@@ -1,0 +1,1562 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { TYPE_DATA, getCompat } from '../../lib/data';
+
+const C = {
+  bg:'#ffffff', card:'rgba(124,58,237,0.06)', border:'rgba(26,22,37,0.12)',
+  purple:'#7C3AED', purpleLight:'#6D28D9', purpleDark:'#4C1D95',
+  text:'#1a1625', muted:'rgba(26,22,37,0.62)', faint:'rgba(26,22,37,0.38)',
+  synergy:'#15803d', tension:'#dc2626', neutral:'#7C3AED',
+};
+
+const S = {
+  label:{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
+    color:'rgba(124,58,237,.55)', fontFamily:"'Courier New',monospace",
+    marginBottom:'12px', display:'block' },
+  card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:'16px',
+    padding:'28px', backdropFilter:'blur(16px)' },
+};
+
+const Bar = ({ value, max, color, h=6 }) => (
+  <div style={{ width:'100%', height:h, background:'rgba(26,22,37,.08)', borderRadius:h/2, overflow:'hidden' }}>
+    <div style={{ height:'100%', width:`${(value/Math.max(max,1))*100}%`,
+      background:`linear-gradient(90deg,${color}99,${color})`, borderRadius:h/2 }}/>
+  </div>
+);
+
+const TypeBadge = ({ type }) => {
+  const d = TYPE_DATA[type];
+  return (
+    <span style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+      display:'inline-flex', alignItems:'center', gap:'4px',
+      background:`${d.color}18`, border:`1px solid ${d.color}44`,
+      color:d.color, fontFamily:'monospace' }}>
+      {d.emoji} {d.short}
+    </span>
+  );
+};
+
+const CompatBadge = ({ level }) => {
+  const map = { synergy:{label:'Sinergia',color:C.synergy}, tension:{label:'Tensão',color:C.tension}, neutral:{label:'Neutro',color:C.neutral} };
+  const m = map[level];
+  return <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
+    background:`${m.color}18`, border:`1px solid ${m.color}44`, color:m.color, fontFamily:'monospace' }}>{m.label}</span>;
+};
+
+export default function DashboardClient({ results, areas = [], counts = [], selectedArea = 'all', analytics = null, auth = null }) {
+  const [tab, setTab] = useState('overview');
+  const router = useRouter();
+  const [area, setArea] = useState(selectedArea);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [groupBaseId, setGroupBaseId] = useState(null);
+  const [groupIds, setGroupIds] = useState([]);
+  const [dismissedIds, setDismissedIds] = useState([]);
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method:'POST' });
+    router.push('/');
+  };
+
+  const filteredResults =
+    typeFilter === 'all' ? results : results.filter(r => String(r.topType) === String(typeFilter));
+
+  const isAdmin = (auth?.role || '') === 'admin';
+
+  // Pre-compute pairs
+  const pairs = [];
+  for (let i=0; i<filteredResults.length; i++)
+    for (let j=i+1; j<filteredResults.length; j++) {
+      const c = getCompat(filteredResults[i].topType, filteredResults[j].topType);
+      pairs.push({ a:filteredResults[i], b:filteredResults[j], compat:c });
+    }
+  const tensions  = pairs.filter(p=>p.compat.level==='tension');
+  const synergies = pairs.filter(p=>p.compat.level==='synergy');
+
+  const typeCount = {};
+  for (let t=1; t<=9; t++) typeCount[t] = 0;
+  filteredResults.forEach(r=>typeCount[r.topType]++);
+  const maxCount = Math.max(...Object.values(typeCount), 1);
+
+  const byAssessmentId = {};
+  filteredResults.forEach(r => { byAssessmentId[String(r.assessmentId)] = r; });
+
+  const groupBase = groupBaseId ? byAssessmentId[String(groupBaseId)] : null;
+  const groupMembers = groupIds.map(id => byAssessmentId[String(id)]).filter(Boolean);
+
+  const suggestions = groupBase
+    ? filteredResults
+        .filter(r => String(r.assessmentId) !== String(groupBase.assessmentId))
+        .filter(r => !dismissedIds.includes(String(r.assessmentId)))
+        .map(r => ({ person: r, compat: getCompat(groupBase.topType, r.topType) }))
+        .sort((x,y)=>{
+          const order = { synergy: 0, neutral: 1, tension: 2 };
+          return (order[x.compat.level] ?? 9) - (order[y.compat.level] ?? 9);
+        })
+    : [];
+
+  const groupPairs = [];
+  for (let i=0; i<groupMembers.length; i++)
+    for (let j=i+1; j<groupMembers.length; j++) {
+      const c = getCompat(groupMembers[i].topType, groupMembers[j].topType);
+      groupPairs.push({ a: groupMembers[i], b: groupMembers[j], compat: c });
+    }
+  const groupTensions = groupPairs.filter(p => p.compat.level === 'tension');
+
+  const Tab = ({id,label}) => (
+    <button onClick={()=>setTab(id)} style={{
+      padding:'8px 16px', background:tab===id?C.purple:'transparent',
+      border:tab===id?'none':`1px solid ${C.border}`, borderRadius:'8px',
+      color:tab===id?'#fff':C.muted, fontSize:'11px', cursor:'pointer',
+      fontFamily:'monospace', letterSpacing:'1px', textTransform:'uppercase' }}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:"'Georgia','Times New Roman',serif",
+      color:C.text, padding:'32px 24px 60px' }}>
+      <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, pointerEvents:'none',
+        background:`radial-gradient(ellipse at 15% 25%,rgba(124,58,237,.06) 0%,transparent 55%)` }}/>
+      <div style={{ maxWidth:'920px', margin:'0 auto', position:'relative', zIndex:1 }}>
+
+        {/* Header */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
+          flexWrap:'wrap', gap:'16px', marginBottom:'28px' }}>
+          <div>
+            <span style={S.label}>◈ 30Team · Dashboard</span>
+            <h2 style={{ fontSize:'32px', fontWeight:'normal', marginBottom:'4px',
+              background:'linear-gradient(135deg,#E8E0FF,#A78BFA 55%,#7C3AED)',
+              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+              Resultados da Equipe
+            </h2>
+            <span style={{ fontSize:'13px', color:C.muted }}>
+              {filteredResults.length} {filteredResults.length===1?'pessoa respondeu':'pessoas responderam'}
+            </span>
+          </div>
+          <div style={{ display:'flex', gap:'10px', alignItems:'center', flexWrap:'wrap' }}>
+            <select value={area} onChange={(e)=>{ const v=e.target.value; setArea(v); router.push(`/dashboard?area=${encodeURIComponent(v)}`); }}
+              style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 14px', color:C.muted,
+                fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
+              <option value="all">Todas as áreas</option>
+              {areas.map(a=>(
+                <option key={a.key} value={a.key}>
+                  {a.label} ({counts.find(c=>c.key===a.key)?.count ?? 0})
+                </option>
+              ))}
+            </select>
+            <select value={typeFilter} onChange={(e)=>setTypeFilter(e.target.value)}
+              style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 14px', color:C.muted,
+                fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
+              <option value="all">Todos os perfis (T1–T9)</option>
+              {[1,2,3,4,5,6,7,8,9].map(t=>(
+                <option key={t} value={String(t)}>
+                  T{t} · {TYPE_DATA[t].short}
+                </option>
+              ))}
+            </select>
+            <a
+              href={`/api/admin/export?area=${encodeURIComponent(area)}`}
+              style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 14px', color:C.muted,
+                fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif",
+                textDecoration:'none', display:'inline-block' }}
+            >
+              Exportar CSV
+            </a>
+            <button onClick={logout}
+              style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 20px', color:C.muted,
+                fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
+              Sair →
+            </button>
+          </div>
+        </div>
+
+        <>
+          <div style={{ display:'flex', gap:'8px', marginBottom:'24px', flexWrap:'wrap' }}>
+            <Tab id="overview"      label="Visão Geral"/>
+            <Tab id="team"          label="Equipe"/>
+            <Tab id="compatibility" label="Compatibilidade"/>
+            <Tab id="compare"       label="Comparativo"/>
+            <Tab id="group"         label="Grupos"/>
+            <Tab id="leadership"    label="Liderança"/>
+            {isAdmin && <Tab id="companies"    label="Empresas"/>}
+          </div>
+
+          {results.length === 0 && tab !== 'companies' ? (
+            <div style={{...S.card, textAlign:'center', padding:'60px'}}>
+              <div style={{ fontSize:'40px', marginBottom:'16px' }}>🌑</div>
+              <p style={{ color:C.muted, fontStyle:'italic' }}>
+                Nenhum resultado ainda.<br/>Compartilhe o link com sua equipe.
+              </p>
+            </div>
+          ) : (
+            <>
+              {tab==='leadership'    && <LeadershipTab analytics={analytics}/>}
+              {tab==='overview'      && <OverviewTab typeCount={typeCount} maxCount={maxCount} results={filteredResults} tensions={tensions} synergies={synergies}/>}
+              {tab==='team'          && <TeamTab results={filteredResults}/>}
+              {tab==='compatibility' && <CompatTab tensions={tensions} synergies={synergies} pairs={pairs}/>}
+              {tab==='compare'       && <CompareTab results={filteredResults}/>}
+              {tab==='companies'     && isAdmin && <CompaniesAdminTab/>}
+              {tab==='group'         && (
+                <GroupTab
+                  results={filteredResults}
+                  groupBase={groupBase}
+                  setGroupBaseId={setGroupBaseId}
+                  groupIds={groupIds}
+                  setGroupIds={setGroupIds}
+                  dismissedIds={dismissedIds}
+                  setDismissedIds={setDismissedIds}
+                  suggestions={suggestions}
+                  groupTensions={groupTensions}
+                />
+              )}
+            </>
+          )}
+        </>
+      </div>
+    </div>
+  );
+}
+
+function LeadershipTab({ analytics }) {
+  const hasData = analytics && analytics.kpis && analytics.kpis.assessments > 0;
+  if (!hasData) {
+    return (
+      <div style={{ ...S.card, textAlign: 'center', padding: '48px' }}>
+        <span style={S.label}>Analytics para liderança</span>
+        <p style={{ color: C.muted, fontSize: '14px', marginTop: '12px', lineHeight: 1.6 }}>
+          Ainda não há avaliações suficientes para montar o painel executivo.
+        </p>
+      </div>
+    );
+  }
+
+  const { kpis, monthlyTrend, globalTopTypeCounts: gCounts, globalTotal, areaSummaries } = analytics;
+  const maxMonthly = Math.max(...monthlyTrend.map((m) => m.cnt), 1);
+  const maxG = Math.max(...Object.values(gCounts), 1);
+  const gTot = globalTotal || 1;
+
+  const Kpi = ({ icon, value, label, hint }) => (
+    <div style={{ ...S.card, padding: '22px' }}>
+      <div style={{ fontSize: '22px', marginBottom: '8px' }}>{icon}</div>
+      <div style={{ fontSize: '28px', color: C.purpleLight, fontFamily: 'monospace', marginBottom: '4px' }}>{value}</div>
+      <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+      {hint && <div style={{ fontSize: '11px', color: C.faint, marginTop: '8px', lineHeight: 1.5 }}>{hint}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ ...S.card, padding: '22px 28px' }}>
+        <span style={S.label}>Analytics para liderança</span>
+        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+          Consolida todas as avaliações cadastradas — não aplica o filtro de área do topo.
+          Use para ver volume, distribuição de tipos por área, tendência mensal e aderência média às rubricas definidas.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+        <Kpi icon="📊" value={kpis.assessments} label="Avaliações" hint="Total de testes concluídos (inclui re-testes)." />
+        <Kpi icon="👤" value={kpis.candidates} label="Candidatos únicos" hint="Pessoas distintas com pelo menos uma avaliação." />
+        <Kpi icon="🏢" value={kpis.areasActive} label="Áreas com dados" hint="Áreas com pelo menos uma avaliação." />
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Volume mensal</span>
+        <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '16px' }}>
+          Contagem de avaliações por mês (data de conclusão no servidor).
+        </p>
+        {monthlyTrend.length === 0 ? (
+          <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>Sem série temporal.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {monthlyTrend.map((m) => (
+              <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
+                <div style={{ flex: 1 }}>
+                  <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
+                </div>
+                <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+        <div style={{ ...S.card }}>
+          <span style={S.label}>Distribuição global (tipo dominante)</span>
+          <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px' }}>
+            Soma de todas as áreas — tipo com maior pontuação em cada avaliação.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9]
+              .filter((t) => (gCounts[t] || 0) > 0)
+              .sort((a, b) => (gCounts[b] || 0) - (gCounts[a] || 0))
+              .map((t) => {
+                const d = TYPE_DATA[t];
+                const c = gCounts[t] || 0;
+                return (
+                  <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '120px', fontSize: '12px', color: d.color, flexShrink: 0, fontFamily: 'monospace' }}>
+                      {d.emoji} {d.short}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <Bar value={c} max={maxG} color={d.color} h={8} />
+                    </div>
+                    <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', width: '28px', textAlign: 'right' }}>{c}</span>
+                    <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', width: '40px', textAlign: 'right' }}>
+                      {Math.round((c / gTot) * 100)}%
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+
+        <div style={{ ...S.card }}>
+          <span style={S.label}>Diversidade cognitiva por área</span>
+          <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px', lineHeight: 1.55 }}>
+            Índice 0–100% derivado da entropia de Shannon na distribuição dos tipos dominantes (100% = mistura mais uniforme entre T1–T9).
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {areaSummaries.map((row) => (
+              <div key={row.areaKey} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ flex: '0 0 38%', fontSize: '12px', color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {row.areaLabel}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <Bar value={row.diversity01} max={1} color={C.synergy} h={8} />
+                </div>
+                <span style={{ width: '44px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                  {Math.round(row.diversity01 * 100)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...S.card, overflow: 'hidden' }}>
+        <span style={S.label}>Por área — resumo executivo</span>
+        <div style={{ overflowX: 'auto', marginTop: '14px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
+            <thead>
+              <tr>
+                {['Área', 'N', 'Dominante', 'Diversidade', 'Fit médio (rubrica)', 'Topos rubrica'].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: 'left',
+                      padding: '8px 12px',
+                      color: C.muted,
+                      fontWeight: 'normal',
+                      fontFamily: 'monospace',
+                      borderBottom: `1px solid ${C.border}`,
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {areaSummaries.map((row) => (
+                <tr key={row.areaKey} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                  <td style={{ padding: '10px 12px', color: C.text }}>{row.areaLabel}</td>
+                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>{row.n}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    {row.dominantType ? <TypeBadge type={row.dominantType} /> : <span style={{ color: C.faint }}>—</span>}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                    {Math.round(row.diversity01 * 100)}%
+                  </td>
+                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                    {row.avgFit010 != null ? `${row.avgFit010}/10` : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                    {row.rubricAlignPct != null ? `${row.rubricAlignPct}%` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: '11px', color: C.faint, marginTop: '14px', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 0 }}>
+          “Topos rubrica”: percentual de avaliações cujo tipo dominante está entre os tipos mais valorados na rubrica da área (peso ≥ 92% do maior peso).
+          Fit médio usa a mesma fórmula de aderência 0–10 do restante do dashboard.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function OverviewTab({ typeCount, maxCount, results, tensions, synergies }) {
+  const top = Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).find(([,c])=>c>0);
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+      <div style={{...S.card, gridColumn:'1/-1'}}>
+        <span style={S.label}>Distribuição de tipos</span>
+        <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+          {Object.entries(typeCount).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]).map(([t,c])=>{
+            const d=TYPE_DATA[parseInt(t)];
+            return (
+              <div key={t} style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+                <span style={{ width:'120px', fontSize:'12px', color:d.color, flexShrink:0, fontFamily:'monospace' }}>
+                  {d.emoji} {d.short}
+                </span>
+                <div style={{ flex:1 }}><Bar value={c} max={maxCount} color={d.color} h={10}/></div>
+                <span style={{ fontSize:'13px', color:C.muted, fontFamily:'monospace', width:'20px', textAlign:'right' }}>{c}</span>
+                <span style={{ fontSize:'11px', color:C.faint, fontFamily:'monospace', width:'36px', textAlign:'right' }}>
+                  {Math.round((c/results.length)*100)}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={S.card}>
+        <span style={S.label}>Alertas rápidos</span>
+        {[{icon:'⚠️',n:tensions.length,c:C.tension,l:'Pares em tensão'},
+          {icon:'✅',n:synergies.length,c:C.synergy,l:'Parcerias naturais'},
+          {icon:'👥',n:Object.values(typeCount).filter(c=>c>0).length,c:C.purpleLight,l:'Tipos presentes'}
+        ].map(x=>(
+          <div key={x.l} style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
+            <span style={{ fontSize:'20px' }}>{x.icon}</span>
+            <div>
+              <div style={{ fontSize:'22px', color:x.c }}>{x.n}</div>
+              <div style={{ fontSize:'11px', color:C.muted, fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'1px' }}>{x.l}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {top&&(()=>{
+        const d=TYPE_DATA[parseInt(top[0])];
+        return (
+          <div style={{...S.card, background:`${d.color}08`, border:`1px solid ${d.color}25`}}>
+            <span style={{...S.label, color:`${d.color}70`}}>Tipo dominante</span>
+            <div style={{ fontSize:'32px', marginBottom:'8px' }}>{d.emoji}</div>
+            <h3 style={{ fontSize:'18px', color:d.color, fontWeight:'normal', marginBottom:'8px' }}>{d.name}</h3>
+            <p style={{ fontSize:'13px', color:C.muted, lineHeight:1.6, margin:0 }}>{d.team}</p>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function TeamTab({ results }) {
+  const [open, setOpen] = useState(null);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+      {results.map((r,i)=>{
+        const d=TYPE_DATA[r.topType];
+        const isOpen=open===i;
+        const sorted=Object.entries(r.scores).sort((a,b)=>b[1]-a[1]);
+        const second=sorted[1];
+        const maxS=parseInt(sorted[0][1]);
+        return (
+          <div key={i} style={{...S.card, padding:0, overflow:'hidden', cursor:'pointer',
+            border:isOpen?`1px solid ${d.color}44`:`1px solid ${C.border}`}}
+            onClick={()=>setOpen(isOpen?null:i)}>
+            <div style={{ display:'flex', alignItems:'center', gap:'16px', padding:'18px 24px' }}>
+              <div style={{ fontSize:'24px', flexShrink:0 }}>{d.emoji}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:'15px', marginBottom:'4px' }}>{r.name}</div>
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center' }}>
+                  <TypeBadge type={r.topType}/>
+                  {r.areaLabel && (
+                    <span style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+                      background:'rgba(26,22,37,.04)', border:`1px solid ${C.border}`,
+                      color:C.muted, fontFamily:'monospace' }}>
+                      {r.areaLabel}
+                    </span>
+                  )}
+                  {r.fitLabel && (
+                    <span style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+                      background:`${C.purple}18`, border:`1px solid ${C.purple}44`,
+                      color:C.purpleLight, fontFamily:'monospace' }}>
+                      Fit: {r.fitLabel}
+                    </span>
+                  )}
+                  {r.areaFitScore010 !== null && r.areaFitScore010 !== undefined && (
+                    <span style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+                      background:'rgba(71,232,123,.08)', border:'1px solid rgba(71,232,123,.25)',
+                      color:'rgba(71,232,123,.95)', fontFamily:'monospace' }}>
+                      Aderência: {r.areaFitScore010}/10
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span style={{ fontSize:'11px', color:C.muted, fontFamily:'monospace' }}>{isOpen?'▲':'▼'}</span>
+            </div>
+            {isOpen&&(
+              <div style={{ borderTop:`1px solid ${C.border}`, padding:'20px 24px' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'20px' }}>
+                  <div>
+                    <span style={{...S.label,marginBottom:'8px'}}>Pontos fortes</span>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                      {d.strengths.slice(0,3).map(s=>(
+                        <span key={s} style={{ padding:'3px 10px', background:`${d.color}15`,
+                          border:`1px solid ${d.color}35`, borderRadius:'20px', fontSize:'11px', color:d.color }}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{...S.label,marginBottom:'8px'}}>Ala secundária</span>
+                    {second&&<TypeBadge type={parseInt(second[0])}/>}
+                  </div>
+                </div>
+                <div style={{ background:`${d.color}0a`, border:`1px solid ${d.color}20`,
+                  borderRadius:'10px', padding:'14px 16px', marginBottom:'16px' }}>
+                  <span style={{...S.label,marginBottom:'6px',color:`${d.color}70`}}>Contribuição para a equipe</span>
+                  <p style={{ fontSize:'13px', color:C.muted, lineHeight:1.65, margin:0 }}>{d.team}</p>
+                </div>
+                <span style={{...S.label,marginBottom:'8px'}}>Pontuação por tipo</span>
+                <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
+                  {sorted.map(([t,s])=>(
+                    <div key={t} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                      <span style={{ width:'60px', fontSize:'10px', color:TYPE_DATA[parseInt(t)].color, fontFamily:'monospace' }}>
+                        {TYPE_DATA[parseInt(t)].emoji} T{t}
+                      </span>
+                      <div style={{ flex:1 }}><Bar value={parseInt(s)} max={maxS} color={TYPE_DATA[parseInt(t)].color} h={5}/></div>
+                      <span style={{ fontSize:'10px', color:C.muted, fontFamily:'monospace', width:'24px', textAlign:'right' }}>{s}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CompatTab({ tensions, synergies, pairs }) {
+  const [section, setSection] = useState('tensions');
+  const SecBtn=({id,label,count,color})=>(
+    <button onClick={()=>setSection(id)} style={{
+      padding:'8px 16px', display:'flex', alignItems:'center', gap:'8px',
+      background:section===id?`${color}20`:'rgba(26,22,37,.04)',
+      border:`1px solid ${section===id?color:C.border}`,
+      borderRadius:'10px', color:section===id?color:C.muted, fontSize:'12px',
+      cursor:'pointer', fontFamily:'monospace' }}>
+      {label} <span style={{ background:`${color}30`, padding:'1px 7px', borderRadius:'10px', fontSize:'11px' }}>{count}</span>
+    </button>
+  );
+  const display=section==='tensions'?tensions:section==='synergies'?synergies:pairs;
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px', marginBottom:'20px' }}>
+        {[{l:'Pares em tensão',n:tensions.length,c:C.tension,i:'⚠️',d:'Risco de atrito interpessoal'},
+          {l:'Parcerias naturais',n:synergies.length,c:C.synergy,i:'✅',d:'Alta complementaridade'},
+          {l:'Total de pares',n:pairs.length,c:C.purpleLight,i:'👥',d:'Combinações analisadas'}
+        ].map(x=>(
+          <div key={x.l} style={{ background:C.card, border:`1px solid ${x.c}25`, borderRadius:'14px', padding:'20px' }}>
+            <div style={{ fontSize:'22px', marginBottom:'6px' }}>{x.i}</div>
+            <div style={{ fontSize:'26px', color:x.c, marginBottom:'4px' }}>{x.n}</div>
+            <div style={{ fontSize:'11px', color:C.muted, fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px' }}>{x.l}</div>
+            <div style={{ fontSize:'11px', color:C.faint }}>{x.d}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display:'flex', gap:'8px', marginBottom:'20px', flexWrap:'wrap' }}>
+        <SecBtn id="tensions"  label="Tensões"        count={tensions.length}  color={C.tension}/>
+        <SecBtn id="synergies" label="Sinergias"      count={synergies.length} color={C.synergy}/>
+        <SecBtn id="all"       label="Todos os pares" count={pairs.length}     color={C.purpleLight}/>
+      </div>
+      {display.length===0?(
+        <div style={{...S.card, textAlign:'center', padding:'40px'}}>
+          <p style={{ color:C.muted, fontStyle:'italic' }}>Nenhum par nessa categoria.</p>
+        </div>
+      ):(
+        display.map((pair,i)=>{
+          const {a,b,compat}=pair;
+          const lc={synergy:C.synergy,tension:C.tension,neutral:C.neutral}[compat.level];
+
+          const PersonCard = ({ person }) => {
+            const d = TYPE_DATA[person.topType];
+            return (
+              <div style={{ background:'rgba(26,22,37,.03)', border:`1px solid ${C.border}`,
+                borderRadius:'12px', padding:'14px 14px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'8px' }}>
+                  <div style={{ fontSize:'22px' }}>{d.emoji}</div>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:'13px', color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {person.name}
+                    </div>
+                    <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                      <TypeBadge type={person.topType}/>
+                      {person.areaLabel && (
+                        <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
+                          background:'rgba(26,22,37,.04)', border:`1px solid ${C.border}`,
+                          color:C.muted, fontFamily:'monospace' }}>
+                          {person.areaLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p style={{ fontSize:'12px', color:C.faint, lineHeight:1.6, margin:0 }}>
+                  {d.team}
+                </p>
+              </div>
+            );
+          };
+
+          return (
+            <div key={i} style={{ background:C.card, border:`1px solid ${lc}30`,
+              borderRadius:'14px', padding:'18px 18px', marginBottom:'12px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+                flexWrap:'wrap', gap:'12px', marginBottom:'12px' }}>
+                <div style={{ fontSize:'12px', color:lc, fontFamily:'monospace',
+                  letterSpacing:'1px', textTransform:'uppercase' }}>{compat.title}</div>
+                <CompatBadge level={compat.level}/>
+              </div>
+
+              {compat.level === 'tension' ? (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 56px 1fr', gap:'10px', alignItems:'stretch' }}>
+                  <PersonCard person={a}/>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', color:C.faint, fontFamily:'monospace' }}>×</div>
+                  <PersonCard person={b}/>
+                </div>
+              ) : (
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'10px' }}>
+                  <TypeBadge type={a.topType}/><span style={{ color:C.muted, fontSize:'13px' }}>{a.name.split(' ')[0]}</span>
+                  <span style={{ color:C.faint }}>×</span>
+                  <TypeBadge type={b.topType}/><span style={{ color:C.muted, fontSize:'13px' }}>{b.name.split(' ')[0]}</span>
+                </div>
+              )}
+
+              <p style={{ fontSize:'13px', color:C.muted, lineHeight:1.65, margin:'12px 0 0' }}>{compat.desc}</p>
+
+              {compat.level==='tension'&&(
+                <div style={{ marginTop:'12px', padding:'10px 14px', background:'rgba(232,71,71,.06)',
+                  border:'1px solid rgba(232,71,71,.2)', borderRadius:'8px' }}>
+                  <span style={{ fontSize:'11px', color:C.tension, fontFamily:'monospace', display:'block', marginBottom:'4px' }}>⚠ Decisão para grupos</span>
+                  <p style={{ fontSize:'12px', color:C.muted, lineHeight:1.6, margin:0 }}>
+                    Evite colocar esse par como dupla fixa sem um acordo claro de papéis. Se precisarem trabalhar juntos, prefira um terceiro elemento “ponte” e rituais curtos de alinhamento (check-in semanal + definição explícita de entregáveis).
+                  </p>
+                </div>
+              )}
+              {compat.level==='synergy'&&(
+                <div style={{ marginTop:'12px', padding:'10px 14px', background:'rgba(71,232,123,.06)',
+                  border:'1px solid rgba(71,232,123,.2)', borderRadius:'8px' }}>
+                  <span style={{ fontSize:'11px', color:C.synergy, fontFamily:'monospace', display:'block', marginBottom:'4px' }}>✓ Oportunidade</span>
+                  <p style={{ fontSize:'12px', color:C.muted, lineHeight:1.6, margin:0 }}>
+                    Alta complementaridade. Bom candidato para projetos de alta interdependência (pairing, discovery/entrega, liderança técnica + execução).
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+      <div style={{ marginTop:'16px', padding:'16px 20px', background:'rgba(167,139,250,.05)',
+        border:`1px solid rgba(167,139,250,.15)`, borderRadius:'12px' }}>
+        <span style={{...S.label,marginBottom:'6px'}}>Nota metodológica</span>
+        <p style={{ fontSize:'12px', color:C.faint, lineHeight:1.65, margin:0 }}>
+          A análise de compatibilidade é baseada no modelo interno de perfis e serve como ponto de partida para conversas — não como diagnóstico definitivo.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CompareTab({ results }) {
+  const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
+  const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
+  const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' })); // key: 'name' | 1..9
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const idSet = new Set(allIds);
+      const next = new Set([...prev].filter((id) => idSet.has(id)));
+      if (next.size === 0 && allIds.length > 0) allIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }, [allIds]);
+
+  const toggleId = (id) => {
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const selectAll = () => setSelectedIds(new Set(allIds));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const visible = results.filter((r) => selectedIds.has(String(r.assessmentId)));
+  const resultsByFirstName = useMemo(() => {
+    const first = (row) => String(row?.name ?? '').trim().split(' ')[0].toLowerCase();
+    return [...results].sort((a, b) => {
+      const an = first(a);
+      const bn = first(b);
+      if (an < bn) return -1;
+      if (an > bn) return 1;
+      return 0;
+    });
+  }, [results]);
+  const visibleSorted = useMemo(() => {
+    const dirMul = sortBy.dir === 'asc' ? 1 : -1;
+    const getScore = (row, t) => {
+      const v = row?.scores?.[t] ?? row?.scores?.[String(t)] ?? 0;
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const getName = (row) => String(row?.name ?? '').trim().split(' ')[0].toLowerCase();
+    return [...visible].sort((a, b) => {
+      if (sortBy.key === 'name') {
+        const an = getName(a);
+        const bn = getName(b);
+        if (an < bn) return -1 * dirMul;
+        if (an > bn) return 1 * dirMul;
+        return 0;
+      }
+      const t = sortBy.key;
+      const av = getScore(a, t);
+      const bv = getScore(b, t);
+      if (av < bv) return -1 * dirMul;
+      if (av > bv) return 1 * dirMul;
+      const an = getName(a);
+      const bn = getName(b);
+      if (an < bn) return -1;
+      if (an > bn) return 1;
+      return 0;
+    });
+  }, [visible, sortBy]);
+
+  const toggleSort = (key) => {
+    setSortBy((prev) => {
+      if (prev.key === key) return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
+      // padrão: nome A→Z; números maior→menor
+      return { key, dir: key === 'name' ? 'asc' : 'desc' };
+    });
+  };
+  const sortMark = (key) => (sortBy.key === key ? (sortBy.dir === 'asc' ? '▲' : '▼') : '');
+  const nSel = selectedIds.size;
+  const nTot = results.length;
+  const allSelected = nTot > 0 && nSel === nTot;
+
+  const btnBar = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '16px',
+    paddingBottom: '16px',
+    borderBottom: `1px solid ${C.border}`,
+  };
+  const miniBtn = {
+    padding: '6px 12px',
+    borderRadius: '8px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+  };
+
+  return (
+    <div style={S.card}>
+      <span style={S.label}>Mapa de perfis da equipe</span>
+      <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px', marginBottom: '14px', lineHeight: 1.55 }}>
+        Escolha quem entra na comparação. Use os atalhos abaixo ou marque/desmarque cada pessoa.
+      </p>
+
+      <div style={btnBar}>
+        <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+          {nSel} de {nTot} na tabela
+        </span>
+        <button
+          type="button"
+          onClick={selectAll}
+          disabled={nTot === 0 || allSelected}
+          style={{
+            ...miniBtn,
+            background: allSelected ? 'rgba(26,22,37,.04)' : `${C.purple}18`,
+            border: `1px solid ${allSelected ? C.border : `${C.purple}55`}`,
+            color: allSelected ? C.faint : C.purple,
+            opacity: nTot === 0 ? 0.5 : 1,
+          }}
+        >
+          Selecionar todos
+        </button>
+        <button
+          type="button"
+          onClick={clearSelection}
+          disabled={nSel === 0}
+          style={{
+            ...miniBtn,
+            background: 'transparent',
+            border: `1px solid ${C.border}`,
+            color: C.muted,
+            opacity: nSel === 0 ? 0.5 : 1,
+          }}
+        >
+          Limpar seleção
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px 14px',
+          marginBottom: '20px',
+          maxHeight: '160px',
+          overflowY: 'auto',
+          padding: '4px 0',
+        }}
+      >
+        {resultsByFirstName.map((r) => {
+          const id = String(r.assessmentId);
+          const on = selectedIds.has(id);
+          return (
+            <label
+              key={id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                padding: '6px 10px',
+                borderRadius: '10px',
+                border: `1px solid ${on ? `${C.purple}40` : C.border}`,
+                background: on ? `${C.purple}10` : 'rgba(26,22,37,.03)',
+                fontSize: '12px',
+                color: C.text,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => toggleId(id)}
+                style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer' }}
+              />
+              <span style={{ whiteSpace: 'nowrap' }}>{r.name.split(' ')[0]}</span>
+              <TypeBadge type={r.topType} />
+            </label>
+          );
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '14px', padding: '24px 0' }}>
+          Ninguém selecionado. Marque uma ou mais pessoas acima para ver o comparativo lado a lado.
+        </p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr>
+                <th
+                  onClick={() => toggleSort('name')}
+                  style={{
+                    textAlign: 'left',
+                    padding: '8px 12px',
+                    color: C.muted,
+                    fontWeight: 'normal',
+                    fontFamily: 'monospace',
+                    borderBottom: `1px solid ${C.border}`,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    Pessoa
+                    <span style={{ color: C.faint, fontSize: '11px' }}>{sortMark('name')}</span>
+                  </span>
+                </th>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
+                  <th
+                    key={t}
+                    onClick={() => toggleSort(t)}
+                    style={{
+                      padding: '8px 6px',
+                      color: TYPE_DATA[t].color,
+                      fontWeight: 'normal',
+                      fontFamily: 'monospace',
+                      borderBottom: `1px solid ${C.border}`,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minWidth: '34px' }}>
+                      {TYPE_DATA[t].emoji}
+                      <span style={{ color: C.faint, fontSize: '11px' }}>{sortMark(t)}</span>
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleSorted.map((r, i) => {
+                const maxS = Math.max(...Object.values(r.scores).map(Number));
+                return (
+                  <tr key={String(r.assessmentId) || i} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                    <td style={{ padding: '10px 12px', color: C.text, whiteSpace: 'nowrap' }}>
+                      {r.name.split(' ')[0]} <TypeBadge type={r.topType} />
+                    </td>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => {
+                      const s = parseInt(r.scores[t] || 0);
+                      const pct = Math.round((s / maxS) * 100);
+                      const isTop = r.topType === t;
+                      return (
+                        <td key={t} style={{ padding: '6px', textAlign: 'center' }}>
+                          <div
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '50%',
+                              background: isTop
+                                ? TYPE_DATA[t].color
+                                : `${TYPE_DATA[t].color}${Math.max(20, Math.round(pct * 1.5))
+                                    .toString(16)
+                                    .padStart(2, '0')}`,
+                              margin: '0 auto',
+                              border: isTop ? `2px solid ${TYPE_DATA[t].color}` : 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            {s}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p style={{ fontSize: '11px', color: C.faint, marginTop: '16px', fontStyle: 'italic' }}>
+        Círculo com borda = tipo dominante. Intensidade da cor = pontuação relativa.
+      </p>
+    </div>
+  );
+}
+
+function CompaniesAdminTab() {
+  const [loading, setLoading] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [error, setError] = useState('');
+
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('hr');
+  const [newUserCompanyId, setNewUserCompanyId] = useState('');
+  const [userMsg, setUserMsg] = useState('');
+
+  const appUrl =
+    (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+
+  const loadCompanies = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/companies');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
+      setCompanies(Array.isArray(data) ? data : []);
+      if (!newUserCompanyId && Array.isArray(data) && data.length) setNewUserCompanyId(String(data[0].id));
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadCompanies(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const createCompany = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), slug: slug.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao criar empresa');
+      setName(''); setSlug('');
+      await loadCompanies();
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rotateLink = async (companyId) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/link`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
+      await loadCompanies();
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setUserMsg('Copiado.');
+      setTimeout(() => setUserMsg(''), 1200);
+    } catch {
+      setUserMsg('Não foi possível copiar automaticamente.');
+      setTimeout(() => setUserMsg(''), 1600);
+    }
+  };
+
+  const createUser = async () => {
+    setLoading(true);
+    setError('');
+    setUserMsg('');
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          role: newUserRole,
+          companyId: newUserRole === 'admin' ? null : (newUserCompanyId ? parseInt(newUserCompanyId, 10) : null),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao criar usuário');
+      setNewUserEmail(''); setNewUserPassword('');
+      setUserMsg('Usuário criado.');
+      setTimeout(() => setUserMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ ...S.card, padding: '22px 28px' }}>
+        <span style={S.label}>Empresas</span>
+        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+          Cadastre empresas, gere o link único de candidatura e crie usuários de RH/Direção vinculados à empresa.
+        </p>
+        {error ? (
+          <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
+            {error}
+          </p>
+        ) : null}
+        {userMsg ? (
+          <p style={{ marginTop: '10px', marginBottom: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>
+            {userMsg}
+          </p>
+        ) : null}
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Criar empresa</span>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nome (ex.: ACME)"
+            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <input
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="Slug opcional (ex.: acme)"
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <button
+            type="button"
+            onClick={createCompany}
+            disabled={loading || !name.trim()}
+            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+          >
+            Criar
+          </button>
+          <button
+            type="button"
+            onClick={loadCompanies}
+            disabled={loading}
+            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+          >
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Empresas cadastradas</span>
+        {companies.length === 0 ? (
+          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
+            Nenhuma empresa ainda.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+            {companies.map((c) => {
+              const token = c.activeToken || '';
+              const link = token ? `${appUrl}/t/${token}` : '';
+              const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
+              return (
+                <div key={c.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: C.text, fontSize: '13px' }}>
+                        <span style={{ fontFamily: 'monospace', color: C.faint, marginRight: '8px' }}>#{c.id}</span>
+                        <strong style={{ fontWeight: 'normal' }}>{c.name}</strong>
+                        <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>({c.slug})</span>
+                      </div>
+                      {token ? (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {link}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                          (sem link ativo)
+                        </div>
+                      )}
+                      {token && exp ? (
+                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                          expira em {exp.toLocaleString()}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => rotateLink(c.id)}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Rotacionar link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => token && copy(link)}
+                        disabled={loading || !token}
+                        style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                      >
+                        Copiar link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Criar usuário (RH/Direção)</span>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+          <input
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
+            placeholder="email@empresa.com"
+            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <input
+            value={newUserPassword}
+            onChange={(e) => setNewUserPassword(e.target.value)}
+            placeholder="Senha"
+            type="password"
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <select
+            value={newUserRole}
+            onChange={(e) => setNewUserRole(e.target.value)}
+            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace' }}
+          >
+            <option value="hr">hr</option>
+            <option value="direction">direction</option>
+            <option value="admin">admin</option>
+          </select>
+          <select
+            value={newUserCompanyId}
+            onChange={(e) => setNewUserCompanyId(e.target.value)}
+            disabled={newUserRole === 'admin'}
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
+          >
+            {companies.map((c) => (
+              <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={createUser}
+            disabled={loading || !newUserEmail.trim() || !newUserPassword.trim()}
+            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !newUserEmail.trim() || !newUserPassword.trim()) ? 0.6 : 1 }}
+          >
+            Criar usuário
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGroupIds, dismissedIds, setDismissedIds, suggestions, groupTensions }) {
+  const [search, setSearch] = useState('');
+
+  const addToGroup = (assessmentId) => {
+    const id = String(assessmentId);
+    if (groupIds.includes(id)) return;
+    setGroupIds([...groupIds, id]);
+  };
+  const removeFromGroup = (assessmentId) => {
+    const id = String(assessmentId);
+    setGroupIds(groupIds.filter(x => x !== id));
+  };
+  const clearGroup = () => {
+    setGroupBaseId(null);
+    setGroupIds([]);
+  };
+
+  const dismissSuggestion = (assessmentId) => {
+    const id = String(assessmentId);
+    if (dismissedIds.includes(id)) return;
+    setDismissedIds([...dismissedIds, id]);
+  };
+
+  const compatShort = { synergy: 'Sinergia', tension: 'Tensão', neutral: 'Neutro' };
+
+  /** Mesmo padrão visual dos cards de sugestão: emoji só no TypeBadge; nome ao lado; × no canto se onRemove. */
+  const PersonMini = ({ person, right, baseCompat = null, onRemove = null }) => {
+    const showX = typeof onRemove === 'function';
+    return (
+      <div style={{
+        position: showX ? 'relative' : 'static',
+        display:'flex', flexDirection:'column', gap:'8px',
+        padding:'12px 14px',
+        paddingRight: showX ? '44px' : '14px',
+        background:'rgba(26,22,37,.03)', border:`1px solid ${C.border}`, borderRadius:'12px',
+      }}>
+        {showX && (
+          <button
+            type="button"
+            onClick={onRemove}
+            title="Remover do grupo"
+            aria-label="Remover do grupo"
+            style={{ position:'absolute', top:'10px', right:'10px',
+              width:'28px', height:'28px', display:'inline-flex', alignItems:'center', justifyContent:'center',
+              background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
+              borderRadius:'10px', color:C.muted, fontSize:'16px',
+              cursor:'pointer', fontFamily:'monospace', lineHeight:1 }}
+          >
+            ×
+          </button>
+        )}
+        <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
+          <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap', minWidth:0 }}>
+            <TypeBadge type={person.topType}/>
+            <span style={{ color:C.text, fontSize:'13px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+              {person.name}
+            </span>
+            {baseCompat && (
+              <>
+                <CompatBadge level={baseCompat.level}/>
+                {baseCompat.level === 'tension' && (
+                  <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
+                    background:`${C.tension}18`, border:`1px solid ${C.tension}44`,
+                    color:C.tension, fontFamily:'monospace' }}>
+                    ⚠ Tensão com base
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+          {!showX && <div style={{ flexShrink:0 }}>{right}</div>}
+        </div>
+        {(person.areaLabel || (person.areaFitScore010 !== null && person.areaFitScore010 !== undefined)) ? (
+          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center' }}>
+            {person.areaLabel && (
+              <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
+                background:'rgba(26,22,37,.04)', border:`1px solid ${C.border}`,
+                color:C.muted, fontFamily:'monospace' }}>
+                {person.areaLabel}
+              </span>
+            )}
+            {person.areaFitScore010 !== null && person.areaFitScore010 !== undefined && (
+              <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
+                background:'rgba(71,232,123,.08)', border:'1px solid rgba(71,232,123,.25)',
+                color:'rgba(71,232,123,.95)', fontFamily:'monospace' }}>
+                {person.areaFitScore010}/10
+              </span>
+            )}
+          </div>
+        ) : null}
+        {baseCompat ? (
+          <div style={{ marginTop:'0', fontSize:'12px', color:C.muted, lineHeight:1.55 }}>
+            {baseCompat.title ? (
+              <span style={{ fontSize:'11px', color:C.faint, fontFamily:'monospace', display:'block', marginBottom:'4px' }}>
+                {baseCompat.title}
+              </span>
+            ) : null}
+            {baseCompat.desc || ''}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+      <div style={S.card}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
+          <span style={S.label}>Montar grupo</span>
+          <button onClick={clearGroup} style={{ background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
+            borderRadius:'10px', padding:'8px 12px', color:C.muted, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
+            Limpar
+          </button>
+        </div>
+
+        <p style={{ fontSize:'12px', color:C.faint, lineHeight:1.65, marginTop:'10px' }}>
+          Escolha uma pessoa base e veja quem tem melhor compatibilidade para trabalhar junto. Depois adicione membros ao grupo e acompanhe tensões internas.
+        </p>
+
+        <span style={{...S.label, marginTop:'18px'}}>Pessoa base</span>
+        {groupBase ? (
+          <PersonMini
+            person={groupBase}
+            right={
+              <button onClick={()=>setGroupBaseId(null)} style={{ background:'transparent', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'8px 10px', color:C.muted, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
+                Trocar
+              </button>
+            }
+          />
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            {results.slice(0, 8).map(r=>(
+              <PersonMini
+                key={r.assessmentId}
+                person={r}
+                right={
+                  <button onClick={()=>setGroupBaseId(String(r.assessmentId))} style={{ background:`${C.purple}22`, border:`1px solid ${C.purple}55`,
+                    borderRadius:'10px', padding:'8px 10px', color:C.purpleLight, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
+                    Selecionar
+                  </button>
+                }
+              />
+            ))}
+            <div style={{ marginTop:'6px', color:C.faint, fontSize:'11px', fontFamily:'monospace' }}>
+              Dica: use o filtro de área/perfil acima para refinar a lista.
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={S.card}>
+        <span style={S.label}>Sugestões e tensões</span>
+
+        {!groupBase ? (
+          <p style={{ color:C.muted, fontStyle:'italic', fontSize:'13px' }}>
+            Selecione uma pessoa base para ver compatibilidades.
+          </p>
+        ) : (
+          <>
+            <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', margin:'10px 0 14px' }}>
+              <input
+                value={search}
+                onChange={(e)=>setSearch(e.target.value)}
+                placeholder="Buscar pessoa para adicionar…"
+                style={{ flex:'1 1 240px', background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
+                  borderRadius:'10px', padding:'10px 12px', color:C.text, fontSize:'12px',
+                  fontFamily:'monospace', outline:'none' }}
+              />
+              <select
+                onChange={(e)=>{ const id=e.target.value; if(id) addToGroup(id); e.target.value=''; }}
+                defaultValue=""
+                style={{ flex:'0 0 240px', background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                  borderRadius:'10px', padding:'10px 12px', color:C.muted, fontSize:'12px',
+                  cursor:'pointer', fontFamily:'monospace' }}
+              >
+                <option value="">+ Adicionar qualquer pessoa</option>
+                {results
+                  .filter(r=>String(r.assessmentId)!==String(groupBase.assessmentId))
+                  .filter(r=>!groupIds.includes(String(r.assessmentId)))
+                  .filter(r=>!search.trim() || r.name.toLowerCase().includes(search.trim().toLowerCase()))
+                  .slice(0, 40)
+                  .map(r=>{
+                    const withBase = getCompat(groupBase.topType, r.topType);
+                    return (
+                      <option key={r.assessmentId} value={String(r.assessmentId)}>
+                        {r.name} (T{r.topType}) · {compatShort[withBase.level] ?? withBase.level}
+                      </option>
+                    );
+                  })}
+              </select>
+            </div>
+
+            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'14px' }}>
+              <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
+                background:`${C.synergy}18`, border:`1px solid ${C.synergy}44`, color:C.synergy, fontFamily:'monospace' }}>
+                Sinergia
+              </span>
+              <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
+                background:`${C.neutral}18`, border:`1px solid ${C.neutral}44`, color:C.neutral, fontFamily:'monospace' }}>
+                Neutro
+              </span>
+              <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
+                background:`${C.tension}18`, border:`1px solid ${C.tension}44`, color:C.tension, fontFamily:'monospace' }}>
+                Tensão
+              </span>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginBottom:'16px' }}>
+              {suggestions.slice(0, 10).map(({ person, compat }) => {
+                const lc = { synergy:C.synergy, tension:C.tension, neutral:C.neutral }[compat.level];
+                const already = groupIds.includes(String(person.assessmentId));
+                return (
+                  <div key={person.assessmentId} style={{ position:'relative',
+                    background:'rgba(26,22,37,.03)', border:`1px solid ${lc}30`,
+                    borderRadius:'12px', padding:'12px 14px' }}>
+                    <button
+                      onClick={()=>dismissSuggestion(person.assessmentId)}
+                      title="Remover da lista"
+                      aria-label="Remover da lista"
+                      style={{ position:'absolute', top:'10px', right:'10px',
+                        width:'28px', height:'28px', display:'inline-flex', alignItems:'center', justifyContent:'center',
+                        background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
+                        borderRadius:'10px', color:C.muted, fontSize:'16px',
+                        cursor:'pointer', fontFamily:'monospace', lineHeight:1 }}
+                    >
+                      ×
+                    </button>
+                    <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
+                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                        <TypeBadge type={person.topType}/>
+                        <span style={{ color:C.text, fontSize:'13px' }}>{person.name}</span>
+                        <CompatBadge level={compat.level}/>
+                        {compat.level==='tension' && (
+                          <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
+                            background:`${C.tension}18`, border:`1px solid ${C.tension}44`,
+                            color:C.tension, fontFamily:'monospace' }}>
+                            ⚠ Tensão com base
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display:'flex', gap:'8px' }}>
+                        <button
+                          disabled={already}
+                          onClick={()=>addToGroup(person.assessmentId)}
+                          style={{ background:already?'rgba(26,22,37,.04)':`${lc}18`,
+                            border:`1px solid ${already?C.border:lc}55`, borderRadius:'10px',
+                            padding:'8px 10px', color:already?C.faint:lc, fontSize:'11px',
+                            cursor:already?'not-allowed':'pointer', fontFamily:'monospace' }}
+                        >
+                          {already?'No grupo':'Adicionar'}
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ marginTop:'8px', fontSize:'12px', color:C.muted, lineHeight:1.55 }}>
+                      {compat.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:'14px' }}>
+              <span style={{...S.label, marginBottom:'10px'}}>Grupo atual</span>
+              {groupIds.length === 0 ? (
+                <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>Nenhuma pessoa adicionada ainda.</p>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {groupIds.map(id => {
+                    const p = results.find(r => String(r.assessmentId) === String(id));
+                    if (!p) return null;
+                    const baseCompat =
+                      groupBase && String(p.assessmentId) !== String(groupBase.assessmentId)
+                        ? getCompat(groupBase.topType, p.topType)
+                        : null;
+                    return (
+                      <PersonMini
+                        key={id}
+                        person={p}
+                        baseCompat={baseCompat}
+                        onRemove={() => removeFromGroup(id)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{ marginTop:'14px' }}>
+                <span style={{...S.label, marginBottom:'6px'}}>Tensões internas</span>
+                {groupTensions.length === 0 ? (
+                  <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>Nenhuma tensão detectada no grupo atual.</p>
+                ) : (
+                  <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                    {groupTensions.slice(0, 8).map((p, idx) => (
+                      <div key={idx} style={{ padding:'10px 12px', background:'rgba(232,71,71,.06)',
+                        border:'1px solid rgba(232,71,71,.2)', borderRadius:'10px' }}>
+                        <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                          <TypeBadge type={p.a.topType}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.a.name.split(' ')[0]}</span>
+                          <span style={{ color:C.faint }}>×</span>
+                          <TypeBadge type={p.b.topType}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.b.name.split(' ')[0]}</span>
+                        </div>
+                        <div style={{ marginTop:'6px', fontSize:'12px', color:C.muted, lineHeight:1.55 }}>
+                          {p.compat.desc}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

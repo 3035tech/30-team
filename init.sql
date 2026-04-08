@@ -1,0 +1,4 @@
+-- Deprecated.
+-- O schema agora é aplicado via `scripts/migrate.js` + `migrations/*.sql`.
+-- Mantemos este arquivo apenas para compatibilidade com docker-compose,
+-- mas ele não precisa criar nada.

@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: enneagram-ingress
+  namespace: enneagram
+  annotations:
+    # Ajuste conforme o ingress controller do seu cluster (nginx é o mais comum)
+    kubernetes.io/ingress.class: "nginx"
+    # Descomente abaixo se usar cert-manager para SSL automático
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  rules:
+    - host: enneagram.3035tech.com   # ajuste para seu domínio
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: enneagram-app
+                port:
+                  number: 80
+
+  # Descomente abaixo para habilitar TLS com cert-manager
+  # tls:
+  #   - hosts:
+  #       - enneagram.3035tech.com
+  #     secretName: enneagram-tls
