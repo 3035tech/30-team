@@ -1,5 +1,5 @@
 # 30Team
-> Perfis e dinâmica de equipe (time interno e contratações) — Next.js + Postgres + Docker
+> Perfis e dinâmica de equipe (time interno e contratações) — Next.js + Postgres + Docker/K8s
 
 ---
 
@@ -13,7 +13,7 @@ Navegador (React) → Next.js (App Router) → Postgres
 - **Frontend**: React com Next.js App Router
 - **Backend**: API Routes + Server Components do Next.js
 - **Banco de dados**: PostgreSQL 16
-- **Autenticação**: JWT em cookie httpOnly
+- **Autenticação**: usuários na tabela `users` + JWT em cookie httpOnly
 - **Containers**: Docker + docker-compose
 
 ---
@@ -21,7 +21,7 @@ Navegador (React) → Next.js (App Router) → Postgres
 ## Estrutura do projeto
 
 ```
-enneagram-next/
+30Team/
 ├── app/
 │   ├── layout.jsx                  ← Layout raiz
 │   ├── page.jsx                    ← Home + Teste + Resultado (client)
@@ -46,10 +46,13 @@ enneagram-next/
 ├── middleware.js                   ← Protege /dashboard com JWT
 ├── migrations/                     ← Schema do banco (aplicado via scripts/migrate.js)
 ├── scripts/migrate.js              ← Aplica migrations + bootstrap admin
-├── init.sql                        ← (deprecated) mantido por compatibilidade
+├── scripts/seed-data.js            ← Popula dados fake (opcional)
+├── scripts/clear-data.js           ← Limpa dados (dev)
+├── init.sql                        ← Bootstrap do banco no Docker (cria DB/user se necessário)
 ├── Dockerfile                      ← Build multi-stage da aplicação
 ├── docker-compose.yml              ← Produção (app + postgres)
 ├── docker-compose.dev.yml          ← Dev com hot reload
+├── k8s/                            ← Manifests Kubernetes (opcional)
 └── .env.example                    ← Template de variáveis de ambiente
 ```
 
@@ -61,7 +64,7 @@ enneagram-next/
 
 ```bash
 git clone <seu-repositorio>
-cd enneagram-next
+cd 30Team
 
 # Copiar e editar o .env
 cp .env.example .env
@@ -80,6 +83,9 @@ BOOTSTRAP_ADMIN_EMAIL=admin@suaempresa.com
 BOOTSTRAP_ADMIN_PASSWORD=sua_senha_do_dashboard
 
 JWT_SECRET=gere_um_valor_longo_aqui
+
+# URL externa usada para decidir cookie Secure em produção (HTTPS)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 Para gerar um JWT_SECRET seguro:
@@ -94,8 +100,8 @@ docker compose up -d
 ```
 
 O docker-compose irá:
-- Subir o container do **Postgres** e criar o banco automaticamente via `init.sql`
-- Fazer o **build** da aplicação Next.js
+- Subir o container do **Postgres**
+- Fazer o **build** da aplicação Next.js (com `output: 'standalone'`)
 - Subir o container da **app** na porta 3000
 
 Aguarde ~2 minutos no primeiro build. Após isso:
@@ -108,7 +114,7 @@ Aguarde ~2 minutos no primeiro build. Após isso:
 docker compose -f docker-compose.dev.yml up
 ```
 
-As alterações nos arquivos são refletidas automaticamente sem rebuild.
+As alterações nos arquivos são refletidas automaticamente (hot reload).
 
 ---
 
@@ -157,7 +163,7 @@ docker compose -f docker-compose.dev.yml up
 | Credenciais do banco | Só no servidor, nunca no browser |
 | Autenticação | JWT em cookie httpOnly (inacessível ao JavaScript) |
 | Proteção de rotas | Middleware verifica JWT em toda rota /dashboard |
-| Senha do gestor | Comparada com bcrypt (suporta hash ou texto no .env) |
+| Senha do gestor | Verificada contra `users.password_hash` (bcrypt) |
 | Brute force | Delay de 500ms em tentativas inválidas |
 | Leitura de resultados | Só com JWT válido (apenas admin autenticado) |
 | Escrita de resultados | Aberta (qualquer funcionário pode salvar) |
@@ -173,8 +179,12 @@ docker compose -f docker-compose.dev.yml up
 | `POSTGRES_DB` | Nome do banco | `enneagram` |
 | `POSTGRES_USER` | Usuário do banco | `enneagram_user` |
 | `POSTGRES_PASSWORD` | Senha do banco | `senha_forte_aqui` |
-| `ADMIN_PASSWORD` | Senha do dashboard do gestor | `minha_senha` |
+| `BOOTSTRAP_ADMIN_EMAIL` | Email do admin inicial (criado no primeiro `db:migrate`) | `admin@empresa.com` |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Senha do admin inicial (criado no primeiro `db:migrate`) | `minha_senha` |
 | `JWT_SECRET` | Segredo para assinar os tokens JWT | `string_aleatoria_longa` |
+| `NEXT_PUBLIC_APP_URL` | URL externa (define cookie Secure quando HTTPS) | `http://localhost:3000` |
+| `COOKIE_SECURE` | Força cookie Secure (`true`/`false`) | `false` |
+| `RETENTION_DAYS` | Retenção/LGPD (limpeza de dados antigos) | `180` |
 
 ---
 
@@ -220,6 +230,17 @@ server {
 ## Comandos úteis
 
 ```bash
+# Rodar local sem Docker (precisa de Postgres rodando)
+npm install
+cp .env.example .env
+npm run db:migrate
+npm run dev
+
+# Migrations / dados
+npm run db:migrate
+npm run db:seed
+npm run db:clear
+
 # Ver logs da aplicação
 docker compose logs -f app
 

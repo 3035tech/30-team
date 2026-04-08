@@ -956,6 +956,7 @@ function CompareTab({ results }) {
 function CompaniesAdminTab() {
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
   const [name, setName] = useState('');
@@ -986,7 +987,25 @@ function CompaniesAdminTab() {
     }
   };
 
-  useEffect(() => { loadCompanies(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadUsers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar usuários');
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCompanies();
+    loadUsers();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createCompany = async () => {
     if (!name.trim()) return;
@@ -1054,6 +1073,25 @@ function CompaniesAdminTab() {
       if (!res.ok) throw new Error(data?.error || 'Falha ao criar usuário');
       setNewUserEmail(''); setNewUserPassword('');
       setUserMsg('Usuário criado.');
+      await loadUsers();
+      setTimeout(() => setUserMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    setLoading(true);
+    setError('');
+    setUserMsg('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
+      setUserMsg('Usuário excluído.');
+      await loadUsers();
       setTimeout(() => setUserMsg(''), 1600);
     } catch (e) {
       setError(e?.message || 'Erro');
@@ -1238,7 +1276,70 @@ function CompaniesAdminTab() {
           >
             Criar usuário
           </button>
+          <button
+            type="button"
+            onClick={loadUsers}
+            disabled={loading}
+            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+          >
+            Atualizar
+          </button>
         </div>
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Usuários cadastrados</span>
+        {users.length === 0 ? (
+          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
+            Nenhum usuário ainda.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+            {users.map((u) => {
+              const companyLabel = u.role === 'admin' ? '—' : (u.companyName || `#${u.companyId || '—'}`);
+              const createdAt = u.createdAt ? new Date(u.createdAt) : null;
+              return (
+                <div key={u.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: C.text, fontSize: '13px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'monospace', color: C.faint }}>#{u.id}</span>
+                        <strong style={{ fontWeight: 'normal' }}>{u.email}</strong>
+                        <span style={{ padding: '2px 8px', fontSize: '10px', borderRadius: '20px',
+                          background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                          color: C.muted, fontFamily: 'monospace' }}>
+                          {u.role}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                        Empresa: {companyLabel}
+                      </div>
+                      {createdAt ? (
+                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                          criado em {createdAt.toLocaleString()}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => deleteUser(u.id)}
+                        disabled={loading}
+                        style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

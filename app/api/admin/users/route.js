@@ -7,6 +7,29 @@ function requireAdmin(payload) {
   return payload?.role === 'admin';
 }
 
+export async function GET() {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = token ? verifyToken(token) : null;
+  if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const r = await query(
+    `SELECT
+       u.id,
+       u.email,
+       u.role,
+       u.active,
+       u.company_id AS "companyId",
+       c.name AS "companyName",
+       u.last_login_at AS "lastLoginAt",
+       u.created_at AS "createdAt"
+     FROM users u
+     LEFT JOIN companies c ON c.id = u.company_id
+     ORDER BY u.created_at DESC`
+  );
+  return NextResponse.json(r.rows);
+}
+
 export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
