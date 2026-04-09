@@ -44,13 +44,14 @@ const Bar = ({ value, max, color, h=6 }) => (
 );
 
 // ── HOME ──────────────────────────────────────────────────────────────────────
-function HomeScreen({ onStart }) {
+function HomeScreen({ onStart, notice = null, startDisabled = false }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [areaKey, setAreaKey] = useState('tecnologia');
   const [consent, setConsent] = useState(false);
   const router = useRouter();
   const ready = name.trim().length > 1 && !!areaKey && consent;
+  const canStart = ready && !startDisabled;
   return (
     <div style={S.app}>
       <div style={S.glow}/>
@@ -59,6 +60,22 @@ function HomeScreen({ onStart }) {
         <h1 style={S.h1}>Mapa de<br/>Perfil</h1>
         <p style={S.p}>Um retrato rápido do seu estilo de trabalho.<br/>
           Descubra padrões de motivação, tomada de decisão e colaboração.</p>
+        {notice ? (
+          <div style={{
+            marginBottom: '18px',
+            padding: '12px 14px',
+            background: notice.kind === 'warning' ? 'rgba(232,71,71,.06)' : 'rgba(26,22,37,.04)',
+            border: notice.kind === 'warning' ? '1px solid rgba(232,71,71,.22)' : `1px solid ${C.border}`,
+            borderRadius: '12px',
+          }}>
+            <div style={{ fontSize: '11px', color: notice.kind === 'warning' ? '#dc2626' : C.faint, fontFamily: 'monospace', marginBottom: '6px' }}>
+              {notice.title}
+            </div>
+            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
+              {notice.message}
+            </div>
+          </div>
+        ) : null}
         <div style={{ display:'flex', gap:'28px', marginBottom:'36px', flexWrap:'wrap' }}>
           {[['54','questões'],['~12','minutos'],['9','tipos'],['300','banco de perguntas']].map(([n,l])=>(
             <div key={l}>
@@ -106,8 +123,17 @@ function HomeScreen({ onStart }) {
           Autorizo o uso dessas informações para fins de recrutamento e comparação interna (LGPD).
         </label>
 
-        <button style={{...S.btn(), opacity:ready?1:.4}}
-          onClick={()=>ready&&onStart({ name:name.trim(), email:email.trim(), areaKey, consent })}>Começar →</button>
+        <button
+          disabled={!canStart}
+          style={{
+            ...S.btn(),
+            opacity: canStart ? 1 : 0.4,
+            cursor: canStart ? 'pointer' : 'not-allowed',
+          }}
+          onClick={() => canStart && onStart({ name: name.trim(), email: email.trim(), areaKey, consent })}
+        >
+          Começar →
+        </button>
         <div style={{ marginTop:'24px', paddingTop:'20px', borderTop:`1px solid ${C.border}` }}>
           <span style={{ fontSize:'11px', color:C.faint }}>Gestor? </span>
           <span style={{ fontSize:'11px', color:C.purpleLight, cursor:'pointer', textDecoration:'underline' }}
@@ -264,7 +290,7 @@ function ResultScreen({ result, onRestart }) {
 }
 
 // ── PAGE (orchestrator) ───────────────────────────────────────────────────────
-export default function Home({ companyToken = '' }) {
+export default function Home({ companyToken = '', vacancyToken = '', notice = null, startDisabled = false }) {
   const [screen, setScreen] = useState('home'); // home | test | result
   const [candidate, setCandidate] = useState(null); // { name, email, areaKey, consent }
   const [result, setResult] = useState(null);
@@ -277,7 +303,7 @@ export default function Home({ companyToken = '' }) {
       await fetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, ...candidate, companyToken }),
+        body: JSON.stringify({ ...data, ...candidate, companyToken, vacancyToken }),
       });
     } catch (e) {
       console.error('Erro ao salvar resultado:', e);
@@ -288,5 +314,5 @@ export default function Home({ companyToken = '' }) {
 
   if (screen === 'test')   return <TestScreen name={candidate?.name || ''} onComplete={handleComplete}/>;
   if (screen === 'result') return <ResultScreen result={result} onRestart={()=>setScreen('home')}/>;
-  return <HomeScreen onStart={handleStart}/>;
+  return <HomeScreen onStart={handleStart} notice={notice} startDisabled={startDisabled} />;
 }

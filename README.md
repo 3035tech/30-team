@@ -35,7 +35,8 @@ Navegador (React) → Next.js (App Router) → Postgres
 │       ├── admin/
 │       │   ├── companies/route.js  ← GET/POST empresas (admin)
 │       │   ├── companies/[id]/link ← POST rotaciona token (admin)
-│       │   └── users/route.js      ← POST cria usuário (admin)
+│       │   ├── users/route.js      ← GET/POST lista/cria usuários (admin)
+│       │   └── users/[userId]      ← DELETE exclui usuário (admin)
 │       └── auth/
 │           ├── login/route.js      ← POST /api/auth/login
 │           └── logout/route.js     ← POST /api/auth/logout

@@ -12,24 +12,47 @@ function normalizeEmail(email) {
 // POST /api/results — salva resultado de um candidato (com área)
 export async function POST(request) {
   try {
-    const { name, email, areaKey, consent, topType, scores, companyToken } = await request.json();
+    const { name, email, areaKey, consent, topType, scores, companyToken, vacancyToken } = await request.json();
 
-    if (!companyToken || !name || !areaKey || !topType || !scores || consent !== true) {
+    if ((!companyToken && !vacancyToken) || !name || !areaKey || !topType || !scores || consent !== true) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
-    const token = String(companyToken || '').trim();
-    const link = await query(
-      `SELECT company_id AS "companyId"
-       FROM company_links
-       WHERE token = $1 AND active = TRUE AND expires_at > NOW()
-       LIMIT 1`,
-      [token]
-    );
-    if (link.rowCount === 0) {
-      return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
+    let companyId = null;
+    let resolvedVacancyId = null;
+
+    if (vacancyToken) {
+      const token = String(vacancyToken || '').trim();
+      const link = await query(
+        `SELECT v.id AS "vacancyId", v.company_id AS "companyId", v.status
+         FROM vacancy_links l
+         JOIN vacancies v ON v.id = l.vacancy_id
+         WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
+         LIMIT 1`,
+        [token]
+      );
+      if (link.rowCount === 0) {
+        return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
+      }
+      if (String(link.rows[0].status || '') === 'closed') {
+        return NextResponse.json({ error: 'Essa vaga não está mais aberta' }, { status: 403 });
+      }
+      companyId = link.rows[0].companyId;
+      resolvedVacancyId = link.rows[0].vacancyId;
+    } else {
+      const token = String(companyToken || '').trim();
+      const link = await query(
+        `SELECT company_id AS "companyId"
+         FROM company_links
+         WHERE token = $1 AND active = TRUE AND expires_at > NOW()
+         LIMIT 1`,
+        [token]
+      );
+      if (link.rowCount === 0) {
+        return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
+      }
+      companyId = link.rows[0].companyId;
     }
-    const companyId = link.rows[0].companyId;
 
     const safeName = name.trim();
     const safeEmail = normalizeEmail(email);
@@ -72,12 +95,19 @@ export async function POST(request) {
       }
     }
 
-    const assessment = await query(
-      `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, created_at AS "createdAt"`,
-      [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
-    );
+    const assessment = resolvedVacancyId
+      ? await query(
+          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id, created_at AS "createdAt"`,
+          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId]
+        )
+      : await query(
+          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id, created_at AS "createdAt"`,
+          [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
+        );
 
     const rub = await query(
       `SELECT r.desired_type_weights AS weights
@@ -99,7 +129,7 @@ export async function POST(request) {
     );
 
     return NextResponse.json(
-      { ok: true, candidateId, assessmentId: assessment.rows[0].id, createdAt: assessment.rows[0].createdAt, areaFitScore010: fit.score010, areaFitLabel: fit.label },
+      { ok: true, candidateId, assessmentId: assessment.rows[0].id, createdAt: assessment.rows[0].createdAt, areaFitScore010: fit.score010, areaFitLabel: fit.label, vacancyId: resolvedVacancyId },
       { status: 201 }
     );
   } catch (error) {

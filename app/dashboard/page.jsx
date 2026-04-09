@@ -73,11 +73,13 @@ export default async function DashboardPage({ searchParams }) {
   if (!isAdmin && !companyId) redirect('/login');
 
   const selectedArea = (searchParams?.area || 'all').toString();
+  const selectedVacancy = (searchParams?.vacancy || 'all').toString();
 
   // Busca candidatos/resultados DIRETAMENTE no banco — sem API, sem fetch
   let results = [];
   let areas = [];
   let counts = [];
+  let vacancies = [];
   let areaStats = null;
   let areaRubric = null;
   let rubricByAreaKey = {};
@@ -85,6 +87,17 @@ export default async function DashboardPage({ searchParams }) {
   try {
     const a = await query(`SELECT key, label FROM areas ORDER BY label ASC`);
     areas = a.rows;
+
+    const vWhere = isAdmin ? '' : 'WHERE company_id = $1';
+    const vParams = isAdmin ? [] : [companyId];
+    const v = await query(
+      `SELECT id, title, status, created_at AS "createdAt"
+       FROM vacancies
+       ${vWhere}
+       ORDER BY created_at DESC`,
+      vParams
+    );
+    vacancies = v.rows;
 
     const cWhere = isAdmin ? '' : 'WHERE ass.company_id = $1';
     const cParams = isAdmin ? [] : [companyId];
@@ -108,6 +121,10 @@ export default async function DashboardPage({ searchParams }) {
     if (selectedArea !== 'all') {
       params.push(selectedArea);
       whereParts.push(`ar.key = $${params.length}`);
+    }
+    if (selectedVacancy !== 'all') {
+      params.push(selectedVacancy);
+      whereParts.push(`ass.vacancy_id = $${params.length}`);
     }
     const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
 
@@ -226,12 +243,15 @@ export default async function DashboardPage({ searchParams }) {
          c.full_name AS name,
          ar.key AS "areaKey",
          ar.label AS "areaLabel",
+         ass.vacancy_id AS "vacancyId",
+         v.title AS "vacancyTitle",
          ass.top_type AS "topType",
          ass.scores,
          ass.created_at AS "createdAt"
        FROM assessments ass
        JOIN candidates c ON c.id = ass.candidate_id
        JOIN areas ar ON ar.id = ass.area_id
+       LEFT JOIN vacancies v ON v.id = ass.vacancy_id
        ${where}
        ORDER BY ass.created_at DESC`,
       params
@@ -251,7 +271,9 @@ export default async function DashboardPage({ searchParams }) {
       results={results}
       areas={areas}
       counts={counts}
+      vacancies={vacancies}
       selectedArea={selectedArea}
+      selectedVacancy={selectedVacancy}
       areaStats={areaStats}
       areaRubric={areaRubric}
       analytics={analytics}

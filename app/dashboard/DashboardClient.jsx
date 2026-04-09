@@ -45,10 +45,11 @@ const CompatBadge = ({ level }) => {
     background:`${m.color}18`, border:`1px solid ${m.color}44`, color:m.color, fontFamily:'monospace' }}>{m.label}</span>;
 };
 
-export default function DashboardClient({ results, areas = [], counts = [], selectedArea = 'all', analytics = null, auth = null }) {
+export default function DashboardClient({ results, areas = [], counts = [], vacancies = [], selectedArea = 'all', selectedVacancy = 'all', analytics = null, auth = null }) {
   const [tab, setTab] = useState('overview');
   const router = useRouter();
   const [area, setArea] = useState(selectedArea);
+  const [vacancy, setVacancy] = useState(selectedVacancy);
   const [typeFilter, setTypeFilter] = useState('all');
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
@@ -63,6 +64,17 @@ export default function DashboardClient({ results, areas = [], counts = [], sele
     typeFilter === 'all' ? results : results.filter(r => String(r.topType) === String(typeFilter));
 
   const isAdmin = (auth?.role || '') === 'admin';
+  const canManage = ['admin','hr','direction'].includes(auth?.role || '');
+
+  const pushFilters = (next) => {
+    const nextArea = next?.area ?? area;
+    const nextVacancy = next?.vacancy ?? vacancy;
+    const sp = new URLSearchParams();
+    if (nextArea && nextArea !== 'all') sp.set('area', nextArea);
+    if (nextVacancy && nextVacancy !== 'all') sp.set('vacancy', nextVacancy);
+    const qs = sp.toString();
+    router.push(qs ? `/dashboard?${qs}` : '/dashboard');
+  };
 
   // Pre-compute pairs
   const pairs = [];
@@ -136,7 +148,7 @@ export default function DashboardClient({ results, areas = [], counts = [], sele
             </span>
           </div>
           <div style={{ display:'flex', gap:'10px', alignItems:'center', flexWrap:'wrap' }}>
-            <select value={area} onChange={(e)=>{ const v=e.target.value; setArea(v); router.push(`/dashboard?area=${encodeURIComponent(v)}`); }}
+            <select value={area} onChange={(e)=>{ const v=e.target.value; setArea(v); pushFilters({ area: v }); }}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
                 fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
@@ -144,6 +156,17 @@ export default function DashboardClient({ results, areas = [], counts = [], sele
               {areas.map(a=>(
                 <option key={a.key} value={a.key}>
                   {a.label} ({counts.find(c=>c.key===a.key)?.count ?? 0})
+                </option>
+              ))}
+            </select>
+            <select value={vacancy} onChange={(e)=>{ const v=e.target.value; setVacancy(v); pushFilters({ vacancy: v }); }}
+              style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 14px', color:C.muted,
+                fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
+              <option value="all">Todas as vagas</option>
+              {vacancies.map(v=>(
+                <option key={v.id} value={String(v.id)}>
+                  {v.title} {v.status === 'closed' ? '(fechada)' : ''}
                 </option>
               ))}
             </select>
@@ -184,10 +207,11 @@ export default function DashboardClient({ results, areas = [], counts = [], sele
             <Tab id="compare"       label="Comparativo"/>
             <Tab id="group"         label="Grupos"/>
             <Tab id="leadership"    label="Liderança"/>
+            {canManage && <Tab id="vacancies"   label="Vagas"/>}
             {isAdmin && <Tab id="companies"    label="Empresas"/>}
           </div>
 
-          {results.length === 0 && tab !== 'companies' ? (
+          {results.length === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
             <div style={{...S.card, textAlign:'center', padding:'60px'}}>
               <div style={{ fontSize:'40px', marginBottom:'16px' }}>🌑</div>
               <p style={{ color:C.muted, fontStyle:'italic' }}>
@@ -201,6 +225,7 @@ export default function DashboardClient({ results, areas = [], counts = [], sele
               {tab==='team'          && <TeamTab results={filteredResults}/>}
               {tab==='compatibility' && <CompatTab tensions={tensions} synergies={synergies} pairs={pairs}/>}
               {tab==='compare'       && <CompareTab results={filteredResults}/>}
+              {tab==='vacancies'     && canManage && <VacanciesAdminTab isAdmin={isAdmin}/>}
               {tab==='companies'     && isAdmin && <CompaniesAdminTab/>}
               {tab==='group'         && (
                 <GroupTab
@@ -1332,6 +1357,303 @@ function CompaniesAdminTab() {
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
                         Excluir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VacanciesAdminTab({ isAdmin }) {
+  const [loading, setLoading] = useState(false);
+  const [vacancies, setVacancies] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [error, setError] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [status, setStatus] = useState('open');
+  const [companyId, setCompanyId] = useState('');
+
+  const appUrl =
+    (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+
+  const loadVacancies = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/vacancies');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar vagas');
+      setVacancies(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCompanies = async () => {
+    if (!isAdmin) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/companies');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
+      setCompanies(Array.isArray(data) ? data : []);
+      if (!companyId && Array.isArray(data) && data.length) setCompanyId(String(data[0].id));
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVacancies();
+    loadCompanies();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const copy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setMsg('Copiado.');
+      setTimeout(() => setMsg(''), 1200);
+    } catch {
+      setMsg('Não foi possível copiar automaticamente.');
+      setTimeout(() => setMsg(''), 1600);
+    }
+  };
+
+  const createVacancy = async () => {
+    if (!title.trim()) return;
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const body = { title: title.trim(), status, slug: slug.trim() || undefined };
+      if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
+      const res = await fetch('/api/admin/vacancies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao criar vaga');
+      setTitle(''); setSlug(''); setStatus('open');
+      setMsg('Vaga criada.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rotateLink = async (vacancyId) => {
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/link`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
+      setMsg('Link rotacionado.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setVacancyStatus = async (vacancyId, nextStatus) => {
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
+      setMsg('Vaga atualizada.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ ...S.card, padding: '22px 28px' }}>
+        <span style={S.label}>Vagas</span>
+        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+          Cadastre vagas e gere o link público de avaliação por vaga.
+        </p>
+        {error ? (
+          <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
+            {error}
+          </p>
+        ) : null}
+        {msg ? (
+          <p style={{ marginTop: '10px', marginBottom: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>
+            {msg}
+          </p>
+        ) : null}
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Criar vaga</span>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+          {isAdmin && (
+            <select
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              style={{ flex: '1 1 240px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              {companies.length === 0 ? (
+                <option value="">(carregando empresas…)</option>
+              ) : companies.map((c) => (
+                <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
+              ))}
+            </select>
+          )}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título (ex.: Pessoa Dev Fullstack)"
+            style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <input
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="Slug opcional (ex.: dev-fullstack)"
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace' }}
+          >
+            <option value="open">open</option>
+            <option value="closed">closed</option>
+          </select>
+          <button
+            type="button"
+            onClick={createVacancy}
+            disabled={loading || !title.trim() || (isAdmin && !companyId)}
+            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1 }}
+          >
+            Criar
+          </button>
+          <button
+            type="button"
+            onClick={loadVacancies}
+            disabled={loading}
+            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+          >
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Vagas cadastradas</span>
+        {vacancies.length === 0 ? (
+          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
+            Nenhuma vaga ainda.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+            {vacancies.map((v) => {
+              const token = v.activeToken || '';
+              const link = token ? `${appUrl}/v/${token}` : '';
+              const exp = v.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
+              return (
+                <div key={v.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: C.text, fontSize: '13px' }}>
+                        <span style={{ fontFamily: 'monospace', color: C.faint, marginRight: '8px' }}>#{v.id}</span>
+                        <strong style={{ fontWeight: 'normal' }}>{v.title}</strong>
+                        <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>({v.status})</span>
+                        {isAdmin && (
+                          <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>
+                            · {v.companyName}
+                          </span>
+                        )}
+                      </div>
+                      {token ? (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {link}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                          (sem link ativo)
+                        </div>
+                      )}
+                      {token && exp ? (
+                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                          expira em {exp.toLocaleString()}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        {v.status === 'open' ? 'Fechar' : 'Reabrir'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => rotateLink(v.id)}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Rotacionar link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => token && copy(link)}
+                        disabled={loading || !token}
+                        style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                      >
+                        Copiar link
                       </button>
                     </div>
                   </div>
