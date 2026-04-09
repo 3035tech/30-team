@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { getPgBaseConfig } from '../lib/pg-config.js';
 
 const require = createRequire(import.meta.url);
 // Use CJS entry for compatibility with Next standalone output.
@@ -15,13 +16,7 @@ const __dirname = path.dirname(__filename);
 const migrationsDir = path.resolve(__dirname, '..', 'migrations');
 
 function getClient() {
-  return new Client({
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    database: process.env.POSTGRES_DB || 'enneagram',
-    user: process.env.POSTGRES_USER || 'enneagram_user',
-    password: process.env.POSTGRES_PASSWORD,
-  });
+  return new Client(getPgBaseConfig());
 }
 
 function listMigrations() {

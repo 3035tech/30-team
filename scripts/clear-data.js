@@ -1,17 +1,12 @@
 import process from 'node:process';
 import { createRequire } from 'node:module';
+import { getPgBaseConfig } from '../lib/pg-config.js';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
 
 function getClient() {
-  return new Client({
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    database: process.env.POSTGRES_DB || 'enneagram',
-    user: process.env.POSTGRES_USER || 'enneagram_user',
-    password: process.env.POSTGRES_PASSWORD,
-  });
+  return new Client(getPgBaseConfig());
 }
 
 async function main() {
