@@ -1,4 +1,3 @@
--- Deprecated.
--- O schema agora é aplicado via `scripts/migrate.js` + `migrations/*.sql`.
--- Mantemos este arquivo apenas para compatibilidade com docker-compose,
--- mas ele não precisa criar nada.
+-- Intencionalmente vazio.
+-- A estrutura do banco deve ser aplicada diretamente via SQL
+-- (ex.: `scripts/rds-bootstrap-completo.sql`) no seu Postgres alvo.

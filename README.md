@@ -46,8 +46,7 @@ Navegador (React) → Next.js (App Router) → Postgres
 │   ├── auth.js                     ← JWT + bcrypt helpers
 │   └── data.js                     ← 300 questões, tipos, matriz de compatibilidade
 ├── middleware.js                   ← Protege /dashboard com JWT
-├── migrations/                     ← Schema do banco (aplicado via scripts/migrate.js)
-├── scripts/migrate.js              ← Aplica migrations + bootstrap admin
+├── scripts/rds-bootstrap-completo.sql ← Migração completa (rodar direto no DB)
 ├── scripts/seed-data.js            ← Popula dados fake (opcional)
 ├── scripts/clear-data.js           ← Limpa dados (dev)
 ├── init.sql                        ← Bootstrap do banco no Docker (cria DB/user se necessário)
@@ -237,8 +236,10 @@ cp .env.example .env
 npm run db:migrate
 npm run dev
 
-# Migrations / dados
-npm run db:migrate
+# Banco (rodar direto no Postgres)
+# psql "postgresql://USER:PASS@HOST:5432/SEU_DATABASE" -f scripts/rds-bootstrap-completo.sql
+
+# Dados (opcional)
 npm run db:seed
 npm run db:clear
 
