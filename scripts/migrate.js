@@ -19,6 +19,17 @@ function getClient() {
   return new Client(getPgBaseConfig());
 }
 
+function quoteIdent(ident) {
+  return `"${String(ident).replace(/"/g, '""')}"`;
+}
+
+async function ensureSearchPath(client) {
+  const schema = String(process.env.POSTGRES_SCHEMA || '').trim();
+  if (!schema) return;
+  // Mantém public como fallback para extensões/objetos existentes.
+  await client.query(`SET search_path TO ${quoteIdent(schema)}, public;`);
+}
+
 function listMigrations() {
   if (!fs.existsSync(migrationsDir)) return [];
   return fs
@@ -87,6 +98,7 @@ async function main() {
   const client = getClient();
   await client.connect();
   try {
+    await ensureSearchPath(client);
     await ensureMigrationsTable(client);
     const applied = await alreadyApplied(client);
     for (const m of migrations) {
