@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: enneagram
-  labels:
-    app: enneagram
-    team: 3035tech

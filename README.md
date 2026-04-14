@@ -15,6 +15,7 @@ Navegador (React) → Next.js (App Router) → Postgres
 - **Banco de dados**: PostgreSQL 16
 - **Autenticação**: usuários na tabela `users` + JWT em cookie httpOnly
 - **Containers**: Docker + docker-compose
+- **Configuração**: a app lê variáveis via `process.env` (K8s/Compose/Vercel/etc.)
 
 ---
 
@@ -53,7 +54,6 @@ Navegador (React) → Next.js (App Router) → Postgres
 ├── Dockerfile                      ← Build multi-stage da aplicação
 ├── docker-compose.yml              ← Produção (app + postgres)
 ├── docker-compose.dev.yml          ← Dev com hot reload
-├── k8s/                            ← Manifests Kubernetes (opcional)
 └── .env.example                    ← Template de variáveis de ambiente
 ```
 
