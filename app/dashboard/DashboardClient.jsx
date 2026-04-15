@@ -29,7 +29,9 @@ const Bar = ({ value, max, color, h=6 }) => (
 const TypeBadge = ({ type }) => {
   const d = TYPE_DATA[type];
   return (
-    <span style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+    <span
+      title={d?.name ? `${d.name} (T${type})` : `T${type}`}
+      style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
       display:'inline-flex', alignItems:'center', gap:'4px',
       background:`${d.color}18`, border:`1px solid ${d.color}44`,
       color:d.color, fontFamily:'monospace' }}>
@@ -328,8 +330,24 @@ function LeadershipTab({ analytics }) {
                 const c = gCounts[t] || 0;
                 return (
                   <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ width: '120px', fontSize: '12px', color: d.color, flexShrink: 0, fontFamily: 'monospace' }}>
-                      {d.emoji} {d.short}
+                    <span
+                      title={d?.name ? `${d.name} (T${t})` : `T${t}`}
+                      style={{
+                        width: '160px',
+                        fontSize: '12px',
+                        color: d.color,
+                        flexShrink: 0,
+                        fontFamily: 'monospace',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span style={{ width: '22px', textAlign: 'center', flexShrink: 0 }}>{d.emoji}</span>
+                      <span style={{ minWidth: 0 }}>{d.short}</span>
                     </span>
                     <div style={{ flex: 1 }}>
                       <Bar value={c} max={maxG} color={d.color} h={8} />
@@ -432,8 +450,24 @@ function OverviewTab({ typeCount, maxCount, results, tensions, synergies }) {
             const d=TYPE_DATA[parseInt(t)];
             return (
               <div key={t} style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-                <span style={{ width:'120px', fontSize:'12px', color:d.color, flexShrink:0, fontFamily:'monospace' }}>
-                  {d.emoji} {d.short}
+                <span
+                  title={d?.name ? `${d.name} (T${t})` : `T${t}`}
+                  style={{
+                    width:'160px',
+                    fontSize:'12px',
+                    color:d.color,
+                    flexShrink:0,
+                    fontFamily:'monospace',
+                    whiteSpace:'nowrap',
+                    overflow:'hidden',
+                    textOverflow:'ellipsis',
+                    display:'inline-flex',
+                    alignItems:'center',
+                    gap:'8px',
+                  }}
+                >
+                  <span style={{ width:'22px', textAlign:'center', flexShrink:0 }}>{d.emoji}</span>
+                  <span style={{ minWidth:0 }}>{d.short}</span>
                 </span>
                 <div style={{ flex:1 }}><Bar value={c} max={maxCount} color={d.color} h={10}/></div>
                 <span style={{ fontSize:'13px', color:C.muted, fontFamily:'monospace', width:'20px', textAlign:'right' }}>{c}</span>
@@ -477,6 +511,27 @@ function OverviewTab({ typeCount, maxCount, results, tensions, synergies }) {
 
 function TeamTab({ results }) {
   const [open, setOpen] = useState(null);
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteCandidate = async (candidateId, name) => {
+    const id = String(candidateId || '').trim();
+    if (!id) return;
+    const ok = window.confirm(`Excluir "${name}" e todas as respostas/avaliações associadas? Essa ação não pode ser desfeita.`);
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir');
+      router.refresh();
+    } catch (e) {
+      window.alert(e?.message || 'Erro ao excluir');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
       {results.map((r,i)=>{
@@ -518,7 +573,31 @@ function TeamTab({ results }) {
                   )}
                 </div>
               </div>
-              <span style={{ fontSize:'11px', color:C.muted, fontFamily:'monospace' }}>{isOpen?'▲':'▼'}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                {r.candidateId ? (
+                  <button
+                    type="button"
+                    onClick={(e)=>{ e.stopPropagation(); deleteCandidate(r.candidateId, r.name); }}
+                    disabled={deleting}
+                    title="Excluir pessoa e respostas"
+                    aria-label="Excluir pessoa e respostas"
+                    style={{
+                      background:'rgba(232,71,71,.08)',
+                      border:'1px solid rgba(232,71,71,.35)',
+                      borderRadius:'10px',
+                      padding:'8px 10px',
+                      color:C.tension,
+                      fontSize:'11px',
+                      cursor:'pointer',
+                      fontFamily:'monospace',
+                      opacity: deleting ? 0.6 : 1,
+                    }}
+                  >
+                    Excluir
+                  </button>
+                ) : null}
+                <span style={{ fontSize:'11px', color:C.muted, fontFamily:'monospace' }}>{isOpen?'▲':'▼'}</span>
+              </div>
             </div>
             {isOpen&&(
               <div style={{ borderTop:`1px solid ${C.border}`, padding:'20px 24px' }}>
@@ -546,7 +625,10 @@ function TeamTab({ results }) {
                 <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
                   {sorted.map(([t,s])=>(
                     <div key={t} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                      <span style={{ width:'60px', fontSize:'10px', color:TYPE_DATA[parseInt(t)].color, fontFamily:'monospace' }}>
+                      <span
+                        title={TYPE_DATA?.[parseInt(t)]?.name ? `${TYPE_DATA[parseInt(t)].name} (T${t})` : `T${t}`}
+                        style={{ width:'60px', fontSize:'10px', color:TYPE_DATA[parseInt(t)].color, fontFamily:'monospace' }}
+                      >
                         {TYPE_DATA[parseInt(t)].emoji} T{t}
                       </span>
                       <div style={{ flex:1 }}><Bar value={parseInt(s)} max={maxS} color={TYPE_DATA[parseInt(t)].color} h={5}/></div>

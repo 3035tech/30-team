@@ -63,8 +63,17 @@ export async function DELETE(_request, { params }) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
     if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
+  const cand = await query(`SELECT full_name AS "fullName" FROM candidates WHERE id = $1 LIMIT 1`, [id]);
+  if (cand.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  const fullName = cand.rows?.[0]?.fullName || null;
+
   const del = await query(`DELETE FROM candidates WHERE id = $1 RETURNING id`, [id]);
   if (del.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+
+  // Best-effort cleanup: legacy table used by /api/results
+  if (fullName) {
+    await query(`DELETE FROM results WHERE LOWER(name) = LOWER($1)`, [fullName]);
+  }
 
   await audit({
     actorUserId: payload.userId || null,

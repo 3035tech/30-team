@@ -240,6 +240,7 @@ export default async function DashboardPage({ searchParams }) {
     const result = await query(
       `SELECT
          ass.id AS "assessmentId",
+         c.id AS "candidateId",
          c.full_name AS name,
          ar.key AS "areaKey",
          ar.label AS "areaLabel",
