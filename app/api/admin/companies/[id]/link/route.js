@@ -17,7 +17,7 @@ export async function POST(_request, { params }) {
   const companyId = params?.id;
   if (!companyId) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
 
-  const exists = await query(`SELECT id FROM companies WHERE id = $1 LIMIT 1`, [companyId]);
+  const exists = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
   if (exists.rowCount === 0) return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 });
 
   await query(

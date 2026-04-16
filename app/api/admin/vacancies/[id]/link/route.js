@@ -23,10 +23,22 @@ export async function POST(_request, { params }) {
   if (!vacancyId) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
 
   if (!isAdmin) {
-    const owned = await query(`SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 LIMIT 1`, [vacancyId, companyId]);
+    const owned = await query(
+      `SELECT v.id FROM vacancies v
+       JOIN companies c ON c.id = v.company_id
+       WHERE v.id = $1 AND v.company_id = $2 AND v.deleted = FALSE AND c.deleted = FALSE
+       LIMIT 1`,
+      [vacancyId, companyId]
+    );
     if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   } else {
-    const exists = await query(`SELECT id FROM vacancies WHERE id = $1 LIMIT 1`, [vacancyId]);
+    const exists = await query(
+      `SELECT v.id FROM vacancies v
+       JOIN companies c ON c.id = v.company_id
+       WHERE v.id = $1 AND v.deleted = FALSE AND c.deleted = FALSE
+       LIMIT 1`,
+      [vacancyId]
+    );
     if (exists.rowCount === 0) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
   }
 

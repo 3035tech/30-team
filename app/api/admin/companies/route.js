@@ -41,6 +41,7 @@ export async function GET() {
   const r = await query(
     `SELECT id, name, slug, active, created_at AS "createdAt"
      FROM companies
+     WHERE deleted = FALSE
      ORDER BY created_at DESC`
   );
 

@@ -27,7 +27,9 @@ export async function POST(request) {
         `SELECT v.id AS "vacancyId", v.company_id AS "companyId", v.status
          FROM vacancy_links l
          JOIN vacancies v ON v.id = l.vacancy_id
+         JOIN companies c ON c.id = v.company_id
          WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
+           AND v.deleted = FALSE AND c.deleted = FALSE
          LIMIT 1`,
         [token]
       );
@@ -42,9 +44,11 @@ export async function POST(request) {
     } else {
       const token = String(companyToken || '').trim();
       const link = await query(
-        `SELECT company_id AS "companyId"
-         FROM company_links
-         WHERE token = $1 AND active = TRUE AND expires_at > NOW()
+        `SELECT l.company_id AS "companyId"
+         FROM company_links l
+         JOIN companies c ON c.id = l.company_id
+         WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
+           AND c.deleted = FALSE
          LIMIT 1`,
         [token]
       );

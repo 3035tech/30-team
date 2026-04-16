@@ -22,12 +22,22 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const area = (searchParams.get('area') || 'all').toString();
+  const rawExportCompany = (searchParams.get('company') || 'all').toString();
 
   const whereParts = [];
   const params = [];
   if (!isAdmin) {
     params.push(companyId);
     whereParts.push(`ass.company_id = $${params.length}`);
+  } else if (rawExportCompany !== 'all') {
+    const cid = parseInt(rawExportCompany, 10);
+    if (Number.isFinite(cid)) {
+      const ok = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
+      if (ok.rowCount > 0) {
+        params.push(cid);
+        whereParts.push(`ass.company_id = $${params.length}`);
+      }
+    }
   }
   if (area !== 'all') {
     params.push(area);

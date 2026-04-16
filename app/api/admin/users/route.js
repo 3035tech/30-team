@@ -25,6 +25,7 @@ export async function GET() {
        u.created_at AS "createdAt"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id
+     WHERE u.deleted = FALSE
      ORDER BY u.created_at DESC`
   );
   return NextResponse.json(r.rows);
@@ -47,7 +48,7 @@ export async function POST(request) {
   if (role !== 'admin' && !companyId) return NextResponse.json({ error: 'Empresa obrigatória' }, { status: 400 });
 
   if (companyId) {
-    const c = await query(`SELECT id FROM companies WHERE id = $1 LIMIT 1`, [companyId]);
+    const c = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
     if (c.rowCount === 0) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
   }
 

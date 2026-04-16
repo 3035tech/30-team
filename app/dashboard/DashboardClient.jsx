@@ -47,11 +47,23 @@ const CompatBadge = ({ level }) => {
     background:`${m.color}18`, border:`1px solid ${m.color}44`, color:m.color, fontFamily:'monospace' }}>{m.label}</span>;
 };
 
-export default function DashboardClient({ results, areas = [], counts = [], vacancies = [], selectedArea = 'all', selectedVacancy = 'all', analytics = null, auth = null }) {
+export default function DashboardClient({
+  results,
+  areas = [],
+  companies = [],
+  counts = [],
+  vacancies = [],
+  selectedArea = 'all',
+  selectedVacancy = 'all',
+  selectedCompany = 'all',
+  analytics = null,
+  auth = null,
+}) {
   const [tab, setTab] = useState('overview');
   const router = useRouter();
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
+  const [company, setCompany] = useState(selectedCompany);
   const [typeFilter, setTypeFilter] = useState('all');
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
@@ -68,10 +80,22 @@ export default function DashboardClient({ results, areas = [], counts = [], vaca
   const isAdmin = (auth?.role || '') === 'admin';
   const canManage = ['admin','hr','direction'].includes(auth?.role || '');
 
+  useEffect(() => {
+    setArea(selectedArea);
+  }, [selectedArea]);
+  useEffect(() => {
+    setVacancy(selectedVacancy);
+  }, [selectedVacancy]);
+  useEffect(() => {
+    setCompany(selectedCompany);
+  }, [selectedCompany]);
+
   const pushFilters = (next) => {
     const nextArea = next?.area ?? area;
     const nextVacancy = next?.vacancy ?? vacancy;
+    const nextCompany = next?.company ?? company;
     const sp = new URLSearchParams();
+    if (isAdmin && nextCompany && nextCompany !== 'all') sp.set('company', nextCompany);
     if (nextArea && nextArea !== 'all') sp.set('area', nextArea);
     if (nextVacancy && nextVacancy !== 'all') sp.set('vacancy', nextVacancy);
     const qs = sp.toString();
@@ -150,6 +174,26 @@ export default function DashboardClient({ results, areas = [], counts = [], vaca
             </span>
           </div>
           <div style={{ display:'flex', gap:'10px', alignItems:'center', flexWrap:'wrap' }}>
+            {isAdmin && companies.length > 0 ? (
+              <select
+                value={company}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCompany(v);
+                  pushFilters({ company: v });
+                }}
+                style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
+                  borderRadius:'10px', padding:'10px 14px', color:C.muted,
+                  fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}
+              >
+                <option value="all">Todas as empresas</option>
+                {companies.map((co) => (
+                  <option key={co.id} value={String(co.id)}>
+                    {co.name}
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <select value={area} onChange={(e)=>{ const v=e.target.value; setArea(v); pushFilters({ area: v }); }}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
@@ -184,7 +228,9 @@ export default function DashboardClient({ results, areas = [], counts = [], vaca
               ))}
             </select>
             <a
-              href={`/api/admin/export?area=${encodeURIComponent(area)}`}
+              href={`/api/admin/export?area=${encodeURIComponent(area)}${
+                isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
+              }`}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
                 fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif",
@@ -263,7 +309,7 @@ function LeadershipTab({ analytics }) {
     );
   }
 
-  const { kpis, monthlyTrend, globalTopTypeCounts: gCounts, globalTotal, areaSummaries } = analytics;
+  const { kpis, monthlyTrend, globalTopTypeCounts: gCounts, globalTotal, areaSummaries, leadershipPotentials = [] } = analytics;
   const maxMonthly = Math.max(...monthlyTrend.map((m) => m.cnt), 1);
   const maxG = Math.max(...Object.values(gCounts), 1);
   const gTot = globalTotal || 1;
@@ -282,7 +328,8 @@ function LeadershipTab({ analytics }) {
       <div style={{ ...S.card, padding: '22px 28px' }}>
         <span style={S.label}>Analytics para liderança</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Consolida todas as avaliações cadastradas — não aplica o filtro de área do topo.
+          Consolida todas as avaliações cadastradas — não aplica os filtros de área, vaga ou perfil do topo.
+          Se você for admin e escolher uma empresa no cabeçalho, estes números ficam restritos a essa empresa.
           Use para ver volume, distribuição de tipos por área, tendência mensal e aderência média às rubricas definidas.
         </p>
       </div>
@@ -292,6 +339,78 @@ function LeadershipTab({ analytics }) {
         <Kpi icon="👤" value={kpis.candidates} label="Candidatos únicos" hint="Pessoas distintas com pelo menos uma avaliação." />
         <Kpi icon="🏢" value={kpis.areasActive} label="Áreas com dados" hint="Áreas com pelo menos uma avaliação." />
       </div>
+
+      {leadershipPotentials.length > 0 ? (
+        <div style={{ ...S.card }}>
+          <span style={S.label}>Potenciais líderes por empresa</span>
+          <p style={{ fontSize: '12px', color: C.faint, marginTop: '8px', marginBottom: '18px', lineHeight: 1.65 }}>
+            Indicativo automático por empresa: usa a <span style={{ color: C.text }}>avaliação mais recente</span> de cada
+            pessoa e calcula um score 0–10 a partir do perfil completo (não só o tipo dominante), ponderando tipos associados a direção, decisão,
+            execução e confiabilidade (ex.: Realizador, Desafiador, Leal, Perfeccionista). Serve como ponto de partida para conversas de sucessão —
+            não substitui julgamento de competência ou contexto.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {leadershipPotentials.map((co) => (
+              <div
+                key={String(co.companyId)}
+                style={{
+                  background: 'rgba(26,22,37,.03)',
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '12px',
+                  padding: '16px 18px',
+                }}
+              >
+                <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontFamily: 'monospace' }}>
+                  {co.companyName}
+                  <span style={{ color: C.faint, marginLeft: '8px' }}>#{co.companyId}</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '420px' }}>
+                    <thead>
+                      <tr>
+                        {['Pessoa', 'Tipo dominante', 'Indicador', 'Faixa'].map((h) => (
+                          <th
+                            key={h}
+                            style={{
+                              textAlign: 'left',
+                              padding: '8px 10px',
+                              color: C.muted,
+                              fontWeight: 'normal',
+                              fontFamily: 'monospace',
+                              borderBottom: `1px solid ${C.border}`,
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {co.people.map((p) => (
+                        <tr key={`${co.companyId}-${p.candidateId}`} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                          <td style={{ padding: '10px', color: C.text, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.name}
+                          </td>
+                          <td style={{ padding: '10px' }}>
+                            <TypeBadge type={p.topType} />
+                          </td>
+                          <td
+                            style={{ padding: '10px', color: C.purpleLight, fontFamily: 'monospace' }}
+                            title="Score heurístico 0–10 (ver texto acima)."
+                          >
+                            {p.leadership010}/10
+                          </td>
+                          <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>{p.leadershipLabel}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div style={{ ...S.card }}>
         <span style={S.label}>Volume mensal</span>
@@ -1150,6 +1269,29 @@ function CompaniesAdminTab() {
     }
   };
 
+  const deleteCompany = async (companyId, companyName) => {
+    const ok = window.confirm(
+      `Arquivar empresa "${companyName}"? Ela some das listagens, as vagas somem e os links públicos deixam de funcionar. Candidatos e avaliações já feitas continuam visíveis no dashboard.`
+    );
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    setUserMsg('');
+    try {
+      const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar empresa');
+      setUserMsg('Empresa arquivada.');
+      await loadCompanies();
+      await loadUsers();
+      setTimeout(() => setUserMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -1197,7 +1339,7 @@ function CompaniesAdminTab() {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
-      setUserMsg('Usuário excluído.');
+      setUserMsg('Usuário desativado (exclusão lógica).');
       await loadUsers();
       setTimeout(() => setUserMsg(''), 1600);
     } catch (e) {
@@ -1323,6 +1465,16 @@ function CompaniesAdminTab() {
                       >
                         Copiar link
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteCompany(c.id, c.name)}
+                        disabled={loading}
+                        style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Arquivar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1434,11 +1586,12 @@ function CompaniesAdminTab() {
                         type="button"
                         onClick={() => deleteUser(u.id)}
                         disabled={loading}
+                        title="Desativa o usuário (exclusão lógica)"
                         style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
                           borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
-                        Excluir
+                        Desativar
                       </button>
                     </div>
                   </div>
@@ -1572,6 +1725,28 @@ function VacanciesAdminTab({ isAdmin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
       setMsg('Vaga atualizada.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const archiveVacancy = async (vacancyId, title) => {
+    const ok = window.confirm(
+      `Arquivar vaga "${title}"? Ela some das listagens e o link público deixa de funcionar. Candidatos que já responderam continuam no dashboard.`
+    );
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar vaga');
+      setMsg('Vaga arquivada.');
       await loadVacancies();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
@@ -1736,6 +1911,16 @@ function VacanciesAdminTab({ isAdmin }) {
                           cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                       >
                         Copiar link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => archiveVacancy(v.id, v.title)}
+                        disabled={loading}
+                        style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Arquivar
                       </button>
                     </div>
                   </div>

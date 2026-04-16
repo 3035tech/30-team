@@ -6,6 +6,7 @@ import DashboardClient from './DashboardClient';
 import { computeAreaScore010 } from '../../lib/area-fit';
 import {
   buildAreaSummaries,
+  buildLeadershipPotentialsByCompany,
   globalTopTypeCounts,
   rubricAlignmentShare,
 } from '../../lib/leadership-analytics';
@@ -74,10 +75,12 @@ export default async function DashboardPage({ searchParams }) {
 
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
+  const rawCompany = (searchParams?.company || 'all').toString();
 
   // Busca candidatos/resultados DIRETAMENTE no banco — sem API, sem fetch
   let results = [];
   let areas = [];
+  let companiesForFilter = [];
   let counts = [];
   let vacancies = [];
   let areaStats = null;
@@ -88,19 +91,49 @@ export default async function DashboardPage({ searchParams }) {
     const a = await query(`SELECT key, label FROM areas ORDER BY label ASC`);
     areas = a.rows;
 
-    const vWhere = isAdmin ? '' : 'WHERE company_id = $1';
-    const vParams = isAdmin ? [] : [companyId];
+    /** Escopo de empresa: admin pode filtrar por ?company=ID; demais perfis usam sempre a empresa da sessão. */
+    let scopeCompanyFilter = null;
+    if (isAdmin) {
+      const cos = await query(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`);
+      companiesForFilter = cos.rows;
+      if (rawCompany !== 'all') {
+        const cid = parseInt(rawCompany, 10);
+        if (Number.isFinite(cid) && companiesForFilter.some((x) => Number(x.id) === cid)) {
+          scopeCompanyFilter = cid;
+        }
+      }
+    }
+
+    const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
+    const vParams = [];
+    if (!isAdmin) {
+      vParams.push(companyId);
+      vWhereParts.push(`v.company_id = $${vParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      vParams.push(scopeCompanyFilter);
+      vWhereParts.push(`v.company_id = $${vParams.length}`);
+    }
+    const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
     const v = await query(
-      `SELECT id, title, status, created_at AS "createdAt"
-       FROM vacancies
+      `SELECT v.id, v.title, v.status, v.created_at AS "createdAt"
+       FROM vacancies v
+       JOIN companies c ON c.id = v.company_id
        ${vWhere}
-       ORDER BY created_at DESC`,
+       ORDER BY v.created_at DESC`,
       vParams
     );
     vacancies = v.rows;
 
-    const cWhere = isAdmin ? '' : 'WHERE ass.company_id = $1';
-    const cParams = isAdmin ? [] : [companyId];
+    const countWhereParts = [];
+    const cParams = [];
+    if (!isAdmin) {
+      cParams.push(companyId);
+      countWhereParts.push(`ass.company_id = $${cParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      cParams.push(scopeCompanyFilter);
+      countWhereParts.push(`ass.company_id = $${cParams.length}`);
+    }
+    const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
     const c = await query(
       `SELECT ar.key, ar.label, COUNT(*)::int AS count
        FROM assessments ass
@@ -117,6 +150,9 @@ export default async function DashboardPage({ searchParams }) {
     if (!isAdmin) {
       params.push(companyId);
       whereParts.push(`ass.company_id = $${params.length}`);
+    } else if (scopeCompanyFilter != null) {
+      params.push(scopeCompanyFilter);
+      whereParts.push(`ass.company_id = $${params.length}`);
     }
     if (selectedArea !== 'all') {
       params.push(selectedArea);
@@ -132,21 +168,29 @@ export default async function DashboardPage({ searchParams }) {
       const areaRow = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
       const areaId = areaRow.rows?.[0]?.id;
       if (areaId) {
-        const statsRow = await query(`SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`, [areaId]);
-        if (statsRow.rowCount > 0) {
-          areaStats = { means: statsRow.rows[0].means, stds: statsRow.rows[0].stds, n: statsRow.rows[0].n };
-        } else {
-          const rawWhere = isAdmin ? `WHERE area_id = $1` : `WHERE company_id = $1 AND area_id = $2`;
-          const rawParams = isAdmin ? [areaId] : [companyId, areaId];
-          const raw = await query(`SELECT scores FROM assessments ${rawWhere}`, rawParams);
-          areaStats = computeStatsFromScores(raw.rows);
-          await query(
-            `INSERT INTO area_stats (area_id, type_means, type_stds, n, computed_at)
-             VALUES ($1, $2, $3, $4, NOW())
-             ON CONFLICT (area_id)
-             DO UPDATE SET type_means = EXCLUDED.type_means, type_stds = EXCLUDED.type_stds, n = EXCLUDED.n, computed_at = NOW()`,
-            [areaId, JSON.stringify(areaStats.means), JSON.stringify(areaStats.stds), areaStats.n]
+        if (isAdmin && scopeCompanyFilter != null) {
+          const raw = await query(
+            `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2`,
+            [scopeCompanyFilter, areaId]
           );
+          areaStats = computeStatsFromScores(raw.rows);
+        } else {
+          const statsRow = await query(`SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`, [areaId]);
+          if (statsRow.rowCount > 0) {
+            areaStats = { means: statsRow.rows[0].means, stds: statsRow.rows[0].stds, n: statsRow.rows[0].n };
+          } else {
+            const rawWhere = isAdmin ? `WHERE area_id = $1` : `WHERE company_id = $1 AND area_id = $2`;
+            const rawParams = isAdmin ? [areaId] : [companyId, areaId];
+            const raw = await query(`SELECT scores FROM assessments ${rawWhere}`, rawParams);
+            areaStats = computeStatsFromScores(raw.rows);
+            await query(
+              `INSERT INTO area_stats (area_id, type_means, type_stds, n, computed_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               ON CONFLICT (area_id)
+               DO UPDATE SET type_means = EXCLUDED.type_means, type_stds = EXCLUDED.type_stds, n = EXCLUDED.n, computed_at = NOW()`,
+              [areaId, JSON.stringify(areaStats.means), JSON.stringify(areaStats.stds), areaStats.n]
+            );
+          }
         }
 
         const rub = await query(`SELECT desired_type_weights AS weights FROM area_rubrics WHERE area_id = $1 LIMIT 1`, [areaId]);
@@ -166,8 +210,16 @@ export default async function DashboardPage({ searchParams }) {
     );
     rubricByAreaKey = Object.fromEntries(rubAll.rows.map(x => [x.areaKey, x.weights || {}]));
 
-    const distWhere = isAdmin ? '' : 'WHERE ass.company_id = $1';
-    const distParams = isAdmin ? [] : [companyId];
+    const distWhereParts = [];
+    const distParams = [];
+    if (!isAdmin) {
+      distParams.push(companyId);
+      distWhereParts.push(`ass.company_id = $${distParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      distParams.push(scopeCompanyFilter);
+      distWhereParts.push(`ass.company_id = $${distParams.length}`);
+    }
+    const distWhere = distWhereParts.length ? `WHERE ${distWhereParts.join(' AND ')}` : '';
     const distAgg = await query(
       `SELECT ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType", COUNT(*)::int AS cnt
        FROM assessments ass
@@ -177,8 +229,16 @@ export default async function DashboardPage({ searchParams }) {
        ORDER BY ar.label, ass.top_type`
       ,distParams
     );
-    const monthlyWhere = isAdmin ? '' : 'WHERE company_id = $1';
-    const monthlyParams = isAdmin ? [] : [companyId];
+    const monthlyParts = [];
+    const monthlyParams = [];
+    if (!isAdmin) {
+      monthlyParams.push(companyId);
+      monthlyParts.push(`company_id = $${monthlyParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      monthlyParams.push(scopeCompanyFilter);
+      monthlyParts.push(`company_id = $${monthlyParams.length}`);
+    }
+    const monthlyWhere = monthlyParts.length ? `WHERE ${monthlyParts.join(' AND ')}` : '';
     const monthlyAgg = await query(
       `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
        FROM assessments
@@ -187,8 +247,16 @@ export default async function DashboardPage({ searchParams }) {
        ORDER BY 1`,
       monthlyParams
     );
-    const totalsWhere = isAdmin ? '' : 'WHERE company_id = $1';
-    const totalsParams = isAdmin ? [] : [companyId];
+    const totalsParts = [];
+    const totalsParams = [];
+    if (!isAdmin) {
+      totalsParams.push(companyId);
+      totalsParts.push(`company_id = $${totalsParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      totalsParams.push(scopeCompanyFilter);
+      totalsParts.push(`company_id = $${totalsParams.length}`);
+    }
+    const totalsWhere = totalsParts.length ? `WHERE ${totalsParts.join(' AND ')}` : '';
     const totalsAgg = await query(
       `SELECT
          COUNT(*)::int AS assessments,
@@ -198,8 +266,16 @@ export default async function DashboardPage({ searchParams }) {
        ${totalsWhere}`,
       totalsParams
     );
-    const scoresWhere = isAdmin ? '' : 'WHERE ass.company_id = $1';
-    const scoresParams = isAdmin ? [] : [companyId];
+    const scoresWhereParts = [];
+    const scoresParams = [];
+    if (!isAdmin) {
+      scoresParams.push(companyId);
+      scoresWhereParts.push(`ass.company_id = $${scoresParams.length}`);
+    } else if (scopeCompanyFilter != null) {
+      scoresParams.push(scopeCompanyFilter);
+      scoresWhereParts.push(`ass.company_id = $${scoresParams.length}`);
+    }
+    const scoresWhere = scoresWhereParts.length ? `WHERE ${scoresWhereParts.join(' AND ')}` : '';
     const scoresAll = await query(
       `SELECT ar.key AS "areaKey", ass.scores
        FROM assessments ass
@@ -225,6 +301,39 @@ export default async function DashboardPage({ searchParams }) {
     const gCounts = globalTopTypeCounts(distAgg.rows);
     const gTotal = Object.values(gCounts).reduce((a, b) => a + b, 0);
     const tRow = totalsAgg.rows[0] || {};
+
+    let leadershipPotentials = [];
+    try {
+      const leadParts = [];
+      const leadParams = [];
+      if (!isAdmin) {
+        leadParams.push(companyId);
+        leadParts.push(`ass.company_id = $${leadParams.length}`);
+      } else if (scopeCompanyFilter != null) {
+        leadParams.push(scopeCompanyFilter);
+        leadParts.push(`ass.company_id = $${leadParams.length}`);
+      }
+      const leadWhere = leadParts.length ? `WHERE ${leadParts.join(' AND ')}` : '';
+      const latestCand = await query(
+        `SELECT DISTINCT ON (ass.candidate_id, ass.company_id)
+           ass.company_id AS "companyId",
+           co.name AS "companyName",
+           ass.candidate_id AS "candidateId",
+           cand.full_name AS name,
+           ass.scores,
+           ass.top_type AS "topType"
+         FROM assessments ass
+         JOIN candidates cand ON cand.id = ass.candidate_id
+         JOIN companies co ON co.id = ass.company_id AND co.deleted = FALSE
+         ${leadWhere}
+         ORDER BY ass.candidate_id, ass.company_id, ass.created_at DESC`,
+        leadParams
+      );
+      leadershipPotentials = buildLeadershipPotentialsByCompany(latestCand.rows, { topPerCompany: 6 });
+    } catch (le) {
+      console.error('Erro ao montar potenciais de liderança por empresa:', le);
+    }
+
     analytics = {
       kpis: {
         assessments: tRow.assessments ?? 0,
@@ -235,6 +344,7 @@ export default async function DashboardPage({ searchParams }) {
       globalTopTypeCounts: gCounts,
       globalTotal: gTotal,
       areaSummaries,
+      leadershipPotentials,
     };
 
     const result = await query(
@@ -271,10 +381,12 @@ export default async function DashboardPage({ searchParams }) {
     <DashboardClient
       results={results}
       areas={areas}
+      companies={companiesForFilter}
       counts={counts}
       vacancies={vacancies}
       selectedArea={selectedArea}
       selectedVacancy={selectedVacancy}
+      selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
       areaStats={areaStats}
       areaRubric={areaRubric}
       analytics={analytics}

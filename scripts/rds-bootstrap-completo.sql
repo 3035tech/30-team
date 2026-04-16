@@ -13,7 +13,7 @@
 --      normalmente permitido). Se falhar, comente o bloco do admin e crie o
 --      usuário depois com outra ferramenta.
 --
--- Este arquivo equivale às migrations 001–004 + registro em schema_migrations.
+-- Este arquivo equivale às migrations 001–005 + registro em schema_migrations.
 -- =============================================================================
 
 -- Extensão para gerar hash bcrypt compatível com bcryptjs (login da app)
@@ -356,6 +356,21 @@ CREATE TRIGGER assessments_company_matches_vacancy
 BEFORE INSERT OR UPDATE OF vacancy_id, company_id ON assessments
 FOR EACH ROW EXECUTE FUNCTION trg_assessments_company_matches_vacancy();
 
+-- ── 005_soft_delete_flags.sql ───────────────────────────────────────────────
+
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
+
+DROP INDEX IF EXISTS idx_companies_slug_unique;
+CREATE UNIQUE INDEX idx_companies_slug_unique ON companies (LOWER(slug)) WHERE deleted = FALSE;
+
+DROP INDEX IF EXISTS idx_vacancies_company_slug_unique;
+CREATE UNIQUE INDEX idx_vacancies_company_slug_unique ON vacancies (company_id, LOWER(slug)) WHERE deleted = FALSE;
+
+DROP INDEX IF EXISTS idx_users_email_unique;
+CREATE UNIQUE INDEX idx_users_email_unique ON users (LOWER(email)) WHERE deleted = FALSE;
+
 -- ── Controle de migrations (opcional, alinha com scripts/migrate.js) ─────────
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -368,7 +383,8 @@ INSERT INTO schema_migrations (name) VALUES
   ('001_init.sql'),
   ('002_add_company_areas.sql'),
   ('003_seed_area_rubrics.sql'),
-  ('004_vacancies.sql')
+  ('004_vacancies.sql'),
+  ('005_soft_delete_flags.sql')
 ON CONFLICT (name) DO NOTHING;
 
 COMMIT;

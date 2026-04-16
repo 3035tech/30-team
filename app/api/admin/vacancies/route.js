@@ -46,8 +46,13 @@ export async function GET() {
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const where = isAdmin ? '' : 'WHERE v.company_id = $1';
-  const params = isAdmin ? [] : [companyId];
+  const whereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
+  const params = [];
+  if (!isAdmin) {
+    params.push(companyId);
+    whereParts.push(`v.company_id = $${params.length}`);
+  }
+  const where = `WHERE ${whereParts.join(' AND ')}`;
 
   const r = await query(
     `SELECT
@@ -103,7 +108,7 @@ export async function POST(request) {
   const slug = slugify(body.slug || title);
   if (!slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
 
-  const c = await query(`SELECT id, name FROM companies WHERE id = $1 LIMIT 1`, [companyId]);
+  const c = await query(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
   if (c.rowCount === 0) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
 
   const ins = await query(

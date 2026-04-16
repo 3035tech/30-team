@@ -15,7 +15,9 @@ export async function GET(request) {
        l.expires_at AS "expiresAt"
      FROM vacancy_links l
      JOIN vacancies v ON v.id = l.vacancy_id
+     JOIN companies c ON c.id = v.company_id
      WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
+       AND v.deleted = FALSE AND c.deleted = FALSE
      LIMIT 1`,
     [token]
   );

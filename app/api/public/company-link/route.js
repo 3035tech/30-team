@@ -14,6 +14,7 @@ export async function GET(request) {
      FROM company_links l
      JOIN companies c ON c.id = l.company_id
      WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
+       AND c.deleted = FALSE
      LIMIT 1`,
     [token]
   );

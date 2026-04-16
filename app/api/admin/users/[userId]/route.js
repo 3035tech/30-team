@@ -22,7 +22,10 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ error: 'Você não pode excluir seu próprio usuário' }, { status: 400 });
   }
 
-  const del = await query(`DELETE FROM users WHERE id = $1 RETURNING id`, [userId]);
+  const del = await query(
+    `UPDATE users SET deleted = TRUE, active = FALSE WHERE id = $1 AND deleted = FALSE RETURNING id`,
+    [userId]
+  );
   if (del.rowCount === 0) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

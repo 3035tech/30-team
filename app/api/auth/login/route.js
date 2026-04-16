@@ -12,14 +12,25 @@ export async function POST(request) {
     }
 
     const res = await query(
-      `SELECT id, email, password_hash AS "passwordHash", role, active, company_id AS "companyId"
-       FROM users
-       WHERE LOWER(email) = LOWER($1)
+      `SELECT
+         u.id,
+         u.email,
+         u.password_hash AS "passwordHash",
+         u.role,
+         u.active,
+         u.company_id AS "companyId",
+         u.deleted AS "userDeleted",
+         c.deleted AS "companyDeleted"
+       FROM users u
+       LEFT JOIN companies c ON c.id = u.company_id
+       WHERE LOWER(u.email) = LOWER($1)
        LIMIT 1`,
       [email.trim()]
     );
 
-    if (res.rowCount === 0 || !res.rows[0].active) {
+    const row0 = res.rows[0];
+    const companyBlocked = row0?.role !== 'admin' && row0?.companyId && row0?.companyDeleted;
+    if (res.rowCount === 0 || !row0?.active || row0?.userDeleted || companyBlocked) {
       // Delay para dificultar brute force
       await new Promise(r => setTimeout(r, 500));
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });

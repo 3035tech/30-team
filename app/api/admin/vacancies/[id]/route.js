@@ -29,7 +29,7 @@ async function getVacancyOr404(vacancyId) {
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
-     WHERE v.id = $1
+     WHERE v.id = $1 AND v.deleted = FALSE AND c.deleted = FALSE
      LIMIT 1`,
     [vacancyId]
   );
@@ -101,7 +101,7 @@ export async function PATCH(request, { params }) {
   const up = await query(
     `UPDATE vacancies
      SET title = $2, slug = $3, status = $4
-     WHERE id = $1
+     WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status, created_at AS "createdAt"`,
     [id, nextTitle, nextSlug, nextStatus]
   );
@@ -122,11 +122,18 @@ export async function DELETE(_request, { params }) {
   if (!id) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
 
   if (!isAdmin) {
-    const owned = await query(`SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
+    const owned = await query(
+      `SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 AND deleted = FALSE LIMIT 1`,
+      [id, companyId]
+    );
     if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const del = await query(`DELETE FROM vacancies WHERE id = $1 RETURNING id`, [id]);
+  await query(
+    `UPDATE vacancy_links SET active = FALSE, rotated_at = NOW() WHERE vacancy_id = $1 AND active = TRUE`,
+    [id]
+  );
+  const del = await query(`UPDATE vacancies SET deleted = TRUE WHERE id = $1 AND deleted = FALSE RETURNING id`, [id]);
   if (del.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
   return NextResponse.json({ ok: true });
