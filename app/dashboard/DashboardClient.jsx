@@ -1292,6 +1292,36 @@ function CompaniesAdminTab() {
     }
   };
 
+  const editCompany = async (c) => {
+    const nextName = window.prompt('Nome da empresa', c?.name ?? '');
+    if (nextName == null) return;
+    const nextSlug = window.prompt('Slug (URL-friendly)', c?.slug ?? '');
+    if (nextSlug == null) return;
+    const nextActiveRaw = window.prompt('Ativa? (true/false)', String(Boolean(c?.active)));
+    if (nextActiveRaw == null) return;
+    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
+
+    setLoading(true);
+    setError('');
+    setUserMsg('');
+    try {
+      const res = await fetch(`/api/admin/companies/${encodeURIComponent(c.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: String(nextName).trim(), slug: String(nextSlug).trim(), active: nextActive }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar empresa');
+      setUserMsg('Empresa atualizada.');
+      await loadCompanies();
+      setTimeout(() => setUserMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -1340,6 +1370,52 @@ function CompaniesAdminTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
       setUserMsg('Usuário desativado (exclusão lógica).');
+      await loadUsers();
+      setTimeout(() => setUserMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const editUser = async (u) => {
+    const nextEmail = window.prompt('Email', u?.email ?? '');
+    if (nextEmail == null) return;
+    const nextRole = window.prompt('Role (hr/direction/admin)', u?.role ?? 'hr');
+    if (nextRole == null) return;
+    const nextCompanyIdRaw =
+      nextRole.trim() === 'admin'
+        ? ''
+        : window.prompt('Company ID (obrigatório para hr/direction)', u?.companyId != null ? String(u.companyId) : '');
+    if (nextCompanyIdRaw == null) return;
+    const nextActiveRaw = window.prompt('Ativo? (true/false)', String(Boolean(u?.active)));
+    if (nextActiveRaw == null) return;
+    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
+    const nextPassword = window.prompt('Nova senha (deixe em branco para não alterar)', '');
+    if (nextPassword == null) return;
+
+    const payload = {
+      email: String(nextEmail).trim(),
+      role: String(nextRole).trim(),
+      active: nextActive,
+    };
+    if (payload.role !== 'admin') payload.companyId = String(nextCompanyIdRaw).trim() ? parseInt(String(nextCompanyIdRaw).trim(), 10) : null;
+    else payload.companyId = null;
+    if (String(nextPassword).trim()) payload.password = String(nextPassword).trim();
+
+    setLoading(true);
+    setError('');
+    setUserMsg('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar usuário');
+      setUserMsg('Usuário atualizado.');
       await loadUsers();
       setTimeout(() => setUserMsg(''), 1600);
     } catch (e) {
@@ -1445,6 +1521,16 @@ function CompaniesAdminTab() {
                       ) : null}
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => editCompany(c)}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Editar
+                      </button>
                       <button
                         type="button"
                         onClick={() => rotateLink(c.id)}
@@ -1584,6 +1670,16 @@ function CompaniesAdminTab() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
+                        onClick={() => editUser(u)}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => deleteUser(u.id)}
                         disabled={loading}
                         title="Desativa o usuário (exclusão lógica)"
@@ -1721,6 +1817,35 @@ function VacanciesAdminTab({ isAdmin }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
+      setMsg('Vaga atualizada.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const editVacancy = async (v) => {
+    const nextTitle = window.prompt('Título da vaga', v?.title ?? '');
+    if (nextTitle == null) return;
+    const nextSlug = window.prompt('Slug (URL-friendly)', v?.slug ?? '');
+    if (nextSlug == null) return;
+    const nextStatus = window.prompt('Status (open/closed)', v?.status ?? 'open');
+    if (nextStatus == null) return;
+
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(v.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: String(nextTitle).trim(), slug: String(nextSlug).trim(), status: String(nextStatus).trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
@@ -1882,6 +2007,16 @@ function VacanciesAdminTab({ isAdmin }) {
                       ) : null}
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => editVacancy(v)}
+                        disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                      >
+                        Editar
+                      </button>
                       <button
                         type="button"
                         onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
