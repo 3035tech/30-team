@@ -81,6 +81,7 @@ export default async function DashboardPage({ searchParams }) {
   let results = [];
   let areas = [];
   let companiesForFilter = [];
+  let scopeCompanyFilter = null;
   let counts = [];
   let vacancies = [];
   let areaStats = null;
@@ -92,7 +93,6 @@ export default async function DashboardPage({ searchParams }) {
     areas = a.rows;
 
     /** Escopo de empresa: admin pode filtrar por ?company=ID; demais perfis usam sempre a empresa da sessão. */
-    let scopeCompanyFilter = null;
     if (isAdmin) {
       const cos = await query(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`);
       companiesForFilter = cos.rows;
