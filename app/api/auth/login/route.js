@@ -2,9 +2,19 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
 import { verifyPassword, signToken, COOKIE_NAME, MAX_AGE } from '../../../../lib/auth';
 import { audit } from '../../../../lib/audit';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export async function POST(request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {

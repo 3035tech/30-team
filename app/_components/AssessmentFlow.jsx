@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TYPE_DATA, drawQuestions, SCALE_LABELS } from '../../lib/data';
+import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
 
 const C = {
   bg: '#ffffff',
@@ -251,13 +252,7 @@ function TestScreen({ name, onComplete }) {
           setSelected(null);
           setFade(false);
         } else {
-          const scores = {};
-          for (let t = 1; t <= 9; t++) scores[t] = 0;
-          questions.forEach((q) => {
-            if (na[q.id] !== undefined) scores[q.type] += na[q.id];
-          });
-          const topType = parseInt(Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0]);
-          onComplete({ name, scores, topType });
+          onComplete({ name, answers: na });
         }
       }, 280);
     },
@@ -338,7 +333,7 @@ function TestScreen({ name, onComplete }) {
   );
 }
 
-function ResultScreen({ result, onRestart }) {
+function ResultScreen({ result, onRestart, saveError = null }) {
   const { name, scores, topType } = result;
   const d = TYPE_DATA[topType];
   const sorted = Object.entries(scores)
@@ -352,6 +347,22 @@ function ResultScreen({ result, onRestart }) {
       <div style={S.glow} />
       <div style={{ ...S.card, maxWidth: '700px' }}>
         <span style={S.label}>◈ Seu resultado, {name.split(' ')[0]}</span>
+        {saveError ? (
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '12px 14px',
+              background: 'rgba(232,71,71,.08)',
+              border: '1px solid rgba(232,71,71,.25)',
+              borderRadius: '12px',
+              fontSize: '13px',
+              color: '#b91c1c',
+              lineHeight: 1.5,
+            }}
+          >
+            Não foi possível registrar suas respostas no servidor: {saveError}
+          </div>
+        ) : null}
         <div style={{ marginBottom: '28px' }}>
           <div style={{ fontSize: '42px', marginBottom: '4px' }}>{d.emoji}</div>
           <div style={{ fontSize: '13px', color: C.muted, fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
@@ -420,28 +431,62 @@ export default function AssessmentFlow({ companyToken = '', vacancyToken = '', n
   const [screen, setScreen] = useState('home'); // home | test | result
   const [candidate, setCandidate] = useState(null); // { name, email, areaKey, consent }
   const [result, setResult] = useState(null);
+  const [saveError, setSaveError] = useState(null);
 
   const handleStart = (c) => {
+    setSaveError(null);
     setCandidate(c);
     setScreen('test');
   };
 
   const handleComplete = async (data) => {
+    const computed = computeAssessmentFromAnswers(data.answers);
+    if (!computed.ok) {
+      console.error(computed.error);
+      setSaveError(computed.error);
+      setResult(null);
+      setScreen('result');
+      return;
+    }
+    const payload = { ...data, ...candidate, companyToken, vacancyToken, answers: data.answers };
+    let errMsg = null;
     try {
-      await fetch('/api/results', {
+      const res = await fetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, ...candidate, companyToken, vacancyToken }),
+        body: JSON.stringify(payload),
       });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errMsg = body.error || `Erro ${res.status}`;
+      }
     } catch (e) {
       console.error('Erro ao salvar resultado:', e);
+      errMsg = 'Falha de rede ao salvar';
     }
-    setResult(data);
+    setSaveError(errMsg);
+    setResult({ name: candidate?.name || data.name || '', scores: computed.scores, topType: computed.topType });
     setScreen('result');
   };
 
   if (screen === 'test') return <TestScreen name={candidate?.name || ''} onComplete={handleComplete} />;
-  if (screen === 'result') return <ResultScreen result={result} onRestart={() => setScreen('home')} />;
+  if (screen === 'result') {
+    if (!result) {
+      return (
+        <div style={S.app}>
+          <div style={S.glow} />
+          <div style={S.card}>
+            <span style={S.label}>◈ 30Team</span>
+            <p style={{ ...S.p, marginBottom: 0 }}>{saveError || 'Não foi possível concluir o teste.'}</p>
+            <button type="button" style={{ ...S.btn(), marginTop: '24px' }} onClick={() => { setSaveError(null); setScreen('home'); }}>
+              ← Voltar ao início
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return <ResultScreen result={result} saveError={saveError} onRestart={() => { setSaveError(null); setScreen('home'); }} />;
+  }
   return <HomeScreen onStart={handleStart} notice={notice} startDisabled={startDisabled} />;
 }
 

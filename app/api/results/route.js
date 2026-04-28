@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 import { verifyToken, COOKIE_NAME } from '../../../lib/auth';
 import { cookies } from 'next/headers';
-import { computeAreaScore010 } from '../../../lib/area-fit';
+import { computeAssessmentFromAnswers } from '../../../lib/assessment-score';
+import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -12,11 +13,27 @@ function normalizeEmail(email) {
 // POST /api/results — salva resultado de um candidato (com área)
 export async function POST(request) {
   try {
-    const { name, email, areaKey, consent, topType, scores, companyToken, vacancyToken } = await request.json();
+    const ip = clientIpFromRequest(request);
+    const rl = checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
 
-    if ((!companyToken && !vacancyToken) || !name || !areaKey || !topType || !scores || consent !== true) {
+    const body = await request.json().catch(() => ({}));
+    const { name, email, areaKey, consent, answers, companyToken, vacancyToken } = body;
+
+    if ((!companyToken && !vacancyToken) || !name || !areaKey || consent !== true) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
+
+    const scored = computeAssessmentFromAnswers(answers);
+    if (!scored.ok) {
+      return NextResponse.json({ error: scored.error }, { status: 400 });
+    }
+    const { topType, scores } = scored;
 
     let companyId = null;
     let resolvedVacancyId = null;
@@ -113,16 +130,6 @@ export async function POST(request) {
           [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
         );
 
-    const rub = await query(
-      `SELECT r.desired_type_weights AS weights
-       FROM area_rubrics r
-       WHERE r.area_id = $1
-       LIMIT 1`,
-      [areaId]
-    );
-    const weights = rub.rows?.[0]?.weights || {};
-    const fit = computeAreaScore010(scores, weights);
-
     // Backward compatible write (legacy dashboards/scripts)
     await query(
       `INSERT INTO results (name, top_type, scores)
@@ -133,7 +140,13 @@ export async function POST(request) {
     );
 
     return NextResponse.json(
-      { ok: true, candidateId, assessmentId: assessment.rows[0].id, createdAt: assessment.rows[0].createdAt, areaFitScore010: fit.score010, areaFitLabel: fit.label, vacancyId: resolvedVacancyId },
+      {
+        ok: true,
+        candidateId,
+        assessmentId: assessment.rows[0].id,
+        createdAt: assessment.rows[0].createdAt,
+        ...(resolvedVacancyId != null ? { vacancyId: resolvedVacancyId } : {}),
+      },
       { status: 201 }
     );
   } catch (error) {
