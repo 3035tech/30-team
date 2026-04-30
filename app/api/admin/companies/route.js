@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
+import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
 
 function requireAdmin(payload) {
   return payload?.role === 'admin';
@@ -32,31 +33,64 @@ async function ensureActiveLink(companyId) {
   return token;
 }
 
-export async function GET() {
+const COMPANY_SORT_KEYS = new Set(['id', 'name', 'slug', 'active', 'createdAt']);
+
+export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
   if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
+  const url = new URL(request.url);
+  if (url.searchParams.get('forSelect') === '1') {
+    const r = await queryRead(
+      `SELECT id, name
+       FROM companies
+       WHERE deleted = FALSE
+       ORDER BY LOWER(name) ASC`
+    );
+    return NextResponse.json(r.rows);
+  }
+
+  const pageRaw = parseInt(url.searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+  const sizeRaw = parseInt(url.searchParams.get('pageSize') || '20', 10);
+  const pageSize = PAGE_SIZE_OPTIONS.includes(sizeRaw) ? sizeRaw : 20;
+  const sortRaw = url.searchParams.get('sort') || 'createdAt';
+  const sort = COMPANY_SORT_KEYS.has(sortRaw) ? sortRaw : 'createdAt';
+  const dir = url.searchParams.get('sortDir') === 'asc' ? 'asc' : 'desc';
+  const orderSql = sqlCompaniesOrderBy(sort, dir);
+
+  const cnt = await queryRead(`SELECT COUNT(*)::int AS n FROM companies WHERE deleted = FALSE`);
+  const total = cnt.rows[0]?.n ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectivePage = Math.min(page, totalPages);
+  const offset = (effectivePage - 1) * pageSize;
+
   const r = await queryRead(
-    `SELECT id, name, slug, active, created_at AS "createdAt"
-     FROM companies
-     WHERE deleted = FALSE
-     ORDER BY created_at DESC`
+    `SELECT
+       c.id,
+       c.name,
+       c.slug,
+       c.active,
+       c.created_at AS "createdAt",
+       lk.token AS "activeToken",
+       lk.expires_at AS "activeTokenExpiresAt"
+     FROM companies c
+     LEFT JOIN company_links lk ON lk.company_id = c.id AND lk.active = TRUE
+     WHERE c.deleted = FALSE
+     ${orderSql}
+     LIMIT $1 OFFSET $2`,
+    [pageSize, offset]
   );
 
-  const out = [];
-  for (const c of r.rows) {
-    const t = await queryRead(
-      `SELECT token, expires_at AS "expiresAt", created_at AS "createdAt", rotated_at AS "rotatedAt"
-       FROM company_links
-       WHERE company_id = $1 AND active = TRUE
-       LIMIT 1`,
-      [c.id]
-    );
-    out.push({ ...c, activeToken: t.rows?.[0]?.token || null, activeTokenExpiresAt: t.rows?.[0]?.expiresAt || null });
-  }
-  return NextResponse.json(out);
+  return NextResponse.json({
+    items: r.rows,
+    total,
+    page: effectivePage,
+    pageSize,
+    totalPages,
+  });
 }
 
 export async function POST(request) {

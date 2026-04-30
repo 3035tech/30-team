@@ -1,45 +1,32 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
+import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 
-export function CompaniesAdminTab() {
+export function CompaniesAdminTab({ navigateDashboard }) {
+  const urlParams = useSearchParams();
+  const spKey = urlParams.toString();
+  const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
+  const { page: companiesPage, pageSize: companiesPageSize } = parseCompaniesPagination(sp);
+  const listSort = parseCompaniesSort(sp);
+
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
+  const [companiesTotal, setCompaniesTotal] = useState(0);
+  const [companiesTotalPages, setCompaniesTotalPages] = useState(1);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
-  const [listSort, setListSort] = useState({ key: 'name', dir: 'asc' });
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
 
-  const sortedCompanies = useMemo(() => {
-    const mul = listSort.dir === 'asc' ? 1 : -1;
-    const rows = [...companies];
-    rows.sort((a, b) => {
-      switch (listSort.key) {
-        case 'id':
-          return (Number(a.id) - Number(b.id)) * mul;
-        case 'name':
-          return String(a.name || '').localeCompare(String(b.name || ''), 'pt') * mul;
-        case 'slug':
-          return String(a.slug || '').localeCompare(String(b.slug || ''), 'pt') * mul;
-        case 'active':
-          return ((a.active ? 1 : 0) - (b.active ? 1 : 0)) * mul;
-        case 'createdAt':
-        default: {
-          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return (ta - tb) * mul;
-        }
-      }
-    });
-    return rows;
-  }, [companies, listSort]);
-
   const toggleCompanySort = (col) => {
-    setListSort((prev) => ({ key: col, dir: clientSortNextDir(col, prev.key, prev.dir) }));
+    if (!navigateDashboard) return;
+    const nextDir = clientSortNextDir(col, listSort.sort, listSort.dir);
+    navigateDashboard({ companiesSort: col, companiesSortDir: nextDir, companiesPage: 1, tab: 'companies' });
   };
 
   const appUrl =
@@ -49,10 +36,21 @@ export function CompaniesAdminTab() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/companies');
+      const snap = Object.fromEntries(urlParams.entries());
+      const { page, pageSize } = parseCompaniesPagination(snap);
+      const sortSt = parseCompaniesSort(snap);
+      const qs = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        sort: sortSt.sort,
+        sortDir: sortSt.dir,
+      });
+      const res = await fetch(`/api/admin/companies?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
-      setCompanies(Array.isArray(data) ? data : []);
+      setCompanies(Array.isArray(data.items) ? data.items : []);
+      setCompaniesTotal(typeof data.total === 'number' ? data.total : 0);
+      setCompaniesTotalPages(typeof data.totalPages === 'number' ? data.totalPages : 1);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -62,7 +60,7 @@ export function CompaniesAdminTab() {
 
   useEffect(() => {
     loadCompanies();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [spKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createCompany = async () => {
     if (!name.trim()) return;
@@ -229,7 +227,7 @@ export function CompaniesAdminTab() {
 
       <div style={{ ...S.card }}>
         <span style={S.label}>Empresas cadastradas</span>
-        {companies.length === 0 ? (
+        {companiesTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
             Nenhuma empresa ainda.
           </p>
@@ -238,16 +236,16 @@ export function CompaniesAdminTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '720px' }}>
               <thead>
                 <tr style={{ background: 'rgba(26,22,37,.02)' }}>
-                  <SortableTh columnKey="id" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>ID</SortableTh>
-                  <SortableTh columnKey="name" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Nome</SortableTh>
-                  <SortableTh columnKey="slug" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Slug</SortableTh>
-                  <SortableTh columnKey="active" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Ativa</SortableTh>
-                  <SortableTh columnKey="createdAt" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Criada em</SortableTh>
+                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>ID</SortableTh>
+                  <SortableTh columnKey="name" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Nome</SortableTh>
+                  <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Slug</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Ativa</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Criada em</SortableTh>
                   <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Link e ações</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedCompanies.map((c) => {
+                {companies.map((c) => {
                   const token = c.activeToken || '';
                   const link = token ? `${appUrl}/t/${token}` : '';
                   const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
@@ -316,6 +314,56 @@ export function CompaniesAdminTab() {
                 })}
               </tbody>
             </table>
+            {navigateDashboard && companiesTotal > 0 ? (
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+                marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
+              }}>
+                <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                  {companiesTotal} empresa(s) · página {companiesPage}/{companiesTotalPages}
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    value={String(companiesPageSize)}
+                    onChange={(e) => {
+                      const ps = parseInt(e.target.value, 10);
+                      navigateDashboard({ companiesPage: 1, companiesPageSize: ps, tab: 'companies' });
+                    }}
+                    disabled={loading}
+                    style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
+                      cursor: 'pointer', fontFamily: 'monospace' }}
+                  >
+                    {PAGE_SIZE_OPTIONS.map((n) => (
+                      <option key={n} value={String(n)}>{n}/pág.</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={loading || companiesPage <= 1}
+                    onClick={() => navigateDashboard({ companiesPage: Math.max(1, companiesPage - 1), tab: 'companies' })}
+                    style={{ background: companiesPage <= 1 ? 'transparent' : `${C.purple}18`,
+                      border: `1px solid ${companiesPage <= 1 ? C.border : `${C.purple}55`}`,
+                      borderRadius: '10px', padding: '6px 12px', color: companiesPage <= 1 ? C.faint : C.purple,
+                      fontSize: '11px', cursor: companiesPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading || companiesPage >= companiesTotalPages}
+                    onClick={() => navigateDashboard({ companiesPage: Math.min(companiesTotalPages, companiesPage + 1), tab: 'companies' })}
+                    style={{ background: companiesPage >= companiesTotalPages ? 'transparent' : `${C.purple}18`,
+                      border: `1px solid ${companiesPage >= companiesTotalPages ? C.border : `${C.purple}55`}`,
+                      borderRadius: '10px', padding: '6px 12px',
+                      color: companiesPage >= companiesTotalPages ? C.faint : C.purple,
+                      fontSize: '11px', cursor: companiesPage >= companiesTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

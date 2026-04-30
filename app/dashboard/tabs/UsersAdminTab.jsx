@@ -1,69 +1,111 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
+import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 
-export function UsersAdminTab() {
+export function UsersAdminTab({ navigateDashboard }) {
+  const urlParams = useSearchParams();
+  const spKey = urlParams.toString();
+
+  const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
+  const { page: usersPage, pageSize: usersPageSize } = parseUsersPagination(sp);
+  const listSort = parseUsersSort(sp);
+
   const [loading, setLoading] = useState(false);
-  const [companies, setCompanies] = useState([]);
+  const [companyOptions, setCompanyOptions] = useState([]);
   const [users, setUsers] = useState([]);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('hr');
   const [newUserCompanyId, setNewUserCompanyId] = useState('');
-  const [listSort, setListSort] = useState({ key: 'createdAt', dir: 'desc' });
-
-  const sortedUsers = useMemo(() => {
-    const mul = listSort.dir === 'asc' ? 1 : -1;
-    const rows = [...users];
-    rows.sort((a, b) => {
-      switch (listSort.key) {
-        case 'id':
-          return (Number(a.id) - Number(b.id)) * mul;
-        case 'email':
-          return String(a.email || '').localeCompare(String(b.email || ''), 'pt') * mul;
-        case 'role':
-          return String(a.role || '').localeCompare(String(b.role || ''), 'pt') * mul;
-        case 'companyName': {
-          const ca = a.role === 'admin' ? '\u0000' : (a.companyName || '');
-          const cb = b.role === 'admin' ? '\u0000' : (b.companyName || '');
-          return ca.localeCompare(cb, 'pt') * mul;
-        }
-        case 'active':
-          return ((a.active ? 1 : 0) - (b.active ? 1 : 0)) * mul;
-        case 'createdAt':
-        default: {
-          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return (ta - tb) * mul;
-        }
-      }
-    });
-    return rows;
-  }, [users, listSort]);
 
   const toggleUserSort = (col) => {
-    setListSort((prev) => ({ key: col, dir: clientSortNextDir(col, prev.key, prev.dir) }));
+    if (!navigateDashboard) return;
+    const nextDir = clientSortNextDir(col, listSort.sort, listSort.dir);
+    navigateDashboard({ usersSort: col, usersSortDir: nextDir, usersPage: 1, tab: 'users' });
   };
 
-  const bootstrap = async () => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rc = await fetch('/api/admin/companies?forSelect=1');
+        const dc = await rc.json();
+        if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
+        const list = Array.isArray(dc) ? dc : [];
+        if (!cancelled) {
+          setCompanyOptions(list);
+          setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
+        }
+      } catch (e) {
+        if (!cancelled) setError(e?.message || 'Erro');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const snap = Object.fromEntries(urlParams.entries());
+        const { page, pageSize } = parseUsersPagination(snap);
+        const sortSt = parseUsersSort(snap);
+        const qs = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          sort: sortSt.sort,
+          sortDir: sortSt.dir,
+        });
+        const ru = await fetch(`/api/admin/users?${qs.toString()}`);
+        const du = await ru.json();
+        if (!ru.ok) throw new Error(du?.error || 'Falha ao carregar usuários');
+        if (!cancelled) {
+          setUsers(Array.isArray(du.items) ? du.items : []);
+          setUsersTotal(typeof du.total === 'number' ? du.total : 0);
+          setUsersTotalPages(typeof du.totalPages === 'number' ? du.totalPages : 1);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e?.message || 'Erro');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [spKey]);
+
+  const loadUsersOnly = async () => {
+    const snap = Object.fromEntries(urlParams.entries());
+    const { page, pageSize } = parseUsersPagination(snap);
+    const sortSt = parseUsersSort(snap);
+    const qs = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sort: sortSt.sort,
+      sortDir: sortSt.dir,
+    });
     setLoading(true);
     setError('');
     try {
-      const rc = await fetch('/api/admin/companies');
-      const dc = await rc.json();
-      if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
-      const list = Array.isArray(dc) ? dc : [];
-      setCompanies(list);
-      setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
-
-      const ru = await fetch('/api/admin/users');
-      const du = await ru.json();
-      if (!ru.ok) throw new Error(du?.error || 'Falha ao carregar usuários');
-      setUsers(Array.isArray(du) ? du : []);
+      const res = await fetch(`/api/admin/users?${qs.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar usuários');
+      setUsers(Array.isArray(data.items) ? data.items : []);
+      setUsersTotal(typeof data.total === 'number' ? data.total : 0);
+      setUsersTotalPages(typeof data.totalPages === 'number' ? data.totalPages : 1);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -71,22 +113,16 @@ export function UsersAdminTab() {
     }
   };
 
-  useEffect(() => {
-    bootstrap();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadUsersOnly = async () => {
-    setLoading(true);
-    setError('');
+  const refreshCompanyOptions = async () => {
     try {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar usuários');
-      setUsers(Array.isArray(data) ? data : []);
+      const rc = await fetch('/api/admin/companies?forSelect=1');
+      const dc = await rc.json();
+      if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
+      const list = Array.isArray(dc) ? dc : [];
+      setCompanyOptions(list);
+      setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
     } catch (e) {
       setError(e?.message || 'Erro');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -245,9 +281,9 @@ export function UsersAdminTab() {
               borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
           >
-            {companies.length === 0 ? (
+            {companyOptions.length === 0 ? (
               <option value="">(nenhuma empresa — cadastre em Empresas)</option>
-            ) : companies.map((c) => (
+            ) : companyOptions.map((c) => (
               <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
             ))}
           </select>
@@ -263,7 +299,10 @@ export function UsersAdminTab() {
           </button>
           <button
             type="button"
-            onClick={bootstrap}
+            onClick={() => {
+              refreshCompanyOptions();
+              loadUsersOnly();
+            }}
             disabled={loading}
             style={{ background: 'transparent', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
@@ -276,7 +315,7 @@ export function UsersAdminTab() {
 
       <div style={{ ...S.card }}>
         <span style={S.label}>Usuários cadastrados</span>
-        {users.length === 0 ? (
+        {usersTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
             Nenhum usuário ainda.
           </p>
@@ -285,17 +324,17 @@ export function UsersAdminTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
               <thead>
                 <tr style={{ background: 'rgba(26,22,37,.02)' }}>
-                  <SortableTh columnKey="id" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>ID</SortableTh>
-                  <SortableTh columnKey="email" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Email</SortableTh>
-                  <SortableTh columnKey="role" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Função</SortableTh>
-                  <SortableTh columnKey="companyName" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Empresa</SortableTh>
-                  <SortableTh columnKey="active" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Ativo</SortableTh>
-                  <SortableTh columnKey="createdAt" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Criado em</SortableTh>
+                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>ID</SortableTh>
+                  <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Email</SortableTh>
+                  <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Função</SortableTh>
+                  <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Empresa</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Ativo</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Criado em</SortableTh>
                   <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedUsers.map((u) => {
+                {users.map((u) => {
                   const companyLabel = u.role === 'admin' ? '—' : (u.companyName || `#${u.companyId || '—'}`);
                   const createdAt = u.createdAt ? new Date(u.createdAt) : null;
                   return (
@@ -344,6 +383,56 @@ export function UsersAdminTab() {
                 })}
               </tbody>
             </table>
+            {navigateDashboard && usersTotal > 0 ? (
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+                marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
+              }}>
+                <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                  {usersTotal} usuário(s) · página {usersPage}/{usersTotalPages}
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    value={String(usersPageSize)}
+                    onChange={(e) => {
+                      const ps = parseInt(e.target.value, 10);
+                      navigateDashboard({ usersPage: 1, usersPageSize: ps, tab: 'users' });
+                    }}
+                    disabled={loading}
+                    style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
+                      cursor: 'pointer', fontFamily: 'monospace' }}
+                  >
+                    {PAGE_SIZE_OPTIONS.map((n) => (
+                      <option key={n} value={String(n)}>{n}/pág.</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={loading || usersPage <= 1}
+                    onClick={() => navigateDashboard({ usersPage: Math.max(1, usersPage - 1), tab: 'users' })}
+                    style={{ background: usersPage <= 1 ? 'transparent' : `${C.purple}18`,
+                      border: `1px solid ${usersPage <= 1 ? C.border : `${C.purple}55`}`,
+                      borderRadius: '10px', padding: '6px 12px', color: usersPage <= 1 ? C.faint : C.purple,
+                      fontSize: '11px', cursor: usersPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading || usersPage >= usersTotalPages}
+                    onClick={() => navigateDashboard({ usersPage: Math.min(usersTotalPages, usersPage + 1), tab: 'users' })}
+                    style={{ background: usersPage >= usersTotalPages ? 'transparent' : `${C.purple}18`,
+                      border: `1px solid ${usersPage >= usersTotalPages ? C.border : `${C.purple}55`}`,
+                      borderRadius: '10px', padding: '6px 12px',
+                      color: usersPage >= usersTotalPages ? C.faint : C.purple,
+                      fontSize: '11px', cursor: usersPage >= usersTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

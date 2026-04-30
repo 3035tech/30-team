@@ -2,16 +2,39 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME, hashPassword } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
+import { PAGE_SIZE_OPTIONS, sqlUsersOrderBy } from '../../../../lib/assessment-filters';
 
 function requireAdmin(payload) {
   return payload?.role === 'admin';
 }
 
-export async function GET() {
+const USER_SORT_KEYS = new Set(['id', 'email', 'role', 'companyName', 'active', 'createdAt']);
+
+export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
   if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const url = new URL(request.url);
+  const pageRaw = parseInt(url.searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+  const sizeRaw = parseInt(url.searchParams.get('pageSize') || '20', 10);
+  const pageSize = PAGE_SIZE_OPTIONS.includes(sizeRaw) ? sizeRaw : 20;
+  const sortRaw = url.searchParams.get('sort') || 'createdAt';
+  const sort = USER_SORT_KEYS.has(sortRaw) ? sortRaw : 'createdAt';
+  const dir = url.searchParams.get('sortDir') === 'asc' ? 'asc' : 'desc';
+  const orderSql = sqlUsersOrderBy(sort, dir);
+
+  const cnt = await query(
+    `SELECT COUNT(*)::int AS n
+     FROM users u
+     WHERE u.deleted = FALSE`
+  );
+  const total = cnt.rows[0]?.n ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectivePage = Math.min(page, totalPages);
+  const offset = (effectivePage - 1) * pageSize;
 
   const r = await query(
     `SELECT
@@ -26,9 +49,17 @@ export async function GET() {
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id
      WHERE u.deleted = FALSE
-     ORDER BY u.created_at DESC`
+     ${orderSql}
+     LIMIT $1 OFFSET $2`,
+    [pageSize, offset]
   );
-  return NextResponse.json(r.rows);
+  return NextResponse.json({
+    items: r.rows,
+    total,
+    page: effectivePage,
+    pageSize,
+    totalPages,
+  });
 }
 
 export async function POST(request) {

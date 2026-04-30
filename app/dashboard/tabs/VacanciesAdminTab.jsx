@@ -179,7 +179,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/companies');
+      const res = await fetch('/api/admin/companies?forSelect=1');
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
       setCompanies(Array.isArray(data) ? data : []);
@@ -495,54 +495,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
                 );
               })}
             </div>
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
-              marginTop: '12px', marginBottom: '8px', paddingBottom: '10px', borderBottom: `1px solid ${C.border}`,
-            }}>
-              <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                {vacTotal} vaga(s) · página {vacPage}/{vacTotalPages}
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                <select
-                  value={String(vacPageSize)}
-                  onChange={(e) => {
-                    const ps = parseInt(e.target.value, 10);
-                    navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' });
-                  }}
-                  disabled={loading}
-                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
-                    cursor: 'pointer', fontFamily: 'monospace' }}
-                >
-                  {PAGE_SIZE_OPTIONS.map((n) => (
-                    <option key={n} value={String(n)}>{n}/pág.</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={loading || vacPage <= 1}
-                  onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
-                  style={{ background: vacPage <= 1 ? 'transparent' : `${C.purple}18`,
-                    border: `1px solid ${vacPage <= 1 ? C.border : `${C.purple}55`}`,
-                    borderRadius: '10px', padding: '6px 12px', color: vacPage <= 1 ? C.faint : C.purple,
-                    fontSize: '11px', cursor: vacPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  disabled={loading || vacPage >= vacTotalPages}
-                  onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
-                  style={{ background: vacPage >= vacTotalPages ? 'transparent' : `${C.purple}18`,
-                    border: `1px solid ${vacPage >= vacTotalPages ? C.border : `${C.purple}55`}`,
-                    borderRadius: '10px', padding: '6px 12px',
-                    color: vacPage >= vacTotalPages ? C.faint : C.purple,
-                    fontSize: '11px', cursor: vacPage >= vacTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
-                >
-                  Próxima
-                </button>
-              </div>
-            </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
             {vacancies.map((v) => {
               const token = v.activeToken || '';
@@ -635,6 +587,54 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
               );
             })}
           </div>
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+              marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`,
+            }}>
+              <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                {vacTotal} vaga(s) · página {vacPage}/{vacTotalPages}
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <select
+                  value={String(vacPageSize)}
+                  onChange={(e) => {
+                    const ps = parseInt(e.target.value, 10);
+                    navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' });
+                  }}
+                  disabled={loading}
+                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
+                    cursor: 'pointer', fontFamily: 'monospace' }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <option key={n} value={String(n)}>{n}/pág.</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={loading || vacPage <= 1}
+                  onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
+                  style={{ background: vacPage <= 1 ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${vacPage <= 1 ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '6px 12px', color: vacPage <= 1 ? C.faint : C.purple,
+                    fontSize: '11px', cursor: vacPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || vacPage >= vacTotalPages}
+                  onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
+                  style={{ background: vacPage >= vacTotalPages ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${vacPage >= vacTotalPages ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '6px 12px',
+                    color: vacPage >= vacTotalPages ? C.faint : C.purple,
+                    fontSize: '11px', cursor: vacPage >= vacTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>

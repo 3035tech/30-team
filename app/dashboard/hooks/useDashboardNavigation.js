@@ -1,10 +1,14 @@
 'use client';
 
 import {
+  parseCompaniesPagination,
+  parseCompaniesSort,
   parseCompatTabPagination,
   parseComparePagination,
   parseTeamPagination,
   parseTeamSort,
+  parseUsersPagination,
+  parseUsersSort,
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
@@ -73,6 +77,24 @@ export function useDashboardNavigation({
     p.set('compatPage', String(Math.max(1, compatPg)));
     p.set('compatPageSize', String(compatPs));
 
+    const usrPgSt = parseUsersPagination(merged);
+    const uPg = opts.usersPage != null ? opts.usersPage : usrPgSt.page;
+    const uPs = opts.usersPageSize != null ? opts.usersPageSize : usrPgSt.pageSize;
+    p.set('usersPage', String(Math.max(1, uPg)));
+    p.set('usersPageSize', String(uPs));
+    const usrSortSt = parseUsersSort(merged);
+    p.set('usersSort', opts.usersSort != null ? opts.usersSort : usrSortSt.sort);
+    p.set('usersSortDir', opts.usersSortDir != null ? opts.usersSortDir : usrSortSt.dir);
+
+    const coPgSt = parseCompaniesPagination(merged);
+    const coPg = opts.companiesPage != null ? opts.companiesPage : coPgSt.page;
+    const coPs = opts.companiesPageSize != null ? opts.companiesPageSize : coPgSt.pageSize;
+    p.set('companiesPage', String(Math.max(1, coPg)));
+    p.set('companiesPageSize', String(coPs));
+    const coSortSt = parseCompaniesSort(merged);
+    p.set('companiesSort', opts.companiesSort != null ? opts.companiesSort : coSortSt.sort);
+    p.set('companiesSortDir', opts.companiesSortDir != null ? opts.companiesSortDir : coSortSt.dir);
+
     const resolvedTab =
       opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
     p.set('tab', resolvedTab);
@@ -98,6 +120,8 @@ export function useDashboardNavigation({
       comparePage: 1,
       vacanciesPage: 1,
       compatPage: 1,
+      usersPage: 1,
+      companiesPage: 1,
     });
   };
 

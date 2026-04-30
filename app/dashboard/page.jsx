@@ -230,6 +230,13 @@ JOIN areas ar ON ar.id = ass.area_id
 LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 `;
 
+    /** Mesmo escopo de filtros (área, vaga, perfil) sem JOIN em candidates — para agregações de Liderança. */
+    const ANALYTICS_ASSESSMENT_JOIN = `
+FROM assessments ass
+JOIN areas ar ON ar.id = ass.area_id
+LEFT JOIN vacancies v ON v.id = ass.vacancy_id
+`;
+
     const { whereParts, params } = assessmentListWhereParts({
       isAdmin,
       companyId,
@@ -315,78 +322,36 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     );
     results = pageRes.rows.map((r) => enrichAssessmentDashboardRow(r, enrichCtx));
 
-    const distWhereParts = [];
-    const distParams = [];
-    if (!isAdmin) {
-      distParams.push(companyId);
-      distWhereParts.push(`ass.company_id = $${distParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      distParams.push(scopeCompanyFilter);
-      distWhereParts.push(`ass.company_id = $${distParams.length}`);
-    }
-    const distWhere = distWhereParts.length ? `WHERE ${distWhereParts.join(' AND ')}` : '';
     const distAgg = await queryRead(
       `SELECT ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType", COUNT(*)::int AS cnt
-       FROM assessments ass
-       JOIN areas ar ON ar.id = ass.area_id
-       ${distWhere}
+       ${ANALYTICS_ASSESSMENT_JOIN}
+       ${assessmentWhere}
        GROUP BY ar.key, ar.label, ass.top_type
-       ORDER BY ar.label, ass.top_type`
-      ,distParams
+       ORDER BY ar.label, ass.top_type`,
+      params
     );
-    const monthlyParts = [];
-    const monthlyParams = [];
-    if (!isAdmin) {
-      monthlyParams.push(companyId);
-      monthlyParts.push(`company_id = $${monthlyParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      monthlyParams.push(scopeCompanyFilter);
-      monthlyParts.push(`company_id = $${monthlyParams.length}`);
-    }
-    const monthlyWhere = monthlyParts.length ? `WHERE ${monthlyParts.join(' AND ')}` : '';
     const monthlyAgg = await queryRead(
-      `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
-       FROM assessments
-       ${monthlyWhere}
+      `SELECT to_char(date_trunc('month', ass.created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
+       ${ANALYTICS_ASSESSMENT_JOIN}
+       ${assessmentWhere}
        GROUP BY 1
        ORDER BY 1`,
-      monthlyParams
+      params
     );
-    const totalsParts = [];
-    const totalsParams = [];
-    if (!isAdmin) {
-      totalsParams.push(companyId);
-      totalsParts.push(`company_id = $${totalsParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      totalsParams.push(scopeCompanyFilter);
-      totalsParts.push(`company_id = $${totalsParams.length}`);
-    }
-    const totalsWhere = totalsParts.length ? `WHERE ${totalsParts.join(' AND ')}` : '';
     const totalsAgg = await queryRead(
       `SELECT
          COUNT(*)::int AS assessments,
-         COUNT(DISTINCT candidate_id)::int AS candidates,
-         COUNT(DISTINCT area_id)::int AS areas_active
-       FROM assessments
-       ${totalsWhere}`,
-      totalsParams
+         COUNT(DISTINCT ass.candidate_id)::int AS candidates,
+         COUNT(DISTINCT ass.area_id)::int AS areas_active
+       ${ANALYTICS_ASSESSMENT_JOIN}
+       ${assessmentWhere}`,
+      params
     );
-    const scoresWhereParts = [];
-    const scoresParams = [];
-    if (!isAdmin) {
-      scoresParams.push(companyId);
-      scoresWhereParts.push(`ass.company_id = $${scoresParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      scoresParams.push(scopeCompanyFilter);
-      scoresWhereParts.push(`ass.company_id = $${scoresParams.length}`);
-    }
-    const scoresWhere = scoresWhereParts.length ? `WHERE ${scoresWhereParts.join(' AND ')}` : '';
     const scoresAll = await queryRead(
       `SELECT ar.key AS "areaKey", ass.scores
-       FROM assessments ass
-       JOIN areas ar ON ar.id = ass.area_id
-       ${scoresWhere}`,
-      scoresParams
+       ${ANALYTICS_ASSESSMENT_JOIN}
+       ${assessmentWhere}`,
+      params
     );
     const scoresRowsByKey = {};
     for (const row of scoresAll.rows) {
@@ -409,16 +374,6 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 
     let leadershipPotentials = [];
     try {
-      const leadParts = [];
-      const leadParams = [];
-      if (!isAdmin) {
-        leadParams.push(companyId);
-        leadParts.push(`ass.company_id = $${leadParams.length}`);
-      } else if (scopeCompanyFilter != null) {
-        leadParams.push(scopeCompanyFilter);
-        leadParts.push(`ass.company_id = $${leadParams.length}`);
-      }
-      const leadWhere = leadParts.length ? `WHERE ${leadParts.join(' AND ')}` : '';
       const latestCand = await queryRead(
         `SELECT DISTINCT ON (ass.candidate_id, ass.company_id)
            ass.company_id AS "companyId",
@@ -430,9 +385,11 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
          FROM assessments ass
          JOIN candidates cand ON cand.id = ass.candidate_id
          JOIN companies co ON co.id = ass.company_id AND co.deleted = FALSE
-         ${leadWhere}
+         JOIN areas ar ON ar.id = ass.area_id
+         LEFT JOIN vacancies v ON v.id = ass.vacancy_id
+         ${assessmentWhere}
          ORDER BY ass.candidate_id, ass.company_id, ass.created_at DESC`,
-        leadParams
+        params
       );
       leadershipPotentials = buildLeadershipPotentialsByCompany(latestCand.rows, { topPerCompany: 6 });
     } catch (le) {

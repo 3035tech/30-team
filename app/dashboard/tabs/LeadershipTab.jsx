@@ -36,9 +36,9 @@ export function LeadershipTab({ analytics }) {
       <div style={{ ...S.card, padding: '22px 28px' }}>
         <span style={S.label}>Analytics para liderança</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Consolida todas as avaliações cadastradas — não aplica os filtros de área, vaga ou perfil do topo.
-          Se você for admin e escolher uma empresa no cabeçalho, estes números ficam restritos a essa empresa.
-          Use para ver volume, distribuição de tipos por área, tendência mensal e aderência média às rubricas definidas.
+          Consolida avaliações no <strong style={{ color: C.text, fontWeight: 600 }}>mesmo escopo</strong> dos filtros do
+          cabeçalho: empresa (admin), área/setor, vaga e perfil (T1–T9). KPIs, série mensal, distribuição por tipo,
+          resumo por área e potenciais de liderança refletem apenas as avaliações que passam nesses filtros.
         </p>
       </div>
 

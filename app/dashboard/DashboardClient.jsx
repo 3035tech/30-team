@@ -330,60 +330,6 @@ export default function DashboardClient({
             </div>
           </div>
 
-          {(tab === 'team' && listTotal > 0) ? (
-            <div style={{ ...S.card, padding: '16px 22px', marginBottom: '18px', display: 'flex',
-              flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                Itens por página (Equipe — lista nesta página)
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-                <select
-                  value={String(pagination.pageSize)}
-                  onChange={(e) => {
-                    const ps = parseInt(e.target.value, 10);
-                    pushTeamPagination({ teamPage: 1, teamPageSize: ps });
-                  }}
-                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace' }}
-                >
-                  {PAGE_SIZE_OPTIONS.map((n) => (
-                    <option key={n} value={String(n)}>{n}</option>
-                  ))}
-                </select>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    disabled={pagination.page <= 1}
-                    onClick={() => pushTeamPagination({ teamPage: pagination.page - 1 })}
-                    style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
-                      fontSize: '12px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
-                  >
-                    Anterior
-                  </button>
-                  <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
-                    {pagination.page} / {pagination.totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={pagination.page >= pagination.totalPages}
-                    onClick={() => pushTeamPagination({ teamPage: pagination.page + 1 })}
-                    style={{ background: pagination.page >= pagination.totalPages ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '8px 14px',
-                      color: pagination.page >= pagination.totalPages ? C.faint : C.purple,
-                      fontSize: '12px',
-                      cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
-                  >
-                    Próxima
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'users' && tab !== 'vacancies' ? (
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
@@ -396,12 +342,67 @@ export default function DashboardClient({
               {tab === 'leadership' && <LeadershipTab analytics={analytics} />}
               {tab === 'overview' && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies} />}
               {tab === 'team' && (
-                <TeamTab
-                  results={results}
-                  sortKey={teamQuerySort.sort}
-                  sortDir={teamQuerySort.dir}
-                  onSort={pushTeamSort}
-                />
+                <>
+                  <TeamTab
+                    results={results}
+                    sortKey={teamQuerySort.sort}
+                    sortDir={teamQuerySort.dir}
+                    onSort={pushTeamSort}
+                  />
+                  {listTotal > 0 ? (
+                    <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
+                      flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                        Itens por página · Equipe
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                        <select
+                          value={String(pagination.pageSize)}
+                          onChange={(e) => {
+                            const ps = parseInt(e.target.value, 10);
+                            pushTeamPagination({ teamPage: 1, teamPageSize: ps });
+                          }}
+                          style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                            cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          {PAGE_SIZE_OPTIONS.map((n) => (
+                            <option key={n} value={String(n)}>{n} / página</option>
+                          ))}
+                        </select>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            disabled={pagination.page <= 1}
+                            onClick={() => pushTeamPagination({ teamPage: pagination.page - 1 })}
+                            style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
+                              border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
+                              borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
+                              fontSize: '12px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                          >
+                            Anterior
+                          </button>
+                          <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
+                            {pagination.page} / {pagination.totalPages}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={pagination.page >= pagination.totalPages}
+                            onClick={() => pushTeamPagination({ teamPage: pagination.page + 1 })}
+                            style={{ background: pagination.page >= pagination.totalPages ? 'transparent' : `${C.purple}18`,
+                              border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
+                              borderRadius: '10px', padding: '8px 14px',
+                              color: pagination.page >= pagination.totalPages ? C.faint : C.purple,
+                              fontSize: '12px',
+                              cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                          >
+                            Próxima
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               )}
               {tab === 'compatibility' && (
                 <CompatTab
@@ -422,8 +423,8 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} />}
-              {tab === 'companies' && isAdmin && <CompaniesAdminTab />}
-              {tab === 'users' && isAdmin && <UsersAdminTab />}
+              {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} />}
+              {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} />}
               {tab === 'group' && (
                 <GroupTab
                   results={interactionPeople}
