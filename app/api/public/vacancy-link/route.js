@@ -12,7 +12,8 @@ export async function GET(request) {
        v.title,
        v.status,
        v.company_id AS "companyId",
-       l.expires_at AS "expiresAt"
+       l.expires_at AS "expiresAt",
+       COALESCE(l.require_candidate_email, FALSE) AS "requireCandidateEmail"
      FROM vacancy_links l
      JOIN vacancies v ON v.id = l.vacancy_id
      JOIN companies c ON c.id = v.company_id

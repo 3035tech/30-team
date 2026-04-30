@@ -10,7 +10,8 @@ export async function GET(request) {
     `SELECT
        c.id AS "companyId",
        c.name,
-       l.expires_at AS "expiresAt"
+       l.expires_at AS "expiresAt",
+       COALESCE(l.require_candidate_email, FALSE) AS "requireCandidateEmail"
      FROM company_links l
      JOIN companies c ON c.id = l.company_id
      WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()

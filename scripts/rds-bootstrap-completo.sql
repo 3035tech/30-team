@@ -48,6 +48,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_company_links_company_active_unique
   ON company_links (company_id)
   WHERE active = TRUE;
 
+ALTER TABLE company_links
+  ADD COLUMN IF NOT EXISTS require_candidate_email BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE TABLE IF NOT EXISTS results (
   id          SERIAL PRIMARY KEY,
   name        TEXT NOT NULL,
@@ -324,6 +327,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_vacancy_links_token_unique ON vacancy_link
 CREATE UNIQUE INDEX IF NOT EXISTS idx_vacancy_links_vacancy_active_unique
   ON vacancy_links (vacancy_id)
   WHERE active = TRUE;
+
+ALTER TABLE vacancy_links
+  ADD COLUMN IF NOT EXISTS require_candidate_email BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE assessments
   ADD COLUMN IF NOT EXISTS vacancy_id BIGINT REFERENCES vacancies(id) ON DELETE SET NULL;

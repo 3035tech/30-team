@@ -99,10 +99,12 @@ export default function HomePage() {
           Adequado a RH e liderança que precisam de visão agregada por empresa e vaga — para apoiar decisões combinando dados e conversa, com rastreio passível de auditoria.
         </p>
 
-        <p style={{ fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '22px', fontStyle: 'italic' }}>
-          Para iniciar o formulário, você precisa acessar um <b>link com token válido</b> enviado pela empresa (ex.: <code>/t/&lt;token&gt;</code> ou{' '}
-          <code>/v/&lt;token&gt;</code>).
-        </p>
+        <div id="como-funciona">
+          <p style={{ fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '22px', fontStyle: 'italic' }}>
+            Para iniciar o formulário, você precisa acessar um <b>link com token válido</b> enviado pela empresa (ex.: <code>/t/&lt;token&gt;</code> ou{' '}
+            <code>/v/&lt;token&gt;</code>).
+          </p>
+        </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
           <button
@@ -121,7 +123,8 @@ export default function HomePage() {
             Sou gestor (dashboard) →
           </button>
           <button
-            onClick={() => router.push('/')}
+            type="button"
+            onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             style={{
               background: 'rgba(26,22,37,.03)',
               border: `1px solid ${C.border}`,
@@ -133,7 +136,7 @@ export default function HomePage() {
               fontFamily: FONTS.serif,
             }}
           >
-            Página inicial
+            Como funciona
           </button>
         </div>
 

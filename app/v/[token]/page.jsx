@@ -34,7 +34,13 @@ export default function VacancyTokenEntryPage() {
     return <AssessmentFlow vacancyToken={token || ''} notice={{ kind: 'info', title: 'Carregando vaga…', message: 'Validando o link e o status da vaga.' }} />;
   }
   if (state.error) {
-    return <AssessmentFlow vacancyToken={token || ''} notice={{ kind: 'warning', title: 'Não foi possível abrir', message: state.error }} startDisabled={true} />;
+    return (
+      <AssessmentFlow
+        vacancyToken={token || ''}
+        notice={{ kind: 'warning', title: 'Não foi possível abrir', message: state.error }}
+        startDisabled={true}
+      />
+    );
   }
 
   const v = state.vacancy;
@@ -43,6 +49,13 @@ export default function VacancyTokenEntryPage() {
     ? { kind: 'warning', title: 'Vaga encerrada', message: 'Essa vaga não está mais aberta. Você pode ver o formulário, mas o RH pode não considerar novas submissões.' }
     : { kind: 'info', title: 'Vaga', message: v?.title ? `Você está se candidatando para: ${v.title}` : 'Link válido.' };
 
-  return <AssessmentFlow vacancyToken={token || ''} notice={notice} startDisabled={isClosed} />;
+  return (
+    <AssessmentFlow
+      vacancyToken={token || ''}
+      notice={notice}
+      startDisabled={isClosed}
+      requireCandidateEmail={!!v?.requireCandidateEmail}
+    />
+  );
 }
 

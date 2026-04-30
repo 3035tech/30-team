@@ -33,10 +33,22 @@ export default function CompanyTokenEntryPage() {
   }, [token]);
 
   if (state.loading) {
-    return <AssessmentFlow companyToken={token || ''} notice={{ kind: 'info', title: 'Carregando…', message: 'Validando o link da empresa.' }} startDisabled={true} />;
+    return (
+      <AssessmentFlow
+        companyToken={token || ''}
+        notice={{ kind: 'info', title: 'Carregando…', message: 'Validando o link da empresa.' }}
+        startDisabled={true}
+      />
+    );
   }
   if (state.error) {
-    return <AssessmentFlow companyToken={token || ''} notice={{ kind: 'warning', title: 'Não foi possível abrir', message: state.error }} startDisabled={true} />;
+    return (
+      <AssessmentFlow
+        companyToken={token || ''}
+        notice={{ kind: 'warning', title: 'Não foi possível abrir', message: state.error }}
+        startDisabled={true}
+      />
+    );
   }
 
   const c = state.company;
@@ -44,6 +56,6 @@ export default function CompanyTokenEntryPage() {
     ? { kind: 'info', title: 'Empresa', message: `Você está respondendo pela empresa: ${c.name}` }
     : { kind: 'info', title: 'Link válido', message: 'Você pode iniciar o formulário.' };
 
-  return <AssessmentFlow companyToken={token || ''} notice={notice} />;
+  return <AssessmentFlow companyToken={token || ''} notice={notice} requireCandidateEmail={!!c?.requireCandidateEmail} />;
 }
 

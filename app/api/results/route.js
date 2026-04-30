@@ -41,7 +41,8 @@ export async function POST(request) {
     if (vacancyToken) {
       const token = String(vacancyToken || '').trim();
       const link = await query(
-        `SELECT v.id AS "vacancyId", v.company_id AS "companyId", v.status
+        `SELECT v.id AS "vacancyId", v.company_id AS "companyId", v.status,
+                COALESCE(l.require_candidate_email, FALSE) AS "requireCandidateEmail"
          FROM vacancy_links l
          JOIN vacancies v ON v.id = l.vacancy_id
          JOIN companies c ON c.id = v.company_id
@@ -58,10 +59,17 @@ export async function POST(request) {
       }
       companyId = link.rows[0].companyId;
       resolvedVacancyId = link.rows[0].vacancyId;
+      if (link.rows[0].requireCandidateEmail && !normalizeEmail(email)) {
+        return NextResponse.json(
+          { error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
+          { status: 400 }
+        );
+      }
     } else {
       const token = String(companyToken || '').trim();
       const link = await query(
-        `SELECT l.company_id AS "companyId"
+        `SELECT l.company_id AS "companyId",
+                COALESCE(l.require_candidate_email, FALSE) AS "requireCandidateEmail"
          FROM company_links l
          JOIN companies c ON c.id = l.company_id
          WHERE l.token = $1 AND l.active = TRUE AND l.expires_at > NOW()
@@ -73,6 +81,12 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
       }
       companyId = link.rows[0].companyId;
+      if (link.rows[0].requireCandidateEmail && !normalizeEmail(email)) {
+        return NextResponse.json(
+          { error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
+          { status: 400 }
+        );
+      }
     }
 
     const safeName = name.trim();
