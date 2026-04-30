@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
-import { assessmentListWhereParts, sqlWhere } from '../../../../lib/assessment-filters';
+import {
+  assessmentListWhereParts,
+  PAGE_SIZE_OPTIONS,
+  sqlWhere,
+} from '../../../../lib/assessment-filters';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -45,6 +49,14 @@ export async function GET(request) {
   const enneRaw = String(url.searchParams.get('enneagram') || '').trim();
   const enneagram = /^[1-9]$/.test(enneRaw) ? enneRaw : 'all';
 
+  const pageRaw = parseInt(url.searchParams.get('comparePage') || url.searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+  const sizeRaw = parseInt(
+    url.searchParams.get('comparePageSize') || url.searchParams.get('pageSize') || '20',
+    10
+  );
+  const pageSize = PAGE_SIZE_OPTIONS.includes(sizeRaw) ? sizeRaw : 20;
+
   const { whereParts, params } = assessmentListWhereParts({
     isAdmin,
     companyId,
@@ -54,6 +66,19 @@ export async function GET(request) {
     enneagram,
   });
   const where = sqlWhere(whereParts);
+
+  const cntRes = await query(
+    `SELECT COUNT(*)::int AS n ${BASE_JOIN} ${where}`,
+    params
+  );
+  const total = cntRes.rows[0]?.n ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectivePage = total === 0 ? 1 : Math.min(page, totalPages);
+
+  const pageParams = [...params];
+  pageParams.push(pageSize);
+  const limIx = pageParams.length;
+  pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
 
   const result = await query(
     `SELECT
@@ -69,9 +94,16 @@ export async function GET(request) {
        ass.created_at AS "createdAt"
      ${BASE_JOIN}
      ${where}
-     ORDER BY ass.created_at DESC, ass.id DESC`,
-    params
+     ORDER BY ass.created_at DESC, ass.id DESC
+     LIMIT $${limIx} OFFSET $${offIx}`,
+    pageParams
   );
 
-  return NextResponse.json({ rows: result.rows });
+  return NextResponse.json({
+    rows: result.rows,
+    total,
+    page: effectivePage,
+    pageSize,
+    totalPages,
+  });
 }

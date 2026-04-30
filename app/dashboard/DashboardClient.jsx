@@ -1,10 +1,17 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TYPE_DATA, getCompat } from '../../lib/data';
 
-import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
+import {
+  PAGE_SIZE_OPTIONS,
+  parseDashboardTab,
+  parseTeamPagination,
+  parseVacanciesPagination,
+  parseComparePagination,
+  parseCompatTabPagination,
+} from '../../lib/assessment-filters';
 
 const C = {
   bg:'#ffffff', card:'rgba(124,58,237,0.06)', border:'rgba(26,22,37,0.12)',
@@ -71,8 +78,9 @@ export default function DashboardClient({
   analytics = null,
   auth = null,
 }) {
-  const [tab, setTab] = useState('overview');
   const router = useRouter();
+  const urlParams = useSearchParams();
+
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
   const [company, setCompany] = useState(selectedCompany);
@@ -88,6 +96,7 @@ export default function DashboardClient({
 
   const isAdmin = (auth?.role || '') === 'admin';
   const canManage = ['admin','hr','direction'].includes(auth?.role || '');
+  const tab = parseDashboardTab(urlParams, { canVacancies: canManage, isAdmin });
 
   useEffect(() => {
     setArea(selectedArea);
@@ -102,42 +111,99 @@ export default function DashboardClient({
     setEnneagram(selectedEnneagram);
   }, [selectedEnneagram]);
 
-  const buildSearchParams = (opts = {}) => {
-    const nextArea = opts.area ?? area;
-    const nextVacancy = opts.vacancy ?? vacancy;
-    const nextCompany = opts.company ?? company;
-    const nextEnneagram = opts.enneagram ?? enneagram;
-    const nextPage = opts.page != null ? opts.page : pagination.page;
-    const nextPageSize = opts.pageSize != null ? opts.pageSize : pagination.pageSize;
-    const sp = new URLSearchParams();
-    if (isAdmin && nextCompany && nextCompany !== 'all') sp.set('company', nextCompany);
-    if (nextArea && nextArea !== 'all') sp.set('area', nextArea);
-    if (nextVacancy && nextVacancy !== 'all') sp.set('vacancy', nextVacancy);
-    if (nextEnneagram && nextEnneagram !== 'all') sp.set('enneagram', nextEnneagram);
-    sp.set('page', String(Math.max(1, nextPage)));
-    sp.set('pageSize', String(nextPageSize));
-    return sp;
+  const snapshot = () => Object.fromEntries(urlParams.entries());
+
+  const buildDashboardUrl = (opts = {}) => {
+    const p = new URLSearchParams();
+    const nextCompany = opts.company !== undefined ? opts.company : company;
+    const nextArea = opts.area !== undefined ? opts.area : area;
+    const nextVacancy = opts.vacancy !== undefined ? opts.vacancy : vacancy;
+    const nextEnneagram = opts.enneagram !== undefined ? opts.enneagram : enneagram;
+
+    if (isAdmin && nextCompany && nextCompany !== 'all') {
+      p.set('company', String(nextCompany));
+    }
+
+    if (nextArea && nextArea !== 'all') p.set('area', nextArea);
+
+    if (nextVacancy && nextVacancy !== 'all') p.set('vacancy', String(nextVacancy));
+
+    if (nextEnneagram && nextEnneagram !== 'all') p.set('enneagram', nextEnneagram);
+
+    const merged = { ...snapshot(), ...opts };
+    const teamFrom = parseTeamPagination(merged);
+    const teamPg = opts.teamPage != null ? opts.teamPage : teamFrom.page;
+    const teamPs = opts.teamPageSize != null ? opts.teamPageSize : teamFrom.pageSize;
+    p.set('teamPage', String(Math.max(1, teamPg)));
+    p.set('teamPageSize', String(teamPs));
+
+    const vacLst = parseVacanciesPagination(merged);
+    const vPg = opts.vacanciesPage != null ? opts.vacanciesPage : vacLst.page;
+    const vPs = opts.vacanciesPageSize != null ? opts.vacanciesPageSize : vacLst.pageSize;
+    p.set('vacanciesPage', String(Math.max(1, vPg)));
+    p.set('vacanciesPageSize', String(vPs));
+
+    const cmp = parseComparePagination(merged);
+    const cPg = opts.comparePage != null ? opts.comparePage : cmp.page;
+    const cPs = opts.comparePageSize != null ? opts.comparePageSize : cmp.pageSize;
+    p.set('comparePage', String(Math.max(1, cPg)));
+    p.set('comparePageSize', String(cPs));
+
+    const compat = parseCompatTabPagination(merged);
+    const compatPg = opts.compatPage != null ? opts.compatPage : compat.page;
+    const compatPs = opts.compatPageSize != null ? opts.compatPageSize : compat.pageSize;
+    p.set('compatPage', String(Math.max(1, compatPg)));
+    p.set('compatPageSize', String(compatPs));
+
+    const resolvedTab =
+      opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
+    p.set('tab', resolvedTab);
+
+    return p;
   };
 
-  const navigateWith = (opts) => {
-    const sp = buildSearchParams(opts);
-    router.push(`/dashboard?${sp.toString()}`);
+  const navigateWithOpts = (opts) => {
+    router.push(`/dashboard?${buildDashboardUrl(opts).toString()}`);
   };
 
-  const pushFilters = (next) => {
-    navigateWith({
-      ...(next?.company != null ? { company: next.company } : {}),
-      ...(next?.area != null ? { area: next.area } : {}),
-      ...(next?.vacancy != null ? { vacancy: next.vacancy } : {}),
-      ...(next?.enneagram != null ? { enneagram: next.enneagram } : {}),
-      page: 1,
+  const navigateToTab = (id) => {
+    navigateWithOpts({ tab: id });
+  };
+
+  const pushFilters = (nextFilter) => {
+    navigateWithOpts({
+      ...(nextFilter?.company != null ? { company: nextFilter.company } : {}),
+      ...(nextFilter?.area != null ? { area: nextFilter.area } : {}),
+      ...(nextFilter?.vacancy != null ? { vacancy: nextFilter.vacancy } : {}),
+      ...(nextFilter?.enneagram != null ? { enneagram: nextFilter.enneagram } : {}),
+      teamPage: 1,
+      comparePage: 1,
+      vacanciesPage: 1,
+      compatPage: 1,
     });
   };
 
-  const pushPagination = (opts) => {
-    navigateWith({
-      page: opts.page ?? pagination.page,
-      pageSize: opts.pageSize ?? pagination.pageSize,
+  const pushTeamPagination = (opts) => {
+    navigateWithOpts({
+      teamPage: opts.teamPage ?? pagination.page,
+      teamPageSize: opts.teamPageSize ?? pagination.pageSize,
+    });
+  };
+
+  const pushComparePagination = (opts) => {
+    const cmp = parseComparePagination(snapshot());
+    navigateWithOpts({
+      comparePage: opts.page ?? cmp.page,
+      comparePageSize: opts.pageSize ?? cmp.pageSize,
+    });
+  };
+
+  const compatListPagination = parseCompatTabPagination(snapshot());
+  const pushCompatListPagination = (opts) => {
+    const cx = parseCompatTabPagination(snapshot());
+    navigateWithOpts({
+      compatPage: opts.page ?? cx.page,
+      compatPageSize: opts.pageSize ?? cx.pageSize,
     });
   };
 
@@ -186,22 +252,75 @@ export default function DashboardClient({
     return sp.toString();
   }, [isAdmin, company, area, vacancy, enneagram]);
 
-  const Tab = ({id,label}) => (
-    <button onClick={()=>setTab(id)} style={{
-      padding:'8px 16px', background:tab===id?C.purple:'transparent',
-      border:tab===id?'none':`1px solid ${C.border}`, borderRadius:'8px',
-      color:tab===id?'#fff':C.muted, fontSize:'11px', cursor:'pointer',
-      fontFamily:'monospace', letterSpacing:'1px', textTransform:'uppercase' }}>
+  const comparePagSnap = parseComparePagination(snapshot());
+
+  const NavLink = ({ id, label }) => (
+    <button
+      type="button"
+      onClick={() => navigateToTab(id)}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        padding: '11px 12px',
+        marginBottom: '4px',
+        borderRadius: '10px',
+        border: 'none',
+        background: tab === id ? `${C.purple}18` : 'transparent',
+        color: tab === id ? C.purpleDark : C.muted,
+        fontSize: '12px',
+        cursor: 'pointer',
+        fontFamily: 'monospace',
+        letterSpacing: '0.5px',
+        borderLeft: tab === id ? `3px solid ${C.purple}` : '3px solid transparent',
+        paddingLeft: tab === id ? '9px' : '11px',
+      }}
+    >
       {label}
     </button>
   );
 
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:"'Georgia','Times New Roman',serif",
-      color:C.text, padding:'32px 24px 60px' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: C.bg,
+      fontFamily: "'Georgia','Times New Roman',serif",
+      color: C.text,
+      position: 'relative',
+    }}>
       <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, pointerEvents:'none',
         background:`radial-gradient(ellipse at 15% 25%,rgba(124,58,237,.06) 0%,transparent 55%)` }}/>
-      <div style={{ maxWidth:'920px', margin:'0 auto', position:'relative', zIndex:1 }}>
+
+      <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+        <aside style={{
+          width: '226px',
+          flexShrink: 0,
+          borderRight: `1px solid ${C.border}`,
+          padding: '24px 14px 32px 18px',
+          background: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(14px)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}>
+          <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>Painel</span>
+          <nav style={{ flex: 1 }}>
+            <NavLink id="overview" label="Visão geral" />
+            <NavLink id="team" label="Equipe" />
+            <NavLink id="compatibility" label="Compatibilidade" />
+            <NavLink id="compare" label="Comparativo" />
+            <NavLink id="group" label="Grupos" />
+            <NavLink id="leadership" label="Liderança" />
+            {canManage ? <NavLink id="vacancies" label="Vagas" /> : null}
+            {isAdmin ? <NavLink id="companies" label="Empresas" /> : null}
+          </nav>
+        </aside>
+
+        <div style={{
+          flex: 1,
+          minWidth: 0,
+          padding: '28px 24px 60px',
+          maxWidth: '1120px',
+        }}>
 
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
@@ -215,9 +334,9 @@ export default function DashboardClient({
             </h2>
             <span style={{ fontSize:'13px', color:C.muted }}>
               {listTotal} {listTotal === 1 ? 'avaliação com os filtros atuais' : 'avaliações com os filtros atuais'}
-              {pagination.total > 0 ? (
+              {pagination.total > 0 && tab === 'team' ? (
                 <span style={{ color: C.faint }}>
-                  {' '}· página {pagination.page} de {pagination.totalPages} ({pagination.pageSize} por página na Equipe)
+                  {' '}· página {pagination.page} de {pagination.totalPages} ({pagination.pageSize} nesta vista)
                 </span>
               ) : null}
             </span>
@@ -302,18 +421,18 @@ export default function DashboardClient({
           </div>
         </div>
 
-        {listTotal > 0 ? (
+        {(tab === 'team' && listTotal > 0) ? (
           <div style={{ ...S.card, padding: '16px 22px', marginBottom: '18px', display: 'flex',
             flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-              Itens por página (Equipe)
+              Itens por página (Equipe — lista nesta página)
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
               <select
                 value={String(pagination.pageSize)}
                 onChange={(e) => {
                   const ps = parseInt(e.target.value, 10);
-                  pushPagination({ page: 1, pageSize: ps });
+                  pushTeamPagination({ teamPage: 1, teamPageSize: ps });
                 }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
@@ -327,7 +446,7 @@ export default function DashboardClient({
                 <button
                   type="button"
                   disabled={pagination.page <= 1}
-                  onClick={() => pushPagination({ page: pagination.page - 1 })}
+                  onClick={() => pushTeamPagination({ teamPage: pagination.page - 1 })}
                   style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
                     border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
                     borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
@@ -341,7 +460,7 @@ export default function DashboardClient({
                 <button
                   type="button"
                   disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => pushPagination({ page: pagination.page + 1 })}
+                  onClick={() => pushTeamPagination({ teamPage: pagination.page + 1 })}
                   style={{ background: pagination.page >= pagination.totalPages ? 'transparent' : `${C.purple}18`,
                     border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
                     borderRadius: '10px', padding: '8px 14px',
@@ -356,19 +475,7 @@ export default function DashboardClient({
           </div>
         ) : null}
 
-        <>
-          <div style={{ display:'flex', gap:'8px', marginBottom:'24px', flexWrap:'wrap' }}>
-            <Tab id="overview"      label="Visão Geral"/>
-            <Tab id="team"          label="Equipe"/>
-            <Tab id="compatibility" label="Compatibilidade"/>
-            <Tab id="compare"       label="Comparativo"/>
-            <Tab id="group"         label="Grupos"/>
-            <Tab id="leadership"    label="Liderança"/>
-            {canManage && <Tab id="vacancies"   label="Vagas"/>}
-            {isAdmin && <Tab id="companies"    label="Empresas"/>}
-          </div>
-
-          {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
+        {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
             <div style={{...S.card, textAlign:'center', padding:'60px'}}>
               <div style={{ fontSize:'40px', marginBottom:'16px' }}>🌑</div>
               <p style={{ color:C.muted, fontStyle:'italic' }}>
@@ -380,9 +487,25 @@ export default function DashboardClient({
               {tab==='leadership'    && <LeadershipTab analytics={analytics}/>}
               {tab==='overview'      && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies}/>}
               {tab==='team'          && <TeamTab results={results}/>}
-              {tab==='compatibility' && <CompatTab tensions={tensions} synergies={synergies} pairs={pairs}/>}
-              {tab==='compare'       && <CompareTabLoader queryString={compareQueryString}/>}
-              {tab==='vacancies'     && canManage && <VacanciesAdminTab isAdmin={isAdmin}/>}
+              {tab==='compatibility' && (
+                <CompatTab
+                  tensions={tensions}
+                  synergies={synergies}
+                  pairs={pairs}
+                  compatPage={compatListPagination.page}
+                  compatPageSize={compatListPagination.pageSize}
+                  onCompatPagination={pushCompatListPagination}
+                />
+              )}
+              {tab==='compare' && (
+                <CompareTabLoader
+                  filterQueryString={compareQueryString}
+                  comparePage={comparePagSnap.page}
+                  comparePageSize={comparePagSnap.pageSize}
+                  onComparePagination={pushComparePagination}
+                />
+              )}
+              {tab==='vacancies'     && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts}/>}
               {tab==='companies'     && isAdmin && <CompaniesAdminTab/>}
               {tab==='group'         && (
                 <GroupTab
@@ -399,7 +522,7 @@ export default function DashboardClient({
               )}
             </>
           )}
-        </>
+        </div>
       </div>
     </div>
   );
@@ -667,8 +790,9 @@ function LeadershipTab({ analytics }) {
   );
 }
 
-function CompareTabLoader({ queryString }) {
+function CompareTabLoader({ filterQueryString, comparePage, comparePageSize, onComparePagination }) {
   const [rows, setRows] = useState([]);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1, page: 1 });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
 
@@ -676,13 +800,20 @@ function CompareTabLoader({ queryString }) {
     let cancelled = false;
     setLoading(true);
     setErr('');
-    const q = queryString ? `?${queryString}` : '';
-    fetch(`/api/admin/assessment-rows${q}`)
+    const q = new URLSearchParams(filterQueryString || '');
+    q.set('comparePage', String(comparePage));
+    q.set('comparePageSize', String(comparePageSize));
+    fetch(`/api/admin/assessment-rows?${q.toString()}`)
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
         if (cancelled) return;
         if (!ok) throw new Error(d?.error || 'Falha ao carregar');
         setRows(Array.isArray(d.rows) ? d.rows : []);
+        setMeta({
+          total: typeof d.total === 'number' ? d.total : (Array.isArray(d.rows) ? d.rows.length : 0),
+          totalPages: typeof d.totalPages === 'number' ? d.totalPages : 1,
+          page: typeof d.page === 'number' ? d.page : comparePage,
+        });
       })
       .catch((e) => {
         if (!cancelled) setErr(e?.message || 'Erro');
@@ -691,7 +822,7 @@ function CompareTabLoader({ queryString }) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [queryString]);
+  }, [filterQueryString, comparePage, comparePageSize]);
 
   if (loading) {
     return (
@@ -707,7 +838,68 @@ function CompareTabLoader({ queryString }) {
       </div>
     );
   }
-  return <CompareTab results={rows} />;
+
+  const effPage = meta.page;
+  const totPg = meta.totalPages;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <CompareTab results={rows} />
+      {meta.total > 0 ? (
+        <div style={{
+          ...S.card, padding: '14px 20px', display: 'flex', flexWrap: 'wrap',
+          alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+            Lista do comparativo (página própria) · {meta.total} pessoa(s)
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+            <select
+              value={String(comparePageSize)}
+              onChange={(e) => {
+                const ps = parseInt(e.target.value, 10);
+                onComparePagination({ page: 1, pageSize: ps });
+              }}
+              style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <option key={n} value={String(n)}>{n}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={effPage <= 1}
+              onClick={() => onComparePagination({ page: effPage - 1, pageSize: comparePageSize })}
+              style={{ background: effPage <= 1 ? 'transparent' : `${C.purple}18`,
+                border: `1px solid ${effPage <= 1 ? C.border : `${C.purple}55`}`,
+                borderRadius: '10px', padding: '8px 14px', color: effPage <= 1 ? C.faint : C.purple,
+                fontSize: '12px', cursor: effPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+            >
+              Anterior
+            </button>
+            <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '90px', textAlign: 'center' }}>
+              {effPage} / {totPg}
+            </span>
+            <button
+              type="button"
+              disabled={effPage >= totPg}
+              onClick={() => onComparePagination({ page: effPage + 1, pageSize: comparePageSize })}
+              style={{ background: effPage >= totPg ? 'transparent' : `${C.purple}18`,
+                border: `1px solid ${effPage >= totPg ? C.border : `${C.purple}55`}`,
+                borderRadius: '10px', padding: '8px 14px',
+                color: effPage >= totPg ? C.faint : C.purple,
+                fontSize: '12px',
+                cursor: effPage >= totPg ? 'default' : 'pointer', fontFamily: 'monospace' }}
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function OverviewTab({ typeCount, maxCount, distributionTotal, tensions, synergies }) {
@@ -922,10 +1114,25 @@ function TeamTab({ results }) {
   );
 }
 
-function CompatTab({ tensions, synergies, pairs }) {
+function CompatTab({
+  tensions,
+  synergies,
+  pairs,
+  compatPage = 1,
+  compatPageSize = 20,
+  onCompatPagination,
+}) {
   const [section, setSection] = useState('tensions');
-  const SecBtn=({id,label,count,color})=>(
-    <button onClick={()=>setSection(id)} style={{
+  const SecBtn = ({ id, label, count, color }) => (
+    <button
+      type="button"
+      onClick={() => {
+        setSection(id);
+        if (onCompatPagination) {
+          onCompatPagination({ page: 1, pageSize: compatPageSize });
+        }
+      }}
+      style={{
       padding:'8px 16px', display:'flex', alignItems:'center', gap:'8px',
       background:section===id?`${color}20`:'rgba(26,22,37,.04)',
       border:`1px solid ${section===id?color:C.border}`,
@@ -934,7 +1141,11 @@ function CompatTab({ tensions, synergies, pairs }) {
       {label} <span style={{ background:`${color}30`, padding:'1px 7px', borderRadius:'10px', fontSize:'11px' }}>{count}</span>
     </button>
   );
-  const display=section==='tensions'?tensions:section==='synergies'?synergies:pairs;
+  const display = section === 'tensions' ? tensions : section === 'synergies' ? synergies : pairs;
+  const listLen = display.length;
+  const totalPg = Math.max(1, Math.ceil(listLen / compatPageSize));
+  const pg = Math.min(Math.max(1, compatPage || 1), totalPg);
+  const sliced = listLen === 0 ? [] : display.slice((pg - 1) * compatPageSize, pg * compatPageSize);
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px', marginBottom:'20px' }}>
@@ -960,8 +1171,10 @@ function CompatTab({ tensions, synergies, pairs }) {
           <p style={{ color:C.muted, fontStyle:'italic' }}>Nenhum par nessa categoria.</p>
         </div>
       ):(
-        display.map((pair,i)=>{
+        <>
+        {sliced.map((pair, i)=>{
           const {a,b,compat}=pair;
+          const pairKey = `${String(a?.assessmentId ?? 'a')}_${String(b?.assessmentId ?? 'b')}_${i}`;
           const lc={synergy:C.synergy,tension:C.tension,neutral:C.neutral}[compat.level];
 
           const PersonCard = ({ person }) => {
@@ -995,7 +1208,7 @@ function CompatTab({ tensions, synergies, pairs }) {
           };
 
           return (
-            <div key={i} style={{ background:C.card, border:`1px solid ${lc}30`,
+            <div key={pairKey} style={{ background:C.card, border:`1px solid ${lc}30`,
               borderRadius:'14px', padding:'18px 18px', marginBottom:'12px' }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
                 flexWrap:'wrap', gap:'12px', marginBottom:'12px' }}>
@@ -1040,7 +1253,58 @@ function CompatTab({ tensions, synergies, pairs }) {
               )}
             </div>
           );
-        })
+        })}
+        {onCompatPagination && listLen > 0 ? (
+          <div style={{
+            ...S.card, padding: '12px 18px', display: 'flex', flexWrap: 'wrap',
+            alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+            marginTop: '8px',
+          }}>
+            <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              Pares nesta vista · página {pg} de {totalPg}
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <select
+                value={String(compatPageSize)}
+                onChange={(e) => {
+                  const ps = parseInt(e.target.value, 10);
+                  onCompatPagination({ page: 1, pageSize: ps });
+                }}
+                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
+                  cursor: 'pointer', fontFamily: 'monospace' }}
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={String(n)}>{n}/pág.</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={pg <= 1}
+                onClick={() => onCompatPagination({ page: pg - 1, pageSize: compatPageSize })}
+                style={{ background: pg <= 1 ? 'transparent' : `${C.purple}18`,
+                  border: `1px solid ${pg <= 1 ? C.border : `${C.purple}55`}`,
+                  borderRadius: '10px', padding: '6px 12px', color: pg <= 1 ? C.faint : C.purple,
+                  fontSize: '11px', cursor: pg <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                disabled={pg >= totalPg}
+                onClick={() => onCompatPagination({ page: pg + 1, pageSize: compatPageSize })}
+                style={{ background: pg >= totalPg ? 'transparent' : `${C.purple}18`,
+                  border: `1px solid ${pg >= totalPg ? C.border : `${C.purple}55`}`,
+                  borderRadius: '10px', padding: '6px 12px',
+                  color: pg >= totalPg ? C.faint : C.purple,
+                  fontSize: '11px', cursor: pg >= totalPg ? 'default' : 'pointer', fontFamily: 'monospace' }}
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        ) : null}
+        </>
       )}
       <div style={{ marginTop:'16px', padding:'16px 20px', background:'rgba(167,139,250,.05)',
         border:`1px solid rgba(167,139,250,.15)`, borderRadius:'12px' }}>
@@ -1955,15 +2219,17 @@ function VacancyInviteByEmail({ vacancyId }) {
   );
 }
 
-function VacanciesAdminTab({ isAdmin }) {
+function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
+  const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
-  const [vacPage, setVacPage] = useState(1);
-  const [vacPageSize, setVacPageSize] = useState(20);
+  const { page: vacPage, pageSize: vacPageSize } = parseVacanciesPagination(
+    Object.fromEntries(urlParams.entries())
+  );
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
 
@@ -2264,7 +2530,10 @@ function VacanciesAdminTab({ isAdmin }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                 <select
                   value={String(vacPageSize)}
-                  onChange={(e) => { setVacPage(1); setVacPageSize(parseInt(e.target.value, 10)); }}
+                  onChange={(e) => {
+                    const ps = parseInt(e.target.value, 10);
+                    navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' });
+                  }}
                   disabled={loading}
                   style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                     borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
@@ -2277,7 +2546,7 @@ function VacanciesAdminTab({ isAdmin }) {
                 <button
                   type="button"
                   disabled={loading || vacPage <= 1}
-                  onClick={() => setVacPage((p) => Math.max(1, p - 1))}
+                  onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
                   style={{ background: vacPage <= 1 ? 'transparent' : `${C.purple}18`,
                     border: `1px solid ${vacPage <= 1 ? C.border : `${C.purple}55`}`,
                     borderRadius: '10px', padding: '6px 12px', color: vacPage <= 1 ? C.faint : C.purple,
@@ -2288,7 +2557,7 @@ function VacanciesAdminTab({ isAdmin }) {
                 <button
                   type="button"
                   disabled={loading || vacPage >= vacTotalPages}
-                  onClick={() => setVacPage((p) => Math.min(vacTotalPages, p + 1))}
+                  onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
                   style={{ background: vacPage >= vacTotalPages ? 'transparent' : `${C.purple}18`,
                     border: `1px solid ${vacPage >= vacTotalPages ? C.border : `${C.purple}55`}`,
                     borderRadius: '10px', padding: '6px 12px',

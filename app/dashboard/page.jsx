@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
@@ -451,23 +452,40 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
   }
 
   return (
-    <DashboardClient
-      results={results}
-      pagination={pagination}
-      compatMetrics={compatMetrics}
-      interactionPeople={interactionPeople}
-      selectedEnneagram={enneagram}
-      areas={areas}
-      companies={companiesForFilter}
-      counts={counts}
-      vacancies={vacancies}
-      selectedArea={selectedArea}
-      selectedVacancy={selectedVacancy}
-      selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
-      areaStats={areaStats}
-      areaRubric={areaRubric}
-      analytics={analytics}
-      auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null }}
-    />
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Georgia, serif',
+            color: 'rgba(26,22,37,0.55)',
+          }}
+        >
+          Carregando painel…
+        </div>
+      }
+    >
+      <DashboardClient
+        results={results}
+        pagination={pagination}
+        compatMetrics={compatMetrics}
+        interactionPeople={interactionPeople}
+        selectedEnneagram={enneagram}
+        areas={areas}
+        companies={companiesForFilter}
+        counts={counts}
+        vacancies={vacancies}
+        selectedArea={selectedArea}
+        selectedVacancy={selectedVacancy}
+        selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
+        areaStats={areaStats}
+        areaRubric={areaRubric}
+        analytics={analytics}
+        auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null }}
+      />
+    </Suspense>
   );
 }
