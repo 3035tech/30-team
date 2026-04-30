@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import crypto from 'node:crypto';
+import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessment-filters';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -61,6 +62,11 @@ export async function GET(request) {
   const rawSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
   const pageSize = VACANCY_PAGE_SIZES.has(rawSize) ? rawSize : 20;
 
+  const { sort: vacSortCol, dir: vacSortDir } = parseVacanciesSort(Object.fromEntries(url.searchParams.entries()), {
+    isAdmin,
+  });
+  const vacancyOrderClause = sqlVacancyOrderBy(vacSortCol, vacSortDir);
+
   const countR = await query(
     `SELECT COUNT(*)::int AS n
      FROM vacancies v
@@ -90,7 +96,7 @@ export async function GET(request) {
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
      ${where}
-     ORDER BY v.created_at DESC
+     ${vacancyOrderClause}
      LIMIT $${limI} OFFSET $${offI}`,
     listParams
   );

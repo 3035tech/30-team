@@ -8,7 +8,9 @@ import {
   PAGE_SIZE_OPTIONS,
   parseDashboardTab,
   parseTeamPagination,
+  parseTeamSort,
   parseVacanciesPagination,
+  parseVacanciesSort,
   parseComparePagination,
   parseCompatTabPagination,
 } from '../../lib/assessment-filters';
@@ -48,6 +50,48 @@ const TypeBadge = ({ type }) => {
     </span>
   );
 };
+
+function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' }) {
+  const active = sortKey === columnKey;
+  return (
+    <th
+      scope="col"
+      tabIndex={0}
+      role="columnheader"
+      aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      onClick={() => onSort(columnKey)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSort(columnKey);
+        }
+      }}
+      style={{
+        textAlign: align,
+        padding: '10px 12px',
+        color: active ? C.purpleLight : C.muted,
+        fontWeight: 600,
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        borderBottom: `1px solid ${C.border}`,
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
+    >
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        {children}
+        <span style={{ color: C.faint }}>{active ? (dir === 'asc' ? '▲' : '▼') : ''}</span>
+      </span>
+    </th>
+  );
+}
+
+function clientSortNextDir(column, previousKey, previousDir) {
+  if (previousKey === column) return previousDir === 'asc' ? 'desc' : 'asc';
+  return column === 'createdAt' ? 'desc' : 'asc';
+}
 
 const CompatBadge = ({ level }) => {
   const map = { synergy:{label:'Sinergia',color:C.synergy}, tension:{label:'Tensão',color:C.tension}, neutral:{label:'Neutro',color:C.neutral} };
@@ -132,6 +176,9 @@ export default function DashboardClient({
 
     const merged = { ...snapshot(), ...opts };
     const teamFrom = parseTeamPagination(merged);
+    const teamSortSt = parseTeamSort(merged);
+    p.set('teamSort', teamSortSt.sort);
+    p.set('teamSortDir', teamSortSt.dir);
     const teamPg = opts.teamPage != null ? opts.teamPage : teamFrom.page;
     const teamPs = opts.teamPageSize != null ? opts.teamPageSize : teamFrom.pageSize;
     p.set('teamPage', String(Math.max(1, teamPg)));
@@ -142,6 +189,10 @@ export default function DashboardClient({
     const vPs = opts.vacanciesPageSize != null ? opts.vacanciesPageSize : vacLst.pageSize;
     p.set('vacanciesPage', String(Math.max(1, vPg)));
     p.set('vacanciesPageSize', String(vPs));
+
+    const vacSortSt = parseVacanciesSort(merged, { isAdmin });
+    p.set('vacanciesSort', vacSortSt.sort);
+    p.set('vacanciesSortDir', vacSortSt.dir);
 
     const cmp = parseComparePagination(merged);
     const cPg = opts.comparePage != null ? opts.comparePage : cmp.page;
@@ -190,6 +241,17 @@ export default function DashboardClient({
     });
   };
 
+  const pushTeamSort = (column) => {
+    const cur = parseTeamSort(snapshot());
+    const nextDir =
+      cur.sort === column ? (cur.dir === 'asc' ? 'desc' : 'asc') : column === 'createdAt' ? 'desc' : 'asc';
+    navigateWithOpts({
+      teamSort: column,
+      teamSortDir: nextDir,
+      teamPage: 1,
+    });
+  };
+
   const pushComparePagination = (opts) => {
     const cmp = parseComparePagination(snapshot());
     navigateWithOpts({
@@ -199,6 +261,7 @@ export default function DashboardClient({
   };
 
   const compatListPagination = parseCompatTabPagination(snapshot());
+  const teamQuerySort = parseTeamSort(snapshot());
   const pushCompatListPagination = (opts) => {
     const cx = parseCompatTabPagination(snapshot());
     navigateWithOpts({
@@ -312,6 +375,7 @@ export default function DashboardClient({
             <NavLink id="leadership" label="Liderança" />
             {canManage ? <NavLink id="vacancies" label="Vagas" /> : null}
             {isAdmin ? <NavLink id="companies" label="Empresas" /> : null}
+            {isAdmin ? <NavLink id="users" label="Usuários" /> : null}
           </nav>
         </aside>
 
@@ -475,7 +539,7 @@ export default function DashboardClient({
           </div>
         ) : null}
 
-        {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
+        {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'users' && tab !== 'vacancies' ? (
             <div style={{...S.card, textAlign:'center', padding:'60px'}}>
               <div style={{ fontSize:'40px', marginBottom:'16px' }}>🌑</div>
               <p style={{ color:C.muted, fontStyle:'italic' }}>
@@ -486,7 +550,14 @@ export default function DashboardClient({
             <>
               {tab==='leadership'    && <LeadershipTab analytics={analytics}/>}
               {tab==='overview'      && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies}/>}
-              {tab==='team'          && <TeamTab results={results}/>}
+              {tab==='team'          && (
+                <TeamTab
+                  results={results}
+                  sortKey={teamQuerySort.sort}
+                  sortDir={teamQuerySort.dir}
+                  onSort={pushTeamSort}
+                />
+              )}
               {tab==='compatibility' && (
                 <CompatTab
                   tensions={tensions}
@@ -507,6 +578,7 @@ export default function DashboardClient({
               )}
               {tab==='vacancies'     && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts}/>}
               {tab==='companies'     && isAdmin && <CompaniesAdminTab/>}
+              {tab==='users'        && isAdmin && <UsersAdminTab/>}
               {tab==='group'         && (
                 <GroupTab
                   results={interactionPeople}
@@ -988,10 +1060,18 @@ function OverviewTab({ typeCount, maxCount, distributionTotal, tensions, synergi
   );
 }
 
-function TeamTab({ results }) {
+function TeamTab({ results, sortKey, sortDir, onSort }) {
   const [open, setOpen] = useState(null);
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+
+  const sortColumns = [
+    { k: 'createdAt', label: 'Data' },
+    { k: 'name', label: 'Nome' },
+    { k: 'area', label: 'Área' },
+    { k: 'type', label: 'Tipo perfil' },
+    { k: 'vacancy', label: 'Vaga' },
+  ];
 
   const deleteCandidate = async (candidateId, name) => {
     const id = String(candidateId || '').trim();
@@ -1013,6 +1093,48 @@ function TeamTab({ results }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+      <div
+        role="group"
+        aria-label="Ordenar lista da equipe"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          background: 'rgba(26,22,37,.03)',
+          borderRadius: '12px',
+          border: `1px solid ${C.border}`,
+        }}
+      >
+        <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Ordenar por
+        </span>
+        {sortColumns.map(({ k, label }) => {
+          const active = sortKey === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => onSort(k)}
+              aria-pressed={active}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                cursor: 'pointer',
+                border: `1px solid ${active ? `${C.purple}55` : C.border}`,
+                background: active ? `${C.purple}18` : 'transparent',
+                color: active ? C.purple : C.muted,
+              }}
+            >
+              {label}
+              {active ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+            </button>
+          );
+        })}
+      </div>
       {results.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
@@ -1612,33 +1734,67 @@ function CompareTab({ results }) {
   );
 }
 
-function CompaniesAdminTab() {
+
+function UsersAdminTab() {
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
-
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-
+  const [msg, setMsg] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('hr');
   const [newUserCompanyId, setNewUserCompanyId] = useState('');
-  const [userMsg, setUserMsg] = useState('');
+  const [listSort, setListSort] = useState({ key: 'createdAt', dir: 'desc' });
 
-  const appUrl =
-    (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+  const sortedUsers = useMemo(() => {
+    const mul = listSort.dir === 'asc' ? 1 : -1;
+    const rows = [...users];
+    rows.sort((a, b) => {
+      switch (listSort.key) {
+        case 'id':
+          return (Number(a.id) - Number(b.id)) * mul;
+        case 'email':
+          return String(a.email || '').localeCompare(String(b.email || ''), 'pt') * mul;
+        case 'role':
+          return String(a.role || '').localeCompare(String(b.role || ''), 'pt') * mul;
+        case 'companyName': {
+          const ca = a.role === 'admin' ? '\u0000' : (a.companyName || '');
+          const cb = b.role === 'admin' ? '\u0000' : (b.companyName || '');
+          return ca.localeCompare(cb, 'pt') * mul;
+        }
+        case 'active':
+          return ((a.active ? 1 : 0) - (b.active ? 1 : 0)) * mul;
+        case 'createdAt':
+        default: {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return (ta - tb) * mul;
+        }
+      }
+    });
+    return rows;
+  }, [users, listSort]);
 
-  const loadCompanies = async () => {
+  const toggleUserSort = (col) => {
+    setListSort((prev) => ({ key: col, dir: clientSortNextDir(col, prev.key, prev.dir) }));
+  };
+
+  const bootstrap = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/companies');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
-      setCompanies(Array.isArray(data) ? data : []);
-      if (!newUserCompanyId && Array.isArray(data) && data.length) setNewUserCompanyId(String(data[0].id));
+      const rc = await fetch('/api/admin/companies');
+      const dc = await rc.json();
+      if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
+      const list = Array.isArray(dc) ? dc : [];
+      setCompanies(list);
+      setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
+
+      const ru = await fetch('/api/admin/users');
+      const du = await ru.json();
+      if (!ru.ok) throw new Error(du?.error || 'Falha ao carregar usuários');
+      setUsers(Array.isArray(du) ? du : []);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -1646,7 +1802,11 @@ function CompaniesAdminTab() {
     }
   };
 
-  const loadUsers = async () => {
+  useEffect(() => {
+    bootstrap();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadUsersOnly = async () => {
     setLoading(true);
     setError('');
     try {
@@ -1661,9 +1821,325 @@ function CompaniesAdminTab() {
     }
   };
 
+  const createUser = async () => {
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          role: newUserRole,
+          companyId: newUserRole === 'admin' ? null : (newUserCompanyId ? parseInt(newUserCompanyId, 10) : null),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao criar usuário');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setMsg('Usuário criado.');
+      await loadUsersOnly();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
+      setMsg('Usuário desativado (exclusão lógica).');
+      await loadUsersOnly();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const editUser = async (u) => {
+    const nextEmail = window.prompt('Email', u?.email ?? '');
+    if (nextEmail == null) return;
+    const nextRole = window.prompt('Role (hr/direction/admin)', u?.role ?? 'hr');
+    if (nextRole == null) return;
+    const nextCompanyIdRaw =
+      nextRole.trim() === 'admin'
+        ? ''
+        : window.prompt('Company ID (obrigatório para hr/direction)', u?.companyId != null ? String(u.companyId) : '');
+    if (nextCompanyIdRaw == null) return;
+    const nextActiveRaw = window.prompt('Ativo? (true/false)', String(Boolean(u?.active)));
+    if (nextActiveRaw == null) return;
+    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
+    const nextPassword = window.prompt('Nova senha (deixe em branco para não alterar)', '');
+    if (nextPassword == null) return;
+
+    const payload = {
+      email: String(nextEmail).trim(),
+      role: String(nextRole).trim(),
+      active: nextActive,
+    };
+    if (payload.role !== 'admin') {
+      payload.companyId = String(nextCompanyIdRaw).trim()
+        ? parseInt(String(nextCompanyIdRaw).trim(), 10)
+        : null;
+    } else payload.companyId = null;
+    if (String(nextPassword).trim()) payload.password = String(nextPassword).trim();
+
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar usuário');
+      setMsg('Usuário atualizado.');
+      await loadUsersOnly();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {error ? (
+        <div style={{ ...S.card, padding: '14px 18px' }}>
+          <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
+        </div>
+      ) : null}
+      {msg ? (
+        <div style={{ ...S.card, padding: '14px 18px' }}>
+          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{msg}</p>
+        </div>
+      ) : null}
+
+      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Usuários</span>
+      <div style={{ ...S.card, padding: '22px 28px' }}>
+        <span style={S.label}>Contas do painel</span>
+        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+          Perfis RH e Direção precisam de uma empresa cadastrada em <strong style={{ color: C.text, fontWeight: 600 }}>Empresas</strong>.
+          Admin tem acesso global. O login usa e-mail e senha definidos aqui.
+        </p>
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Novo usuário (RH / Direção / admin)</span>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+          <input
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
+            placeholder="email@empresa.com"
+            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <input
+            value={newUserPassword}
+            onChange={(e) => setNewUserPassword(e.target.value)}
+            placeholder="Senha"
+            type="password"
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+          />
+          <select
+            value={newUserRole}
+            onChange={(e) => setNewUserRole(e.target.value)}
+            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace' }}
+          >
+            <option value="hr">hr</option>
+            <option value="direction">direction</option>
+            <option value="admin">admin</option>
+          </select>
+          <select
+            value={newUserCompanyId}
+            onChange={(e) => setNewUserCompanyId(e.target.value)}
+            disabled={newUserRole === 'admin'}
+            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
+          >
+            {companies.length === 0 ? (
+              <option value="">(nenhuma empresa — cadastre em Empresas)</option>
+            ) : companies.map((c) => (
+              <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={createUser}
+            disabled={loading || !newUserEmail.trim() || !newUserPassword.trim()}
+            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !newUserEmail.trim() || !newUserPassword.trim()) ? 0.6 : 1 }}
+          >
+            Criar usuário
+          </button>
+          <button
+            type="button"
+            onClick={bootstrap}
+            disabled={loading}
+            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+          >
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div style={{ ...S.card }}>
+        <span style={S.label}>Usuários cadastrados</span>
+        {users.length === 0 ? (
+          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
+            Nenhum usuário ainda.
+          </p>
+        ) : (
+          <div style={{ marginTop: '10px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
+              <thead>
+                <tr style={{ background: 'rgba(26,22,37,.02)' }}>
+                  <SortableTh columnKey="id" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>ID</SortableTh>
+                  <SortableTh columnKey="email" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Email</SortableTh>
+                  <SortableTh columnKey="role" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Função</SortableTh>
+                  <SortableTh columnKey="companyName" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Empresa</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Ativo</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.key} dir={listSort.dir} onSort={toggleUserSort}>Criado em</SortableTh>
+                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedUsers.map((u) => {
+                  const companyLabel = u.role === 'admin' ? '—' : (u.companyName || `#${u.companyId || '—'}`);
+                  const createdAt = u.createdAt ? new Date(u.createdAt) : null;
+                  return (
+                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                      <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{u.id}</td>
+                      <td style={{ padding: '12px', color: C.text }}>{u.email}</td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ padding: '2px 8px', fontSize: '10px', borderRadius: '20px',
+                          background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                          color: C.muted, fontFamily: 'monospace' }}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{companyLabel}</td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? 'sim' : 'não'}</td>
+                      <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                        {createdAt ? createdAt.toLocaleString() : '—'}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => editUser(u)}
+                            disabled={loading}
+                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteUser(u.id)}
+                            disabled={loading}
+                            title="Desativa o usuário (exclusão lógica)"
+                            style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                              borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                          >
+                            Desativar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CompaniesAdminTab() {
+  const [loading, setLoading] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [error, setError] = useState('');
+  const [msg, setMsg] = useState('');
+  const [listSort, setListSort] = useState({ key: 'name', dir: 'asc' });
+
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+
+  const sortedCompanies = useMemo(() => {
+    const mul = listSort.dir === 'asc' ? 1 : -1;
+    const rows = [...companies];
+    rows.sort((a, b) => {
+      switch (listSort.key) {
+        case 'id':
+          return (Number(a.id) - Number(b.id)) * mul;
+        case 'name':
+          return String(a.name || '').localeCompare(String(b.name || ''), 'pt') * mul;
+        case 'slug':
+          return String(a.slug || '').localeCompare(String(b.slug || ''), 'pt') * mul;
+        case 'active':
+          return ((a.active ? 1 : 0) - (b.active ? 1 : 0)) * mul;
+        case 'createdAt':
+        default: {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return (ta - tb) * mul;
+        }
+      }
+    });
+    return rows;
+  }, [companies, listSort]);
+
+  const toggleCompanySort = (col) => {
+    setListSort((prev) => ({ key: col, dir: clientSortNextDir(col, prev.key, prev.dir) }));
+  };
+
+  const appUrl =
+    (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+
+  const loadCompanies = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/companies');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
+      setCompanies(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadCompanies();
-    loadUsers();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createCompany = async () => {
@@ -1709,15 +2185,14 @@ function CompaniesAdminTab() {
     if (!ok) return;
     setLoading(true);
     setError('');
-    setUserMsg('');
+    setMsg('');
     try {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar empresa');
-      setUserMsg('Empresa arquivada.');
+      setMsg('Empresa arquivada.');
       await loadCompanies();
-      await loadUsers();
-      setTimeout(() => setUserMsg(''), 1600);
+      setTimeout(() => setMsg(''), 1600);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -1736,7 +2211,7 @@ function CompaniesAdminTab() {
 
     setLoading(true);
     setError('');
-    setUserMsg('');
+    setMsg('');
     try {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(c.id)}`, {
         method: 'PATCH',
@@ -1745,9 +2220,9 @@ function CompaniesAdminTab() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar empresa');
-      setUserMsg('Empresa atualizada.');
+      setMsg('Empresa atualizada.');
       await loadCompanies();
-      setTimeout(() => setUserMsg(''), 1600);
+      setTimeout(() => setMsg(''), 1600);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -1758,105 +2233,15 @@ function CompaniesAdminTab() {
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      setUserMsg('Copiado.');
-      setTimeout(() => setUserMsg(''), 1200);
+      setMsg('Copiado.');
+      setTimeout(() => setMsg(''), 1200);
     } catch {
-      setUserMsg('Não foi possível copiar automaticamente.');
-      setTimeout(() => setUserMsg(''), 1600);
+      setMsg('Não foi possível copiar automaticamente.');
+      setTimeout(() => setMsg(''), 1600);
     }
   };
 
-  const createUser = async () => {
-    setLoading(true);
-    setError('');
-    setUserMsg('');
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: newUserEmail.trim(),
-          password: newUserPassword,
-          role: newUserRole,
-          companyId: newUserRole === 'admin' ? null : (newUserCompanyId ? parseInt(newUserCompanyId, 10) : null),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao criar usuário');
-      setNewUserEmail(''); setNewUserPassword('');
-      setUserMsg('Usuário criado.');
-      await loadUsers();
-      setTimeout(() => setUserMsg(''), 1600);
-    } catch (e) {
-      setError(e?.message || 'Erro');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const deleteUser = async (userId) => {
-    setLoading(true);
-    setError('');
-    setUserMsg('');
-    try {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
-      setUserMsg('Usuário desativado (exclusão lógica).');
-      await loadUsers();
-      setTimeout(() => setUserMsg(''), 1600);
-    } catch (e) {
-      setError(e?.message || 'Erro');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const editUser = async (u) => {
-    const nextEmail = window.prompt('Email', u?.email ?? '');
-    if (nextEmail == null) return;
-    const nextRole = window.prompt('Role (hr/direction/admin)', u?.role ?? 'hr');
-    if (nextRole == null) return;
-    const nextCompanyIdRaw =
-      nextRole.trim() === 'admin'
-        ? ''
-        : window.prompt('Company ID (obrigatório para hr/direction)', u?.companyId != null ? String(u.companyId) : '');
-    if (nextCompanyIdRaw == null) return;
-    const nextActiveRaw = window.prompt('Ativo? (true/false)', String(Boolean(u?.active)));
-    if (nextActiveRaw == null) return;
-    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
-    const nextPassword = window.prompt('Nova senha (deixe em branco para não alterar)', '');
-    if (nextPassword == null) return;
-
-    const payload = {
-      email: String(nextEmail).trim(),
-      role: String(nextRole).trim(),
-      active: nextActive,
-    };
-    if (payload.role !== 'admin') payload.companyId = String(nextCompanyIdRaw).trim() ? parseInt(String(nextCompanyIdRaw).trim(), 10) : null;
-    else payload.companyId = null;
-    if (String(nextPassword).trim()) payload.password = String(nextPassword).trim();
-
-    setLoading(true);
-    setError('');
-    setUserMsg('');
-    try {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar usuário');
-      setUserMsg('Usuário atualizado.');
-      await loadUsers();
-      setTimeout(() => setUserMsg(''), 1600);
-    } catch (e) {
-      setError(e?.message || 'Erro');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1865,9 +2250,9 @@ function CompaniesAdminTab() {
           <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
         </div>
       ) : null}
-      {userMsg ? (
+      {msg ? (
         <div style={{ ...S.card, padding: '14px 18px' }}>
-          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{userMsg}</p>
+          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{msg}</p>
         </div>
       ) : null}
 
@@ -1927,222 +2312,90 @@ function CompaniesAdminTab() {
             Nenhuma empresa ainda.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-            {companies.map((c) => {
-              const token = c.activeToken || '';
-              const link = token ? `${appUrl}/t/${token}` : '';
-              const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
-              return (
-                <div key={c.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.text, fontSize: '13px' }}>
-                        <span style={{ fontFamily: 'monospace', color: C.faint, marginRight: '8px' }}>#{c.id}</span>
-                        <strong style={{ fontWeight: 'normal' }}>{c.name}</strong>
-                        <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>({c.slug})</span>
-                      </div>
-                      {token ? (
-                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                          {link}
+          <div style={{ marginTop: '10px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '720px' }}>
+              <thead>
+                <tr style={{ background: 'rgba(26,22,37,.02)' }}>
+                  <SortableTh columnKey="id" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>ID</SortableTh>
+                  <SortableTh columnKey="name" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Nome</SortableTh>
+                  <SortableTh columnKey="slug" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Slug</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Ativa</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.key} dir={listSort.dir} onSort={toggleCompanySort}>Criada em</SortableTh>
+                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Link e ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedCompanies.map((c) => {
+                  const token = c.activeToken || '';
+                  const link = token ? `${appUrl}/t/${token}` : '';
+                  const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
+                  const createdAt = c.createdAt ? new Date(c.createdAt) : null;
+                  return (
+                    <tr key={c.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)', verticalAlign: 'top' }}>
+                      <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{c.id}</td>
+                      <td style={{ padding: '12px', color: C.text }}>{c.name}</td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.slug}</td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.active ? 'sim' : 'não'}</td>
+                      <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                        {createdAt ? createdAt.toLocaleString() : '—'}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                        <div style={{ marginBottom: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'left' }}>
+                          {token ? link : '(sem link ativo)'}
+                          {token && exp ? (
+                            <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint }}>expira {exp.toLocaleString()}</div>
+                          ) : null}
                         </div>
-                      ) : (
-                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                          (sem link ativo)
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => editCompany(c)}
+                            disabled={loading}
+                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => rotateLink(c.id)}
+                            disabled={loading}
+                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                          >
+                            Rotacionar link
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => token && copy(link)}
+                            disabled={loading || !token}
+                            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                          >
+                            Copiar link
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteCompany(c.id, c.name)}
+                            disabled={loading}
+                            style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                              borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                          >
+                            Arquivar
+                          </button>
                         </div>
-                      )}
-                      {token && exp ? (
-                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                          expira em {exp.toLocaleString()}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => editCompany(c)}
-                        disabled={loading}
-                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => rotateLink(c.id)}
-                        disabled={loading}
-                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                      >
-                        Rotacionar link
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => token && copy(link)}
-                        disabled={loading || !token}
-                        style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
-                      >
-                        Copiar link
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteCompany(c.id, c.name)}
-                        disabled={loading}
-                        style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                      >
-                        Arquivar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
-
-      <div style={{ marginTop: '12px', paddingTop: '28px', borderTop: `1px solid ${C.border}` }}>
-        <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Usuários</span>
-        <div style={{ ...S.card, padding: '22px 28px', marginBottom: '12px' }}>
-          <span style={S.label}>Contas do painel</span>
-          <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-            Perfis RH e Direção precisam de uma empresa. Admin tem acesso global. Após criar usuários aqui,
-            eles fazem login com e-mail e senha definidos.
-          </p>
-        </div>
-
-      <div style={{ ...S.card }}>
-        <span style={S.label}>Novo usuário (RH / Direção / admin)</span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-          <input
-            value={newUserEmail}
-            onChange={(e) => setNewUserEmail(e.target.value)}
-            placeholder="email@empresa.com"
-            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
-          />
-          <input
-            value={newUserPassword}
-            onChange={(e) => setNewUserPassword(e.target.value)}
-            placeholder="Senha"
-            type="password"
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
-          />
-          <select
-            value={newUserRole}
-            onChange={(e) => setNewUserRole(e.target.value)}
-            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace' }}
-          >
-            <option value="hr">hr</option>
-            <option value="direction">direction</option>
-            <option value="admin">admin</option>
-          </select>
-          <select
-            value={newUserCompanyId}
-            onChange={(e) => setNewUserCompanyId(e.target.value)}
-            disabled={newUserRole === 'admin'}
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
-          >
-            {companies.map((c) => (
-              <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={createUser}
-            disabled={loading || !newUserEmail.trim() || !newUserPassword.trim()}
-            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !newUserEmail.trim() || !newUserPassword.trim()) ? 0.6 : 1 }}
-          >
-            Criar usuário
-          </button>
-          <button
-            type="button"
-            onClick={loadUsers}
-            disabled={loading}
-            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-          >
-            Atualizar
-          </button>
-        </div>
-      </div>
-
-      <div style={{ ...S.card }}>
-        <span style={S.label}>Usuários cadastrados</span>
-        {users.length === 0 ? (
-          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            Nenhum usuário ainda.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-            {users.map((u) => {
-              const companyLabel = u.role === 'admin' ? '—' : (u.companyName || `#${u.companyId || '—'}`);
-              const createdAt = u.createdAt ? new Date(u.createdAt) : null;
-              return (
-                <div key={u.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.text, fontSize: '13px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <span style={{ fontFamily: 'monospace', color: C.faint }}>#{u.id}</span>
-                        <strong style={{ fontWeight: 'normal' }}>{u.email}</strong>
-                        <span style={{ padding: '2px 8px', fontSize: '10px', borderRadius: '20px',
-                          background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                          color: C.muted, fontFamily: 'monospace' }}>
-                          {u.role}
-                        </span>
-                      </div>
-                      <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                        Empresa: {companyLabel}
-                      </div>
-                      {createdAt ? (
-                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                          criado em {createdAt.toLocaleString()}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => editUser(u)}
-                        disabled={loading}
-                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteUser(u.id)}
-                        disabled={loading}
-                        title="Desativa o usuário (exclusão lógica)"
-                        style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                      >
-                        Desativar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
       </div>
     </div>
   );
@@ -2255,6 +2508,7 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
   const { page: vacPage, pageSize: vacPageSize } = parseVacanciesPagination(
     Object.fromEntries(urlParams.entries())
   );
+  const vacSortSt = parseVacanciesSort(Object.fromEntries(urlParams.entries()), { isAdmin });
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
 
@@ -2266,6 +2520,17 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
   const appUrl =
     (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
 
+  const pushVacanciesSort = (column) => {
+    const cur = parseVacanciesSort(Object.fromEntries(urlParams.entries()), { isAdmin });
+    const nextDir = clientSortNextDir(column, cur.sort, cur.dir);
+    navigateDashboard({
+      vacanciesSort: column,
+      vacanciesSortDir: nextDir,
+      vacanciesPage: 1,
+      tab: 'vacancies',
+    });
+  };
+
   const loadVacancies = async () => {
     setLoading(true);
     setError('');
@@ -2273,6 +2538,8 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
       const qs = new URLSearchParams({
         page: String(vacPage),
         pageSize: String(vacPageSize),
+        sort: vacSortSt.sort,
+        sortDir: vacSortSt.dir,
       }).toString();
       const res = await fetch(`/api/admin/vacancies?${qs}`);
       const data = await res.json();
@@ -2315,7 +2582,7 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
 
   useEffect(() => {
     loadVacancies();
-  }, [vacPage, vacPageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadCompanies();
@@ -2545,6 +2812,55 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
           </p>
         ) : (
           <>
+            <div
+              role="group"
+              aria-label="Ordenar vagas"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '10px',
+                marginTop: '12px',
+                padding: '12px',
+                background: 'rgba(26,22,37,.03)',
+                borderRadius: '12px',
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Ordenar por
+              </span>
+              {[
+                { k: 'id', label: 'ID' },
+                { k: 'title', label: 'Título' },
+                { k: 'status', label: 'Status' },
+                ...(isAdmin ? [{ k: 'companyName', label: 'Empresa' }] : []),
+                { k: 'createdAt', label: 'Criada em' },
+              ].map(({ k, label }) => {
+                const active = vacSortSt.sort === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => pushVacanciesSort(k)}
+                    aria-pressed={active}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                      cursor: 'pointer',
+                      border: `1px solid ${active ? `${C.purple}55` : C.border}`,
+                      background: active ? `${C.purple}18` : 'transparent',
+                      color: active ? C.purple : C.muted,
+                    }}
+                  >
+                    {label}
+                    {active ? (vacSortSt.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+                  </button>
+                );
+              })}
+            </div>
             <div style={{
               display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
               marginTop: '12px', marginBottom: '8px', paddingBottom: '10px', borderBottom: `1px solid ${C.border}`,

@@ -6,6 +6,8 @@ import { query } from '../../lib/db';
 import DashboardClient from './DashboardClient';
 import {
   parseDashboardPagination,
+  parseTeamSort,
+  sqlTeamOrderBy,
   assessmentListWhereParts,
   sqlWhere,
 } from '../../lib/assessment-filters';
@@ -172,6 +174,9 @@ export default async function DashboardPage({ searchParams }) {
     enneagram = enneParsed;
     pagination = { ...pagination, page, pageSize };
 
+    const teamSortState = parseTeamSort(searchParams);
+    const teamOrderSql = sqlTeamOrderBy(teamSortState.sort, teamSortState.dir);
+
     if (selectedArea !== 'all') {
       const areaRow = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
       const areaId = areaRow.rows?.[0]?.id;
@@ -271,7 +276,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
               ar.label AS "areaLabel"
        ${BASE_JOIN_LIST}
        ${assessmentWhere}
-       ORDER BY ass.created_at DESC, ass.id DESC`,
+       ${teamOrderSql}`,
       params
     );
     const bundles = buildCompatBundles(lightRes.rows);
@@ -304,7 +309,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
          ass.created_at AS "createdAt"
        ${BASE_JOIN_LIST}
        ${assessmentWhere}
-       ORDER BY ass.created_at DESC, ass.id DESC
+       ${teamOrderSql}
        LIMIT $${limIx} OFFSET $${offIx}`,
       pageParams
     );
