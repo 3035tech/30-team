@@ -4,6 +4,8 @@ services:
     image: postgres:16-alpine
     container_name: enneagram_postgres
     restart: unless-stopped
+    # Ajuste max_connections ≥ (número_de_réplicas × PG_POOL_MAX × pools_por_app). Ver .env.example.
+    command: ['postgres', '-c', 'max_connections=200']
     env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data

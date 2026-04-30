@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
-import { query } from '../../../../lib/db';
+import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessment-filters';
 
@@ -22,7 +22,7 @@ function slugify(input) {
 }
 
 async function ensureActiveLink(vacancyId) {
-  const existing = await query(
+  const existing = await queryRead(
     `SELECT token
      FROM vacancy_links
      WHERE vacancy_id = $1 AND active = TRUE AND expires_at > NOW()
@@ -49,15 +49,26 @@ export async function GET(request) {
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
+  const url = new URL(request.url);
+  const vacFromQs = String(url.searchParams.get('vacancy') || '').trim();
+  let filterVacancyId = null;
+  if (vacFromQs !== '' && vacFromQs !== 'all') {
+    const vid = parseInt(vacFromQs, 10);
+    if (Number.isFinite(vid)) filterVacancyId = vid;
+  }
+
   const whereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
   const params = [];
   if (!isAdmin) {
     params.push(companyId);
     whereParts.push(`v.company_id = $${params.length}`);
   }
+  if (filterVacancyId != null) {
+    params.push(filterVacancyId);
+    whereParts.push(`v.id = $${params.length}`);
+  }
   const where = `WHERE ${whereParts.join(' AND ')}`;
 
-  const url = new URL(request.url);
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const rawSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
   const pageSize = VACANCY_PAGE_SIZES.has(rawSize) ? rawSize : 20;
@@ -67,7 +78,7 @@ export async function GET(request) {
   });
   const vacancyOrderClause = sqlVacancyOrderBy(vacSortCol, vacSortDir);
 
-  const countR = await query(
+  const countR = await queryRead(
     `SELECT COUNT(*)::int AS n
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -84,7 +95,7 @@ export async function GET(request) {
   const limI = listParams.length;
   listParams.push(offset);
   const offI = listParams.length;
-  const r = await query(
+  const r = await queryRead(
     `SELECT
        v.id,
        v.company_id AS "companyId",
@@ -103,7 +114,7 @@ export async function GET(request) {
 
   const out = [];
   for (const v of r.rows) {
-    const t = await query(
+    const t = await queryRead(
       `SELECT token, expires_at AS "expiresAt"
        FROM vacancy_links
        WHERE vacancy_id = $1 AND active = TRUE
@@ -145,7 +156,7 @@ export async function POST(request) {
   const slug = slugify(body.slug || title);
   if (!slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
 
-  const c = await query(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
+  const c = await queryRead(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
   if (c.rowCount === 0) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
 
   const ins = await query(

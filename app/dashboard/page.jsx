@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
-import { query } from '../../lib/db';
+import { query, queryRead } from '../../lib/db';
 import DashboardClient from './DashboardClient';
 import {
   parseDashboardPagination,
@@ -114,12 +114,12 @@ export default async function DashboardPage({ searchParams }) {
   let enneagram = 'all';
 
   try {
-    const a = await query(`SELECT key, label FROM areas ORDER BY label ASC`);
+    const a = await queryRead(`SELECT key, label FROM areas ORDER BY label ASC`);
     areas = a.rows;
 
     /** Escopo de empresa: admin pode filtrar por ?company=ID; demais perfis usam sempre a empresa da sessão. */
     if (isAdmin) {
-      const cos = await query(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`);
+      const cos = await queryRead(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`);
       companiesForFilter = cos.rows;
       if (rawCompany !== 'all') {
         const cid = parseInt(rawCompany, 10);
@@ -139,8 +139,8 @@ export default async function DashboardPage({ searchParams }) {
       vWhereParts.push(`v.company_id = $${vParams.length}`);
     }
     const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
-    const v = await query(
-      `SELECT v.id, v.title, v.status, v.created_at AS "createdAt"
+    const v = await queryRead(
+      `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
        FROM vacancies v
        JOIN companies c ON c.id = v.company_id
        ${vWhere}
@@ -159,7 +159,7 @@ export default async function DashboardPage({ searchParams }) {
       countWhereParts.push(`ass.company_id = $${cParams.length}`);
     }
     const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
-    const c = await query(
+    const c = await queryRead(
       `SELECT ar.key, ar.label, COUNT(*)::int AS count
        FROM assessments ass
        JOIN areas ar ON ar.id = ass.area_id
@@ -178,23 +178,23 @@ export default async function DashboardPage({ searchParams }) {
     const teamOrderSql = sqlTeamOrderBy(teamSortState.sort, teamSortState.dir);
 
     if (selectedArea !== 'all') {
-      const areaRow = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
+      const areaRow = await queryRead(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
       const areaId = areaRow.rows?.[0]?.id;
       if (areaId) {
         if (isAdmin && scopeCompanyFilter != null) {
-          const raw = await query(
+          const raw = await queryRead(
             `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2`,
             [scopeCompanyFilter, areaId]
           );
           areaStats = computeStatsFromScores(raw.rows);
         } else {
-          const statsRow = await query(`SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`, [areaId]);
+          const statsRow = await queryRead(`SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`, [areaId]);
           if (statsRow.rowCount > 0) {
             areaStats = { means: statsRow.rows[0].means, stds: statsRow.rows[0].stds, n: statsRow.rows[0].n };
           } else {
             const rawWhere = isAdmin ? `WHERE area_id = $1` : `WHERE company_id = $1 AND area_id = $2`;
             const rawParams = isAdmin ? [areaId] : [companyId, areaId];
-            const raw = await query(`SELECT scores FROM assessments ${rawWhere}`, rawParams);
+            const raw = await queryRead(`SELECT scores FROM assessments ${rawWhere}`, rawParams);
             areaStats = computeStatsFromScores(raw.rows);
             await query(
               `INSERT INTO area_stats (area_id, type_means, type_stds, n, computed_at)
@@ -206,7 +206,7 @@ export default async function DashboardPage({ searchParams }) {
           }
         }
 
-        const rub = await query(`SELECT desired_type_weights AS weights FROM area_rubrics WHERE area_id = $1 LIMIT 1`, [areaId]);
+        const rub = await queryRead(`SELECT desired_type_weights AS weights FROM area_rubrics WHERE area_id = $1 LIMIT 1`, [areaId]);
         if (rub.rowCount > 0) {
           areaRubric = rub.rows[0].weights || {};
         } else {
@@ -216,7 +216,7 @@ export default async function DashboardPage({ searchParams }) {
       }
     }
 
-    const rubAll = await query(
+    const rubAll = await queryRead(
       `SELECT a.key AS "areaKey", r.desired_type_weights AS weights
        FROM area_rubrics r
        JOIN areas a ON a.id = r.area_id`
@@ -240,7 +240,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     });
     const assessmentWhere = sqlWhere(whereParts);
 
-    const cntRes = await query(
+    const cntRes = await queryRead(
       `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${assessmentWhere}`,
       params
     );
@@ -256,7 +256,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 
     const typeCountAgg = {};
     for (let t = 1; t <= 9; t++) typeCountAgg[t] = 0;
-    const histRes = await query(
+    const histRes = await queryRead(
       `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
        ${BASE_JOIN_LIST}
        ${assessmentWhere}
@@ -268,7 +268,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       if (typeof tt === 'number' && tt >= 1 && tt <= 9) typeCountAgg[tt] = row.n;
     }
 
-    const lightRes = await query(
+    const lightRes = await queryRead(
       `SELECT ass.id AS "assessmentId",
               c.id AS "candidateId",
               c.full_name AS name,
@@ -295,7 +295,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     const limIx = pageParams.length;
     pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
     const offIx = pageParams.length;
-    const pageRes = await query(
+    const pageRes = await queryRead(
       `SELECT
          ass.id AS "assessmentId",
          c.id AS "candidateId",
@@ -325,7 +325,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       distWhereParts.push(`ass.company_id = $${distParams.length}`);
     }
     const distWhere = distWhereParts.length ? `WHERE ${distWhereParts.join(' AND ')}` : '';
-    const distAgg = await query(
+    const distAgg = await queryRead(
       `SELECT ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType", COUNT(*)::int AS cnt
        FROM assessments ass
        JOIN areas ar ON ar.id = ass.area_id
@@ -344,7 +344,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       monthlyParts.push(`company_id = $${monthlyParams.length}`);
     }
     const monthlyWhere = monthlyParts.length ? `WHERE ${monthlyParts.join(' AND ')}` : '';
-    const monthlyAgg = await query(
+    const monthlyAgg = await queryRead(
       `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
        FROM assessments
        ${monthlyWhere}
@@ -362,7 +362,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       totalsParts.push(`company_id = $${totalsParams.length}`);
     }
     const totalsWhere = totalsParts.length ? `WHERE ${totalsParts.join(' AND ')}` : '';
-    const totalsAgg = await query(
+    const totalsAgg = await queryRead(
       `SELECT
          COUNT(*)::int AS assessments,
          COUNT(DISTINCT candidate_id)::int AS candidates,
@@ -381,7 +381,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       scoresWhereParts.push(`ass.company_id = $${scoresParams.length}`);
     }
     const scoresWhere = scoresWhereParts.length ? `WHERE ${scoresWhereParts.join(' AND ')}` : '';
-    const scoresAll = await query(
+    const scoresAll = await queryRead(
       `SELECT ar.key AS "areaKey", ass.scores
        FROM assessments ass
        JOIN areas ar ON ar.id = ass.area_id
@@ -419,7 +419,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         leadParts.push(`ass.company_id = $${leadParams.length}`);
       }
       const leadWhere = leadParts.length ? `WHERE ${leadParts.join(' AND ')}` : '';
-      const latestCand = await query(
+      const latestCand = await queryRead(
         `SELECT DISTINCT ON (ass.candidate_id, ass.company_id)
            ass.company_id AS "companyId",
            co.name AS "companyName",

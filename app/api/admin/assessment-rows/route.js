@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
-import { query } from '../../../../lib/db';
+import { queryRead } from '../../../../lib/db';
 import {
   assessmentListWhereParts,
   PAGE_SIZE_OPTIONS,
@@ -41,7 +41,7 @@ export async function GET(request) {
   if (isAdmin && rawCompany !== 'all') {
     const cid = parseInt(rawCompany, 10);
     if (Number.isFinite(cid)) {
-      const ok = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
+      const ok = await queryRead(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
       if (ok.rowCount > 0) scopeCompanyFilter = cid;
     }
   }
@@ -67,7 +67,7 @@ export async function GET(request) {
   });
   const where = sqlWhere(whereParts);
 
-  const cntRes = await query(
+  const cntRes = await queryRead(
     `SELECT COUNT(*)::int AS n ${BASE_JOIN} ${where}`,
     params
   );
@@ -81,7 +81,7 @@ export async function GET(request) {
   pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
   const offIx = pageParams.length;
 
-  const result = await query(
+  const result = await queryRead(
     `SELECT
        ass.id AS "assessmentId",
        c.id AS "candidateId",

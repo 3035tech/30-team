@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
-import { query } from '../../../../lib/db';
+import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 
 function requireAdmin(payload) {
@@ -18,7 +18,7 @@ function slugify(input) {
 }
 
 async function ensureActiveLink(companyId) {
-  const existing = await query(
+  const existing = await queryRead(
     `SELECT token FROM company_links WHERE company_id = $1 AND active = TRUE AND expires_at > NOW() LIMIT 1`,
     [companyId]
   );
@@ -38,7 +38,7 @@ export async function GET() {
   const payload = token ? verifyToken(token) : null;
   if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const r = await query(
+  const r = await queryRead(
     `SELECT id, name, slug, active, created_at AS "createdAt"
      FROM companies
      WHERE deleted = FALSE
@@ -47,7 +47,7 @@ export async function GET() {
 
   const out = [];
   for (const c of r.rows) {
-    const t = await query(
+    const t = await queryRead(
       `SELECT token, expires_at AS "expiresAt", created_at AS "createdAt", rotated_at AS "rotatedAt"
        FROM company_links
        WHERE company_id = $1 AND active = TRUE

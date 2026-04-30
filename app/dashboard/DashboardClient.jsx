@@ -412,7 +412,7 @@ export default function DashboardClient({
                 onChange={(e) => {
                   const v = e.target.value;
                   setCompany(v);
-                  pushFilters({ company: v });
+                  pushFilters({ company: v, vacancy: 'all' });
                 }}
                 style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                   borderRadius:'10px', padding:'10px 14px', color:C.muted,
@@ -437,7 +437,21 @@ export default function DashboardClient({
                 </option>
               ))}
             </select>
-            <select value={vacancy} onChange={(e)=>{ const v=e.target.value; setVacancy(v); pushFilters({ vacancy: v }); }}
+            <select
+              value={vacancy}
+              onChange={(e) => {
+                const v = e.target.value;
+                setVacancy(v);
+                if (isAdmin && v !== 'all') {
+                  const hit = vacancies.find((x) => String(x.id) === v);
+                  if (hit != null && hit.companyId != null) {
+                    setCompany(String(hit.companyId));
+                    pushFilters({ vacancy: v, company: String(hit.companyId) });
+                    return;
+                  }
+                }
+                pushFilters({ vacancy: v });
+              }}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
                 fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
@@ -468,7 +482,7 @@ export default function DashboardClient({
             <a
               href={`/api/admin/export?area=${encodeURIComponent(area)}${
                 isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
-              }`}
+              }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}`}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
                 fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif",
@@ -2509,6 +2523,7 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
     Object.fromEntries(urlParams.entries())
   );
   const vacSortSt = parseVacanciesSort(Object.fromEntries(urlParams.entries()), { isAdmin });
+  const vacFilterFromUrl = String(urlParams.get('vacancy') || 'all');
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
 
@@ -2540,8 +2555,9 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
         pageSize: String(vacPageSize),
         sort: vacSortSt.sort,
         sortDir: vacSortSt.dir,
-      }).toString();
-      const res = await fetch(`/api/admin/vacancies?${qs}`);
+      });
+      if (vacFilterFromUrl && vacFilterFromUrl !== 'all') qs.set('vacancy', vacFilterFromUrl);
+      const res = await fetch(`/api/admin/vacancies?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao carregar vagas');
       const rows = Array.isArray(data?.items)
@@ -2582,7 +2598,7 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
 
   useEffect(() => {
     loadVacancies();
-  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir, vacFilterFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadCompanies();
@@ -2806,9 +2822,32 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
 
       <div style={{ ...S.card }}>
         <span style={S.label}>Vagas cadastradas</span>
+        {vacFilterFromUrl !== 'all' ? (
+          <div style={{ marginTop: '10px', padding: '10px 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.03)' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+              A lista abaixo está limitada à vaga do filtro superior.{' '}
+              <button
+                type="button"
+                onClick={() => navigateDashboard({ vacancy: 'all', vacanciesPage: 1, tab: 'vacancies' })}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  color: C.purpleLight,
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  textDecoration: 'underline',
+                }}
+              >
+                Mostrar todas as vagas
+              </button>
+            </p>
+          </div>
+        ) : null}
         {vacTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            Nenhuma vaga ainda.
+            {vacFilterFromUrl !== 'all' ? 'Nenhuma vaga corresponde ao filtro atual.' : 'Nenhuma vaga ainda.'}
           </p>
         ) : (
           <>

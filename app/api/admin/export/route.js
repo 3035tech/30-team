@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
-import { query } from '../../../../lib/db';
+import { queryRead } from '../../../../lib/db';
 import { audit } from '../../../../lib/audit';
 
 function csvEscape(value) {
@@ -23,6 +23,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const area = (searchParams.get('area') || 'all').toString();
   const rawExportCompany = (searchParams.get('company') || 'all').toString();
+  const rawVacancy = String(searchParams.get('vacancy') || 'all').trim();
 
   const whereParts = [];
   const params = [];
@@ -32,7 +33,7 @@ export async function GET(request) {
   } else if (rawExportCompany !== 'all') {
     const cid = parseInt(rawExportCompany, 10);
     if (Number.isFinite(cid)) {
-      const ok = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
+      const ok = await queryRead(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
       if (ok.rowCount > 0) {
         params.push(cid);
         whereParts.push(`ass.company_id = $${params.length}`);
@@ -43,9 +44,16 @@ export async function GET(request) {
     params.push(area);
     whereParts.push(`ar.key = $${params.length}`);
   }
+  if (rawVacancy !== '' && rawVacancy !== 'all') {
+    const vid = parseInt(rawVacancy, 10);
+    if (Number.isFinite(vid)) {
+      params.push(vid);
+      whereParts.push(`ass.vacancy_id = $${params.length}`);
+    }
+  }
   const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
 
-  const r = await query(
+  const r = await queryRead(
     `SELECT
        ass.id AS assessment_id,
        c.full_name AS candidate_name,

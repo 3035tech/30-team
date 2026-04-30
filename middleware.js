@@ -2,6 +2,23 @@ import { NextResponse } from 'next/server';
 import { COOKIE_NAME } from './lib/auth';
 import { verifyTokenEdge } from './lib/auth-edge';
 
+/** Cabeçalhos opcionais em runtime (produção HTTPS). Ver .env.example. */
+function withSecurityHeaders(response) {
+  const csp = process.env.CSP_REPORT_ONLY?.trim();
+  if (csp) {
+    response.headers.set('Content-Security-Policy-Report-Only', csp);
+  }
+  if (process.env.ENABLE_HSTS === 'true') {
+    const maxAge = process.env.HSTS_MAX_AGE?.trim() || '31536000';
+    const preload = process.env.HSTS_PRELOAD === 'true' ? '; preload' : '';
+    response.headers.set(
+      'Strict-Transport-Security',
+      `max-age=${maxAge}; includeSubDomains${preload}`
+    );
+  }
+  return response;
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
@@ -14,13 +31,14 @@ export async function middleware(request) {
     if (!allowed) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+      return withSecurityHeaders(NextResponse.redirect(loginUrl));
     }
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/admin/:path*'],
+  // Inclui HTML e APIs para HSTS/CSP opcionais; auth só nos paths abaixo.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

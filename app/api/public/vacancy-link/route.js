@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../lib/db';
+import { queryRead } from '../../../../lib/db';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const token = String(searchParams.get('token') || '').trim();
   if (!token) return NextResponse.json({ error: 'Token inválido' }, { status: 400 });
 
-  const r = await query(
+  const r = await queryRead(
     `SELECT
        v.id AS "vacancyId",
        v.title,

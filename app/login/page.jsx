@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { sanitizeLoginRedirect } from '../../lib/sanitize-login-redirect';
 
 const C = {
   bg:'#ffffff', card:'rgba(124,58,237,0.06)', border:'rgba(26,22,37,0.12)',
@@ -17,7 +18,7 @@ function LoginForm() {
   const [error,    setError]    = useState('');
   const router      = useRouter();
   const searchParams = useSearchParams();
-  const redirect    = searchParams.get('redirect') || '/dashboard';
+  const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
 
   const login = async () => {
     if (!email || !password) return;

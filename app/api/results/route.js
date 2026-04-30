@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../lib/db';
+import { query, queryRead } from '../../../lib/db';
 import { verifyToken, COOKIE_NAME } from '../../../lib/auth';
 import { cookies } from 'next/headers';
 import { computeAssessmentFromAnswers } from '../../../lib/assessment-score';
@@ -130,14 +130,17 @@ export async function POST(request) {
           [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
         );
 
-    // Backward compatible write (legacy dashboards/scripts)
-    await query(
-      `INSERT INTO results (name, top_type, scores)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (LOWER(name))
-       DO UPDATE SET top_type = $2, scores = $3, created_at = NOW()`,
-      [safeName, topType, JSON.stringify(scores)]
-    );
+    // Legado: `results` usa UNIQUE global em LOWER(name) — colide entre empresas/candidatos.
+    // Mantido só se LEGACY_RESULTS_WRITE=true (scripts/dashboards antigos).
+    if (process.env.LEGACY_RESULTS_WRITE === 'true') {
+      await query(
+        `INSERT INTO results (name, top_type, scores)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (LOWER(name))
+         DO UPDATE SET top_type = $2, scores = $3, created_at = NOW()`,
+        [safeName, topType, JSON.stringify(scores)]
+      );
+    }
 
     return NextResponse.json(
       {
@@ -155,7 +158,7 @@ export async function POST(request) {
   }
 }
 
-// GET /api/results — retorna todos os resultados (apenas admin autenticado)
+// GET /api/results — legado: tabela `results` (global por nome). Preferir dados do dashboard via assessments.
 export async function GET() {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -166,7 +169,7 @@ export async function GET() {
   }
 
   try {
-    const result = await query(
+    const result = await queryRead(
       `SELECT id, name, top_type AS "topType", scores, created_at AS "createdAt"
        FROM results
        ORDER BY created_at DESC`

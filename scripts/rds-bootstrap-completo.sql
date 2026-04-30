@@ -371,6 +371,22 @@ CREATE UNIQUE INDEX idx_vacancies_company_slug_unique ON vacancies (company_id, 
 DROP INDEX IF EXISTS idx_users_email_unique;
 CREATE UNIQUE INDEX idx_users_email_unique ON users (LOWER(email)) WHERE deleted = FALSE;
 
+-- ── 006_performance_indexes.sql ─────────────────────────────────────────────
+
+CREATE INDEX IF NOT EXISTS idx_vacencies_company_created_active
+  ON vacancies (company_id, created_at DESC)
+  WHERE deleted = FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_assessments_company_top_created
+  ON assessments (company_id, top_type, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_candidates_company_lower_name
+  ON candidates (company_id, (LOWER(full_name)));
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor_created
+  ON audit_log (actor_user_id, created_at DESC)
+  WHERE actor_user_id IS NOT NULL;
+
 -- ── Controle de migrations (opcional, alinha com scripts/migrate.js) ─────────
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -384,7 +400,8 @@ INSERT INTO schema_migrations (name) VALUES
   ('002_add_company_areas.sql'),
   ('003_seed_area_rubrics.sql'),
   ('004_vacancies.sql'),
-  ('005_soft_delete_flags.sql')
+  ('005_soft_delete_flags.sql'),
+  ('006_performance_indexes.sql')
 ON CONFLICT (name) DO NOTHING;
 
 COMMIT;

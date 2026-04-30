@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
-import { query } from '../../../../../lib/db';
+import { query, queryRead } from '../../../../../lib/db';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -18,7 +18,7 @@ function slugify(input) {
 }
 
 async function getVacancyOr404(vacancyId) {
-  const v = await query(
+  const v = await queryRead(
     `SELECT
        v.id,
        v.company_id AS "companyId",
@@ -38,7 +38,7 @@ async function getVacancyOr404(vacancyId) {
 }
 
 async function attachActiveToken(vacancy) {
-  const t = await query(
+  const t = await queryRead(
     `SELECT token, expires_at AS "expiresAt", rotated_at AS "rotatedAt"
      FROM vacancy_links
      WHERE vacancy_id = $1 AND active = TRUE
@@ -122,7 +122,7 @@ export async function DELETE(_request, { params }) {
   if (!id) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
 
   if (!isAdmin) {
-    const owned = await query(
+    const owned = await queryRead(
       `SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 AND deleted = FALSE LIMIT 1`,
       [id, companyId]
     );
