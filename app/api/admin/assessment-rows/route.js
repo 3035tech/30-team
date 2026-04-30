@@ -79,6 +79,7 @@ export async function GET(request) {
   pageParams.push(pageSize);
   const limIx = pageParams.length;
   pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
+  const offIx = pageParams.length;
 
   const result = await query(
     `SELECT

@@ -804,7 +804,18 @@ function CompareTabLoader({ filterQueryString, comparePage, comparePageSize, onC
     q.set('comparePage', String(comparePage));
     q.set('comparePageSize', String(comparePageSize));
     fetch(`/api/admin/assessment-rows?${q.toString()}`)
-      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(async (r) => {
+        const raw = await r.text();
+        let d = {};
+        if (raw && raw.trim()) {
+          try {
+            d = JSON.parse(raw);
+          } catch {
+            d = {};
+          }
+        }
+        return { ok: r.ok, d, status: r.status };
+      })
       .then(({ ok, d }) => {
         if (cancelled) return;
         if (!ok) throw new Error(d?.error || 'Falha ao carregar');
@@ -1849,25 +1860,28 @@ function CompaniesAdminTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {error ? (
+        <div style={{ ...S.card, padding: '14px 18px' }}>
+          <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
+        </div>
+      ) : null}
+      {userMsg ? (
+        <div style={{ ...S.card, padding: '14px 18px' }}>
+          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{userMsg}</p>
+        </div>
+      ) : null}
+
+      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Empresas</span>
       <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>Empresas</span>
+        <span style={S.label}>Cadastro de empresas</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Cadastre empresas, gere o link único de candidatura e crie usuários de RH/Direção vinculados à empresa.
+          Inclua a empresa no sistema, edite dados e gere o link público único (/t/…) para candidaturas.
+          Arquivar tira da lista e invalida vínculos; dados de avaliações já recebidas continuam acessíveis no dashboard.
         </p>
-        {error ? (
-          <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
-            {error}
-          </p>
-        ) : null}
-        {userMsg ? (
-          <p style={{ marginTop: '10px', marginBottom: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>
-            {userMsg}
-          </p>
-        ) : null}
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Criar empresa</span>
+        <span style={S.label}>Nova empresa</span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
           <input
             value={name}
@@ -1992,8 +2006,18 @@ function CompaniesAdminTab() {
         )}
       </div>
 
+      <div style={{ marginTop: '12px', paddingTop: '28px', borderTop: `1px solid ${C.border}` }}>
+        <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Usuários</span>
+        <div style={{ ...S.card, padding: '22px 28px', marginBottom: '12px' }}>
+          <span style={S.label}>Contas do painel</span>
+          <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+            Perfis RH e Direção precisam de uma empresa. Admin tem acesso global. Após criar usuários aqui,
+            eles fazem login com e-mail e senha definidos.
+          </p>
+        </div>
+
       <div style={{ ...S.card }}>
-        <span style={S.label}>Criar usuário (RH/Direção)</span>
+        <span style={S.label}>Novo usuário (RH / Direção / admin)</span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
           <input
             value={newUserEmail}
@@ -2118,6 +2142,7 @@ function CompaniesAdminTab() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
