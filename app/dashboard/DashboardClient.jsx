@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TYPE_DATA, getCompat } from '../../lib/data';
+import { C, FONTS } from '../../lib/theme';
 
 import {
   PAGE_SIZE_OPTIONS,
@@ -15,16 +16,9 @@ import {
   parseCompatTabPagination,
 } from '../../lib/assessment-filters';
 
-const C = {
-  bg:'#ffffff', card:'rgba(124,58,237,0.06)', border:'rgba(26,22,37,0.12)',
-  purple:'#7C3AED', purpleLight:'#6D28D9', purpleDark:'#4C1D95',
-  text:'#1a1625', muted:'rgba(26,22,37,0.62)', faint:'rgba(26,22,37,0.38)',
-  synergy:'#15803d', tension:'#dc2626', neutral:'#7C3AED',
-};
-
 const S = {
   label:{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
-    color:'rgba(124,58,237,.55)', fontFamily:"'Courier New',monospace",
+    color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
     marginBottom:'12px', display:'block' },
   card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:'16px',
     padding:'28px', backdropFilter:'blur(16px)' },
@@ -1961,7 +1955,7 @@ function UsersAdminTab() {
             onChange={(e) => setNewUserEmail(e.target.value)}
             placeholder="email@empresa.com"
             style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={newUserPassword}
@@ -1969,7 +1963,7 @@ function UsersAdminTab() {
             placeholder="Senha"
             type="password"
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <select
             value={newUserRole}
@@ -2287,14 +2281,14 @@ function CompaniesAdminTab() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Nome (ex.: ACME)"
             style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="Slug opcional (ex.: acme)"
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <button
             type="button"
@@ -2469,7 +2463,7 @@ function VacancyInviteByEmail({ vacancyId }) {
           aria-label="Nome do candidato"
           style={{
             flex: '1 1 160px', minWidth: '140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none',
+            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace',
           }}
         />
         <input
@@ -2481,7 +2475,7 @@ function VacancyInviteByEmail({ vacancyId }) {
           aria-label="E-mail do candidato"
           style={{
             flex: '2 1 220px', minWidth: '180px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none',
+            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace',
           }}
         />
         <button
@@ -2778,14 +2772,14 @@ function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título (ex.: Pessoa Dev Fullstack)"
             style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="Slug opcional (ex.: dev-fullstack)"
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <select
             value={status}
@@ -3214,7 +3208,7 @@ function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGroupIds, d
                 placeholder="Buscar pessoa para adicionar…"
                 style={{ flex:'1 1 240px', background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
                   borderRadius:'10px', padding:'10px 12px', color:C.text, fontSize:'12px',
-                  fontFamily:'monospace', outline:'none' }}
+                  fontFamily:'monospace' }}
               />
               <select
                 onChange={(e)=>{ const id=e.target.value; if(id) addToGroup(id); e.target.value=''; }}

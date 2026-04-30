@@ -1,0 +1,23 @@
+/* C.purple (#7C3AED) — manter alinhado a lib/theme.js */
+:root {
+  --color-focus-ring: #7c3aed;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+th[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 1px;
+}

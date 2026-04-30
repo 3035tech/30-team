@@ -1,3 +1,5 @@
+import './globals.css';
+
 export const metadata = {
   title: '30Team',
   description: 'Perfis e dinâmica de equipe — time interno e contratações.',

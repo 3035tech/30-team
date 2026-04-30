@@ -4,24 +4,13 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TYPE_DATA, drawQuestions, SCALE_LABELS } from '../../lib/data';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
-
-const C = {
-  bg: '#ffffff',
-  card: 'rgba(124,58,237,0.06)',
-  border: 'rgba(26,22,37,0.12)',
-  purple: '#7C3AED',
-  purpleLight: '#6D28D9',
-  purpleDark: '#4C1D95',
-  text: '#1a1625',
-  muted: 'rgba(26,22,37,0.62)',
-  faint: 'rgba(26,22,37,0.38)',
-};
+import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
 
 const S = {
   app: {
     minHeight: '100vh',
     background: C.bg,
-    fontFamily: "'Georgia','Times New Roman',serif",
+    fontFamily: FONTS.serif,
     color: C.text,
     display: 'flex',
     flexDirection: 'column',
@@ -38,8 +27,7 @@ const S = {
     right: 0,
     bottom: 0,
     pointerEvents: 'none',
-    background: `radial-gradient(ellipse at 15% 25%,rgba(124,58,237,.07) 0%,transparent 55%),
-                radial-gradient(ellipse at 85% 75%,rgba(71,168,232,.05) 0%,transparent 55%)`,
+    background: RADIAL_GLOW,
   },
   card: {
     maxWidth: '660px',
@@ -49,7 +37,7 @@ const S = {
     borderRadius: '20px',
     padding: '44px 48px',
     backdropFilter: 'blur(24px)',
-    boxShadow: '0 20px 50px rgba(124,58,237,.1), 0 4px 24px rgba(0,0,0,.05)',
+    boxShadow: SHADOW.cardElevated,
     position: 'relative',
     zIndex: 1,
   },
@@ -58,7 +46,7 @@ const S = {
     letterSpacing: '3px',
     textTransform: 'uppercase',
     color: 'rgba(124,58,237,.55)',
-    fontFamily: "'Courier New',monospace",
+    fontFamily: FONTS.mono,
     marginBottom: '16px',
     display: 'block',
   },
@@ -67,20 +55,20 @@ const S = {
     fontWeight: 'normal',
     lineHeight: 1.15,
     marginBottom: '12px',
-    background: 'linear-gradient(135deg,#E8E0FF 0%,#A78BFA 55%,#7C3AED 100%)',
+    background: GRADIENT.title,
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
   p: { fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '32px', fontStyle: 'italic' },
   btn: (bg = C.purple) => ({
-    background: `linear-gradient(135deg,${bg} 0%,#4C1D95 100%)`,
+    background: GRADIENT.primaryBtn(bg, C.purpleDark),
     border: 'none',
     borderRadius: '10px',
     padding: '14px 32px',
     color: '#fff',
     fontSize: '14px',
     cursor: 'pointer',
-    fontFamily: "'Georgia',serif",
+    fontFamily: FONTS.serif,
   }),
   input: {
     width: '100%',
@@ -90,8 +78,7 @@ const S = {
     padding: '14px 18px',
     color: C.text,
     fontSize: '15px',
-    fontFamily: "'Georgia',serif",
-    outline: 'none',
+    fontFamily: FONTS.serif,
     boxSizing: 'border-box',
     marginBottom: '16px',
   },
@@ -148,7 +135,7 @@ function HomeScreen({ onStart, notice = null, startDisabled = false }) {
             <div
               style={{
                 fontSize: '11px',
-                color: notice.kind === 'warning' ? '#dc2626' : C.faint,
+                color: notice.kind === 'warning' ? C.tension : C.faint,
                 fontFamily: 'monospace',
                 marginBottom: '6px',
               }}
@@ -301,7 +288,7 @@ function TestScreen({ name, onComplete }) {
                   cursor: 'pointer',
                   color: isSel ? C.purpleLight : C.text,
                   fontSize: '14px',
-                  fontFamily: "'Georgia',serif",
+                  fontFamily: FONTS.serif,
                   textAlign: 'left',
                 }}
               >
