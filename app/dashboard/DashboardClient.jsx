@@ -1701,6 +1701,102 @@ function CompaniesAdminTab() {
   );
 }
 
+function VacancyInviteByEmail({ vacancyId }) {
+  const [candidateName, setCandidateName] = useState('');
+  const [candidateEmail, setCandidateEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [localErr, setLocalErr] = useState('');
+  const [localOk, setLocalOk] = useState('');
+
+  const send = async () => {
+    const name = candidateName.trim();
+    const mail = candidateEmail.trim().toLowerCase();
+    setLocalErr('');
+    setLocalOk('');
+    if (!name) {
+      setLocalErr('Informe o nome do candidato.');
+      return;
+    }
+    if (!mail) {
+      setLocalErr('Informe o e-mail do candidato.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateName: name, candidateEmail: mail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Não foi possível enviar.');
+      setLocalOk(`E-mail enviado para ${mail}.`);
+      setCandidateName('');
+      setCandidateEmail('');
+      setTimeout(() => setLocalOk(''), 5000);
+    } catch (e) {
+      setLocalErr(e?.message || 'Erro');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}`, width: '100%' }}>
+      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
+        Convidar candidato — nome, e-mail e envio do desafio por e-mail
+      </span>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          value={candidateName}
+          onChange={(e) => setCandidateName(e.target.value)}
+          placeholder="Nome do candidato"
+          disabled={busy}
+          aria-label="Nome do candidato"
+          style={{
+            flex: '1 1 160px', minWidth: '140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none',
+          }}
+        />
+        <input
+          type="email"
+          value={candidateEmail}
+          onChange={(e) => setCandidateEmail(e.target.value)}
+          placeholder="email@exemplo.com"
+          disabled={busy}
+          aria-label="E-mail do candidato"
+          style={{
+            flex: '2 1 220px', minWidth: '180px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+            borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace', outline: 'none',
+          }}
+        />
+        <button
+          type="button"
+          onClick={send}
+          disabled={busy}
+          style={{
+            flex: '0 0 auto', background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
+            borderRadius: '10px', padding: '8px 14px', color: C.synergy, fontSize: '12px',
+            cursor: 'pointer', fontFamily: 'monospace', opacity: busy ? 0.6 : 1,
+          }}
+        >
+          {busy ? 'Enviando…' : 'Enviar desafio'}
+        </button>
+      </div>
+      {localErr ? (
+        <p style={{ marginTop: '8px', marginBottom: 0, color: C.tension, fontSize: '11px', fontFamily: 'monospace' }}>
+          {localErr}
+        </p>
+      ) : null}
+      {localOk ? (
+        <p style={{ marginTop: '8px', marginBottom: 0, color: C.synergy, fontSize: '11px', fontFamily: 'monospace' }}>
+          {localOk}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function VacanciesAdminTab({ isAdmin }) {
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
@@ -1886,7 +1982,11 @@ function VacanciesAdminTab({ isAdmin }) {
       <div style={{ ...S.card, padding: '22px 28px' }}>
         <span style={S.label}>Vagas</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Cadastre vagas e gere o link público de avaliação por vaga.
+          Cadastre cada vaga para obter um link de avaliação exclusivo. Em cada vaga, o RH preenche nome e e-mail do candidato
+          e clica em <strong style={{ color: C.text, fontWeight: 600 }}>Enviar desafio</strong> — o candidato recebe um e-mail com o
+          link do formulário (configure SMTP no servidor; veja{' '}
+          <span style={{ fontFamily: 'monospace', color: C.faint }}>.env.example</span>
+          ). Também é possível copiar o link público e enviar por outro canal.
         </p>
         {error ? (
           <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
@@ -2059,6 +2159,7 @@ function VacanciesAdminTab({ isAdmin }) {
                       </button>
                     </div>
                   </div>
+                  <VacancyInviteByEmail vacancyId={v.id} />
                 </div>
               );
             })}
