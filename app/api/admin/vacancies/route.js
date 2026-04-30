@@ -9,6 +9,8 @@ function requireRole(payload) {
   return role === 'admin' || role === 'direction' || role === 'hr';
 }
 
+const VACANCY_PAGE_SIZES = new Set([10, 20, 30, 40, 50]);
+
 function slugify(input) {
   return String(input || '')
     .trim()
@@ -36,7 +38,7 @@ async function ensureActiveLink(vacancyId) {
   return token;
 }
 
-export async function GET() {
+export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
@@ -54,6 +56,28 @@ export async function GET() {
   }
   const where = `WHERE ${whereParts.join(' AND ')}`;
 
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+  const rawSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+  const pageSize = VACANCY_PAGE_SIZES.has(rawSize) ? rawSize : 20;
+
+  const countR = await query(
+    `SELECT COUNT(*)::int AS n
+     FROM vacancies v
+     JOIN companies c ON c.id = v.company_id
+     ${where}`,
+    params
+  );
+  const total = countR.rows[0]?.n ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectivePage = total === 0 ? 1 : Math.min(page, totalPages);
+  const offset = (effectivePage - 1) * pageSize;
+
+  const listParams = [...params];
+  listParams.push(pageSize);
+  const limI = listParams.length;
+  listParams.push(offset);
+  const offI = listParams.length;
   const r = await query(
     `SELECT
        v.id,
@@ -66,8 +90,9 @@ export async function GET() {
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
      ${where}
-     ORDER BY v.created_at DESC`,
-    params
+     ORDER BY v.created_at DESC
+     LIMIT $${limI} OFFSET $${offI}`,
+    listParams
   );
 
   const out = [];
@@ -81,7 +106,13 @@ export async function GET() {
     );
     out.push({ ...v, activeToken: t.rows?.[0]?.token || null, activeTokenExpiresAt: t.rows?.[0]?.expiresAt || null });
   }
-  return NextResponse.json(out);
+  return NextResponse.json({
+    items: out,
+    total,
+    page: effectivePage,
+    pageSize,
+    totalPages,
+  });
 }
 
 export async function POST(request) {

@@ -3,7 +3,13 @@ import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
 import { query } from '../../lib/db';
 import DashboardClient from './DashboardClient';
-import { computeAreaScore010 } from '../../lib/area-fit';
+import {
+  parseDashboardPagination,
+  assessmentListWhereParts,
+  sqlWhere,
+} from '../../lib/assessment-filters';
+import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
+import { getCompat } from '../../lib/data';
 import {
   buildAreaSummaries,
   buildLeadershipPotentialsByCompany,
@@ -11,11 +17,31 @@ import {
   rubricAlignmentShare,
 } from '../../lib/leadership-analytics';
 
-function toNum(x) {
-  const n = typeof x === 'number' ? x : parseFloat(x);
-  return Number.isFinite(n) ? n : 0;
+function buildCompatBundles(lightRows) {
+  const people = lightRows.map((r) => ({
+    assessmentId: r.assessmentId,
+    candidateId: r.candidateId,
+    name: r.name,
+    areaKey: '',
+    areaLabel: r.areaLabel || '',
+    vacancyId: null,
+    vacancyTitle: '',
+    topType: r.topType,
+    scores: {},
+  }));
+  const pairs = []; const tensions = []; const synergies = [];
+  for (let i = 0; i < people.length; i++) {
+    for (let j = i + 1; j < people.length; j++) {
+      const a = people[i]; const b = people[j];
+      const compat = getCompat(a.topType, b.topType);
+      const row = { a, b, compat };
+      pairs.push(row);
+      if (compat.level === 'tension') tensions.push(row);
+      if (compat.level === 'synergy') synergies.push(row);
+    }
+  }
+  return { pairs, tensions, synergies, people };
 }
-
 function computeStatsFromScores(rows) {
   const sums = {}; const sums2 = {}; const counts = {};
   for (let t = 1; t <= 9; t++) { sums[t] = 0; sums2[t] = 0; counts[t] = 0; }
@@ -39,26 +65,6 @@ function computeStatsFromScores(rows) {
     stds[t] = std;
   }
   return { n, means, stds };
-}
-
-function fitForCandidate(scores, stats, weights) {
-  if (!stats) return { fitScore: null, fitLabel: null };
-  const w = weights && Object.keys(weights).length ? weights : null;
-  let score = 0;
-  let wsum = 0;
-  for (let t = 1; t <= 9; t++) {
-    const v = toNum(scores?.[t] ?? scores?.[String(t)] ?? 0);
-    const z = (v - toNum(stats.means?.[t])) / Math.max(toNum(stats.stds?.[t]), 1e-6);
-    const wt = w ? toNum(w[String(t)] ?? w[t] ?? 0) : (t === 0 ? 0 : 0);
-    if (w) {
-      score += wt * z;
-      wsum += Math.abs(wt);
-    }
-  }
-  if (!w) return { fitScore: null, fitLabel: null };
-  const norm = wsum ? score / wsum : score;
-  const label = norm >= 0.75 ? 'Alto' : norm >= 0.25 ? 'Médio' : 'Baixo';
-  return { fitScore: norm, fitLabel: label };
 }
 
 // Server Component — roda no servidor, acessa o banco diretamente
@@ -88,6 +94,22 @@ export default async function DashboardPage({ searchParams }) {
   let areaRubric = null;
   let rubricByAreaKey = {};
   let analytics = null;
+  let pagination = {
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  };
+  let compatMetrics = {
+    pairs: [],
+    tensions: [],
+    synergies: [],
+    typeCount: Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => [t, 0])),
+    total: 0,
+  };
+  let interactionPeople = [];
+  let enneagram = 'all';
+
   try {
     const a = await query(`SELECT key, label FROM areas ORDER BY label ASC`);
     areas = a.rows;
@@ -145,24 +167,9 @@ export default async function DashboardPage({ searchParams }) {
     );
     counts = c.rows;
 
-    const whereParts = [];
-    const params = [];
-    if (!isAdmin) {
-      params.push(companyId);
-      whereParts.push(`ass.company_id = $${params.length}`);
-    } else if (scopeCompanyFilter != null) {
-      params.push(scopeCompanyFilter);
-      whereParts.push(`ass.company_id = $${params.length}`);
-    }
-    if (selectedArea !== 'all') {
-      params.push(selectedArea);
-      whereParts.push(`ar.key = $${params.length}`);
-    }
-    if (selectedVacancy !== 'all') {
-      params.push(selectedVacancy);
-      whereParts.push(`ass.vacancy_id = $${params.length}`);
-    }
-    const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+    const { page, pageSize, enneagram: enneParsed } = parseDashboardPagination(searchParams);
+    enneagram = enneParsed;
+    pagination = { ...pagination, page, pageSize };
 
     if (selectedArea !== 'all') {
       const areaRow = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
@@ -209,6 +216,98 @@ export default async function DashboardPage({ searchParams }) {
        JOIN areas a ON a.id = r.area_id`
     );
     rubricByAreaKey = Object.fromEntries(rubAll.rows.map(x => [x.areaKey, x.weights || {}]));
+
+    const BASE_JOIN_LIST = `
+FROM assessments ass
+JOIN candidates c ON c.id = ass.candidate_id
+JOIN areas ar ON ar.id = ass.area_id
+LEFT JOIN vacancies v ON v.id = ass.vacancy_id
+`;
+
+    const { whereParts, params } = assessmentListWhereParts({
+      isAdmin,
+      companyId,
+      scopeCompanyFilter,
+      selectedArea,
+      selectedVacancy,
+      enneagram,
+    });
+    const assessmentWhere = sqlWhere(whereParts);
+
+    const cntRes = await query(
+      `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${assessmentWhere}`,
+      params
+    );
+    const listTotal = cntRes.rows[0]?.n ?? 0;
+    const totalPagesSafe = Math.max(1, Math.ceil(listTotal / pageSize));
+    const effectivePage = listTotal === 0 ? 1 : Math.min(page, totalPagesSafe);
+    pagination = {
+      page: effectivePage,
+      pageSize,
+      total: listTotal,
+      totalPages: totalPagesSafe,
+    };
+
+    const typeCountAgg = {};
+    for (let t = 1; t <= 9; t++) typeCountAgg[t] = 0;
+    const histRes = await query(
+      `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
+       ${BASE_JOIN_LIST}
+       ${assessmentWhere}
+       GROUP BY ass.top_type`,
+      params
+    );
+    for (const row of histRes.rows) {
+      const tt = row.topType;
+      if (typeof tt === 'number' && tt >= 1 && tt <= 9) typeCountAgg[tt] = row.n;
+    }
+
+    const lightRes = await query(
+      `SELECT ass.id AS "assessmentId",
+              c.id AS "candidateId",
+              c.full_name AS name,
+              ass.top_type AS "topType",
+              ar.label AS "areaLabel"
+       ${BASE_JOIN_LIST}
+       ${assessmentWhere}
+       ORDER BY ass.created_at DESC, ass.id DESC`,
+      params
+    );
+    const bundles = buildCompatBundles(lightRes.rows);
+    compatMetrics = {
+      pairs: bundles.pairs,
+      tensions: bundles.tensions,
+      synergies: bundles.synergies,
+      typeCount: typeCountAgg,
+      total: listTotal,
+    };
+    interactionPeople = bundles.people;
+
+    const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey };
+    const pageParams = [...params];
+    pageParams.push(pageSize);
+    const limIx = pageParams.length;
+    pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
+    const offIx = pageParams.length;
+    const pageRes = await query(
+      `SELECT
+         ass.id AS "assessmentId",
+         c.id AS "candidateId",
+         c.full_name AS name,
+         ar.key AS "areaKey",
+         ar.label AS "areaLabel",
+         ass.vacancy_id AS "vacancyId",
+         v.title AS "vacancyTitle",
+         ass.top_type AS "topType",
+         ass.scores,
+         ass.created_at AS "createdAt"
+       ${BASE_JOIN_LIST}
+       ${assessmentWhere}
+       ORDER BY ass.created_at DESC, ass.id DESC
+       LIMIT $${limIx} OFFSET $${offIx}`,
+      pageParams
+    );
+    results = pageRes.rows.map((r) => enrichAssessmentDashboardRow(r, enrichCtx));
 
     const distWhereParts = [];
     const distParams = [];
@@ -347,32 +446,6 @@ export default async function DashboardPage({ searchParams }) {
       leadershipPotentials,
     };
 
-    const result = await query(
-      `SELECT
-         ass.id AS "assessmentId",
-         c.id AS "candidateId",
-         c.full_name AS name,
-         ar.key AS "areaKey",
-         ar.label AS "areaLabel",
-         ass.vacancy_id AS "vacancyId",
-         v.title AS "vacancyTitle",
-         ass.top_type AS "topType",
-         ass.scores,
-         ass.created_at AS "createdAt"
-       FROM assessments ass
-       JOIN candidates c ON c.id = ass.candidate_id
-       JOIN areas ar ON ar.id = ass.area_id
-       LEFT JOIN vacancies v ON v.id = ass.vacancy_id
-       ${where}
-       ORDER BY ass.created_at DESC`,
-      params
-    );
-    results = result.rows.map(r => {
-      const fit = selectedArea !== 'all' ? fitForCandidate(r.scores, areaStats, areaRubric) : { fitScore: null, fitLabel: null };
-      const weights = rubricByAreaKey[r.areaKey] || {};
-      const areaFit = computeAreaScore010(r.scores, weights);
-      return { ...r, ...fit, areaFitScore010: areaFit.score010, areaFitLabel: areaFit.label };
-    });
   } catch (e) {
     console.error('Erro ao buscar resultados:', e);
   }
@@ -380,6 +453,10 @@ export default async function DashboardPage({ searchParams }) {
   return (
     <DashboardClient
       results={results}
+      pagination={pagination}
+      compatMetrics={compatMetrics}
+      interactionPeople={interactionPeople}
+      selectedEnneagram={enneagram}
       areas={areas}
       companies={companiesForFilter}
       counts={counts}

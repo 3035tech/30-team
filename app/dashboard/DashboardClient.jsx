@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { TYPE_DATA, getCompat } from '../../lib/data';
 
+import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
+
 const C = {
   bg:'#ffffff', card:'rgba(124,58,237,0.06)', border:'rgba(26,22,37,0.12)',
   purple:'#7C3AED', purpleLight:'#6D28D9', purpleDark:'#4C1D95',
@@ -56,6 +58,16 @@ export default function DashboardClient({
   selectedArea = 'all',
   selectedVacancy = 'all',
   selectedCompany = 'all',
+  pagination = { page: 1, pageSize: 20, total: 0, totalPages: 1 },
+  compatMetrics = {
+    pairs: [],
+    tensions: [],
+    synergies: [],
+    typeCount: {},
+    total: 0,
+  },
+  interactionPeople = [],
+  selectedEnneagram = 'all',
   analytics = null,
   auth = null,
 }) {
@@ -64,7 +76,7 @@ export default function DashboardClient({
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
   const [company, setCompany] = useState(selectedCompany);
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [enneagram, setEnneagram] = useState(selectedEnneagram);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
@@ -73,9 +85,6 @@ export default function DashboardClient({
     await fetch('/api/auth/logout', { method:'POST' });
     router.push('/');
   };
-
-  const filteredResults =
-    typeFilter === 'all' ? results : results.filter(r => String(r.topType) === String(typeFilter));
 
   const isAdmin = (auth?.role || '') === 'admin';
   const canManage = ['admin','hr','direction'].includes(auth?.role || '');
@@ -89,58 +98,93 @@ export default function DashboardClient({
   useEffect(() => {
     setCompany(selectedCompany);
   }, [selectedCompany]);
+  useEffect(() => {
+    setEnneagram(selectedEnneagram);
+  }, [selectedEnneagram]);
 
-  const pushFilters = (next) => {
-    const nextArea = next?.area ?? area;
-    const nextVacancy = next?.vacancy ?? vacancy;
-    const nextCompany = next?.company ?? company;
+  const buildSearchParams = (opts = {}) => {
+    const nextArea = opts.area ?? area;
+    const nextVacancy = opts.vacancy ?? vacancy;
+    const nextCompany = opts.company ?? company;
+    const nextEnneagram = opts.enneagram ?? enneagram;
+    const nextPage = opts.page != null ? opts.page : pagination.page;
+    const nextPageSize = opts.pageSize != null ? opts.pageSize : pagination.pageSize;
     const sp = new URLSearchParams();
     if (isAdmin && nextCompany && nextCompany !== 'all') sp.set('company', nextCompany);
     if (nextArea && nextArea !== 'all') sp.set('area', nextArea);
     if (nextVacancy && nextVacancy !== 'all') sp.set('vacancy', nextVacancy);
-    const qs = sp.toString();
-    router.push(qs ? `/dashboard?${qs}` : '/dashboard');
+    if (nextEnneagram && nextEnneagram !== 'all') sp.set('enneagram', nextEnneagram);
+    sp.set('page', String(Math.max(1, nextPage)));
+    sp.set('pageSize', String(nextPageSize));
+    return sp;
   };
 
-  // Pre-compute pairs
-  const pairs = [];
-  for (let i=0; i<filteredResults.length; i++)
-    for (let j=i+1; j<filteredResults.length; j++) {
-      const c = getCompat(filteredResults[i].topType, filteredResults[j].topType);
-      pairs.push({ a:filteredResults[i], b:filteredResults[j], compat:c });
-    }
-  const tensions  = pairs.filter(p=>p.compat.level==='tension');
-  const synergies = pairs.filter(p=>p.compat.level==='synergy');
+  const navigateWith = (opts) => {
+    const sp = buildSearchParams(opts);
+    router.push(`/dashboard?${sp.toString()}`);
+  };
 
-  const typeCount = {};
-  for (let t=1; t<=9; t++) typeCount[t] = 0;
-  filteredResults.forEach(r=>typeCount[r.topType]++);
+  const pushFilters = (next) => {
+    navigateWith({
+      ...(next?.company != null ? { company: next.company } : {}),
+      ...(next?.area != null ? { area: next.area } : {}),
+      ...(next?.vacancy != null ? { vacancy: next.vacancy } : {}),
+      ...(next?.enneagram != null ? { enneagram: next.enneagram } : {}),
+      page: 1,
+    });
+  };
+
+  const pushPagination = (opts) => {
+    navigateWith({
+      page: opts.page ?? pagination.page,
+      pageSize: opts.pageSize ?? pagination.pageSize,
+    });
+  };
+
+  const pairs = compatMetrics.pairs || [];
+  const tensions = compatMetrics.tensions || [];
+  const synergies = compatMetrics.synergies || [];
+  const typeCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+  Object.assign(typeCount, compatMetrics.typeCount || {});
   const maxCount = Math.max(...Object.values(typeCount), 1);
+  const listTotal = compatMetrics.total ?? 0;
 
   const byAssessmentId = {};
-  filteredResults.forEach(r => { byAssessmentId[String(r.assessmentId)] = r; });
+  interactionPeople.forEach((r) => {
+    byAssessmentId[String(r.assessmentId)] = r;
+  });
 
   const groupBase = groupBaseId ? byAssessmentId[String(groupBaseId)] : null;
-  const groupMembers = groupIds.map(id => byAssessmentId[String(id)]).filter(Boolean);
+  const groupMembers = groupIds.map((id) => byAssessmentId[String(id)]).filter(Boolean);
 
   const suggestions = groupBase
-    ? filteredResults
-        .filter(r => String(r.assessmentId) !== String(groupBase.assessmentId))
-        .filter(r => !dismissedIds.includes(String(r.assessmentId)))
-        .map(r => ({ person: r, compat: getCompat(groupBase.topType, r.topType) }))
-        .sort((x,y)=>{
+    ? interactionPeople
+        .filter((r) => String(r.assessmentId) !== String(groupBase.assessmentId))
+        .filter((r) => !dismissedIds.includes(String(r.assessmentId)))
+        .map((r) => ({ person: r, compat: getCompat(groupBase.topType, r.topType) }))
+        .sort((x, y) => {
           const order = { synergy: 0, neutral: 1, tension: 2 };
           return (order[x.compat.level] ?? 9) - (order[y.compat.level] ?? 9);
         })
     : [];
 
   const groupPairs = [];
-  for (let i=0; i<groupMembers.length; i++)
-    for (let j=i+1; j<groupMembers.length; j++) {
+  for (let i = 0; i < groupMembers.length; i++) {
+    for (let j = i + 1; j < groupMembers.length; j++) {
       const c = getCompat(groupMembers[i].topType, groupMembers[j].topType);
       groupPairs.push({ a: groupMembers[i], b: groupMembers[j], compat: c });
     }
-  const groupTensions = groupPairs.filter(p => p.compat.level === 'tension');
+  }
+  const groupTensions = groupPairs.filter((p) => p.compat.level === 'tension');
+
+  const compareQueryString = useMemo(() => {
+    const sp = new URLSearchParams();
+    if (isAdmin && company && company !== 'all') sp.set('company', company);
+    if (area && area !== 'all') sp.set('area', area);
+    if (vacancy && vacancy !== 'all') sp.set('vacancy', vacancy);
+    if (enneagram && enneagram !== 'all') sp.set('enneagram', enneagram);
+    return sp.toString();
+  }, [isAdmin, company, area, vacancy, enneagram]);
 
   const Tab = ({id,label}) => (
     <button onClick={()=>setTab(id)} style={{
@@ -170,7 +214,12 @@ export default function DashboardClient({
               Resultados da Equipe
             </h2>
             <span style={{ fontSize:'13px', color:C.muted }}>
-              {filteredResults.length} {filteredResults.length===1?'pessoa respondeu':'pessoas responderam'}
+              {listTotal} {listTotal === 1 ? 'avaliação com os filtros atuais' : 'avaliações com os filtros atuais'}
+              {pagination.total > 0 ? (
+                <span style={{ color: C.faint }}>
+                  {' '}· página {pagination.page} de {pagination.totalPages} ({pagination.pageSize} por página na Equipe)
+                </span>
+              ) : null}
             </span>
           </div>
           <div style={{ display:'flex', gap:'10px', alignItems:'center', flexWrap:'wrap' }}>
@@ -216,7 +265,13 @@ export default function DashboardClient({
                 </option>
               ))}
             </select>
-            <select value={typeFilter} onChange={(e)=>setTypeFilter(e.target.value)}
+            <select
+              value={enneagram}
+              onChange={(e) => {
+                const v = e.target.value;
+                setEnneagram(v);
+                pushFilters({ enneagram: v });
+              }}
               style={{ background:'rgba(26,22,37,.05)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 14px', color:C.muted,
                 fontSize:'12px', cursor:'pointer', fontFamily:"'Georgia',serif" }}>
@@ -247,6 +302,60 @@ export default function DashboardClient({
           </div>
         </div>
 
+        {listTotal > 0 ? (
+          <div style={{ ...S.card, padding: '16px 22px', marginBottom: '18px', display: 'flex',
+            flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+              Itens por página (Equipe)
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              <select
+                value={String(pagination.pageSize)}
+                onChange={(e) => {
+                  const ps = parseInt(e.target.value, 10);
+                  pushPagination({ page: 1, pageSize: ps });
+                }}
+                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'monospace' }}
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={String(n)}>{n}</option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  disabled={pagination.page <= 1}
+                  onClick={() => pushPagination({ page: pagination.page - 1 })}
+                  style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
+                    fontSize: '12px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Anterior
+                </button>
+                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
+                  {pagination.page} / {pagination.totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={pagination.page >= pagination.totalPages}
+                  onClick={() => pushPagination({ page: pagination.page + 1 })}
+                  style={{ background: pagination.page >= pagination.totalPages ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '8px 14px',
+                    color: pagination.page >= pagination.totalPages ? C.faint : C.purple,
+                    fontSize: '12px',
+                    cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <>
           <div style={{ display:'flex', gap:'8px', marginBottom:'24px', flexWrap:'wrap' }}>
             <Tab id="overview"      label="Visão Geral"/>
@@ -259,7 +368,7 @@ export default function DashboardClient({
             {isAdmin && <Tab id="companies"    label="Empresas"/>}
           </div>
 
-          {results.length === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
+          {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'vacancies' ? (
             <div style={{...S.card, textAlign:'center', padding:'60px'}}>
               <div style={{ fontSize:'40px', marginBottom:'16px' }}>🌑</div>
               <p style={{ color:C.muted, fontStyle:'italic' }}>
@@ -269,15 +378,15 @@ export default function DashboardClient({
           ) : (
             <>
               {tab==='leadership'    && <LeadershipTab analytics={analytics}/>}
-              {tab==='overview'      && <OverviewTab typeCount={typeCount} maxCount={maxCount} results={filteredResults} tensions={tensions} synergies={synergies}/>}
-              {tab==='team'          && <TeamTab results={filteredResults}/>}
+              {tab==='overview'      && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies}/>}
+              {tab==='team'          && <TeamTab results={results}/>}
               {tab==='compatibility' && <CompatTab tensions={tensions} synergies={synergies} pairs={pairs}/>}
-              {tab==='compare'       && <CompareTab results={filteredResults}/>}
+              {tab==='compare'       && <CompareTabLoader queryString={compareQueryString}/>}
               {tab==='vacancies'     && canManage && <VacanciesAdminTab isAdmin={isAdmin}/>}
               {tab==='companies'     && isAdmin && <CompaniesAdminTab/>}
               {tab==='group'         && (
                 <GroupTab
-                  results={filteredResults}
+                  results={interactionPeople}
                   groupBase={groupBase}
                   setGroupBaseId={setGroupBaseId}
                   groupIds={groupIds}
@@ -558,7 +667,55 @@ function LeadershipTab({ analytics }) {
   );
 }
 
-function OverviewTab({ typeCount, maxCount, results, tensions, synergies }) {
+function CompareTabLoader({ queryString }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setErr('');
+    const q = queryString ? `?${queryString}` : '';
+    fetch(`/api/admin/assessment-rows${q}`)
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (cancelled) return;
+        if (!ok) throw new Error(d?.error || 'Falha ao carregar');
+        setRows(Array.isArray(d.rows) ? d.rows : []);
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(e?.message || 'Erro');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [queryString]);
+
+  if (loading) {
+    return (
+      <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
+        <p style={{ color: C.muted, margin: 0 }}>Carregando dados do comparativo…</p>
+      </div>
+    );
+  }
+  if (err) {
+    return (
+      <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
+        <p style={{ color: C.tension, margin: 0 }}>{err}</p>
+      </div>
+    );
+  }
+  return <CompareTab results={rows} />;
+}
+
+function OverviewTab({ typeCount, maxCount, distributionTotal, tensions, synergies }) {
+  const denom = Math.max(
+    distributionTotal || 0,
+    Object.values(typeCount).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0),
+    1,
+  );
   const top = Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).find(([,c])=>c>0);
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
@@ -591,7 +748,7 @@ function OverviewTab({ typeCount, maxCount, results, tensions, synergies }) {
                 <div style={{ flex:1 }}><Bar value={c} max={maxCount} color={d.color} h={10}/></div>
                 <span style={{ fontSize:'13px', color:C.muted, fontFamily:'monospace', width:'20px', textAlign:'right' }}>{c}</span>
                 <span style={{ fontSize:'11px', color:C.faint, fontFamily:'monospace', width:'36px', textAlign:'right' }}>
-                  {Math.round((c/results.length)*100)}%
+                  {Math.round((c / denom) * 100)}%
                 </span>
               </div>
             );
@@ -653,16 +810,17 @@ function TeamTab({ results }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-      {results.map((r,i)=>{
-        const d=TYPE_DATA[r.topType];
-        const isOpen=open===i;
-        const sorted=Object.entries(r.scores).sort((a,b)=>b[1]-a[1]);
-        const second=sorted[1];
-        const maxS=parseInt(sorted[0][1]);
+      {results.map((r) => {
+        const id = String(r.assessmentId);
+        const d = TYPE_DATA[r.topType];
+        const isOpen = open === id;
+        const sorted = Object.entries(r.scores || {}).sort((a, b) => b[1] - a[1]);
+        const second = sorted[1];
+        const maxS = sorted[0] ? parseInt(sorted[0][1], 10) : 0;
         return (
-          <div key={i} style={{...S.card, padding:0, overflow:'hidden', cursor:'pointer',
+          <div key={id} style={{...S.card, padding:0, overflow:'hidden', cursor:'pointer',
             border:isOpen?`1px solid ${d.color}44`:`1px solid ${C.border}`}}
-            onClick={()=>setOpen(isOpen?null:i)}>
+            onClick={()=>setOpen(isOpen?null:id)}>
             <div style={{ display:'flex', alignItems:'center', gap:'16px', padding:'18px 24px' }}>
               <div style={{ fontSize:'24px', flexShrink:0 }}>{d.emoji}</div>
               <div style={{ flex:1 }}>
@@ -1804,6 +1962,11 @@ function VacanciesAdminTab({ isAdmin }) {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
+  const [vacPage, setVacPage] = useState(1);
+  const [vacPageSize, setVacPageSize] = useState(20);
+  const [vacTotal, setVacTotal] = useState(0);
+  const [vacTotalPages, setVacTotalPages] = useState(1);
+
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [status, setStatus] = useState('open');
@@ -1816,10 +1979,25 @@ function VacanciesAdminTab({ isAdmin }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/vacancies');
+      const qs = new URLSearchParams({
+        page: String(vacPage),
+        pageSize: String(vacPageSize),
+      }).toString();
+      const res = await fetch(`/api/admin/vacancies?${qs}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao carregar vagas');
-      setVacancies(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data)
+          ? data
+          : [];
+      setVacancies(rows);
+      const total = typeof data?.total === 'number' ? data.total : rows.length;
+      const tpg = typeof data?.totalPages === 'number'
+        ? data.totalPages
+        : Math.max(1, Math.ceil(total / vacPageSize));
+      setVacTotal(total);
+      setVacTotalPages(tpg);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -1846,6 +2024,9 @@ function VacanciesAdminTab({ isAdmin }) {
 
   useEffect(() => {
     loadVacancies();
+  }, [vacPage, vacPageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     loadCompanies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2067,11 +2248,57 @@ function VacanciesAdminTab({ isAdmin }) {
 
       <div style={{ ...S.card }}>
         <span style={S.label}>Vagas cadastradas</span>
-        {vacancies.length === 0 ? (
+        {vacTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
             Nenhuma vaga ainda.
           </p>
         ) : (
+          <>
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
+              marginTop: '12px', marginBottom: '8px', paddingBottom: '10px', borderBottom: `1px solid ${C.border}`,
+            }}>
+              <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                {vacTotal} vaga(s) · página {vacPage}/{vacTotalPages}
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <select
+                  value={String(vacPageSize)}
+                  onChange={(e) => { setVacPage(1); setVacPageSize(parseInt(e.target.value, 10)); }}
+                  disabled={loading}
+                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
+                    cursor: 'pointer', fontFamily: 'monospace' }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <option key={n} value={String(n)}>{n}/pág.</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={loading || vacPage <= 1}
+                  onClick={() => setVacPage((p) => Math.max(1, p - 1))}
+                  style={{ background: vacPage <= 1 ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${vacPage <= 1 ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '6px 12px', color: vacPage <= 1 ? C.faint : C.purple,
+                    fontSize: '11px', cursor: vacPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || vacPage >= vacTotalPages}
+                  onClick={() => setVacPage((p) => Math.min(vacTotalPages, p + 1))}
+                  style={{ background: vacPage >= vacTotalPages ? 'transparent' : `${C.purple}18`,
+                    border: `1px solid ${vacPage >= vacTotalPages ? C.border : `${C.purple}55`}`,
+                    borderRadius: '10px', padding: '6px 12px',
+                    color: vacPage >= vacTotalPages ? C.faint : C.purple,
+                    fontSize: '11px', cursor: vacPage >= vacTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
             {vacancies.map((v) => {
               const token = v.activeToken || '';
@@ -2164,6 +2391,7 @@ function VacanciesAdminTab({ isAdmin }) {
               );
             })}
           </div>
+          </>
         )}
       </div>
     </div>
