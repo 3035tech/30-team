@@ -295,22 +295,19 @@ function TestScreen({ name, onComplete }) {
       if (fade) return;
       setFade(true);
       setTimeout(() => {
-        let na;
-        setAnswers((prev) => {
-          na = { ...prev, [q.id]: val };
-          return na;
-        });
+        const nextAnswers = { ...answers, [q.id]: val };
+        setAnswers(nextAnswers);
         setPendingVal(null);
         if (idx < questions.length - 1) {
           setIdx((i) => i + 1);
           setSelected(null);
           setFade(false);
         } else {
-          onComplete({ name, answers: na });
+          onComplete({ name, answers: nextAnswers });
         }
       }, 280);
     },
-    [fade, q.id, idx, questions.length, name, onComplete]
+    [fade, answers, q.id, idx, questions.length, name, onComplete]
   );
 
   const chooseOption = useCallback(
