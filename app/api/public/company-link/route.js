@@ -4,7 +4,7 @@ import { queryRead } from '../../../../lib/db';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const token = String(searchParams.get('token') || '').trim();
-  if (!token) return NextResponse.json({ error: 'Token inválido' }, { status: 400 });
+  if (!token) return NextResponse.json({ errorCode: 'INVALID_TOKEN', error: 'Token inválido' }, { status: 400 });
 
   const r = await queryRead(
     `SELECT
@@ -19,7 +19,7 @@ export async function GET(request) {
      LIMIT 1`,
     [token]
   );
-  if (r.rowCount === 0) return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 404 });
+  if (r.rowCount === 0) return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 404 });
 
   return NextResponse.json(r.rows[0]);
 }

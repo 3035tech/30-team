@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
 import { query, queryRead } from '../../lib/db';
+import { normalizeLocale, t } from '../../lib/i18n';
 import DashboardClient from './DashboardClient';
 import {
   parseDashboardPagination,
@@ -80,6 +81,7 @@ export default async function DashboardPage({ searchParams }) {
   if (!allowed) redirect('/login');
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
+  const locale = normalizeLocale(payload?.locale);
   if (!isAdmin && !companyId) redirect('/login');
 
   const selectedArea = (searchParams?.area || 'all').toString();
@@ -426,7 +428,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
             color: 'rgba(26,22,37,0.55)',
           }}
         >
-          Carregando painel…
+          {t(locale, 'dashboard.loadingPanel')}
         </div>
       }
     >
@@ -446,7 +448,8 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         areaStats={areaStats}
         areaRubric={areaRubric}
         analytics={analytics}
-        auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null }}
+        auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null, locale }}
+        initialLocale={locale}
       />
     </Suspense>
   );

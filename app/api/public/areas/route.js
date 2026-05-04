@@ -10,6 +10,6 @@ export async function GET() {
     return NextResponse.json({ areas: r.rows });
   } catch (e) {
     console.error('public/areas:', e);
-    return NextResponse.json({ error: 'Erro ao carregar áreas' }, { status: 500 });
+    return NextResponse.json({ errorCode: 'AREAS_LOAD', error: 'Erro ao carregar áreas' }, { status: 500 });
   }
 }

@@ -2,8 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TYPE_DATA, getCompat } from '../../lib/data';
+import { getCompat } from '../../lib/data';
+import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
+import { t } from '../../lib/i18n';
+import { useLocale } from '../../lib/useLocale';
 import { C } from '../../lib/theme';
+import LanguageSelect from '../_components/LanguageSelect';
 
 import {
   PAGE_SIZE_OPTIONS,
@@ -46,9 +50,11 @@ export default function DashboardClient({
   selectedEnneagram = 'all',
   analytics = null,
   auth = null,
+  initialLocale = 'pt-BR',
 }) {
   const router = useRouter();
   const urlParams = useSearchParams();
+  const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
 
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
@@ -57,6 +63,7 @@ export default function DashboardClient({
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
+  const typeData = getTypeData(locale);
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -197,18 +204,19 @@ export default function DashboardClient({
           flexDirection: 'column',
           gap: '8px',
         }}>
-          <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>Painel</span>
+          <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
           <nav style={{ flex: 1 }}>
-            <NavLink id="overview" label="Visão geral" />
-            <NavLink id="team" label="Equipe" />
-            <NavLink id="compatibility" label="Compatibilidade" />
-            <NavLink id="compare" label="Comparativo" />
-            <NavLink id="group" label="Grupos" />
-            <NavLink id="leadership" label="Liderança" />
-            {canManage ? <NavLink id="vacancies" label="Vagas" /> : null}
-            {isAdmin ? <NavLink id="companies" label="Empresas" /> : null}
-            {isAdmin ? <NavLink id="users" label="Usuários" /> : null}
+            <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
+            <NavLink id="team" label={t(locale, 'dashboard.team')} />
+            <NavLink id="compatibility" label={t(locale, 'dashboard.compatibility')} />
+            <NavLink id="compare" label={t(locale, 'dashboard.compare')} />
+            <NavLink id="group" label={t(locale, 'dashboard.group')} />
+            <NavLink id="leadership" label={t(locale, 'dashboard.leadership')} />
+            {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
+            {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
+            {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
           </nav>
+          <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
         </aside>
 
         <div style={{
@@ -221,17 +229,17 @@ export default function DashboardClient({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
             flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
             <div>
-              <span style={S.label}>◈ 30Team · Dashboard</span>
+              <span style={S.label}>◈ 30Team · {t(locale, 'dashboard.dashboard')}</span>
               <h2 style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
                 background: 'linear-gradient(135deg,#E8E0FF,#A78BFA 55%,#7C3AED)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Resultados da Equipe
+                {t(locale, 'dashboard.title')}
               </h2>
               <span style={{ fontSize: '13px', color: C.muted }}>
-                {listTotal} {listTotal === 1 ? 'avaliação com os filtros atuais' : 'avaliações com os filtros atuais'}
+                {listTotal} {listTotal === 1 ? t(locale, 'dashboard.assessmentSingular') : t(locale, 'dashboard.assessmentPlural')}
                 {pagination.total > 0 && tab === 'team' ? (
                   <span style={{ color: C.faint }}>
-                    {' '}· página {pagination.page} de {pagination.totalPages} ({pagination.pageSize} nesta vista)
+                    {' '}· {t(locale, 'dashboard.pageInfo', { page: pagination.page, totalPages: pagination.totalPages, pageSize: pagination.pageSize })}
                   </span>
                 ) : null}
               </span>
@@ -249,7 +257,7 @@ export default function DashboardClient({
                     borderRadius: '10px', padding: '10px 14px', color: C.muted,
                     fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
                 >
-                  <option value="all">Todas as empresas</option>
+                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
                   {companies.map((co) => (
                     <option key={co.id} value={String(co.id)}>
                       {co.name}
@@ -261,10 +269,10 @@ export default function DashboardClient({
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">Todas as áreas</option>
+                <option value="all">{t(locale, 'dashboard.allAreas')}</option>
                 {areas.map((a) => (
                   <option key={a.key} value={a.key}>
-                    {a.label} ({counts.find((c) => c.key === a.key)?.count ?? 0})
+                    {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
                   </option>
                 ))}
               </select>
@@ -286,10 +294,10 @@ export default function DashboardClient({
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">Todas as vagas</option>
+                <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
                 {vacancies.map((v) => (
                   <option key={v.id} value={String(v.id)}>
-                    {v.title} {v.status === 'closed' ? '(fechada)' : ''}
+                    {v.title} {v.status === 'closed' ? t(locale, 'dashboard.closed') : ''}
                   </option>
                 ))}
               </select>
@@ -303,10 +311,10 @@ export default function DashboardClient({
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">Todos os perfis (T1–T9)</option>
+                <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
                   <option key={t} value={String(t)}>
-                    T{t} · {TYPE_DATA[t].short}
+                    T{t} · {typeData[t].short}
                   </option>
                 ))}
               </select>
@@ -319,13 +327,13 @@ export default function DashboardClient({
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif",
                   textDecoration: 'none', display: 'inline-block' }}
               >
-                Exportar CSV
+                {t(locale, 'dashboard.exportCsv')}
               </a>
               <button type="button" onClick={logout}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 20px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                Sair →
+                {t(locale, 'dashboard.logout')}
               </button>
             </div>
           </div>
@@ -334,13 +342,18 @@ export default function DashboardClient({
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
               <p style={{ color: C.muted, fontStyle: 'italic' }}>
-                Nenhum resultado ainda.<br />Compartilhe o link com sua equipe.
+                {t(locale, 'dashboard.empty').split('\n').map((line, i) => (
+                  <span key={line}>
+                    {i > 0 ? <br /> : null}
+                    {line}
+                  </span>
+                ))}
               </p>
             </div>
           ) : (
             <>
-              {tab === 'leadership' && <LeadershipTab analytics={analytics} />}
-              {tab === 'overview' && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies} />}
+              {tab === 'leadership' && <LeadershipTab analytics={analytics} locale={locale} />}
+              {tab === 'overview' && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies} locale={locale} />}
               {tab === 'team' && (
                 <>
                   <TeamTab
@@ -353,7 +366,7 @@ export default function DashboardClient({
                     <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
                       flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                        Itens por página · Equipe
+                        {t(locale, 'dashboard.itemsPerPageTeam')}
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                         <select
@@ -367,7 +380,7 @@ export default function DashboardClient({
                             cursor: 'pointer', fontFamily: 'monospace' }}
                         >
                           {PAGE_SIZE_OPTIONS.map((n) => (
-                            <option key={n} value={String(n)}>{n} / página</option>
+                            <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
                           ))}
                         </select>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -380,7 +393,7 @@ export default function DashboardClient({
                               borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
                               fontSize: '12px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
                           >
-                            Anterior
+                            {t(locale, 'dashboard.previous')}
                           </button>
                           <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
                             {pagination.page} / {pagination.totalPages}
@@ -396,7 +409,7 @@ export default function DashboardClient({
                               fontSize: '12px',
                               cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
                           >
-                            Próxima
+                            {t(locale, 'dashboard.next')}
                           </button>
                         </div>
                       </div>
@@ -412,6 +425,7 @@ export default function DashboardClient({
                   compatPage={compatListPagination.page}
                   compatPageSize={compatListPagination.pageSize}
                   onCompatPagination={pushCompatListPagination}
+                  locale={locale}
                 />
               )}
               {tab === 'compare' && (
@@ -420,11 +434,12 @@ export default function DashboardClient({
                   comparePage={comparePagSnap.page}
                   comparePageSize={comparePagSnap.pageSize}
                   onComparePagination={pushComparePagination}
+                  locale={locale}
                 />
               )}
-              {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} />}
-              {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} />}
-              {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} />}
+              {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'group' && (
                 <GroupTab
                   results={interactionPeople}
@@ -436,6 +451,7 @@ export default function DashboardClient({
                   setDismissedIds={setDismissedIds}
                   suggestions={suggestions}
                   groupTensions={groupTensions}
+                  locale={locale}
                 />
               )}
             </>

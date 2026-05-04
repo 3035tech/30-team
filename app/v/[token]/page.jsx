@@ -3,42 +3,52 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AssessmentFlow from '../../_components/AssessmentFlow';
+import { errorMessage, t } from '../../../lib/i18n';
+import { useLocale } from '../../../lib/useLocale';
 
 export default function VacancyTokenEntryPage() {
   const params = useParams();
   const token = typeof params?.token === 'string' ? params.token : Array.isArray(params?.token) ? params.token[0] : '';
   const [state, setState] = useState({ loading: true, error: '', vacancy: null });
+  const [locale] = useLocale();
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      const t = String(token || '').trim();
-      if (!t) {
-        if (!cancelled) setState({ loading: false, error: 'Link inválido.', vacancy: null });
+      const tokenValue = String(token || '').trim();
+      if (!tokenValue) {
+        if (!cancelled) setState({ loading: false, error: t(locale, 'publicPages.invalidLink'), vacancy: null });
         return;
       }
       try {
-        const res = await fetch(`/api/public/vacancy-link?token=${encodeURIComponent(t)}`);
+        const res = await fetch(`/api/public/vacancy-link?token=${encodeURIComponent(tokenValue)}`);
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Link inválido ou expirado.');
+        if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error || t(locale, 'errors.EXPIRED_LINK'));
         if (!cancelled) setState({ loading: false, error: '', vacancy: data });
       } catch (e) {
-        if (!cancelled) setState({ loading: false, error: e?.message || 'Erro' , vacancy: null });
+        if (!cancelled) setState({ loading: false, error: e?.message || t(locale, 'errors.INTERNAL') , vacancy: null });
       }
     };
     run();
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, locale]);
 
   if (state.loading) {
-    return <AssessmentFlow vacancyToken={token || ''} notice={{ kind: 'info', title: 'Carregando vaga…', message: 'Validando o link e o status da vaga.' }} />;
+    return (
+      <AssessmentFlow
+        vacancyToken={token || ''}
+        notice={{ kind: 'info', title: t(locale, 'publicPages.loadingVacancyTitle'), message: t(locale, 'publicPages.loadingVacancyMessage') }}
+        initialLocale={locale}
+      />
+    );
   }
   if (state.error) {
     return (
       <AssessmentFlow
         vacancyToken={token || ''}
-        notice={{ kind: 'warning', title: 'Não foi possível abrir', message: state.error }}
+        notice={{ kind: 'warning', title: t(locale, 'publicPages.invalidOpenTitle'), message: state.error }}
         startDisabled={true}
+        initialLocale={locale}
       />
     );
   }
@@ -46,15 +56,20 @@ export default function VacancyTokenEntryPage() {
   const v = state.vacancy;
   const isClosed = String(v?.status || '') === 'closed';
   const notice = isClosed
-    ? { kind: 'warning', title: 'Vaga encerrada', message: 'Essa vaga não está mais aberta. Você pode ver o formulário, mas o RH pode não considerar novas submissões.' }
-    : { kind: 'info', title: 'Vaga', message: v?.title ? `Você está se candidatando para: ${v.title}` : 'Link válido.' };
+    ? { kind: 'warning', title: t(locale, 'publicPages.vacancyClosedTitle'), message: t(locale, 'publicPages.vacancyClosedMessage') }
+    : {
+        kind: 'info',
+        title: t(locale, 'publicPages.vacancyTitle'),
+        message: v?.title ? t(locale, 'publicPages.vacancyMessage', { title: v.title }) : t(locale, 'publicPages.validLinkMessage'),
+      };
 
   return (
     <AssessmentFlow
       vacancyToken={token || ''}
       notice={notice}
       startDisabled={isClosed}
-      requireCandidateEmail={!!v?.requireCandidateEmail}
+      requireCandidateEmail={true}
+      initialLocale={locale}
     />
   );
 }

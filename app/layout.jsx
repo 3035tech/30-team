@@ -1,4 +1,6 @@
 import './globals.css';
+import { cookies } from 'next/headers';
+import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale } from '../lib/i18n';
 
 export const metadata = {
   title: '30Team',
@@ -6,8 +8,10 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const cookieStore = cookies();
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   return (
-    <html lang="pt-BR">
+    <html lang={localeHtmlLang(locale)}>
       <head>
         <meta charSet="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>

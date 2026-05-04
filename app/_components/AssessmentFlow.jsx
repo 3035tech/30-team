@@ -2,9 +2,12 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TYPE_DATA, drawQuestions, SCALE_LABELS } from '../../lib/data';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
+import { drawLocalizedQuestions, getScaleLabels, getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
+import { errorMessage, t } from '../../lib/i18n';
+import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
+import LanguageSelect from './LanguageSelect';
 
 const S = {
   app: {
@@ -99,7 +102,7 @@ const Bar = ({ value, max, color, h = 6 }) => (
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function HomeScreen({ onStart, notice = null, startDisabled = false, requireCandidateEmail = false }) {
+function HomeScreen({ onStart, notice = null, startDisabled = false, requireCandidateEmail = false, locale, setLocale }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [areaKey, setAreaKey] = useState('');
@@ -107,6 +110,8 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   const [areasLoading, setAreasLoading] = useState(true);
   const [areasError, setAreasError] = useState('');
   const [consent, setConsent] = useState(false);
+  const [startBusy, setStartBusy] = useState(false);
+  const [startError, setStartError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -115,13 +120,13 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
       try {
         const res = await fetch('/api/public/areas');
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Não foi possível carregar as áreas.');
+        if (!res.ok) throw new Error(data?.error || t(locale, 'errors.AREAS_LOAD'));
         if (!cancelled) {
           setAreaOptions(Array.isArray(data.areas) ? data.areas : []);
           setAreasError('');
         }
       } catch (e) {
-        if (!cancelled) setAreasError(e?.message || 'Erro ao carregar áreas.');
+        if (!cancelled) setAreasError(e?.message || t(locale, 'errors.AREAS_LOAD'));
       } finally {
         if (!cancelled) setAreasLoading(false);
       }
@@ -138,22 +143,46 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
 
   const emailOk = !requireCandidateEmail || EMAIL_RE.test(email.trim());
   const ready = name.trim().length > 1 && !!areaKey && consent && emailOk;
-  const canStart = ready && !startDisabled && !areasLoading && !areasError && areaOptions.length > 0;
+  const canStart = ready && !startDisabled && !areasLoading && !areasError && areaOptions.length > 0 && !startBusy;
+  const startPayload = { name: name.trim(), email: email.trim(), areaKey, consent };
+  const handleSubmitStart = async () => {
+    if (!canStart) return;
+    setStartBusy(true);
+    setStartError('');
+    try {
+      const err = await onStart(startPayload);
+      if (err) setStartError(err);
+    } catch (e) {
+      console.error('Erro ao iniciar teste:', e);
+      setStartError(t(locale, 'candidate.startValidationError'));
+    } finally {
+      setStartBusy(false);
+    }
+  };
 
   return (
     <div style={S.app}>
       <div style={S.glow} />
       <div style={S.card}>
-        <span style={S.label}>◈ 30Team</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'candidate.brand')}</span>
+          <LanguageSelect locale={locale} onChange={setLocale} compact />
+        </div>
         <h1 style={S.h1}>
-          Mapa de
-          <br />
-          Perfil
+          {t(locale, 'candidate.mapTitle').split('\n').map((line, i) => (
+            <span key={line}>
+              {i > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
         </h1>
         <p style={S.p}>
-          Um retrato rápido do seu estilo de trabalho.
-          <br />
-          Descubra padrões de motivação, tomada de decisão e colaboração.
+          {t(locale, 'candidate.intro').split('\n').map((line, i) => (
+            <span key={line}>
+              {i > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
         </p>
 
         {notice ? (
@@ -182,10 +211,10 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
 
         <div style={{ display: 'flex', gap: '28px', marginBottom: '36px', flexWrap: 'wrap' }}>
           {[
-            ['54', 'questões'],
-            ['~12', 'minutos'],
-            ['9', 'tipos'],
-            ['300', 'banco de perguntas'],
+            ['54', t(locale, 'candidate.statsQuestions')],
+            ['~12', t(locale, 'candidate.statsMinutes')],
+            ['9', t(locale, 'candidate.statsTypes')],
+            ['300', t(locale, 'candidate.statsBank')],
           ].map(([n, l]) => (
             <div key={l}>
               <div style={{ fontSize: '24px', color: C.purpleLight }}>{n}</div>
@@ -196,18 +225,18 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           ))}
         </div>
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>Seu nome completo</label>
+        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.fullName')}</label>
         <input
           style={S.input}
-          placeholder="Ex: Maria Silva"
+          placeholder={t(locale, 'candidate.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && ready && onStart({ name: name.trim(), email: email.trim(), areaKey, consent })}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
         />
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>Área (vaga)</label>
+        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.area')}</label>
         {areasLoading ? (
-          <div style={{ ...S.input, color: C.muted, marginBottom: '16px' }}>Carregando áreas…</div>
+          <div style={{ ...S.input, color: C.muted, marginBottom: '16px' }}>{t(locale, 'candidate.loadingAreas')}</div>
         ) : areasError ? (
           <div
             style={{
@@ -228,23 +257,23 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           >
             {areaOptions.map((a) => (
               <option key={a.key} value={a.key}>
-                {a.label}
+                {localizeAreaLabel(a, locale)}
               </option>
             ))}
           </select>
         )}
 
         <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '4px' }}>
-          {requireCandidateEmail ? 'E-mail (obrigatório neste link · contato do RH)' : 'E-mail (opcional)'}
+          {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
         </label>
         <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '0 0 8px' }}>
           {requireCandidateEmail
-            ? 'A empresa configurou este link para exigir e-mail e poder retornar sobre seu processo.'
-            : 'Opcional para reduzir dados pessoais. Sem e-mail, o RH pode ter mais dificuldade para contato; alguns links de empresa ou vaga pedem e-mail — neste caso o campo passa a ser obrigatório.'}
+            ? t(locale, 'candidate.emailHelpRequired')
+            : t(locale, 'candidate.emailHelpOptional')}
         </p>
         <input
           style={{ ...S.input, marginBottom: '16px', borderColor: requireCandidateEmail && !emailOk && email.length > 0 ? 'rgba(232,71,71,.4)' : undefined }}
-          placeholder="Ex: maria@empresa.com"
+          placeholder={t(locale, 'candidate.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           inputMode={requireCandidateEmail ? 'email' : undefined}
@@ -253,25 +282,42 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
 
         <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '12px', color: C.muted, lineHeight: 1.5, marginBottom: '16px' }}>
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: '2px' }} />
-          Autorizo o uso dessas informações para fins de recrutamento e comparação interna (LGPD).
+          {t(locale, 'candidate.consent')}
         </label>
+
+        {startError ? (
+          <div
+            style={{
+              marginBottom: '16px',
+              padding: '12px 14px',
+              background: 'rgba(232,71,71,.06)',
+              border: '1px solid rgba(232,71,71,.22)',
+              borderRadius: '12px',
+              fontSize: '12px',
+              color: '#b91c1c',
+              lineHeight: 1.5,
+            }}
+          >
+            {startError}
+          </div>
+        ) : null}
 
         <button
           disabled={!canStart}
           style={{
             ...S.btn(),
             opacity: canStart ? 1 : 0.4,
-            cursor: canStart ? 'pointer' : 'not-allowed',
+            cursor: startBusy ? 'wait' : canStart ? 'pointer' : 'not-allowed',
           }}
-          onClick={() => canStart && onStart({ name: name.trim(), email: email.trim(), areaKey, consent })}
+          onClick={handleSubmitStart}
         >
-          Começar →
+          {startBusy ? t(locale, 'common.validating') : t(locale, 'candidate.start')}
         </button>
 
         <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: `1px solid ${C.border}` }}>
-          <span style={{ fontSize: '11px', color: C.faint }}>Gestor? </span>
+          <span style={{ fontSize: '11px', color: C.faint }}>{t(locale, 'candidate.manager')} </span>
           <span style={{ fontSize: '11px', color: C.purpleLight, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/login')}>
-            Acessar dashboard →
+            {t(locale, 'candidate.dashboardAccess')}
           </span>
         </div>
       </div>
@@ -279,8 +325,8 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   );
 }
 
-function TestScreen({ name, onComplete }) {
-  const [questions] = useState(() => drawQuestions());
+function TestScreen({ name, onComplete, locale }) {
+  const [questions] = useState(() => drawLocalizedQuestions(locale));
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [selected, setSelected] = useState(null);
@@ -289,6 +335,7 @@ function TestScreen({ name, onComplete }) {
   const [fade, setFade] = useState(false);
   const q = questions[idx];
   const progress = (idx / questions.length) * 100;
+  const scaleLabels = getScaleLabels(locale);
 
   const advanceWithAnswer = useCallback(
     (val) => {
@@ -340,7 +387,7 @@ function TestScreen({ name, onComplete }) {
       <div style={{ ...S.card, maxWidth: '700px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
           <span style={{ ...S.label, marginBottom: 0 }}>
-            Questão {idx + 1} de {questions.length}
+            {t(locale, 'candidate.questionProgress', { current: idx + 1, total: questions.length })}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {idx > 0 ? (
@@ -358,7 +405,7 @@ function TestScreen({ name, onComplete }) {
                   fontFamily: FONTS.serif,
                 }}
               >
-                ← Anterior
+                {t(locale, 'candidate.previous')}
               </button>
             ) : null}
             <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{Math.round(progress)}%</span>
@@ -387,13 +434,13 @@ function TestScreen({ name, onComplete }) {
               }
             }}
           />
-          Confirmar cada resposta antes de avançar (menos risco de clique errado)
+          {t(locale, 'candidate.carefulMode')}
         </label>
         <p style={{ fontSize: '20px', lineHeight: 1.6, marginBottom: '36px', fontWeight: 'normal', opacity: fade ? 0.3 : 1, transition: 'opacity .28s' }}>
           "{q.text}"
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {SCALE_LABELS.map((label, i) => {
+          {scaleLabels.map((label, i) => {
             const val = i + 1;
             const isSel = selected === val;
             return (
@@ -442,7 +489,7 @@ function TestScreen({ name, onComplete }) {
         {carefulMode && pendingVal !== null && !fade ? (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
             <button type="button" style={{ ...S.btn(), fontSize: '13px' }} onClick={() => advanceWithAnswer(pendingVal)}>
-              Confirmar e avançar
+              {t(locale, 'candidate.confirmAdvance')}
             </button>
             <button
               type="button"
@@ -461,7 +508,7 @@ function TestScreen({ name, onComplete }) {
                 setSelected(null);
               }}
             >
-              Escolher outra opção
+              {t(locale, 'candidate.chooseAnother')}
             </button>
           </div>
         ) : null}
@@ -470,9 +517,10 @@ function TestScreen({ name, onComplete }) {
   );
 }
 
-function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null, retryBusy = false }) {
+function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null, retryBusy = false, locale }) {
   const { name, scores, topType } = result;
-  const d = TYPE_DATA[topType];
+  const typeData = getTypeData(locale);
+  const d = typeData[topType];
   const sorted = Object.entries(scores)
     .sort((a, b) => b[1] - a[1])
     .map(([t, s]) => ({ type: parseInt(t), score: s }));
@@ -483,7 +531,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
     <div style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
       <div style={S.glow} />
       <div style={{ ...S.card, maxWidth: '700px' }}>
-        <span style={S.label}>◈ Seu resultado, {name.split(' ')[0]}</span>
+        <span style={S.label}>{t(locale, 'candidate.resultFor', { name: name.split(' ')[0] })}</span>
         {saveError ? (
           <div
             style={{
@@ -497,7 +545,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
               lineHeight: 1.5,
             }}
           >
-            Não foi possível registrar suas respostas no servidor: {saveError}
+            {t(locale, 'candidate.saveErrorPrefix')} {saveError}
             {onRetrySave ? (
               <div style={{ marginTop: '14px' }}>
                 <button
@@ -510,10 +558,10 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
                   }}
                   onClick={onRetrySave}
                 >
-                  {retryBusy ? 'Enviando…' : 'Tentar enviar novamente'}
+                  {retryBusy ? t(locale, 'candidate.sending') : t(locale, 'candidate.retrySave')}
                 </button>
                 <div style={{ fontSize: '11px', color: C.muted, marginTop: '10px', lineHeight: 1.5 }}>
-                  Os mesmos dados são reenviados; não é preciso refazer o teste.
+                  {t(locale, 'candidate.retryHelp')}
                 </div>
               </div>
             ) : null}
@@ -522,14 +570,14 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
         <div style={{ marginBottom: '28px' }}>
           <div style={{ fontSize: '42px', marginBottom: '4px' }}>{d.emoji}</div>
           <div style={{ fontSize: '13px', color: C.muted, fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Tipo {topType}
+            {t(locale, 'candidate.type', { type: topType })}
           </div>
           <h2 style={{ fontSize: 'clamp(28px,5vw,42px)', fontWeight: 'normal', color: d.color, marginBottom: '16px' }}>{d.name}</h2>
           <p style={{ ...S.p, marginBottom: 0 }}>{d.desc}</p>
         </div>
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>Pontos fortes</span>
+          <span style={S.label}>{t(locale, 'candidate.strengths')}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {d.strengths.map((s) => (
               <span key={s} style={{ padding: '5px 13px', background: `${d.color}15`, border: `1px solid ${d.color}40`, borderRadius: '20px', fontSize: '12px', color: d.color }}>
@@ -540,20 +588,20 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
         </div>
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>Desafio de crescimento</span>
+          <span style={S.label}>{t(locale, 'candidate.challenge')}</span>
           <p style={{ fontSize: '15px', color: C.muted, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{d.challenge}"</p>
         </div>
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>Perfil por tipo</span>
+          <span style={S.label}>{t(locale, 'candidate.profileByType')}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {sorted.map(({ type, score }) => (
               <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ width: '90px', fontSize: '11px', color: TYPE_DATA[type].color, fontFamily: 'monospace', flexShrink: 0 }}>
-                  {TYPE_DATA[type].emoji} T{type}
+                <span style={{ width: '90px', fontSize: '11px', color: typeData[type].color, fontFamily: 'monospace', flexShrink: 0 }}>
+                  {typeData[type].emoji} T{type}
                 </span>
                 <div style={{ flex: 1 }}>
-                  <Bar value={score} max={maxScore} color={TYPE_DATA[type].color} />
+                  <Bar value={score} max={maxScore} color={typeData[type].color} />
                 </div>
                 <span style={{ width: '24px', fontSize: '11px', color: C.muted, textAlign: 'right', fontFamily: 'monospace' }}>{score}</span>
               </div>
@@ -563,20 +611,20 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
 
         {second ? (
           <div style={{ background: `${d.color}0a`, border: `1px solid ${d.color}25`, borderRadius: '12px', padding: '16px 20px', marginBottom: '24px' }}>
-            <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>Ala secundária</span>
+            <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>{t(locale, 'candidate.wing')}</span>
             <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.6, margin: 0 }}>
-              Segundo tipo mais forte: <span style={{ color: TYPE_DATA[second.type].color }}>{TYPE_DATA[second.type].name}</span> — molda como você expressa seu tipo principal no dia a dia.
+              {t(locale, 'candidate.wingText', { typeName: typeData[second.type].name })}
             </p>
           </div>
         ) : null}
 
         <div style={{ background: `${d.color}0a`, border: `1px solid ${d.color}25`, borderRadius: '12px', padding: '16px 20px', marginBottom: '28px' }}>
-          <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>Contribuição para a equipe</span>
+          <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>{t(locale, 'candidate.teamContribution')}</span>
           <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.7, margin: 0 }}>{d.team}</p>
         </div>
 
         <button style={{ ...S.btn(), fontSize: '13px' }} onClick={onRestart}>
-          ← Voltar ao início
+          {t(locale, 'common.backHome')}
         </button>
       </div>
     </div>
@@ -589,7 +637,9 @@ export default function AssessmentFlow({
   notice = null,
   startDisabled = false,
   requireCandidateEmail = false,
+  initialLocale = 'pt-BR',
 }) {
+  const [locale, setLocale] = useLocale(initialLocale);
   const [screen, setScreen] = useState('home'); // home | test | result
   const [candidate, setCandidate] = useState(null); // { name, email, areaKey, consent }
   const [result, setResult] = useState(null);
@@ -597,11 +647,25 @@ export default function AssessmentFlow({
   const [retryPayload, setRetryPayload] = useState(null);
   const [retryBusy, setRetryBusy] = useState(false);
 
-  const handleStart = (c) => {
+  const handleStart = async (c) => {
     setSaveError(null);
     setRetryPayload(null);
+    if (vacancyToken) {
+      try {
+        const params = new URLSearchParams({ token: vacancyToken, email: c.email });
+        const res = await fetch(`/api/public/vacancy-link?${params.toString()}`);
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          return body?.errorCode ? errorMessage(locale, body.errorCode, body.error) : body?.error || t(locale, 'candidate.vacancyValidationError');
+        }
+      } catch (e) {
+        console.error('Erro ao validar inscrição da vaga:', e);
+        return t(locale, 'candidate.vacancyValidationError');
+      }
+    }
     setCandidate(c);
     setScreen('test');
+    return null;
   };
 
   const retrySave = useCallback(async () => {
@@ -615,7 +679,7 @@ export default function AssessmentFlow({
         body: JSON.stringify(retryPayload),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) errMsg = body.error || `Erro ${res.status}`;
+      if (!res.ok) errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || `Erro ${res.status}`;
     } catch (e) {
       console.error('Erro ao reenviar resultado:', e);
       errMsg = 'Falha de rede ao salvar';
@@ -623,7 +687,7 @@ export default function AssessmentFlow({
     setRetryBusy(false);
     setSaveError(errMsg);
     setRetryPayload(errMsg ? retryPayload : null);
-  }, [retryPayload]);
+  }, [retryPayload, locale]);
 
   const handleComplete = async (data) => {
     const computed = computeAssessmentFromAnswers(data.answers);
@@ -645,7 +709,7 @@ export default function AssessmentFlow({
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        errMsg = body.error || `Erro ${res.status}`;
+        errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || `Erro ${res.status}`;
       }
     } catch (e) {
       console.error('Erro ao salvar resultado:', e);
@@ -657,7 +721,7 @@ export default function AssessmentFlow({
     setScreen('result');
   };
 
-  if (screen === 'test') return <TestScreen name={candidate?.name || ''} onComplete={handleComplete} />;
+  if (screen === 'test') return <TestScreen name={candidate?.name || ''} onComplete={handleComplete} locale={locale} />;
   if (screen === 'result') {
     if (!result) {
       return (
@@ -665,7 +729,7 @@ export default function AssessmentFlow({
           <div style={S.glow} />
           <div style={S.card}>
             <span style={S.label}>◈ 30Team</span>
-            <p style={{ ...S.p, marginBottom: 0 }}>{saveError || 'Não foi possível concluir o teste.'}</p>
+            <p style={{ ...S.p, marginBottom: 0 }}>{saveError || t(locale, 'candidate.finishErrorFallback')}</p>
             <button
               type="button"
               style={{ ...S.btn(), marginTop: '24px' }}
@@ -675,7 +739,7 @@ export default function AssessmentFlow({
                 setScreen('home');
               }}
             >
-              ← Voltar ao início
+              {t(locale, 'common.backHome')}
             </button>
           </div>
         </div>
@@ -687,6 +751,7 @@ export default function AssessmentFlow({
         saveError={saveError}
         retryBusy={retryBusy}
         onRetrySave={retryPayload ? retrySave : null}
+        locale={locale}
         onRestart={() => {
           setSaveError(null);
           setRetryPayload(null);
@@ -695,6 +760,15 @@ export default function AssessmentFlow({
       />
     );
   }
-  return <HomeScreen onStart={handleStart} notice={notice} startDisabled={startDisabled} requireCandidateEmail={requireCandidateEmail} />;
+  return (
+    <HomeScreen
+      onStart={handleStart}
+      notice={notice}
+      startDisabled={startDisabled}
+      requireCandidateEmail={requireCandidateEmail || !!vacancyToken}
+      locale={locale}
+      setLocale={setLocale}
+    />
+  );
 }
 

@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { sanitizeLoginRedirect } from '../../lib/sanitize-login-redirect';
+import { errorMessage, t } from '../../lib/i18n';
+import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW_SINGLE, GRADIENT, SHADOW } from '../../lib/theme';
+import LanguageSelect from '../_components/LanguageSelect';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -14,6 +17,7 @@ function LoginForm() {
   const router      = useRouter();
   const searchParams = useSearchParams();
   const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
+  const [locale, setLocale] = useLocale();
 
   const login = async () => {
     if (!email || !password) return;
@@ -28,10 +32,10 @@ function LoginForm() {
         router.push(redirect);
       } else {
         const data = await res.json();
-        setError(data.error || 'Senha incorreta');
+        setError(data.errorCode ? errorMessage(locale, data.errorCode, data.error) : data.error || t(locale, 'login.wrongPassword'));
       }
     } catch {
-      setError('Erro de conexão');
+      setError(t(locale, 'login.connectionError'));
     } finally {
       setLoading(false);
     }
@@ -47,19 +51,24 @@ function LoginForm() {
         border:`1px solid ${C.border}`, borderRadius:'20px', padding:'44px 48px',
         backdropFilter:'blur(24px)', position:'relative', zIndex:1,
         boxShadow:SHADOW.cardElevated }}>
-        <span style={{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
-          color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
-          marginBottom:'16px', display:'block' }}>◈ 30Team · Acesso restrito</span>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
+          <span style={{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
+            color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
+            display:'block' }}>{t(locale, 'login.restricted')}</span>
+          <LanguageSelect locale={locale} onChange={setLocale} compact />
+        </div>
         <h2 style={{ fontSize:'32px', fontWeight:'normal', lineHeight:1.2, marginBottom:'12px',
           background:GRADIENT.titleLogin,
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-          Dashboard<br/>do Gestor
+          {t(locale, 'login.title').split('\n').map((line, i) => (
+            <span key={line}>{i > 0 ? <br /> : null}{line}</span>
+          ))}
         </h2>
         <p style={{ fontSize:'14px', color:C.muted, lineHeight:1.7, marginBottom:'28px', fontStyle:'italic' }}>
-          Entre com seu email e senha para acessar o painel.
+          {t(locale, 'login.intro')}
         </p>
         <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
-          Email
+          {t(locale, 'login.email')}
         </label>
         <input type="email"
           style={{ width:'100%', background:'rgba(26,22,37,.04)',
@@ -70,7 +79,7 @@ function LoginForm() {
           onChange={e=>setEmail(e.target.value)}
           onKeyDown={e=>e.key==='Enter'&&login()}/>
         <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
-          Senha
+          {t(locale, 'login.password')}
         </label>
         <input type="password"
           style={{ width:'100%', background:'rgba(26,22,37,.04)',
@@ -88,13 +97,13 @@ function LoginForm() {
             borderRadius:'10px', padding:'14px 32px', color:'#fff', fontSize:'14px',
             cursor:'pointer', fontFamily:FONTS.serif, opacity:loading?.6:1, marginBottom:'16px' }}
           onClick={login} disabled={loading}>
-          {loading?'Entrando...':'Entrar →'}
+          {loading ? t(locale, 'login.entering') : t(locale, 'login.enter')}
         </button>
         <br/>
         <button onClick={()=>router.push('/')}
           style={{ background:'none', border:'none', color:C.muted,
             fontSize:'12px', cursor:'pointer', fontFamily:FONTS.serif }}>
-          ← Voltar ao teste
+          {t(locale, 'login.backToTest')}
         </button>
       </div>
     </div>

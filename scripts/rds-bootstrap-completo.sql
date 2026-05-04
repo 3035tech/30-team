@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS users (
   email          TEXT NOT NULL,
   password_hash  TEXT NOT NULL,
   role           TEXT NOT NULL CHECK (role IN ('admin','direction','hr')),
+  locale         TEXT NOT NULL DEFAULT 'pt-BR' CHECK (locale IN ('pt-BR', 'en')),
   active         BOOLEAN NOT NULL DEFAULT TRUE,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login_at  TIMESTAMPTZ
@@ -367,6 +368,9 @@ FOR EACH ROW EXECUTE FUNCTION trg_assessments_company_matches_vacancy();
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT NOT NULL DEFAULT 'pt-BR';
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_locale_check;
+ALTER TABLE users ADD CONSTRAINT users_locale_check CHECK (locale IN ('pt-BR', 'en'));
 
 DROP INDEX IF EXISTS idx_companies_slug_unique;
 CREATE UNIQUE INDEX idx_companies_slug_unique ON companies (LOWER(slug)) WHERE deleted = FALSE;
@@ -407,7 +411,9 @@ INSERT INTO schema_migrations (name) VALUES
   ('003_seed_area_rubrics.sql'),
   ('004_vacancies.sql'),
   ('005_soft_delete_flags.sql'),
-  ('006_performance_indexes.sql')
+  ('006_performance_indexes.sql'),
+  ('007_link_require_candidate_email.sql'),
+  ('008_user_locale.sql')
 ON CONFLICT (name) DO NOTHING;
 
 COMMIT;

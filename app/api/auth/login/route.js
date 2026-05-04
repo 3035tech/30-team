@@ -3,6 +3,7 @@ import { query } from '../../../../lib/db';
 import { verifyPassword, signToken, COOKIE_NAME, MAX_AGE } from '../../../../lib/auth';
 import { audit } from '../../../../lib/audit';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
+import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
 
 export async function POST(request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request) {
     const rl = checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
     if (!rl.ok) {
       return NextResponse.json(
-        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+        { errorCode: 'RATE_LIMIT', error: 'Muitas tentativas. Aguarde e tente novamente.' },
         { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
       );
     }
@@ -18,7 +19,7 @@ export async function POST(request) {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email e senha obrigatórios' }, { status: 400 });
+      return NextResponse.json({ errorCode: 'REQUIRED_LOGIN', error: 'Email e senha obrigatórios' }, { status: 400 });
     }
 
     const res = await query(
@@ -27,6 +28,7 @@ export async function POST(request) {
          u.email,
          u.password_hash AS "passwordHash",
          u.role,
+         u.locale,
          u.active,
          u.company_id AS "companyId",
          u.deleted AS "userDeleted",
@@ -43,14 +45,14 @@ export async function POST(request) {
     if (res.rowCount === 0 || !row0?.active || row0?.userDeleted || companyBlocked) {
       // Delay para dificultar brute force
       await new Promise(r => setTimeout(r, 500));
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      return NextResponse.json({ errorCode: 'INVALID_CREDENTIALS', error: 'Credenciais inválidas' }, { status: 401 });
     }
 
     const u = res.rows[0];
     const valid = await verifyPassword(password, u.passwordHash);
     if (!valid) {
       await new Promise(r => setTimeout(r, 500));
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      return NextResponse.json({ errorCode: 'INVALID_CREDENTIALS', error: 'Credenciais inválidas' }, { status: 401 });
     }
 
     // Update last login (best-effort)
@@ -58,7 +60,8 @@ export async function POST(request) {
       await query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [u.id]);
     } catch {}
 
-    const token = signToken({ userId: u.id, role: u.role, companyId: u.companyId ?? null });
+    const locale = normalizeLocale(u.locale);
+    const token = signToken({ userId: u.id, role: u.role, companyId: u.companyId ?? null, locale });
     const response = NextResponse.json({ ok: true });
 
     // Em Docker local, o container roda com NODE_ENV=production, mas você acessa via HTTP.
@@ -75,6 +78,13 @@ export async function POST(request) {
       maxAge: MAX_AGE,
       path: '/',
     });
+    response.cookies.set(LOCALE_COOKIE, locale, {
+      httpOnly: false,
+      secure: secureCookie,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+    });
 
     await audit({
       actorUserId: u.id,
@@ -87,6 +97,6 @@ export async function POST(request) {
     return response;
   } catch (error) {
     console.error('Erro no login:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ errorCode: 'INTERNAL', error: 'Erro interno' }, { status: 500 });
   }
 }

@@ -5,6 +5,9 @@ import { cookies } from 'next/headers';
 import { computeAssessmentFromAnswers } from '../../../lib/assessment-score';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 
+const DUPLICATE_VACANCY_MESSAGE =
+  'Já existe um teste respondido com este e-mail para esta vaga. Para refazer, avise o RH para excluir o teste já feito.';
+
 function normalizeEmail(email) {
   const e = (email || '').trim();
   return e.length ? e.toLowerCase() : null;
@@ -17,16 +20,17 @@ export async function POST(request) {
     const rl = checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
     if (!rl.ok) {
       return NextResponse.json(
-        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+        { errorCode: 'RATE_LIMIT', error: 'Muitas tentativas. Aguarde e tente novamente.' },
         { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
       );
     }
 
     const body = await request.json().catch(() => ({}));
     const { name, email, areaKey, consent, answers, companyToken, vacancyToken } = body;
+    const safeEmail = normalizeEmail(email);
 
     if ((!companyToken && !vacancyToken) || !name || !areaKey || consent !== true) {
-      return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
+      return NextResponse.json({ errorCode: 'INCOMPLETE_DATA', error: 'Dados incompletos' }, { status: 400 });
     }
 
     const scored = computeAssessmentFromAnswers(answers);
@@ -52,16 +56,16 @@ export async function POST(request) {
         [token]
       );
       if (link.rowCount === 0) {
-        return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
+        return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 403 });
       }
       if (String(link.rows[0].status || '') === 'closed') {
-        return NextResponse.json({ error: 'Essa vaga não está mais aberta' }, { status: 403 });
+        return NextResponse.json({ errorCode: 'CLOSED_VACANCY', error: 'Essa vaga não está mais aberta' }, { status: 403 });
       }
       companyId = link.rows[0].companyId;
       resolvedVacancyId = link.rows[0].vacancyId;
-      if (link.rows[0].requireCandidateEmail && !normalizeEmail(email)) {
+      if (!safeEmail) {
         return NextResponse.json(
-          { error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
+          { errorCode: 'REQUIRED_VACANCY_EMAIL', error: 'Este link exige e-mail para validar se já existe uma resposta para esta vaga.' },
           { status: 400 }
         );
       }
@@ -78,23 +82,22 @@ export async function POST(request) {
         [token]
       );
       if (link.rowCount === 0) {
-        return NextResponse.json({ error: 'Link inválido ou expirado' }, { status: 403 });
+        return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 403 });
       }
       companyId = link.rows[0].companyId;
-      if (link.rows[0].requireCandidateEmail && !normalizeEmail(email)) {
+      if (link.rows[0].requireCandidateEmail && !safeEmail) {
         return NextResponse.json(
-          { error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
+          { errorCode: 'REQUIRED_CONTACT_EMAIL', error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
           { status: 400 }
         );
       }
     }
 
     const safeName = name.trim();
-    const safeEmail = normalizeEmail(email);
 
     const areaRes = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [areaKey]);
     if (areaRes.rowCount === 0) {
-      return NextResponse.json({ error: 'Área inválida' }, { status: 400 });
+      return NextResponse.json({ errorCode: 'INVALID_AREA', error: 'Área inválida' }, { status: 400 });
     }
     const areaId = areaRes.rows[0].id;
 
@@ -127,6 +130,19 @@ export async function POST(request) {
           [companyId, safeName]
         );
         candidateId = ins.rows[0].id;
+      }
+    }
+
+    if (resolvedVacancyId) {
+      const existingAssessment = await query(
+        `SELECT 1
+         FROM assessments
+         WHERE candidate_id = $1 AND vacancy_id = $2
+         LIMIT 1`,
+        [candidateId, resolvedVacancyId]
+      );
+      if (existingAssessment.rowCount > 0) {
+        return NextResponse.json({ errorCode: 'DUPLICATE_VACANCY_SUBMISSION', error: DUPLICATE_VACANCY_MESSAGE }, { status: 409 });
       }
     }
 
@@ -168,7 +184,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Erro ao salvar resultado:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ errorCode: 'INTERNAL', error: 'Erro interno' }, { status: 500 });
   }
 }
 
