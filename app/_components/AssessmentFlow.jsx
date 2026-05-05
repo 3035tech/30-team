@@ -634,6 +634,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
 export default function AssessmentFlow({
   companyToken = '',
   vacancyToken = '',
+  inviteToken = '',
   notice = null,
   startDisabled = false,
   requireCandidateEmail = false,
@@ -699,7 +700,14 @@ export default function AssessmentFlow({
       setScreen('result');
       return;
     }
-    const payload = { ...data, ...candidate, companyToken, vacancyToken, answers: data.answers };
+    const payload = {
+      ...data,
+      ...candidate,
+      companyToken,
+      vacancyToken,
+      ...(inviteToken ? { inviteToken } : {}),
+      answers: data.answers,
+    };
     let errMsg = null;
     try {
       const res = await fetch('/api/results', {

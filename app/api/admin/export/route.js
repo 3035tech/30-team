@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { queryRead } from '../../../../lib/db';
 import { audit } from '../../../../lib/audit';
+import { parsePipelineFilter } from '../../../../lib/assessment-filters';
 
 function csvEscape(value) {
   const s = String(value ?? '');
@@ -24,6 +25,7 @@ export async function GET(request) {
   const area = (searchParams.get('area') || 'all').toString();
   const rawExportCompany = (searchParams.get('company') || 'all').toString();
   const rawVacancy = String(searchParams.get('vacancy') || 'all').trim();
+  const pipelineStage = parsePipelineFilter(searchParams);
 
   const whereParts = [];
   const params = [];
@@ -51,6 +53,10 @@ export async function GET(request) {
       whereParts.push(`ass.vacancy_id = $${params.length}`);
     }
   }
+  if (pipelineStage !== 'all') {
+    params.push(pipelineStage);
+    whereParts.push(`ass.pipeline_stage = $${params.length}`);
+  }
   const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
 
   const r = await queryRead(
@@ -62,6 +68,7 @@ export async function GET(request) {
        ar.label AS area_label,
        ass.top_type,
        ass.scores,
+       ass.pipeline_stage AS pipeline_stage,
        ass.created_at
      FROM assessments ass
      JOIN candidates c ON c.id = ass.candidate_id
@@ -78,6 +85,7 @@ export async function GET(request) {
     'area_key',
     'area_label',
     'top_type',
+    'pipeline_stage',
     'scores_json',
     'created_at',
   ];
@@ -92,6 +100,7 @@ export async function GET(request) {
         row.area_key,
         csvEscape(row.area_label),
         row.top_type,
+        csvEscape(row.pipeline_stage || ''),
         csvEscape(JSON.stringify(row.scores)),
         row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
       ].join(',')

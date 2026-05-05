@@ -65,7 +65,21 @@ export async function GET(_request, { params }) {
   if (!v) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
   if (!isAdmin && String(v.companyId) !== String(companyId)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  return NextResponse.json(await attachActiveToken(v));
+  const rub = await queryRead(
+    `SELECT desired_type_weights AS "vacancyFitWeights", notes AS "vacancyRubricNotes", updated_at AS "vacancyRubricUpdatedAt"
+     FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
+    [id]
+  );
+  const rubric =
+    rub.rowCount > 0
+      ? {
+          vacancyFitWeights: rub.rows[0].vacancyFitWeights || {},
+          vacancyRubricNotes: rub.rows[0].vacancyRubricNotes ?? null,
+          vacancyRubricUpdatedAt: rub.rows[0].vacancyRubricUpdatedAt ?? null,
+        }
+      : { vacancyFitWeights: {}, vacancyRubricNotes: null, vacancyRubricUpdatedAt: null };
+
+  return NextResponse.json({ ...(await attachActiveToken(v)), ...rubric });
 }
 
 export async function PATCH(request, { params }) {
@@ -105,7 +119,54 @@ export async function PATCH(request, { params }) {
      RETURNING id, company_id AS "companyId", title, slug, status, created_at AS "createdAt"`,
     [id, nextTitle, nextSlug, nextStatus]
   );
-  return NextResponse.json(await attachActiveToken({ ...up.rows[0], companyName: current.companyName }));
+
+  if (body.vacancyFitWeights != null || body.vacancyRubricNotes !== undefined) {
+    const curRub = await queryRead(
+      `SELECT desired_type_weights AS weights, notes FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
+      [id]
+    );
+    const prevW = curRub.rows[0]?.weights || {};
+    const prevN = curRub.rows[0]?.notes ?? null;
+
+    const w = body.vacancyFitWeights != null ? body.vacancyFitWeights : prevW;
+    if (typeof w !== 'object' || Array.isArray(w)) {
+      return NextResponse.json({ error: 'vacancyFitWeights deve ser um objeto JSON' }, { status: 400 });
+    }
+    const notes =
+      body.vacancyRubricNotes !== undefined
+        ? body.vacancyRubricNotes == null
+          ? null
+          : String(body.vacancyRubricNotes).slice(0, 4000)
+        : prevN;
+    await query(
+      `INSERT INTO vacancy_rubrics (vacancy_id, desired_type_weights, notes, updated_at)
+       VALUES ($1, $2::jsonb, $3, NOW())
+       ON CONFLICT (vacancy_id) DO UPDATE SET
+         desired_type_weights = EXCLUDED.desired_type_weights,
+         notes = EXCLUDED.notes,
+         updated_at = NOW()`,
+      [id, JSON.stringify(w), notes]
+    );
+  }
+
+  const rub = await queryRead(
+    `SELECT desired_type_weights AS "vacancyFitWeights", notes AS "vacancyRubricNotes", updated_at AS "vacancyRubricUpdatedAt"
+     FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
+    [id]
+  );
+  const rubric =
+    rub.rowCount > 0
+      ? {
+          vacancyFitWeights: rub.rows[0].vacancyFitWeights || {},
+          vacancyRubricNotes: rub.rows[0].vacancyRubricNotes ?? null,
+          vacancyRubricUpdatedAt: rub.rows[0].vacancyRubricUpdatedAt ?? null,
+        }
+      : { vacancyFitWeights: {}, vacancyRubricNotes: null, vacancyRubricUpdatedAt: null };
+
+  return NextResponse.json({
+    ...(await attachActiveToken({ ...up.rows[0], companyName: current.companyName })),
+    ...rubric,
+  });
 }
 
 export async function DELETE(_request, { params }) {

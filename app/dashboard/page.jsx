@@ -10,6 +10,7 @@ import {
   parseTeamSort,
   sqlTeamOrderBy,
   assessmentListWhereParts,
+  parsePipelineFilter,
   sqlWhere,
 } from '../../lib/assessment-filters';
 import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
@@ -86,6 +87,7 @@ export default async function DashboardPage({ searchParams }) {
 
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
+  const selectedPipeline = parsePipelineFilter(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
 
   // Busca candidatos/resultados DIRETAMENTE no banco — sem API, sem fetch
@@ -98,6 +100,7 @@ export default async function DashboardPage({ searchParams }) {
   let areaStats = null;
   let areaRubric = null;
   let rubricByAreaKey = {};
+  let vacancyRubricByVacancyId = {};
   let analytics = null;
   let pagination = {
     page: 1,
@@ -150,6 +153,18 @@ export default async function DashboardPage({ searchParams }) {
       vParams
     );
     vacancies = v.rows;
+
+    const vacIdsForRubrics = vacancies.map((x) => x.id).filter((id) => id != null);
+    if (vacIdsForRubrics.length > 0) {
+      const vr = await queryRead(
+        `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
+         FROM vacancy_rubrics WHERE vacancy_id = ANY($1::bigint[])`,
+        [vacIdsForRubrics]
+      );
+      vacancyRubricByVacancyId = Object.fromEntries(
+        vr.rows.map((row) => [String(row.vacancyId), row.weights && typeof row.weights === 'object' ? row.weights : {}])
+      );
+    }
 
     const countWhereParts = [];
     const cParams = [];
@@ -246,6 +261,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       selectedArea,
       selectedVacancy,
       enneagram,
+      pipelineStage: selectedPipeline,
     });
     const assessmentWhere = sqlWhere(whereParts);
 
@@ -298,7 +314,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     };
     interactionPeople = bundles.people;
 
-    const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey };
+    const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey, vacancyRubricByVacancyId };
     const pageParams = [...params];
     pageParams.push(pageSize);
     const limIx = pageParams.length;
@@ -315,7 +331,9 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
          v.title AS "vacancyTitle",
          ass.top_type AS "topType",
          ass.scores,
-         ass.created_at AS "createdAt"
+         ass.created_at AS "createdAt",
+         ass.pipeline_stage AS "pipelineStage",
+         ass.invite_id AS "inviteId"
        ${BASE_JOIN_LIST}
        ${assessmentWhere}
        ${teamOrderSql}
@@ -444,6 +462,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         vacancies={vacancies}
         selectedArea={selectedArea}
         selectedVacancy={selectedVacancy}
+        selectedPipeline={selectedPipeline}
         selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
         areaStats={areaStats}
         areaRubric={areaRubric}

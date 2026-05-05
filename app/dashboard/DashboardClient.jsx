@@ -37,6 +37,7 @@ export default function DashboardClient({
   vacancies = [],
   selectedArea = 'all',
   selectedVacancy = 'all',
+  selectedPipeline = 'all',
   selectedCompany = 'all',
   pagination = { page: 1, pageSize: 20, total: 0, totalPages: 1 },
   compatMetrics = {
@@ -60,6 +61,7 @@ export default function DashboardClient({
   const [vacancy, setVacancy] = useState(selectedVacancy);
   const [company, setCompany] = useState(selectedCompany);
   const [enneagram, setEnneagram] = useState(selectedEnneagram);
+  const [pipeline, setPipeline] = useState(selectedPipeline);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
@@ -86,6 +88,9 @@ export default function DashboardClient({
   useEffect(() => {
     setEnneagram(selectedEnneagram);
   }, [selectedEnneagram]);
+  useEffect(() => {
+    setPipeline(selectedPipeline);
+  }, [selectedPipeline]);
 
   const {
     snapshot,
@@ -103,6 +108,7 @@ export default function DashboardClient({
     vacancy,
     company,
     enneagram,
+    pipeline,
     isAdmin,
     teamPagination: pagination,
   });
@@ -251,7 +257,8 @@ export default function DashboardClient({
                   onChange={(e) => {
                     const v = e.target.value;
                     setCompany(v);
-                    pushFilters({ company: v, vacancy: 'all' });
+                    setPipeline('all');
+                    pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
                   }}
                   style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                     borderRadius: '10px', padding: '10px 14px', color: C.muted,
@@ -265,7 +272,7 @@ export default function DashboardClient({
                   ))}
                 </select>
               ) : null}
-              <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); pushFilters({ area: v }); }}
+              <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
@@ -281,15 +288,16 @@ export default function DashboardClient({
                 onChange={(e) => {
                   const v = e.target.value;
                   setVacancy(v);
+                  setPipeline('all');
                   if (isAdmin && v !== 'all') {
                     const hit = vacancies.find((x) => String(x.id) === v);
                     if (hit != null && hit.companyId != null) {
                       setCompany(String(hit.companyId));
-                      pushFilters({ vacancy: v, company: String(hit.companyId) });
+                      pushFilters({ vacancy: v, company: String(hit.companyId), pipeline: 'all' });
                       return;
                     }
                   }
-                  pushFilters({ vacancy: v });
+                  pushFilters({ vacancy: v, pipeline: 'all' });
                 }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
@@ -318,10 +326,32 @@ export default function DashboardClient({
                   </option>
                 ))}
               </select>
+              <select
+                value={pipeline}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPipeline(v);
+                  pushFilters({ pipeline: v });
+                }}
+                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
+                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
+              >
+                <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
+                <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
+                <option value="test_completed">{t(locale, 'recruiting.pipelineTestCompleted')}</option>
+                <option value="screening">{t(locale, 'recruiting.pipelineScreening')}</option>
+                <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
+                <option value="approved">{t(locale, 'recruiting.pipelineApproved')}</option>
+                <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
+                <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
+              </select>
               <a
                 href={`/api/admin/export?area=${encodeURIComponent(area)}${
                   isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
-                }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}`}
+                }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
+                  pipeline && pipeline !== 'all' ? `&pipeline=${encodeURIComponent(pipeline)}` : ''
+                }`}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif",
@@ -361,6 +391,7 @@ export default function DashboardClient({
                     sortKey={teamQuerySort.sort}
                     sortDir={teamQuerySort.dir}
                     onSort={pushTeamSort}
+                    locale={locale}
                   />
                   {listTotal > 0 ? (
                     <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',

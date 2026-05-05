@@ -23,6 +23,7 @@ export function useDashboardNavigation({
   vacancy,
   company,
   enneagram,
+  pipeline,
   isAdmin,
   teamPagination,
 }) {
@@ -44,6 +45,9 @@ export function useDashboardNavigation({
     if (nextVacancy && nextVacancy !== 'all') p.set('vacancy', String(nextVacancy));
 
     if (nextEnneagram && nextEnneagram !== 'all') p.set('enneagram', nextEnneagram);
+
+    const pipeResolved = opts.pipeline !== undefined ? opts.pipeline : pipeline;
+    if (pipeResolved && pipeResolved !== 'all') p.set('pipeline', String(pipeResolved));
 
     const merged = { ...snapshot(), ...opts };
     const teamFrom = parseTeamPagination(merged);
@@ -116,6 +120,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.area != null ? { area: nextFilter.area } : {}),
       ...(nextFilter?.vacancy != null ? { vacancy: nextFilter.vacancy } : {}),
       ...(nextFilter?.enneagram != null ? { enneagram: nextFilter.enneagram } : {}),
+      ...(nextFilter?.pipeline != null ? { pipeline: nextFilter.pipeline } : {}),
       teamPage: 1,
       comparePage: 1,
       vacanciesPage: 1,

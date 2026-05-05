@@ -26,7 +26,8 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { name, email, areaKey, consent, answers, companyToken, vacancyToken } = body;
+    const { name, email, areaKey, consent, answers, companyToken, vacancyToken, inviteToken: rawInviteToken } = body;
+    const inviteToken = String(rawInviteToken || '').trim();
     const safeEmail = normalizeEmail(email);
 
     if ((!companyToken && !vacancyToken) || !name || !areaKey || consent !== true) {
@@ -41,6 +42,7 @@ export async function POST(request) {
 
     let companyId = null;
     let resolvedVacancyId = null;
+    let resolvedInviteId = null;
 
     if (vacancyToken) {
       const token = String(vacancyToken || '').trim();
@@ -68,6 +70,36 @@ export async function POST(request) {
           { errorCode: 'REQUIRED_VACANCY_EMAIL', error: 'Este link exige e-mail para validar se já existe uma resposta para esta vaga.' },
           { status: 400 }
         );
+      }
+
+      if (inviteToken) {
+        const inv = await query(
+          `SELECT ci.id, ci.vacancy_id AS "vacancyId", LOWER(TRIM(ci.candidate_email)) AS "inviteEmail"
+           FROM candidate_invites ci
+           WHERE ci.token = $1 AND ci.status IN ('sent', 'opened')
+           LIMIT 1`,
+          [inviteToken]
+        );
+        if (inv.rowCount === 0) {
+          return NextResponse.json(
+            { errorCode: 'INVITE_INVALID', error: 'Convite inválido ou já utilizado.' },
+            { status: 400 }
+          );
+        }
+        const invRow = inv.rows[0];
+        if (Number(invRow.vacancyId) !== Number(resolvedVacancyId)) {
+          return NextResponse.json(
+            { errorCode: 'INVITE_INVALID', error: 'Este convite não corresponde a esta vaga.' },
+            { status: 400 }
+          );
+        }
+        if (invRow.inviteEmail !== safeEmail) {
+          return NextResponse.json(
+            { errorCode: 'INVITE_EMAIL_MISMATCH', error: 'Use o mesmo e-mail para o qual o convite foi enviado.' },
+            { status: 400 }
+          );
+        }
+        resolvedInviteId = invRow.id;
       }
     } else {
       const token = String(companyToken || '').trim();
@@ -148,10 +180,10 @@ export async function POST(request) {
 
     const assessment = resolvedVacancyId
       ? await query(
-          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id, invite_id, pipeline_stage)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'test_completed')
            RETURNING id, created_at AS "createdAt"`,
-          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId]
+          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId, resolvedInviteId]
         )
       : await query(
           `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores)
@@ -159,6 +191,13 @@ export async function POST(request) {
            RETURNING id, created_at AS "createdAt"`,
           [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
         );
+
+    if (resolvedInviteId) {
+      await query(
+        `UPDATE candidate_invites SET status = 'completed', completed_at = NOW() WHERE id = $1`,
+        [resolvedInviteId]
+      );
+    }
 
     // Legado: `results` usa UNIQUE global em LOWER(name) — colide entre empresas/candidatos.
     // Mantido só se LEGACY_RESULTS_WRITE=true (scripts/dashboards antigos).

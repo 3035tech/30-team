@@ -30,10 +30,20 @@ export async function GET(_request, { params }) {
   }
 
   const a = await query(
-    `SELECT ass.id, ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType",
-            ass.scores, ass.created_at AS "createdAt", ass.source
+    `SELECT ass.id,
+            ar.key AS "areaKey",
+            ar.label AS "areaLabel",
+            ass.top_type AS "topType",
+            ass.scores,
+            ass.created_at AS "createdAt",
+            ass.source,
+            ass.vacancy_id AS "vacancyId",
+            v.title AS "vacancyTitle",
+            ass.pipeline_stage AS "pipelineStage",
+            ass.invite_id AS "inviteId"
      FROM assessments ass
      JOIN areas ar ON ar.id = ass.area_id
+     LEFT JOIN vacancies v ON v.id = ass.vacancy_id
      WHERE ass.candidate_id = $1
      ORDER BY ass.created_at DESC`,
     [id]

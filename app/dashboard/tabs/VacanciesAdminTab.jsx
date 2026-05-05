@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import {
   PAGE_SIZE_OPTIONS,
@@ -10,7 +11,7 @@ import {
 } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S } from '../dashboard-shared';
 
-export function VacancyInviteByEmail({ vacancyId }) {
+export function VacancyInviteByEmail({ vacancyId, onSent }) {
   const [candidateName, setCandidateName] = useState('');
   const [candidateEmail, setCandidateEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -42,6 +43,7 @@ export function VacancyInviteByEmail({ vacancyId }) {
       setLocalOk(`E-mail enviado para ${mail}.`);
       setCandidateName('');
       setCandidateEmail('');
+      onSent?.();
       setTimeout(() => setLocalOk(''), 5000);
     } catch (e) {
       setLocalErr(e?.message || 'Erro');
@@ -106,13 +108,324 @@ export function VacancyInviteByEmail({ vacancyId }) {
   );
 }
 
-export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
+function inviteStatusLabel(locale, status) {
+  const s = String(status || '');
+  if (s === 'opened') return t(locale, 'recruiting.inviteOpened');
+  if (s === 'completed') return t(locale, 'recruiting.inviteCompleted');
+  if (s === 'cancelled') return t(locale, 'recruiting.inviteCancelled');
+  return t(locale, 'recruiting.inviteSent');
+}
+
+function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
+  const [rows, setRows] = useState([]);
+  const [busy, setBusy] = useState(null);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setErr('');
+      try {
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!cancelled) setRows(Array.isArray(data.invites) ? data.invites : []);
+      } catch (e) {
+        if (!cancelled) setErr(e?.message || 'Erro');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vacancyId, refreshKey]);
+
+  const remind = async (inviteId) => {
+    setBusy(String(inviteId));
+    setErr('');
+    try {
+      const res = await fetch(
+        `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites/${encodeURIComponent(inviteId)}/remind`,
+        { method: 'POST' }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Falha');
+      const r2 = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
+      const d2 = await r2.json().catch(() => ({}));
+      if (r2.ok) setRows(Array.isArray(d2.invites) ? d2.invites : []);
+    } catch (e) {
+      setErr(e?.message || 'Erro');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!rows.length && !err) {
+    return (
+      <div style={{ marginTop: '10px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+        {t(locale, 'recruiting.inviteListTitle')}: —
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: '12px' }}>
+      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
+        {t(locale, 'recruiting.inviteListTitle')}
+      </span>
+      {err ? (
+        <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: C.tension, fontFamily: 'monospace' }}>{err}</p>
+      ) : null}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
+        {rows.map((inv) => (
+          <div
+            key={inv.id}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              border: `1px solid ${C.border}`,
+              background: 'rgba(26,22,37,.02)',
+            }}
+          >
+            <span style={{ color: C.text }}>{inv.candidateName}</span>
+            <span style={{ color: C.muted }}>{inv.candidateEmail}</span>
+            <span style={{ color: C.purpleLight }}>{inviteStatusLabel(locale, inv.status)}</span>
+            {['sent', 'opened'].includes(String(inv.status || '')) ? (
+              <button
+                type="button"
+                disabled={busy === String(inv.id)}
+                onClick={() => remind(inv.id)}
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: '10px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: `1px solid ${C.synergy}55`,
+                  background: `${C.synergy}12`,
+                  color: C.synergy,
+                  cursor: 'pointer',
+                }}
+              >
+                {busy === String(inv.id) ? '…' : t(locale, 'recruiting.inviteRemind')}
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VacancyRubricEditor({ vacancyId, locale }) {
+  const [weights, setWeights] = useState(() => Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, ''])));
+  const [notes, setNotes] = useState('');
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (cancelled) return;
+        const w = data.vacancyFitWeights || {};
+        const next = {};
+        for (let t = 1; t <= 9; t++) {
+          const v = w[String(t)] ?? w[t];
+          next[t] = v != null && v !== '' ? String(v) : '';
+        }
+        setWeights(next);
+        setNotes(data.vacancyRubricNotes != null ? String(data.vacancyRubricNotes) : '');
+      } catch (e) {
+        if (!cancelled) setErr(e?.message || 'Erro');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vacancyId]);
+
+  const save = async () => {
+    setErr('');
+    setMsg('');
+    const wObj = {};
+    for (let t = 1; t <= 9; t++) {
+      const raw = String(weights[t] ?? '').trim();
+      if (!raw) continue;
+      const n = parseFloat(raw);
+      if (Number.isFinite(n) && n > 0) wObj[String(t)] = n;
+    }
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vacancyFitWeights: wObj, vacancyRubricNotes: notes }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Falha');
+      setMsg(t(locale, 'recruiting.rubricSaved'));
+      setTimeout(() => setMsg(''), 2000);
+    } catch (e) {
+      setErr(e?.message || 'Erro');
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
+      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
+        {t(locale, 'recruiting.rubricTitle')}
+      </span>
+      {loading ? <p style={{ fontSize: '11px', color: C.faint }}>…</p> : null}
+      {err ? <p style={{ fontSize: '11px', color: C.tension }}>{err}</p> : null}
+      {msg ? <p style={{ fontSize: '11px', color: C.synergy }}>{msg}</p> : null}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
+          <label key={t} style={{ fontSize: '10px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            T{t}
+            <input
+              value={weights[t] ?? ''}
+              onChange={(e) => setWeights((prev) => ({ ...prev, [t]: e.target.value }))}
+              placeholder="0"
+              style={{
+                width: '44px',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                border: `1px solid ${C.border}`,
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                background: 'rgba(26,22,37,.03)',
+                color: C.text,
+              }}
+            />
+          </label>
+        ))}
+      </div>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder={t(locale, 'recruiting.rubricNotes')}
+        rows={2}
+        style={{
+          width: '100%',
+          boxSizing: 'border-box',
+          marginBottom: '8px',
+          padding: '8px 10px',
+          borderRadius: '8px',
+          border: `1px solid ${C.border}`,
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          background: 'rgba(26,22,37,.03)',
+          color: C.text,
+        }}
+      />
+      <button
+        type="button"
+        onClick={save}
+        disabled={loading}
+        style={{
+          fontSize: '11px',
+          padding: '6px 12px',
+          borderRadius: '8px',
+          border: `1px solid ${C.purple}55`,
+          background: `${C.purple}18`,
+          color: C.purple,
+          cursor: 'pointer',
+          fontFamily: 'monospace',
+        }}
+      >
+        {t(locale, 'recruiting.rubricSave')}
+      </button>
+    </div>
+  );
+}
+
+function VacancyRankingBlock({ vacancyId, locale }) {
+  const [rows, setRows] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const load = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Erro');
+      setRows(Array.isArray(data.ranking) ? data.ranking : []);
+    } catch (e) {
+      setErr(e?.message || 'Erro');
+      setRows([]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{t(locale, 'recruiting.rankingTitle')}</span>
+        <button
+          type="button"
+          onClick={load}
+          disabled={busy}
+          style={{
+            fontSize: '11px',
+            padding: '6px 10px',
+            borderRadius: '8px',
+            border: `1px solid ${C.border}`,
+            background: 'transparent',
+            color: C.muted,
+            cursor: busy ? 'default' : 'pointer',
+            fontFamily: 'monospace',
+          }}
+        >
+          {busy ? t(locale, 'recruiting.rankingLoading') : t(locale, 'recruiting.rankingLoad')}
+        </button>
+      </div>
+      {err ? <p style={{ fontSize: '11px', color: C.tension }}>{err}</p> : null}
+      {rows && rows.length === 0 ? (
+        <p style={{ fontSize: '11px', color: C.faint }}>{t(locale, 'recruiting.rankingEmpty')}</p>
+      ) : null}
+      {rows && rows.length > 0 ? (
+        <div style={{ marginTop: '8px', maxHeight: '220px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '11px' }}>
+          {rows.map((r, i) => (
+            <div
+              key={r.assessmentId}
+              style={{
+                display: 'flex',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: `1px solid ${C.border}`,
+                color: C.muted,
+              }}
+            >
+              <span style={{ color: C.faint, width: '22px' }}>{i + 1}</span>
+              <span style={{ flex: 1, color: C.text }}>{r.name}</span>
+              <span>T{r.topType}</span>
+              <span>{r.vacancyFitScore010 != null ? `${r.vacancyFitScore010}/10` : '—'}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const [invitesRefresh, setInvitesRefresh] = useState(0);
 
   const { page: vacPage, pageSize: vacPageSize } = parseVacanciesPagination(
     Object.fromEntries(urlParams.entries())
@@ -332,11 +645,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
       <div style={{ ...S.card, padding: '22px 28px' }}>
         <span style={S.label}>Vagas</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Cadastre cada vaga para obter um link de avaliação exclusivo. Em cada vaga, o RH preenche nome e e-mail do candidato
-          e clica em <strong style={{ color: C.text, fontWeight: 600 }}>Enviar desafio</strong> — o candidato recebe um e-mail com o
-          link do formulário (configure SMTP no servidor; veja{' '}
-          <span style={{ fontFamily: 'monospace', color: C.faint }}>.env.example</span>
-          ). Também é possível copiar o link público e enviar por outro canal.
+          {t(locale, 'recruiting.vacanciesIntro')}
         </p>
         {error ? (
           <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
@@ -582,7 +891,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard }) {
                       </button>
                     </div>
                   </div>
-                  <VacancyInviteByEmail vacancyId={v.id} />
+                  <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
+                  <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                  <VacancyRubricEditor vacancyId={v.id} locale={locale} />
+                  <VacancyRankingBlock vacancyId={v.id} locale={locale} />
                 </div>
               );
             })}

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
@@ -64,7 +65,7 @@ export async function POST(request, { params }) {
     let row;
     if (!isAdmin) {
       const owned = await query(
-        `SELECT v.id, v.title, v.status, c.name AS "companyName"
+        `SELECT v.id, v.company_id AS "companyId", v.title, v.status, c.name AS "companyName"
          FROM vacancies v
          JOIN companies c ON c.id = v.company_id
          WHERE v.id = $1 AND v.company_id = $2 AND v.deleted = FALSE AND c.deleted = FALSE
@@ -75,7 +76,7 @@ export async function POST(request, { params }) {
       row = owned.rows[0];
     } else {
       const exists = await query(
-        `SELECT v.id, v.title, v.status, c.name AS "companyName"
+        `SELECT v.id, v.company_id AS "companyId", v.title, v.status, c.name AS "companyName"
          FROM vacancies v
          JOIN companies c ON c.id = v.company_id
          WHERE v.id = $1 AND v.deleted = FALSE AND c.deleted = FALSE
@@ -102,7 +103,19 @@ export async function POST(request, { params }) {
     }
 
     const linkToken = await ensureActiveVacancyLinkToken(row.id);
-    const challengeUrl = `${base}/v/${linkToken}`;
+    const inviteToken = crypto.randomBytes(24).toString('hex');
+    const createdBy = payload?.userId != null ? Number(payload.userId) : null;
+    const createdBySql = Number.isFinite(createdBy) ? createdBy : null;
+
+    const ins = await query(
+      `INSERT INTO candidate_invites (
+         vacancy_id, company_id, candidate_name, candidate_email, token, status, created_by_user_id
+       ) VALUES ($1, $2, $3, $4, $5, 'sent', $6)
+       RETURNING id`,
+      [row.id, row.companyId, candidateName, candidateEmail, inviteToken, createdBySql]
+    );
+    const inviteId = ins.rows[0]?.id;
+    const challengeUrl = `${base}/v/${linkToken}?invite=${encodeURIComponent(inviteToken)}`;
 
     const { subject, text, html } = buildCandidateChallengeInviteMail({
       candidateFullName: candidateName,
@@ -114,6 +127,9 @@ export async function POST(request, { params }) {
     try {
       await sendTransactionalMail({ to: candidateEmail, subject, text, html });
     } catch (e) {
+      if (inviteId != null) {
+        await query(`DELETE FROM candidate_invites WHERE id = $1`, [inviteId]).catch(() => {});
+      }
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
         return NextResponse.json({ error: e.message }, { status: 503 });
       }
@@ -121,7 +137,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Falha ao enviar e-mail. Verifique a configuração SMTP no servidor.' }, { status: 502 });
     }
 
-    return NextResponse.json({ ok: true, sentTo: candidateEmail });
+    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
