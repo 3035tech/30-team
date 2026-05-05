@@ -7,6 +7,8 @@ import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 
 export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGroupIds, dismissedIds, setDismissedIds, suggestions, groupTensions }) {
   const [search, setSearch] = useState('');
+  const [baseSearch, setBaseSearch] = useState('');
+  const [showAllBase, setShowAllBase] = useState(false);
 
   const addToGroup = (assessmentId) => {
     const id = String(assessmentId);
@@ -137,7 +139,18 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
           />
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            {results.slice(0, 8).map(r=>(
+            <input
+              value={baseSearch}
+              onChange={(e)=>{ setBaseSearch(e.target.value); setShowAllBase(false); }}
+              placeholder="Buscar pessoa base…"
+              style={{ background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
+                borderRadius:'10px', padding:'10px 12px', color:C.text, fontSize:'12px',
+                fontFamily:'monospace' }}
+            />
+            {results
+              .filter(r=>!baseSearch.trim() || r.name.toLowerCase().includes(baseSearch.trim().toLowerCase()))
+              .slice(0, showAllBase ? 80 : 12)
+              .map(r=>(
               <PersonMini
                 key={r.assessmentId}
                 person={r}
@@ -149,6 +162,17 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                 }
               />
             ))}
+            {results.filter(r=>!baseSearch.trim() || r.name.toLowerCase().includes(baseSearch.trim().toLowerCase())).length > (showAllBase ? 80 : 12) ? (
+              <button
+                type="button"
+                onClick={() => setShowAllBase(true)}
+                style={{ background:'transparent', border:`1px solid ${C.border}`,
+                  borderRadius:'10px', padding:'8px 10px', color:C.muted, fontSize:'11px',
+                  cursor:'pointer', fontFamily:'monospace' }}
+              >
+                Mostrar mais
+              </button>
+            ) : null}
             <div style={{ marginTop:'6px', color:C.faint, fontSize:'11px', fontFamily:'monospace' }}>
               Dica: use o filtro de área/perfil acima para refinar a lista.
             </div>
@@ -186,7 +210,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                   .filter(r=>String(r.assessmentId)!==String(groupBase.assessmentId))
                   .filter(r=>!groupIds.includes(String(r.assessmentId)))
                   .filter(r=>!search.trim() || r.name.toLowerCase().includes(search.trim().toLowerCase()))
-                  .slice(0, 40)
+                  .slice(0, 300)
                   .map(r=>{
                     const withBase = getCompat(groupBase.topType, r.topType);
                     return (
