@@ -8,6 +8,15 @@ Este documento explica como funciona a **rubrica de aderência por vaga** no 30T
 
 A rubrica por vaga é um conjunto de **pesos para os tipos T1–T9** que representa o “perfil desejado” para uma vaga/programa.
 
+### Contexto do instrumento (importante para IA e para o RH)
+
+O 30Team usa uma **avaliação inspirada no modelo do Eneagrama** aplicada ao **contexto de trabalho** (estilo, motivação, colaboração). O resultado do teste inclui **pontuações por tipo T1 a T9** (nove estilos). **T1–T9 não são diagnósticos clínicos**; são **heurísticas** para triagem e conversa com o candidato.
+
+Quando uma IA (ou alguém de fora do produto) for sugerir pesos, ela precisa saber explicitamente que:
+
+- **T1…T9** = nove perfis do mapa usado pelo app (equivalente à ideia dos nove tipos do Eneagrama no vocabulário do produto).
+- A rubrica diz **quais desses estilos a vaga deve valorizar mais**, dado o papel e o contexto.
+
 - O **candidato responde o mesmo teste** (mesmas perguntas) para qualquer vaga.
 - A rubrica **não muda o teste**; ela muda **como interpretamos o resultado** *para aquela vaga*.
 - O sistema calcula uma **aderência 0–10** e permite **ranking/comparativo** dentro da vaga.
@@ -55,8 +64,24 @@ Cole este prompt em uma IA e substitua o bloco “CONTEXTO DA VAGA”.
 ```text
 Você é um(a) especialista em recrutamento e desenho de rubricas comportamentais.
 
+Contexto do produto (obrigatório ler antes de sugerir pesos):
+- A empresa usa o 30Team: uma avaliação de perfil de trabalho baseada no modelo do Eneagrama (nove tipos), representada no sistema como T1..T9.
+- O candidato responde um questionário; o sistema gera scores por tipo (T1..T9). Isso é uma heurística para recrutamento/times — não é avaliação clínica nem diagnóstico.
+- Sua tarefa é sugerir PESOS (importância relativa) para T1..T9 que melhor traduzem o “perfil desejado” para a vaga descrita abaixo.
+
 Tarefa: gerar uma rubrica de aderência (pesos) para um teste que retorna scores dos tipos T1–T9.
 Você deve devolver pesos numéricos para T1..T9 (0 a 3; 0 = irrelevante) e um texto curto explicando o racional.
+
+Referência rápida dos tipos (vocabulário comum do Eneagrama; use como orientação, não como rótulo do candidato):
+- T1: reformador / padrões, qualidade, melhoria contínua
+- T2: auxiliar / apoio, relacionamento, serviço
+- T3: realizador / performance, resultado, imagem de competência
+- T4: individualista / profundidade, autenticidade, sentido
+- T5: investigador / análise, autonomia, aprofundamento
+- T6: leal / prevenção de risco, lealdade, estrutura
+- T7: entusiasta / variedade, otimismo, velocidade de ideias
+- T8: desafiador / assertividade, confronto, proteção
+- T9: pacificador / estabilidade, mediação, ritmo
 
 Regras:
 - Não invente informações fora do contexto.

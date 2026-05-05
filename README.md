@@ -1,6 +1,8 @@
 # 30Team
 > Perfis e dinâmica de equipe (time interno e contratações) — Next.js + Postgres + Docker/K8s
 
+A avaliação do candidato é um **mapa de perfil de trabalho** baseado no **modelo do Eneagrama** (tipos **T1–T9** no produto). Os resultados servem para **triagem, comparativos e conversas** — não substituem entrevista técnica nem constituem diagnóstico clínico. Para **pesos da rubrica por vaga** (como a IA deve interpretar T1–T9), veja `docs/rubrica-por-vaga.md`.
+
 ---
 
 ## Arquitetura
