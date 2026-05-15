@@ -9,18 +9,13 @@ function requireRole(payload) {
   return role === 'admin' || role === 'direction' || role === 'hr';
 }
 
-export async function POST(_request, { params }) {
-  const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+async function authorizeVacancyLink(payload, vacancyId) {
+  if (!vacancyId) return { error: 'Vaga inválida', status: 400 };
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const vacancyId = params?.id;
-  if (!vacancyId) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+  if (!isAdmin && !companyId) return { error: 'Não autorizado', status: 401 };
 
   if (!isAdmin) {
     const owned = await query(
@@ -30,7 +25,7 @@ export async function POST(_request, { params }) {
        LIMIT 1`,
       [vacancyId, companyId]
     );
-    if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (owned.rowCount === 0) return { error: 'Não autorizado', status: 401 };
   } else {
     const exists = await query(
       `SELECT v.id FROM vacancies v
@@ -39,8 +34,21 @@ export async function POST(_request, { params }) {
        LIMIT 1`,
       [vacancyId]
     );
-    if (exists.rowCount === 0) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
+    if (exists.rowCount === 0) return { error: 'Vaga não encontrada', status: 404 };
   }
+
+  return { ok: true };
+}
+
+export async function POST(_request, { params }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = token ? verifyToken(token) : null;
+  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const vacancyId = params?.id;
+  const auth = await authorizeVacancyLink(payload, vacancyId);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   await query(
     `UPDATE vacancy_links
@@ -59,3 +67,44 @@ export async function POST(_request, { params }) {
   return NextResponse.json({ ok: true, token: newToken });
 }
 
+export async function PATCH(request, { params }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = token ? verifyToken(token) : null;
+  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const vacancyId = params?.id;
+  const auth = await authorizeVacancyLink(payload, vacancyId);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  }
+
+  const expiresAtRaw = body?.expiresAt;
+  if (expiresAtRaw == null || expiresAtRaw === '') {
+    return NextResponse.json({ error: 'Informe expiresAt (ISO 8601).' }, { status: 400 });
+  }
+
+  const expiresAt = new Date(expiresAtRaw);
+  if (Number.isNaN(expiresAt.getTime())) {
+    return NextResponse.json({ error: 'Data inválida.' }, { status: 400 });
+  }
+
+  const r = await query(
+    `UPDATE vacancy_links
+     SET expires_at = $1
+     WHERE vacancy_id = $2 AND active = TRUE
+     RETURNING expires_at AS "expiresAt"`,
+    [expiresAt, vacancyId]
+  );
+
+  if (r.rowCount === 0) {
+    return NextResponse.json({ error: 'Nenhum link ativo para esta vaga.' }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, expiresAt: r.rows[0].expiresAt });
+}

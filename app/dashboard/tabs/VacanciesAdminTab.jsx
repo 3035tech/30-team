@@ -418,6 +418,13 @@ function VacancyRankingBlock({ vacancyId, locale }) {
   );
 }
 
+function toDatetimeLocalValue(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  // datetime-local (horário local do navegador)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -426,6 +433,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [invitesRefresh, setInvitesRefresh] = useState(0);
+  const [linkExpiryEdit, setLinkExpiryEdit] = useState(null);
 
   const { page: vacPage, pageSize: vacPageSize } = parseVacanciesPagination(
     Object.fromEntries(urlParams.entries())
@@ -553,11 +561,41 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     setLoading(true);
     setError('');
     setMsg('');
+    setLinkExpiryEdit((cur) => (cur?.vacancyId === vacancyId ? null : cur));
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/link`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
       setMsg('Link rotacionado.');
+      await loadVacancies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveLinkExpiry = async () => {
+    if (!linkExpiryEdit?.vacancyId) return;
+    const parsed = new Date(linkExpiryEdit.value);
+    if (Number.isNaN(parsed.getTime())) {
+      setError('Data de expiração inválida.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(linkExpiryEdit.vacancyId)}/link`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresAt: parsed.toISOString() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar expiração');
+      setMsg('Expiração do link atualizada.');
+      setLinkExpiryEdit(null);
       await loadVacancies();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
@@ -871,6 +909,28 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       </button>
                       <button
                         type="button"
+                        onClick={() => {
+                          if (!token) return;
+                          setLinkExpiryEdit((cur) =>
+                            cur?.vacancyId === v.id
+                              ? null
+                              : {
+                                  vacancyId: v.id,
+                                  value: v.activeTokenExpiresAt
+                                    ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
+                                    : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                                }
+                          );
+                        }}
+                        disabled={loading || !token}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                      >
+                        Editar expiração
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => token && copy(link)}
                         disabled={loading || !token}
                         style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
@@ -891,6 +951,83 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       </button>
                     </div>
                   </div>
+                  {linkExpiryEdit?.vacancyId === v.id ? (
+                    <div
+                      style={{
+                        marginTop: '12px',
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: `1px solid ${C.border}`,
+                        background: 'rgba(26,22,37,.04)',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '10px',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        Nova data de expiração (horário local)
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={linkExpiryEdit.value}
+                        onChange={(e) =>
+                          setLinkExpiryEdit((cur) =>
+                            cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
+                          )
+                        }
+                        disabled={loading}
+                        aria-label="Nova data de expiração do link"
+                        style={{
+                          flex: '1 1 200px',
+                          minWidth: '180px',
+                          background: 'rgba(26,22,37,.04)',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: '10px',
+                          padding: '8px 10px',
+                          color: C.text,
+                          fontSize: '12px',
+                          fontFamily: 'monospace',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={saveLinkExpiry}
+                        disabled={loading}
+                        style={{
+                          background: `${C.synergy}18`,
+                          border: `1px solid ${C.synergy}55`,
+                          borderRadius: '10px',
+                          padding: '8px 12px',
+                          color: C.synergy,
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          fontFamily: 'monospace',
+                          opacity: loading ? 0.6 : 1,
+                        }}
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLinkExpiryEdit(null)}
+                        disabled={loading}
+                        style={{
+                          background: 'transparent',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: '10px',
+                          padding: '8px 12px',
+                          color: C.muted,
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          fontFamily: 'monospace',
+                          opacity: loading ? 0.6 : 1,
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : null}
                   <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
                   <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
                   <VacancyRubricEditor vacancyId={v.id} locale={locale} />
