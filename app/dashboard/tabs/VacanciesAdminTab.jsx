@@ -157,6 +157,33 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
     }
   };
 
+  const removeInvite = async (inv) => {
+    const ok = window.confirm(
+      t(locale, 'recruiting.inviteDeleteConfirm', {
+        name: inv.candidateName || '—',
+        email: inv.candidateEmail || '—',
+      })
+    );
+    if (!ok) return;
+    setBusy(`del:${inv.id}`);
+    setErr('');
+    try {
+      const res = await fetch(
+        `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites/${encodeURIComponent(inv.id)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Falha');
+      const r2 = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
+      const d2 = await r2.json().catch(() => ({}));
+      if (r2.ok) setRows(Array.isArray(d2.invites) ? d2.invites : []);
+    } catch (e) {
+      setErr(e?.message || 'Erro');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   if (!rows.length && !err) {
     return (
       <div style={{ marginTop: '10px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
@@ -193,25 +220,43 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
             <span style={{ color: C.text }}>{inv.candidateName}</span>
             <span style={{ color: C.muted }}>{inv.candidateEmail}</span>
             <span style={{ color: C.purpleLight }}>{inviteStatusLabel(locale, inv.status)}</span>
-            {['sent', 'opened'].includes(String(inv.status || '')) ? (
+            <div style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+              {['sent', 'opened'].includes(String(inv.status || '')) ? (
+                <button
+                  type="button"
+                  disabled={busy === String(inv.id) || busy === `del:${inv.id}`}
+                  onClick={() => remind(inv.id)}
+                  style={{
+                    fontSize: '10px',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    border: `1px solid ${C.synergy}55`,
+                    background: `${C.synergy}12`,
+                    color: C.synergy,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {busy === String(inv.id) ? '…' : t(locale, 'recruiting.inviteRemind')}
+                </button>
+              ) : null}
               <button
                 type="button"
-                disabled={busy === String(inv.id)}
-                onClick={() => remind(inv.id)}
+                disabled={busy === `del:${inv.id}` || busy === String(inv.id)}
+                onClick={() => removeInvite(inv)}
+                title={t(locale, 'recruiting.inviteDelete')}
                 style={{
-                  marginLeft: 'auto',
                   fontSize: '10px',
                   padding: '4px 8px',
                   borderRadius: '6px',
-                  border: `1px solid ${C.synergy}55`,
-                  background: `${C.synergy}12`,
-                  color: C.synergy,
+                  border: '1px solid rgba(232,71,71,.35)',
+                  background: 'rgba(232,71,71,.08)',
+                  color: C.tension,
                   cursor: 'pointer',
                 }}
               >
-                {busy === String(inv.id) ? '…' : t(locale, 'recruiting.inviteRemind')}
+                {busy === `del:${inv.id}` ? '…' : t(locale, 'recruiting.inviteRemove')}
               </button>
-            ) : null}
+            </div>
           </div>
         ))}
       </div>
