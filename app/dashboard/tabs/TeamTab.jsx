@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { Bar, S, TypeBadge } from '../dashboard-shared';
 
@@ -170,6 +170,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
         const second = sorted[1];
         const maxS = sorted[0] ? parseInt(sorted[0][1], 10) : 0;
         const showVacancyFit = r.vacancyFitScore010 != null && r.vacancyFitScore010 !== undefined;
+        const created = r.createdAt != null ? new Date(r.createdAt) : null;
+        const createdLabel =
+          created && !Number.isNaN(created.getTime())
+            ? created.toLocaleString(localeHtmlLang(locale), { dateStyle: 'short', timeStyle: 'short' })
+            : null;
         return (
           <div
             key={id}
@@ -195,6 +200,19 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
               <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '15px', marginBottom: '4px' }}>{r.name}</div>
+                {createdLabel ? (
+                  <div
+                    title={t(locale, 'dashboard.teamListDateHelp')}
+                    style={{
+                      fontSize: '11px',
+                      color: C.faint,
+                      fontFamily: 'monospace',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
+                  </div>
+                ) : null}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <TypeBadge type={r.topType} />
                   {r.areaLabel && (
