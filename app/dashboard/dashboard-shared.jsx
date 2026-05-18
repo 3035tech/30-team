@@ -1,6 +1,8 @@
 'use client';
 
 import { TYPE_DATA } from '../../lib/data';
+import { t } from '../../lib/i18n';
+import { typeFullName, typeShortLabel } from '../../lib/type-en';
 import { C, FONTS } from '../../lib/theme';
 
 const S = {
@@ -18,16 +20,38 @@ const Bar = ({ value, max, color, h=6 }) => (
   </div>
 );
 
-const TypeBadge = ({ type }) => {
+const TypeBadge = ({ type, locale = 'pt-BR' }) => {
   const d = TYPE_DATA[type];
+  const short = typeShortLabel(type, locale);
+  const name = typeFullName(type, locale);
+  if (!d) {
+    return (
+      <span
+        style={{
+          padding: '3px 10px',
+          fontSize: '11px',
+          borderRadius: '20px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          background: `${C.muted}18`,
+          border: `1px solid ${C.border}`,
+          color: C.muted,
+          fontFamily: 'monospace',
+        }}
+      >
+        T{type}
+      </span>
+    );
+  }
   return (
     <span
-      title={d?.name ? `${d.name} (T${type})` : `T${type}`}
+      title={name ? `${name} (T${type})` : `T${type}`}
       style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
       display:'inline-flex', alignItems:'center', gap:'4px',
       background:`${d.color}18`, border:`1px solid ${d.color}44`,
       color:d.color, fontFamily:'monospace' }}>
-      {d.emoji} {d.short}
+      {d.emoji} {short}
     </span>
   );
 };
@@ -74,11 +98,29 @@ function clientSortNextDir(column, previousKey, previousDir) {
   return column === 'createdAt' ? 'desc' : 'asc';
 }
 
-const CompatBadge = ({ level }) => {
-  const map = { synergy:{label:'Sinergia',color:C.synergy}, tension:{label:'Tensão',color:C.tension}, neutral:{label:'Neutro',color:C.neutral} };
+const CompatBadge = ({ level, locale = 'pt-BR' }) => {
+  const map = {
+    synergy: { key: 'panel.compatLevel.synergy', color: C.synergy },
+    tension: { key: 'panel.compatLevel.tension', color: C.tension },
+    neutral: { key: 'panel.compatLevel.neutral', color: C.neutral },
+  };
   const m = map[level];
-  return <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
-    background:`${m.color}18`, border:`1px solid ${m.color}44`, color:m.color, fontFamily:'monospace' }}>{m.label}</span>;
+  if (!m) return null;
+  return (
+    <span
+      style={{
+        padding: '2px 9px',
+        fontSize: '10px',
+        borderRadius: '20px',
+        background: `${m.color}18`,
+        border: `1px solid ${m.color}44`,
+        color: m.color,
+        fontFamily: 'monospace',
+      }}
+    >
+      {t(locale, m.key)}
+    </span>
+  );
 };
 
 export { Bar, CompatBadge, S, SortableTh, TypeBadge, clientSortNextDir };

@@ -2,10 +2,22 @@
 
 import { useState } from 'react';
 import { getCompat } from '../../../lib/data';
+import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 
-export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGroupIds, dismissedIds, setDismissedIds, suggestions, groupTensions }) {
+export function GroupTab({
+  results,
+  groupBase,
+  setGroupBaseId,
+  groupIds,
+  setGroupIds,
+  dismissedIds,
+  setDismissedIds,
+  suggestions,
+  groupTensions,
+  locale = 'pt-BR',
+}) {
   const [search, setSearch] = useState('');
   const [baseSearch, setBaseSearch] = useState('');
   const [showAllBase, setShowAllBase] = useState(false);
@@ -30,8 +42,6 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
     setDismissedIds([...dismissedIds, id]);
   };
 
-  const compatShort = { synergy: 'Sinergia', tension: 'Tensão', neutral: 'Neutro' };
-
   /** Mesmo padrão visual dos cards de sugestão: emoji só no TypeBadge; nome ao lado; × no canto se onRemove. */
   const PersonMini = ({ person, right, baseCompat = null, onRemove = null }) => {
     const showX = typeof onRemove === 'function';
@@ -47,8 +57,8 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
           <button
             type="button"
             onClick={onRemove}
-            title="Remover do grupo"
-            aria-label="Remover do grupo"
+            title={t(locale, 'panel.group.removeFromGroup')}
+            aria-label={t(locale, 'panel.group.removeFromGroup')}
             style={{ position:'absolute', top:'10px', right:'10px',
               width:'28px', height:'28px', display:'inline-flex', alignItems:'center', justifyContent:'center',
               background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
@@ -60,18 +70,18 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
         )}
         <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
           <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap', minWidth:0 }}>
-            <TypeBadge type={person.topType}/>
+            <TypeBadge type={person.topType} locale={locale}/>
             <span style={{ color:C.text, fontSize:'13px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
               {person.name}
             </span>
             {baseCompat && (
               <>
-                <CompatBadge level={baseCompat.level}/>
+                <CompatBadge level={baseCompat.level} locale={locale}/>
                 {baseCompat.level === 'tension' && (
                   <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
                     background:`${C.tension}18`, border:`1px solid ${C.tension}44`,
                     color:C.tension, fontFamily:'monospace' }}>
-                    ⚠ Tensão com base
+                    {t(locale, 'panel.group.tensionWithBase')}
                   </span>
                 )}
               </>
@@ -115,25 +125,25 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
       <div style={S.card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
-          <span style={S.label}>Montar grupo</span>
+          <span style={S.label}>{t(locale, 'panel.group.title')}</span>
           <button onClick={clearGroup} style={{ background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
             borderRadius:'10px', padding:'8px 12px', color:C.muted, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
-            Limpar
+            {t(locale, 'panel.group.clear')}
           </button>
         </div>
 
         <p style={{ fontSize:'12px', color:C.faint, lineHeight:1.65, marginTop:'10px' }}>
-          Escolha uma pessoa base e veja quem tem melhor compatibilidade para trabalhar junto. Depois adicione membros ao grupo e acompanhe tensões internas.
+          {t(locale, 'panel.group.intro')}
         </p>
 
-        <span style={{...S.label, marginTop:'18px'}}>Pessoa base</span>
+        <span style={{...S.label, marginTop:'18px'}}>{t(locale, 'panel.group.basePerson')}</span>
         {groupBase ? (
           <PersonMini
             person={groupBase}
             right={
               <button onClick={()=>setGroupBaseId(null)} style={{ background:'transparent', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'8px 10px', color:C.muted, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
-                Trocar
+                {t(locale, 'panel.group.swap')}
               </button>
             }
           />
@@ -142,7 +152,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
             <input
               value={baseSearch}
               onChange={(e)=>{ setBaseSearch(e.target.value); setShowAllBase(false); }}
-              placeholder="Buscar pessoa base…"
+              placeholder={t(locale, 'panel.group.searchBasePh')}
               style={{ background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
                 borderRadius:'10px', padding:'10px 12px', color:C.text, fontSize:'12px',
                 fontFamily:'monospace' }}
@@ -157,7 +167,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                 right={
                   <button onClick={()=>setGroupBaseId(String(r.assessmentId))} style={{ background:`${C.purple}22`, border:`1px solid ${C.purple}55`,
                     borderRadius:'10px', padding:'8px 10px', color:C.purpleLight, fontSize:'11px', cursor:'pointer', fontFamily:'monospace' }}>
-                    Selecionar
+                    {t(locale, 'panel.group.select')}
                   </button>
                 }
               />
@@ -170,22 +180,22 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                   borderRadius:'10px', padding:'8px 10px', color:C.muted, fontSize:'11px',
                   cursor:'pointer', fontFamily:'monospace' }}
               >
-                Mostrar mais
+                {t(locale, 'panel.group.showMore')}
               </button>
             ) : null}
             <div style={{ marginTop:'6px', color:C.faint, fontSize:'11px', fontFamily:'monospace' }}>
-              Dica: use o filtro de área/perfil acima para refinar a lista.
+              {t(locale, 'panel.group.filterHint')}
             </div>
           </div>
         )}
       </div>
 
       <div style={S.card}>
-        <span style={S.label}>Sugestões e tensões</span>
+        <span style={S.label}>{t(locale, 'panel.group.suggestionsTitle')}</span>
 
         {!groupBase ? (
           <p style={{ color:C.muted, fontStyle:'italic', fontSize:'13px' }}>
-            Selecione uma pessoa base para ver compatibilidades.
+            {t(locale, 'panel.group.pickBaseFirst')}
           </p>
         ) : (
           <>
@@ -193,7 +203,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
               <input
                 value={search}
                 onChange={(e)=>setSearch(e.target.value)}
-                placeholder="Buscar pessoa para adicionar…"
+                placeholder={t(locale, 'panel.group.searchAddPh')}
                 style={{ flex:'1 1 240px', background:'rgba(26,22,37,.07)', border:`1px solid ${C.border}`,
                   borderRadius:'10px', padding:'10px 12px', color:C.text, fontSize:'12px',
                   fontFamily:'monospace' }}
@@ -205,17 +215,17 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                   borderRadius:'10px', padding:'10px 12px', color:C.muted, fontSize:'12px',
                   cursor:'pointer', fontFamily:'monospace' }}
               >
-                <option value="">+ Adicionar qualquer pessoa</option>
+                <option value="">{t(locale, 'panel.group.addAnyone')}</option>
                 {results
                   .filter(r=>String(r.assessmentId)!==String(groupBase.assessmentId))
                   .filter(r=>!groupIds.includes(String(r.assessmentId)))
                   .filter(r=>!search.trim() || r.name.toLowerCase().includes(search.trim().toLowerCase()))
                   .slice(0, 300)
                   .map(r=>{
-                    const withBase = getCompat(groupBase.topType, r.topType);
+                    const withBase = getCompat(groupBase.topType, r.topType, locale);
                     return (
                       <option key={r.assessmentId} value={String(r.assessmentId)}>
-                        {r.name} (T{r.topType}) · {compatShort[withBase.level] ?? withBase.level}
+                        {r.name} (T{r.topType}) · {t(locale, `panel.compatLevel.${withBase.level}`)}
                       </option>
                     );
                   })}
@@ -225,15 +235,15 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'14px' }}>
               <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
                 background:`${C.synergy}18`, border:`1px solid ${C.synergy}44`, color:C.synergy, fontFamily:'monospace' }}>
-                Sinergia
+                {t(locale, 'panel.group.synergy')}
               </span>
               <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
                 background:`${C.neutral}18`, border:`1px solid ${C.neutral}44`, color:C.neutral, fontFamily:'monospace' }}>
-                Neutro
+                {t(locale, 'panel.group.neutral')}
               </span>
               <span style={{ padding:'2px 9px', fontSize:'10px', borderRadius:'20px',
                 background:`${C.tension}18`, border:`1px solid ${C.tension}44`, color:C.tension, fontFamily:'monospace' }}>
-                Tensão
+                {t(locale, 'panel.group.tension')}
               </span>
             </div>
 
@@ -247,8 +257,8 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                     borderRadius:'12px', padding:'12px 14px' }}>
                     <button
                       onClick={()=>dismissSuggestion(person.assessmentId)}
-                      title="Remover da lista"
-                      aria-label="Remover da lista"
+                      title={t(locale, 'panel.group.removeFromList')}
+                      aria-label={t(locale, 'panel.group.removeFromList')}
                       style={{ position:'absolute', top:'10px', right:'10px',
                         width:'28px', height:'28px', display:'inline-flex', alignItems:'center', justifyContent:'center',
                         background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
@@ -259,14 +269,14 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                     </button>
                     <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
                       <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
-                        <TypeBadge type={person.topType}/>
+                        <TypeBadge type={person.topType} locale={locale}/>
                         <span style={{ color:C.text, fontSize:'13px' }}>{person.name}</span>
-                        <CompatBadge level={compat.level}/>
+                        <CompatBadge level={compat.level} locale={locale}/>
                         {compat.level==='tension' && (
                           <span style={{ padding:'2px 8px', fontSize:'10px', borderRadius:'20px',
                             background:`${C.tension}18`, border:`1px solid ${C.tension}44`,
                             color:C.tension, fontFamily:'monospace' }}>
-                            ⚠ Tensão com base
+                            {t(locale, 'panel.group.tensionWithBase')}
                           </span>
                         )}
                       </div>
@@ -279,7 +289,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                             padding:'8px 10px', color:already?C.faint:lc, fontSize:'11px',
                             cursor:already?'not-allowed':'pointer', fontFamily:'monospace' }}
                         >
-                          {already?'No grupo':'Adicionar'}
+                          {already ? t(locale, 'panel.group.inGroup') : t(locale, 'panel.group.add')}
                         </button>
                       </div>
                     </div>
@@ -292,9 +302,9 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
             </div>
 
             <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:'14px' }}>
-              <span style={{...S.label, marginBottom:'10px'}}>Grupo atual</span>
+              <span style={{...S.label, marginBottom:'10px'}}>{t(locale, 'panel.group.currentGroup')}</span>
               {groupIds.length === 0 ? (
-                <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>Nenhuma pessoa adicionada ainda.</p>
+                <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>{t(locale, 'panel.group.noneInGroup')}</p>
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                   {groupIds.map(id => {
@@ -302,7 +312,7 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
                     if (!p) return null;
                     const baseCompat =
                       groupBase && String(p.assessmentId) !== String(groupBase.assessmentId)
-                        ? getCompat(groupBase.topType, p.topType)
+                        ? getCompat(groupBase.topType, p.topType, locale)
                         : null;
                     return (
                       <PersonMini
@@ -317,18 +327,18 @@ export function GroupTab({ results, groupBase, setGroupBaseId, groupIds, setGrou
               )}
 
               <div style={{ marginTop:'14px' }}>
-                <span style={{...S.label, marginBottom:'6px'}}>Tensões internas</span>
+                <span style={{...S.label, marginBottom:'6px'}}>{t(locale, 'panel.group.internalTensions')}</span>
                 {groupTensions.length === 0 ? (
-                  <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>Nenhuma tensão detectada no grupo atual.</p>
+                  <p style={{ color:C.faint, fontSize:'12px', fontStyle:'italic' }}>{t(locale, 'panel.group.noTensions')}</p>
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                     {groupTensions.slice(0, 8).map((p, idx) => (
                       <div key={idx} style={{ padding:'10px 12px', background:'rgba(232,71,71,.06)',
                         border:'1px solid rgba(232,71,71,.2)', borderRadius:'10px' }}>
                         <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
-                          <TypeBadge type={p.a.topType}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.a.name.split(' ')[0]}</span>
+                          <TypeBadge type={p.a.topType} locale={locale}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.a.name.split(' ')[0]}</span>
                           <span style={{ color:C.faint }}>×</span>
-                          <TypeBadge type={p.b.topType}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.b.name.split(' ')[0]}</span>
+                          <TypeBadge type={p.b.topType} locale={locale}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.b.name.split(' ')[0]}</span>
                         </div>
                         <div style={{ marginTop:'6px', fontSize:'12px', color:C.muted, lineHeight:1.55 }}>
                           {p.compat.desc}

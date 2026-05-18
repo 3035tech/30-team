@@ -40,12 +40,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
   const [stageBusy, setStageBusy] = useState(null);
 
   const sortColumns = [
-    { k: 'createdAt', label: 'Data' },
-    { k: 'name', label: 'Nome' },
-    { k: 'area', label: 'Área' },
-    { k: 'type', label: 'Tipo perfil' },
-    { k: 'vacancy', label: 'Vaga' },
-    { k: 'pipeline', label: t(locale, 'recruiting.pipelineShort') },
+    { k: 'createdAt', labelKey: 'panel.team.sortDate' },
+    { k: 'name', labelKey: 'panel.team.sortName' },
+    { k: 'area', labelKey: 'panel.team.sortArea' },
+    { k: 'type', labelKey: 'panel.team.sortProfileType' },
+    { k: 'vacancy', labelKey: 'panel.team.sortVacancy' },
+    { k: 'pipeline', labelKey: 'recruiting.pipelineShort' },
   ];
 
   const loadDetail = useCallback(async (candidateId) => {
@@ -54,46 +54,46 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
     } catch (e) {
-      setDetailErr(e?.message || 'Erro');
+      setDetailErr(e?.message || t(locale, 'panel.common.error'));
       setDetail(null);
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   const deleteCandidate = async (candidateId, name) => {
     const id = String(candidateId || '').trim();
     if (!id) return;
-    const ok = window.confirm(`Excluir "${name}" e todas as respostas/avaliações associadas? Essa ação não pode ser desfeita.`);
+    const ok = window.confirm(t(locale, 'panel.team.confirmDeletePerson', { name }));
     if (!ok) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(id)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.deletePersonError'));
       router.refresh();
     } catch (e) {
-      window.alert(e?.message || 'Erro ao excluir');
+      window.alert(e?.message || t(locale, 'panel.team.deletePersonError'));
     } finally {
       setDeleting(false);
     }
   };
 
   const deleteAssessment = async (assessmentId) => {
-    const ok = window.confirm(t(locale, 'recruiting.allowRetake') + '?');
+    const ok = window.confirm(t(locale, 'recruiting.allowRetake') + t(locale, 'panel.team.allowRetakeConfirmSuffix'));
     if (!ok) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/assessments/${encodeURIComponent(assessmentId)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       router.refresh();
       if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
     } catch (e) {
-      window.alert(e?.message || 'Erro');
+      window.alert(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setDeleting(false);
     }
@@ -108,11 +108,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
         body: JSON.stringify({ pipelineStage }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       router.refresh();
       if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
     } catch (e) {
-      window.alert(e?.message || 'Erro');
+      window.alert(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setStageBusy(null);
     }
@@ -122,7 +122,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div
         role="group"
-        aria-label="Ordenar lista da equipe"
+        aria-label={t(locale, 'panel.team.sortAria')}
         style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -135,9 +135,9 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
         }}
       >
         <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Ordenar por
+          {t(locale, 'panel.team.sortBy')}
         </span>
-        {sortColumns.map(({ k, label }) => {
+        {sortColumns.map(({ k, labelKey }) => {
           const active = sortKey === k;
           return (
             <button
@@ -156,7 +156,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                 color: active ? C.purple : C.muted,
               }}
             >
-              {label}
+              {t(locale, labelKey)}
               {active ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
             </button>
           );
@@ -214,7 +214,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                   </div>
                 ) : null}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <TypeBadge type={r.topType} />
+                  <TypeBadge type={r.topType} locale={locale} />
                   {r.areaLabel && (
                     <span
                       style={{
@@ -257,7 +257,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                         fontFamily: 'monospace',
                       }}
                     >
-                      Fit: {r.fitLabel}
+                      {t(locale, 'recruiting.fitLabel')}: {r.fitLabel}
                     </span>
                   )}
                   {showVacancyFit ? (
@@ -300,8 +300,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                       deleteCandidate(r.candidateId, r.name);
                     }}
                     disabled={deleting}
-                    title="Excluir pessoa e respostas"
-                    aria-label="Excluir pessoa e respostas"
+                    title={t(locale, 'panel.team.ariaDeletePerson')}
+                    aria-label={t(locale, 'panel.team.ariaDeletePerson')}
                     style={{
                       background: 'rgba(232,71,71,.08)',
                       border: '1px solid rgba(232,71,71,.35)',
@@ -314,7 +314,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                       opacity: deleting ? 0.6 : 1,
                     }}
                   >
-                    Excluir
+                    {t(locale, 'panel.team.deletePerson')}
                   </button>
                 ) : null}
                 <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{isOpen ? '▲' : '▼'}</span>
@@ -324,7 +324,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
               <div style={{ borderTop: `1px solid ${C.border}`, padding: '20px 24px' }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                   <div>
-                    <span style={{ ...S.label, marginBottom: '8px' }}>Pontos fortes</span>
+                    <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'candidate.strengths')}</span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {d.strengths.slice(0, 3).map((s) => (
                         <span
@@ -344,8 +344,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     </div>
                   </div>
                   <div>
-                    <span style={{ ...S.label, marginBottom: '8px' }}>Ala secundária</span>
-                    {second && <TypeBadge type={parseInt(second[0], 10)} />}
+                    <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'candidate.wing')}</span>
+                    {second && <TypeBadge type={parseInt(second[0], 10)} locale={locale} />}
                   </div>
                 </div>
                 <div
@@ -357,7 +357,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     marginBottom: '16px',
                   }}
                 >
-                  <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}70` }}>Contribuição para a equipe</span>
+                  <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}70` }}>{t(locale, 'candidate.teamContribution')}</span>
                   <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.65, margin: 0 }}>{d.team}</p>
                 </div>
 
@@ -435,7 +435,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                   )}
                 </div>
 
-                <span style={{ ...S.label, marginBottom: '8px' }}>Pontuação por tipo</span>
+                <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   {sorted.map(([t, s]) => (
                     <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

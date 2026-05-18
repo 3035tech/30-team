@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { C } from '../../../lib/theme';
+import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
 
-export function CompareTabLoader({ filterQueryString, comparePage, comparePageSize, onComparePagination }) {
+export function CompareTabLoader({ filterQueryString, comparePage, comparePageSize, onComparePagination, locale = 'pt-BR' }) {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, page: 1 });
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
       })
       .then(({ ok, d }) => {
         if (cancelled) return;
-        if (!ok) throw new Error(d?.error || 'Falha ao carregar');
+        if (!ok) throw new Error(d?.error || t(locale, 'panel.compare.loadError'));
         setRows(Array.isArray(d.rows) ? d.rows : []);
         setMeta({
           total: typeof d.total === 'number' ? d.total : (Array.isArray(d.rows) ? d.rows.length : 0),
@@ -49,12 +49,12 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [filterQueryString, comparePage, comparePageSize]);
+  }, [filterQueryString, comparePage, comparePageSize, locale]);
 
   if (loading) {
     return (
       <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
-        <p style={{ color: C.muted, margin: 0 }}>Carregando dados do comparativo…</p>
+        <p style={{ color: C.muted, margin: 0 }}>{t(locale, 'panel.compare.loading')}</p>
       </div>
     );
   }
@@ -71,14 +71,14 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <CompareTab results={rows} />
+      <CompareTab results={rows} locale={locale} />
       {meta.total > 0 ? (
         <div style={{
           ...S.card, padding: '14px 20px', display: 'flex', flexWrap: 'wrap',
           alignItems: 'center', gap: '12px', justifyContent: 'space-between',
         }}>
           <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            Lista do comparativo (página própria) · {meta.total} pessoa(s)
+            {t(locale, 'panel.compare.listMeta', { n: meta.total })}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
             <select
@@ -92,7 +92,7 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
                 cursor: 'pointer', fontFamily: 'monospace' }}
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
-                <option key={n} value={String(n)}>{n}</option>
+                <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
               ))}
             </select>
             <button
@@ -104,7 +104,7 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
                 borderRadius: '10px', padding: '8px 14px', color: effPage <= 1 ? C.faint : C.purple,
                 fontSize: '12px', cursor: effPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
             >
-              Anterior
+              {t(locale, 'dashboard.previous')}
             </button>
             <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '90px', textAlign: 'center' }}>
               {effPage} / {totPg}
@@ -120,7 +120,7 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
                 fontSize: '12px',
                 cursor: effPage >= totPg ? 'default' : 'pointer', fontFamily: 'monospace' }}
             >
-              Próxima
+              {t(locale, 'dashboard.next')}
             </button>
           </div>
         </div>

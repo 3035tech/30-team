@@ -1,17 +1,31 @@
 'use client';
 
 import { TYPE_DATA } from '../../../lib/data';
+import { t } from '../../../lib/i18n';
+import { typeShortLabel, typeTitleTooltip } from '../../../lib/type-en';
 import { C } from '../../../lib/theme';
 import { Bar, S, TypeBadge } from '../dashboard-shared';
 
-export function LeadershipTab({ analytics }) {
+const BAND_KEYS = {
+  standout: 'bandStandout',
+  strong: 'bandStrong',
+  moderate: 'bandModerate',
+  explore: 'bandExplore',
+};
+
+function bandLabel(locale, band) {
+  const k = BAND_KEYS[band];
+  return k ? t(locale, `panel.leadership.${k}`) : band || t(locale, 'panel.common.notApplicable');
+}
+
+export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
   const hasData = analytics && analytics.kpis && analytics.kpis.assessments > 0;
   if (!hasData) {
     return (
       <div style={{ ...S.card, textAlign: 'center', padding: '48px' }}>
-        <span style={S.label}>Analytics para liderança</span>
+        <span style={S.label}>{t(locale, 'panel.leadership.emptyTitle')}</span>
         <p style={{ color: C.muted, fontSize: '14px', marginTop: '12px', lineHeight: 1.6 }}>
-          Ainda não há avaliações suficientes para montar o painel executivo.
+          {t(locale, 'panel.leadership.emptyBody')}
         </p>
       </div>
     );
@@ -31,31 +45,42 @@ export function LeadershipTab({ analytics }) {
     </div>
   );
 
+  const tableHeaders = [
+    t(locale, 'panel.leadership.tablePerson'),
+    t(locale, 'panel.leadership.tableDominant'),
+    t(locale, 'panel.leadership.tableIndicator'),
+    t(locale, 'panel.leadership.tableBand'),
+  ];
+
+  const execHeaders = [
+    t(locale, 'panel.leadership.execColArea'),
+    t(locale, 'panel.leadership.execColN'),
+    t(locale, 'panel.leadership.execColDominant'),
+    t(locale, 'panel.leadership.execColDiversity'),
+    t(locale, 'panel.leadership.execColFit'),
+    t(locale, 'panel.leadership.execColRubricTop'),
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>Analytics para liderança</span>
+        <span style={S.label}>{t(locale, 'panel.leadership.title')}</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Consolida avaliações no <strong style={{ color: C.text, fontWeight: 600 }}>mesmo escopo</strong> dos filtros do
-          cabeçalho: empresa (admin), área/setor, vaga e perfil (T1–T9). KPIs, série mensal, distribuição por tipo,
-          resumo por área e potenciais de liderança refletem apenas as avaliações que passam nesses filtros.
+          {t(locale, 'panel.leadership.intro')}
         </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-        <Kpi icon="📊" value={kpis.assessments} label="Avaliações" hint="Total de testes concluídos (inclui re-testes)." />
-        <Kpi icon="👤" value={kpis.candidates} label="Candidatos únicos" hint="Pessoas distintas com pelo menos uma avaliação." />
-        <Kpi icon="🏢" value={kpis.areasActive} label="Áreas com dados" hint="Áreas com pelo menos uma avaliação." />
+        <Kpi icon="📊" value={kpis.assessments} label={t(locale, 'panel.leadership.kpiAssessments')} hint={t(locale, 'panel.leadership.kpiAssessmentsHint')} />
+        <Kpi icon="👤" value={kpis.candidates} label={t(locale, 'panel.leadership.kpiCandidates')} hint={t(locale, 'panel.leadership.kpiCandidatesHint')} />
+        <Kpi icon="🏢" value={kpis.areasActive} label={t(locale, 'panel.leadership.kpiAreas')} hint={t(locale, 'panel.leadership.kpiAreasHint')} />
       </div>
 
       {leadershipPotentials.length > 0 ? (
         <div style={{ ...S.card }}>
-          <span style={S.label}>Potenciais líderes por empresa</span>
+          <span style={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
           <p style={{ fontSize: '12px', color: C.faint, marginTop: '8px', marginBottom: '18px', lineHeight: 1.65 }}>
-            Indicativo automático por empresa: usa a <span style={{ color: C.text }}>avaliação mais recente</span> de cada
-            pessoa e calcula um score 0–10 a partir do perfil completo (não só o tipo dominante), ponderando tipos associados a direção, decisão,
-            execução e confiabilidade (ex.: Realizador, Desafiador, Leal, Perfeccionista). Serve como ponto de partida para conversas de sucessão —
-            não substitui julgamento de competência ou contexto.
+            {t(locale, 'panel.leadership.potentialsIntro')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {leadershipPotentials.map((co) => (
@@ -76,7 +101,7 @@ export function LeadershipTab({ analytics }) {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '420px' }}>
                     <thead>
                       <tr>
-                        {['Pessoa', 'Tipo dominante', 'Indicador', 'Faixa'].map((h) => (
+                        {tableHeaders.map((h) => (
                           <th
                             key={h}
                             style={{
@@ -100,15 +125,17 @@ export function LeadershipTab({ analytics }) {
                             {p.name}
                           </td>
                           <td style={{ padding: '10px' }}>
-                            <TypeBadge type={p.topType} />
+                            <TypeBadge type={p.topType} locale={locale} />
                           </td>
                           <td
                             style={{ padding: '10px', color: C.purpleLight, fontFamily: 'monospace' }}
-                            title="Score heurístico 0–10 (ver texto acima)."
+                            title={t(locale, 'panel.leadership.scoreTitleHint')}
                           >
                             {p.leadership010}/10
                           </td>
-                          <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>{p.leadershipLabel}</td>
+                          <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>
+                            {bandLabel(locale, p.leadershipBand)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -121,12 +148,12 @@ export function LeadershipTab({ analytics }) {
       ) : null}
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Volume mensal</span>
+        <span style={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
         <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '16px' }}>
-          Contagem de avaliações por mês (data de conclusão no servidor).
+          {t(locale, 'panel.leadership.monthlyHint')}
         </p>
         {monthlyTrend.length === 0 ? (
-          <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>Sem série temporal.</p>
+          <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>{t(locale, 'panel.leadership.noTimeSeries')}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {monthlyTrend.map((m) => (
@@ -144,21 +171,22 @@ export function LeadershipTab({ analytics }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
         <div style={{ ...S.card }}>
-          <span style={S.label}>Distribuição global (tipo dominante)</span>
+          <span style={S.label}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
           <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px' }}>
-            Soma de todas as áreas — tipo com maior pontuação em cada avaliação.
+            {t(locale, 'panel.leadership.globalDistHint')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9]
-              .filter((t) => (gCounts[t] || 0) > 0)
+              .filter((ty) => (gCounts[ty] || 0) > 0)
               .sort((a, b) => (gCounts[b] || 0) - (gCounts[a] || 0))
-              .map((t) => {
-                const d = TYPE_DATA[t];
-                const c = gCounts[t] || 0;
+              .map((ty) => {
+                const d = TYPE_DATA[ty];
+                const c = gCounts[ty] || 0;
+                const label = typeShortLabel(ty, locale);
                 return (
-                  <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div key={ty} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span
-                      title={d?.name ? `${d.name} (T${t})` : `T${t}`}
+                      title={typeTitleTooltip(ty, locale)}
                       style={{
                         width: '160px',
                         fontSize: '12px',
@@ -174,7 +202,7 @@ export function LeadershipTab({ analytics }) {
                       }}
                     >
                       <span style={{ width: '22px', textAlign: 'center', flexShrink: 0 }}>{d.emoji}</span>
-                      <span style={{ minWidth: 0 }}>{d.short}</span>
+                      <span style={{ minWidth: 0 }}>{label}</span>
                     </span>
                     <div style={{ flex: 1 }}>
                       <Bar value={c} max={maxG} color={d.color} h={8} />
@@ -190,9 +218,9 @@ export function LeadershipTab({ analytics }) {
         </div>
 
         <div style={{ ...S.card }}>
-          <span style={S.label}>Diversidade cognitiva por área</span>
+          <span style={S.label}>{t(locale, 'panel.leadership.diversityTitle')}</span>
           <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px', lineHeight: 1.55 }}>
-            Índice 0–100% derivado da entropia de Shannon na distribuição dos tipos dominantes (100% = mistura mais uniforme entre T1–T9).
+            {t(locale, 'panel.leadership.diversityHint')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {areaSummaries.map((row) => (
@@ -213,12 +241,12 @@ export function LeadershipTab({ analytics }) {
       </div>
 
       <div style={{ ...S.card, overflow: 'hidden' }}>
-        <span style={S.label}>Por área — resumo executivo</span>
+        <span style={S.label}>{t(locale, 'panel.leadership.execTableTitle')}</span>
         <div style={{ overflowX: 'auto', marginTop: '14px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
             <thead>
               <tr>
-                {['Área', 'N', 'Dominante', 'Diversidade', 'Fit médio (rubrica)', 'Topos rubrica'].map((h) => (
+                {execHeaders.map((h) => (
                   <th
                     key={h}
                     style={{
@@ -241,7 +269,7 @@ export function LeadershipTab({ analytics }) {
                   <td style={{ padding: '10px 12px', color: C.text }}>{row.areaLabel}</td>
                   <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>{row.n}</td>
                   <td style={{ padding: '10px 12px' }}>
-                    {row.dominantType ? <TypeBadge type={row.dominantType} /> : <span style={{ color: C.faint }}>—</span>}
+                    {row.dominantType ? <TypeBadge type={row.dominantType} locale={locale} /> : <span style={{ color: C.faint }}>—</span>}
                   </td>
                   <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
                     {Math.round(row.diversity01 * 100)}%
@@ -258,8 +286,7 @@ export function LeadershipTab({ analytics }) {
           </table>
         </div>
         <p style={{ fontSize: '11px', color: C.faint, marginTop: '14px', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 0 }}>
-          “Topos rubrica”: percentual de avaliações cujo tipo dominante está entre os tipos mais valorados na rubrica da área (peso ≥ 92% do maior peso).
-          Fit médio usa a mesma fórmula de aderência 0–10 do restante do dashboard.
+          {t(locale, 'panel.leadership.execFootnote')}
         </p>
       </div>
     </div>

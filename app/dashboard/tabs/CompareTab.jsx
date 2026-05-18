@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
+import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { S, TypeBadge } from '../dashboard-shared';
 
-export function CompareTab({ results }) {
+export function CompareTab({ results, locale = 'pt-BR' }) {
   const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
   const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
   const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' })); // key: 'name' | 1..9
@@ -104,14 +105,14 @@ export function CompareTab({ results }) {
 
   return (
     <div style={S.card}>
-      <span style={S.label}>Mapa de perfis da equipe</span>
+      <span style={S.label}>{t(locale, 'panel.compare.title')}</span>
       <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px', marginBottom: '14px', lineHeight: 1.55 }}>
-        Escolha quem entra na comparação. Use os atalhos abaixo ou marque/desmarque cada pessoa.
+        {t(locale, 'panel.compare.intro')}
       </p>
 
       <div style={btnBar}>
         <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-          {nSel} de {nTot} na tabela
+          {t(locale, 'panel.compare.inTable', { selected: nSel, total: nTot })}
         </span>
         <button
           type="button"
@@ -125,7 +126,7 @@ export function CompareTab({ results }) {
             opacity: nTot === 0 ? 0.5 : 1,
           }}
         >
-          Selecionar todos
+          {t(locale, 'panel.compare.selectAll')}
         </button>
         <button
           type="button"
@@ -139,7 +140,7 @@ export function CompareTab({ results }) {
             opacity: nSel === 0 ? 0.5 : 1,
           }}
         >
-          Limpar seleção
+          {t(locale, 'panel.compare.clearSelection')}
         </button>
       </div>
 
@@ -180,7 +181,7 @@ export function CompareTab({ results }) {
                 style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer' }}
               />
               <span style={{ whiteSpace: 'nowrap' }}>{r.name.split(' ')[0]}</span>
-              <TypeBadge type={r.topType} />
+              <TypeBadge type={r.topType} locale={locale} />
             </label>
           );
         })}
@@ -188,7 +189,7 @@ export function CompareTab({ results }) {
 
       {visible.length === 0 ? (
         <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '14px', padding: '24px 0' }}>
-          Ninguém selecionado. Marque uma ou mais pessoas acima para ver o comparativo lado a lado.
+          {t(locale, 'panel.compare.noneSelected')}
         </p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -209,7 +210,7 @@ export function CompareTab({ results }) {
                   }}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    Pessoa
+                    {t(locale, 'panel.compare.personCol')}
                     <span style={{ color: C.faint, fontSize: '11px' }}>{sortMark('name')}</span>
                   </span>
                 </th>
@@ -242,7 +243,7 @@ export function CompareTab({ results }) {
                 return (
                   <tr key={String(r.assessmentId) || i} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
                     <td style={{ padding: '10px 12px', color: C.text, whiteSpace: 'nowrap' }}>
-                      {r.name.split(' ')[0]} <TypeBadge type={r.topType} />
+                      {r.name.split(' ')[0]} <TypeBadge type={r.topType} locale={locale} />
                     </td>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => {
                       const s = parseInt(r.scores[t] || 0);
@@ -283,7 +284,7 @@ export function CompareTab({ results }) {
         </div>
       )}
       <p style={{ fontSize: '11px', color: C.faint, marginTop: '16px', fontStyle: 'italic' }}>
-        Círculo com borda = tipo dominante. Intensidade da cor = pontuação relativa.
+        {t(locale, 'panel.compare.footerHint')}
       </p>
     </div>
   );

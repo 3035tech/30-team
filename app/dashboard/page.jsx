@@ -22,7 +22,7 @@ import {
   rubricAlignmentShare,
 } from '../../lib/leadership-analytics';
 
-function buildCompatBundles(lightRows) {
+function buildCompatBundles(lightRows, locale) {
   const people = lightRows.map((r) => ({
     assessmentId: r.assessmentId,
     candidateId: r.candidateId,
@@ -38,7 +38,7 @@ function buildCompatBundles(lightRows) {
   for (let i = 0; i < people.length; i++) {
     for (let j = i + 1; j < people.length; j++) {
       const a = people[i]; const b = people[j];
-      const compat = getCompat(a.topType, b.topType);
+      const compat = getCompat(a.topType, b.topType, locale);
       const row = { a, b, compat };
       pairs.push(row);
       if (compat.level === 'tension') tensions.push(row);
@@ -304,7 +304,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
        ${teamOrderSql}`,
       params
     );
-    const bundles = buildCompatBundles(lightRes.rows);
+    const bundles = buildCompatBundles(lightRes.rows, locale);
     compatMetrics = {
       pairs: bundles.pairs,
       tensions: bundles.tensions,

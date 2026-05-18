@@ -133,7 +133,7 @@ export default function DashboardClient({
     ? interactionPeople
         .filter((r) => String(r.assessmentId) !== String(groupBase.assessmentId))
         .filter((r) => !dismissedIds.includes(String(r.assessmentId)))
-        .map((r) => ({ person: r, compat: getCompat(groupBase.topType, r.topType) }))
+        .map((r) => ({ person: r, compat: getCompat(groupBase.topType, r.topType, locale) }))
         .sort((x, y) => {
           const order = { synergy: 0, neutral: 1, tension: 2 };
           return (order[x.compat.level] ?? 9) - (order[y.compat.level] ?? 9);
@@ -143,7 +143,7 @@ export default function DashboardClient({
   const groupPairs = [];
   for (let i = 0; i < groupMembers.length; i++) {
     for (let j = i + 1; j < groupMembers.length; j++) {
-      const c = getCompat(groupMembers[i].topType, groupMembers[j].topType);
+      const c = getCompat(groupMembers[i].topType, groupMembers[j].topType, locale);
       groupPairs.push({ a: groupMembers[i], b: groupMembers[j], compat: c });
     }
   }
