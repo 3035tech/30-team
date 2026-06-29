@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCompat } from '../../lib/data';
 import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
@@ -28,6 +28,7 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { TeamTab } from './tabs/TeamTab';
 import { UsersAdminTab } from './tabs/UsersAdminTab';
 import { VacanciesAdminTab } from './tabs/VacanciesAdminTab';
+import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
 
 export default function DashboardClient({
   results,
@@ -219,6 +220,7 @@ export default function DashboardClient({
             <NavLink id="group" label={t(locale, 'dashboard.group')} />
             <NavLink id="leadership" label={t(locale, 'dashboard.leadership')} />
             {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
+            {canManage ? <NavLink id="motivators" label="Motivadores" /> : null}
             {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
             {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
           </nav>
@@ -469,6 +471,11 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'motivators' && canManage && (
+                <Suspense fallback={<div style={{ color: C.muted, padding: '24px' }}>Carregando…</div>}>
+                  <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
+                </Suspense>
+              )}
               {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'group' && (

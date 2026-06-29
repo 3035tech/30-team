@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "db:seed": "node scripts/seed-data.js",
+    "db:seed-motivators": "node scripts/seed-motivators-questions.js",
+    "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",
+    "db:seed-motivators-all": "node scripts/seed-motivators-questions.js && node scripts/seed-motivators-templates.js",
     "db:clear": "node scripts/clear-data.js"
   },
   "dependencies": {
