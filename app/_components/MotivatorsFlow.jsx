@@ -76,18 +76,35 @@ const S = {
   }),
 };
 
-const Bar = ({ value, max = 100, color, h = 8 }) => (
-  <div style={{ width: '100%', height: h, background: 'rgba(26,22,37,.08)', borderRadius: h / 2, overflow: 'hidden' }}>
-    <div
-      style={{
-        height: '100%',
-        width: `${(value / Math.max(max, 1)) * 100}%`,
-        background: `linear-gradient(90deg,${color}99,${color})`,
-        borderRadius: h / 2,
-      }}
-    />
-  </div>
-);
+function ThankYouScreen({ locale, saveError, onDone }) {
+  const copy =
+    locale === 'en'
+      ? {
+          label: 'Assessment complete',
+          title: 'Thank you!',
+          body: 'Your responses have been saved successfully. Your manager or HR team will review your motivators profile.',
+          done: 'Close',
+        }
+      : {
+          label: 'Assessment concluído',
+          title: 'Obrigado!',
+          body: 'Suas respostas foram registradas com sucesso. Seu gestor ou o time de RH terá acesso ao seu perfil de motivadores.',
+          done: 'Concluir',
+        };
+
+  return (
+    <div style={S.app}>
+      <div style={S.glow} />
+      <div style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
+        <span style={S.label}>{copy.label}</span>
+        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{copy.title}</h1>
+        {saveError ? <p style={{ color: C.tension, marginBottom: '16px', fontSize: '14px' }}>{saveError}</p> : null}
+        <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{copy.body}</p>
+        <button type="button" style={S.btn()} onClick={onDone}>{copy.done}</button>
+      </div>
+    </div>
+  );
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -306,50 +323,8 @@ function TestScreen({ questions, onComplete }) {
   );
 }
 
-function ResultScreen({ result, saveError, onRestart }) {
-  const maxScore = Math.max(...(result.ranking || []).map((r) => r.score), 1);
-  return (
-    <div style={S.app}>
-      <div style={S.glow} />
-      <div style={{ ...S.card, maxWidth: '720px' }}>
-        <span style={S.label}>Seu perfil de motivadores</span>
-        <h1 style={{ ...S.h1, fontSize: '32px' }}>Resultado</h1>
-
-        {saveError ? <p style={{ color: C.tension, marginBottom: '16px' }}>{saveError}</p> : null}
-
-        <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '24px' }}>{result.profileSummary}</p>
-
-        <div style={{ marginBottom: '28px' }}>
-          {(result.ranking || []).map((dim) => (
-            <div key={dim.key} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-              <span style={{ width: '130px', fontSize: '12px', color: dim.color, fontFamily: 'monospace' }}>{dim.label}</span>
-              <div style={{ flex: 1 }}><Bar value={dim.score} max={maxScore} color={dim.color} /></div>
-              <span style={{ width: '32px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{dim.score}</span>
-            </div>
-          ))}
-        </div>
-
-        {result.managerRecommendations ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ padding: '16px', borderRadius: '12px', background: `${C.synergy}0a`, border: `1px solid ${C.synergy}33` }}>
-              <div style={{ fontSize: '11px', color: C.synergy, marginBottom: '10px', fontFamily: 'monospace' }}>Para seu gestor — Faça</div>
-              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>
-                {(result.managerRecommendations.do || []).map((t) => <li key={t}>{t}</li>)}
-              </ul>
-            </div>
-            <div style={{ padding: '16px', borderRadius: '12px', background: `${C.tension}08`, border: `1px solid ${C.tension}33` }}>
-              <div style={{ fontSize: '11px', color: C.tension, marginBottom: '10px', fontFamily: 'monospace' }}>Evite</div>
-              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>
-                {(result.managerRecommendations.avoid || []).map((t) => <li key={t}>{t}</li>)}
-              </ul>
-            </div>
-          </div>
-        ) : null}
-
-        <button type="button" style={S.btn()} onClick={onRestart}>Concluir</button>
-      </div>
-    </div>
-  );
+function ResultScreen({ locale, saveError, onDone }) {
+  return <ThankYouScreen locale={locale} saveError={saveError} onDone={onDone} />;
 }
 
 export default function MotivatorsFlow({
@@ -362,8 +337,8 @@ export default function MotivatorsFlow({
   const [locale, setLocale] = useState(initialLocale);
   const [screen, setScreen] = useState('home');
   const [session, setSession] = useState(null);
-  const [result, setResult] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [submitOk, setSubmitOk] = useState(false);
 
   const handleStart = async (candidate) => {
     try {
@@ -397,7 +372,7 @@ export default function MotivatorsFlow({
       errMsg = 'Falha de rede ao salvar.';
     }
     setSaveError(errMsg);
-    setResult(resData?.ok ? resData : null);
+    setSubmitOk(Boolean(resData?.ok));
     setScreen('result');
   };
 
@@ -405,7 +380,7 @@ export default function MotivatorsFlow({
     return <TestScreen questions={session.questions} onComplete={handleComplete} />;
   }
   if (screen === 'result') {
-    if (!result && saveError) {
+    if (!submitOk && saveError) {
       return (
         <div style={S.app}>
           <div style={S.glow} />
@@ -418,9 +393,9 @@ export default function MotivatorsFlow({
     }
     return (
       <ResultScreen
-        result={result}
+        locale={locale}
         saveError={saveError}
-        onRestart={() => { setScreen('home'); setResult(null); setSession(null); }}
+        onDone={() => { setScreen('home'); setSubmitOk(false); setSession(null); }}
       />
     );
   }

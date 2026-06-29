@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../../lib/ae/require-admin';
+import { buildHrInsights } from '../../../../../../lib/ae/hr-insights';
 
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
 export async function GET(_request, { params }) {
@@ -65,10 +66,17 @@ export async function GET(_request, { params }) {
       };
     });
 
+    const hrInsights = buildHrInsights({
+      ranking: attempt.ranking || [],
+      dimensionScores: attempt.dimensionScores || {},
+      dimensions: dimRes.rows,
+    });
+
     return NextResponse.json({
       attempt: { ...attempt, ranking: rankingWithLabels },
       history: hist.rows,
       dimensions: dimRes.rows,
+      hrInsights,
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts/[id]', err);

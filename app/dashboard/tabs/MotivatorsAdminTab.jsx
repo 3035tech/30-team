@@ -278,25 +278,83 @@ function ResultsList({ isAdmin, companyFilter }) {
       </div>
       {detail?.attempt ? (
         <div style={S.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-            <span style={S.label}>Detalhe + histórico</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <span style={S.label}>Perfil do colaborador</span>
+              <div style={{ fontSize: '18px', color: C.text, marginTop: '4px' }}>{detail.attempt.candidateName}</div>
+              <div style={{ fontSize: '12px', color: C.muted, marginTop: '6px', lineHeight: 1.5 }}>
+                {detail.attempt.candidateEmail}
+                {detail.attempt.areaLabel ? ` · ${detail.attempt.areaLabel}` : ''}
+                {detail.attempt.companyName ? ` · ${detail.attempt.companyName}` : ''}
+              </div>
+              <div style={{ fontSize: '11px', color: C.faint, marginTop: '4px', fontFamily: 'monospace' }}>
+                Concluído em {detail.attempt.completedAt ? new Date(detail.attempt.completedAt).toLocaleString('pt-BR') : '—'}
+              </div>
+            </div>
             <button
               type="button"
               disabled={busy}
               onClick={() => removeAttempt(detail.attempt.id)}
-              style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer' }}
+              style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', flexShrink: 0 }}
             >
               Excluir resultado
             </button>
           </div>
-          <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6 }}>{detail.attempt.profileSummary}</p>
-          {(detail.attempt.ranking || []).slice(0, 6).map((dim) => (
+
+          {detail.hrInsights?.topMotivators?.length > 0 ? (
+            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', background: `${C.purple}08`, border: `1px solid ${C.purple}22` }}>
+              <div style={{ fontSize: '10px', color: C.purple, marginBottom: '10px', fontFamily: 'monospace' }}>Top motivadores</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                {detail.hrInsights.topMotivators.map((d) => (
+                  <span key={d.key} style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '12px', background: `${d.color || C.purple}18`, color: d.color || C.purple }}>
+                    {d.label} · {d.score}
+                  </span>
+                ))}
+              </div>
+              {detail.hrInsights.summaryNote ? (
+                <p style={{ margin: 0, fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>{detail.hrInsights.summaryNote}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6, marginBottom: '16px' }}>{detail.attempt.profileSummary}</p>
+
+          <div style={{ fontSize: '10px', color: C.muted, marginBottom: '10px', fontFamily: 'monospace' }}>Todas as dimensões</div>
+          {(detail.attempt.ranking || []).map((dim) => (
             <div key={dim.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ width: '110px', fontSize: '11px', color: dim.color }}>{dim.label}</span>
               <div style={{ flex: 1 }}><Bar value={dim.score} max={100} color={dim.color} h={6} /></div>
-              <span style={{ fontSize: '11px', color: C.muted }}>{dim.score}</span>
+              <span style={{ fontSize: '11px', color: C.muted, width: '24px', textAlign: 'right' }}>{dim.score}</span>
             </div>
           ))}
+
+          {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
+              <div style={{ padding: '14px', borderRadius: '12px', background: `${C.synergy}0a`, border: `1px solid ${C.synergy}33` }}>
+                <div style={{ fontSize: '10px', color: C.synergy, marginBottom: '10px', fontFamily: 'monospace' }}>Sugestões de ação — Faça</div>
+                <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
+                  {detail.hrInsights.suggestedActions.do.map((item) => (
+                    <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
+                      <span style={{ fontSize: '10px', color: C.synergy, fontFamily: 'monospace' }}>{item.dimension}</span>
+                      <div style={{ marginTop: '2px' }}>{item.text}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ padding: '14px', borderRadius: '12px', background: `${C.tension}08`, border: `1px solid ${C.tension}33` }}>
+                <div style={{ fontSize: '10px', color: C.tension, marginBottom: '10px', fontFamily: 'monospace' }}>Evite</div>
+                <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
+                  {detail.hrInsights.suggestedActions.avoid.map((item) => (
+                    <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
+                      <span style={{ fontSize: '10px', color: C.tension, fontFamily: 'monospace' }}>{item.dimension}</span>
+                      <div style={{ marginTop: '2px' }}>{item.text}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : null}
+
           {detail.history?.length > 1 ? (
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
               <div style={{ fontSize: '11px', color: C.muted, marginBottom: '8px', fontFamily: 'monospace' }}>Evolução ({detail.history.length} avaliações)</div>

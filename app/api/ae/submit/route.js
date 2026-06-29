@@ -50,13 +50,6 @@ export async function POST(request) {
 
     const texts = await resolveResultTextsFromDb(query, attempt.definitionId, scored, locale);
 
-    const dimRes = await query(
-      `SELECT key, label, color, sort_order AS "sortOrder"
-       FROM ae_dimensions WHERE definition_id = $1 AND active = TRUE ORDER BY sort_order`,
-      [attempt.definitionId]
-    );
-    const dimensionMeta = dimRes.rows;
-
     await query(
       `UPDATE ae_attempts SET
          status = 'completed',
@@ -84,23 +77,9 @@ export async function POST(request) {
       );
     }
 
-    const rankingWithLabels = scored.ranking.map((key) => {
-      const meta = dimensionMeta.find((d) => d.key === key);
-      return {
-        key,
-        label: meta?.label || key,
-        color: meta?.color || '#7C3AED',
-        score: scored.dimensionScores[key] || 0,
-      };
-    });
-
     return NextResponse.json({
       ok: true,
       attemptId,
-      dimensionScores: scored.dimensionScores,
-      ranking: rankingWithLabels,
-      profileSummary: texts.profileSummary,
-      managerRecommendations: texts.managerRecommendations,
     });
   } catch (err) {
     console.error('POST /api/ae/submit', err);
