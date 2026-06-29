@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { bootstrapMotivators, getMotivatorsStatus } from '../../../../../lib/ae/bootstrap-motivators';
 import { getSessionPayload, requireManagerRole } from '../../../../../lib/ae/require-admin';
+import { AE_SCORING_ENGINE_VERSION } from '../../../../../lib/ae/ae-id';
 
 /** GET /api/admin/ae/status — diagnóstico do módulo */
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
     const status = await getMotivatorsStatus(query);
-    return NextResponse.json(status);
+    return NextResponse.json({ ...status, scoringEngine: AE_SCORING_ENGINE_VERSION });
   } catch (err) {
     console.error('GET /api/admin/ae/status', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

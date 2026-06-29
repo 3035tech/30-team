@@ -4,6 +4,7 @@ import { loadQuestionsForScoring } from '../../../../lib/ae/load-questions-for-s
 import { computeMotivatorScores } from '../../../../lib/ae/scoring';
 import { resolveResultTextsFromDb } from '../../../../lib/ae/templates';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
+import { AE_SCORING_ENGINE_VERSION } from '../../../../lib/ae/ae-id';
 
 /**
  * POST /api/ae/submit
@@ -58,7 +59,8 @@ export async function POST(request) {
          ranking = $3::jsonb,
          profile_summary = $4,
          manager_recommendations = $5::jsonb,
-         answers = $6::jsonb
+         answers = $6::jsonb,
+         algorithm_version = $7
        WHERE id = $1`,
       [
         attemptId,
@@ -67,6 +69,7 @@ export async function POST(request) {
         texts.profileSummary,
         JSON.stringify(texts.managerRecommendations),
         JSON.stringify(answers),
+        AE_SCORING_ENGINE_VERSION,
       ]
     );
 
