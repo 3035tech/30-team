@@ -5,6 +5,8 @@ import { computeMotivatorScores } from '../../../../lib/ae/scoring';
 import { resolveResultTextsFromDb } from '../../../../lib/ae/templates';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { AE_SCORING_ENGINE_VERSION } from '../../../../lib/ae/ae-id';
+import { bootstrapMotivators } from '../../../../lib/ae/bootstrap-motivators';
+import { formatScoringFailure, summarizeScoringInput } from '../../../../lib/ae/scoring-diagnostics';
 
 /**
  * POST /api/ae/submit
@@ -43,10 +45,23 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Esta sessão já foi finalizada.' }, { status: 409 });
     }
 
-    const questions = await loadQuestionsForScoring(query, attempt.questionIds);
-    const scored = computeMotivatorScores({ questions, answers });
+    let questions = await loadQuestionsForScoring(query, attempt.questionIds);
+    let diagnostics = summarizeScoringInput(questions, answers);
+    let scored = computeMotivatorScores({ questions, answers });
+
+    if (!scored.ok || formatScoringFailure(scored, diagnostics)) {
+      await bootstrapMotivators(query, { repairWeights: true });
+      questions = await loadQuestionsForScoring(query, attempt.questionIds);
+      diagnostics = summarizeScoringInput(questions, answers);
+      scored = computeMotivatorScores({ questions, answers });
+    }
+
     if (!scored.ok) {
       return NextResponse.json({ error: scored.error }, { status: 400 });
+    }
+    const scoringFailure = formatScoringFailure(scored, diagnostics);
+    if (scoringFailure) {
+      return NextResponse.json({ error: scoringFailure }, { status: 400 });
     }
 
     const texts = await resolveResultTextsFromDb(query, attempt.definitionId, scored, locale);

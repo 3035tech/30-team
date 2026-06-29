@@ -85,7 +85,11 @@ export async function GET(_request, { params }) {
       history: hist.rows,
       dimensions: dimRes.rows,
       hrInsights,
-      rescore: rescore.rescored ? { ok: true } : rescore.error ? { ok: false, error: rescore.error } : null,
+      rescore: rescore.rescored
+        ? { ok: true }
+        : rescore.error
+          ? { ok: false, error: rescore.error, diagnostics: rescore.diagnostics || null }
+          : null,
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts/[id]', err);
@@ -120,7 +124,10 @@ export async function POST(_request, { params }) {
 
     const rescore = await maybeRescoreAndPersist(query, params.id, { force: true });
     if (!rescore.rescored) {
-      return NextResponse.json({ error: rescore.error || 'Não foi possível recalcular.' }, { status: 400 });
+      return NextResponse.json(
+        { error: rescore.error || 'Não foi possível recalcular.', diagnostics: rescore.diagnostics || null },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({

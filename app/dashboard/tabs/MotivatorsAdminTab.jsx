@@ -341,7 +341,14 @@ function ResultsList({ isAdmin, companyFilter }) {
 
           {detail.rescore?.ok === false && detail.rescore.error ? (
             <div style={{ marginBottom: '14px', padding: '10px 12px', borderRadius: '10px', background: `${C.tension}10`, border: `1px solid ${C.tension}33`, fontSize: '12px', color: C.tension }}>
-              Não foi possível recalcular automaticamente: {detail.rescore.error}
+              <div>{detail.rescore.error}</div>
+              {detail.rescore.diagnostics ? (
+                <div style={{ marginTop: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', lineHeight: 1.5 }}>
+                  Perguntas: {detail.rescore.diagnostics.questionsLoaded}/{detail.rescore.diagnostics.answersCount} ·
+                  FC sem pesos: {detail.rescore.diagnostics.fcWithoutWeights} ·
+                  Likert sem pesos: {detail.rescore.diagnostics.likertWithoutWeights}
+                </div>
+              ) : null}
             </div>
           ) : null}
 

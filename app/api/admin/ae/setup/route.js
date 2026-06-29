@@ -26,7 +26,7 @@ export async function POST() {
     if (!requireManagerRole(payload)) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
-    const result = await bootstrapMotivators(query);
+    const result = await bootstrapMotivators(query, { repairWeights: true });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error('POST /api/admin/ae/setup', err);
