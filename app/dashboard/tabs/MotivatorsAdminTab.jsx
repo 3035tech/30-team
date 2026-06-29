@@ -226,6 +226,32 @@ function ResultsList({ isAdmin, companyFilter }) {
       .then((d) => setDetail(d));
   }, [selected]);
 
+  const reloadDetail = () => {
+    if (!selected) return;
+    fetch(`/api/admin/ae/attempts/${selected}`)
+      .then((r) => r.json())
+      .then((d) => setDetail(d));
+  };
+
+  const rescoreAttempt = async (id) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/ae/attempts/${id}`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erro ao recalcular.');
+      reloadDetail();
+      load();
+    } catch (e) {
+      alert(e.message || 'Erro ao recalcular.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const allScoresZero = detail?.attempt?.ranking?.length
+    ? detail.attempt.ranking.every((d) => !d.score)
+    : false;
+
   const removeAttempt = async (id) => {
     if (!confirm('Excluir este resultado? O colaborador poderá refazer o assessment se o convite ainda estiver válido.')) return;
     setBusy(true);
@@ -291,15 +317,33 @@ function ResultsList({ isAdmin, companyFilter }) {
                 Concluído em {detail.attempt.completedAt ? new Date(detail.attempt.completedAt).toLocaleString('pt-BR') : '—'}
               </div>
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => removeAttempt(detail.attempt.id)}
-              style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', flexShrink: 0 }}
-            >
-              Excluir resultado
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              {allScoresZero ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => rescoreAttempt(detail.attempt.id)}
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.purple}44`, background: `${C.purple}10`, color: C.purple, cursor: busy ? 'not-allowed' : 'pointer' }}
+                >
+                  Recalcular scores
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => removeAttempt(detail.attempt.id)}
+                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer' }}
+              >
+                Excluir resultado
+              </button>
+            </div>
           </div>
+
+          {detail.rescore?.ok === false && detail.rescore.error ? (
+            <div style={{ marginBottom: '14px', padding: '10px 12px', borderRadius: '10px', background: `${C.tension}10`, border: `1px solid ${C.tension}33`, fontSize: '12px', color: C.tension }}>
+              Não foi possível recalcular automaticamente: {detail.rescore.error}
+            </div>
+          ) : null}
 
           {detail.hrInsights?.topMotivators?.length > 0 ? (
             <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', background: `${C.purple}08`, border: `1px solid ${C.purple}22` }}>

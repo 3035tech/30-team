@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../../lib/ae/require-admin';
 import { buildHrInsights } from '../../../../../../lib/ae/hr-insights';
+import { buildDimensionRanking, maybeRescoreAndPersist } from '../../../../../../lib/ae/rescore-attempt';
 
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
 export async function GET(_request, { params }) {
@@ -23,7 +24,7 @@ export async function GET(_request, { params }) {
     const res = await query(
       `SELECT a.id, a.status, a.started_at AS "startedAt", a.completed_at AS "completedAt",
               a.dimension_scores AS "dimensionScores", a.ranking, a.profile_summary AS "profileSummary",
-              a.manager_recommendations AS "managerRecommendations",
+              a.manager_recommendations AS "managerRecommendations", a.algorithm_version AS "algorithmVersion",
               c.id AS "candidateId", c.full_name AS "candidateName", c.email AS "candidateEmail",
               ar.label AS "areaLabel", co.name AS "companyName"
        FROM ae_attempts a
@@ -37,7 +38,19 @@ export async function GET(_request, { params }) {
     if (res.rowCount === 0) {
       return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
     }
-    const attempt = res.rows[0];
+    let attempt = res.rows[0];
+
+    const rescore = await maybeRescoreAndPersist(query, params.id);
+    if (rescore.rescored && rescore.scored) {
+      attempt = {
+        ...attempt,
+        dimensionScores: rescore.scored.dimensionScores,
+        ranking: rescore.scored.ranking,
+        profileSummary: rescore.texts?.profileSummary ?? attempt.profileSummary,
+        managerRecommendations: rescore.texts?.managerRecommendations ?? attempt.managerRecommendations,
+        algorithmVersion: 'ae-scoring-v2',
+      };
+    }
 
     const hist = await query(
       `SELECT a.id, a.completed_at AS "completedAt", a.dimension_scores AS "dimensionScores", a.ranking
@@ -56,18 +69,13 @@ export async function GET(_request, { params }) {
       [params.id]
     );
 
-    const rankingWithLabels = (attempt.ranking || []).map((key) => {
-      const meta = dimRes.rows.find((d) => d.key === key);
-      return {
-        key,
-        label: meta?.label || key,
-        color: meta?.color || '#7C3AED',
-        score: attempt.dimensionScores?.[key] ?? 0,
-      };
-    });
+    const rankingKeys = Array.isArray(attempt.ranking)
+      ? attempt.ranking.map((item) => (typeof item === 'string' ? item : item?.key)).filter(Boolean)
+      : [];
+    const rankingWithLabels = buildDimensionRanking(dimRes.rows, attempt.dimensionScores || {}, rankingKeys);
 
     const hrInsights = buildHrInsights({
-      ranking: attempt.ranking || [],
+      ranking: rankingKeys.length ? rankingKeys : rankingWithLabels.map((d) => d.key),
       dimensionScores: attempt.dimensionScores || {},
       dimensions: dimRes.rows,
     });
@@ -77,9 +85,51 @@ export async function GET(_request, { params }) {
       history: hist.rows,
       dimensions: dimRes.rows,
       hrInsights,
+      rescore: rescore.rescored ? { ok: true } : rescore.error ? { ok: false, error: rescore.error } : null,
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts/[id]', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
+
+/** POST /api/admin/ae/attempts/[id] — recalcula pontuação a partir das respostas salvas */
+export async function POST(_request, { params }) {
+  try {
+    const payload = getSessionPayload();
+    if (!requireManagerRole(payload)) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+    const sqlParams = [params.id];
+    let companyScope = '';
+    if (!scope.isAdmin) {
+      companyScope = 'AND a.company_id = $2';
+      sqlParams.push(scope.companyId);
+    }
+
+    const exists = await query(
+      `SELECT a.id FROM ae_attempts a WHERE a.id = $1 ${companyScope} LIMIT 1`,
+      sqlParams
+    );
+    if (exists.rowCount === 0) {
+      return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
+    }
+
+    const rescore = await maybeRescoreAndPersist(query, params.id, { force: true });
+    if (!rescore.rescored) {
+      return NextResponse.json({ error: rescore.error || 'Não foi possível recalcular.' }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      dimensionScores: rescore.scored.dimensionScores,
+      ranking: rescore.scored.ranking,
+    });
+  } catch (err) {
+    console.error('POST /api/admin/ae/attempts/[id]', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
