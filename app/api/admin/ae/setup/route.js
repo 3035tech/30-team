@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../lib/db';
-import { bootstrapMotivators, getMotivatorsStatus } from '../../../../lib/ae/bootstrap-motivators';
-import { getSessionPayload, requireManagerRole } from '../../../../lib/ae/require-admin';
+import { query } from '../../../../../lib/db';
+import { bootstrapMotivators, getMotivatorsStatus } from '../../../../../lib/ae/bootstrap-motivators';
+import { getSessionPayload, requireManagerRole } from '../../../../../lib/ae/require-admin';
 
 /** GET /api/admin/ae/status — diagnóstico do módulo */
 export async function GET() {
