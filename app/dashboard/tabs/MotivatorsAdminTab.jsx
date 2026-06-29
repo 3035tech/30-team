@@ -207,8 +207,9 @@ function ResultsList({ isAdmin, companyFilter }) {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     const p = new URLSearchParams({ status: 'completed', pageSize: '30' });
     if (isAdmin && companyFilter && companyFilter !== 'all') p.set('company', companyFilter);
     fetch(`/api/admin/ae/attempts?${p}`)
@@ -216,12 +217,33 @@ function ResultsList({ isAdmin, companyFilter }) {
       .then((d) => setItems(d.items || []));
   }, [isAdmin, companyFilter]);
 
+  useEffect(() => { load(); }, [load]);
+
   useEffect(() => {
     if (!selected) { setDetail(null); return; }
     fetch(`/api/admin/ae/attempts/${selected}`)
       .then((r) => r.json())
       .then((d) => setDetail(d));
   }, [selected]);
+
+  const removeAttempt = async (id) => {
+    if (!confirm('Excluir este resultado? O colaborador poderá refazer o assessment se o convite ainda estiver válido.')) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/ae/attempts/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erro ao excluir.');
+      if (selected === id) {
+        setSelected(null);
+        setDetail(null);
+      }
+      load();
+    } catch (e) {
+      alert(e.message || 'Erro ao excluir.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: detail ? '1fr 1fr' : '1fr', gap: '20px' }}>
@@ -246,7 +268,8 @@ function ResultsList({ isAdmin, companyFilter }) {
                   {row.completedAt ? new Date(row.completedAt).toLocaleDateString('pt-BR') : '—'}
                 </td>
                 <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                  <button type="button" onClick={() => setSelected(row.id)} style={{ background: 'none', border: 'none', color: C.purple, cursor: 'pointer', fontSize: '11px' }}>Ver</button>
+                  <button type="button" onClick={() => setSelected(row.id)} style={{ background: 'none', border: 'none', color: C.purple, cursor: 'pointer', fontSize: '11px', marginRight: '10px' }}>Ver</button>
+                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} style={{ background: 'none', border: 'none', color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', fontSize: '11px' }}>Excluir</button>
                 </td>
               </tr>
             ))}
@@ -255,7 +278,17 @@ function ResultsList({ isAdmin, companyFilter }) {
       </div>
       {detail?.attempt ? (
         <div style={S.card}>
-          <span style={S.label}>Detalhe + histórico</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+            <span style={S.label}>Detalhe + histórico</span>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => removeAttempt(detail.attempt.id)}
+              style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer' }}
+            >
+              Excluir resultado
+            </button>
+          </div>
           <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6 }}>{detail.attempt.profileSummary}</p>
           {(detail.attempt.ranking || []).slice(0, 6).map((dim) => (
             <div key={dim.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
@@ -335,15 +368,41 @@ function AnalyticsPanel({ isAdmin, companyFilter }) {
 function ConfigPanel() {
   const [questions, setQuestions] = useState([]);
   const [dims, setDims] = useState([]);
+  const [definitions, setDefinitions] = useState([]);
+  const [deleteBusy, setDeleteBusy] = useState(null);
 
-  useEffect(() => {
+  const loadConfig = useCallback(() => {
     fetch('/api/admin/ae/config/questions?definition=motivators')
       .then((r) => r.json())
       .then((d) => setQuestions((d.items || []).slice(0, 50)));
     fetch('/api/admin/ae/config/dimensions')
       .then((r) => r.json())
       .then((d) => setDims(d.items || []));
+    fetch('/api/admin/ae/definitions')
+      .then((r) => r.json())
+      .then((d) => setDefinitions(d.items || []))
+      .catch(() => {});
   }, []);
+
+  useEffect(() => { loadConfig(); }, [loadConfig]);
+
+  const removeDefinition = async (def) => {
+    const msg = def.attemptsCount > 0
+      ? `Excluir o assessment "${def.name}"? Isso apaga perguntas, convites e ${def.attemptsCount} resultado(s). Irreversível.`
+      : `Excluir o assessment "${def.name}"? Isso apaga perguntas e configurações. Irreversível.`;
+    if (!confirm(msg)) return;
+    setDeleteBusy(def.id);
+    try {
+      const res = await fetch(`/api/admin/ae/definitions/${def.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erro ao excluir.');
+      loadConfig();
+    } catch (e) {
+      alert(e.message || 'Erro ao excluir.');
+    } finally {
+      setDeleteBusy(null);
+    }
+  };
 
   const toggleQuestion = async (id, active) => {
     await fetch('/api/admin/ae/config/questions', {
@@ -356,6 +415,33 @@ function ConfigPanel() {
 
   return (
     <div style={{ display: 'grid', gap: '20px' }}>
+      {definitions.length > 0 ? (
+        <div style={S.card}>
+          <span style={S.label}>Assessments cadastrados</span>
+          <p style={{ fontSize: '12px', color: C.muted, margin: '0 0 12px' }}>
+            A plataforma suporta vários assessments em paralelo (tabela <code style={{ fontFamily: 'monospace' }}>ae_definitions</code>). Hoje o fluxo público usa o slug do convite.
+          </p>
+          {definitions.map((def) => (
+            <div key={def.id} style={{ padding: '12px 0', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: '14px', color: C.text }}>{def.name}</div>
+                <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '4px' }}>
+                  {def.slug} · v{def.version} · {def.questionsCount} perguntas · {def.attemptsCount} resultados
+                  {!def.active ? ' · inativo' : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={deleteBusy === def.id}
+                onClick={() => removeDefinition(def)}
+                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: 'transparent', color: C.tension, cursor: deleteBusy === def.id ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+              >
+                {deleteBusy === def.id ? 'Excluindo…' : 'Excluir'}
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div style={S.card}>
         <span style={S.label}>Dimensões ({dims.length})</span>
         <p style={{ fontSize: '12px', color: C.muted }}>Edite labels e ative/desative dimensões no banco via API admin.</p>

@@ -75,3 +75,56 @@ export async function GET(_request, { params }) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+
+/** DELETE /api/admin/ae/attempts/[id] — remove resultado e libera novo envio do convite */
+export async function DELETE(_request, { params }) {
+  try {
+    const payload = getSessionPayload();
+    if (!requireManagerRole(payload)) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+    const attemptId = Number(params.id);
+    if (!Number.isFinite(attemptId)) {
+      return NextResponse.json({ error: 'ID inválido.' }, { status: 400 });
+    }
+
+    const sqlParams = [attemptId];
+    let companyScope = '';
+    if (!scope.isAdmin) {
+      companyScope = 'AND a.company_id = $2';
+      sqlParams.push(scope.companyId);
+    }
+
+    const row = await query(
+      `SELECT a.id, a.invite_id AS "inviteId", a.status
+       FROM ae_attempts a
+       WHERE a.id = $1 ${companyScope}
+       LIMIT 1`,
+      sqlParams
+    );
+    if (row.rowCount === 0) {
+      return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
+    }
+
+    const { inviteId } = row.rows[0];
+
+    await query(`DELETE FROM ae_attempts WHERE id = $1`, [attemptId]);
+
+    if (inviteId) {
+      await query(
+        `UPDATE ae_invites
+         SET status = 'opened', completed_at = NULL
+         WHERE id = $1 AND status = 'completed'`,
+        [inviteId]
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/ae/attempts/[id]', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
