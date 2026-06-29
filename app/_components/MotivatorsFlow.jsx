@@ -210,17 +210,19 @@ function TestScreen({ questions, onComplete }) {
       if (fade) return;
       setFade(true);
       setTimeout(() => {
-        const next = { ...answers, [q.id]: { questionId: q.id, ...answerPart } };
-        setAnswers(next);
-        if (idx < questions.length - 1) {
-          setIdx((i) => i + 1);
-          setFade(false);
-        } else {
-          onComplete(Object.values(next));
-        }
+        setAnswers((prev) => {
+          const next = { ...prev, [q.id]: { questionId: q.id, ...answerPart } };
+          if (idx < questions.length - 1) {
+            setIdx((i) => i + 1);
+            setFade(false);
+          } else {
+            onComplete(Object.values(next));
+          }
+          return next;
+        });
       }, 250);
     },
-    [fade, answers, q, idx, questions.length, onComplete]
+    [fade, q, idx, questions.length, onComplete]
   );
 
   if (!q) return null;
