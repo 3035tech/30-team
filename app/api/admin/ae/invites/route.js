@@ -9,10 +9,59 @@ import {
 } from '../../../../../lib/ae/require-admin';
 import { sendTransactionalMail } from '../../../../../lib/mail';
 import { buildMotivatorsInviteMail } from '../../../../../lib/motivators-invite-mail';
+import { bootstrapMotivators } from '../../../../../lib/ae/bootstrap-motivators';
+
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INVITE_TTL_DAYS = 30;
+
+async function resolveDefinitionAndCompany(definitionSlug, targetCompanyId) {
+  const companyRes = await query(
+    `SELECT id, name AS "companyName" FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
+    [targetCompanyId]
+  );
+  if (companyRes.rowCount === 0) {
+    return { error: 'Empresa não encontrada ou inativa.', status: 404 };
+  }
+
+  let defRes = await query(
+    `SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER($1) AND active = TRUE LIMIT 1`,
+    [definitionSlug]
+  );
+
+  if (defRes.rowCount === 0) {
+    try {
+      await bootstrapMotivators(query);
+      defRes = await query(
+        `SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER($1) AND active = TRUE LIMIT 1`,
+        [definitionSlug]
+      );
+    } catch (bootstrapErr) {
+      if (bootstrapErr?.code === '42P01') {
+        return {
+          error:
+            'Tabelas do módulo Motivadores ainda não existem. Aplique as migrations 010 e 011 no banco (ou redeploy com RUN_MIGRATIONS=true).',
+          status: 503,
+        };
+      }
+      throw bootstrapErr;
+    }
+  }
+
+  if (defRes.rowCount === 0) {
+    return {
+      error:
+        'Assessment de motivadores não configurado. Rode npm run db:seed-motivators-all no servidor ou use Configuração → Inicializar.',
+      status: 503,
+    };
+  }
+
+  return {
+    definitionId: defRes.rows[0].id,
+    companyName: companyRes.rows[0].companyName,
+  };
+}
 
 /** GET /api/admin/ae/invites — lista convites */
 export async function GET(request) {
@@ -119,16 +168,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Empresa inválida.' }, { status: 400 });
     }
 
-    const def = await query(
-      `SELECT d.id, c.name AS "companyName"
-       FROM ae_definitions d
-       JOIN companies c ON c.id = $2
-       WHERE LOWER(d.slug) = LOWER($1) AND d.active = TRUE AND c.deleted = FALSE
-       LIMIT 1`,
-      [definitionSlug, targetCompanyId]
-    );
-    if (def.rowCount === 0) {
-      return NextResponse.json({ error: 'Assessment ou empresa não encontrados.' }, { status: 404 });
+    const resolved = await resolveDefinitionAndCompany(definitionSlug, targetCompanyId);
+    if (resolved.error) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status || 404 });
     }
 
     const base = publicAppUrl(request);
@@ -146,14 +188,14 @@ export async function POST(request) {
          status, expires_at, created_by_user_id
        ) VALUES ($1, $2, $3, $4, $5, 'sent', $6, $7)
        RETURNING id`,
-      [def.rows[0].id, targetCompanyId, candidateName, candidateEmail, inviteToken, expiresAt, createdBy]
+      [resolved.definitionId, targetCompanyId, candidateName, candidateEmail, inviteToken, expiresAt, createdBy]
     );
     const inviteId = ins.rows[0].id;
     const assessmentUrl = `${base}/assessment/motivators/${inviteToken}`;
 
     const { subject, text, html } = buildMotivatorsInviteMail({
       candidateFullName: candidateName,
-      companyName: def.rows[0].companyName,
+      companyName: resolved.companyName,
       assessmentUrl,
     });
 

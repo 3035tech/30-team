@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed-data.js",
     "db:seed-motivators": "node scripts/seed-motivators-questions.js",
     "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",

@@ -348,6 +348,30 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _l
   const view = searchParams.get('motivatorsView') || 'invites';
   const companyFilter = searchParams.get('company') || 'all';
   const [refreshKey, setRefreshKey] = useState(0);
+  const [moduleStatus, setModuleStatus] = useState(null);
+  const [setupBusy, setSetupBusy] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/ae/status')
+      .then((r) => r.json())
+      .then(setModuleStatus)
+      .catch(() => {});
+  }, [refreshKey]);
+
+  const runSetup = async () => {
+    setSetupBusy(true);
+    try {
+      const res = await fetch('/api/admin/ae/setup', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Falha ao inicializar');
+      setRefreshKey((k) => k + 1);
+      alert('Módulo inicializado com sucesso.');
+    } catch (e) {
+      alert(e.message || 'Erro');
+    } finally {
+      setSetupBusy(false);
+    }
+  };
 
   const setView = (id) => {
     const p = new URLSearchParams(searchParams.toString());
@@ -364,6 +388,22 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _l
         <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 'normal', color: C.text }}>Motivadores Profissionais</h2>
         <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>Convites, resultados e analytics do assessment de motivadores — independente do Eneagrama.</p>
       </div>
+
+      {moduleStatus && !moduleStatus.ready ? (
+        <div style={{ ...S.card, marginBottom: '20px', borderColor: `${C.tension}44`, background: `${C.tension}08` }}>
+          <span style={{ ...S.label, color: C.tension }}>Configuração pendente</span>
+          <p style={{ fontSize: '13px', color: C.muted, margin: '0 0 12px', lineHeight: 1.6 }}>
+            {moduleStatus.reason === 'schema_missing'
+              ? 'As tabelas do banco ainda não foram criadas. Aplique as migrations 010 e 011 no Postgres.'
+              : 'O assessment ainda não foi inicializado (perguntas e dimensões). Clique abaixo ou envie um convite após o deploy mais recente.'}
+          </p>
+          {moduleStatus.reason !== 'schema_missing' ? (
+            <button type="button" disabled={setupBusy} onClick={runSetup} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: C.purple, color: '#fff', cursor: 'pointer' }}>
+              {setupBusy ? 'Inicializando…' : 'Inicializar módulo agora'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {visibleViews.map((v) => (
