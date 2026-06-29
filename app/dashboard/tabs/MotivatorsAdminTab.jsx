@@ -30,25 +30,56 @@ function statusBadge(status) {
 function InviteForm({ isAdmin, companies, companyId, onSent }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [company, setCompany] = useState(companyId || '');
+  const [company, setCompany] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
+  useEffect(() => {
+    if (companyId && companyId !== 'all') {
+      setCompany(String(companyId));
+      return;
+    }
+    if (isAdmin && companies.length === 1) {
+      setCompany(String(companies[0].id));
+    }
+  }, [companyId, isAdmin, companies]);
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const companyOk = !isAdmin || (company !== '' && Number.isFinite(Number(company)));
+  const canSend = name.trim().length > 1 && emailOk && companyOk && !busy;
+
   const send = async () => {
     setErr('');
     setMsg('');
+    if (!name.trim()) {
+      setErr('Informe o nome do colaborador.');
+      return;
+    }
+    if (!emailOk) {
+      setErr('Informe um e-mail válido.');
+      return;
+    }
+    if (isAdmin && !companyOk) {
+      setErr('Selecione a empresa.');
+      return;
+    }
     setBusy(true);
     try {
       const body = { candidateName: name.trim(), candidateEmail: email.trim().toLowerCase() };
-      if (isAdmin && company) body.companyId = Number(company);
-      const res = await fetch('/api/admin/ae/invites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (isAdmin) body.companyId = Number(company);
+      const res = await fetch('/api/admin/ae/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Erro');
+      if (!res.ok) throw new Error(data.error || 'Erro ao enviar convite.');
       setMsg(`Convite enviado para ${data.sentTo}`);
       setName('');
       setEmail('');
       onSent?.();
+      setTimeout(() => setMsg(''), 8000);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -70,7 +101,20 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
         ) : null}
         <input placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '1 1 140px' }} />
         <input placeholder="email@empresa.com" value={email} onChange={(e) => setEmail(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '2 1 200px' }} />
-        <button type="button" onClick={send} disabled={busy} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: C.purple, color: '#fff', cursor: 'pointer' }}>
+        <button
+          type="button"
+          onClick={send}
+          disabled={!canSend}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: C.purple,
+            color: '#fff',
+            cursor: canSend ? 'pointer' : 'not-allowed',
+            opacity: canSend ? 1 : 0.5,
+          }}
+        >
           {busy ? 'Enviando…' : 'Enviar convite'}
         </button>
       </div>
