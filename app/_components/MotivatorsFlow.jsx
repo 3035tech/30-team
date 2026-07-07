@@ -2,9 +2,38 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MOTIVATORS_DEFINITION } from '../../lib/ae/motivators-dimensions.js';
 import { localizeAreaLabel } from '../../lib/i18n-data';
 import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
 import LanguageSelect from './LanguageSelect';
+
+const SESSION_CFG = MOTIVATORS_DEFINITION.config;
+const SESSION_QUESTIONS = SESSION_CFG.questions_per_session ?? 30;
+const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
+
+function homeCopy(locale) {
+  if (locale === 'en') {
+    return {
+      intro:
+        'Discover what motivates you most at work — recognition, autonomy, growth and more. This is not a personality test. Allow about ' +
+        SESSION_MINUTES +
+        ' minutes.',
+      stats: [
+        [String(SESSION_QUESTIONS), 'Questions'],
+        [`~${SESSION_MINUTES}`, 'Minutes'],
+        ['3', 'Question types'],
+      ],
+    };
+  }
+  return {
+    intro: `Descubra o que mais motiva você no trabalho — reconhecimento, autonomia, crescimento e muito mais. Não é um teste de personalidade. Reserve cerca de ${SESSION_MINUTES} minutos.`,
+    stats: [
+      [String(SESSION_QUESTIONS), 'Perguntas'],
+      [`~${SESSION_MINUTES}`, 'Minutos'],
+      ['3', 'Tipos de pergunta'],
+    ],
+  };
+}
 
 const S = {
   app: {
@@ -130,6 +159,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
   }, [areaOptions, areaKey]);
 
   const ready = name.trim().length > 1 && EMAIL_RE.test(email.trim()) && areaKey && consent && !startDisabled;
+  const copy = homeCopy(locale);
 
   const submit = async () => {
     if (!ready || busy) return;
@@ -149,10 +179,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
         <h1 style={S.h1}>Assessment de Motivadores Profissionais</h1>
-        <p style={S.p}>
-          Descubra o que mais motiva você no trabalho — reconhecimento, autonomia, crescimento e muito mais.
-          Não é um teste de personalidade. Reserve cerca de 12 minutos.
-        </p>
+        <p style={S.p}>{copy.intro}</p>
 
         {notice ? (
           <div
@@ -172,7 +199,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         ) : null}
 
         <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', flexWrap: 'wrap' }}>
-          {[['30', 'Perguntas'], ['~12', 'Minutos'], ['3', 'Formatos']].map(([n, l]) => (
+          {copy.stats.map(([n, l]) => (
             <div key={l}>
               <div style={{ fontSize: '22px', color: C.purpleLight }}>{n}</div>
               <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'monospace' }}>{l}</div>
