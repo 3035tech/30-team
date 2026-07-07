@@ -483,7 +483,7 @@ function ConfigPanel() {
   const loadConfig = useCallback(() => {
     fetch('/api/admin/ae/config/questions?definition=motivators')
       .then((r) => r.json())
-      .then((d) => setQuestions((d.items || []).slice(0, 50)));
+      .then((d) => setQuestions((d.items || []).slice(0, 100)));
     fetch('/api/admin/ae/config/dimensions')
       .then((r) => r.json())
       .then((d) => setDims(d.items || []));
@@ -564,7 +564,7 @@ function ConfigPanel() {
       </div>
       <div style={S.card}>
         <span style={S.label}>Banco de perguntas (amostra)</span>
-        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '12px' }}>200 perguntas no banco; 48 sorteadas por sessão. Ative/desative sem alterar código.</p>
+        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '12px' }}>68 perguntas únicas no banco (múltipla escolha, ranking e afirmativas); 30 sorteadas por sessão. Ative/desative sem alterar código.</p>
         {questions.map((q) => (
           <div key={q.id} style={{ padding: '10px 0', borderTop: `1px solid ${C.border}`, display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
             <button type="button" onClick={() => toggleQuestion(q.id, q.active)} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', border: `1px solid ${C.border}`, background: q.active ? `${C.synergy}18` : 'transparent', cursor: 'pointer' }}>

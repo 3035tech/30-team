@@ -3,6 +3,7 @@ import process from 'node:process';
 import { getPgBaseConfig } from '../lib/pg-config.js';
 import { MOTIVATORS_DEFINITION, MOTIVATORS_DIMENSIONS } from '../lib/ae/motivators-dimensions.js';
 import { generateMotivatorsQuestionBank, getQuestionBankStats } from '../lib/ae/motivators-question-bank.js';
+import { usesOptions } from '../lib/ae/normalize-question-type.js';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
@@ -104,7 +105,7 @@ async function main() {
       const questionId = qIns.rows[0].id;
       inserted += 1;
 
-      if (q.questionType === 'forced_choice' && q.options) {
+      if (usesOptions(q) && q.options) {
         for (const opt of q.options) {
           const oIns = await client.query(
             `INSERT INTO ae_question_options (question_id, key, text, sort_order, active)
@@ -155,7 +156,7 @@ async function main() {
     await client.query('COMMIT');
     process.stdout.write(
       `Motivators seed complete. definition_id=${definitionId} questions=${inserted} ` +
-        `(bank: ${stats.total} = ${stats.forcedChoice} forced + ${stats.likert} likert)\n`
+        `(bank: ${stats.total} = ${stats.forcedChoice} forced + ${stats.ranking} ranking + ${stats.likert} likert)\n`
     );
   } catch (err) {
     await client.query('ROLLBACK');

@@ -20,11 +20,24 @@ const questions = [
     weight: 1,
     dimensionWeights: { reconhecimento: 2, crescimento: 1 },
   },
+  {
+    id: '128',
+    questionType: 'ranking',
+    weight: 1,
+    options: [
+      { id: '601', weights: { financeiro: 2 } },
+      { id: '602', weights: { reconhecimento: 2 } },
+      { id: '603', weights: { crescimento: 2 } },
+      { id: '604', weights: { autonomia: 2 } },
+    ],
+  },
 ];
 
 const answers = [
   { questionId: 126, optionId: '502' },
   { questionId: '127', likertValue: 5 },
+  // Ordena: financeiro (1º) > crescimento (2º) > autonomia (3º) > reconhecimento (4º)
+  { questionId: '128', ranking: ['601', '603', '604', '602'] },
 ];
 
 const scored = computeMotivatorScores({ questions, answers });

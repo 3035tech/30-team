@@ -151,7 +151,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         <h1 style={S.h1}>Assessment de Motivadores Profissionais</h1>
         <p style={S.p}>
           Descubra o que mais motiva você no trabalho — reconhecimento, autonomia, crescimento e muito mais.
-          Não é um teste de personalidade. Reserve cerca de 15 minutos.
+          Não é um teste de personalidade. Reserve cerca de 12 minutos.
         </p>
 
         {notice ? (
@@ -172,7 +172,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         ) : null}
 
         <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', flexWrap: 'wrap' }}>
-          {[['48', 'Perguntas'], ['~15', 'Minutos'], ['200', 'Banco']].map(([n, l]) => (
+          {[['30', 'Perguntas'], ['~12', 'Minutos'], ['3', 'Formatos']].map(([n, l]) => (
             <div key={l}>
               <div style={{ fontSize: '22px', color: C.purpleLight }}>{n}</div>
               <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'monospace' }}>{l}</div>
@@ -210,6 +210,95 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
             Acessar painel
           </span>
         </p>
+      </div>
+    </div>
+  );
+}
+
+function RankingChoice({ question, onConfirm }) {
+  const [order, setOrder] = useState([]);
+  const options = question.options || [];
+  const complete = order.length === options.length && options.length > 0;
+
+  const toggle = (id) => {
+    setOrder((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  return (
+    <div>
+      <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px', fontStyle: 'italic' }}>
+        Toque nas opções na ordem do que é mais importante para você — da mais para a menos importante.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {options.map((opt) => {
+          const pos = order.indexOf(opt.id);
+          const ranked = pos >= 0;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => toggle(opt.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                textAlign: 'left',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                border: `1px solid ${ranked ? C.purple : C.border}`,
+                background: ranked ? 'rgba(124,58,237,.08)' : 'rgba(26,22,37,.03)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: C.text,
+                fontFamily: FONTS.serif,
+              }}
+            >
+              <span
+                style={{
+                  flexShrink: 0,
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '50%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  fontFamily: FONTS.mono,
+                  border: `1px solid ${ranked ? C.purple : C.border}`,
+                  background: ranked ? C.purple : 'transparent',
+                  color: ranked ? '#fff' : C.muted,
+                }}
+              >
+                {ranked ? pos + 1 : '+'}
+              </span>
+              {opt.text}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '20px' }}>
+        <button
+          type="button"
+          disabled={order.length === 0}
+          onClick={() => setOrder([])}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: order.length === 0 ? C.faint : C.muted,
+            cursor: order.length === 0 ? 'default' : 'pointer',
+            fontSize: '13px',
+          }}
+        >
+          Limpar
+        </button>
+        <button
+          type="button"
+          disabled={!complete}
+          onClick={() => onConfirm(order)}
+          style={{ ...S.btn(), opacity: complete ? 1 : 0.45, marginLeft: 'auto' }}
+        >
+          Confirmar ordem
+        </button>
       </div>
     </div>
   );
@@ -279,6 +368,8 @@ function TestScreen({ questions, onComplete }) {
               </button>
             ))}
           </div>
+        ) : q.questionType === 'ranking' ? (
+          <RankingChoice key={q.id} question={q} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
         ) : (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C.muted, marginBottom: '12px' }}>
