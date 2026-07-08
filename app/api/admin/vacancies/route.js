@@ -103,6 +103,8 @@ export async function GET(request) {
        v.title,
        v.slug,
        v.status,
+       v.positions_count AS "positionsCount",
+       v.target_date AS "targetDate",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -156,14 +158,21 @@ export async function POST(request) {
   const slug = slugify(body.slug || title);
   if (!slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
 
+  const positionsCount = Math.max(1, parseInt(body.positionsCount || '1', 10) || 1);
+  const targetDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || ''))
+    ? String(body.targetDate)
+    : null;
+
   const c = await queryRead(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
   if (c.rowCount === 0) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
 
   const ins = await query(
-    `INSERT INTO vacancies (company_id, title, slug, status)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, company_id AS "companyId", title, slug, status, created_at AS "createdAt"`,
-    [companyId, title, slug, status]
+    `INSERT INTO vacancies (company_id, title, slug, status, positions_count, target_date)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, company_id AS "companyId", title, slug, status,
+               positions_count AS "positionsCount", target_date AS "targetDate",
+               created_at AS "createdAt"`,
+    [companyId, title, slug, status, positionsCount, targetDate]
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);

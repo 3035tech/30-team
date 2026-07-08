@@ -50,6 +50,30 @@ export async function GET(_request, { params }) {
     [id]
   );
 
+  let historyByAssessment = {};
+  if (a.rows.length > 0) {
+    const assessmentIds = a.rows.map((r) => r.id);
+    try {
+      const h = await query(
+        `SELECT assessment_id AS "assessmentId", from_stage AS "fromStage", to_stage AS "toStage",
+                changed_at AS "changedAt"
+         FROM assessment_pipeline_history
+         WHERE assessment_id = ANY($1::bigint[])
+         ORDER BY changed_at ASC`,
+        [assessmentIds]
+      );
+      for (const row of h.rows) {
+        const key = String(row.assessmentId);
+        if (!historyByAssessment[key]) historyByAssessment[key] = [];
+        historyByAssessment[key].push(row);
+      }
+    } catch {}
+  }
+  const assessmentsWithHistory = a.rows.map((row) => ({
+    ...row,
+    pipelineHistory: historyByAssessment[String(row.id)] || [],
+  }));
+
   await audit({
     actorUserId: payload.userId || null,
     action: 'candidate.export_json',
@@ -57,7 +81,7 @@ export async function GET(_request, { params }) {
     targetId: id,
   });
 
-  return NextResponse.json({ candidate: c.rows[0], assessments: a.rows });
+  return NextResponse.json({ candidate: c.rows[0], assessments: assessmentsWithHistory });
 }
 
 export async function PATCH(request, { params }) {

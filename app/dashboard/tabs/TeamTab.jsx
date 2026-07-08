@@ -48,6 +48,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
 
+  useEffect(() => { setSelectedIds(new Set()); }, [results]);
+
   const sortColumns = [
     { k: 'createdAt', labelKey: 'panel.team.sortDate' },
     { k: 'name', labelKey: 'panel.team.sortName' },
@@ -189,6 +191,15 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
 
   const q = localSearch.trim().toLowerCase();
   const filtered = q ? results.filter((r) => (r.name || '').toLowerCase().includes(q)) : results;
+  const allSelected = filtered.length > 0 && filtered.every((r) => selectedIds.has(String(r.assessmentId)));
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) filtered.forEach((r) => next.delete(String(r.assessmentId)));
+      else filtered.forEach((r) => next.add(String(r.assessmentId)));
+      return next;
+    });
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -228,6 +239,17 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
           border: `1px solid ${C.border}`,
         }}
       >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+          fontSize: '11px', color: C.muted, fontFamily: 'monospace', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleSelectAll}
+            aria-label="Selecionar todos nesta página"
+            style={{ width: '14px', height: '14px', accentColor: C.purple }}
+          />
+          Todos
+        </label>
         <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {t(locale, 'panel.team.sortBy')}
         </span>
@@ -539,10 +561,23 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             background: 'rgba(255,255,255,.4)',
                           }}
                         >
-                          <span style={{ fontFamily: 'monospace', fontSize: '12px', color: C.muted }}>
-                            #{a.id} · {a.areaLabel}
-                            {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
-                          </span>
+                          <div>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px', color: C.muted }}>
+                              #{a.id} · {a.areaLabel}
+                              {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
+                            </span>
+                            {a.pipelineHistory?.length > 0 && (
+                              <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint,
+                                fontFamily: 'monospace', lineHeight: 1.8 }}>
+                                {a.pipelineHistory.map((h, i) => (
+                                  <span key={i} style={{ marginRight: '10px' }}>
+                                    {h.fromStage || '—'} → {h.toStage} ·{' '}
+                                    {new Date(h.changedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           <label style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {t(locale, 'recruiting.stageLabel')}
                             <select

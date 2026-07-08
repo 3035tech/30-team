@@ -42,6 +42,7 @@ export default function DashboardClient({
   selectedCompany = 'all',
   selectedDateFrom = null,
   selectedDateTo = null,
+  selectedSearch = '',
   pagination = { page: 1, pageSize: 20, total: 0, totalPages: 1 },
   compatMetrics = {
     pairs: [],
@@ -67,6 +68,7 @@ export default function DashboardClient({
   const [pipeline, setPipeline] = useState(selectedPipeline);
   const [dateFrom, setDateFrom] = useState(selectedDateFrom || '');
   const [dateTo, setDateTo] = useState(selectedDateTo || '');
+  const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newCandidates, setNewCandidates] = useState(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
@@ -100,6 +102,7 @@ export default function DashboardClient({
   }, [selectedPipeline]);
   useEffect(() => { setDateFrom(selectedDateFrom || ''); }, [selectedDateFrom]);
   useEffect(() => { setDateTo(selectedDateTo || ''); }, [selectedDateTo]);
+  useEffect(() => { setSearch(selectedSearch || ''); }, [selectedSearch]);
 
   useEffect(() => {
     try {
@@ -149,6 +152,7 @@ export default function DashboardClient({
     pipeline,
     dateFrom,
     dateTo,
+    search,
     isAdmin,
     teamPagination: pagination,
   });
@@ -318,6 +322,44 @@ export default function DashboardClient({
           maxWidth: '1120px',
         }}>
 
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  pushFilters({ search: search.trim() || null });
+                }
+              }}
+              onBlur={() => {
+                const trimmed = search.trim();
+                if (trimmed !== (selectedSearch || '').trim()) {
+                  pushFilters({ search: trimmed || null });
+                }
+              }}
+              placeholder="Buscar candidato por nome (Enter para pesquisar em todas as páginas)…"
+              aria-label="Busca global de candidatos"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
+                border: `1px solid ${C.border}`, borderRadius: '12px',
+                padding: '12px 16px 12px 42px', color: C.text, fontSize: '14px',
+                fontFamily: "'Georgia',serif" }}
+            />
+            <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)',
+              color: C.faint, fontSize: '16px', pointerEvents: 'none' }}>⌕</span>
+            {selectedSearch && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); pushFilters({ search: null }); }}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: C.muted, fontSize: '13px', fontFamily: 'monospace' }}
+              >
+                ✕ limpar
+              </button>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
             flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
             <div>
@@ -469,7 +511,9 @@ export default function DashboardClient({
                   isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
                 }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
                   pipeline && pipeline !== 'all' ? `&pipeline=${encodeURIComponent(pipeline)}` : ''
-                }`}
+                }${dateFrom ? `&dateFrom=${encodeURIComponent(dateFrom)}` : ''}${
+                  dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
+                }${selectedSearch ? `&search=${encodeURIComponent(selectedSearch)}` : ''}`}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
                   fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif",

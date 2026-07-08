@@ -26,6 +26,8 @@ async function getVacancyOr404(vacancyId) {
        v.title,
        v.slug,
        v.status,
+       v.positions_count AS "positionsCount",
+       v.target_date AS "targetDate",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -103,6 +105,12 @@ export async function PATCH(request, { params }) {
   const title = body.title != null ? String(body.title || '').trim() : null;
   const status = body.status != null ? String(body.status || '').trim() : null;
   const slug = body.slug != null ? slugify(body.slug || '') : null;
+  const positionsCount = body.positionsCount != null
+    ? Math.max(1, parseInt(body.positionsCount, 10) || 1)
+    : null;
+  const targetDate = body.targetDate !== undefined
+    ? (/^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || '')) ? String(body.targetDate) : null)
+    : undefined;
 
   if (status !== null && !['open', 'closed'].includes(status)) return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
   if (slug !== null && !slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
@@ -110,14 +118,18 @@ export async function PATCH(request, { params }) {
   const nextTitle = title !== null ? title : current.title;
   const nextStatus = status !== null ? status : current.status;
   const nextSlug = slug !== null ? slug : current.slug;
+  const nextPositions = positionsCount !== null ? positionsCount : (current.positionsCount ?? 1);
+  const nextTargetDate = targetDate !== undefined ? targetDate : (current.targetDate ?? null);
   if (!nextTitle) return NextResponse.json({ error: 'Título obrigatório' }, { status: 400 });
 
   const up = await query(
     `UPDATE vacancies
-     SET title = $2, slug = $3, status = $4
+     SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6
      WHERE id = $1 AND deleted = FALSE
-     RETURNING id, company_id AS "companyId", title, slug, status, created_at AS "createdAt"`,
-    [id, nextTitle, nextSlug, nextStatus]
+     RETURNING id, company_id AS "companyId", title, slug, status,
+               positions_count AS "positionsCount", target_date AS "targetDate",
+               created_at AS "createdAt"`,
+    [id, nextTitle, nextSlug, nextStatus, nextPositions, nextTargetDate]
   );
 
   if (body.vacancyFitWeights != null || body.vacancyRubricNotes !== undefined) {

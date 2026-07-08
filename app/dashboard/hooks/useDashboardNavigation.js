@@ -26,6 +26,7 @@ export function useDashboardNavigation({
   pipeline,
   dateFrom,
   dateTo,
+  search,
   isAdmin,
   teamPagination,
 }) {
@@ -39,6 +40,7 @@ export function useDashboardNavigation({
     const nextEnneagram = opts.enneagram !== undefined ? opts.enneagram : enneagram;
     const nextDateFrom = opts.dateFrom !== undefined ? opts.dateFrom : dateFrom;
     const nextDateTo = opts.dateTo !== undefined ? opts.dateTo : dateTo;
+    const nextSearch = opts.search !== undefined ? opts.search : search;
 
     if (isAdmin && nextCompany && nextCompany !== 'all') {
       p.set('company', String(nextCompany));
@@ -52,6 +54,7 @@ export function useDashboardNavigation({
 
     if (nextDateFrom) p.set('dateFrom', nextDateFrom);
     if (nextDateTo) p.set('dateTo', nextDateTo);
+    if (nextSearch) p.set('search', nextSearch);
 
     const pipeResolved = opts.pipeline !== undefined ? opts.pipeline : pipeline;
     if (pipeResolved && pipeResolved !== 'all') p.set('pipeline', String(pipeResolved));
@@ -130,6 +133,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.pipeline != null ? { pipeline: nextFilter.pipeline } : {}),
       ...(nextFilter?.dateFrom !== undefined ? { dateFrom: nextFilter.dateFrom } : {}),
       ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
+      ...(nextFilter?.search !== undefined ? { search: nextFilter.search } : {}),
       teamPage: 1,
       comparePage: 1,
       vacanciesPage: 1,

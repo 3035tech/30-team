@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { queryRead } from '../../../../lib/db';
 import { audit } from '../../../../lib/audit';
-import { parsePipelineFilter } from '../../../../lib/assessment-filters';
+import { parsePipelineFilter, parseDateFilter, parseNameSearch } from '../../../../lib/assessment-filters';
 
 function csvEscape(value) {
   const s = String(value ?? '');
@@ -26,6 +26,8 @@ export async function GET(request) {
   const rawExportCompany = (searchParams.get('company') || 'all').toString();
   const rawVacancy = String(searchParams.get('vacancy') || 'all').trim();
   const pipelineStage = parsePipelineFilter(searchParams);
+  const { dateFrom, dateTo } = parseDateFilter(searchParams);
+  const nameSearch = parseNameSearch(searchParams);
 
   const whereParts = [];
   const params = [];
@@ -57,6 +59,18 @@ export async function GET(request) {
     params.push(pipelineStage);
     whereParts.push(`ass.pipeline_stage = $${params.length}`);
   }
+  if (dateFrom) {
+    params.push(dateFrom);
+    whereParts.push(`ass.created_at >= $${params.length}::date`);
+  }
+  if (dateTo) {
+    params.push(dateTo);
+    whereParts.push(`ass.created_at < ($${params.length}::date + INTERVAL '1 day')`);
+  }
+  if (nameSearch) {
+    params.push(`%${nameSearch}%`);
+    whereParts.push(`c.full_name ILIKE $${params.length}`);
+  }
   const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
 
   const r = await queryRead(
@@ -69,6 +83,7 @@ export async function GET(request) {
        ass.top_type,
        ass.scores,
        ass.pipeline_stage AS pipeline_stage,
+       c.hr_notes,
        ass.created_at
      FROM assessments ass
      JOIN candidates c ON c.id = ass.candidate_id
@@ -86,6 +101,7 @@ export async function GET(request) {
     'area_label',
     'top_type',
     'pipeline_stage',
+    'hr_notes',
     'scores_json',
     'created_at',
   ];
@@ -101,6 +117,7 @@ export async function GET(request) {
         csvEscape(row.area_label),
         row.top_type,
         csvEscape(row.pipeline_stage || ''),
+        csvEscape(row.hr_notes || ''),
         csvEscape(JSON.stringify(row.scores)),
         row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
       ].join(',')

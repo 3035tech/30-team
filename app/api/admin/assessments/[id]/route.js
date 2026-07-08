@@ -40,17 +40,24 @@ export async function PATCH(request, { params }) {
     }
 
     const own = await queryRead(
-      `SELECT ass.id FROM assessments ass
+      `SELECT ass.id, ass.pipeline_stage AS "currentStage" FROM assessments ass
        WHERE ass.id = $1 ${!isAdmin ? 'AND ass.company_id = $2' : ''}
        LIMIT 1`,
       !isAdmin ? [id, companyId] : [id]
     );
     if (own.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    const currentStage = own.rows[0]?.currentStage || null;
 
     const up = await query(
       `UPDATE assessments SET pipeline_stage = $2 WHERE id = $1 RETURNING id, pipeline_stage AS "pipelineStage"`,
       [id, stage]
     );
+
+    await query(
+      `INSERT INTO assessment_pipeline_history (assessment_id, from_stage, to_stage, changed_by_user_id)
+       VALUES ($1, $2, $3, $4)`,
+      [id, currentStage, stage, payload.userId || null]
+    ).catch(() => {});
 
     await audit({
       actorUserId: payload.userId || null,

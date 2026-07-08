@@ -602,6 +602,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [status, setStatus] = useState('open');
+  const [positionsCount, setPositionsCount] = useState('1');
+  const [targetDate, setTargetDate] = useState('');
   const [companyId, setCompanyId] = useState('');
 
   const appUrl =
@@ -693,7 +695,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     setError('');
     setMsg('');
     try {
-      const body = { title: title.trim(), status, slug: slug.trim() || undefined };
+      const body = {
+        title: title.trim(), status, slug: slug.trim() || undefined,
+        positionsCount: parseInt(positionsCount, 10) || 1,
+        targetDate: targetDate || null,
+      };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
         method: 'POST',
@@ -702,7 +708,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao criar vaga');
-      setTitle(''); setSlug(''); setStatus('open');
+      setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
       setMsg('Vaga criada.');
       await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
@@ -784,12 +790,19 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const editVacancy = (v) => {
-    setEditingVacancy({ id: v.id, title: v.title ?? '', slug: v.slug ?? '', status: v.status ?? 'open' });
+    setEditingVacancy({
+      id: v.id,
+      title: v.title ?? '',
+      slug: v.slug ?? '',
+      status: v.status ?? 'open',
+      positionsCount: String(v.positionsCount ?? 1),
+      targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
+    });
   };
 
   const saveVacancyEdit = async () => {
     if (!editingVacancy) return;
-    const { id, title, slug, status } = editingVacancy;
+    const { id, title, slug, status, positionsCount, targetDate } = editingVacancy;
     if (!title.trim()) { setError('O título é obrigatório.'); return; }
     setLoading(true);
     setError('');
@@ -798,7 +811,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), slug: slug.trim() || undefined, status }),
+        body: JSON.stringify({
+          title: title.trim(),
+          slug: slug.trim() || undefined,
+          status,
+          positionsCount: parseInt(positionsCount, 10) || 1,
+          targetDate: targetDate || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
@@ -901,9 +920,34 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace' }}
           >
-            <option value="open">open</option>
-            <option value="closed">closed</option>
+            <option value="open">Aberta</option>
+            <option value="closed">Fechada</option>
           </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+            fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+            Vagas
+            <input
+              type="number"
+              min="1"
+              value={positionsCount}
+              onChange={(e) => setPositionsCount(e.target.value)}
+              aria-label="Número de posições"
+              style={{ width: '60px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+            fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+            Alvo
+            <input
+              type="date"
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              aria-label="Data-alvo de encerramento"
+              style={{ background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+            />
+          </label>
           <button
             type="button"
             onClick={createVacancy}
@@ -1060,6 +1104,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           expira em {exp.toLocaleString()}
                         </div>
                       ) : null}
+                      <div style={{ marginTop: '6px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {v.positionsCount != null && v.positionsCount > 0 && (
+                          <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                            {v.positionsCount} vaga{v.positionsCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {v.targetDate && (
+                          <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                            alvo: {new Date(v.targetDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button
@@ -1172,6 +1228,35 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           <option value="open">Aberta</option>
                           <option value="closed">Fechada</option>
                         </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                          fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                          Nº de vagas
+                          <input
+                            type="number"
+                            min="1"
+                            value={editingVacancy.positionsCount}
+                            onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
+                            aria-label="Número de posições"
+                            style={{ width: '70px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                              fontFamily: 'monospace' }}
+                          />
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                          fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                          Data-alvo
+                          <input
+                            type="date"
+                            value={editingVacancy.targetDate}
+                            onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
+                            aria-label="Data-alvo de encerramento"
+                            style={{ background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                              fontFamily: 'monospace' }}
+                          />
+                        </label>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button

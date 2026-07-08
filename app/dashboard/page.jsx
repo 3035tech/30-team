@@ -12,6 +12,7 @@ import {
   assessmentListWhereParts,
   parsePipelineFilter,
   parseDateFilter,
+  parseNameSearch,
   sqlWhere,
 } from '../../lib/assessment-filters';
 import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
@@ -90,6 +91,7 @@ export default async function DashboardPage({ searchParams }) {
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
   const selectedPipeline = parsePipelineFilter(searchParams);
   const { dateFrom: selectedDateFrom, dateTo: selectedDateTo } = parseDateFilter(searchParams);
+  const nameSearch = parseNameSearch(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
 
   // Busca candidatos/resultados DIRETAMENTE no banco — sem API, sem fetch
@@ -269,9 +271,16 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     });
     const assessmentWhere = sqlWhere(whereParts);
 
+    // For queries that JOIN candidates (alias c), extend with optional name search
+    const extWhereParts = nameSearch
+      ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
+      : whereParts;
+    const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
+    const candidateWhere = sqlWhere(extWhereParts);
+
     const cntRes = await queryRead(
-      `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${assessmentWhere}`,
-      params
+      `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
+      extParams
     );
     const listTotal = cntRes.rows[0]?.n ?? 0;
     const totalPagesSafe = Math.max(1, Math.ceil(listTotal / pageSize));
@@ -288,9 +297,9 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     const histRes = await queryRead(
       `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
        ${BASE_JOIN_LIST}
-       ${assessmentWhere}
+       ${candidateWhere}
        GROUP BY ass.top_type`,
-      params
+      extParams
     );
     for (const row of histRes.rows) {
       const tt = row.topType;
@@ -304,9 +313,9 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
               ass.top_type AS "topType",
               ar.label AS "areaLabel"
        ${BASE_JOIN_LIST}
-       ${assessmentWhere}
+       ${candidateWhere}
        ${teamOrderSql}`,
-      params
+      extParams
     );
     const bundles = buildCompatBundles(lightRes.rows, locale);
     compatMetrics = {
@@ -319,7 +328,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     interactionPeople = bundles.people;
 
     const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey, vacancyRubricByVacancyId };
-    const pageParams = [...params];
+    const pageParams = [...extParams];
     pageParams.push(pageSize);
     const limIx = pageParams.length;
     pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
@@ -339,7 +348,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
          ass.pipeline_stage AS "pipelineStage",
          ass.invite_id AS "inviteId"
        ${BASE_JOIN_LIST}
-       ${assessmentWhere}
+       ${candidateWhere}
        ${teamOrderSql}
        LIMIT $${limIx} OFFSET $${offIx}`,
       pageParams
@@ -470,6 +479,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
         selectedDateFrom={selectedDateFrom}
         selectedDateTo={selectedDateTo}
+        selectedSearch={nameSearch}
         areaStats={areaStats}
         areaRubric={areaRubric}
         analytics={analytics}
