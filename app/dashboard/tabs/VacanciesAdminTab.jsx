@@ -121,21 +121,23 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState('');
 
+  const fetchInvites = async (cancelled = { current: false }) => {
+    setErr('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Erro');
+      if (!cancelled.current) setRows(Array.isArray(data.invites) ? data.invites : []);
+    } catch (e) {
+      if (!cancelled.current) setErr(e?.message || 'Erro');
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setErr('');
-      try {
-        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Erro');
-        if (!cancelled) setRows(Array.isArray(data.invites) ? data.invites : []);
-      } catch (e) {
-        if (!cancelled) setErr(e?.message || 'Erro');
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [vacancyId, refreshKey]);
+    const cancelled = { current: false };
+    fetchInvites(cancelled);
+    return () => { cancelled.current = true; };
+  }, [vacancyId, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const remind = async (inviteId) => {
     setBusy(String(inviteId));
@@ -147,9 +149,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Falha');
-      const r2 = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
-      const d2 = await r2.json().catch(() => ({}));
-      if (r2.ok) setRows(Array.isArray(d2.invites) ? d2.invites : []);
+      await fetchInvites();
     } catch (e) {
       setErr(e?.message || 'Erro');
     } finally {
@@ -174,9 +174,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Falha');
-      const r2 = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
-      const d2 = await r2.json().catch(() => ({}));
-      if (r2.ok) setRows(Array.isArray(d2.invites) ? d2.invites : []);
+      await fetchInvites();
     } catch (e) {
       setErr(e?.message || 'Erro');
     } finally {
@@ -186,7 +184,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
 
   if (!rows.length && !err) {
     return (
-      <div style={{ marginTop: '10px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+      <div style={{ marginTop: '10px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
         {t(locale, 'recruiting.inviteListTitle')}: —
       </div>
     );
@@ -194,71 +192,84 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
 
   return (
     <div style={{ marginTop: '12px' }}>
-      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
+      <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
         {t(locale, 'recruiting.inviteListTitle')}
       </span>
       {err ? (
-        <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: C.tension, fontFamily: 'monospace' }}>{err}</p>
+        <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: C.tension, fontFamily: 'monospace' }}>{err}</p>
       ) : null}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
-        {rows.map((inv) => (
-          <div
-            key={inv.id}
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              padding: '8px 10px',
-              borderRadius: '8px',
-              border: `1px solid ${C.border}`,
-              background: 'rgba(26,22,37,.02)',
-            }}
-          >
-            <span style={{ color: C.text }}>{inv.candidateName}</span>
-            <span style={{ color: C.muted }}>{inv.candidateEmail}</span>
-            <span style={{ color: C.purpleLight }}>{inviteStatusLabel(locale, inv.status)}</span>
-            <div style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-              {['sent', 'opened'].includes(String(inv.status || '')) ? (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '260px', overflowY: 'auto' }}>
+        {rows.map((inv) => {
+          const lastReminder = inv.lastReminderAt ? new Date(inv.lastReminderAt) : null;
+          const reminderCount = inv.reminderCount ?? 0;
+          const canRemind = ['sent', 'opened'].includes(String(inv.status || ''));
+          return (
+            <div
+              key={inv.id}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
+                gap: '8px',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${C.border}`,
+                background: 'rgba(26,22,37,.02)',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: C.text, fontWeight: 500 }}>{inv.candidateName}</div>
+                <div style={{ color: C.muted, fontSize: '11px' }}>{inv.candidateEmail}</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px', alignItems: 'center' }}>
+                  <span style={{ color: C.purpleLight }}>{inviteStatusLabel(locale, inv.status)}</span>
+                  {reminderCount > 0 && (
+                    <span style={{ color: C.faint, fontSize: '11px' }}>
+                      {reminderCount} lembrete{reminderCount > 1 ? 's' : ''} enviado{reminderCount > 1 ? 's' : ''}
+                      {lastReminder ? ` · último: ${lastReminder.toLocaleDateString('pt-BR')}` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                {canRemind ? (
+                  <button
+                    type="button"
+                    disabled={!!busy}
+                    onClick={() => remind(inv.id)}
+                    style={{
+                      fontSize: '11px', padding: '5px 10px', borderRadius: '6px',
+                      border: `1px solid ${C.synergy}55`, background: `${C.synergy}12`,
+                      color: C.synergy, cursor: busy ? 'default' : 'pointer', display: 'flex',
+                      alignItems: 'center', gap: '6px',
+                    }}
+                  >
+                    {busy === String(inv.id)
+                      ? <><span className="spinner" />Enviando</>
+                      : t(locale, 'recruiting.inviteRemind')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  disabled={busy === String(inv.id) || busy === `del:${inv.id}`}
-                  onClick={() => remind(inv.id)}
+                  disabled={!!busy}
+                  onClick={() => removeInvite(inv)}
+                  title={t(locale, 'recruiting.inviteDelete')}
                   style={{
-                    fontSize: '10px',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    border: `1px solid ${C.synergy}55`,
-                    background: `${C.synergy}12`,
-                    color: C.synergy,
-                    cursor: 'pointer',
+                    fontSize: '11px', padding: '5px 10px', borderRadius: '6px',
+                    border: '1px solid rgba(232,71,71,.35)', background: 'rgba(232,71,71,.08)',
+                    color: C.tension, cursor: busy ? 'default' : 'pointer', display: 'flex',
+                    alignItems: 'center', gap: '6px',
                   }}
                 >
-                  {busy === String(inv.id) ? '…' : t(locale, 'recruiting.inviteRemind')}
+                  {busy === `del:${inv.id}`
+                    ? <><span className="spinner" />Removendo</>
+                    : t(locale, 'recruiting.inviteRemove')}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                disabled={busy === `del:${inv.id}` || busy === String(inv.id)}
-                onClick={() => removeInvite(inv)}
-                title={t(locale, 'recruiting.inviteDelete')}
-                style={{
-                  fontSize: '10px',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(232,71,71,.35)',
-                  background: 'rgba(232,71,71,.08)',
-                  color: C.tension,
-                  cursor: 'pointer',
-                }}
-              >
-                {busy === `del:${inv.id}` ? '…' : t(locale, 'recruiting.inviteRemove')}
-              </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -316,7 +327,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Falha');
       setMsg(t(locale, 'recruiting.rubricSaved'));
-      setTimeout(() => setMsg(''), 2000);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setErr(e?.message || 'Erro');
     }
@@ -332,7 +343,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
       {msg ? <p style={{ fontSize: '11px', color: C.synergy }}>{msg}</p> : null}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
-          <label key={t} style={{ fontSize: '10px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <label key={t} style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
             T{t}
             <input
               value={weights[t] ?? ''}
@@ -391,74 +402,172 @@ function VacancyRubricEditor({ vacancyId, locale }) {
   );
 }
 
-function VacancyRankingBlock({ vacancyId, locale }) {
-  const [rows, setRows] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
+const KANBAN_STAGES = [
+  { id: 'new',            label: 'Novo',             color: 'rgba(26,22,37,.45)' },
+  { id: 'test_completed', label: 'Teste Realizado',   color: '#7C3AED' },
+  { id: 'screening',      label: 'Triagem',           color: '#0284c7' },
+  { id: 'interview',      label: 'Entrevista',        color: '#d97706' },
+  { id: 'approved',       label: 'Aprovado',          color: '#15803d' },
+  { id: 'rejected',       label: 'Reprovado',         color: '#dc2626' },
+  { id: 'archived',       label: 'Arquivado',         color: 'rgba(26,22,37,.3)' },
+];
 
-  const load = async () => {
-    setBusy(true);
-    setErr('');
+function VacancyKanbanBlock({ vacancyId, locale }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [moving, setMoving] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr('');
+      try {
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!cancelled) setRows(Array.isArray(data.ranking) ? data.ranking : []);
+      } catch (e) {
+        if (!cancelled) setErr(e?.message || 'Erro');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vacancyId]);
+
+  const moveTo = async (assessmentId, stage) => {
+    setMoving(String(assessmentId));
     try {
-      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
+      const res = await fetch(`/api/admin/assessments/${encodeURIComponent(assessmentId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pipelineStage: stage }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Erro');
-      setRows(Array.isArray(data.ranking) ? data.ranking : []);
+      setRows((prev) =>
+        prev.map((r) => String(r.assessmentId) === String(assessmentId) ? { ...r, pipelineStage: stage } : r)
+      );
     } catch (e) {
-      setErr(e?.message || 'Erro');
-      setRows([]);
+      setErr(e?.message || 'Erro ao mover candidato');
     } finally {
-      setBusy(false);
+      setMoving(null);
     }
   };
 
+  const grouped = Object.fromEntries(KANBAN_STAGES.map((s) => [s.id, []]));
+  rows.forEach((r) => {
+    const stage = r.pipelineStage || 'new';
+    if (grouped[stage]) grouped[stage].push(r);
+    else grouped['new'].push(r);
+  });
+
+  const hasAny = rows.length > 0;
+
   return (
-    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{t(locale, 'recruiting.rankingTitle')}</span>
-        <button
-          type="button"
-          onClick={load}
-          disabled={busy}
-          style={{
-            fontSize: '11px',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            border: `1px solid ${C.border}`,
-            background: 'transparent',
-            color: C.muted,
-            cursor: busy ? 'default' : 'pointer',
-            fontFamily: 'monospace',
-          }}
-        >
-          {busy ? t(locale, 'recruiting.rankingLoading') : t(locale, 'recruiting.rankingLoad')}
-        </button>
+    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase',
+          letterSpacing: '1.5px' }}>
+          Pipeline de Candidatos
+        </span>
+        {loading && <span className="spinner" style={{ color: C.muted }} />}
+        {!loading && hasAny && (
+          <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            {rows.length} candidato{rows.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
-      {err ? <p style={{ fontSize: '11px', color: C.tension }}>{err}</p> : null}
-      {rows && rows.length === 0 ? (
-        <p style={{ fontSize: '11px', color: C.faint }}>{t(locale, 'recruiting.rankingEmpty')}</p>
+
+      {err ? <p style={{ fontSize: '12px', color: C.tension, fontFamily: 'monospace', margin: '0 0 10px' }}>{err}</p> : null}
+
+      {!loading && !hasAny ? (
+        <p style={{ fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+          Nenhum candidato nesta vaga ainda.
+        </p>
       ) : null}
-      {rows && rows.length > 0 ? (
-        <div style={{ marginTop: '8px', maxHeight: '220px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '11px' }}>
-          {rows.map((r, i) => (
-            <div
-              key={r.assessmentId}
-              style={{
-                display: 'flex',
-                gap: '10px',
-                padding: '6px 0',
-                borderBottom: `1px solid ${C.border}`,
-                color: C.muted,
-              }}
-            >
-              <span style={{ color: C.faint, width: '22px' }}>{i + 1}</span>
-              <span style={{ flex: 1, color: C.text }}>{r.name}</span>
-              <span>T{r.topType}</span>
-              <span>{r.vacancyFitScore010 != null ? `${r.vacancyFitScore010}/10` : '—'}</span>
-            </div>
-          ))}
+
+      {hasAny && (
+        <div style={{ overflowX: 'auto', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content' }}>
+            {KANBAN_STAGES.map((stage) => {
+              const cards = grouped[stage.id] || [];
+              return (
+                <div
+                  key={stage.id}
+                  style={{
+                    width: '200px',
+                    flexShrink: 0,
+                    background: 'rgba(26,22,37,.025)',
+                    border: `1px solid ${C.border}`,
+                    borderRadius: '12px',
+                    padding: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stage.color,
+                      flexShrink: 0, display: 'inline-block' }} />
+                    <span style={{ fontSize: '11px', fontFamily: 'monospace', color: stage.color,
+                      fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                      {stage.label}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.faint,
+                      fontFamily: 'monospace', background: 'rgba(26,22,37,.06)',
+                      padding: '1px 6px', borderRadius: '8px' }}>
+                      {cards.length}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                    {cards.map((r) => (
+                      <div
+                        key={r.assessmentId}
+                        style={{
+                          background: 'rgba(255,255,255,.7)',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: '8px',
+                          padding: '8px 10px',
+                          opacity: moving === String(r.assessmentId) ? 0.55 : 1,
+                          transition: 'opacity 0.15s',
+                        }}
+                      >
+                        <div style={{ fontSize: '13px', color: C.text, marginBottom: '4px',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {r.name}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+                            T{r.topType}
+                          </span>
+                          {r.vacancyFitScore010 != null && (
+                            <span style={{ fontSize: '11px', fontFamily: 'monospace',
+                              color: r.vacancyFitScore010 >= 7 ? '#15803d' : r.vacancyFitScore010 >= 4 ? '#d97706' : C.tension }}>
+                              {r.vacancyFitScore010}/10
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={stage.id}
+                          disabled={moving === String(r.assessmentId)}
+                          onChange={(e) => moveTo(r.assessmentId, e.target.value)}
+                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', borderRadius: '6px',
+                            border: `1px solid ${C.border}`, background: 'transparent', color: C.muted,
+                            cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          {KANBAN_STAGES.map((s) => (
+                            <option key={s.id} value={s.id}>{s.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -479,6 +588,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [msg, setMsg] = useState('');
   const [invitesRefresh, setInvitesRefresh] = useState(0);
   const [linkExpiryEdit, setLinkExpiryEdit] = useState(null);
+  const [editingVacancy, setEditingVacancy] = useState(null);
+  const [expandedVacancyIds, setExpandedVacancyIds] = useState(new Set());
 
   const { page: vacPage, pageSize: vacPageSize } = parseVacanciesPagination(
     Object.fromEntries(urlParams.entries())
@@ -569,10 +680,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       await navigator.clipboard.writeText(text);
       setMsg('Copiado.');
-      setTimeout(() => setMsg(''), 1200);
+      setTimeout(() => setMsg(''), 3000);
     } catch {
       setMsg('Não foi possível copiar automaticamente.');
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     }
   };
 
@@ -594,7 +705,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setTitle(''); setSlug(''); setStatus('open');
       setMsg('Vaga criada.');
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -613,7 +724,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
       setMsg('Link rotacionado.');
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -642,7 +753,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setMsg('Expiração do link atualizada.');
       setLinkExpiryEdit(null);
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -664,7 +775,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
       setMsg('Vaga atualizada.');
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -672,33 +783,42 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     }
   };
 
-  const editVacancy = async (v) => {
-    const nextTitle = window.prompt('Título da vaga', v?.title ?? '');
-    if (nextTitle == null) return;
-    const nextSlug = window.prompt('Slug (URL-friendly)', v?.slug ?? '');
-    if (nextSlug == null) return;
-    const nextStatus = window.prompt('Status (open/closed)', v?.status ?? 'open');
-    if (nextStatus == null) return;
+  const editVacancy = (v) => {
+    setEditingVacancy({ id: v.id, title: v.title ?? '', slug: v.slug ?? '', status: v.status ?? 'open' });
+  };
 
+  const saveVacancyEdit = async () => {
+    if (!editingVacancy) return;
+    const { id, title, slug, status } = editingVacancy;
+    if (!title.trim()) { setError('O título é obrigatório.'); return; }
     setLoading(true);
     setError('');
     setMsg('');
     try {
-      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(v.id)}`, {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: String(nextTitle).trim(), slug: String(nextSlug).trim(), status: String(nextStatus).trim() }),
+        body: JSON.stringify({ title: title.trim(), slug: slug.trim() || undefined, status }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
       setMsg('Vaga atualizada.');
+      setEditingVacancy(null);
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleVacancyExpanded = (id) => {
+    setExpandedVacancyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const archiveVacancy = async (vacancyId, title) => {
@@ -715,7 +835,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar vaga');
       setMsg('Vaga arquivada.');
       await loadVacancies();
-      setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setError(e?.message || 'Erro');
     } finally {
@@ -790,8 +910,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             disabled={loading || !title.trim() || (isAdmin && !companyId)}
             style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
               borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1 }}
+              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', gap: '8px' }}
           >
+            {loading ? <span className="spinner" /> : null}
             Criar
           </button>
           <button
@@ -800,8 +922,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             disabled={loading}
             style={{ background: 'transparent', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', gap: '8px' }}
           >
+            {loading ? <span className="spinner" /> : null}
             Atualizar
           </button>
         </div>
@@ -853,7 +977,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 border: `1px solid ${C.border}`,
               }}
             >
-              <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Ordenar por
               </span>
               {[
@@ -892,16 +1016,32 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               const token = v.activeToken || '';
               const link = token ? `${appUrl}/v/${token}` : '';
               const exp = v.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
+              const isExpanded = expandedVacancyIds.has(v.id);
+              const isEditing = editingVacancy?.id === v.id;
               return (
                 <div key={v.id} style={{ background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px' }}>
+                  {/* Header da vaga */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.text, fontSize: '13px' }}>
-                        <span style={{ fontFamily: 'monospace', color: C.faint, marginRight: '8px' }}>#{v.id}</span>
+                      <div style={{ color: C.text, fontSize: '14px' }}>
+                        <span style={{ fontFamily: 'monospace', color: C.faint, marginRight: '8px', fontSize: '12px' }}>#{v.id}</span>
                         <strong style={{ fontWeight: 'normal' }}>{v.title}</strong>
-                        <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>({v.status})</span>
+                        <span
+                          style={{
+                            marginLeft: '10px',
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            background: v.status === 'open' ? 'rgba(21,128,61,.12)' : 'rgba(26,22,37,.08)',
+                            color: v.status === 'open' ? C.synergy : C.muted,
+                            border: `1px solid ${v.status === 'open' ? 'rgba(21,128,61,.3)' : C.border}`,
+                          }}
+                        >
+                          {v.status === 'open' ? 'Aberta' : 'Fechada'}
+                        </span>
                         {isAdmin && (
-                          <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px' }}>
+                          <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px', fontSize: '12px' }}>
                             · {v.companyName}
                           </span>
                         )}
@@ -911,23 +1051,32 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           {link}
                         </div>
                       ) : (
-                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
                           (sem link ativo)
                         </div>
                       )}
                       {token && exp ? (
-                        <div style={{ marginTop: '6px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                        <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
                           expira em {exp.toLocaleString()}
                         </div>
                       ) : null}
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id) })}
+                        style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.purpleLight, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace' }}
+                      >
+                        Ver candidatos
+                      </button>
                       <button
                         type="button"
                         onClick={() => editVacancy(v)}
                         disabled={loading}
                         style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
                         Editar
@@ -937,7 +1086,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
                         disabled={loading}
                         style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
                         {v.status === 'open' ? 'Fechar' : 'Reabrir'}
@@ -947,39 +1096,17 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         onClick={() => rotateLink(v.id)}
                         disabled={loading}
                         style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
                         Rotacionar link
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (!token) return;
-                          setLinkExpiryEdit((cur) =>
-                            cur?.vacancyId === v.id
-                              ? null
-                              : {
-                                  vacancyId: v.id,
-                                  value: v.activeTokenExpiresAt
-                                    ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
-                                    : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-                                }
-                          );
-                        }}
-                        disabled={loading || !token}
-                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                          cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
-                      >
-                        Editar expiração
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => token && copy(link)}
                         disabled={loading || !token}
                         style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                          borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
+                          borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                       >
                         Copiar link
@@ -989,28 +1116,96 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         onClick={() => archiveVacancy(v.id, v.title)}
                         disabled={loading}
                         style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
+                          borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
                         Arquivar
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleVacancyExpanded(v.id)}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace' }}
+                        title={isExpanded ? 'Recolher detalhes' : 'Expandir detalhes'}
+                      >
+                        {isExpanded ? '▲ Recolher' : '▼ Detalhes'}
+                      </button>
                     </div>
                   </div>
-                  {linkExpiryEdit?.vacancyId === v.id ? (
-                    <div
-                      style={{
-                        marginTop: '12px',
-                        padding: '12px',
-                        borderRadius: '10px',
-                        border: `1px solid ${C.border}`,
-                        background: 'rgba(26,22,37,.04)',
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '10px',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+
+                  {/* Formulário de edição inline */}
+                  {isEditing && (
+                    <div style={{
+                      marginTop: '12px', padding: '16px', borderRadius: '10px',
+                      border: `1px solid ${C.purple}44`, background: `${C.purple}08`,
+                    }}>
+                      <span style={{ fontSize: '11px', color: C.purpleLight, fontFamily: 'monospace',
+                        textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
+                        Editar vaga
+                      </span>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <input
+                          value={editingVacancy.title}
+                          onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
+                          placeholder="Título da vaga"
+                          aria-label="Título da vaga"
+                          style={{ flex: '2 1 280px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                        />
+                        <input
+                          value={editingVacancy.slug}
+                          onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
+                          placeholder="Slug (ex.: dev-fullstack)"
+                          aria-label="Slug da vaga"
+                          style={{ flex: '1 1 200px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                        />
+                        <select
+                          value={editingVacancy.status}
+                          onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
+                          aria-label="Status da vaga"
+                          style={{ flex: '0 0 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px',
+                            cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          <option value="open">Aberta</option>
+                          <option value="closed">Fechada</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={saveVacancyEdit}
+                          disabled={loading}
+                          style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                            borderRadius: '10px', padding: '9px 18px', color: C.purple, fontSize: '13px',
+                            cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                        >
+                          Salvar alterações
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingVacancy(null)}
+                          disabled={loading}
+                          style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '9px 14px', color: C.muted, fontSize: '13px',
+                            cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Editar expiração do link */}
+                  {linkExpiryEdit?.vacancyId === v.id && (
+                    <div style={{
+                      marginTop: '12px', padding: '12px', borderRadius: '10px',
+                      border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.04)',
+                      display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
                         Nova data de expiração (horário local)
                       </span>
                       <input
@@ -1023,60 +1218,58 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         }
                         disabled={loading}
                         aria-label="Nova data de expiração do link"
-                        style={{
-                          flex: '1 1 200px',
-                          minWidth: '180px',
-                          background: 'rgba(26,22,37,.04)',
-                          border: `1px solid ${C.border}`,
-                          borderRadius: '10px',
-                          padding: '8px 10px',
-                          color: C.text,
-                          fontSize: '12px',
-                          fontFamily: 'monospace',
-                        }}
+                        style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
+                          border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
+                          color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
                       />
-                      <button
-                        type="button"
-                        onClick={saveLinkExpiry}
-                        disabled={loading}
-                        style={{
-                          background: `${C.synergy}18`,
-                          border: `1px solid ${C.synergy}55`,
-                          borderRadius: '10px',
-                          padding: '8px 12px',
-                          color: C.synergy,
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                          fontFamily: 'monospace',
-                          opacity: loading ? 0.6 : 1,
-                        }}
-                      >
+                      <button type="button" onClick={saveLinkExpiry} disabled={loading}
+                        style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
+                          borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
                         Salvar
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setLinkExpiryEdit(null)}
-                        disabled={loading}
-                        style={{
-                          background: 'transparent',
-                          border: `1px solid ${C.border}`,
-                          borderRadius: '10px',
-                          padding: '8px 12px',
-                          color: C.muted,
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                          fontFamily: 'monospace',
-                          opacity: loading ? 0.6 : 1,
-                        }}
-                      >
+                      <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
                         Cancelar
                       </button>
                     </div>
-                  ) : null}
-                  <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
-                  <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
-                  <VacancyRubricEditor vacancyId={v.id} locale={locale} />
-                  <VacancyRankingBlock vacancyId={v.id} locale={locale} />
+                  )}
+
+                  {/* Detalhes colapsáveis */}
+                  {isExpanded && (
+                    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!token) return;
+                            setLinkExpiryEdit((cur) =>
+                              cur?.vacancyId === v.id
+                                ? null
+                                : {
+                                    vacancyId: v.id,
+                                    value: v.activeTokenExpiresAt
+                                      ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
+                                      : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                                  }
+                            );
+                          }}
+                          disabled={loading || !token}
+                          style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                            borderRadius: '10px', padding: '7px 10px', color: C.muted, fontSize: '12px',
+                            cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                        >
+                          Editar expiração do link
+                        </button>
+                      </div>
+                      <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
+                      <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                      <VacancyRubricEditor vacancyId={v.id} locale={locale} />
+                      <VacancyKanbanBlock vacancyId={v.id} locale={locale} />
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -40,6 +40,8 @@ export default function DashboardClient({
   selectedVacancy = 'all',
   selectedPipeline = 'all',
   selectedCompany = 'all',
+  selectedDateFrom = null,
+  selectedDateTo = null,
   pagination = { page: 1, pageSize: 20, total: 0, totalPages: 1 },
   compatMetrics = {
     pairs: [],
@@ -63,6 +65,10 @@ export default function DashboardClient({
   const [company, setCompany] = useState(selectedCompany);
   const [enneagram, setEnneagram] = useState(selectedEnneagram);
   const [pipeline, setPipeline] = useState(selectedPipeline);
+  const [dateFrom, setDateFrom] = useState(selectedDateFrom || '');
+  const [dateTo, setDateTo] = useState(selectedDateTo || '');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newCandidates, setNewCandidates] = useState(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
@@ -92,6 +98,37 @@ export default function DashboardClient({
   useEffect(() => {
     setPipeline(selectedPipeline);
   }, [selectedPipeline]);
+  useEffect(() => { setDateFrom(selectedDateFrom || ''); }, [selectedDateFrom]);
+  useEffect(() => { setDateTo(selectedDateTo || ''); }, [selectedDateTo]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('30team_group') || '{}');
+      if (saved.baseId != null) setGroupBaseId(saved.baseId);
+      if (Array.isArray(saved.ids)) setGroupIds(saved.ids);
+      if (Array.isArray(saved.dismissed)) setDismissedIds(saved.dismissed);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('30team_group', JSON.stringify({
+        baseId: groupBaseId,
+        ids: groupIds,
+        dismissed: dismissedIds,
+      }));
+    } catch {}
+  }, [groupBaseId, groupIds, dismissedIds]);
+
+  const listTotal = compatMetrics.total ?? 0;
+  useEffect(() => {
+    try {
+      const prev = parseInt(localStorage.getItem('30team_lastTotal') || '0', 10);
+      if (listTotal > prev) setNewCandidates(true);
+      localStorage.setItem('30team_lastTotal', String(listTotal));
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     snapshot,
@@ -110,6 +147,8 @@ export default function DashboardClient({
     company,
     enneagram,
     pipeline,
+    dateFrom,
+    dateTo,
     isAdmin,
     teamPagination: pagination,
   });
@@ -120,7 +159,6 @@ export default function DashboardClient({
   const typeCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
   Object.assign(typeCount, compatMetrics.typeCount || {});
   const maxCount = Math.max(...Object.values(typeCount), 1);
-  const listTotal = compatMetrics.total ?? 0;
 
   const byAssessmentId = {};
   interactionPeople.forEach((r) => {
@@ -163,10 +201,10 @@ export default function DashboardClient({
   const compatListPagination = parseCompatTabPagination(snapshot());
   const teamQuerySort = parseTeamSort(snapshot());
 
-  const NavLink = ({ id, label }) => (
+  const NavLink = ({ id, label, badge }) => (
     <button
       type="button"
-      onClick={() => navigateToTab(id)}
+      onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
       style={{
         width: '100%',
         textAlign: 'left',
@@ -176,15 +214,22 @@ export default function DashboardClient({
         border: 'none',
         background: tab === id ? `${C.purple}18` : 'transparent',
         color: tab === id ? C.purpleDark : C.muted,
-        fontSize: '12px',
+        fontSize: '13px',
         cursor: 'pointer',
         fontFamily: 'monospace',
         letterSpacing: '0.5px',
         borderLeft: tab === id ? `3px solid ${C.purple}` : '3px solid transparent',
         paddingLeft: tab === id ? '9px' : '11px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
       }}
     >
       {label}
+      {badge && (
+        <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
+          background: C.purple, flexShrink: 0 }} />
+      )}
     </button>
   );
 
@@ -199,8 +244,20 @@ export default function DashboardClient({
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
         background: 'radial-gradient(ellipse at 15% 25%,rgba(124,58,237,.06) 0%,transparent 55%)' }} />
 
+      <button
+        type="button"
+        className="db-hamburger"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
+      <div
+        className={`db-overlay${sidebarOpen ? ' db-overlay-visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
       <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-        <aside style={{
+        <aside className={`db-sidebar${sidebarOpen ? ' db-sidebar-open' : ''}`} style={{
           width: '226px',
           flexShrink: 0,
           borderRight: `1px solid ${C.border}`,
@@ -213,21 +270,48 @@ export default function DashboardClient({
         }}>
           <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
           <nav style={{ flex: 1 }}>
+            <span style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
+              color: 'rgba(26,22,37,.28)', fontFamily: 'monospace', display: 'block',
+              padding: '0 12px', marginBottom: '4px' }}>
+              Análise
+            </span>
             <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
-            <NavLink id="team" label={t(locale, 'dashboard.team')} />
+            <NavLink id="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
             <NavLink id="compatibility" label={t(locale, 'dashboard.compatibility')} />
             <NavLink id="compare" label={t(locale, 'dashboard.compare')} />
             <NavLink id="group" label={t(locale, 'dashboard.group')} />
             <NavLink id="leadership" label={t(locale, 'dashboard.leadership')} />
-            {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-            {canManage ? <NavLink id="motivators" label="Motivadores" /> : null}
-            {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
-            {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
+            {(canManage || isAdmin) && (
+              <>
+                <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
+                <span style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
+                  color: 'rgba(26,22,37,.28)', fontFamily: 'monospace', display: 'block',
+                  padding: '0 12px', marginBottom: '4px' }}>
+                  Gestão
+                </span>
+                {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
+                {canManage ? <NavLink id="motivators" label="Motivadores" /> : null}
+                {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
+                {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
+              </>
+            )}
           </nav>
-          <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={logout}
+              style={{ background: 'transparent', border: `1px solid rgba(220,38,38,.25)`,
+                borderRadius: '10px', padding: '9px 12px', color: 'rgba(220,38,38,.6)',
+                fontSize: '11px', cursor: 'pointer', fontFamily: 'monospace',
+                textAlign: 'left', width: '100%' }}
+            >
+              {t(locale, 'dashboard.logout')}
+            </button>
+            <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
+          </div>
         </aside>
 
-        <div style={{
+        <div className="db-main" style={{
           flex: 1,
           minWidth: 0,
           padding: '28px 24px 60px',
@@ -264,7 +348,7 @@ export default function DashboardClient({
                   }}
                   style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                     borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                    fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
+                    fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
                 >
                   <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
                   {companies.map((co) => (
@@ -277,7 +361,7 @@ export default function DashboardClient({
               <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
+                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
                 <option value="all">{t(locale, 'dashboard.allAreas')}</option>
                 {areas.map((a) => (
                   <option key={a.key} value={a.key}>
@@ -303,7 +387,7 @@ export default function DashboardClient({
                 }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
+                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
                 <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
                 {vacancies.map((v) => (
                   <option key={v.id} value={String(v.id)}>
@@ -320,7 +404,7 @@ export default function DashboardClient({
                 }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
+                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
                 <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
                   <option key={t} value={String(t)}>
@@ -337,7 +421,7 @@ export default function DashboardClient({
                 }}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
+                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
               >
                 <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
                 <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
@@ -348,6 +432,38 @@ export default function DashboardClient({
                 <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
                 <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
               </select>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                De
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDateFrom(v);
+                    pushFilters({ dateFrom: v || null, dateTo: dateTo || null });
+                  }}
+                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '9px 10px', color: C.muted,
+                    fontSize: '12px', fontFamily: 'monospace' }}
+                />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                Até
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDateTo(v);
+                    pushFilters({ dateFrom: dateFrom || null, dateTo: v || null });
+                  }}
+                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '9px 10px', color: C.muted,
+                    fontSize: '12px', fontFamily: 'monospace' }}
+                />
+              </label>
               <a
                 href={`/api/admin/export?area=${encodeURIComponent(area)}${
                   isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
@@ -356,17 +472,11 @@ export default function DashboardClient({
                 }`}
                 style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
                   borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif",
+                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif",
                   textDecoration: 'none', display: 'inline-block' }}
               >
                 {t(locale, 'dashboard.exportCsv')}
               </a>
-              <button type="button" onClick={logout}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 20px', color: C.muted,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                {t(locale, 'dashboard.logout')}
-              </button>
             </div>
           </div>
 
@@ -398,7 +508,7 @@ export default function DashboardClient({
                   {listTotal > 0 ? (
                     <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
                       flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                      <span style={{ fontSize: '13px', color: C.muted, fontFamily: 'monospace' }}>
                         {t(locale, 'dashboard.itemsPerPageTeam')}
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
@@ -424,11 +534,11 @@ export default function DashboardClient({
                             style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
                               border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
                               borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
-                              fontSize: '12px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                              fontSize: '13px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
                           >
                             {t(locale, 'dashboard.previous')}
                           </button>
-                          <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '13px', color: C.muted, fontFamily: 'monospace', minWidth: '100px', textAlign: 'center' }}>
                             {pagination.page} / {pagination.totalPages}
                           </span>
                           <button
@@ -439,7 +549,7 @@ export default function DashboardClient({
                               border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
                               borderRadius: '10px', padding: '8px 14px',
                               color: pagination.page >= pagination.totalPages ? C.faint : C.purple,
-                              fontSize: '12px',
+                              fontSize: '13px',
                               cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
                           >
                             {t(locale, 'dashboard.next')}

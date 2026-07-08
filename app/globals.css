@@ -1,4 +1,19 @@
 /* C.purple (#7C3AED) — manter alinhado a lib/theme.js */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  opacity: 0.6;
+}
 :root {
   --color-focus-ring: #7c3aed;
   --focus-ring-width: 2px;
@@ -20,4 +35,61 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline-offset: 1px;
+}
+
+/* Responsive sidebar */
+.db-hamburger {
+  display: none;
+}
+.db-sidebar {
+  transition: transform 0.25s ease;
+}
+.db-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .db-hamburger {
+    display: flex;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 110;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(26,22,37,.12);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    font-size: 18px;
+    color: rgba(26,22,37,.7);
+  }
+  .db-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 20px rgba(0,0,0,.12);
+    overflow-y: auto;
+  }
+  .db-sidebar.db-sidebar-open {
+    transform: translateX(0);
+  }
+  .db-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(0,0,0,.4);
+  }
+  .db-overlay.db-overlay-visible {
+    display: block;
+  }
+  .db-main {
+    padding-top: 64px !important;
+  }
 }

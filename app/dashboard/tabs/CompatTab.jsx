@@ -94,7 +94,7 @@ export function CompatTab({
             >
               {x.l}
             </div>
-            <div style={{ fontSize: '11px', color: C.faint }}>{x.d}</div>
+            <div style={{ fontSize: '12px', color: C.faint }}>{x.d}</div>
           </div>
         ))}
       </div>
@@ -145,7 +145,7 @@ export function CompatTab({
                           <span
                             style={{
                               padding: '2px 8px',
-                              fontSize: '10px',
+                              fontSize: '11px',
                               borderRadius: '20px',
                               background: 'rgba(26,22,37,.04)',
                               border: `1px solid ${C.border}`,
@@ -213,7 +213,7 @@ export function CompatTab({
                       borderRadius: '8px',
                     }}
                   >
-                    <span style={{ fontSize: '11px', color: C.tension, fontFamily: 'monospace', display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '12px', color: C.tension, fontFamily: 'monospace', display: 'block', marginBottom: '4px' }}>
                       ⚠ {t(locale, 'panel.compat.decisionTitle')}
                     </span>
                     <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, margin: 0 }}>{t(locale, 'panel.compat.tensionAdvice')}</p>
@@ -229,7 +229,7 @@ export function CompatTab({
                       borderRadius: '8px',
                     }}
                   >
-                    <span style={{ fontSize: '11px', color: C.synergy, fontFamily: 'monospace', display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '12px', color: C.synergy, fontFamily: 'monospace', display: 'block', marginBottom: '4px' }}>
                       ✓ {t(locale, 'panel.compat.opportunityTitle')}
                     </span>
                     <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, margin: 0 }}>{t(locale, 'panel.compat.synergyAdvice')}</p>
@@ -251,7 +251,7 @@ export function CompatTab({
                 marginTop: '8px',
               }}
             >
-              <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
                 {t(locale, 'panel.compat.pairsPage', { page: pg, total: totalPg })}
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>

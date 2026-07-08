@@ -32,12 +32,21 @@ function pipelineLabel(locale, code) {
 
 export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' }) {
   const [open, setOpen] = useState(null);
+  const [localSearch, setLocalSearch] = useState('');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState('');
   const [stageBusy, setStageBusy] = useState(null);
+  const [notesDraft, setNotesDraft] = useState('');
+  const [notesEditing, setNotesEditing] = useState(false);
+  const [notesBusy, setNotesBusy] = useState(false);
+  const [notesMsg, setNotesMsg] = useState('');
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkStage, setBulkStage] = useState('test_completed');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
 
   const sortColumns = [
     { k: 'createdAt', labelKey: 'panel.team.sortDate' },
@@ -51,11 +60,14 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
   const loadDetail = useCallback(async (candidateId) => {
     setDetailLoading(true);
     setDetailErr('');
+    setNotesEditing(false);
+    setNotesMsg('');
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
+      setNotesDraft(data?.candidate?.hrNotes || '');
     } catch (e) {
       setDetailErr(e?.message || t(locale, 'panel.common.error'));
       setDetail(null);
@@ -118,8 +130,90 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
     }
   };
 
+  const saveNotes = async () => {
+    if (!detail?.candidate?.id) return;
+    setNotesBusy(true);
+    setNotesMsg('');
+    try {
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(detail.candidate.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hrNotes: notesDraft }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setDetail((prev) => prev ? { ...prev, candidate: { ...prev.candidate, hrNotes: data.hrNotes } } : prev);
+      setNotesEditing(false);
+      setNotesMsg('Notas salvas.');
+      setTimeout(() => setNotesMsg(''), 3000);
+    } catch (e) {
+      setNotesMsg(e?.message || 'Erro ao salvar notas.');
+    } finally {
+      setNotesBusy(false);
+    }
+  };
+
+  const toggleSelect = (assessmentId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(String(assessmentId))) next.delete(String(assessmentId));
+      else next.add(String(assessmentId));
+      return next;
+    });
+  };
+
+  const applyBulk = async () => {
+    if (selectedIds.size === 0 || !bulkStage) return;
+    setBulkBusy(true);
+    setBulkMsg('');
+    try {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          fetch(`/api/admin/assessments/${encodeURIComponent(id)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pipelineStage: bulkStage }),
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      setBulkMsg(`${selectedIds.size} candidato(s) atualizados.`);
+      setTimeout(() => setBulkMsg(''), 3000);
+      router.refresh();
+    } catch {
+      setBulkMsg('Erro ao atualizar em massa.');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const q = localSearch.trim().toLowerCase();
+  const filtered = q ? results.filter((r) => (r.name || '').toLowerCase().includes(q)) : results;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ position: 'relative' }}>
+        <input
+          type="search"
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          placeholder="Buscar candidato por nome…"
+          aria-label="Buscar candidato por nome"
+          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
+            border: `1px solid ${C.border}`, borderRadius: '12px', padding: '12px 16px 12px 40px',
+            color: C.text, fontSize: '14px', fontFamily: "'Georgia',serif", outline: 'none' }}
+        />
+        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+          color: C.faint, fontSize: '15px', pointerEvents: 'none' }}>
+          ⌕
+        </span>
+        {q && (
+          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+            color: C.faint, fontSize: '11px', fontFamily: 'monospace' }}>
+            {filtered.length} resultado{filtered.length !== 1 ? 's' : ''} nesta página
+          </span>
+        )}
+      </div>
       <div
         role="group"
         aria-label={t(locale, 'panel.team.sortAria')}
@@ -134,7 +228,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
           border: `1px solid ${C.border}`,
         }}
       >
-        <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {t(locale, 'panel.team.sortBy')}
         </span>
         {sortColumns.map(({ k, labelKey }) => {
@@ -148,7 +242,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
               style={{
                 padding: '6px 12px',
                 borderRadius: '8px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontFamily: 'monospace',
                 cursor: 'pointer',
                 border: `1px solid ${active ? `${C.purple}55` : C.border}`,
@@ -162,7 +256,61 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
           );
         })}
       </div>
-      {results.map((r) => {
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
+          padding: '12px 16px', borderRadius: '12px', border: `1px solid ${C.purple}44`,
+          background: `${C.purple}0a` }}>
+          <span style={{ fontSize: '13px', color: C.purple, fontFamily: 'monospace' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <select
+            value={bulkStage}
+            onChange={(e) => setBulkStage(e.target.value)}
+            disabled={bulkBusy}
+            style={{ fontSize: '12px', padding: '6px 10px', borderRadius: '8px',
+              border: `1px solid ${C.border}`, background: 'transparent', color: C.text }}
+          >
+            {PIPELINE_OPTIONS.map((code) => (
+              <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={applyBulk}
+            disabled={bulkBusy}
+            style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
+              border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
+              color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              opacity: bulkBusy ? 0.6 : 1 }}
+          >
+            {bulkBusy ? <span className="spinner" /> : null}
+            Aplicar estágio
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            disabled={bulkBusy}
+            style={{ fontSize: '12px', padding: '7px 12px', borderRadius: '8px',
+              border: `1px solid ${C.border}`, background: 'transparent',
+              color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+          >
+            Limpar seleção
+          </button>
+          {bulkMsg && (
+            <span style={{ fontSize: '12px', color: bulkMsg.includes('Erro') ? C.tension : C.synergy,
+              fontFamily: 'monospace' }}>
+              {bulkMsg}
+            </span>
+          )}
+        </div>
+      )}
+      {filtered.length === 0 && q ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
+          Nenhum candidato encontrado para "{localSearch}" nesta página.
+        </div>
+      ) : null}
+      {filtered.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
         const isOpen = open === id;
@@ -197,14 +345,22 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 24px' }}>
+              <input
+                type="checkbox"
+                checked={selectedIds.has(id)}
+                onClick={(e) => e.stopPropagation()}
+                onChange={() => toggleSelect(id)}
+                aria-label={`Selecionar ${r.name}`}
+                style={{ width: '16px', height: '16px', flexShrink: 0, accentColor: C.purple, cursor: 'pointer' }}
+              />
               <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '15px', marginBottom: '4px' }}>{r.name}</div>
+                <div style={{ fontSize: '16px', marginBottom: '4px' }}>{r.name}</div>
                 {createdLabel ? (
                   <div
                     title={t(locale, 'dashboard.teamListDateHelp')}
                     style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       color: C.faint,
                       fontFamily: 'monospace',
                       marginBottom: '6px',
@@ -219,7 +375,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     <span
                       style={{
                         padding: '3px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         borderRadius: '20px',
                         background: 'rgba(26,22,37,.04)',
                         border: `1px solid ${C.border}`,
@@ -234,7 +390,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     <span
                       style={{
                         padding: '3px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         borderRadius: '20px',
                         background: 'rgba(124,58,237,.12)',
                         border: '1px solid rgba(124,58,237,.35)',
@@ -249,7 +405,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     <span
                       style={{
                         padding: '3px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         borderRadius: '20px',
                         background: `${C.purple}18`,
                         border: `1px solid ${C.purple}44`,
@@ -264,7 +420,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     <span
                       style={{
                         padding: '3px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         borderRadius: '20px',
                         background: 'rgba(71,232,123,.08)',
                         border: '1px solid rgba(71,232,123,.25)',
@@ -278,7 +434,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     <span
                       style={{
                         padding: '3px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         borderRadius: '20px',
                         background: 'rgba(71,232,123,.08)',
                         border: '1px solid rgba(71,232,123,.25)',
@@ -308,7 +464,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                       borderRadius: '10px',
                       padding: '8px 10px',
                       color: C.tension,
-                      fontSize: '11px',
+                      fontSize: '12px',
                       cursor: 'pointer',
                       fontFamily: 'monospace',
                       opacity: deleting ? 0.6 : 1,
@@ -317,7 +473,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     {t(locale, 'panel.team.deletePerson')}
                   </button>
                 ) : null}
-                <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{isOpen ? '▲' : '▼'}</span>
+                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{isOpen ? '▲' : '▼'}</span>
               </div>
             </div>
             {isOpen && (
@@ -383,11 +539,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             background: 'rgba(255,255,255,.4)',
                           }}
                         >
-                          <span style={{ fontFamily: 'monospace', fontSize: '11px', color: C.muted }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px', color: C.muted }}>
                             #{a.id} · {a.areaLabel}
                             {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
                           </span>
-                          <label style={{ fontSize: '11px', color: C.muted, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <label style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {t(locale, 'recruiting.stageLabel')}
                             <select
                               value={a.pipelineStage || 'test_completed'}
@@ -415,7 +571,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             onClick={() => deleteAssessment(a.id)}
                             style={{
                               marginLeft: 'auto',
-                              fontSize: '11px',
+                              fontSize: '12px',
                               padding: '6px 10px',
                               borderRadius: '8px',
                               border: '1px solid rgba(232,71,71,.35)',
@@ -435,20 +591,99 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                   )}
                 </div>
 
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
+                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ ...S.label, marginBottom: 0 }}>Notas de RH</span>
+                    {!notesEditing && (
+                      <button
+                        type="button"
+                        onClick={() => { setNotesDraft(detail?.candidate?.hrNotes || ''); setNotesEditing(true); setNotesMsg(''); }}
+                        style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
+                          background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                      >
+                        {detail?.candidate?.hrNotes ? 'Editar' : '+ Adicionar nota'}
+                      </button>
+                    )}
+                  </div>
+                  {!notesEditing ? (
+                    detail?.candidate?.hrNotes ? (
+                      <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap', fontFamily: "'Georgia',serif" }}>
+                        {detail.candidate.hrNotes}
+                      </p>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+                        Nenhuma nota registrada.
+                      </p>
+                    )
+                  ) : (
+                    <div>
+                      <textarea
+                        value={notesDraft}
+                        onChange={(e) => setNotesDraft(e.target.value)}
+                        rows={4}
+                        placeholder="Observações sobre o candidato…"
+                        aria-label="Notas de RH"
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+                          borderRadius: '8px', border: `1px solid ${C.border}`, fontSize: '13px',
+                          fontFamily: "'Georgia',serif", background: 'rgba(26,22,37,.03)',
+                          color: C.text, resize: 'vertical', marginBottom: '8px' }}
+                      />
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={saveNotes}
+                          disabled={notesBusy}
+                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
+                            border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
+                            color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            opacity: notesBusy ? 0.6 : 1 }}
+                        >
+                          {notesBusy ? <span className="spinner" /> : null}
+                          Salvar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setNotesEditing(false); setNotesDraft(detail?.candidate?.hrNotes || ''); }}
+                          disabled={notesBusy}
+                          style={{ fontSize: '12px', padding: '7px 12px', borderRadius: '8px',
+                            border: `1px solid ${C.border}`, background: 'transparent',
+                            color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          Cancelar
+                        </button>
+                        {notesMsg && (
+                          <span style={{ fontSize: '12px', color: notesMsg.includes('Erro') ? C.tension : C.synergy,
+                            fontFamily: 'monospace' }}>
+                            {notesMsg}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {!notesEditing && notesMsg && (
+                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.synergy, fontFamily: 'monospace' }}>
+                      {notesMsg}
+                    </p>
+                  )}
+                </div>
+
                 <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   {sorted.map(([t, s]) => (
                     <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span
                         title={TYPE_DATA?.[parseInt(t, 10)]?.name ? `${TYPE_DATA[parseInt(t, 10)].name} (T${t})` : `T${t}`}
-                        style={{ width: '60px', fontSize: '10px', color: TYPE_DATA[parseInt(t, 10)].color, fontFamily: 'monospace' }}
+                        style={{ width: '60px', fontSize: '11px', color: TYPE_DATA[parseInt(t, 10)].color, fontFamily: 'monospace' }}
                       >
                         {TYPE_DATA[parseInt(t, 10)].emoji} T{t}
                       </span>
                       <div style={{ flex: 1 }}>
                         <Bar value={parseInt(s, 10)} max={maxS} color={TYPE_DATA[parseInt(t, 10)].color} h={5} />
                       </div>
-                      <span style={{ fontSize: '10px', color: C.muted, fontFamily: 'monospace', width: '24px', textAlign: 'right' }}>{s}</span>
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', width: '24px', textAlign: 'right' }}>{s}</span>
                     </div>
                   ))}
                 </div>

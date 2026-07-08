@@ -6,7 +6,7 @@ import { typeFullName, typeShortLabel } from '../../lib/type-en';
 import { C, FONTS } from '../../lib/theme';
 
 const S = {
-  label:{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
+  label:{ fontSize:'11px', letterSpacing:'2.5px', textTransform:'uppercase',
     color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
     marginBottom:'12px', display:'block' },
   card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:'16px',
@@ -47,7 +47,7 @@ const TypeBadge = ({ type, locale = 'pt-BR' }) => {
   return (
     <span
       title={name ? `${name} (T${type})` : `T${type}`}
-      style={{ padding:'3px 10px', fontSize:'11px', borderRadius:'20px',
+      style={{ padding:'3px 10px', fontSize:'12px', borderRadius:'20px',
       display:'inline-flex', alignItems:'center', gap:'4px',
       background:`${d.color}18`, border:`1px solid ${d.color}44`,
       color:d.color, fontFamily:'monospace' }}>
@@ -77,7 +77,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
         color: active ? C.purpleLight : C.muted,
         fontWeight: 600,
         fontFamily: 'monospace',
-        fontSize: '10px',
+        fontSize: '11px',
         letterSpacing: '0.06em',
         textTransform: 'uppercase',
         borderBottom: `1px solid ${C.border}`,
@@ -110,7 +110,7 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
     <span
       style={{
         padding: '2px 9px',
-        fontSize: '10px',
+        fontSize: '12px',
         borderRadius: '20px',
         background: `${m.color}18`,
         border: `1px solid ${m.color}44`,

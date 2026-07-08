@@ -11,6 +11,7 @@ import {
   sqlTeamOrderBy,
   assessmentListWhereParts,
   parsePipelineFilter,
+  parseDateFilter,
   sqlWhere,
 } from '../../lib/assessment-filters';
 import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
@@ -88,6 +89,7 @@ export default async function DashboardPage({ searchParams }) {
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
   const selectedPipeline = parsePipelineFilter(searchParams);
+  const { dateFrom: selectedDateFrom, dateTo: selectedDateTo } = parseDateFilter(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
 
   // Busca candidatos/resultados DIRETAMENTE no banco — sem API, sem fetch
@@ -262,6 +264,8 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       selectedVacancy,
       enneagram,
       pipelineStage: selectedPipeline,
+      dateFrom: selectedDateFrom,
+      dateTo: selectedDateTo,
     });
     const assessmentWhere = sqlWhere(whereParts);
 
@@ -464,6 +468,8 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         selectedVacancy={selectedVacancy}
         selectedPipeline={selectedPipeline}
         selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
+        selectedDateFrom={selectedDateFrom}
+        selectedDateTo={selectedDateTo}
         areaStats={areaStats}
         areaRubric={areaRubric}
         analytics={analytics}

@@ -20,7 +20,8 @@ export async function GET(_request, { params }) {
 
   const id = params?.id;
   const c = await query(
-    `SELECT id, company_id AS "companyId", full_name AS "fullName", email, consent_at AS "consentAt", created_at AS "createdAt"
+    `SELECT id, company_id AS "companyId", full_name AS "fullName", email, hr_notes AS "hrNotes",
+            consent_at AS "consentAt", created_at AS "createdAt"
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
   );
@@ -57,6 +58,43 @@ export async function GET(_request, { params }) {
   });
 
   return NextResponse.json({ candidate: c.rows[0], assessments: a.rows });
+}
+
+export async function PATCH(request, { params }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = token ? verifyToken(token) : null;
+  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  const isAdmin = payload?.role === 'admin';
+  const companyId = payload?.companyId ?? null;
+  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const id = params?.id;
+  if (!id) return NextResponse.json({ error: 'Inválido' }, { status: 400 });
+
+  if (!isAdmin) {
+    const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
+    if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  if (body.hrNotes === undefined) return NextResponse.json({ error: 'hrNotes obrigatório' }, { status: 400 });
+  const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
+
+  const up = await query(
+    `UPDATE candidates SET hr_notes = $2 WHERE id = $1 RETURNING id, hr_notes AS "hrNotes"`,
+    [id, notes || null]
+  );
+  if (up.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+
+  await audit({
+    actorUserId: payload.userId || null,
+    action: 'candidate.notes_update',
+    targetType: 'candidate',
+    targetId: String(id),
+  });
+
+  return NextResponse.json(up.rows[0]);
 }
 
 export async function DELETE(_request, { params }) {

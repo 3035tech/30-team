@@ -24,6 +24,8 @@ export function useDashboardNavigation({
   company,
   enneagram,
   pipeline,
+  dateFrom,
+  dateTo,
   isAdmin,
   teamPagination,
 }) {
@@ -35,6 +37,8 @@ export function useDashboardNavigation({
     const nextArea = opts.area !== undefined ? opts.area : area;
     const nextVacancy = opts.vacancy !== undefined ? opts.vacancy : vacancy;
     const nextEnneagram = opts.enneagram !== undefined ? opts.enneagram : enneagram;
+    const nextDateFrom = opts.dateFrom !== undefined ? opts.dateFrom : dateFrom;
+    const nextDateTo = opts.dateTo !== undefined ? opts.dateTo : dateTo;
 
     if (isAdmin && nextCompany && nextCompany !== 'all') {
       p.set('company', String(nextCompany));
@@ -45,6 +49,9 @@ export function useDashboardNavigation({
     if (nextVacancy && nextVacancy !== 'all') p.set('vacancy', String(nextVacancy));
 
     if (nextEnneagram && nextEnneagram !== 'all') p.set('enneagram', nextEnneagram);
+
+    if (nextDateFrom) p.set('dateFrom', nextDateFrom);
+    if (nextDateTo) p.set('dateTo', nextDateTo);
 
     const pipeResolved = opts.pipeline !== undefined ? opts.pipeline : pipeline;
     if (pipeResolved && pipeResolved !== 'all') p.set('pipeline', String(pipeResolved));
@@ -121,6 +128,8 @@ export function useDashboardNavigation({
       ...(nextFilter?.vacancy != null ? { vacancy: nextFilter.vacancy } : {}),
       ...(nextFilter?.enneagram != null ? { enneagram: nextFilter.enneagram } : {}),
       ...(nextFilter?.pipeline != null ? { pipeline: nextFilter.pipeline } : {}),
+      ...(nextFilter?.dateFrom !== undefined ? { dateFrom: nextFilter.dateFrom } : {}),
+      ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
       teamPage: 1,
       comparePage: 1,
       vacanciesPage: 1,
