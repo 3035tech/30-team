@@ -11,6 +11,14 @@ const S = {
     marginBottom:'12px', display:'block' },
   card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:'16px',
     padding:'28px', backdropFilter:'blur(16px)' },
+  select:{ background:C.inputBg, border:`1px solid ${C.border}`, borderRadius:'10px',
+    padding:'9px 12px', color:C.muted, fontSize:'13px', cursor:'pointer', fontFamily:FONTS.serif },
+  sidebarSection:{ fontSize:'11px', letterSpacing:'2px', textTransform:'uppercase',
+    color:C.sectionLabel, fontFamily:FONTS.mono, display:'block',
+    padding:'0 12px', marginBottom:'4px' },
+  filterChip:{ display:'inline-flex', alignItems:'center', gap:'4px',
+    padding:'4px 10px', background:`${C.purple}12`, border:`1px solid ${C.purple}40`,
+    borderRadius:'20px', fontSize:'12px', color:C.purpleLight, fontFamily:FONTS.mono },
 };
 
 const Bar = ({ value, max, color, h=6 }) => (

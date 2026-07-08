@@ -93,3 +93,9 @@ textarea:focus-visible {
     padding-top: 64px !important;
   }
 }
+
+/* Kanban horizontal scroll */
+.kanban-scroll::-webkit-scrollbar { height: 6px; }
+.kanban-scroll::-webkit-scrollbar-track { background: rgba(26,22,37,.05); border-radius: 3px; }
+.kanban-scroll::-webkit-scrollbar-thumb { background: rgba(26,22,37,.2); border-radius: 3px; }
+.kanban-scroll::-webkit-scrollbar-thumb:hover { background: rgba(26,22,37,.35); }

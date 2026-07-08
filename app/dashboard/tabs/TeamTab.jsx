@@ -58,8 +58,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
   const [viewMode, setViewMode] = useState('list');
+  const [stageOverrides, setStageOverrides] = useState({});
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverStage, setDragOverStage] = useState(null);
 
-  useEffect(() => { setSelectedIds(new Set()); }, [results]);
+  useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
   const sortColumns = [
     { k: 'createdAt', labelKey: 'panel.team.sortDate' },
@@ -200,6 +203,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
     }
   };
 
+  const getEffectiveStage = (r) => stageOverrides[String(r.assessmentId)] ?? r.pipelineStage ?? 'new';
+
   const q = localSearch.trim().toLowerCase();
   const filtered = q ? results.filter((r) => (r.name || '').toLowerCase().includes(q)) : results;
   const allSelected = filtered.length > 0 && filtered.every((r) => selectedIds.has(String(r.assessmentId)));
@@ -312,38 +317,76 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
       </div>
 
       {viewMode === 'kanban' && (
-        <div style={{ overflowX: 'auto', paddingBottom: '12px' }}>
-          <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content' }}>
+        <div
+          className="kanban-scroll"
+          style={{ overflowX: 'auto', paddingBottom: '16px',
+            marginLeft: '-24px', marginRight: '-24px',
+            paddingLeft: '24px', paddingRight: '24px',
+            WebkitOverflowScrolling: 'touch' }}
+        >
+          <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content', alignItems: 'flex-start' }}>
             {KANBAN_STAGES.map((stage) => {
-              const items = filtered.filter((r) => (r.pipelineStage || 'new') === stage.id);
+              const items = filtered.filter((r) => getEffectiveStage(r) === stage.id);
+              const isDropTarget = dragOverStage === stage.id;
               return (
-                <div key={stage.id} style={{ width: '210px', flexShrink: 0 }}>
-                  <div style={{ padding: '8px 12px', borderRadius: '10px 10px 0 0',
-                    background: `${stage.color}15`,
-                    borderTop: `3px solid ${stage.color}`,
-                    border: `1px solid ${stage.color}30`,
-                    marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '11px', color: stage.color, fontFamily: 'monospace',
-                      fontWeight: 600, letterSpacing: '0.3px' }}>
+                <div
+                  key={stage.id}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.id); }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverStage(null); }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain');
+                    setDragOverStage(null);
+                    if (!id) return;
+                    const r = results.find((r) => String(r.assessmentId) === id);
+                    if (!r || getEffectiveStage(r) === stage.id) return;
+                    setStageOverrides((prev) => ({ ...prev, [id]: stage.id }));
+                    await patchPipeline(parseInt(id, 10), stage.id);
+                  }}
+                  style={{ width: '260px', flexShrink: 0, borderRadius: '12px',
+                    outline: isDropTarget ? `2px dashed ${stage.color}` : '2px dashed transparent',
+                    outlineOffset: '3px', transition: 'outline-color 0.12s' }}
+                >
+                  <div style={{ padding: '10px 14px', borderRadius: '10px 10px 0 0',
+                    background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
+                    borderTop: `3px solid ${stage.color}`, border: `1px solid ${stage.color}30`,
+                    marginBottom: '8px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between', transition: 'background 0.12s' }}>
+                    <span style={{ fontSize: '12px', color: stage.color, fontFamily: 'monospace',
+                      fontWeight: 700, letterSpacing: '0.5px' }}>
                       {stage.label}
                     </span>
-                    <span style={{ fontSize: '11px', color: stage.color, fontFamily: 'monospace',
-                      background: `${stage.color}20`, borderRadius: '10px', padding: '1px 7px' }}>
+                    <span style={{ fontSize: '12px', color: stage.color, fontFamily: 'monospace',
+                      background: `${stage.color}25`, borderRadius: '10px', padding: '1px 8px',
+                      fontWeight: 700 }}>
                       {items.length}
                     </span>
                   </div>
-                  <div style={{ maxHeight: '65vh', overflowY: 'auto', display: 'flex',
-                    flexDirection: 'column', gap: '7px' }}>
+                  <div style={{ minHeight: isDropTarget ? '80px' : '40px', display: 'flex',
+                    flexDirection: 'column', gap: '8px', transition: 'min-height 0.12s' }}>
                     {items.map((r) => {
                       const rid = String(r.assessmentId);
                       const d = TYPE_DATA[r.topType];
                       const fitScore = r.vacancyFitScore010 ?? r.areaFitScore010;
+                      const isDragging = draggingId === rid;
                       return (
-                        <div key={rid} style={{ background: 'rgba(255,255,255,.85)',
-                          border: `1px solid ${C.border}`, borderRadius: '10px',
-                          padding: '10px 11px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
-                            <span style={{ fontSize: '20px', lineHeight: 1 }}>{d.emoji}</span>
+                        <div
+                          key={rid}
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggingId(rid);
+                            e.dataTransfer.setData('text/plain', rid);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
+                          onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
+                          style={{ background: 'rgba(255,255,255,.92)',
+                            border: `1px solid ${C.border}`, borderRadius: '10px',
+                            padding: '11px 13px', boxShadow: '0 1px 6px rgba(0,0,0,.05)',
+                            opacity: isDragging ? 0.4 : 1, cursor: 'grab',
+                            transition: 'opacity 0.15s', userSelect: 'none' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>{d.emoji}</span>
                             <span style={{ fontSize: '13px', lineHeight: 1.3,
                               fontFamily: "'Georgia',serif", color: C.text, flex: 1,
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -354,7 +397,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             <TypeBadge type={r.topType} locale={locale} />
                             {r.areaLabel && (
                               <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
-                                background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                                background: C.inputBg, border: `1px solid ${C.border}`,
                                 color: C.muted, fontFamily: 'monospace' }}>
                                 {r.areaLabel}
                               </span>
@@ -363,7 +406,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                               <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
                                 background: fitScore >= 7 ? 'rgba(21,128,61,.1)' : fitScore >= 4 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
                                 border: `1px solid ${fitScore >= 7 ? 'rgba(21,128,61,.3)' : fitScore >= 4 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
-                                color: fitScore >= 7 ? '#15803d' : fitScore >= 4 ? '#d97706' : '#dc2626',
+                                color: fitScore >= 7 ? C.synergy : fitScore >= 4 ? '#d97706' : C.tension,
                                 fontFamily: 'monospace' }}>
                                 {fitScore}/10
                               </span>
@@ -377,9 +420,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             </div>
                           )}
                           <select
-                            value={r.pipelineStage || 'new'}
+                            value={getEffectiveStage(r)}
                             disabled={stageBusy === rid}
                             onChange={(e) => patchPipeline(r.assessmentId, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
                             style={{ width: '100%', fontSize: '11px', padding: '5px 8px',
                               borderRadius: '7px', border: `1px solid ${C.border}`,
                               background: 'rgba(26,22,37,.03)', color: C.muted,
@@ -394,10 +438,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                       );
                     })}
                     {items.length === 0 && (
-                      <div style={{ padding: '16px 10px', textAlign: 'center',
-                        color: C.faint, fontSize: '11px', fontFamily: 'monospace',
-                        fontStyle: 'italic' }}>
-                        —
+                      <div style={{ padding: '20px 12px', textAlign: 'center',
+                        color: isDropTarget ? stage.color : C.faint, fontSize: '12px',
+                        fontFamily: 'monospace', fontStyle: 'italic',
+                        border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
+                        borderRadius: '8px', transition: 'all 0.12s' }}>
+                        {isDropTarget ? '↓ Soltar aqui' : '—'}
                       </div>
                     )}
                   </div>

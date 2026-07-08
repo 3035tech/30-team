@@ -6,7 +6,7 @@ import { getCompat } from '../../lib/data';
 import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { C } from '../../lib/theme';
+import { C, FONTS, GRADIENT } from '../../lib/theme';
 import LanguageSelect from '../_components/LanguageSelect';
 
 import {
@@ -205,6 +205,71 @@ export default function DashboardClient({
   const compatListPagination = parseCompatTabPagination(snapshot());
   const teamQuerySort = parseTeamSort(snapshot());
 
+  const clearAllFilters = () => {
+    setArea('all');
+    setVacancy('all');
+    setPipeline('all');
+    setEnneagram('all');
+    setDateFrom('');
+    setDateTo('');
+    setSearch('');
+    if (isAdmin) setCompany('all');
+    pushFilters({
+      area: 'all', vacancy: 'all', pipeline: 'all', enneagram: 'all',
+      dateFrom: null, dateTo: null, search: null,
+      ...(isAdmin ? { company: 'all' } : {}),
+    });
+  };
+
+  const _pipelineChipLabels = {
+    new: 'Novo', test_completed: 'Teste', screening: 'Triagem',
+    interview: 'Entrevista', approved: 'Aprovado', rejected: 'Reprovado', archived: 'Arquivado',
+  };
+  const activeChips = [];
+  if (isAdmin && company !== 'all') {
+    const co = companies.find((c) => String(c.id) === company);
+    activeChips.push({ key: 'company', label: co?.name || company,
+      onRemove: () => { setCompany('all'); pushFilters({ company: 'all', vacancy: 'all', pipeline: 'all' }); } });
+  }
+  if (area !== 'all') {
+    const ar = areas.find((a) => a.key === area);
+    activeChips.push({ key: 'area', label: localizeAreaLabel(ar, locale) || area,
+      onRemove: () => { setArea('all'); setPipeline('all'); pushFilters({ area: 'all', pipeline: 'all' }); } });
+  }
+  if (vacancy !== 'all') {
+    const vac = vacancies.find((v) => String(v.id) === vacancy);
+    activeChips.push({ key: 'vacancy', label: vac?.title || vacancy,
+      onRemove: () => { setVacancy('all'); setPipeline('all'); pushFilters({ vacancy: 'all', pipeline: 'all' }); } });
+  }
+  if (enneagram !== 'all') {
+    activeChips.push({ key: 'enneagram', label: `T${enneagram}`,
+      onRemove: () => { setEnneagram('all'); pushFilters({ enneagram: 'all' }); } });
+  }
+  if (pipeline !== 'all') {
+    activeChips.push({ key: 'pipeline', label: _pipelineChipLabels[pipeline] || pipeline,
+      onRemove: () => { setPipeline('all'); pushFilters({ pipeline: 'all' }); } });
+  }
+  if (dateFrom) {
+    activeChips.push({ key: 'dateFrom', label: `De: ${dateFrom}`,
+      onRemove: () => { setDateFrom(''); pushFilters({ dateFrom: null, dateTo: dateTo || null }); } });
+  }
+  if (dateTo) {
+    activeChips.push({ key: 'dateTo', label: `Até: ${dateTo}`,
+      onRemove: () => { setDateTo(''); pushFilters({ dateFrom: dateFrom || null, dateTo: null }); } });
+  }
+  if (selectedSearch) {
+    activeChips.push({ key: 'search', label: `"${selectedSearch}"`,
+      onRemove: () => { setSearch(''); pushFilters({ search: null }); } });
+  }
+
+  const exportUrl = `/api/admin/export?area=${encodeURIComponent(area)}${
+    isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
+  }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
+    pipeline && pipeline !== 'all' ? `&pipeline=${encodeURIComponent(pipeline)}` : ''
+  }${dateFrom ? `&dateFrom=${encodeURIComponent(dateFrom)}` : ''}${
+    dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
+  }${selectedSearch ? `&search=${encodeURIComponent(selectedSearch)}` : ''}`;
+
   const NavLink = ({ id, label, badge }) => (
     <button
       type="button"
@@ -274,11 +339,7 @@ export default function DashboardClient({
         }}>
           <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
           <nav style={{ flex: 1 }}>
-            <span style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
-              color: 'rgba(26,22,37,.28)', fontFamily: 'monospace', display: 'block',
-              padding: '0 12px', marginBottom: '4px' }}>
-              Análise
-            </span>
+            <span style={S.sidebarSection}>Análise</span>
             <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
             <NavLink id="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
             <NavLink id="compatibility" label={t(locale, 'dashboard.compatibility')} />
@@ -288,11 +349,7 @@ export default function DashboardClient({
             {(canManage || isAdmin) && (
               <>
                 <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
-                <span style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
-                  color: 'rgba(26,22,37,.28)', fontFamily: 'monospace', display: 'block',
-                  padding: '0 12px', marginBottom: '4px' }}>
-                  Gestão
-                </span>
+                <span style={S.sidebarSection}>Gestão</span>
                 {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
                 {canManage ? <NavLink id="motivators" label="Motivadores" /> : null}
                 {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
@@ -319,7 +376,7 @@ export default function DashboardClient({
           flex: 1,
           minWidth: 0,
           padding: '28px 24px 60px',
-          maxWidth: '1120px',
+          maxWidth: '1600px',
         }}>
 
           <div style={{ position: 'relative', marginBottom: '16px' }}>
@@ -338,7 +395,7 @@ export default function DashboardClient({
                   pushFilters({ search: trimmed || null });
                 }
               }}
-              placeholder="Buscar candidato por nome (Enter para pesquisar em todas as páginas)…"
+              placeholder="Buscar candidato por nome…"
               aria-label="Busca global de candidatos"
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
                 border: `1px solid ${C.border}`, borderRadius: '12px',
@@ -360,12 +417,13 @@ export default function DashboardClient({
             )}
           </div>
 
+          {/* Title row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-            flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
+            flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
             <div>
               <span style={S.label}>◈ 30Team · {t(locale, 'dashboard.dashboard')}</span>
               <h2 style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
-                background: 'linear-gradient(135deg,#E8E0FF,#A78BFA 55%,#7C3AED)',
+                background: GRADIENT.title,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 {t(locale, 'dashboard.title')}
               </h2>
@@ -378,151 +436,136 @@ export default function DashboardClient({
                 ) : null}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {isAdmin && companies.length > 0 ? (
-                <select
-                  value={company}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setCompany(v);
-                    setPipeline('all');
-                    pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
-                  }}
-                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                    fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
-                >
-                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
-                  {companies.map((co) => (
-                    <option key={co.id} value={String(co.id)}>
-                      {co.name}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">{t(locale, 'dashboard.allAreas')}</option>
-                {areas.map((a) => (
-                  <option key={a.key} value={a.key}>
-                    {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
-                  </option>
-                ))}
-              </select>
+            <a
+              href={exportUrl}
+              style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
+                borderRadius: '10px', padding: '10px 16px', color: C.purple,
+                fontSize: '13px', fontFamily: FONTS.serif, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
+            >
+              ↓ {t(locale, 'dashboard.exportCsv')}
+            </a>
+          </div>
+
+          {/* Filter row */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
+            {isAdmin && companies.length > 0 ? (
               <select
-                value={vacancy}
+                value={company}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setVacancy(v);
+                  setCompany(v);
                   setPipeline('all');
-                  if (isAdmin && v !== 'all') {
-                    const hit = vacancies.find((x) => String(x.id) === v);
-                    if (hit != null && hit.companyId != null) {
-                      setCompany(String(hit.companyId));
-                      pushFilters({ vacancy: v, company: String(hit.companyId), pipeline: 'all' });
-                      return;
-                    }
+                  pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
+                }}
+                style={S.select}
+              >
+                <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
+                {companies.map((co) => (
+                  <option key={co.id} value={String(co.id)}>{co.name}</option>
+                ))}
+              </select>
+            ) : null}
+            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} style={S.select}>
+              <option value="all">{t(locale, 'dashboard.allAreas')}</option>
+              {areas.map((a) => (
+                <option key={a.key} value={a.key}>
+                  {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
+                </option>
+              ))}
+            </select>
+            <select
+              value={vacancy}
+              onChange={(e) => {
+                const v = e.target.value;
+                setVacancy(v);
+                setPipeline('all');
+                if (isAdmin && v !== 'all') {
+                  const hit = vacancies.find((x) => String(x.id) === v);
+                  if (hit != null && hit.companyId != null) {
+                    setCompany(String(hit.companyId));
+                    pushFilters({ vacancy: v, company: String(hit.companyId), pipeline: 'all' });
+                    return;
                   }
-                  pushFilters({ vacancy: v, pipeline: 'all' });
-                }}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
-                {vacancies.map((v) => (
-                  <option key={v.id} value={String(v.id)}>
-                    {v.title} {v.status === 'closed' ? t(locale, 'dashboard.closed') : ''}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={enneagram}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setEnneagram(v);
-                  pushFilters({ enneagram: v });
-                }}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}>
-                <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
-                  <option key={t} value={String(t)}>
-                    T{t} · {typeData[t].short}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={pipeline}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setPipeline(v);
-                  pushFilters({ pipeline: v });
-                }}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif" }}
-              >
-                <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
-                <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
-                <option value="test_completed">{t(locale, 'recruiting.pipelineTestCompleted')}</option>
-                <option value="screening">{t(locale, 'recruiting.pipelineScreening')}</option>
-                <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
-                <option value="approved">{t(locale, 'recruiting.pipelineApproved')}</option>
-                <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
-                <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
-              </select>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                De
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setDateFrom(v);
-                    pushFilters({ dateFrom: v || null, dateTo: dateTo || null });
-                  }}
-                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '9px 10px', color: C.muted,
-                    fontSize: '12px', fontFamily: 'monospace' }}
-                />
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                Até
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setDateTo(v);
-                    pushFilters({ dateFrom: dateFrom || null, dateTo: v || null });
-                  }}
-                  style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '9px 10px', color: C.muted,
-                    fontSize: '12px', fontFamily: 'monospace' }}
-                />
-              </label>
-              <a
-                href={`/api/admin/export?area=${encodeURIComponent(area)}${
-                  isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
-                }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
-                  pipeline && pipeline !== 'all' ? `&pipeline=${encodeURIComponent(pipeline)}` : ''
-                }${dateFrom ? `&dateFrom=${encodeURIComponent(dateFrom)}` : ''}${
-                  dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
-                }${selectedSearch ? `&search=${encodeURIComponent(selectedSearch)}` : ''}`}
-                style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted,
-                  fontSize: '13px', cursor: 'pointer', fontFamily: "'Georgia',serif",
-                  textDecoration: 'none', display: 'inline-block' }}
-              >
-                {t(locale, 'dashboard.exportCsv')}
-              </a>
+                }
+                pushFilters({ vacancy: v, pipeline: 'all' });
+              }}
+              style={S.select}
+            >
+              <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
+              {vacancies.map((v) => (
+                <option key={v.id} value={String(v.id)}>
+                  {v.title} {v.status === 'closed' ? t(locale, 'dashboard.closed') : ''}
+                </option>
+              ))}
+            </select>
+            <select value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} style={S.select}>
+              <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
+                <option key={t} value={String(t)}>T{t} · {typeData[t].short}</option>
+              ))}
+            </select>
+            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} style={S.select}>
+              <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
+              <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
+              <option value="test_completed">{t(locale, 'recruiting.pipelineTestCompleted')}</option>
+              <option value="screening">{t(locale, 'recruiting.pipelineScreening')}</option>
+              <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
+              <option value="approved">{t(locale, 'recruiting.pipelineApproved')}</option>
+              <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
+              <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
+            </select>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: '10px',
+              padding: '6px 12px' }}>
+              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>De</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { const v = e.target.value; setDateFrom(v); pushFilters({ dateFrom: v || null, dateTo: dateTo || null }); }}
+                style={{ border: 'none', background: 'transparent', color: C.muted,
+                  fontSize: '12px', fontFamily: FONTS.mono, outline: 'none', minWidth: '120px' }}
+              />
+              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>Até</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { const v = e.target.value; setDateTo(v); pushFilters({ dateFrom: dateFrom || null, dateTo: v || null }); }}
+                style={{ border: 'none', background: 'transparent', color: C.muted,
+                  fontSize: '12px', fontFamily: FONTS.mono, outline: 'none', minWidth: '120px' }}
+              />
             </div>
           </div>
+
+          {/* Active filter chips */}
+          {activeChips.length > 0 && (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
+              {activeChips.map((chip) => (
+                <span key={chip.key} style={S.filterChip}>
+                  {chip.label}
+                  <button
+                    type="button"
+                    onClick={chip.onRemove}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer',
+                      color: C.purpleLight, fontSize: '11px', padding: '0 0 0 2px',
+                      lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                style={{ fontSize: '11px', color: C.muted, fontFamily: FONTS.mono,
+                  background: 'transparent', border: `1px solid ${C.border}`,
+                  borderRadius: '20px', padding: '4px 10px', cursor: 'pointer' }}
+              >
+                Limpar todos
+              </button>
+            </div>
+          )}
 
           {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'users' && tab !== 'vacancies' ? (
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
