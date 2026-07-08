@@ -328,6 +328,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                     e.preventDefault();
                     const id = e.dataTransfer.getData('text/plain');
                     setDragOverStage(null);
+                    setDraggingId(null);
                     if (!id) return;
                     const r = results.find((r) => String(r.assessmentId) === id);
                     if (!r || getEffectiveStage(r) === stage.id) return;
@@ -409,26 +410,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                           </div>
                           {r.vacancyTitle && (
                             <div style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace',
-                              marginBottom: '7px', overflow: 'hidden', textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap' }}>
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {r.vacancyTitle}
                             </div>
                           )}
-                          <select
-                            value={getEffectiveStage(r)}
-                            disabled={stageBusy === rid}
-                            onChange={(e) => patchPipeline(r.assessmentId, e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ width: '100%', fontSize: '11px', padding: '5px 8px',
-                              borderRadius: '7px', border: `1px solid ${C.border}`,
-                              background: 'rgba(26,22,37,.03)', color: C.muted,
-                              cursor: stageBusy === rid ? 'wait' : 'pointer',
-                              fontFamily: 'monospace' }}
-                          >
-                            {PIPELINE_OPTIONS.map((code) => (
-                              <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
-                            ))}
-                          </select>
                         </div>
                       );
                     })}
