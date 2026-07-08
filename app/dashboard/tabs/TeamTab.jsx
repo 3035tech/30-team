@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
@@ -15,6 +15,16 @@ const PIPELINE_OPTIONS = [
   'approved',
   'rejected',
   'archived',
+];
+
+const KANBAN_STAGES = [
+  { id: 'new',            label: 'Novo',            color: 'rgba(26,22,37,.5)' },
+  { id: 'test_completed', label: 'Teste Realizado',  color: '#7C3AED' },
+  { id: 'screening',      label: 'Triagem',          color: '#0284c7' },
+  { id: 'interview',      label: 'Entrevista',       color: '#d97706' },
+  { id: 'approved',       label: 'Aprovado',         color: '#15803d' },
+  { id: 'rejected',       label: 'Reprovado',        color: '#dc2626' },
+  { id: 'archived',       label: 'Arquivado',        color: 'rgba(26,22,37,.3)' },
 ];
 
 function pipelineLabel(locale, code) {
@@ -47,6 +57,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
   const [bulkStage, setBulkStage] = useState('test_completed');
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => { setSelectedIds(new Set()); }, [results]);
 
@@ -253,7 +264,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
         <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {t(locale, 'panel.team.sortBy')}
         </span>
-        {sortColumns.map(({ k, labelKey }) => {
+        {viewMode === 'list' && sortColumns.map(({ k, labelKey }) => {
           const active = sortKey === k;
           return (
             <button
@@ -277,8 +288,133 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
             </button>
           );
         })}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+          {[
+            { id: 'list',   icon: '≡', label: 'Lista' },
+            { id: 'kanban', icon: '⊞', label: 'Kanban' },
+          ].map(({ id, icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setViewMode(id)}
+              title={label}
+              aria-pressed={viewMode === id}
+              style={{ padding: '5px 10px', borderRadius: '8px', fontSize: '12px',
+                fontFamily: 'monospace', cursor: 'pointer',
+                border: `1px solid ${viewMode === id ? `${C.purple}55` : C.border}`,
+                background: viewMode === id ? `${C.purple}18` : 'transparent',
+                color: viewMode === id ? C.purple : C.muted }}
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </div>
       </div>
-      {selectedIds.size > 0 && (
+
+      {viewMode === 'kanban' && (
+        <div style={{ overflowX: 'auto', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content' }}>
+            {KANBAN_STAGES.map((stage) => {
+              const items = filtered.filter((r) => (r.pipelineStage || 'new') === stage.id);
+              return (
+                <div key={stage.id} style={{ width: '210px', flexShrink: 0 }}>
+                  <div style={{ padding: '8px 12px', borderRadius: '10px 10px 0 0',
+                    background: `${stage.color}15`,
+                    borderTop: `3px solid ${stage.color}`,
+                    border: `1px solid ${stage.color}30`,
+                    marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '11px', color: stage.color, fontFamily: 'monospace',
+                      fontWeight: 600, letterSpacing: '0.3px' }}>
+                      {stage.label}
+                    </span>
+                    <span style={{ fontSize: '11px', color: stage.color, fontFamily: 'monospace',
+                      background: `${stage.color}20`, borderRadius: '10px', padding: '1px 7px' }}>
+                      {items.length}
+                    </span>
+                  </div>
+                  <div style={{ maxHeight: '65vh', overflowY: 'auto', display: 'flex',
+                    flexDirection: 'column', gap: '7px' }}>
+                    {items.map((r) => {
+                      const rid = String(r.assessmentId);
+                      const d = TYPE_DATA[r.topType];
+                      const fitScore = r.vacancyFitScore010 ?? r.areaFitScore010;
+                      return (
+                        <div key={rid} style={{ background: 'rgba(255,255,255,.85)',
+                          border: `1px solid ${C.border}`, borderRadius: '10px',
+                          padding: '10px 11px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
+                            <span style={{ fontSize: '20px', lineHeight: 1 }}>{d.emoji}</span>
+                            <span style={{ fontSize: '13px', lineHeight: 1.3,
+                              fontFamily: "'Georgia',serif", color: C.text, flex: 1,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {r.name}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '7px' }}>
+                            <TypeBadge type={r.topType} locale={locale} />
+                            {r.areaLabel && (
+                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
+                                background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
+                                color: C.muted, fontFamily: 'monospace' }}>
+                                {r.areaLabel}
+                              </span>
+                            )}
+                            {fitScore != null && (
+                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
+                                background: fitScore >= 7 ? 'rgba(21,128,61,.1)' : fitScore >= 4 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
+                                border: `1px solid ${fitScore >= 7 ? 'rgba(21,128,61,.3)' : fitScore >= 4 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
+                                color: fitScore >= 7 ? '#15803d' : fitScore >= 4 ? '#d97706' : '#dc2626',
+                                fontFamily: 'monospace' }}>
+                                {fitScore}/10
+                              </span>
+                            )}
+                          </div>
+                          {r.vacancyTitle && (
+                            <div style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace',
+                              marginBottom: '7px', overflow: 'hidden', textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap' }}>
+                              {r.vacancyTitle}
+                            </div>
+                          )}
+                          <select
+                            value={r.pipelineStage || 'new'}
+                            disabled={stageBusy === rid}
+                            onChange={(e) => patchPipeline(r.assessmentId, e.target.value)}
+                            style={{ width: '100%', fontSize: '11px', padding: '5px 8px',
+                              borderRadius: '7px', border: `1px solid ${C.border}`,
+                              background: 'rgba(26,22,37,.03)', color: C.muted,
+                              cursor: stageBusy === rid ? 'wait' : 'pointer',
+                              fontFamily: 'monospace' }}
+                          >
+                            {PIPELINE_OPTIONS.map((code) => (
+                              <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                    {items.length === 0 && (
+                      <div style={{ padding: '16px 10px', textAlign: 'center',
+                        color: C.faint, fontSize: '11px', fontFamily: 'monospace',
+                        fontStyle: 'italic' }}>
+                        —
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filtered.length === 0 && q && (
+            <div style={{ textAlign: 'center', padding: '40px', color: C.muted,
+              fontStyle: 'italic', fontSize: '14px' }}>
+              Nenhum candidato encontrado para &quot;{localSearch}&quot; nesta página.
+            </div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'list' && selectedIds.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
           padding: '12px 16px', borderRadius: '12px', border: `1px solid ${C.purple}44`,
           background: `${C.purple}0a` }}>
@@ -327,12 +463,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
           )}
         </div>
       )}
-      {filtered.length === 0 && q ? (
+      {viewMode === 'list' && filtered.length === 0 && q ? (
         <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
-          Nenhum candidato encontrado para "{localSearch}" nesta página.
+          Nenhum candidato encontrado para &quot;{localSearch}&quot; nesta página.
         </div>
       ) : null}
-      {filtered.map((r) => {
+      {viewMode === 'list' && filtered.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
         const isOpen = open === id;
