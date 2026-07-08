@@ -9,7 +9,7 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, S } from '../dashboard-shared';
+import { clientSortNextDir, KANBAN_STAGES, S } from '../dashboard-shared';
 
 export function VacancyInviteByEmail({ vacancyId, onSent }) {
   const [candidateName, setCandidateName] = useState('');
@@ -402,21 +402,13 @@ function VacancyRubricEditor({ vacancyId, locale }) {
   );
 }
 
-const KANBAN_STAGES = [
-  { id: 'new',            label: 'Novo',             color: 'rgba(26,22,37,.45)' },
-  { id: 'test_completed', label: 'Teste Realizado',   color: '#7C3AED' },
-  { id: 'screening',      label: 'Triagem',           color: '#0284c7' },
-  { id: 'interview',      label: 'Entrevista',        color: '#d97706' },
-  { id: 'approved',       label: 'Aprovado',          color: '#15803d' },
-  { id: 'rejected',       label: 'Reprovado',         color: '#dc2626' },
-  { id: 'archived',       label: 'Arquivado',         color: 'rgba(26,22,37,.3)' },
-];
-
 function VacancyKanbanBlock({ vacancyId, locale }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [moving, setMoving] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverStage, setDragOverStage] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -490,77 +482,101 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
       ) : null}
 
       {hasAny && (
-        <div style={{ overflowX: 'auto', paddingBottom: '8px' }}>
-          <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content' }}>
+        <div className="kanban-scroll" style={{ overflowX: 'auto', paddingBottom: '8px',
+          WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content', alignItems: 'flex-start' }}>
             {KANBAN_STAGES.map((stage) => {
               const cards = grouped[stage.id] || [];
+              const isDropTarget = dragOverStage === stage.id;
               return (
                 <div
                   key={stage.id}
-                  style={{
-                    width: '200px',
-                    flexShrink: 0,
-                    background: 'rgba(26,22,37,.025)',
-                    border: `1px solid ${C.border}`,
-                    borderRadius: '12px',
-                    padding: '10px',
+                  onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.id); }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverStage(null); }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain');
+                    setDragOverStage(null);
+                    setDraggingId(null);
+                    if (!id) return;
+                    const r = rows.find((r) => String(r.assessmentId) === id);
+                    if (!r || (r.pipelineStage || 'new') === stage.id) return;
+                    await moveTo(parseInt(id, 10), stage.id);
                   }}
+                  style={{ width: '200px', flexShrink: 0, borderRadius: '12px',
+                    outline: isDropTarget ? `2px dashed ${stage.color}` : '2px dashed transparent',
+                    outlineOffset: '3px', transition: 'outline-color 0.12s' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stage.color,
-                      flexShrink: 0, display: 'inline-block' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 10px', borderRadius: '10px 10px 0 0',
+                    background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
+                    borderTop: `3px solid ${stage.color}`, border: `1px solid ${stage.color}30`,
+                    marginBottom: '8px', transition: 'background 0.12s' }}>
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%',
+                      background: stage.color, flexShrink: 0, display: 'inline-block' }} />
                     <span style={{ fontSize: '11px', fontFamily: 'monospace', color: stage.color,
-                      fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                      fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', flex: 1 }}>
                       {stage.label}
                     </span>
-                    <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.faint,
-                      fontFamily: 'monospace', background: 'rgba(26,22,37,.06)',
-                      padding: '1px 6px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '11px', color: stage.color, fontFamily: 'monospace',
+                      background: `${stage.color}25`, borderRadius: '8px', padding: '1px 7px', fontWeight: 700 }}>
                       {cards.length}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    {cards.map((r) => (
-                      <div
-                        key={r.assessmentId}
-                        style={{
-                          background: 'rgba(255,255,255,.7)',
-                          border: `1px solid ${C.border}`,
-                          borderRadius: '8px',
-                          padding: '8px 10px',
-                          opacity: moving === String(r.assessmentId) ? 0.55 : 1,
-                          transition: 'opacity 0.15s',
-                        }}
-                      >
-                        <div style={{ fontSize: '13px', color: C.text, marginBottom: '4px',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {r.name}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
-                            T{r.topType}
-                          </span>
-                          {r.vacancyFitScore010 != null && (
-                            <span style={{ fontSize: '11px', fontFamily: 'monospace',
-                              color: r.vacancyFitScore010 >= 7 ? '#15803d' : r.vacancyFitScore010 >= 4 ? '#d97706' : C.tension }}>
-                              {r.vacancyFitScore010}/10
-                            </span>
-                          )}
-                        </div>
-                        <select
-                          value={stage.id}
-                          disabled={moving === String(r.assessmentId)}
-                          onChange={(e) => moveTo(r.assessmentId, e.target.value)}
-                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', borderRadius: '6px',
-                            border: `1px solid ${C.border}`, background: 'transparent', color: C.muted,
-                            cursor: 'pointer', fontFamily: 'monospace' }}
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{ minHeight: isDropTarget ? '60px' : '30px', display: 'flex',
+                      flexDirection: 'column', gap: '7px', transition: 'min-height 0.12s' }}
+                  >
+                    {cards.map((r) => {
+                      const rid = String(r.assessmentId);
+                      const isDragging = draggingId === rid;
+                      const isBusy = moving === rid;
+                      return (
+                        <div
+                          key={rid}
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggingId(rid);
+                            e.dataTransfer.setData('text/plain', rid);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
+                          onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
+                          style={{ background: 'rgba(255,255,255,.88)',
+                            border: `1px solid ${C.border}`, borderRadius: '8px',
+                            padding: '9px 10px', cursor: 'grab', userSelect: 'none',
+                            opacity: isDragging ? 0.4 : isBusy ? 0.65 : 1,
+                            transition: 'opacity 0.15s',
+                            pointerEvents: draggingId && !isDragging ? 'none' : 'auto' }}
                         >
-                          {KANBAN_STAGES.map((s) => (
-                            <option key={s.id} value={s.id}>{s.label}</option>
-                          ))}
-                        </select>
+                          <div style={{ fontSize: '13px', color: C.text, marginBottom: '4px',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            fontFamily: "'Georgia',serif" }}>
+                            {r.name}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+                              T{r.topType}
+                            </span>
+                            {r.vacancyFitScore010 != null && (
+                              <span style={{ fontSize: '11px', fontFamily: 'monospace',
+                                color: r.vacancyFitScore010 >= 7 ? C.synergy : r.vacancyFitScore010 >= 4 ? '#d97706' : C.tension }}>
+                                {r.vacancyFitScore010}/10
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {cards.length === 0 && (
+                      <div style={{ padding: '14px 10px', textAlign: 'center',
+                        color: isDropTarget ? stage.color : C.faint, fontSize: '11px',
+                        fontFamily: 'monospace', fontStyle: 'italic',
+                        border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
+                        borderRadius: '8px', transition: 'all 0.12s' }}>
+                        {isDropTarget ? '↓' : '—'}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               );

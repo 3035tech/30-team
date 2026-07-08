@@ -131,4 +131,14 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
   );
 };
 
-export { Bar, CompatBadge, S, SortableTh, TypeBadge, clientSortNextDir };
+const KANBAN_STAGES = [
+  { id: 'new',            label: 'Novo',            color: 'rgba(26,22,37,.5)' },
+  { id: 'test_completed', label: 'Teste Realizado',  color: '#7C3AED' },
+  { id: 'screening',      label: 'Triagem',          color: '#0284c7' },
+  { id: 'interview',      label: 'Entrevista',       color: '#d97706' },
+  { id: 'approved',       label: 'Aprovado',         color: '#15803d' },
+  { id: 'rejected',       label: 'Reprovado',        color: '#dc2626' },
+  { id: 'archived',       label: 'Arquivado',        color: 'rgba(26,22,37,.3)' },
+];
+
+export { Bar, CompatBadge, KANBAN_STAGES, S, SortableTh, TypeBadge, clientSortNextDir };

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, S, TypeBadge } from '../dashboard-shared';
+import { Bar, KANBAN_STAGES, S, TypeBadge } from '../dashboard-shared';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -17,15 +17,6 @@ const PIPELINE_OPTIONS = [
   'archived',
 ];
 
-const KANBAN_STAGES = [
-  { id: 'new',            label: 'Novo',            color: 'rgba(26,22,37,.5)' },
-  { id: 'test_completed', label: 'Teste Realizado',  color: '#7C3AED' },
-  { id: 'screening',      label: 'Triagem',          color: '#0284c7' },
-  { id: 'interview',      label: 'Entrevista',       color: '#d97706' },
-  { id: 'approved',       label: 'Aprovado',         color: '#15803d' },
-  { id: 'rejected',       label: 'Reprovado',        color: '#dc2626' },
-  { id: 'archived',       label: 'Arquivado',        color: 'rgba(26,22,37,.3)' },
-];
 
 function pipelineLabel(locale, code) {
   const map = {
@@ -362,8 +353,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                       {items.length}
                     </span>
                   </div>
-                  <div style={{ minHeight: isDropTarget ? '80px' : '40px', display: 'flex',
-                    flexDirection: 'column', gap: '8px', transition: 'min-height 0.12s' }}>
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{ minHeight: isDropTarget ? '80px' : '40px', display: 'flex',
+                      flexDirection: 'column', gap: '8px', transition: 'min-height 0.12s' }}
+                  >
                     {items.map((r) => {
                       const rid = String(r.assessmentId);
                       const d = TYPE_DATA[r.topType];
@@ -383,7 +377,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                             border: `1px solid ${C.border}`, borderRadius: '10px',
                             padding: '11px 13px', boxShadow: '0 1px 6px rgba(0,0,0,.05)',
                             opacity: isDragging ? 0.4 : 1, cursor: 'grab',
-                            transition: 'opacity 0.15s', userSelect: 'none' }}
+                            transition: 'opacity 0.15s', userSelect: 'none',
+                            pointerEvents: draggingId && !isDragging ? 'none' : 'auto' }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                             <span style={{ fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>{d.emoji}</span>
