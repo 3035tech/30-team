@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
+import { personListName, personSortKey } from '../../../lib/person-name';
 import { C } from '../../../lib/theme';
 import { S, TypeBadge } from '../dashboard-shared';
 
@@ -33,11 +34,10 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
   const clearSelection = () => setSelectedIds(new Set());
 
   const visible = results.filter((r) => selectedIds.has(String(r.assessmentId)));
-  const resultsByFirstName = useMemo(() => {
-    const first = (row) => String(row?.name ?? '').trim().split(' ')[0].toLowerCase();
+  const resultsByName = useMemo(() => {
     return [...results].sort((a, b) => {
-      const an = first(a);
-      const bn = first(b);
+      const an = personSortKey(a?.name);
+      const bn = personSortKey(b?.name);
       if (an < bn) return -1;
       if (an > bn) return 1;
       return 0;
@@ -50,7 +50,7 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
       const n = typeof v === 'number' ? v : parseFloat(v);
       return Number.isFinite(n) ? n : 0;
     };
-    const getName = (row) => String(row?.name ?? '').trim().split(' ')[0].toLowerCase();
+    const getName = (row) => personSortKey(row?.name);
     return [...visible].sort((a, b) => {
       if (sortBy.key === 'name') {
         const an = getName(a);
@@ -155,12 +155,14 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
           padding: '4px 0',
         }}
       >
-        {resultsByFirstName.map((r) => {
+        {resultsByName.map((r) => {
           const id = String(r.assessmentId);
           const on = selectedIds.has(id);
+          const displayName = personListName(r.name);
           return (
             <label
               key={id}
+              title={r.name}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -172,15 +174,18 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
                 background: on ? `${C.purple}10` : 'rgba(26,22,37,.03)',
                 fontSize: '12px',
                 color: C.text,
+                maxWidth: '220px',
               }}
             >
               <input
                 type="checkbox"
                 checked={on}
                 onChange={() => toggleId(id)}
-                style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer' }}
+                style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}
               />
-              <span style={{ whiteSpace: 'nowrap' }}>{r.name.split(' ')[0]}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                {displayName}
+              </span>
               <TypeBadge type={r.topType} locale={locale} />
             </label>
           );
@@ -242,8 +247,13 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
                 const maxS = Math.max(...Object.values(r.scores).map(Number));
                 return (
                   <tr key={String(r.assessmentId) || i} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
-                    <td style={{ padding: '10px 12px', color: C.text, whiteSpace: 'nowrap' }}>
-                      {r.name.split(' ')[0]} <TypeBadge type={r.topType} locale={locale} />
+                    <td style={{ padding: '10px 12px', color: C.text, maxWidth: '220px' }}>
+                      <span title={r.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {personListName(r.name)}
+                        </span>
+                        <TypeBadge type={r.topType} locale={locale} />
+                      </span>
                     </td>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => {
                       const s = parseInt(r.scores[t] || 0);
