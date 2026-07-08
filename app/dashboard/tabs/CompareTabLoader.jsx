@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { C } from '../../../lib/theme';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
 
