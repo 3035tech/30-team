@@ -15,7 +15,7 @@ function inviteStatusLabel(locale, status) {
   return 'Sem convite';
 }
 
-function CandidateCard({ row, vacancyId, locale, onChanged }) {
+function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
   const [notes, setNotes] = useState(row.interviewNotes || '');
   const [busy, setBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
@@ -65,6 +65,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged }) {
       if (!res.ok) throw new Error(data?.error || 'Falha ao enviar desafio');
       setOk(`Desafio enviado para ${data.sentTo || row.email}.`);
       onChanged?.();
+      onPipelineChange?.();
       setTimeout(() => setOk(''), 5000);
     } catch (e) {
       setErr(e?.message || 'Erro');
@@ -209,7 +210,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged }) {
   );
 }
 
-export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR' }) {
+export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipelineChange }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -385,6 +386,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR' }) {
               vacancyId={vacancyId}
               locale={locale}
               onChanged={load}
+              onPipelineChange={onPipelineChange}
             />
           ))}
         </div>

@@ -133,7 +133,15 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Falha ao enviar e-mail. Verifique a configuração SMTP no servidor.' }, { status: 502 });
     }
 
-    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId });
+    // Entra no kanban como "Novo" assim que o desafio é enviado
+    await query(
+      `UPDATE vacancy_candidates
+       SET pipeline_stage = COALESCE(pipeline_stage, 'new'), updated_at = NOW()
+       WHERE vacancy_id = $1 AND candidate_id = $2`,
+      [vacancyId, candidateId]
+    );
+
+    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'new' });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

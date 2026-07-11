@@ -394,7 +394,34 @@ function VacancyRubricEditor({ vacancyId, locale }) {
   );
 }
 
-function VacancyKanbanBlock({ vacancyId, locale }) {
+function formatRelativeAgo(dateLike, locale = 'pt-BR') {
+  if (!dateLike) return null;
+  const d = new Date(dateLike);
+  if (Number.isNaN(d.getTime())) return null;
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0) return null;
+  const sec = Math.floor(diffMs / 1000);
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+  const day = Math.floor(hr / 24);
+  const en = String(locale || '').toLowerCase().startsWith('en');
+  if (sec < 60) return en ? 'just now' : 'agora';
+  if (min < 60) return en ? `${min}m ago` : `há ${min} min`;
+  if (hr < 48) return en ? `${hr}h ago` : `há ${hr}h`;
+  if (day < 30) return en ? `${day}d ago` : `há ${day} dia${day !== 1 ? 's' : ''}`;
+  return d.toLocaleDateString(en ? 'en-US' : 'pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+function inviteStatusShort(locale, status) {
+  const s = String(status || '');
+  if (s === 'opened') return t(locale, 'recruiting.inviteOpened');
+  if (s === 'completed') return t(locale, 'recruiting.inviteCompleted');
+  if (s === 'sent') return t(locale, 'recruiting.inviteSent');
+  if (s === 'cancelled') return t(locale, 'recruiting.inviteCancelled');
+  return null;
+}
+
+function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -419,21 +446,41 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [vacancyId]);
+  }, [vacancyId, refreshKey]);
 
-  const moveTo = async (assessmentId, stage) => {
-    setMoving(String(assessmentId));
+  const cardKey = (r) =>
+    r.assessmentId != null ? `a:${r.assessmentId}` : `vc:${r.vacancyCandidateId}`;
+
+  const moveTo = async (row, stage) => {
+    const key = cardKey(row);
+    setMoving(key);
     try {
-      const res = await fetch(`/api/admin/assessments/${encodeURIComponent(assessmentId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pipelineStage: stage }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Erro');
-      setRows((prev) =>
-        prev.map((r) => String(r.assessmentId) === String(assessmentId) ? { ...r, pipelineStage: stage } : r)
-      );
+      if (row.pendingTest || !row.assessmentId) {
+        const res = await fetch(
+          `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(row.candidateId)}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pipelineStage: stage }),
+          }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Erro');
+        setRows((prev) =>
+          prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
+        );
+      } else {
+        const res = await fetch(`/api/admin/assessments/${encodeURIComponent(row.assessmentId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pipelineStage: stage }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Erro');
+        setRows((prev) =>
+          prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
+        );
+      }
     } catch (e) {
       setErr(e?.message || 'Erro ao mover candidato');
     } finally {
@@ -491,11 +538,11 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
                     setDragOverStage(null);
                     setDraggingId(null);
                     if (!id) return;
-                    const r = rows.find((r) => String(r.assessmentId) === id);
+                    const r = rows.find((row) => cardKey(row) === id);
                     if (!r || (r.pipelineStage || 'new') === stage.id) return;
-                    await moveTo(parseInt(id, 10), stage.id);
+                    await moveTo(r, stage.id);
                   }}
-                  style={{ width: '200px', flexShrink: 0, borderRadius: '12px',
+                  style={{ width: '210px', flexShrink: 0, borderRadius: '12px',
                     outline: isDropTarget ? `2px dashed ${stage.color}` : '2px dashed transparent',
                     outlineOffset: '3px', transition: 'outline-color 0.12s' }}
                 >
@@ -521,9 +568,11 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
                       flexDirection: 'column', gap: '7px', transition: 'min-height 0.12s' }}
                   >
                     {cards.map((r) => {
-                      const rid = String(r.assessmentId);
+                      const rid = cardKey(r);
                       const isDragging = draggingId === rid;
                       const isBusy = moving === rid;
+                      const inviteLabel = inviteStatusShort(locale, r.inviteStatus);
+                      const ago = formatRelativeAgo(r.inviteSentAt, locale);
                       return (
                         <div
                           key={rid}
@@ -541,15 +590,24 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
                             transition: 'opacity 0.15s',
                             pointerEvents: draggingId && !isDragging ? 'none' : 'auto' }}
                         >
-                          <div style={{ fontSize: '13px', color: C.text, marginBottom: '4px',
+                          <div style={{ fontSize: '13px', color: C.text, marginBottom: '3px',
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                             fontFamily: "'Georgia',serif" }}>
                             {r.name}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
-                              T{r.topType}
-                            </span>
+                          {r.email ? (
+                            <div style={{ fontSize: '10px', fontFamily: 'monospace', color: C.faint,
+                              marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                              title={r.email}>
+                              {r.email}
+                            </div>
+                          ) : null}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            {r.pendingTest || r.topType == null ? null : (
+                              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+                                T{r.topType}
+                              </span>
+                            )}
                             {r.vacancyFitScore010 != null && (
                               <span style={{ fontSize: '11px', fontFamily: 'monospace',
                                 color: r.vacancyFitScore010 >= 7 ? C.synergy : r.vacancyFitScore010 >= 4 ? '#d97706' : C.tension }}>
@@ -557,6 +615,23 @@ function VacancyKanbanBlock({ vacancyId, locale }) {
                               </span>
                             )}
                           </div>
+                          {(inviteLabel || ago) ? (
+                            <div style={{ marginTop: '5px', fontSize: '10px', fontFamily: 'monospace', color: C.muted,
+                              lineHeight: 1.35 }}>
+                              {inviteLabel ? `Convite: ${inviteLabel}` : null}
+                              {inviteLabel && ago ? ' · ' : null}
+                              {ago || null}
+                            </div>
+                          ) : r.pendingTest ? (
+                            <div style={{ marginTop: '5px', fontSize: '10px', fontFamily: 'monospace', color: C.faint }}>
+                              Aguardando teste
+                            </div>
+                          ) : null}
+                          {r.hasNotes ? (
+                            <div style={{ marginTop: '4px', fontSize: '10px', fontFamily: 'monospace', color: C.purpleLight }}>
+                              Com anotações
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
@@ -595,6 +670,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [invitesRefresh, setInvitesRefresh] = useState(0);
+  const [pipelineRefresh, setPipelineRefresh] = useState(0);
   const [linkExpiryEdit, setLinkExpiryEdit] = useState(null);
   const [editingVacancy, setEditingVacancy] = useState(null);
   const [detailVacancy, setDetailVacancy] = useState(null);
@@ -1231,11 +1307,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   Editar expiração do link
                 </button>
               </div>
-              <VacancyInterviewCandidates vacancyId={v.id} locale={locale} />
+              <VacancyInterviewCandidates
+                vacancyId={v.id}
+                locale={locale}
+                onPipelineChange={() => {
+                  setInvitesRefresh((x) => x + 1);
+                  setPipelineRefresh((x) => x + 1);
+                }}
+              />
               <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
               <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
               <VacancyRubricEditor vacancyId={v.id} locale={locale} />
-              <VacancyKanbanBlock vacancyId={v.id} locale={locale} />
+              <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
             </div>
           </div>
         ) : null}

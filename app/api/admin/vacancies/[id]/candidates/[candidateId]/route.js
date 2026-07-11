@@ -52,18 +52,51 @@ export async function PATCH(request, { params }) {
     if (loaded.error) return loaded.error;
 
     const body = await request.json().catch(() => ({}));
-    if (body.interviewNotes === undefined && body.notes === undefined) {
+    if (body.interviewNotes === undefined && body.notes === undefined && body.pipelineStage === undefined) {
       return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 });
     }
-    const notes = sanitizeInterviewNotesHtml(body.interviewNotes ?? body.notes);
+
+    const PIPELINE = new Set([
+      'new',
+      'test_completed',
+      'screening',
+      'interview',
+      'approved',
+      'rejected',
+      'archived',
+    ]);
+
+    let notes = loaded.link.interviewNotes;
+    if (body.interviewNotes !== undefined || body.notes !== undefined) {
+      notes = sanitizeInterviewNotesHtml(body.interviewNotes ?? body.notes);
+    }
+
+    let stage = undefined;
+    if (body.pipelineStage !== undefined) {
+      const s = body.pipelineStage == null ? null : String(body.pipelineStage).trim();
+      if (s != null && !PIPELINE.has(s)) {
+        return NextResponse.json({ error: 'pipelineStage inválido' }, { status: 400 });
+      }
+      stage = s;
+    }
 
     const upd = await query(
       `UPDATE vacancy_candidates
-       SET interview_notes = $3, updated_at = NOW()
+       SET interview_notes = CASE WHEN $3::boolean THEN $4 ELSE interview_notes END,
+           pipeline_stage = CASE WHEN $5::boolean THEN $6 ELSE pipeline_stage END,
+           updated_at = NOW()
        WHERE vacancy_id = $1 AND candidate_id = $2
        RETURNING id, vacancy_id AS "vacancyId", candidate_id AS "candidateId",
-                 interview_notes AS "interviewNotes", updated_at AS "updatedAt"`,
-      [vacancyId, candidateId, notes]
+                 interview_notes AS "interviewNotes", pipeline_stage AS "pipelineStage",
+                 updated_at AS "updatedAt"`,
+      [
+        vacancyId,
+        candidateId,
+        body.interviewNotes !== undefined || body.notes !== undefined,
+        body.interviewNotes !== undefined || body.notes !== undefined ? notes : null,
+        body.pipelineStage !== undefined,
+        stage ?? null,
+      ]
     );
 
     return NextResponse.json({
