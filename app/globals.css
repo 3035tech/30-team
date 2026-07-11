@@ -94,8 +94,93 @@ textarea:focus-visible {
   }
 }
 
+/* Candidate assessment flows (eneagrama + motivadores) — mobile */
+.cand-flow {
+  -webkit-overflow-scrolling: touch;
+}
+.cand-flow-card {
+  max-width: 100%;
+}
+.cand-likert-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.cand-likert-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 56px;
+  aspect-ratio: 1;
+  height: auto !important;
+  width: auto !important;
+  min-height: 44px;
+}
+.cand-tap {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px !important;
+  box-sizing: border-box;
+}
+.cand-flow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cand-q-text {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.cand-type-label {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .cand-flow {
+    padding: 12px !important;
+    justify-content: flex-start !important;
+    padding-top: 16px !important;
+    padding-bottom: 28px !important;
+  }
+  .cand-flow-card {
+    padding: 22px 18px !important;
+    border-radius: 16px !important;
+  }
+  .cand-q-text {
+    font-size: 17px !important;
+    margin-bottom: 24px !important;
+  }
+  .cand-type-label {
+    width: 72px !important;
+    font-size: 11px !important;
+  }
+  .cand-likert-row {
+    gap: 6px;
+  }
+  .cand-likert-btn {
+    max-width: none;
+    min-height: 48px;
+    font-size: 15px !important;
+  }
+  .cand-scale-btn {
+    padding: 14px 14px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .cand-likert-row {
+    gap: 4px;
+  }
+}
+
 /* Kanban horizontal scroll */
 .kanban-scroll::-webkit-scrollbar { height: 6px; }
 .kanban-scroll::-webkit-scrollbar-track { background: rgba(26,22,37,.05); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb { background: rgba(26,22,37,.2); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb:hover { background: rgba(26,22,37,.35); }
+

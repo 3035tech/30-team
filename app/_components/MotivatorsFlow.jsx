@@ -47,7 +47,8 @@ const S = {
     justifyContent: 'center',
     padding: '24px',
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'auto',
+    boxSizing: 'border-box',
   },
   glow: { position: 'fixed', inset: 0, pointerEvents: 'none', background: RADIAL_GLOW },
   card: {
@@ -61,6 +62,7 @@ const S = {
     boxShadow: SHADOW.cardElevated,
     position: 'relative',
     zIndex: 1,
+    boxSizing: 'border-box',
   },
   label: {
     fontSize: '10px',
@@ -122,9 +124,9 @@ function ThankYouScreen({ locale, saveError, onDone }) {
         };
 
   return (
-    <div style={S.app}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
+      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
         <span style={S.label}>{copy.label}</span>
         <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{copy.title}</h1>
         {saveError ? <p style={{ color: C.tension, marginBottom: '16px', fontSize: '14px' }}>{saveError}</p> : null}
@@ -171,14 +173,14 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
   };
 
   return (
-    <div style={S.app}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div style={S.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div className="cand-flow-card" style={S.card}>
+        <div className="cand-flow-header" style={{ marginBottom: '16px' }}>
           <span style={{ ...S.label, marginBottom: 0 }}>◈ Motivadores</span>
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 style={S.h1}>Assessment de Motivadores Profissionais</h1>
+        <h1 style={{ ...S.h1, fontSize: 'clamp(24px, 6vw, 40px)' }}>Assessment de Motivadores Profissionais</h1>
         <p style={S.p}>{copy.intro}</p>
 
         {notice ? (
@@ -306,6 +308,7 @@ function RankingChoice({ question, onConfirm }) {
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '20px' }}>
         <button
           type="button"
+          className="cand-tap"
           disabled={order.length === 0}
           onClick={() => setOrder([])}
           style={{
@@ -361,16 +364,16 @@ function TestScreen({ questions, onComplete }) {
   if (!q) return null;
 
   return (
-    <div style={S.app}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div style={{ ...S.card, maxWidth: '700px', opacity: fade ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px', opacity: fade ? 0.6 : 1, transition: 'opacity 0.2s' }}>
         <span style={S.label}>
           Pergunta {idx + 1} de {questions.length}
         </span>
         <div style={{ height: '4px', background: 'rgba(26,22,37,.08)', borderRadius: 2, marginBottom: '24px' }}>
           <div style={{ width: `${progress}%`, height: '100%', background: C.purple, borderRadius: 2 }} />
         </div>
-        <p style={{ fontSize: '17px', lineHeight: 1.6, marginBottom: '28px', color: C.text }}>{q.text}</p>
+        <p className="cand-q-text" style={{ fontSize: '17px', lineHeight: 1.6, marginBottom: '28px', color: C.text }}>{q.text}</p>
 
         {q.questionType === 'forced_choice' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -399,15 +402,16 @@ function TestScreen({ questions, onComplete }) {
           <RankingChoice key={q.id} question={q} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
         ) : (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C.muted, marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C.muted, marginBottom: '12px', gap: '8px' }}>
               <span>{q.likertScale?.minLabel || 'Discordo'}</span>
               <span>{q.likertScale?.maxLabel || 'Concordo'}</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            <div className="cand-likert-row">
               {[1, 2, 3, 4, 5].map((v) => (
                 <button
                   key={v}
                   type="button"
+                  className="cand-likert-btn"
                   onClick={() => advance({ likertValue: v })}
                   style={{
                     width: '48px',
@@ -430,6 +434,7 @@ function TestScreen({ questions, onComplete }) {
         {idx > 0 ? (
           <button
             type="button"
+            className="cand-tap"
             style={{ marginTop: '24px', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: '13px' }}
             onClick={() => { setIdx((i) => i - 1); setFade(false); }}
           >
@@ -500,9 +505,9 @@ export default function MotivatorsFlow({
   if (screen === 'result') {
     if (!submitOk && saveError) {
       return (
-        <div style={S.app}>
+        <div className="cand-flow" style={S.app}>
           <div style={S.glow} />
-          <div style={S.card}>
+          <div className="cand-flow-card" style={S.card}>
             <p style={S.p}>{saveError}</p>
             <button type="button" style={S.btn()} onClick={() => setScreen('home')}>Voltar</button>
           </div>

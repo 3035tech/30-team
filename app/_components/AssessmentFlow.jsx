@@ -21,7 +21,8 @@ const S = {
     justifyContent: 'center',
     padding: '24px',
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'auto',
+    boxSizing: 'border-box',
   },
   glow: {
     position: 'fixed',
@@ -43,6 +44,7 @@ const S = {
     boxShadow: SHADOW.cardElevated,
     position: 'relative',
     zIndex: 1,
+    boxSizing: 'border-box',
   },
   label: {
     fontSize: '10px',
@@ -161,10 +163,10 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   };
 
   return (
-    <div style={S.app}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div style={S.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+      <div className="cand-flow-card" style={S.card}>
+        <div className="cand-flow-header" style={{ marginBottom: '16px' }}>
           <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'candidate.brand')}</span>
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
@@ -409,9 +411,9 @@ function TestScreen({ name, onComplete, locale }) {
   }, [fade, idx, questions, answers]);
 
   return (
-    <div style={S.app}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div style={{ ...S.card, maxWidth: '700px' }}>
+      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
           <span style={{ ...S.label, marginBottom: 0 }}>
             {t(locale, 'candidate.questionProgress', { current: idx + 1, total: questions.length })}
@@ -420,6 +422,7 @@ function TestScreen({ name, onComplete, locale }) {
             {idx > 0 ? (
               <button
                 type="button"
+                className="cand-tap"
                 onClick={goBack}
                 style={{
                   background: 'rgba(26,22,37,.04)',
@@ -463,7 +466,7 @@ function TestScreen({ name, onComplete, locale }) {
           />
           {t(locale, 'candidate.carefulMode')}
         </label>
-        <p style={{ fontSize: '20px', lineHeight: 1.6, marginBottom: '36px', fontWeight: 'normal', opacity: fade ? 0.3 : 1, transition: 'opacity .28s' }}>
+        <p className="cand-q-text" style={{ fontSize: '20px', lineHeight: 1.6, marginBottom: '36px', fontWeight: 'normal', opacity: fade ? 0.3 : 1, transition: 'opacity .28s' }}>
           "{q.text}"
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -474,6 +477,7 @@ function TestScreen({ name, onComplete, locale }) {
               <button
                 key={i}
                 type="button"
+                className="cand-scale-btn"
                 onClick={() => chooseOption(val)}
                 style={{
                   display: 'flex',
@@ -555,9 +559,9 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
   const second = sorted[1];
 
   return (
-    <div style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
+    <div className="cand-flow" style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
       <div style={S.glow} />
-      <div style={{ ...S.card, maxWidth: '700px' }}>
+      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px' }}>
         <span style={S.label}>{t(locale, 'candidate.resultFor', { name: name.split(' ')[0] })}</span>
         {saveError ? (
           <div
@@ -624,7 +628,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {sorted.map(({ type, score }) => (
               <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ width: '90px', fontSize: '11px', color: typeData[type].color, fontFamily: 'monospace', flexShrink: 0 }}>
+                <span className="cand-type-label" style={{ width: '90px', fontSize: '11px', color: typeData[type].color, fontFamily: 'monospace', flexShrink: 0 }}>
                   {typeData[type].emoji} T{type}
                 </span>
                 <div style={{ flex: 1 }}>
@@ -762,9 +766,9 @@ export default function AssessmentFlow({
   if (screen === 'result') {
     if (!result) {
       return (
-        <div style={S.app}>
+        <div className="cand-flow" style={S.app}>
           <div style={S.glow} />
-          <div style={S.card}>
+          <div className="cand-flow-card" style={S.card}>
             <span style={S.label}>◈ 30Team</span>
             <p style={{ ...S.p, marginBottom: 0 }}>{saveError || t(locale, 'candidate.finishErrorFallback')}</p>
             <button
