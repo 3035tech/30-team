@@ -59,6 +59,14 @@ export function useDashboardNavigation({
     const pipeResolved = opts.pipeline !== undefined ? opts.pipeline : pipeline;
     if (pipeResolved && pipeResolved !== 'all') p.set('pipeline', String(pipeResolved));
 
+    // Detalhe individual da vaga (aba vacancies): /dashboard?tab=vacancies&vacancyDetail=<id>
+    if (opts.vacancyDetail !== undefined) {
+      if (opts.vacancyDetail) p.set('vacancyDetail', String(opts.vacancyDetail));
+    } else {
+      const curDetail = urlParams.get('vacancyDetail');
+      if (curDetail) p.set('vacancyDetail', curDetail);
+    }
+
     const merged = { ...snapshot(), ...opts };
     const teamFrom = parseTeamPagination(merged);
     const teamSortSt = parseTeamSort(merged);
@@ -121,7 +129,7 @@ export function useDashboardNavigation({
   };
 
   const navigateToTab = (id) => {
-    navigateWithOpts({ tab: id });
+    navigateWithOpts({ tab: id, vacancyDetail: '' });
   };
 
   const pushFilters = (nextFilter) => {
