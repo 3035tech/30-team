@@ -30,6 +30,19 @@ export async function POST(request) {
     const inviteToken = String(rawInviteToken || '').trim();
     const safeEmail = normalizeEmail(email);
 
+    // Telemetria soft (anti-IA / cópia): opcional, validada no servidor.
+    const MAX_FILL_MS = 24 * 60 * 60 * 1000;
+    let fillDurationMs = null;
+    if (body.fillDurationMs != null && body.fillDurationMs !== '') {
+      const n = Number(body.fillDurationMs);
+      if (Number.isFinite(n) && n >= 0 && n <= MAX_FILL_MS) fillDurationMs = Math.round(n);
+    }
+    let copyEventCount = 0;
+    if (body.copyEventCount != null && body.copyEventCount !== '') {
+      const n = Number(body.copyEventCount);
+      if (Number.isFinite(n) && n >= 0) copyEventCount = Math.min(9999, Math.round(n));
+    }
+
     if ((!companyToken && !vacancyToken) || !name || !areaKey || consent !== true) {
       return NextResponse.json({ errorCode: 'INCOMPLETE_DATA', error: 'Dados incompletos' }, { status: 400 });
     }
@@ -180,16 +193,16 @@ export async function POST(request) {
 
     const assessment = resolvedVacancyId
       ? await query(
-          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id, invite_id, pipeline_stage)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'test_completed')
+          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id, invite_id, pipeline_stage, fill_duration_ms, copy_event_count)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'test_completed', $8, $9)
            RETURNING id, created_at AS "createdAt"`,
-          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId, resolvedInviteId]
+          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId, resolvedInviteId, fillDurationMs, copyEventCount]
         )
       : await query(
-          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, fill_duration_ms, copy_event_count)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id, created_at AS "createdAt"`,
-          [candidateId, companyId, areaId, topType, JSON.stringify(scores)]
+          [candidateId, companyId, areaId, topType, JSON.stringify(scores), fillDurationMs, copyEventCount]
         );
 
     if (resolvedInviteId) {

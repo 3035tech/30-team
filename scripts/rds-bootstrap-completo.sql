@@ -92,7 +92,9 @@ CREATE TABLE IF NOT EXISTS assessments (
   top_type     INTEGER NOT NULL CHECK (top_type BETWEEN 1 AND 9),
   scores       JSONB NOT NULL,
   source       TEXT NOT NULL DEFAULT 'public_form',
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fill_duration_ms INTEGER CHECK (fill_duration_ms IS NULL OR fill_duration_ms >= 0),
+  copy_event_count INTEGER NOT NULL DEFAULT 0 CHECK (copy_event_count >= 0)
 );
 
 CREATE OR REPLACE FUNCTION trg_assessments_company_matches_candidate()

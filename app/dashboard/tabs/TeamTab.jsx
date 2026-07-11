@@ -31,7 +31,24 @@ function pipelineLabel(locale, code) {
   return t(locale, map[code] || 'recruiting.pipelineNew');
 }
 
-export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' }) {
+/** Formata ms → "Xm Ys" / "Xh Ym" para telemetria admin. */
+function formatFillDuration(ms) {
+  if (ms == null || !Number.isFinite(Number(ms))) return null;
+  const totalSec = Math.max(0, Math.round(Number(ms) / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+/** 54 perguntas: < ~3 min é bem rápido (sinal soft). */
+function isSuspiciouslyFast(ms) {
+  return ms != null && Number.isFinite(Number(ms)) && Number(ms) < 3 * 60 * 1000;
+}
+
+export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', isAdmin = false }) {
   const [open, setOpen] = useState(null);
   const [localSearch, setLocalSearch] = useState('');
   const router = useRouter();
@@ -728,6 +745,27 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR' })
                               #{a.id} · {a.areaLabel}
                               {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
                             </span>
+                            {isAdmin && (a.fillDurationMs != null || a.copyEventCount != null) && (
+                              <div
+                                style={{
+                                  marginTop: '6px',
+                                  fontSize: '11px',
+                                  fontFamily: 'monospace',
+                                  lineHeight: 1.5,
+                                  color: isSuspiciouslyFast(a.fillDurationMs) || (a.copyEventCount || 0) > 0
+                                    ? '#b45309'
+                                    : C.faint,
+                                }}
+                                title="Telemetria de integridade (somente admin)"
+                              >
+                                Tempo do teste:{' '}
+                                {formatFillDuration(a.fillDurationMs) || '—'}
+                                {isSuspiciouslyFast(a.fillDurationMs) ? ' · rápido' : ''}
+                                {' · '}
+                                Cópias na tela: {a.copyEventCount ?? 0}
+                                {(a.copyEventCount || 0) > 0 ? ' · atenção' : ''}
+                              </div>
+                            )}
                             {a.pipelineHistory?.length > 0 && (
                               <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint,
                                 fontFamily: 'monospace', lineHeight: 1.8 }}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
 import { drawLocalizedQuestions, getScaleLabels, getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
@@ -333,9 +333,36 @@ function TestScreen({ name, onComplete, locale }) {
   const [pendingVal, setPendingVal] = useState(null);
   const [carefulMode, setCarefulMode] = useState(false);
   const [fade, setFade] = useState(false);
+  const startedAtRef = useRef(Date.now());
+  const copyCountRef = useRef(0);
   const q = questions[idx];
   const progress = (idx / questions.length) * 100;
   const scaleLabels = getScaleLabels(locale);
+
+  useEffect(() => {
+    const onCopyLike = () => {
+      copyCountRef.current = Math.min(9999, copyCountRef.current + 1);
+    };
+    document.addEventListener('copy', onCopyLike);
+    document.addEventListener('cut', onCopyLike);
+    return () => {
+      document.removeEventListener('copy', onCopyLike);
+      document.removeEventListener('cut', onCopyLike);
+    };
+  }, []);
+
+  const finishWithTelemetry = useCallback(
+    (nextAnswers) => {
+      const fillDurationMs = Math.max(0, Date.now() - startedAtRef.current);
+      onComplete({
+        name,
+        answers: nextAnswers,
+        fillDurationMs,
+        copyEventCount: copyCountRef.current,
+      });
+    },
+    [name, onComplete]
+  );
 
   const advanceWithAnswer = useCallback(
     (val) => {
@@ -350,11 +377,11 @@ function TestScreen({ name, onComplete, locale }) {
           setSelected(null);
           setFade(false);
         } else {
-          onComplete({ name, answers: nextAnswers });
+          finishWithTelemetry(nextAnswers);
         }
       }, 280);
     },
-    [fade, answers, q.id, idx, questions.length, name, onComplete]
+    [fade, answers, q.id, idx, questions.length, finishWithTelemetry]
   );
 
   const chooseOption = useCallback(
@@ -707,6 +734,8 @@ export default function AssessmentFlow({
       vacancyToken,
       ...(inviteToken ? { inviteToken } : {}),
       answers: data.answers,
+      fillDurationMs: data.fillDurationMs,
+      copyEventCount: data.copyEventCount,
     };
     let errMsg = null;
     try {

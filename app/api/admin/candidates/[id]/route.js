@@ -41,7 +41,9 @@ export async function GET(_request, { params }) {
             ass.vacancy_id AS "vacancyId",
             v.title AS "vacancyTitle",
             ass.pipeline_stage AS "pipelineStage",
-            ass.invite_id AS "inviteId"
+            ass.invite_id AS "inviteId",
+            ass.fill_duration_ms AS "fillDurationMs",
+            ass.copy_event_count AS "copyEventCount"
      FROM assessments ass
      JOIN areas ar ON ar.id = ass.area_id
      LEFT JOIN vacancies v ON v.id = ass.vacancy_id
@@ -69,10 +71,18 @@ export async function GET(_request, { params }) {
       }
     } catch {}
   }
-  const assessmentsWithHistory = a.rows.map((row) => ({
-    ...row,
-    pipelineHistory: historyByAssessment[String(row.id)] || [],
-  }));
+  const assessmentsWithHistory = a.rows.map((row) => {
+    const base = {
+      ...row,
+      pipelineHistory: historyByAssessment[String(row.id)] || [],
+    };
+    // Telemetria de integridade: apenas role admin
+    if (!isAdmin) {
+      delete base.fillDurationMs;
+      delete base.copyEventCount;
+    }
+    return base;
+  });
 
   await audit({
     actorUserId: payload.userId || null,

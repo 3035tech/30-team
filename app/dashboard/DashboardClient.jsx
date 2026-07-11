@@ -591,6 +591,7 @@ export default function DashboardClient({
                     sortDir={teamQuerySort.dir}
                     onSort={pushTeamSort}
                     locale={locale}
+                    isAdmin={isAdmin}
                   />
                   {listTotal > 0 ? (
                     <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
