@@ -10,6 +10,7 @@ import {
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
 import { clientSortNextDir, KANBAN_STAGES, S } from '../dashboard-shared';
+import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 
 export function VacancyInviteByEmail({ vacancyId, onSent }) {
   const [candidateName, setCandidateName] = useState('');
@@ -1239,6 +1240,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   Editar expiração do link
                 </button>
               </div>
+              <VacancyInterviewCandidates vacancyId={v.id} locale={locale} />
               <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
               <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
               <VacancyRubricEditor vacancyId={v.id} locale={locale} />

@@ -1,7 +1,6 @@
--- Scripts de banco — fluxo "candidato na entrevista → notas → envio eneagrama"
--- Execute no pgAdmin / psql antes de usar a nova tela na vaga.
+-- 014: candidatos pré-cadastrados na vaga (entrevista → notas → envio do desafio).
+-- Email é a chave de união com eneagrama/motivadores.
 
--- 1) Vínculo candidato ↔ vaga (pré-cadastro na entrevista) + notas ricas
 CREATE TABLE IF NOT EXISTS vacancy_candidates (
   id                  BIGSERIAL PRIMARY KEY,
   vacancy_id          BIGINT NOT NULL REFERENCES vacancies(id) ON DELETE CASCADE,
@@ -23,7 +22,6 @@ CREATE INDEX IF NOT EXISTS idx_vacancy_candidates_candidate
 CREATE INDEX IF NOT EXISTS idx_vacancy_candidates_company
   ON vacancy_candidates (company_id, created_at DESC);
 
--- 2) Ligar convite de eneagrama ao candidato pré-cadastrado
 ALTER TABLE candidate_invites
   ADD COLUMN IF NOT EXISTS candidate_id BIGINT REFERENCES candidates(id) ON DELETE SET NULL;
 
@@ -31,12 +29,9 @@ CREATE INDEX IF NOT EXISTS idx_candidate_invites_candidate
   ON candidate_invites (candidate_id)
   WHERE candidate_id IS NOT NULL;
 
--- 3) Controle de migration (opcional, alinha com npm run db:migrate)
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  id BIGSERIAL PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-INSERT INTO schema_migrations (name) VALUES ('014_vacancy_candidates.sql')
-ON CONFLICT (name) DO NOTHING;
+COMMENT ON TABLE vacancy_candidates IS
+  'Vínculo candidato↔vaga criado na entrevista (antes do teste). Notas ricas em interview_notes.';
+COMMENT ON COLUMN vacancy_candidates.interview_notes IS
+  'Anotações da entrevista (HTML sanitizado do editor rico).';
+COMMENT ON COLUMN candidate_invites.candidate_id IS
+  'Candidato pré-cadastrado ao enviar o desafio de eneagrama.';
