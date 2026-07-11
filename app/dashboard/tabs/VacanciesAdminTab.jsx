@@ -11,6 +11,7 @@ import {
 } from '../../../lib/assessment-filters';
 import { clientSortNextDir, KANBAN_STAGES, S } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
+import { RichTextEditor } from '../../_components/RichTextEditor';
 
 export function VacancyInviteByEmail({ vacancyId, onSent }) {
   const [candidateName, setCandidateName] = useState('');
@@ -364,24 +365,14 @@ function VacancyRubricEditor({ vacancyId, locale }) {
           </label>
         ))}
       </div>
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        placeholder={t(locale, 'recruiting.rubricNotes')}
-        rows={2}
-        style={{
-          width: '100%',
-          boxSizing: 'border-box',
-          marginBottom: '8px',
-          padding: '8px 10px',
-          borderRadius: '8px',
-          border: `1px solid ${C.border}`,
-          fontSize: '11px',
-          fontFamily: 'monospace',
-          background: 'rgba(26,22,37,.03)',
-          color: C.text,
-        }}
-      />
+      <div style={{ marginBottom: '8px' }}>
+        <RichTextEditor
+          value={notes}
+          onChange={setNotes}
+          placeholder={t(locale, 'recruiting.rubricNotes')}
+          minHeight={120}
+        />
+      </div>
       <button
         type="button"
         onClick={save}

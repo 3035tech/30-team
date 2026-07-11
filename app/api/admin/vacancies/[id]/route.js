@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead } from '../../../../../lib/db';
+import { sanitizeInterviewNotesHtml } from '../../../../../lib/sanitize-html';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -148,7 +149,7 @@ export async function PATCH(request, { params }) {
       body.vacancyRubricNotes !== undefined
         ? body.vacancyRubricNotes == null
           ? null
-          : String(body.vacancyRubricNotes).slice(0, 4000)
+          : sanitizeInterviewNotesHtml(body.vacancyRubricNotes)
         : prevN;
     await query(
       `INSERT INTO vacancy_rubrics (vacancy_id, desired_type_weights, notes, updated_at)
