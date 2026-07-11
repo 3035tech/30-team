@@ -498,7 +498,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const hasAny = rows.length > 0;
 
   return (
-    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
         <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase',
           letterSpacing: '1.5px' }}>
@@ -1041,55 +1041,60 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         </div>
 
         {v ? (
-          <div style={{ ...S.card }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: '18px', color: C.text }}>{v.title}</span>
-                  <span
-                    style={{
-                      fontFamily: 'monospace', fontSize: '11px',
-                      color: v.status === 'open' ? C.synergy : C.faint,
-                      border: `1px solid ${v.status === 'open' ? `${C.synergy}55` : C.border}`,
-                      borderRadius: '999px', padding: '2px 8px',
-                    }}
-                  >
-                    {v.status === 'open' ? 'Aberta' : 'Fechada'}
-                  </span>
-                  {isAdmin && (
-                    <span style={{ fontFamily: 'monospace', color: C.faint, fontSize: '12px' }}>
-                      · {v.companyName}
+          <>
+            {/* 1–4. Informações e ações da vaga + rubrica */}
+            <div style={{ ...S.card }}>
+              <span style={{ ...S.label, marginBottom: '14px', display: 'block' }}>Informações da vaga</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 700, fontSize: '18px', color: C.text }}>{v.title}</span>
+                    <span
+                      style={{
+                        fontFamily: 'monospace', fontSize: '11px',
+                        color: v.status === 'open' ? C.synergy : C.faint,
+                        border: `1px solid ${v.status === 'open' ? `${C.synergy}55` : C.border}`,
+                        borderRadius: '999px', padding: '2px 8px',
+                      }}
+                    >
+                      {v.status === 'open' ? 'Aberta' : 'Fechada'}
                     </span>
-                  )}
-                </div>
-                {token ? (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                    {link}
+                    {isAdmin && (
+                      <span style={{ fontFamily: 'monospace', color: C.faint, fontSize: '12px' }}>
+                        · {v.companyName}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
-                    (sem link ativo)
-                  </div>
-                )}
-                {token && exp ? (
-                  <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                    expira em {exp.toLocaleString()}
-                  </div>
-                ) : null}
-                <div style={{ marginTop: '8px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {v.positionsCount != null && v.positionsCount > 0 && (
-                    <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                      {v.positionsCount} vaga{v.positionsCount !== 1 ? 's' : ''}
-                    </span>
+                  {token ? (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {link}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
+                      (sem link ativo)
+                    </div>
                   )}
-                  {v.targetDate && (
-                    <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                      alvo: {new Date(v.targetDate + 'T00:00:00').toLocaleDateString('pt-BR')}
-                    </span>
-                  )}
+                  {token && exp ? (
+                    <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                      expira em {exp.toLocaleString()}
+                    </div>
+                  ) : null}
+                  <div style={{ marginTop: '8px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {v.positionsCount != null && v.positionsCount > 0 && (
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        {v.positionsCount} vaga{v.positionsCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {v.targetDate && (
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        alvo: {new Date(v.targetDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+
+              <div style={{ marginTop: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button
                   type="button"
                   onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id), vacancyDetail: '' })}
@@ -1141,151 +1146,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </button>
                 <button
                   type="button"
-                  onClick={() => archiveVacancy(v.id, v.title)}
-                  disabled={loading}
-                  style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                    borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                >
-                  Arquivar
-                </button>
-              </div>
-            </div>
-
-            {isEditing && (
-              <div style={{
-                marginTop: '12px', padding: '16px', borderRadius: '10px',
-                border: `1px solid ${C.purple}44`, background: `${C.purple}08`,
-              }}>
-                <span style={{ fontSize: '11px', color: C.purpleLight, fontFamily: 'monospace',
-                  textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
-                  Editar vaga
-                </span>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                  <input
-                    value={editingVacancy.title}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                    placeholder="Título da vaga"
-                    aria-label="Título da vaga"
-                    style={{ flex: '2 1 280px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                  <input
-                    value={editingVacancy.slug}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                    placeholder="Slug (ex.: dev-fullstack)"
-                    aria-label="Slug da vaga"
-                    style={{ flex: '1 1 200px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                  <select
-                    value={editingVacancy.status}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                    aria-label="Status da vaga"
-                    style={{ flex: '0 0 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px',
-                      cursor: 'pointer', fontFamily: 'monospace' }}
-                  >
-                    <option value="open">Aberta</option>
-                    <option value="closed">Fechada</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                    fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                    Nº de vagas
-                    <input
-                      type="number"
-                      min="1"
-                      value={editingVacancy.positionsCount}
-                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
-                      aria-label="Número de posições"
-                      style={{ width: '70px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
-                        fontFamily: 'monospace' }}
-                    />
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                    fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                    Data-alvo
-                    <input
-                      type="date"
-                      value={editingVacancy.targetDate}
-                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
-                      aria-label="Data-alvo de encerramento"
-                      style={{ background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
-                        fontFamily: 'monospace' }}
-                    />
-                  </label>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={saveVacancyEdit}
-                    disabled={loading}
-                    style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                      borderRadius: '10px', padding: '9px 18px', color: C.purple, fontSize: '13px',
-                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                  >
-                    Salvar alterações
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingVacancy(null)}
-                    disabled={loading}
-                    style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '9px 14px', color: C.muted, fontSize: '13px',
-                      cursor: 'pointer', fontFamily: 'monospace' }}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {linkExpiryEdit?.vacancyId === v.id && (
-              <div style={{
-                marginTop: '12px', padding: '12px', borderRadius: '10px',
-                border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.04)',
-                display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
-              }}>
-                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                  Nova data de expiração (horário local)
-                </span>
-                <input
-                  type="datetime-local"
-                  value={linkExpiryEdit.value}
-                  onChange={(e) =>
-                    setLinkExpiryEdit((cur) =>
-                      cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
-                    )
-                  }
-                  disabled={loading}
-                  aria-label="Nova data de expiração do link"
-                  style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
-                    border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
-                    color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
-                />
-                <button type="button" onClick={saveLinkExpiry} disabled={loading}
-                  style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
-                    borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                  Salvar
-                </button>
-                <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
-                  style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                  Cancelar
-                </button>
-              </div>
-            )}
-
-            <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                <button
-                  type="button"
                   onClick={() => {
                     if (!token) return;
                     setLinkExpiryEdit((cur) =>
@@ -1301,12 +1161,158 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   }}
                   disabled={loading || !token}
                   style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '7px 10px', color: C.muted, fontSize: '12px',
+                    borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                 >
-                  Editar expiração do link
+                  Editar expiração
+                </button>
+                <button
+                  type="button"
+                  onClick={() => archiveVacancy(v.id, v.title)}
+                  disabled={loading}
+                  style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                    borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                >
+                  Arquivar
                 </button>
               </div>
+
+              {isEditing && (
+                <div style={{
+                  marginTop: '12px', padding: '16px', borderRadius: '10px',
+                  border: `1px solid ${C.purple}44`, background: `${C.purple}08`,
+                }}>
+                  <span style={{ fontSize: '11px', color: C.purpleLight, fontFamily: 'monospace',
+                    textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
+                    Editar vaga
+                  </span>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    <input
+                      value={editingVacancy.title}
+                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
+                      placeholder="Título da vaga"
+                      aria-label="Título da vaga"
+                      style={{ flex: '2 1 280px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                    />
+                    <input
+                      value={editingVacancy.slug}
+                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
+                      placeholder="Slug (ex.: dev-fullstack)"
+                      aria-label="Slug da vaga"
+                      style={{ flex: '1 1 200px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                    />
+                    <select
+                      value={editingVacancy.status}
+                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
+                      aria-label="Status da vaga"
+                      style={{ flex: '0 0 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px',
+                        cursor: 'pointer', fontFamily: 'monospace' }}
+                    >
+                      <option value="open">Aberta</option>
+                      <option value="closed">Fechada</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                      fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                      Nº de vagas
+                      <input
+                        type="number"
+                        min="1"
+                        value={editingVacancy.positionsCount}
+                        onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
+                        aria-label="Número de posições"
+                        style={{ width: '70px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                          fontFamily: 'monospace' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                      fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                      Data-alvo
+                      <input
+                        type="date"
+                        value={editingVacancy.targetDate}
+                        onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
+                        aria-label="Data-alvo de encerramento"
+                        style={{ background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                          fontFamily: 'monospace' }}
+                      />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={saveVacancyEdit}
+                      disabled={loading}
+                      style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                        borderRadius: '10px', padding: '9px 18px', color: C.purple, fontSize: '13px',
+                        cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                    >
+                      Salvar alterações
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingVacancy(null)}
+                      disabled={loading}
+                      style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '9px 14px', color: C.muted, fontSize: '13px',
+                        cursor: 'pointer', fontFamily: 'monospace' }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {linkExpiryEdit?.vacancyId === v.id && (
+                <div style={{
+                  marginTop: '12px', padding: '12px', borderRadius: '10px',
+                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.04)',
+                  display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
+                }}>
+                  <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                    Nova data de expiração (horário local)
+                  </span>
+                  <input
+                    type="datetime-local"
+                    value={linkExpiryEdit.value}
+                    onChange={(e) =>
+                      setLinkExpiryEdit((cur) =>
+                        cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
+                      )
+                    }
+                    disabled={loading}
+                    aria-label="Nova data de expiração do link"
+                    style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
+                      border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
+                      color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                  <button type="button" onClick={saveLinkExpiry} disabled={loading}
+                    style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
+                      borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
+                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
+                    Salvar
+                  </button>
+                  <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
+                    style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
+                    Cancelar
+                  </button>
+                </div>
+              )}
+
+              <VacancyRubricEditor vacancyId={v.id} locale={locale} />
+            </div>
+
+            {/* 5–6. Candidatos da entrevista + convites */}
+            <div style={{ ...S.card }}>
               <VacancyInterviewCandidates
                 vacancyId={v.id}
                 locale={locale}
@@ -1315,12 +1321,21 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   setPipelineRefresh((x) => x + 1);
                 }}
               />
-              <VacancyInviteByEmail vacancyId={v.id} onSent={() => setInvitesRefresh((x) => x + 1)} />
+              <VacancyInviteByEmail
+                vacancyId={v.id}
+                onSent={() => {
+                  setInvitesRefresh((x) => x + 1);
+                  setPipelineRefresh((x) => x + 1);
+                }}
+              />
               <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
-              <VacancyRubricEditor vacancyId={v.id} locale={locale} />
+            </div>
+
+            {/* 7. Kanban no final */}
+            <div style={{ ...S.card }}>
               <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
             </div>
-          </div>
+          </>
         ) : null}
       </div>
     );

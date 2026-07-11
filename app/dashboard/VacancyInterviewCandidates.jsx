@@ -270,7 +270,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
   };
 
   return (
-    <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
+    <div>
       <span style={S.label}>Candidatos da entrevista</span>
       <p style={{ fontSize: '12px', color: C.muted, marginTop: '8px', lineHeight: 1.55, marginBottom: '12px' }}>
         Cadastre o candidato com nome e e-mail após a entrevista. O e-mail é a chave para enviar o eneagrama
