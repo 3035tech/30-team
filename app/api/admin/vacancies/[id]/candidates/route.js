@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import { upsertCandidatePreInterview } from '../../../../../../lib/ae/candidate-upsert';
+import { normalizeCandidateProfile } from '../../../../../../lib/candidate-profile';
 import { sanitizeInterviewNotesHtml } from '../../../../../../lib/sanitize-html';
 import { apiError } from '../../../../../../lib/api-error';
 
@@ -67,6 +68,13 @@ export async function GET(request, { params }) {
          vc.updated_at AS "updatedAt",
          c.full_name AS "fullName",
          c.email,
+         c.phone,
+         c.linkedin_url AS "linkedinUrl",
+         c.city,
+         c.state,
+         c.salary_expectation AS "salaryExpectation",
+         c.availability,
+         c.source,
          inv.id AS "inviteId",
          inv.status AS "inviteStatus",
          inv.sent_at AS "inviteSentAt",
@@ -139,6 +147,7 @@ export async function POST(request, { params }) {
       companyId: vacancy.companyId,
       fullName,
       email,
+      profile: normalizeCandidateProfile(body),
     });
     if (!up.ok) return apiError(request, up.errorCode || 'INTERNAL', 400);
 
@@ -163,6 +172,13 @@ export async function POST(request, { params }) {
         ...link.rows[0],
         fullName: up.fullName,
         email: up.email,
+        phone: up.phone,
+        linkedinUrl: up.linkedinUrl,
+        city: up.city,
+        state: up.state,
+        salaryExpectation: up.salaryExpectation,
+        availability: up.availability,
+        source: up.source,
       },
       { status: 201 }
     );

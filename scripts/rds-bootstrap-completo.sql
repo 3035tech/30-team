@@ -74,6 +74,13 @@ CREATE TABLE IF NOT EXISTS candidates (
   company_id  BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   full_name   TEXT NOT NULL,
   email       TEXT,
+  phone       TEXT,
+  linkedin_url TEXT,
+  city        TEXT,
+  state       TEXT,
+  salary_expectation TEXT,
+  availability TEXT,
+  source      TEXT,
   consent_at  TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

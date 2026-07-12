@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
+import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -22,6 +23,8 @@ export async function GET(request, { params }) {
   const id = params?.id;
   const c = await query(
     `SELECT id, company_id AS "companyId", full_name AS "fullName", email, hr_notes AS "hrNotes",
+            phone, linkedin_url AS "linkedinUrl", city, state,
+            salary_expectation AS "salaryExpectation", availability, source,
             consent_at AS "consentAt", created_at AS "createdAt"
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
@@ -113,18 +116,74 @@ export async function PATCH(request, { params }) {
   }
 
   const body = await request.json().catch(() => ({}));
-  if (body.hrNotes === undefined) return apiError(request, 'HR_NOTES_REQUIRED', 400);
-  const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
+  const profile = normalizeCandidateProfile(body);
+  const hasHrNotes = body.hrNotes !== undefined;
+  const hasProfile = Object.values(profile).some((v) => v != null);
+  const hasName = body.fullName !== undefined || body.name !== undefined;
+
+  if (!hasHrNotes && !hasProfile && !hasName) {
+    return apiError(request, 'NO_FIELDS_TO_UPDATE', 400);
+  }
+
+  const sets = [];
+  const params = [id];
+  let n = 2;
+
+  if (hasName) {
+    const name = String(body.fullName || body.name || '').trim().slice(0, 200);
+    if (!name) return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
+    sets.push(`full_name = $${n++}`);
+    params.push(name);
+  }
+  if (hasHrNotes) {
+    const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
+    sets.push(`hr_notes = $${n++}`);
+    params.push(notes || null);
+  }
+  if (body.phone !== undefined || body.telefone !== undefined) {
+    sets.push(`phone = $${n++}`);
+    params.push(profile.phone);
+  }
+  if (body.linkedinUrl !== undefined || body.linkedin !== undefined || body.linkedin_url !== undefined) {
+    sets.push(`linkedin_url = $${n++}`);
+    params.push(profile.linkedinUrl);
+  }
+  if (body.city !== undefined || body.cidade !== undefined) {
+    sets.push(`city = $${n++}`);
+    params.push(profile.city);
+  }
+  if (body.state !== undefined || body.uf !== undefined) {
+    sets.push(`state = $${n++}`);
+    params.push(profile.state);
+  }
+  if (body.salaryExpectation !== undefined || body.salary !== undefined || body.pretensao !== undefined) {
+    sets.push(`salary_expectation = $${n++}`);
+    params.push(profile.salaryExpectation);
+  }
+  if (body.availability !== undefined || body.disponibilidade !== undefined) {
+    sets.push(`availability = $${n++}`);
+    params.push(profile.availability);
+  }
+  if (body.source !== undefined || body.fonte !== undefined) {
+    sets.push(`source = $${n++}`);
+    params.push(profile.source);
+  }
+
+  if (sets.length === 0) return apiError(request, 'NO_FIELDS_TO_UPDATE', 400);
 
   const up = await query(
-    `UPDATE candidates SET hr_notes = $2 WHERE id = $1 RETURNING id, hr_notes AS "hrNotes"`,
-    [id, notes || null]
+    `UPDATE candidates SET ${sets.join(', ')}
+     WHERE id = $1
+     RETURNING id, full_name AS "fullName", email, hr_notes AS "hrNotes",
+               phone, linkedin_url AS "linkedinUrl", city, state,
+               salary_expectation AS "salaryExpectation", availability, source`,
+    params
   );
   if (up.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
   await audit({
     actorUserId: payload.userId || null,
-    action: 'candidate.notes_update',
+    action: 'candidate.profile_update',
     targetType: 'candidate',
     targetId: String(id),
   });

@@ -6,6 +6,19 @@ import { C } from '../../lib/theme';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { S } from './dashboard-shared';
 
+const inputStyle = {
+  flex: '1 1 180px',
+  background: 'rgba(255,255,255,.8)',
+  border: `1px solid ${C.border}`,
+  borderRadius: '10px',
+  padding: '10px 12px',
+  color: C.text,
+  fontSize: '13px',
+  fontFamily: 'monospace',
+};
+
+const selectStyle = { ...inputStyle, cursor: 'pointer' };
+
 function inviteStatusLabel(locale, status) {
   const s = String(status || '');
   if (s === 'opened') return t(locale, 'recruiting.inviteOpened');
@@ -15,9 +28,39 @@ function inviteStatusLabel(locale, status) {
   return t(locale, 'recruiting.noInviteYet');
 }
 
+function availabilityLabel(locale, code) {
+  const map = {
+    immediate: 'recruiting.availabilityImmediate',
+    '15_days': 'recruiting.availability15',
+    '30_days': 'recruiting.availability30',
+    '60_days': 'recruiting.availability60',
+    other: 'recruiting.availabilityOther',
+  };
+  return code ? t(locale, map[code] || 'recruiting.availabilityOther') : null;
+}
+
+function sourceLabel(locale, code) {
+  const map = {
+    linkedin: 'recruiting.sourceLinkedin',
+    referral: 'recruiting.sourceReferral',
+    agency: 'recruiting.sourceAgency',
+    job_board: 'recruiting.sourceJobBoard',
+    other: 'recruiting.sourceOther',
+  };
+  return code ? t(locale, map[code] || 'recruiting.sourceOther') : null;
+}
+
 function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
   const [notes, setNotes] = useState(row.interviewNotes || '');
+  const [phone, setPhone] = useState(row.phone || '');
+  const [linkedinUrl, setLinkedinUrl] = useState(row.linkedinUrl || '');
+  const [city, setCity] = useState(row.city || '');
+  const [stateUf, setStateUf] = useState(row.state || '');
+  const [salaryExpectation, setSalaryExpectation] = useState(row.salaryExpectation || '');
+  const [availability, setAvailability] = useState(row.availability || '');
+  const [source, setSource] = useState(row.source || '');
   const [busy, setBusy] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
@@ -25,7 +68,14 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   useEffect(() => {
     setNotes(row.interviewNotes || '');
-  }, [row.interviewNotes, row.candidateId]);
+    setPhone(row.phone || '');
+    setLinkedinUrl(row.linkedinUrl || '');
+    setCity(row.city || '');
+    setStateUf(row.state || '');
+    setSalaryExpectation(row.salaryExpectation || '');
+    setAvailability(row.availability || '');
+    setSource(row.source || '');
+  }, [row]);
 
   const saveNotes = async () => {
     setBusy(true);
@@ -52,6 +102,36 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     }
   };
 
+  const saveProfile = async () => {
+    setProfileBusy(true);
+    setErr('');
+    setOk('');
+    try {
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(row.candidateId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          linkedinUrl,
+          city,
+          state: stateUf,
+          salaryExpectation,
+          availability: availability || null,
+          source: source || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setOk(t(locale, 'recruiting.profileSaved'));
+      onChanged?.();
+      setTimeout(() => setOk(''), 3000);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
   const sendChallenge = async () => {
     setInviteBusy(true);
     setErr('');
@@ -75,6 +155,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   };
 
   const alreadyCompleted = Boolean(row.assessmentId) || row.inviteStatus === 'completed';
+  const locBits = [row.city, row.state].filter(Boolean).join(' / ');
 
   return (
     <div
@@ -92,7 +173,19 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           </div>
           <div style={{ marginTop: '4px', fontSize: '12px', fontFamily: 'monospace', color: C.muted }}>
             {row.email}
+            {row.phone ? ` · ${row.phone}` : ''}
           </div>
+          {(locBits || row.linkedinUrl) ? (
+            <div style={{ marginTop: '4px', fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+              {locBits || null}
+              {locBits && row.linkedinUrl ? ' · ' : null}
+              {row.linkedinUrl ? (
+                <a href={row.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: C.purpleLight }}>
+                  LinkedIn
+                </a>
+              ) : null}
+            </div>
+          ) : null}
           <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
             <span
               style={{
@@ -111,11 +204,16 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 {t(locale, 'recruiting.typeShort', { type: row.topType })}
               </span>
             )}
-            {row.pipelineStage && (
+            {availabilityLabel(locale, row.availability) ? (
               <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
-                {row.pipelineStage}
+                {availabilityLabel(locale, row.availability)}
               </span>
-            )}
+            ) : null}
+            {sourceLabel(locale, row.source) ? (
+              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+                {sourceLabel(locale, row.source)}
+              </span>
+            ) : null}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -178,6 +276,49 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
       {expanded && (
         <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
+            <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
+            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t(locale, 'recruiting.cityPh')} style={inputStyle} />
+            <input value={stateUf} onChange={(e) => setStateUf(e.target.value)} placeholder={t(locale, 'recruiting.statePh')} style={{ ...inputStyle, flex: '0 1 80px' }} maxLength={32} />
+            <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
+            <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.availabilityLabel')}>
+              <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+              <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
+              <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+              <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+              <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+              <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+            </select>
+            <select value={source} onChange={(e) => setSource(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.sourceLabel')}>
+              <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+              <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+              <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+              <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+              <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+              <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={saveProfile}
+            disabled={profileBusy}
+            style={{
+              background: `${C.purple}12`,
+              border: `1px solid ${C.purple}44`,
+              borderRadius: '10px',
+              padding: '8px 14px',
+              color: C.purple,
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+              opacity: profileBusy ? 0.6 : 1,
+              marginBottom: '14px',
+            }}
+          >
+            {profileBusy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveProfile')}
+          </button>
+
           <span
             style={{
               fontSize: '11px',
@@ -224,6 +365,13 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
   const [err, setErr] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [city, setCity] = useState('');
+  const [stateUf, setStateUf] = useState('');
+  const [salaryExpectation, setSalaryExpectation] = useState('');
+  const [availability, setAvailability] = useState('');
+  const [source, setSource] = useState('');
   const [createNotes, setCreateNotes] = useState('');
   const [creating, setCreating] = useState(false);
   const [createMsg, setCreateMsg] = useState('');
@@ -259,6 +407,13 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         body: JSON.stringify({
           fullName: name.trim(),
           email: email.trim().toLowerCase(),
+          phone,
+          linkedinUrl,
+          city,
+          state: stateUf,
+          salaryExpectation,
+          availability: availability || null,
+          source: source || null,
           interviewNotes: createNotes,
         }),
       });
@@ -266,6 +421,13 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setName('');
       setEmail('');
+      setPhone('');
+      setLinkedinUrl('');
+      setCity('');
+      setStateUf('');
+      setSalaryExpectation('');
+      setAvailability('');
+      setSource('');
       setCreateNotes('');
       setCreateMsg(t(locale, 'recruiting.candidateRegistered'));
       await load();
@@ -307,39 +469,29 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           {t(locale, 'recruiting.newCandidate')}
         </span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t(locale, 'recruiting.fullNamePh')}
-            aria-label={t(locale, 'recruiting.fullNamePh')}
-            style={{
-              flex: '1 1 200px',
-              background: 'rgba(255,255,255,.8)',
-              border: `1px solid ${C.border}`,
-              borderRadius: '10px',
-              padding: '10px 12px',
-              color: C.text,
-              fontSize: '13px',
-              fontFamily: 'monospace',
-            }}
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')}
-            aria-label={t(locale, 'recruiting.inviteCandidateEmailPh')}
-            style={{
-              flex: '1 1 220px',
-              background: 'rgba(255,255,255,.8)',
-              border: `1px solid ${C.border}`,
-              borderRadius: '10px',
-              padding: '10px 12px',
-              color: C.text,
-              fontSize: '13px',
-              fontFamily: 'monospace',
-            }}
-          />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t(locale, 'recruiting.fullNamePh')} style={inputStyle} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} style={{ ...inputStyle, flex: '1 1 220px' }} />
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
+          <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
+          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t(locale, 'recruiting.cityPh')} style={inputStyle} />
+          <input value={stateUf} onChange={(e) => setStateUf(e.target.value)} placeholder={t(locale, 'recruiting.statePh')} style={{ ...inputStyle, flex: '0 1 80px' }} maxLength={32} />
+          <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
+          <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle}>
+            <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+            <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
+            <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+            <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+            <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+            <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+          </select>
+          <select value={source} onChange={(e) => setSource(e.target.value)} style={selectStyle}>
+            <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+            <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+            <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+            <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+            <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+            <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+          </select>
         </div>
         <RichTextEditor
           value={createNotes}

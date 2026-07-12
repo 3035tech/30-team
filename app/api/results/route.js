@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 import { computeAssessmentFromAnswers } from '../../../lib/assessment-score';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 import { apiError } from '../../../lib/api-error';
+import { upsertCandidate } from '../../../lib/ae/candidate-upsert';
+import { normalizeCandidateProfile } from '../../../lib/candidate-profile';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -127,36 +129,15 @@ export async function POST(request) {
     const areaId = areaRes.rows[0].id;
 
     // Candidate upsert (prefer email; otherwise best-effort by name)
-    let candidateId = null;
-    if (safeEmail) {
-      const up = await query(
-        `INSERT INTO candidates (company_id, full_name, email, consent_at)
-         VALUES ($1, $2, $3, NOW())
-         ON CONFLICT (company_id, LOWER(email)) WHERE email IS NOT NULL
-         DO UPDATE SET full_name = EXCLUDED.full_name, consent_at = NOW()
-         RETURNING id`,
-        [companyId, safeName, safeEmail]
-      );
-      candidateId = up.rows[0].id;
-    } else {
-      const existing = await query(
-        `SELECT id
-         FROM candidates
-         WHERE company_id = $1 AND LOWER(full_name) = LOWER($2) AND (email IS NULL OR email = '')
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [companyId, safeName]
-      );
-      if (existing.rowCount > 0) {
-        candidateId = existing.rows[0].id;
-      } else {
-        const ins = await query(
-          `INSERT INTO candidates (company_id, full_name, consent_at) VALUES ($1, $2, NOW()) RETURNING id`,
-          [companyId, safeName]
-        );
-        candidateId = ins.rows[0].id;
-      }
-    }
+    const profile = normalizeCandidateProfile(body);
+    const up = await upsertCandidate({
+      companyId,
+      fullName: safeName,
+      email: safeEmail,
+      profile,
+    });
+    if (!up.ok) return apiError(request, up.errorCode || 'INCOMPLETE_DATA', 400);
+    const candidateId = up.candidateId;
 
     if (resolvedVacancyId) {
       const existingAssessment = await query(

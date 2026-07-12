@@ -112,6 +112,10 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   const [areasLoading, setAreasLoading] = useState(true);
   const [areasError, setAreasError] = useState('');
   const [consent, setConsent] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [city, setCity] = useState('');
+  const [stateUf, setStateUf] = useState('');
   const [startBusy, setStartBusy] = useState(false);
   const [startError, setStartError] = useState('');
   const router = useRouter();
@@ -146,7 +150,16 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   const emailOk = !requireCandidateEmail || EMAIL_RE.test(email.trim());
   const ready = name.trim().length > 1 && !!areaKey && consent && emailOk;
   const canStart = ready && !startDisabled && !areasLoading && !areasError && areaOptions.length > 0 && !startBusy;
-  const startPayload = { name: name.trim(), email: email.trim(), areaKey, consent };
+  const startPayload = {
+    name: name.trim(),
+    email: email.trim(),
+    areaKey,
+    consent,
+    phone: phone.trim(),
+    linkedinUrl: linkedinUrl.trim(),
+    city: city.trim(),
+    state: stateUf.trim(),
+  };
   const handleSubmitStart = async () => {
     if (!canStart) return;
     setStartBusy(true);
@@ -281,6 +294,36 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           inputMode={requireCandidateEmail ? 'email' : undefined}
           autoComplete="email"
         />
+
+        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.phone')}</label>
+        <input
+          style={S.input}
+          placeholder={t(locale, 'candidate.phonePlaceholder')}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          inputMode="tel"
+          autoComplete="tel"
+        />
+
+        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.linkedin')}</label>
+        <input
+          style={S.input}
+          placeholder={t(locale, 'candidate.linkedinPlaceholder')}
+          value={linkedinUrl}
+          onChange={(e) => setLinkedinUrl(e.target.value)}
+          autoComplete="url"
+        />
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '2 1 180px' }}>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.city')}</label>
+            <input style={S.input} placeholder={t(locale, 'candidate.cityPlaceholder')} value={city} onChange={(e) => setCity(e.target.value)} />
+          </div>
+          <div style={{ flex: '1 1 80px' }}>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
+            <input style={S.input} placeholder={t(locale, 'candidate.statePlaceholder')} value={stateUf} onChange={(e) => setStateUf(e.target.value)} maxLength={32} />
+          </div>
+        </div>
 
         <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '12px', color: C.muted, lineHeight: 1.5, marginBottom: '16px' }}>
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: '2px' }} />

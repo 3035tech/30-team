@@ -58,6 +58,50 @@ function isSuspiciouslyFast(ms) {
   return ms != null && Number.isFinite(Number(ms)) && Number(ms) < 3 * 60 * 1000;
 }
 
+function availabilityLabel(locale, code) {
+  const map = {
+    immediate: 'recruiting.availabilityImmediate',
+    '15_days': 'recruiting.availability15',
+    '30_days': 'recruiting.availability30',
+    '60_days': 'recruiting.availability60',
+    other: 'recruiting.availabilityOther',
+  };
+  return code ? t(locale, map[code] || 'recruiting.availabilityOther') : null;
+}
+
+function sourceLabel(locale, code) {
+  const map = {
+    linkedin: 'recruiting.sourceLinkedin',
+    referral: 'recruiting.sourceReferral',
+    agency: 'recruiting.sourceAgency',
+    job_board: 'recruiting.sourceJobBoard',
+    other: 'recruiting.sourceOther',
+  };
+  return code ? t(locale, map[code] || 'recruiting.sourceOther') : null;
+}
+
+const emptyProfileDraft = () => ({
+  phone: '',
+  linkedinUrl: '',
+  city: '',
+  state: '',
+  salaryExpectation: '',
+  availability: '',
+  source: '',
+});
+
+function profileFromCandidate(c) {
+  return {
+    phone: c?.phone || '',
+    linkedinUrl: c?.linkedinUrl || '',
+    city: c?.city || '',
+    state: c?.state || '',
+    salaryExpectation: c?.salaryExpectation || '',
+    availability: c?.availability || '',
+    source: c?.source || '',
+  };
+}
+
 export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', isAdmin = false }) {
   const [open, setOpen] = useState(null);
   const [localSearch, setLocalSearch] = useState('');
@@ -72,6 +116,11 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
   const [notesBusy, setNotesBusy] = useState(false);
   const [notesMsg, setNotesMsg] = useState('');
   const [notesMsgIsError, setNotesMsgIsError] = useState(false);
+  const [profileDraft, setProfileDraft] = useState(emptyProfileDraft);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileMsg, setProfileMsg] = useState('');
+  const [profileMsgIsError, setProfileMsgIsError] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkStage, setBulkStage] = useState('test_completed');
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -98,12 +147,15 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
     setDetailErr('');
     setNotesEditing(false);
     setNotesMsg('');
+    setProfileEditing(false);
+    setProfileMsg('');
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
       setNotesDraft(data?.candidate?.hrNotes || '');
+      setProfileDraft(profileFromCandidate(data?.candidate));
     } catch (e) {
       setDetailErr(e?.message || t(locale, 'panel.common.error'));
       setDetail(null);
@@ -188,6 +240,52 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
       setNotesMsg(e?.message || t(locale, 'panel.team.saveNotesError'));
     } finally {
       setNotesBusy(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    if (!detail?.candidate?.id) return;
+    setProfileBusy(true);
+    setProfileMsg('');
+    try {
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(detail.candidate.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: profileDraft.phone,
+          linkedinUrl: profileDraft.linkedinUrl,
+          city: profileDraft.city,
+          state: profileDraft.state,
+          salaryExpectation: profileDraft.salaryExpectation,
+          availability: profileDraft.availability || null,
+          source: profileDraft.source || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setDetail((prev) => (prev ? {
+        ...prev,
+        candidate: {
+          ...prev.candidate,
+          phone: data.phone,
+          linkedinUrl: data.linkedinUrl,
+          city: data.city,
+          state: data.state,
+          salaryExpectation: data.salaryExpectation,
+          availability: data.availability,
+          source: data.source,
+        },
+      } : prev));
+      setProfileDraft(profileFromCandidate(data));
+      setProfileEditing(false);
+      setProfileMsgIsError(false);
+      setProfileMsg(t(locale, 'recruiting.profileSaved'));
+      setTimeout(() => setProfileMsg(''), 3000);
+    } catch (e) {
+      setProfileMsgIsError(true);
+      setProfileMsg(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setProfileBusy(false);
     }
   };
 
@@ -841,6 +939,168 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                   ) : (
                     <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>—</p>
                   )}
+                </div>
+
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
+                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'recruiting.candidateProfile')}</span>
+                    {!profileEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileDraft(profileFromCandidate(detail?.candidate));
+                          setProfileEditing(true);
+                          setProfileMsg('');
+                        }}
+                        style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
+                          background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                      >
+                        {t(locale, 'panel.team.editNote')}
+                      </button>
+                    )}
+                  </div>
+                  {!profileEditing ? (
+                    (() => {
+                      const c = detail?.candidate;
+                      const locBits = [c?.city, c?.state].filter(Boolean).join(' / ');
+                      const bits = [
+                        c?.phone,
+                        locBits || null,
+                        c?.linkedinUrl ? 'LinkedIn' : null,
+                        c?.salaryExpectation,
+                        availabilityLabel(locale, c?.availability),
+                        sourceLabel(locale, c?.source),
+                      ].filter(Boolean);
+                      if (!bits.length) {
+                        return (
+                          <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>—</p>
+                        );
+                      }
+                      return (
+                        <div style={{ fontSize: '13px', color: C.text, lineHeight: 1.65, fontFamily: 'monospace' }}>
+                          {c?.phone ? <div>{c.phone}</div> : null}
+                          {locBits ? <div>{locBits}</div> : null}
+                          {c?.linkedinUrl ? (
+                            <div>
+                              <a href={c.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: C.purpleLight }}>
+                                {c.linkedinUrl}
+                              </a>
+                            </div>
+                          ) : null}
+                          {c?.salaryExpectation ? <div>{c.salaryExpectation}</div> : null}
+                          {availabilityLabel(locale, c?.availability) ? (
+                            <div>{availabilityLabel(locale, c.availability)}</div>
+                          ) : null}
+                          {sourceLabel(locale, c?.source) ? (
+                            <div>{sourceLabel(locale, c.source)}</div>
+                          ) : null}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                        <input
+                          value={profileDraft.phone}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, phone: e.target.value }))}
+                          placeholder={t(locale, 'recruiting.phonePh')}
+                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        />
+                        <input
+                          value={profileDraft.linkedinUrl}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, linkedinUrl: e.target.value }))}
+                          placeholder={t(locale, 'recruiting.linkedinPh')}
+                          style={{ flex: '2 1 200px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        />
+                        <input
+                          value={profileDraft.city}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, city: e.target.value }))}
+                          placeholder={t(locale, 'recruiting.cityPh')}
+                          style={{ flex: '1 1 120px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        />
+                        <input
+                          value={profileDraft.state}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, state: e.target.value }))}
+                          placeholder={t(locale, 'recruiting.statePh')}
+                          maxLength={32}
+                          style={{ flex: '0 1 70px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        />
+                        <input
+                          value={profileDraft.salaryExpectation}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: e.target.value }))}
+                          placeholder={t(locale, 'recruiting.salaryPh')}
+                          style={{ flex: '1 1 160px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        />
+                        <select
+                          value={profileDraft.availability}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, availability: e.target.value }))}
+                          aria-label={t(locale, 'recruiting.availabilityLabel')}
+                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        >
+                          <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+                          <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
+                          <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+                          <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+                          <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+                          <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+                        </select>
+                        <select
+                          value={profileDraft.source}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, source: e.target.value }))}
+                          aria-label={t(locale, 'recruiting.sourceLabel')}
+                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                        >
+                          <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+                          <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+                          <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+                          <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+                          <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+                          <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={saveProfile}
+                          disabled={profileBusy}
+                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
+                            border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
+                            color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
+                            opacity: profileBusy ? 0.6 : 1 }}
+                        >
+                          {profileBusy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveProfile')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDraft(profileFromCandidate(detail?.candidate));
+                            setProfileEditing(false);
+                            setProfileMsg('');
+                          }}
+                          disabled={profileBusy}
+                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
+                            border: `1px solid ${C.border}`, background: 'transparent',
+                            color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                        >
+                          {t(locale, 'panel.admin.cancel')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {profileMsg ? (
+                    <p style={{ margin: '8px 0 0', fontSize: '11px', fontFamily: 'monospace',
+                      color: profileMsgIsError ? C.tension : C.synergy }}>
+                      {profileMsg}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
