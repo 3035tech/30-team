@@ -29,6 +29,7 @@ import { TeamTab } from './tabs/TeamTab';
 import { UsersAdminTab } from './tabs/UsersAdminTab';
 import { VacanciesAdminTab } from './tabs/VacanciesAdminTab';
 import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
+import { HelpTab } from './tabs/HelpTab';
 
 export default function DashboardClient({
   results,
@@ -361,6 +362,9 @@ export default function DashboardClient({
                 {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
               </>
             )}
+            <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
+            <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionHelp')}</span>
+            <NavLink id="help" label={t(locale, 'dashboard.help')} />
           </nav>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
@@ -572,7 +576,12 @@ export default function DashboardClient({
             </div>
           )}
 
-          {compatMetrics.total === 0 && tab !== 'companies' && tab !== 'users' && tab !== 'vacancies' ? (
+          {compatMetrics.total === 0
+            && tab !== 'companies'
+            && tab !== 'users'
+            && tab !== 'vacancies'
+            && tab !== 'motivators'
+            && tab !== 'help' ? (
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
               <p style={{ color: C.muted, fontStyle: 'italic' }}>
@@ -681,6 +690,7 @@ export default function DashboardClient({
               )}
               {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'help' && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'group' && (
                 <GroupTab
                   results={interactionPeople}

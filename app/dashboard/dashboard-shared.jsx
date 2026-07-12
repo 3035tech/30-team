@@ -137,6 +137,7 @@ const KANBAN_STAGE_DEFS = [
   { id: 'screening', color: '#0284c7', labelKey: 'recruiting.pipelineScreening' },
   { id: 'interview', color: '#d97706', labelKey: 'recruiting.pipelineInterview' },
   { id: 'approved', color: '#15803d', labelKey: 'recruiting.pipelineApproved' },
+  { id: 'hired', color: '#0f766e', labelKey: 'recruiting.pipelineHired' },
   { id: 'rejected', color: '#dc2626', labelKey: 'recruiting.pipelineRejected' },
   { id: 'archived', color: 'rgba(26,22,37,.3)', labelKey: 'recruiting.pipelineArchived' },
 ];

@@ -15,6 +15,7 @@ import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
+import { promptPipelineExtras, rejectionReasonLabel } from '../pipeline-prompts';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -469,6 +470,7 @@ function pipelineStageLabel(locale, code) {
     screening: 'recruiting.pipelineScreening',
     interview: 'recruiting.pipelineInterview',
     approved: 'recruiting.pipelineApproved',
+    hired: 'recruiting.pipelineHired',
     rejected: 'recruiting.pipelineRejected',
     archived: 'recruiting.pipelineArchived',
   };
@@ -645,6 +647,8 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
     r.assessmentId != null ? `a:${r.assessmentId}` : `vc:${r.vacancyCandidateId}`;
 
   const moveTo = async (row, stage) => {
+    const extras = promptPipelineExtras(locale, stage);
+    if (extras == null) return;
     const key = cardKey(row);
     setMoving(key);
     try {
@@ -654,24 +658,34 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pipelineStage: stage }),
+            body: JSON.stringify({ pipelineStage: stage, ...extras }),
           }
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         setRows((prev) =>
-          prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
+          prev.map((r) => (cardKey(r) === key ? {
+            ...r,
+            pipelineStage: stage,
+            rejectionReason: data.rejectionReason ?? extras.rejectionReason ?? r.rejectionReason,
+            startDate: data.startDate ?? extras.startDate ?? r.startDate,
+          } : r))
         );
       } else {
         const res = await fetch(`/api/admin/assessments/${encodeURIComponent(row.assessmentId)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pipelineStage: stage }),
+          body: JSON.stringify({ pipelineStage: stage, ...extras }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         setRows((prev) =>
-          prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
+          prev.map((r) => (cardKey(r) === key ? {
+            ...r,
+            pipelineStage: stage,
+            rejectionReason: data.rejectionReason ?? extras.rejectionReason ?? r.rejectionReason,
+            startDate: data.startDate ?? extras.startDate ?? r.startDate,
+          } : r))
         );
       }
     } catch (e) {
@@ -808,6 +822,16 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                               </span>
                             )}
                           </div>
+                          {r.rejectionReason ? (
+                            <div style={{ marginTop: '4px', fontSize: '10px', fontFamily: 'monospace', color: C.tension }}>
+                              {rejectionReasonLabel(locale, r.rejectionReason)}
+                            </div>
+                          ) : null}
+                          {r.startDate && (r.pipelineStage === 'hired') ? (
+                            <div style={{ marginTop: '4px', fontSize: '10px', fontFamily: 'monospace', color: C.synergy }}>
+                              {t(locale, 'recruiting.startDateLabel')}: {r.startDate}
+                            </div>
+                          ) : null}
                           {(inviteLabel || ago) ? (
                             <div style={{ marginTop: '5px', fontSize: '10px', fontFamily: 'monospace', color: C.muted,
                               lineHeight: 1.35 }}>

@@ -6,6 +6,7 @@ import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
+import { buildCandidateTimeline } from '../../../../../lib/hire';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -26,6 +27,9 @@ export async function GET(request, { params }) {
     `SELECT id, company_id AS "companyId", full_name AS "fullName", email, hr_notes AS "hrNotes",
             phone, linkedin_url AS "linkedinUrl", city, state,
             salary_expectation AS "salaryExpectation", availability, source,
+            employment_status AS "employmentStatus",
+            hired_at AS "hiredAt", start_date AS "startDate",
+            hired_vacancy_id AS "hiredVacancyId",
             consent_at AS "consentAt", created_at AS "createdAt"
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
@@ -46,6 +50,9 @@ export async function GET(request, { params }) {
             ass.vacancy_id AS "vacancyId",
             v.title AS "vacancyTitle",
             ass.pipeline_stage AS "pipelineStage",
+            ass.rejection_reason AS "rejectionReason",
+            ass.start_date AS "startDate",
+            ass.hired_at AS "hiredAt",
             ass.invite_id AS "inviteId",
             ass.fill_duration_ms AS "fillDurationMs",
             ass.copy_event_count AS "copyEventCount"
@@ -63,7 +70,7 @@ export async function GET(request, { params }) {
     try {
       const h = await query(
         `SELECT assessment_id AS "assessmentId", from_stage AS "fromStage", to_stage AS "toStage",
-                changed_at AS "changedAt"
+                reason, start_date AS "startDate", changed_at AS "changedAt"
          FROM assessment_pipeline_history
          WHERE assessment_id = ANY($1::bigint[])
          ORDER BY changed_at ASC`,
@@ -96,7 +103,18 @@ export async function GET(request, { params }) {
     targetId: id,
   });
 
-  return NextResponse.json({ candidate: c.rows[0], assessments: assessmentsWithHistory });
+  let timeline = [];
+  try {
+    timeline = await buildCandidateTimeline(id);
+  } catch (e) {
+    console.error('candidate timeline:', e);
+  }
+
+  return NextResponse.json({
+    candidate: c.rows[0],
+    assessments: assessmentsWithHistory,
+    timeline,
+  });
 }
 
 export async function PATCH(request, { params }) {

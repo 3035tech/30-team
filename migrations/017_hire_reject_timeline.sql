@@ -1,23 +1,6 @@
--- Pendências de banco (execute no pgAdmin / psql)
--- 015 — perfil ampliado do candidato
--- 016 — descrição e faixa salarial da vaga
--- 017 — rejeição, contratação, timeline
+-- 017: motivo de rejeição, contratação contratado, datas de contratação, timeline
 
-ALTER TABLE candidates
-  ADD COLUMN IF NOT EXISTS phone TEXT,
-  ADD COLUMN IF NOT EXISTS linkedin_url TEXT,
-  ADD COLUMN IF NOT EXISTS city TEXT,
-  ADD COLUMN IF NOT EXISTS state TEXT,
-  ADD COLUMN IF NOT EXISTS salary_expectation TEXT,
-  ADD COLUMN IF NOT EXISTS availability TEXT,
-  ADD COLUMN IF NOT EXISTS source TEXT;
-
-ALTER TABLE vacancies
-  ADD COLUMN IF NOT EXISTS description TEXT,
-  ADD COLUMN IF NOT EXISTS salary_min TEXT,
-  ADD COLUMN IF NOT EXISTS salary_max TEXT;
-
--- 017
+-- Histórico de pipeline (assessments) — garante tabela + colunas extras
 CREATE TABLE IF NOT EXISTS assessment_pipeline_history (
   id BIGSERIAL PRIMARY KEY,
   assessment_id BIGINT NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
@@ -28,10 +11,15 @@ CREATE TABLE IF NOT EXISTS assessment_pipeline_history (
   changed_by_user_id BIGINT,
   changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 ALTER TABLE assessment_pipeline_history
   ADD COLUMN IF NOT EXISTS reason TEXT,
   ADD COLUMN IF NOT EXISTS start_date DATE;
 
+CREATE INDEX IF NOT EXISTS idx_assessment_pipeline_history_assessment
+  ON assessment_pipeline_history (assessment_id, changed_at ASC);
+
+-- Histórico de pipeline (pré-teste / vacancy_candidates)
 CREATE TABLE IF NOT EXISTS vacancy_candidate_pipeline_history (
   id BIGSERIAL PRIMARY KEY,
   vacancy_candidate_id BIGINT NOT NULL REFERENCES vacancy_candidates(id) ON DELETE CASCADE,
@@ -43,6 +31,10 @@ CREATE TABLE IF NOT EXISTS vacancy_candidate_pipeline_history (
   changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_vc_pipeline_history_vc
+  ON vacancy_candidate_pipeline_history (vacancy_candidate_id, changed_at ASC);
+
+-- Ampliar estágios: + hired
 ALTER TABLE assessments DROP CONSTRAINT IF EXISTS assessments_pipeline_stage_check;
 ALTER TABLE assessments ADD CONSTRAINT assessments_pipeline_stage_check CHECK (
   pipeline_stage IN (
@@ -78,3 +70,7 @@ ALTER TABLE candidates
 ALTER TABLE candidates DROP CONSTRAINT IF EXISTS candidates_employment_status_check;
 ALTER TABLE candidates ADD CONSTRAINT candidates_employment_status_check
   CHECK (employment_status IN ('candidate', 'employee', 'alumni'));
+
+COMMENT ON COLUMN assessments.rejection_reason IS 'Motivo ao rejeitar: salary|profile_fit|experience|culture|timing|competition|no_show|withdrew|other';
+COMMENT ON COLUMN assessments.start_date IS 'Data de início combinada ao marcar hired';
+COMMENT ON COLUMN candidates.employment_status IS 'candidate | employee | alumni';

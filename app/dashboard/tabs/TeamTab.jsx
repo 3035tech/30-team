@@ -10,6 +10,7 @@ import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { titleCasePersonName } from '../../../lib/person-name';
+import { promptPipelineExtras, rejectionReasonLabel } from '../pipeline-prompts';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -17,6 +18,7 @@ const PIPELINE_OPTIONS = [
   'screening',
   'interview',
   'approved',
+  'hired',
   'rejected',
   'archived',
 ];
@@ -39,6 +41,7 @@ function pipelineLabel(locale, code) {
     screening: 'recruiting.pipelineScreening',
     interview: 'recruiting.pipelineInterview',
     approved: 'recruiting.pipelineApproved',
+    hired: 'recruiting.pipelineHired',
     rejected: 'recruiting.pipelineRejected',
     archived: 'recruiting.pipelineArchived',
   };
@@ -204,12 +207,14 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
   };
 
   const patchPipeline = async (assessmentId, pipelineStage) => {
+    const extras = promptPipelineExtras(locale, pipelineStage);
+    if (extras == null) return;
     setStageBusy(String(assessmentId));
     try {
       const res = await fetch(`/api/admin/assessments/${encodeURIComponent(assessmentId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pipelineStage }),
+        body: JSON.stringify({ pipelineStage, ...extras }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
@@ -304,6 +309,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
 
   const applyBulk = async () => {
     if (selectedIds.size === 0 || !bulkStage) return;
+    const extras = promptPipelineExtras(locale, bulkStage);
+    if (extras == null) return;
     setBulkBusy(true);
     setBulkMsg('');
     try {
@@ -312,7 +319,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           fetch(`/api/admin/assessments/${encodeURIComponent(id)}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pipelineStage: bulkStage }),
+            body: JSON.stringify({ pipelineStage: bulkStage, ...extras }),
           })
         )
       );
@@ -674,7 +681,17 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
               />
               <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '16px', marginBottom: '4px' }}>{titleCasePersonName(r.name)}</div>
+                <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                  {titleCasePersonName(r.name)}
+                  {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === 'employee' ? (
+                    <span style={{
+                      marginLeft: '8px', fontSize: '11px', fontFamily: 'monospace',
+                      color: C.synergy, border: `1px solid ${C.synergy}55`, borderRadius: '999px', padding: '1px 8px',
+                    }}>
+                      {t(locale, 'recruiting.employmentEmployee')}
+                    </span>
+                  ) : null}
+                </div>
                 {createdLabel ? (
                   <div
                     title={t(locale, 'dashboard.teamListDateHelp')}
@@ -837,6 +854,47 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                 </div>
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
+                  <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
+                  {detailLoading ? (
+                    <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>…</p>
+                  ) : detail?.timeline?.length ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {detail.timeline.map((ev, i) => {
+                        let text = t(locale, ev.labelKey || 'recruiting.timelinePipelineChange');
+                        if (ev.type === 'pipeline.change') {
+                          text = t(locale, 'recruiting.timelinePipelineChange', {
+                            from: pipelineLabel(locale, ev.fromStage || '—'),
+                            to: pipelineLabel(locale, ev.toStage || '—'),
+                          });
+                        }
+                        const bits = [text];
+                        if (ev.vacancyTitle) bits.push(ev.vacancyTitle);
+                        if (ev.reason) bits.push(rejectionReasonLabel(locale, ev.reason));
+                        if (ev.startDate) bits.push(`${t(locale, 'recruiting.startDateLabel')}: ${ev.startDate}`);
+                        if (ev.topType != null) bits.push(`T${ev.topType}`);
+                        return (
+                          <div key={`${ev.type}-${i}`} style={{ fontSize: '12px', fontFamily: 'monospace', color: C.muted, lineHeight: 1.5 }}>
+                            <span style={{ color: C.faint }}>
+                              {ev.at
+                                ? new Date(ev.at).toLocaleString(localeHtmlLang(locale), {
+                                    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
+                                  })
+                                : '—'}
+                            </span>
+                            {' · '}
+                            <span style={{ color: C.text }}>{bits.filter(Boolean).join(' · ')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+                      {t(locale, 'recruiting.timelineEmpty')}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.assessmentsForCandidate')}</span>
                   {detailLoading ? (
                     <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>…</p>
@@ -885,12 +943,25 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                                 {(a.copyEventCount || 0) > 0 ? t(locale, 'panel.team.attentionFlag') : ''}
                               </div>
                             )}
+                            {a.rejectionReason ? (
+                              <div style={{ marginTop: '4px', fontSize: '11px', color: C.tension, fontFamily: 'monospace' }}>
+                                {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, a.rejectionReason)}
+                              </div>
+                            ) : null}
+                            {a.startDate && a.pipelineStage === 'hired' ? (
+                              <div style={{ marginTop: '4px', fontSize: '11px', color: C.synergy, fontFamily: 'monospace' }}>
+                                {t(locale, 'recruiting.startDateLabel')}: {a.startDate}
+                              </div>
+                            ) : null}
                             {a.pipelineHistory?.length > 0 && (
                               <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint,
                                 fontFamily: 'monospace', lineHeight: 1.8 }}>
                                 {a.pipelineHistory.map((h, i) => (
                                   <span key={i} style={{ marginRight: '10px' }}>
-                                    {h.fromStage || '—'} → {h.toStage} ·{' '}
+                                    {h.fromStage || '—'} → {h.toStage}
+                                    {h.reason ? ` (${rejectionReasonLabel(locale, h.reason)})` : ''}
+                                    {h.startDate ? ` · ${h.startDate}` : ''}
+                                    {' · '}
                                     {new Date(h.changedAt).toLocaleDateString(localeHtmlLang(locale), { day: '2-digit', month: '2-digit', year: '2-digit' })}
                                   </span>
                                 ))}

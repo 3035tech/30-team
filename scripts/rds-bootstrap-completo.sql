@@ -459,10 +459,16 @@ ALTER TABLE assessments
       'screening',
       'interview',
       'approved',
+      'hired',
       'rejected',
       'archived'
     )
   );
+
+ALTER TABLE assessments
+  ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+  ADD COLUMN IF NOT EXISTS hired_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS start_date DATE;
 
 CREATE INDEX IF NOT EXISTS idx_assessments_pipeline ON assessments (company_id, pipeline_stage, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_assessments_invite ON assessments (invite_id) WHERE invite_id IS NOT NULL;
@@ -493,6 +499,53 @@ ALTER TABLE candidate_invites
 CREATE INDEX IF NOT EXISTS idx_candidate_invites_candidate
   ON candidate_invites (candidate_id)
   WHERE candidate_id IS NOT NULL;
+
+-- ── 017 hire / reject / timeline ───────────────────────────────────────────
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS employment_status TEXT NOT NULL DEFAULT 'candidate',
+  ADD COLUMN IF NOT EXISTS hired_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS start_date DATE,
+  ADD COLUMN IF NOT EXISTS hired_vacancy_id BIGINT REFERENCES vacancies(id) ON DELETE SET NULL;
+ALTER TABLE candidates DROP CONSTRAINT IF EXISTS candidates_employment_status_check;
+ALTER TABLE candidates ADD CONSTRAINT candidates_employment_status_check
+  CHECK (employment_status IN ('candidate', 'employee', 'alumni'));
+
+CREATE TABLE IF NOT EXISTS assessment_pipeline_history (
+  id BIGSERIAL PRIMARY KEY,
+  assessment_id BIGINT NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
+  from_stage TEXT,
+  to_stage TEXT NOT NULL,
+  reason TEXT,
+  start_date DATE,
+  changed_by_user_id BIGINT,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE assessment_pipeline_history
+  ADD COLUMN IF NOT EXISTS reason TEXT,
+  ADD COLUMN IF NOT EXISTS start_date DATE;
+
+CREATE TABLE IF NOT EXISTS vacancy_candidate_pipeline_history (
+  id BIGSERIAL PRIMARY KEY,
+  vacancy_candidate_id BIGINT NOT NULL REFERENCES vacancy_candidates(id) ON DELETE CASCADE,
+  from_stage TEXT,
+  to_stage TEXT NOT NULL,
+  reason TEXT,
+  start_date DATE,
+  changed_by_user_id BIGINT,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE vacancy_candidates
+  ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+  ADD COLUMN IF NOT EXISTS hired_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE vacancy_candidates DROP CONSTRAINT IF EXISTS vacancy_candidates_pipeline_stage_check;
+ALTER TABLE vacancy_candidates ADD CONSTRAINT vacancy_candidates_pipeline_stage_check CHECK (
+  pipeline_stage IS NULL OR pipeline_stage IN (
+    'new', 'test_completed', 'screening', 'interview',
+    'approved', 'hired', 'rejected', 'archived'
+  )
+);
 
 -- ── Controle de migrations (opcional, alinha com scripts/migrate.js) ─────────
 
