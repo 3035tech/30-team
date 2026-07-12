@@ -5,6 +5,7 @@ import { queryRead } from '../../../../lib/db';
 import {
   assessmentListWhereParts,
   PAGE_SIZE_OPTIONS,
+  parseNameSearch,
   sqlWhere,
 } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
@@ -66,17 +67,22 @@ export async function GET(request) {
     selectedVacancy,
     enneagram,
   });
-  const where = sqlWhere(whereParts);
+  const nameSearch = parseNameSearch(url.searchParams);
+  const extWhereParts = nameSearch
+    ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
+    : whereParts;
+  const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
+  const where = sqlWhere(extWhereParts);
 
   const cntRes = await queryRead(
     `SELECT COUNT(*)::int AS n ${BASE_JOIN} ${where}`,
-    params
+    extParams
   );
   const total = cntRes.rows[0]?.n ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const effectivePage = total === 0 ? 1 : Math.min(page, totalPages);
 
-  const pageParams = [...params];
+  const pageParams = [...extParams];
   pageParams.push(pageSize);
   const limIx = pageParams.length;
   pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));

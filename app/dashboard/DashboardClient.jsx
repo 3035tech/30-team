@@ -606,6 +606,12 @@ export default function DashboardClient({
                     onSort={pushTeamSort}
                     locale={locale}
                     isAdmin={isAdmin}
+                    search={selectedSearch}
+                    listTotal={listTotal}
+                    onSearch={(value) => {
+                      setSearch(value || '');
+                      pushFilters({ search: value });
+                    }}
                   />
                   {listTotal > 0 ? (
                     <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
@@ -680,6 +686,11 @@ export default function DashboardClient({
                   comparePageSize={comparePagSnap.pageSize}
                   onComparePagination={pushComparePagination}
                   locale={locale}
+                  search={selectedSearch}
+                  onSearch={(value) => {
+                    setSearch(value || '');
+                    pushFilters({ search: value });
+                  }}
                 />
               )}
               {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}

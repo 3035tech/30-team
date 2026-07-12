@@ -114,11 +114,11 @@ function InsightStrip({ locale, visible }) {
   );
 }
 
-export function CompareTab({ results, locale = 'pt-BR' }) {
+export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, listTotal = 0 }) {
   const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
   const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
   const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' }));
-  const [query, setQuery] = useState('');
+  const [searchDraft, setSearchDraft] = useState(search || '');
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -128,6 +128,16 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
       return next;
     });
   }, [allIds]);
+
+  useEffect(() => {
+    setSearchDraft(search || '');
+  }, [search]);
+
+  const commitSearch = () => {
+    const trimmed = searchDraft.trim();
+    if (trimmed === (search || '').trim()) return;
+    if (typeof onSearch === 'function') onSearch(trimmed || null);
+  };
 
   const toggleId = (id) => {
     setSelectedIds((prev) => {
@@ -143,17 +153,14 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
 
   const visible = results.filter((r) => selectedIds.has(String(r.assessmentId)));
   const resultsByName = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return [...results]
-      .filter((r) => !q || String(r.name || '').toLowerCase().includes(q))
-      .sort((a, b) => {
-        const an = personSortKey(a?.name);
-        const bn = personSortKey(b?.name);
-        if (an < bn) return -1;
-        if (an > bn) return 1;
-        return 0;
-      });
-  }, [results, query]);
+    return [...results].sort((a, b) => {
+      const an = personSortKey(a?.name);
+      const bn = personSortKey(b?.name);
+      if (an < bn) return -1;
+      if (an > bn) return 1;
+      return 0;
+    });
+  }, [results]);
 
   const visibleSorted = useMemo(() => {
     const dirMul = sortBy.dir === 'asc' ? 1 : -1;
@@ -265,8 +272,12 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
           </span>
           <input
             type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitSearch();
+            }}
+            onBlur={commitSearch}
             placeholder={t(locale, 'panel.compare.searchPh')}
             aria-label={t(locale, 'panel.compare.searchPh')}
             style={{
@@ -282,7 +293,11 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
               fontFamily: 'inherit',
             }}
           />
-          <button
+          {(search || '').trim() ? (
+            <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+              {t(locale, 'panel.compare.searchResultsTotal', { n: listTotal })}
+            </span>
+          ) : null}          <button
             type="button"
             onClick={selectAll}
             disabled={nTot === 0 || (nTot > 0 && nSel === nTot)}
@@ -325,7 +340,9 @@ export function CompareTab({ results, locale = 'pt-BR' }) {
         >
           {resultsByName.length === 0 ? (
             <span style={{ fontSize: '13px', color: C.faint, fontStyle: 'italic' }}>
-              {t(locale, 'panel.compare.searchEmpty')}
+              {(search || '').trim()
+                ? t(locale, 'panel.compare.searchEmpty')
+                : t(locale, 'panel.compare.noneSelected')}
             </span>
           ) : (
             resultsByName.map((r) => {

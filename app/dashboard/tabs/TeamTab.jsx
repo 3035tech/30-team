@@ -109,9 +109,19 @@ function profileFromCandidate(c) {
   };
 }
 
-export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', isAdmin = false }) {
+export function TeamTab({
+  results,
+  sortKey,
+  sortDir,
+  onSort,
+  locale = 'pt-BR',
+  isAdmin = false,
+  search = '',
+  onSearch,
+  listTotal = 0,
+}) {
   const [open, setOpen] = useState(null);
-  const [localSearch, setLocalSearch] = useState('');
+  const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [detail, setDetail] = useState(null);
@@ -139,6 +149,16 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
   const [dragOverStage, setDragOverStage] = useState(null);
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
+
+  useEffect(() => {
+    setSearchDraft(search || '');
+  }, [search]);
+
+  const commitSearch = () => {
+    const trimmed = searchDraft.trim();
+    if (trimmed === (search || '').trim()) return;
+    if (typeof onSearch === 'function') onSearch(trimmed || null);
+  };
 
   const sortColumns = [
     { k: 'createdAt', labelKey: 'panel.team.sortDate' },
@@ -338,8 +358,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
 
   const getEffectiveStage = (r) => stageOverrides[String(r.assessmentId)] ?? r.pipelineStage ?? 'new';
 
-  const q = localSearch.trim().toLowerCase();
-  const filtered = q ? results.filter((r) => (r.name || '').toLowerCase().includes(q)) : results;
+  const filtered = results;
+  const activeSearch = (search || '').trim();
   const allSelected = filtered.length > 0 && filtered.every((r) => selectedIds.has(String(r.assessmentId)));
   const toggleSelectAll = () => {
     setSelectedIds((prev) => {
@@ -355,8 +375,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
       <div style={{ position: 'relative' }}>
         <input
           type="search"
-          value={localSearch}
-          onChange={(e) => setLocalSearch(e.target.value)}
+          value={searchDraft}
+          onChange={(e) => setSearchDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitSearch();
+          }}
+          onBlur={commitSearch}
           placeholder={t(locale, 'dashboard.searchPlaceholder')}
           aria-label={t(locale, 'panel.team.searchAriaLabel')}
           style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
@@ -367,12 +391,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           color: C.faint, fontSize: '15px', pointerEvents: 'none' }}>
           ⌕
         </span>
-        {q && (
+        {activeSearch ? (
           <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
             color: C.faint, fontSize: '11px', fontFamily: 'monospace' }}>
-            {t(locale, 'panel.team.pageResults', { n: filtered.length })}
+            {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
-        )}
+        ) : null}
       </div>
       <div
         role="group"
@@ -573,10 +597,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
               );
             })}
           </div>
-          {filtered.length === 0 && q && (
+          {filtered.length === 0 && activeSearch && (
             <div style={{ textAlign: 'center', padding: '40px', color: C.muted,
               fontStyle: 'italic', fontSize: '14px' }}>
-              {t(locale, 'panel.team.noResultsFor', { query: localSearch })}
+              {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
             </div>
           )}
         </div>
@@ -631,9 +655,9 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           )}
         </div>
       )}
-      {viewMode === 'list' && filtered.length === 0 && q ? (
+      {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
         <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
-          {t(locale, 'panel.team.noResultsFor', { query: localSearch })}
+          {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
         </div>
       ) : null}
       {viewMode === 'list' && filtered.map((r) => {

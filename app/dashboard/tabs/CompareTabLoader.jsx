@@ -7,7 +7,15 @@ import { C } from '../../../lib/theme';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
 
-export function CompareTabLoader({ filterQueryString, comparePage, comparePageSize, onComparePagination, locale = 'pt-BR' }) {
+export function CompareTabLoader({
+  filterQueryString,
+  comparePage,
+  comparePageSize,
+  onComparePagination,
+  locale = 'pt-BR',
+  search = '',
+  onSearch,
+}) {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, page: 1 });
   const [loading, setLoading] = useState(true);
@@ -72,7 +80,13 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <CompareTab results={rows} locale={locale} />
+      <CompareTab
+        results={rows}
+        locale={locale}
+        search={search}
+        onSearch={onSearch}
+        listTotal={meta.total}
+      />
       {meta.total > 0 ? (
         <div style={{
           ...S.card, padding: '14px 20px', display: 'flex', flexWrap: 'wrap',
