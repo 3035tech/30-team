@@ -5,6 +5,7 @@ import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
+import { titleCasePersonName } from '../../../../../lib/person-name';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -130,7 +131,7 @@ export async function PATCH(request, { params }) {
   let n = 2;
 
   if (hasName) {
-    const name = String(body.fullName || body.name || '').trim().slice(0, 200);
+    const name = titleCasePersonName(body.fullName || body.name).slice(0, 200);
     if (!name) return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
     sets.push(`full_name = $${n++}`);
     sqlParams.push(name);

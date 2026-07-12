@@ -8,6 +8,8 @@ import { C } from '../../../lib/theme';
 import { Bar, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
+import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
+import { titleCasePersonName } from '../../../lib/person-name';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -94,11 +96,11 @@ const emptyProfileDraft = () => ({
 
 function profileFromCandidate(c) {
   return {
-    phone: c?.phone || '',
+    phone: stripPhone(c?.phone) || '',
     linkedinUrl: c?.linkedinUrl || '',
     city: c?.city || '',
     state: c?.state || '',
-    salaryExpectation: c?.salaryExpectation || '',
+    salaryExpectation: salaryToCentsDigits(c?.salaryExpectation),
     availability: c?.availability || '',
     source: c?.source || '',
   };
@@ -258,7 +260,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           linkedinUrl: profileDraft.linkedinUrl,
           city: profileDraft.city,
           state: profileDraft.state,
-          salaryExpectation: profileDraft.salaryExpectation,
+          salaryExpectation: stripSalary(profileDraft.salaryExpectation),
           availability: profileDraft.availability || null,
           source: profileDraft.source || null,
         }),
@@ -519,7 +521,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                             <span style={{ fontSize: '13px', lineHeight: 1.3,
                               fontFamily: "'Georgia',serif", color: C.text, flex: 1,
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {r.name}
+                              {titleCasePersonName(r.name)}
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '7px' }}>
@@ -667,12 +669,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                 checked={selectedIds.has(id)}
                 onClick={(e) => e.stopPropagation()}
                 onChange={() => toggleSelect(id)}
-                aria-label={t(locale, 'panel.team.selectPersonAria', { name: r.name })}
+                aria-label={t(locale, 'panel.team.selectPersonAria', { name: titleCasePersonName(r.name) })}
                 style={{ width: '16px', height: '16px', flexShrink: 0, accentColor: C.purple, cursor: 'pointer' }}
               />
               <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '16px', marginBottom: '4px' }}>{r.name}</div>
+                <div style={{ fontSize: '16px', marginBottom: '4px' }}>{titleCasePersonName(r.name)}</div>
                 {createdLabel ? (
                   <div
                     title={t(locale, 'dashboard.teamListDateHelp')}
@@ -981,7 +983,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                       }
                       return (
                         <div style={{ fontSize: '13px', color: C.text, lineHeight: 1.65, fontFamily: 'monospace' }}>
-                          {c?.phone ? <div>{c.phone}</div> : null}
+                          {c?.phone ? <div>{formatPhoneBr(c.phone)}</div> : null}
                           {locBits ? <div>{locBits}</div> : null}
                           {c?.linkedinUrl ? (
                             <div>
@@ -990,7 +992,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                               </a>
                             </div>
                           ) : null}
-                          {c?.salaryExpectation ? <div>{c.salaryExpectation}</div> : null}
+                          {c?.salaryExpectation ? <div>{formatSalaryBr(c.salaryExpectation)}</div> : null}
                           {availabilityLabel(locale, c?.availability) ? (
                             <div>{availabilityLabel(locale, c.availability)}</div>
                           ) : null}
@@ -1004,9 +1006,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                     <div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                         <input
-                          value={profileDraft.phone}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, phone: e.target.value }))}
+                          value={formatPhoneBr(profileDraft.phone)}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, phone: stripPhone(e.target.value) || '' }))}
                           placeholder={t(locale, 'recruiting.phonePh')}
+                          inputMode="tel"
                           style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
                             fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
                         />
@@ -1033,9 +1036,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                             fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
                         />
                         <input
-                          value={profileDraft.salaryExpectation}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: e.target.value }))}
+                          value={formatSalaryBr(profileDraft.salaryExpectation)}
+                          onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: digitsOnly(e.target.value).slice(0, 15) }))}
                           placeholder={t(locale, 'recruiting.salaryPh')}
+                          inputMode="numeric"
                           style={{ flex: '1 1 160px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
                             fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
                         />

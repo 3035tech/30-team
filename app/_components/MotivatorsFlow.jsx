@@ -6,6 +6,7 @@ import { MOTIVATORS_DEFINITION } from '../../lib/ae/motivators-dimensions.js';
 import { localizeAreaLabel } from '../../lib/i18n-data';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
+import { titleCasePersonName } from '../../lib/person-name';
 import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
 import LanguageSelect from './LanguageSelect';
 
@@ -129,7 +130,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
     if (!ready || busy) return;
     setBusy(true);
     setError('');
-    const err = await onStart({ name: name.trim(), email: email.trim().toLowerCase(), areaKey, consent });
+    const err = await onStart({ name: titleCasePersonName(name), email: email.trim().toLowerCase(), areaKey, consent });
     if (err) setError(err);
     setBusy(false);
   };
@@ -178,7 +179,13 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         </div>
 
         <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'candidate.fullName')}</label>
-        <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder={t(locale, 'candidate.namePlaceholder')} />
+        <input
+          style={S.input}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => setName(titleCasePersonName(name))}
+          placeholder={t(locale, 'candidate.namePlaceholder')}
+        />
 
         <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.emailInvite')}</label>
         <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />

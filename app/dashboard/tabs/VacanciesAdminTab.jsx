@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
+import { titleCasePersonName } from '../../../lib/person-name';
 import {
   PAGE_SIZE_OPTIONS,
   parseVacanciesPagination,
@@ -12,6 +13,16 @@ import {
 import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
+import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
+
+function formatVacancySalaryRange(locale, min, max) {
+  const a = min ? formatSalaryBr(min) : '';
+  const b = max ? formatSalaryBr(max) : '';
+  if (a && b) return t(locale, 'recruiting.salaryRangeDisplay', { min: a, max: b });
+  if (a) return t(locale, 'recruiting.salaryFromDisplay', { min: a });
+  if (b) return t(locale, 'recruiting.salaryUpToDisplay', { max: b });
+  return null;
+}
 
 export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
   const [candidateName, setCandidateName] = useState('');
@@ -21,7 +32,7 @@ export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
   const [localOk, setLocalOk] = useState('');
 
   const send = async () => {
-    const name = candidateName.trim();
+    const name = titleCasePersonName(candidateName);
     const mail = candidateEmail.trim().toLowerCase();
     setLocalErr('');
     setLocalOk('');
@@ -550,7 +561,7 @@ function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       {idx + 1}
                     </td>
                     <td style={{ padding: '10px' }}>
-                      <div style={{ color: C.text, fontWeight: 500 }}>{r.name}</div>
+                      <div style={{ color: C.text, fontWeight: 500 }}>{titleCasePersonName(r.name)}</div>
                       {r.email ? (
                         <div style={{ marginTop: '2px', fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
                           {r.email}
@@ -757,7 +768,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           <div style={{ fontSize: '13px', color: C.text, marginBottom: '3px',
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                             fontFamily: "'Georgia',serif" }}>
-                            {r.name}
+                            {titleCasePersonName(r.name)}
                           </div>
                           {r.email ? (
                             <div style={{ fontSize: '10px', fontFamily: 'monospace', color: C.faint,
@@ -856,6 +867,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [status, setStatus] = useState('open');
   const [positionsCount, setPositionsCount] = useState('1');
   const [targetDate, setTargetDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [salaryMin, setSalaryMin] = useState('');
+  const [salaryMax, setSalaryMax] = useState('');
   const [companyId, setCompanyId] = useState('');
 
   const appUrl =
@@ -987,6 +1001,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         title: title.trim(), status, slug: slug.trim() || undefined,
         positionsCount: parseInt(positionsCount, 10) || 1,
         targetDate: targetDate || null,
+        description,
+        salaryMin: stripSalary(salaryMin),
+        salaryMax: stripSalary(salaryMax),
       };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
@@ -997,6 +1014,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
+      setDescription(''); setSalaryMin(''); setSalaryMax('');
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
@@ -1088,12 +1106,15 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       status: v.status ?? 'open',
       positionsCount: String(v.positionsCount ?? 1),
       targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
+      description: v.description ?? '',
+      salaryMin: salaryToCentsDigits(v.salaryMin),
+      salaryMax: salaryToCentsDigits(v.salaryMax),
     });
   };
 
   const saveVacancyEdit = async () => {
     if (!editingVacancy) return;
-    const { id, title, slug, status, positionsCount, targetDate } = editingVacancy;
+    const { id, title, slug, status, positionsCount, targetDate, description, salaryMin, salaryMax } = editingVacancy;
     if (!title.trim()) { setError(t(locale, 'recruiting.titleRequired')); return; }
     setLoading(true);
     setError('');
@@ -1108,6 +1129,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           status,
           positionsCount: parseInt(positionsCount, 10) || 1,
           targetDate: targetDate || null,
+          description,
+          salaryMin: stripSalary(salaryMin),
+          salaryMax: stripSalary(salaryMax),
         }),
       });
       const data = await res.json();
@@ -1256,7 +1280,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         })}
                       </span>
                     )}
+                    {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                      </span>
+                    ) : null}
                   </div>
+                  {v.description ? (
+                    <p style={{
+                      marginTop: '12px', marginBottom: 0, fontSize: '13px', color: C.text,
+                      lineHeight: 1.65, whiteSpace: 'pre-wrap',
+                    }}>
+                      {v.description}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -1410,7 +1447,37 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           fontFamily: 'monospace' }}
                       />
                     </label>
+                    <input
+                      value={formatSalaryBr(editingVacancy.salaryMin)}
+                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
+                      placeholder={t(locale, 'recruiting.salaryMinPh')}
+                      inputMode="numeric"
+                      aria-label={t(locale, 'recruiting.salaryMinPh')}
+                      style={{ flex: '1 1 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                    />
+                    <input
+                      value={formatSalaryBr(editingVacancy.salaryMax)}
+                      onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
+                      placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                      inputMode="numeric"
+                      aria-label={t(locale, 'recruiting.salaryMaxPh')}
+                      style={{ flex: '1 1 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                    />
                   </div>
+                  <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
+                    {t(locale, 'recruiting.vacancyDescriptionLabel')}
+                  </label>
+                  <textarea
+                    value={editingVacancy.description}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, description: e.target.value }))}
+                    placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+                    rows={4}
+                    style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'Georgia, serif',
+                      resize: 'vertical', marginBottom: '10px', lineHeight: 1.55 }}
+                  />
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       type="button"
@@ -1603,6 +1670,31 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
             />
           </label>
+          <input
+            value={formatSalaryBr(salaryMin)}
+            onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
+            placeholder={t(locale, 'recruiting.salaryMinPh')}
+            inputMode="numeric"
+            style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+          />
+          <input
+            value={formatSalaryBr(salaryMax)}
+            onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
+            placeholder={t(locale, 'recruiting.salaryMaxPh')}
+            inputMode="numeric"
+            style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+            rows={3}
+            style={{ flex: '1 1 100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'Georgia, serif',
+              resize: 'vertical', lineHeight: 1.55, boxSizing: 'border-box' }}
+          />
           <button
             type="button"
             onClick={createVacancy}
@@ -1769,6 +1861,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             {t(locale, 'recruiting.targetDate', { date: new Date(v.targetDate + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR') })}
                           </span>
                         )}
+                        {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
+                          <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                            {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>

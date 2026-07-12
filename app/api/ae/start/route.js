@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
 import { drawMotivatorsQuestions } from '../../../../lib/ae/draw-questions';
 import { upsertCandidate, normalizeEmail } from '../../../../lib/ae/candidate-upsert';
+import { titleCasePersonName } from '../../../../lib/person-name';
 import { toPublicQuestions } from '../../../../lib/ae/to-public-questions';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { apiError } from '../../../../lib/api-error';
@@ -22,7 +23,7 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => ({}));
     const inviteToken = String(body.inviteToken || '').trim();
-    const name = String(body.name || '').trim();
+    const name = titleCasePersonName(body.name);
     const email = normalizeEmail(body.email);
     const areaKey = String(body.areaKey || '').trim();
     const consent = body.consent === true;

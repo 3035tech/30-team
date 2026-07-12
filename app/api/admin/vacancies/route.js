@@ -5,6 +5,7 @@ import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
+import { parseVacancyDetailsFromBody } from '../../../../lib/vacancy-details';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -106,6 +107,9 @@ export async function GET(request) {
        v.status,
        v.positions_count AS "positionsCount",
        v.target_date AS "targetDate",
+       v.description,
+       v.salary_min AS "salaryMin",
+       v.salary_max AS "salaryMax",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -164,16 +168,38 @@ export async function POST(request) {
     ? String(body.targetDate)
     : null;
 
+  let details;
+  try {
+    details = parseVacancyDetailsFromBody(body, { forCreate: true });
+  } catch (e) {
+    if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
+    throw e;
+  }
+
   const c = await queryRead(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
   if (c.rowCount === 0) return apiError(request, 'INVALID_COMPANY', 400);
 
   const ins = await query(
-    `INSERT INTO vacancies (company_id, title, slug, status, positions_count, target_date)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO vacancies (
+       company_id, title, slug, status, positions_count, target_date,
+       description, salary_min, salary_max
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
+               description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                created_at AS "createdAt"`,
-    [companyId, title, slug, status, positionsCount, targetDate]
+    [
+      companyId,
+      title,
+      slug,
+      status,
+      positionsCount,
+      targetDate,
+      details.description,
+      details.salaryMin,
+      details.salaryMax,
+    ]
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);

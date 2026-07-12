@@ -10,6 +10,8 @@ import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
 import LanguageSelect from './LanguageSelect';
 import { BrStateSelect } from './BrStateSelect';
 import { BrCitySelect } from './BrCitySelect';
+import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
+import { titleCasePersonName } from '../../lib/person-name';
 
 const S = {
   app: {
@@ -153,11 +155,11 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   const ready = name.trim().length > 1 && !!areaKey && consent && emailOk;
   const canStart = ready && !startDisabled && !areasLoading && !areasError && areaOptions.length > 0 && !startBusy;
   const startPayload = {
-    name: name.trim(),
+    name: titleCasePersonName(name),
     email: email.trim(),
     areaKey,
     consent,
-    phone: phone.trim(),
+    phone: stripPhone(phone) || '',
     linkedinUrl: linkedinUrl.trim(),
     city: city.trim(),
     state: stateUf.trim(),
@@ -248,6 +250,7 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           placeholder={t(locale, 'candidate.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onBlur={() => setName(titleCasePersonName(name))}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
         />
 
@@ -301,8 +304,8 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
         <input
           style={S.input}
           placeholder={t(locale, 'candidate.phonePlaceholder')}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={formatPhoneBr(phone)}
+          onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
           inputMode="tel"
           autoComplete="tel"
         />

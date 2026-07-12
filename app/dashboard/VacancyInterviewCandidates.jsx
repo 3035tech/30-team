@@ -6,6 +6,8 @@ import { C } from '../../lib/theme';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { BrStateSelect } from '../_components/BrStateSelect';
 import { BrCitySelect } from '../_components/BrCitySelect';
+import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../lib/br-masks';
+import { titleCasePersonName } from '../../lib/person-name';
 import { S } from './dashboard-shared';
 
 const inputStyle = {
@@ -54,11 +56,11 @@ function sourceLabel(locale, code) {
 
 function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
   const [notes, setNotes] = useState(row.interviewNotes || '');
-  const [phone, setPhone] = useState(row.phone || '');
+  const [phone, setPhone] = useState(stripPhone(row.phone) || '');
   const [linkedinUrl, setLinkedinUrl] = useState(row.linkedinUrl || '');
   const [city, setCity] = useState(row.city || '');
   const [stateUf, setStateUf] = useState(row.state || '');
-  const [salaryExpectation, setSalaryExpectation] = useState(row.salaryExpectation || '');
+  const [salaryExpectation, setSalaryExpectation] = useState(salaryToCentsDigits(row.salaryExpectation));
   const [availability, setAvailability] = useState(row.availability || '');
   const [source, setSource] = useState(row.source || '');
   const [busy, setBusy] = useState(false);
@@ -70,11 +72,11 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   useEffect(() => {
     setNotes(row.interviewNotes || '');
-    setPhone(row.phone || '');
+    setPhone(stripPhone(row.phone) || '');
     setLinkedinUrl(row.linkedinUrl || '');
     setCity(row.city || '');
     setStateUf(row.state || '');
-    setSalaryExpectation(row.salaryExpectation || '');
+    setSalaryExpectation(salaryToCentsDigits(row.salaryExpectation));
     setAvailability(row.availability || '');
     setSource(row.source || '');
   }, [row]);
@@ -117,7 +119,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           linkedinUrl,
           city,
           state: stateUf,
-          salaryExpectation,
+          salaryExpectation: stripSalary(salaryExpectation),
           availability: availability || null,
           source: source || null,
         }),
@@ -171,11 +173,11 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: '14px', color: C.text }}>
-            <strong style={{ fontWeight: 600 }}>{row.fullName}</strong>
+            <strong style={{ fontWeight: 600 }}>{titleCasePersonName(row.fullName)}</strong>
           </div>
           <div style={{ marginTop: '4px', fontSize: '12px', fontFamily: 'monospace', color: C.muted }}>
             {row.email}
-            {row.phone ? ` · ${row.phone}` : ''}
+            {row.phone ? ` · ${formatPhoneBr(row.phone)}` : ''}
           </div>
           {(locBits || row.linkedinUrl) ? (
             <div style={{ marginTop: '4px', fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
@@ -214,6 +216,11 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
             {sourceLabel(locale, row.source) ? (
               <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
                 {sourceLabel(locale, row.source)}
+              </span>
+            ) : null}
+            {row.salaryExpectation ? (
+              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+                {formatSalaryBr(row.salaryExpectation)}
               </span>
             ) : null}
           </div>
@@ -279,7 +286,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       {expanded && (
         <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
+            <input
+              value={formatPhoneBr(phone)}
+              onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+              placeholder={t(locale, 'recruiting.phonePh')}
+              inputMode="tel"
+              style={inputStyle}
+            />
             <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
             <BrStateSelect
               value={stateUf}
@@ -297,7 +310,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               locale={locale}
               style={{ ...selectStyle, flex: '1 1 180px' }}
             />
-            <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
+            <input
+              value={formatSalaryBr(salaryExpectation)}
+              onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
+              placeholder={t(locale, 'recruiting.salaryPh')}
+              inputMode="numeric"
+              style={inputStyle}
+            />
             <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.availabilityLabel')}>
               <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
               <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
@@ -421,13 +440,13 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: name.trim(),
+          fullName: titleCasePersonName(name),
           email: email.trim().toLowerCase(),
           phone,
           linkedinUrl,
           city,
           state: stateUf,
-          salaryExpectation,
+          salaryExpectation: stripSalary(salaryExpectation),
           availability: availability || null,
           source: source || null,
           interviewNotes: createNotes,
@@ -485,9 +504,21 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           {t(locale, 'recruiting.newCandidate')}
         </span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t(locale, 'recruiting.fullNamePh')} style={inputStyle} />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setName(titleCasePersonName(name))}
+            placeholder={t(locale, 'recruiting.fullNamePh')}
+            style={inputStyle}
+          />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} style={{ ...inputStyle, flex: '1 1 220px' }} />
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
+          <input
+            value={formatPhoneBr(phone)}
+            onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+            placeholder={t(locale, 'recruiting.phonePh')}
+            inputMode="tel"
+            style={inputStyle}
+          />
           <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
           <BrStateSelect
             value={stateUf}
@@ -505,7 +536,13 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             locale={locale}
             style={{ ...selectStyle, flex: '1 1 180px' }}
           />
-          <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
+          <input
+            value={formatSalaryBr(salaryExpectation)}
+            onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
+            placeholder={t(locale, 'recruiting.salaryPh')}
+            inputMode="numeric"
+            style={inputStyle}
+          />
           <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle}>
             <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
             <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>

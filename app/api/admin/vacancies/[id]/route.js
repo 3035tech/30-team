@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead } from '../../../../../lib/db';
 import { sanitizeInterviewNotesHtml } from '../../../../../lib/sanitize-html';
 import { apiError } from '../../../../../lib/api-error';
+import { parseVacancyDetailsFromBody } from '../../../../../lib/vacancy-details';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -30,6 +31,9 @@ async function getVacancyOr404(vacancyId) {
        v.status,
        v.positions_count AS "positionsCount",
        v.target_date AS "targetDate",
+       v.description,
+       v.salary_min AS "salaryMin",
+       v.salary_max AS "salaryMax",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -114,6 +118,21 @@ export async function PATCH(request, { params }) {
     ? (/^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || '')) ? String(body.targetDate) : null)
     : undefined;
 
+  let details;
+  try {
+    details = parseVacancyDetailsFromBody(body, { forCreate: false });
+  } catch (e) {
+    if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
+    throw e;
+  }
+
+  // Valida min/max cruzando com valores atuais quando só um lado veio no PATCH
+  const checkMin = details.salaryMin !== undefined ? details.salaryMin : current.salaryMin;
+  const checkMax = details.salaryMax !== undefined ? details.salaryMax : current.salaryMax;
+  if (checkMin != null && checkMax != null && Number(checkMin) > Number(checkMax)) {
+    return apiError(request, 'INVALID_SALARY_RANGE', 400);
+  }
+
   if (status !== null && !['open', 'closed'].includes(status)) return apiError(request, 'INVALID_STATUS', 400);
   if (slug !== null && !slug) return apiError(request, 'INVALID_SLUG', 400);
 
@@ -122,16 +141,21 @@ export async function PATCH(request, { params }) {
   const nextSlug = slug !== null ? slug : current.slug;
   const nextPositions = positionsCount !== null ? positionsCount : (current.positionsCount ?? 1);
   const nextTargetDate = targetDate !== undefined ? targetDate : (current.targetDate ?? null);
+  const nextDescription = details.description !== undefined ? details.description : (current.description ?? null);
+  const nextSalaryMin = details.salaryMin !== undefined ? details.salaryMin : (current.salaryMin ?? null);
+  const nextSalaryMax = details.salaryMax !== undefined ? details.salaryMax : (current.salaryMax ?? null);
   if (!nextTitle) return apiError(request, 'TITLE_REQUIRED', 400);
 
   const up = await query(
     `UPDATE vacancies
-     SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6
+     SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6,
+         description = $7, salary_min = $8, salary_max = $9
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
+               description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                created_at AS "createdAt"`,
-    [id, nextTitle, nextSlug, nextStatus, nextPositions, nextTargetDate]
+    [id, nextTitle, nextSlug, nextStatus, nextPositions, nextTargetDate, nextDescription, nextSalaryMin, nextSalaryMax]
   );
 
   if (body.vacancyFitWeights != null || body.vacancyRubricNotes !== undefined) {
