@@ -126,47 +126,47 @@ export async function PATCH(request, { params }) {
   }
 
   const sets = [];
-  const params = [id];
+  const sqlParams = [id];
   let n = 2;
 
   if (hasName) {
     const name = String(body.fullName || body.name || '').trim().slice(0, 200);
     if (!name) return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
     sets.push(`full_name = $${n++}`);
-    params.push(name);
+    sqlParams.push(name);
   }
   if (hasHrNotes) {
     const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
     sets.push(`hr_notes = $${n++}`);
-    params.push(notes || null);
+    sqlParams.push(notes || null);
   }
   if (body.phone !== undefined || body.telefone !== undefined) {
     sets.push(`phone = $${n++}`);
-    params.push(profile.phone);
+    sqlParams.push(profile.phone);
   }
   if (body.linkedinUrl !== undefined || body.linkedin !== undefined || body.linkedin_url !== undefined) {
     sets.push(`linkedin_url = $${n++}`);
-    params.push(profile.linkedinUrl);
+    sqlParams.push(profile.linkedinUrl);
   }
   if (body.city !== undefined || body.cidade !== undefined) {
     sets.push(`city = $${n++}`);
-    params.push(profile.city);
+    sqlParams.push(profile.city);
   }
   if (body.state !== undefined || body.uf !== undefined) {
     sets.push(`state = $${n++}`);
-    params.push(profile.state);
+    sqlParams.push(profile.state);
   }
   if (body.salaryExpectation !== undefined || body.salary !== undefined || body.pretensao !== undefined) {
     sets.push(`salary_expectation = $${n++}`);
-    params.push(profile.salaryExpectation);
+    sqlParams.push(profile.salaryExpectation);
   }
   if (body.availability !== undefined || body.disponibilidade !== undefined) {
     sets.push(`availability = $${n++}`);
-    params.push(profile.availability);
+    sqlParams.push(profile.availability);
   }
   if (body.source !== undefined || body.fonte !== undefined) {
     sets.push(`source = $${n++}`);
-    params.push(profile.source);
+    sqlParams.push(profile.source);
   }
 
   if (sets.length === 0) return apiError(request, 'NO_FIELDS_TO_UPDATE', 400);
@@ -177,7 +177,7 @@ export async function PATCH(request, { params }) {
      RETURNING id, full_name AS "fullName", email, hr_notes AS "hrNotes",
                phone, linkedin_url AS "linkedinUrl", city, state,
                salary_expectation AS "salaryExpectation", availability, source`,
-    params
+    sqlParams
   );
   if (up.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
