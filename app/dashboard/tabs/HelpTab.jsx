@@ -109,7 +109,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     candidates: 5,
     pipeline: 5,
     team: 4,
-    motivators: 5,
+    motivators: 7,
     tips: 5,
   };
 
