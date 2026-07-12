@@ -8,6 +8,7 @@ import { S } from '../dashboard-shared';
 const SECTIONS = [
   'welcome',
   'flow',
+  'enneagram',
   'vacancies',
   'candidates',
   'pipeline',
@@ -103,11 +104,12 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   const stepCounts = {
     welcome: 3,
     flow: 0,
+    enneagram: 6,
     vacancies: 5,
     candidates: 5,
     pipeline: 5,
     team: 4,
-    motivators: 3,
+    motivators: 5,
     tips: 5,
   };
 
