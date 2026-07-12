@@ -14,6 +14,7 @@ import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-s
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
+import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -22,6 +23,23 @@ function formatVacancySalaryRange(locale, min, max) {
   if (a) return t(locale, 'recruiting.salaryFromDisplay', { min: a });
   if (b) return t(locale, 'recruiting.salaryUpToDisplay', { max: b });
   return null;
+}
+
+function VacancyDescriptionHtml({ html }) {
+  const safe = sanitizeInterviewNotesHtml(html);
+  if (!safe) return null;
+  return (
+    <div
+      style={{
+        marginTop: '12px',
+        fontSize: '13px',
+        color: C.text,
+        lineHeight: 1.65,
+        fontFamily: 'Georgia, serif',
+      }}
+      dangerouslySetInnerHTML={{ __html: safe }}
+    />
+  );
 }
 
 export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
@@ -1286,14 +1304,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       </span>
                     ) : null}
                   </div>
-                  {v.description ? (
-                    <p style={{
-                      marginTop: '12px', marginBottom: 0, fontSize: '13px', color: C.text,
-                      lineHeight: 1.65, whiteSpace: 'pre-wrap',
-                    }}>
-                      {v.description}
-                    </p>
-                  ) : null}
+                  {v.description ? <VacancyDescriptionHtml html={v.description} /> : null}
                 </div>
               </div>
 
@@ -1469,15 +1480,15 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
                     {t(locale, 'recruiting.vacancyDescriptionLabel')}
                   </label>
-                  <textarea
-                    value={editingVacancy.description}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, description: e.target.value }))}
-                    placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-                    rows={4}
-                    style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'Georgia, serif',
-                      resize: 'vertical', marginBottom: '10px', lineHeight: 1.55 }}
-                  />
+                  <div style={{ marginBottom: '10px' }}>
+                    <RichTextEditor
+                      value={editingVacancy.description}
+                      onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}
+                      placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+                      minHeight={140}
+                      locale={locale}
+                    />
+                  </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       type="button"
@@ -1686,15 +1697,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-            rows={3}
-            style={{ flex: '1 1 100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'Georgia, serif',
-              resize: 'vertical', lineHeight: 1.55, boxSizing: 'border-box' }}
-          />
+          <div style={{ flex: '1 1 100%' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
+              {t(locale, 'recruiting.vacancyDescriptionLabel')}
+            </label>
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+              minHeight={120}
+              locale={locale}
+            />
+          </div>
           <button
             type="button"
             onClick={createVacancy}
