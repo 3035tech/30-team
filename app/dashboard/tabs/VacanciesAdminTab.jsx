@@ -9,7 +9,7 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, getKanbanStages, S } from '../dashboard-shared';
+import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 
@@ -281,7 +281,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   );
 }
 
-function VacancyRubricEditor({ vacancyId, locale }) {
+function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
   const [weights, setWeights] = useState(() => Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, ''])));
   const [notes, setNotes] = useState('');
   const [msg, setMsg] = useState('');
@@ -333,6 +333,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setMsg(t(locale, 'recruiting.rubricSaved'));
+      onSaved?.();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
       setErr(e?.message || t(locale, 'panel.common.error'));
@@ -423,6 +424,164 @@ function inviteStatusShort(locale, status) {
   if (s === 'sent') return t(locale, 'recruiting.inviteSent');
   if (s === 'cancelled') return t(locale, 'recruiting.inviteCancelled');
   return null;
+}
+
+function fitBandLabel(locale, code) {
+  if (code === 'high') return t(locale, 'recruiting.fitHigh');
+  if (code === 'medium') return t(locale, 'recruiting.fitMedium');
+  if (code === 'low') return t(locale, 'recruiting.fitLow');
+  return null;
+}
+
+function pipelineStageLabel(locale, code) {
+  const map = {
+    new: 'recruiting.pipelineNew',
+    test_completed: 'recruiting.pipelineTestCompleted',
+    screening: 'recruiting.pipelineScreening',
+    interview: 'recruiting.pipelineInterview',
+    approved: 'recruiting.pipelineApproved',
+    rejected: 'recruiting.pipelineRejected',
+    archived: 'recruiting.pipelineArchived',
+  };
+  return t(locale, map[code] || 'recruiting.pipelineNew');
+}
+
+function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
+  const [rows, setRows] = useState([]);
+  const [hasCompletedTests, setHasCompletedTests] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr('');
+      try {
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+        const all = Array.isArray(data.ranking) ? data.ranking : [];
+        const completed = all.filter((r) => !r.pendingTest && r.assessmentId != null);
+        const scored = completed
+          .filter((r) => r.vacancyFitScore010 != null)
+          .sort((a, b) => {
+            const av = a.vacancyFitScore010;
+            const bv = b.vacancyFitScore010;
+            if (bv !== av) return bv - av;
+            return String(a.name || '').localeCompare(String(b.name || ''), localeHtmlLang(locale));
+          });
+        if (!cancelled) {
+          setHasCompletedTests(completed.length > 0);
+          setRows(scored);
+        }
+      } catch (e) {
+        if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vacancyId, refreshKey, locale]);
+
+  const scoreColor = (s) => (s >= 7 ? C.synergy : s >= 4 ? '#d97706' : C.tension);
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
+        <span style={S.label}>{t(locale, 'recruiting.rankingTitle')}</span>
+        {loading ? <span className="spinner" style={{ color: C.muted }} /> : null}
+        {!loading && rows.length > 0 ? (
+          <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            {t(locale, 'recruiting.rankingScoredCount', { n: rows.length })}
+          </span>
+        ) : null}
+      </div>
+      <p style={{ margin: '0 0 14px', fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+        {t(locale, 'recruiting.rankingIntro')}
+      </p>
+
+      {err ? (
+        <p style={{ fontSize: '12px', color: C.tension, fontFamily: 'monospace', margin: '0 0 10px' }}>{err}</p>
+      ) : null}
+
+      {!loading && rows.length === 0 ? (
+        <p style={{ fontSize: '12px', color: C.faint, fontStyle: 'italic', margin: 0 }}>
+          {hasCompletedTests
+            ? t(locale, 'recruiting.rankingNoWeights')
+            : t(locale, 'recruiting.rankingEmpty')}
+        </p>
+      ) : null}
+
+      {rows.length > 0 ? (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ textAlign: 'left', borderBottom: `1px solid ${C.border}` }}>
+                <th style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: C.faint, fontWeight: 600 }}>
+                  {t(locale, 'recruiting.rankingColRank')}
+                </th>
+                <th style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: C.faint, fontWeight: 600 }}>
+                  {t(locale, 'recruiting.rankingColCandidate')}
+                </th>
+                <th style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: C.faint, fontWeight: 600 }}>
+                  {t(locale, 'recruiting.rankingColType')}
+                </th>
+                <th style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: C.faint, fontWeight: 600 }}>
+                  {t(locale, 'recruiting.rankingColFit')}
+                </th>
+                <th style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: C.faint, fontWeight: 600 }}>
+                  {t(locale, 'recruiting.rankingColStage')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, idx) => {
+                const band = fitBandLabel(locale, r.vacancyFitLabel);
+                return (
+                  <tr
+                    key={r.assessmentId != null ? `a:${r.assessmentId}` : `c:${r.candidateId}`}
+                    style={{
+                      borderBottom: `1px solid ${C.border}`,
+                      background: idx === 0 ? `${C.synergy}0a` : idx < 3 ? 'rgba(26,22,37,.02)' : 'transparent',
+                    }}
+                  >
+                    <td style={{ padding: '10px', fontFamily: 'monospace', color: idx < 3 ? C.purple : C.faint, fontWeight: idx < 3 ? 700 : 400 }}>
+                      {idx + 1}
+                    </td>
+                    <td style={{ padding: '10px' }}>
+                      <div style={{ color: C.text, fontWeight: 500 }}>{r.name}</div>
+                      {r.email ? (
+                        <div style={{ marginTop: '2px', fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+                          {r.email}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td style={{ padding: '10px' }}>
+                      {r.topType != null ? <TypeBadge type={r.topType} locale={locale} /> : t(locale, 'panel.common.notApplicable')}
+                    </td>
+                    <td style={{ padding: '10px' }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: scoreColor(r.vacancyFitScore010) }}>
+                        {r.vacancyFitScore010}/10
+                      </span>
+                      {band ? (
+                        <span style={{ marginLeft: '8px', fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+                          {band}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td style={{ padding: '10px', fontSize: '12px', fontFamily: 'monospace', color: C.muted }}>
+                      {pipelineStageLabel(locale, r.pipelineStage || 'new')}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
@@ -1315,7 +1474,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </div>
               )}
 
-              <VacancyRubricEditor vacancyId={v.id} locale={locale} />
+              <VacancyRubricEditor
+                vacancyId={v.id}
+                locale={locale}
+                onSaved={() => setPipelineRefresh((x) => x + 1)}
+              />
+            </div>
+
+            {/* Ranking por rubrica (independente do pipeline) */}
+            <div style={{ ...S.card }}>
+              <VacancyFitRankingBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
             </div>
 
             {/* 5–6. Candidatos da entrevista + convites */}
