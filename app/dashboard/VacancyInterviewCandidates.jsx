@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 import { RichTextEditor } from '../_components/RichTextEditor';
+import { BrStateSelect } from '../_components/BrStateSelect';
+import { BrCitySelect } from '../_components/BrCitySelect';
 import { S } from './dashboard-shared';
 
 const inputStyle = {
@@ -279,8 +281,22 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
             <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t(locale, 'recruiting.cityPh')} style={inputStyle} />
-            <input value={stateUf} onChange={(e) => setStateUf(e.target.value)} placeholder={t(locale, 'recruiting.statePh')} style={{ ...inputStyle, flex: '0 1 80px' }} maxLength={32} />
+            <BrStateSelect
+              value={stateUf}
+              onChange={(uf) => {
+                setStateUf(uf);
+                setCity('');
+              }}
+              locale={locale}
+              style={{ ...selectStyle, flex: '0 1 160px' }}
+            />
+            <BrCitySelect
+              uf={stateUf}
+              value={city}
+              onChange={setCity}
+              locale={locale}
+              style={{ ...selectStyle, flex: '1 1 180px' }}
+            />
             <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
             <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.availabilityLabel')}>
               <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
@@ -473,8 +489,22 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} style={{ ...inputStyle, flex: '1 1 220px' }} />
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t(locale, 'recruiting.phonePh')} style={inputStyle} />
           <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
-          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t(locale, 'recruiting.cityPh')} style={inputStyle} />
-          <input value={stateUf} onChange={(e) => setStateUf(e.target.value)} placeholder={t(locale, 'recruiting.statePh')} style={{ ...inputStyle, flex: '0 1 80px' }} maxLength={32} />
+          <BrStateSelect
+            value={stateUf}
+            onChange={(uf) => {
+              setStateUf(uf);
+              setCity('');
+            }}
+            locale={locale}
+            style={{ ...selectStyle, flex: '0 1 160px' }}
+          />
+          <BrCitySelect
+            uf={stateUf}
+            value={city}
+            onChange={setCity}
+            locale={locale}
+            style={{ ...selectStyle, flex: '1 1 180px' }}
+          />
           <input value={salaryExpectation} onChange={(e) => setSalaryExpectation(e.target.value)} placeholder={t(locale, 'recruiting.salaryPh')} style={inputStyle} />
           <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle}>
             <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>

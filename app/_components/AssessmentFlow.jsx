@@ -8,6 +8,8 @@ import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
 import LanguageSelect from './LanguageSelect';
+import { BrStateSelect } from './BrStateSelect';
+import { BrCitySelect } from './BrCitySelect';
 
 const S = {
   app: {
@@ -315,13 +317,21 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
         />
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 120px' }}>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
+            <BrStateSelect
+              value={stateUf}
+              onChange={(uf) => {
+                setStateUf(uf);
+                setCity('');
+              }}
+              locale={locale}
+              style={S.input}
+            />
+          </div>
           <div style={{ flex: '2 1 180px' }}>
             <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.city')}</label>
-            <input style={S.input} placeholder={t(locale, 'candidate.cityPlaceholder')} value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-          <div style={{ flex: '1 1 80px' }}>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
-            <input style={S.input} placeholder={t(locale, 'candidate.statePlaceholder')} value={stateUf} onChange={(e) => setStateUf(e.target.value)} maxLength={32} />
+            <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} style={S.input} />
           </div>
         </div>
 

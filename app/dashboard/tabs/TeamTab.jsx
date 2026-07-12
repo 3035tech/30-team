@@ -6,6 +6,8 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { Bar, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
+import { BrStateSelect } from '../../_components/BrStateSelect';
+import { BrCitySelect } from '../../_components/BrCitySelect';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -1015,19 +1017,19 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                           style={{ flex: '2 1 200px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
                             fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
                         />
-                        <input
-                          value={profileDraft.city}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, city: e.target.value }))}
-                          placeholder={t(locale, 'recruiting.cityPh')}
-                          style={{ flex: '1 1 120px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
-                        />
-                        <input
+                        <BrStateSelect
                           value={profileDraft.state}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, state: e.target.value }))}
-                          placeholder={t(locale, 'recruiting.statePh')}
-                          maxLength={32}
-                          style={{ flex: '0 1 70px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                          onChange={(state) => setProfileDraft((p) => ({ ...p, state, city: '' }))}
+                          locale={locale}
+                          style={{ flex: '0 1 160px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
+                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text, cursor: 'pointer' }}
+                        />
+                        <BrCitySelect
+                          uf={profileDraft.state}
+                          value={profileDraft.city}
+                          onChange={(city) => setProfileDraft((p) => ({ ...p, city }))}
+                          locale={locale}
+                          style={{ flex: '1 1 180px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
                             fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
                         />
                         <input
