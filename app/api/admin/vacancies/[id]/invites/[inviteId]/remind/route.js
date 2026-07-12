@@ -6,6 +6,7 @@ import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacanc
 import { sendTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
+import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -26,24 +27,21 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const isAdmin = payload?.role === 'admin';
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     const inviteId = params?.inviteId;
-    if (!vacancyId || !inviteId) return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    if (!vacancyId || !inviteId) return apiError(request, 'INVALID_PARAMS', 400);
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rl = checkRateLimit(`invite-remind:${uid || ip}`, 60, 60 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json(
-        { error: 'Muitos lembretes nesta hora. Aguarde e tente novamente.' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
-      );
+      return apiError(request, 'RATE_LIMIT_REMINDERS', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const inv = await queryRead(
@@ -58,44 +56,43 @@ export async function POST(request, { params }) {
        LIMIT 1`,
       [inviteId, vacancyId]
     );
-    if (inv.rowCount === 0) return NextResponse.json({ error: 'Convite não encontrado' }, { status: 404 });
+    if (inv.rowCount === 0) return apiError(request, 'INVITE_NOT_FOUND', 404);
 
     const row = inv.rows[0];
     if (!isAdmin && String(row.companyId) !== String(companyId)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     if (String(row.vacancyStatus || '') === 'closed') {
-      return NextResponse.json({ error: 'Vaga encerrada — não é possível lembrar.' }, { status: 400 });
+      return apiError(request, 'VACANCY_CLOSED', 400);
     }
     if (!['sent', 'opened'].includes(String(row.status || ''))) {
-      return NextResponse.json({ error: 'Este convite não está pendente.' }, { status: 400 });
+      return apiError(request, 'INVITE_NOT_PENDING', 400);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return NextResponse.json(
-        { error: 'URL pública do app não configurada (NEXT_PUBLIC_APP_URL).' },
-        { status: 500 }
-      );
+      return apiError(request, 'APP_URL_MISSING', 500);
     }
 
     const linkToken = await ensureActiveVacancyLinkToken(row.vacancyId);
     const challengeUrl = `${base}/v/${linkToken}?invite=${encodeURIComponent(row.token)}`;
+    const locale = localeFromRequest(request);
     const { subject, text, html } = buildCandidateChallengeInviteMail({
       candidateFullName: row.candidateName,
       vacancyTitle: row.vacancyTitle,
       companyName: row.companyName ?? null,
       challengeUrl,
+      locale,
     });
 
     try {
       await sendTransactionalMail({ to: row.candidateEmail, subject, text, html });
     } catch (e) {
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return NextResponse.json({ error: e.message }, { status: 503 });
+        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
       }
       console.error('remind mail error', e);
-      return NextResponse.json({ error: 'Falha ao enviar e-mail.' }, { status: 502 });
+      return apiError(request, 'MAIL_FAILED', 502);
     }
 
     const up = await query(
@@ -109,6 +106,6 @@ export async function POST(request, { params }) {
     return NextResponse.json({ ok: true, ...up.rows[0] });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

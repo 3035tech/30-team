@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
+import { apiError } from '../../../../lib/api-error';
 
 function requireAdmin(payload) {
   return payload?.role === 'admin';
@@ -39,7 +40,7 @@ export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const url = new URL(request.url);
   if (url.searchParams.get('forSelect') === '1') {
@@ -97,12 +98,12 @@ export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const name = String(body.name || '').trim();
   const slug = slugify(body.slug || name);
-  if (!name || !slug) return NextResponse.json({ error: 'Nome obrigatório' }, { status: 400 });
+  if (!name || !slug) return apiError(request, 'NAME_REQUIRED', 400);
 
   const ins = await query(
     `INSERT INTO companies (name, slug, active)

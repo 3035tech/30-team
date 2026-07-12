@@ -3,22 +3,23 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import crypto from 'node:crypto';
+import { apiError } from '../../../../../../lib/api-error';
 
 function requireAdmin(payload) {
   return payload?.role === 'admin';
 }
 
-export async function POST(_request, { params }) {
+export async function POST(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const companyId = params?.id;
-  if (!companyId) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
+  if (!companyId) return apiError(request, 'INVALID_COMPANY', 400);
 
   const exists = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
-  if (exists.rowCount === 0) return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 });
+  if (exists.rowCount === 0) return apiError(request, 'COMPANY_NOT_FOUND', 404);
 
   await query(
     `UPDATE company_links

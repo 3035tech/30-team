@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 
 function ToolbarButton({ label, title, onClick }) {
@@ -33,9 +34,16 @@ function ToolbarButton({ label, title, onClick }) {
  * Editor rico leve (negrito, itálico, listas) para anotações de entrevista.
  * Valor em HTML; onChange recebe HTML.
  */
-export function RichTextEditor({ value, onChange, placeholder = 'Anotações da entrevista…', minHeight = 140 }) {
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  minHeight = 140,
+  locale = 'pt-BR',
+}) {
   const ref = useRef(null);
   const lastHtml = useRef('');
+  const ph = placeholder || t(locale, 'recruiting.interviewNotesPh');
 
   useEffect(() => {
     const el = ref.current;
@@ -75,14 +83,26 @@ export function RichTextEditor({ value, onChange, placeholder = 'Anotações da 
           background: 'rgba(26,22,37,.03)',
         }}
       >
-        <ToolbarButton label="B" title="Negrito" onClick={() => run('bold')} />
-        <ToolbarButton label="I" title="Itálico" onClick={() => run('italic')} />
-        <ToolbarButton label="U" title="Sublinhado" onClick={() => run('underline')} />
-        <ToolbarButton label="• Lista" title="Lista com marcadores" onClick={() => run('insertUnorderedList')} />
-        <ToolbarButton label="1. Lista" title="Lista numerada" onClick={() => run('insertOrderedList')} />
-        <ToolbarButton label="H2" title="Título" onClick={() => run('formatBlock', 'h2')} />
-        <ToolbarButton label="¶" title="Parágrafo" onClick={() => run('formatBlock', 'p')} />
-        <ToolbarButton label="Limpar" title="Remover formatação" onClick={() => run('removeFormat')} />
+        <ToolbarButton label="B" title={t(locale, 'editor.bold')} onClick={() => run('bold')} />
+        <ToolbarButton label="I" title={t(locale, 'editor.italic')} onClick={() => run('italic')} />
+        <ToolbarButton label="U" title={t(locale, 'editor.underline')} onClick={() => run('underline')} />
+        <ToolbarButton
+          label={t(locale, 'editor.bulletLabel')}
+          title={t(locale, 'editor.bulletList')}
+          onClick={() => run('insertUnorderedList')}
+        />
+        <ToolbarButton
+          label={t(locale, 'editor.numberedLabel')}
+          title={t(locale, 'editor.numberedList')}
+          onClick={() => run('insertOrderedList')}
+        />
+        <ToolbarButton label="H2" title={t(locale, 'editor.heading')} onClick={() => run('formatBlock', 'h2')} />
+        <ToolbarButton label="¶" title={t(locale, 'editor.paragraph')} onClick={() => run('formatBlock', 'p')} />
+        <ToolbarButton
+          label={t(locale, 'editor.clear')}
+          title={t(locale, 'editor.clearTitle')}
+          onClick={() => run('removeFormat')}
+        />
       </div>
       <div style={{ position: 'relative' }}>
         {isEmpty ? (
@@ -97,7 +117,7 @@ export function RichTextEditor({ value, onChange, placeholder = 'Anotações da 
               pointerEvents: 'none',
             }}
           >
-            {placeholder}
+            {ph}
           </span>
         ) : null}
         <div
@@ -105,7 +125,7 @@ export function RichTextEditor({ value, onChange, placeholder = 'Anotações da 
           contentEditable
           role="textbox"
           aria-multiline="true"
-          aria-label={placeholder}
+          aria-label={ph}
           onInput={emit}
           onBlur={emit}
           style={{

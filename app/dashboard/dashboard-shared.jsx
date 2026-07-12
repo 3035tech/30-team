@@ -131,14 +131,25 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
   );
 };
 
-const KANBAN_STAGES = [
-  { id: 'new',            label: 'Novo',            color: 'rgba(26,22,37,.5)' },
-  { id: 'test_completed', label: 'Teste Realizado',  color: '#7C3AED' },
-  { id: 'screening',      label: 'Triagem',          color: '#0284c7' },
-  { id: 'interview',      label: 'Entrevista',       color: '#d97706' },
-  { id: 'approved',       label: 'Aprovado',         color: '#15803d' },
-  { id: 'rejected',       label: 'Reprovado',        color: '#dc2626' },
-  { id: 'archived',       label: 'Arquivado',        color: 'rgba(26,22,37,.3)' },
+const KANBAN_STAGE_DEFS = [
+  { id: 'new', color: 'rgba(26,22,37,.5)', labelKey: 'recruiting.pipelineNew' },
+  { id: 'test_completed', color: '#7C3AED', labelKey: 'recruiting.pipelineTestCompleted' },
+  { id: 'screening', color: '#0284c7', labelKey: 'recruiting.pipelineScreening' },
+  { id: 'interview', color: '#d97706', labelKey: 'recruiting.pipelineInterview' },
+  { id: 'approved', color: '#15803d', labelKey: 'recruiting.pipelineApproved' },
+  { id: 'rejected', color: '#dc2626', labelKey: 'recruiting.pipelineRejected' },
+  { id: 'archived', color: 'rgba(26,22,37,.3)', labelKey: 'recruiting.pipelineArchived' },
 ];
 
-export { Bar, CompatBadge, KANBAN_STAGES, S, SortableTh, TypeBadge, clientSortNextDir };
+function getKanbanStages(locale = 'pt-BR') {
+  return KANBAN_STAGE_DEFS.map((s) => ({
+    id: s.id,
+    color: s.color,
+    label: t(locale, s.labelKey),
+  }));
+}
+
+/** @deprecated use getKanbanStages(locale) */
+const KANBAN_STAGES = getKanbanStages('pt-BR');
+
+export { Bar, CompatBadge, KANBAN_STAGES, getKanbanStages, S, SortableTh, TypeBadge, clientSortNextDir };

@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessment-filters';
+import { apiError } from '../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -43,11 +44,11 @@ export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const url = new URL(request.url);
   const vacFromQs = String(url.searchParams.get('vacancy') || '').trim();
@@ -138,11 +139,11 @@ export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const sessionCompanyId = payload?.companyId ?? null;
-  if (!isAdmin && !sessionCompanyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !sessionCompanyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const title = String(body.title || '').trim();
@@ -151,12 +152,12 @@ export async function POST(request) {
   const requestedCompanyId = body.companyId ?? null;
   const companyId = isAdmin ? (requestedCompanyId ?? sessionCompanyId) : sessionCompanyId;
 
-  if (!companyId) return NextResponse.json({ error: 'Empresa obrigatória' }, { status: 400 });
-  if (!title) return NextResponse.json({ error: 'Título obrigatório' }, { status: 400 });
-  if (!['open', 'closed'].includes(status)) return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
+  if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+  if (!title) return apiError(request, 'TITLE_REQUIRED', 400);
+  if (!['open', 'closed'].includes(status)) return apiError(request, 'INVALID_STATUS', 400);
 
   const slug = slugify(body.slug || title);
-  if (!slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
+  if (!slug) return apiError(request, 'INVALID_SLUG', 400);
 
   const positionsCount = Math.max(1, parseInt(body.positionsCount || '1', 10) || 1);
   const targetDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || ''))
@@ -164,7 +165,7 @@ export async function POST(request) {
     : null;
 
   const c = await queryRead(`SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
-  if (c.rowCount === 0) return NextResponse.json({ error: 'Empresa inválida' }, { status: 400 });
+  if (c.rowCount === 0) return apiError(request, 'INVALID_COMPANY', 400);
 
   const ins = await query(
     `INSERT INTO vacancies (company_id, title, slug, status, positions_count, target_date)

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import { getSessionPayload, requireAdminRole } from '../../../../../../lib/ae/require-admin';
+import { apiError } from '../../../../../../lib/api-error';
 
 /** GET /api/admin/ae/config/questions */
 export async function GET(request) {
   try {
     const payload = getSessionPayload();
     if (!requireAdminRole(payload)) {
-      return NextResponse.json({ error: 'Apenas administradores.' }, { status: 401 });
+      return apiError(request, 'ADMIN_ONLY', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -27,7 +28,7 @@ export async function GET(request) {
     return NextResponse.json({ items: res.rows, total: res.rowCount });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
@@ -36,12 +37,12 @@ export async function PATCH(request) {
   try {
     const payload = getSessionPayload();
     if (!requireAdminRole(payload)) {
-      return NextResponse.json({ error: 'Apenas administradores.' }, { status: 401 });
+      return apiError(request, 'ADMIN_ONLY', 401);
     }
 
     const body = await request.json().catch(() => ({}));
     const id = Number(body.id);
-    if (!Number.isFinite(id)) return NextResponse.json({ error: 'ID inválido.' }, { status: 400 });
+    if (!Number.isFinite(id)) return apiError(request, 'INVALID_ID', 400);
 
     const fields = [];
     const params = [id];
@@ -58,12 +59,12 @@ export async function PATCH(request) {
       fields.push(`weight = $${n++}`);
       params.push(Number(body.weight));
     }
-    if (fields.length === 0) return NextResponse.json({ error: 'Nada para atualizar.' }, { status: 400 });
+    if (fields.length === 0) return apiError(request, 'NOTHING_TO_UPDATE', 400);
 
     await query(`UPDATE ae_questions SET ${fields.join(', ')} WHERE id = $1`, params);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

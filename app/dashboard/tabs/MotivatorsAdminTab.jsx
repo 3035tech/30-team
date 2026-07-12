@@ -2,17 +2,34 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { S, Bar } from '../dashboard-shared';
 
-const VIEWS = [
-  { id: 'invites', label: 'Convites' },
-  { id: 'results', label: 'Resultados' },
-  { id: 'dashboard', label: 'Dashboard RH' },
-  { id: 'config', label: 'Configuração', adminOnly: true },
-];
+function dateLocale(locale) {
+  return locale === 'en' ? 'en-US' : 'pt-BR';
+}
 
-function statusBadge(status) {
+function getViews(locale) {
+  return [
+    { id: 'invites', label: t(locale, 'panel.motivatorsAdmin.tabs.invites') },
+    { id: 'results', label: t(locale, 'panel.motivatorsAdmin.tabs.results') },
+    { id: 'dashboard', label: t(locale, 'panel.motivatorsAdmin.tabs.dashboard') },
+    { id: 'config', label: t(locale, 'panel.motivatorsAdmin.tabs.config'), adminOnly: true },
+  ];
+}
+
+function inviteStatusLabel(locale, status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'opened') return t(locale, 'panel.motivatorsAdmin.invites.statusOpened');
+  if (s === 'completed') return t(locale, 'panel.motivatorsAdmin.invites.statusCompleted');
+  if (s === 'cancelled') return t(locale, 'panel.motivatorsAdmin.invites.statusCancelled');
+  if (s === 'expired') return t(locale, 'panel.motivatorsAdmin.invites.statusExpired');
+  if (s === 'sent') return t(locale, 'panel.motivatorsAdmin.invites.statusSent');
+  return status;
+}
+
+function statusBadge(locale, status) {
   const colors = {
     sent: C.muted,
     opened: C.purple,
@@ -22,12 +39,12 @@ function statusBadge(status) {
   };
   return (
     <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: `${colors[status] || C.muted}18`, color: colors[status] || C.muted, fontFamily: 'monospace' }}>
-      {status}
+      {inviteStatusLabel(locale, status)}
     </span>
   );
 }
 
-function InviteForm({ isAdmin, companies, companyId, onSent }) {
+function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
@@ -53,15 +70,15 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
     setErr('');
     setMsg('');
     if (!name.trim()) {
-      setErr('Informe o nome do colaborador.');
+      setErr(t(locale, 'panel.motivatorsAdmin.invite.needName'));
       return;
     }
     if (!emailOk) {
-      setErr('Informe um e-mail válido.');
+      setErr(t(locale, 'panel.motivatorsAdmin.invite.needEmail'));
       return;
     }
     if (isAdmin && !companyOk) {
-      setErr('Selecione a empresa.');
+      setErr(t(locale, 'panel.motivatorsAdmin.invite.needCompany'));
       return;
     }
     setBusy(true);
@@ -74,8 +91,8 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
         body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Erro ao enviar convite.');
-      setMsg(`Convite enviado para ${data.sentTo}`);
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.invite.sendError'));
+      setMsg(t(locale, 'panel.motivatorsAdmin.invite.sendOk', { email: data.sentTo }));
       setName('');
       setEmail('');
       onSent?.();
@@ -89,18 +106,18 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
 
   return (
     <div style={{ ...S.card, marginBottom: '20px' }}>
-      <span style={S.label}>Novo convite</span>
+      <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
         {isAdmin ? (
           <select value={company} onChange={(e) => setCompany(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, minWidth: '160px' }}>
-            <option value="">Empresa…</option>
+            <option value="">{t(locale, 'panel.motivatorsAdmin.invite.companyPh')}</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         ) : null}
-        <input placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '1 1 140px' }} />
-        <input placeholder="email@empresa.com" value={email} onChange={(e) => setEmail(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '2 1 200px' }} />
+        <input placeholder={t(locale, 'panel.motivatorsAdmin.invite.namePh')} value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '1 1 140px' }} />
+        <input placeholder={t(locale, 'panel.motivatorsAdmin.invite.emailPh')} value={email} onChange={(e) => setEmail(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '2 1 200px' }} />
         <button
           type="button"
           onClick={send}
@@ -115,7 +132,7 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
             opacity: canSend ? 1 : 0.5,
           }}
         >
-          {busy ? 'Enviando…' : 'Enviar convite'}
+          {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.send')}
         </button>
       </div>
       {err ? <p style={{ color: C.tension, fontSize: '12px', marginTop: '8px' }}>{err}</p> : null}
@@ -124,7 +141,7 @@ function InviteForm({ isAdmin, companies, companyId, onSent }) {
   );
 }
 
-function InvitesList({ refreshKey, isAdmin, companyFilter }) {
+function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
@@ -143,36 +160,36 @@ function InvitesList({ refreshKey, isAdmin, companyFilter }) {
   useEffect(() => { load(); }, [load]);
 
   const cancel = async (id) => {
-    if (!confirm('Cancelar este convite?')) return;
+    if (!confirm(t(locale, 'panel.motivatorsAdmin.invites.cancelConfirm'))) return;
     await fetch(`/api/admin/ae/invites/${id}`, { method: 'DELETE' });
     load();
   };
 
   const remind = async (id) => {
     await fetch(`/api/admin/ae/invites/${id}/remind`, { method: 'POST' });
-    alert('Lembrete enviado.');
+    alert(t(locale, 'panel.motivatorsAdmin.invites.reminderSent'));
   };
 
   return (
     <div style={S.card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-        <span style={S.label}>Convites</span>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
         <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
-          <option value="all">Todos os status</option>
-          <option value="sent">Pendente</option>
-          <option value="opened">Aberto</option>
-          <option value="completed">Respondido</option>
-          <option value="cancelled">Cancelado</option>
+          <option value="all">{t(locale, 'panel.motivatorsAdmin.invites.allStatuses')}</option>
+          <option value="sent">{t(locale, 'panel.motivatorsAdmin.invites.statusSent')}</option>
+          <option value="opened">{t(locale, 'panel.motivatorsAdmin.invites.statusOpened')}</option>
+          <option value="completed">{t(locale, 'panel.motivatorsAdmin.invites.statusCompleted')}</option>
+          <option value="cancelled">{t(locale, 'panel.motivatorsAdmin.invites.statusCancelled')}</option>
         </select>
       </div>
-      {loading ? <p style={{ color: C.muted }}>Carregando…</p> : null}
+      {loading ? <p style={{ color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead>
           <tr style={{ textAlign: 'left', color: C.muted, fontFamily: 'monospace', fontSize: '10px' }}>
-            <th style={{ padding: '8px' }}>Colaborador</th>
-            <th style={{ padding: '8px' }}>Status</th>
-            <th style={{ padding: '8px' }}>Enviado</th>
-            <th style={{ padding: '8px' }}>Expira</th>
+            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colEmployee')}</th>
+            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colStatus')}</th>
+            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colSent')}</th>
+            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colExpires')}</th>
             <th style={{ padding: '8px' }} />
           </tr>
         </thead>
@@ -183,14 +200,14 @@ function InvitesList({ refreshKey, isAdmin, companyFilter }) {
                 <div>{row.candidateName}</div>
                 <div style={{ color: C.muted, fontSize: '11px' }}>{row.candidateEmail}</div>
               </td>
-              <td style={{ padding: '10px 8px' }}>{statusBadge(row.status)}</td>
-              <td style={{ padding: '10px 8px', color: C.muted }}>{row.sentAt ? new Date(row.sentAt).toLocaleDateString('pt-BR') : '—'}</td>
-              <td style={{ padding: '10px 8px', color: C.muted }}>{row.expiresAt ? new Date(row.expiresAt).toLocaleDateString('pt-BR') : '—'}</td>
+              <td style={{ padding: '10px 8px' }}>{statusBadge(locale, row.status)}</td>
+              <td style={{ padding: '10px 8px', color: C.muted }}>{row.sentAt ? new Date(row.sentAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
+              <td style={{ padding: '10px 8px', color: C.muted }}>{row.expiresAt ? new Date(row.expiresAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
               <td style={{ padding: '10px 8px', textAlign: 'right' }}>
                 {['sent', 'opened'].includes(row.status) ? (
                   <>
-                    <button type="button" onClick={() => remind(row.id)} style={{ marginRight: '8px', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.purple }}>Reenviar</button>
-                    <button type="button" onClick={() => cancel(row.id)} style={{ fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.tension }}>Cancelar</button>
+                    <button type="button" onClick={() => remind(row.id)} style={{ marginRight: '8px', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.purple }}>{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
+                    <button type="button" onClick={() => cancel(row.id)} style={{ fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.tension }}>{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
                   </>
                 ) : null}
               </td>
@@ -198,12 +215,12 @@ function InvitesList({ refreshKey, isAdmin, companyFilter }) {
           ))}
         </tbody>
       </table>
-      {!loading && items.length === 0 ? <p style={{ color: C.muted, marginTop: '12px' }}>Nenhum convite encontrado.</p> : null}
+      {!loading && items.length === 0 ? <p style={{ color: C.muted, marginTop: '12px' }}>{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
     </div>
   );
 }
 
-function ResultsList({ isAdmin, companyFilter }) {
+function ResultsList({ locale, isAdmin, companyFilter }) {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -238,11 +255,11 @@ function ResultsList({ isAdmin, companyFilter }) {
     try {
       const res = await fetch(`/api/admin/ae/attempts/${id}`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Erro ao recalcular.');
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.results.rescoreError'));
       reloadDetail();
       load();
     } catch (e) {
-      alert(e.message || 'Erro ao recalcular.');
+      alert(e.message || t(locale, 'panel.motivatorsAdmin.results.rescoreError'));
     } finally {
       setBusy(false);
     }
@@ -253,19 +270,19 @@ function ResultsList({ isAdmin, companyFilter }) {
     : false;
 
   const removeAttempt = async (id) => {
-    if (!confirm('Excluir este resultado? O colaborador poderá refazer o assessment se o convite ainda estiver válido.')) return;
+    if (!confirm(t(locale, 'panel.motivatorsAdmin.results.deleteConfirm'))) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/ae/attempts/${id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Erro ao excluir.');
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.results.deleteError'));
       if (selected === id) {
         setSelected(null);
         setDetail(null);
       }
       load();
     } catch (e) {
-      alert(e.message || 'Erro ao excluir.');
+      alert(e.message || t(locale, 'panel.motivatorsAdmin.results.deleteError'));
     } finally {
       setBusy(false);
     }
@@ -274,12 +291,12 @@ function ResultsList({ isAdmin, companyFilter }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: detail ? '1fr 1fr' : '1fr', gap: '20px' }}>
       <div style={S.card}>
-        <span style={S.label}>Resultados</span>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
           <thead>
             <tr style={{ color: C.muted, fontFamily: 'monospace', fontSize: '10px' }}>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Colaborador</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Data</th>
+              <th style={{ padding: '8px', textAlign: 'left' }}>{t(locale, 'panel.motivatorsAdmin.results.colEmployee')}</th>
+              <th style={{ padding: '8px', textAlign: 'left' }}>{t(locale, 'panel.motivatorsAdmin.results.colDate')}</th>
               <th style={{ padding: '8px' }} />
             </tr>
           </thead>
@@ -288,14 +305,14 @@ function ResultsList({ isAdmin, companyFilter }) {
               <tr key={row.id} style={{ borderTop: `1px solid ${C.border}` }}>
                 <td style={{ padding: '10px 8px' }}>
                   <div>{row.candidateName}</div>
-                  <div style={{ fontSize: '11px', color: C.muted }}>{row.areaLabel || '—'}</div>
+                  <div style={{ fontSize: '11px', color: C.muted }}>{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
                 </td>
                 <td style={{ padding: '10px 8px', color: C.muted }}>
-                  {row.completedAt ? new Date(row.completedAt).toLocaleDateString('pt-BR') : '—'}
+                  {row.completedAt ? new Date(row.completedAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}
                 </td>
                 <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                  <button type="button" onClick={() => setSelected(row.id)} style={{ background: 'none', border: 'none', color: C.purple, cursor: 'pointer', fontSize: '11px', marginRight: '10px' }}>Ver</button>
-                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} style={{ background: 'none', border: 'none', color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', fontSize: '11px' }}>Excluir</button>
+                  <button type="button" onClick={() => setSelected(row.id)} style={{ background: 'none', border: 'none', color: C.purple, cursor: 'pointer', fontSize: '11px', marginRight: '10px' }}>{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
+                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} style={{ background: 'none', border: 'none', color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', fontSize: '11px' }}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
                 </td>
               </tr>
             ))}
@@ -306,7 +323,7 @@ function ResultsList({ isAdmin, companyFilter }) {
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <span style={S.label}>Perfil do colaborador</span>
+              <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.results.profileTitle')}</span>
               <div style={{ fontSize: '18px', color: C.text, marginTop: '4px' }}>{detail.attempt.candidateName}</div>
               <div style={{ fontSize: '12px', color: C.muted, marginTop: '6px', lineHeight: 1.5 }}>
                 {detail.attempt.candidateEmail}
@@ -314,7 +331,11 @@ function ResultsList({ isAdmin, companyFilter }) {
                 {detail.attempt.companyName ? ` · ${detail.attempt.companyName}` : ''}
               </div>
               <div style={{ fontSize: '11px', color: C.faint, marginTop: '4px', fontFamily: 'monospace' }}>
-                Concluído em {detail.attempt.completedAt ? new Date(detail.attempt.completedAt).toLocaleString('pt-BR') : '—'}
+                {t(locale, 'panel.motivatorsAdmin.results.completedAt', {
+                  date: detail.attempt.completedAt
+                    ? new Date(detail.attempt.completedAt).toLocaleString(dateLocale(locale))
+                    : t(locale, 'panel.common.notApplicable'),
+                })}
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
@@ -325,7 +346,7 @@ function ResultsList({ isAdmin, companyFilter }) {
                   onClick={() => rescoreAttempt(detail.attempt.id)}
                   style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.purple}44`, background: `${C.purple}10`, color: C.purple, cursor: busy ? 'not-allowed' : 'pointer' }}
                 >
-                  Recalcular scores
+                  {t(locale, 'panel.motivatorsAdmin.results.rescore')}
                 </button>
               ) : null}
               <button
@@ -334,7 +355,7 @@ function ResultsList({ isAdmin, companyFilter }) {
                 onClick={() => removeAttempt(detail.attempt.id)}
                 style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer' }}
               >
-                Excluir resultado
+                {t(locale, 'panel.motivatorsAdmin.results.deleteResult')}
               </button>
             </div>
           </div>
@@ -344,9 +365,12 @@ function ResultsList({ isAdmin, companyFilter }) {
               <div>{detail.rescore.error}</div>
               {detail.rescore.diagnostics ? (
                 <div style={{ marginTop: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', lineHeight: 1.5 }}>
-                  Perguntas: {detail.rescore.diagnostics.questionsLoaded}/{detail.rescore.diagnostics.answersCount} ·
-                  FC sem pesos: {detail.rescore.diagnostics.fcWithoutWeights} ·
-                  Likert sem pesos: {detail.rescore.diagnostics.likertWithoutWeights}
+                  {t(locale, 'panel.motivatorsAdmin.results.rescoreDiag', {
+                    loaded: detail.rescore.diagnostics.questionsLoaded,
+                    answers: detail.rescore.diagnostics.answersCount,
+                    fc: detail.rescore.diagnostics.fcWithoutWeights,
+                    likert: detail.rescore.diagnostics.likertWithoutWeights,
+                  })}
                 </div>
               ) : null}
             </div>
@@ -354,7 +378,7 @@ function ResultsList({ isAdmin, companyFilter }) {
 
           {detail.hrInsights?.topMotivators?.length > 0 ? (
             <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', background: `${C.purple}08`, border: `1px solid ${C.purple}22` }}>
-              <div style={{ fontSize: '10px', color: C.purple, marginBottom: '10px', fontFamily: 'monospace' }}>Top motivadores</div>
+              <div style={{ fontSize: '10px', color: C.purple, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                 {detail.hrInsights.topMotivators.map((d) => (
                   <span key={d.key} style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '12px', background: `${d.color || C.purple}18`, color: d.color || C.purple }}>
@@ -370,7 +394,7 @@ function ResultsList({ isAdmin, companyFilter }) {
 
           <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6, marginBottom: '16px' }}>{detail.attempt.profileSummary}</p>
 
-          <div style={{ fontSize: '10px', color: C.muted, marginBottom: '10px', fontFamily: 'monospace' }}>Todas as dimensões</div>
+          <div style={{ fontSize: '10px', color: C.muted, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
           {(detail.attempt.ranking || []).map((dim) => (
             <div key={dim.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ width: '110px', fontSize: '11px', color: dim.color }}>{dim.label}</span>
@@ -382,7 +406,7 @@ function ResultsList({ isAdmin, companyFilter }) {
           {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
               <div style={{ padding: '14px', borderRadius: '12px', background: `${C.synergy}0a`, border: `1px solid ${C.synergy}33` }}>
-                <div style={{ fontSize: '10px', color: C.synergy, marginBottom: '10px', fontFamily: 'monospace' }}>Sugestões de ação — Faça</div>
+                <div style={{ fontSize: '10px', color: C.synergy, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
                 <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
                   {detail.hrInsights.suggestedActions.do.map((item) => (
                     <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
@@ -393,7 +417,7 @@ function ResultsList({ isAdmin, companyFilter }) {
                 </ul>
               </div>
               <div style={{ padding: '14px', borderRadius: '12px', background: `${C.tension}08`, border: `1px solid ${C.tension}33` }}>
-                <div style={{ fontSize: '10px', color: C.tension, marginBottom: '10px', fontFamily: 'monospace' }}>Evite</div>
+                <div style={{ fontSize: '10px', color: C.tension, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
                 <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
                   {detail.hrInsights.suggestedActions.avoid.map((item) => (
                     <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
@@ -408,12 +432,15 @@ function ResultsList({ isAdmin, companyFilter }) {
 
           {detail.history?.length > 1 ? (
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
-              <div style={{ fontSize: '11px', color: C.muted, marginBottom: '8px', fontFamily: 'monospace' }}>Evolução ({detail.history.length} avaliações)</div>
+              <div style={{ fontSize: '11px', color: C.muted, marginBottom: '8px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.evolution', { count: detail.history.length })}</div>
               {detail.history.map((h) => (
                 <div key={h.id} style={{ fontSize: '12px', color: C.muted, marginBottom: '4px' }}>
-                  {h.completedAt ? new Date(h.completedAt).toLocaleDateString('pt-BR') : '—'}
-                  {' — top: '}
-                  {Array.isArray(h.ranking) ? h.ranking.slice(0, 2).join(', ') : '—'}
+                  {t(locale, 'panel.motivatorsAdmin.results.historyTop', {
+                    date: h.completedAt
+                      ? new Date(h.completedAt).toLocaleDateString(dateLocale(locale))
+                      : t(locale, 'panel.common.notApplicable'),
+                    top: Array.isArray(h.ranking) ? h.ranking.slice(0, 2).join(', ') : t(locale, 'panel.common.notApplicable'),
+                  })}
                 </div>
               ))}
             </div>
@@ -424,7 +451,7 @@ function ResultsList({ isAdmin, companyFilter }) {
   );
 }
 
-function AnalyticsPanel({ isAdmin, companyFilter }) {
+function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -435,15 +462,15 @@ function AnalyticsPanel({ isAdmin, companyFilter }) {
       .then(setData);
   }, [isAdmin, companyFilter]);
 
-  if (!data) return <div style={S.card}><p style={{ color: C.muted }}>Carregando analytics…</p></div>;
+  if (!data) return <div style={S.card}><p style={{ color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.analytics.loading')}</p></div>;
 
   const maxAvg = Math.max(...(data.distribution || []).map((d) => d.average), 1);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
       <div style={S.card}>
-        <span style={S.label}>Distribuição média</span>
-        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px' }}>{data.totalAttempts} avaliações concluídas</p>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.avgDistribution')}</span>
+        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px' }}>{t(locale, 'panel.motivatorsAdmin.analytics.completedCount', { count: data.totalAttempts })}</p>
         {(data.distribution || []).slice(0, 8).map((d) => (
           <div key={d.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ width: '100px', fontSize: '11px', fontFamily: 'monospace' }}>{d.key}</span>
@@ -453,19 +480,19 @@ function AnalyticsPanel({ isAdmin, companyFilter }) {
         ))}
       </div>
       <div style={S.card}>
-        <span style={S.label}>Top motivadores (#1)</span>
-        {(data.topMotivators || []).slice(0, 6).map((t) => (
-          <div key={t.key} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
-            <span>{t.key}</span>
-            <span style={{ color: C.muted }}>{t.pct}% ({t.count})</span>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.topMotivators')}</span>
+        {(data.topMotivators || []).slice(0, 6).map((row) => (
+          <div key={row.key} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+            <span>{row.key}</span>
+            <span style={{ color: C.muted }}>{row.pct}% ({row.count})</span>
           </div>
         ))}
       </div>
       <div style={S.card}>
-        <span style={S.label}>Convites por status</span>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.invitesByStatus')}</span>
         {(data.inviteStats || []).map((s) => (
           <div key={s.status} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-            <span>{statusBadge(s.status)}</span>
+            <span>{statusBadge(locale, s.status)}</span>
             <span>{s.count}</span>
           </div>
         ))}
@@ -474,7 +501,7 @@ function AnalyticsPanel({ isAdmin, companyFilter }) {
   );
 }
 
-function ConfigPanel() {
+function ConfigPanel({ locale }) {
   const [questions, setQuestions] = useState([]);
   const [dims, setDims] = useState([]);
   const [definitions, setDefinitions] = useState([]);
@@ -497,17 +524,17 @@ function ConfigPanel() {
 
   const removeDefinition = async (def) => {
     const msg = def.attemptsCount > 0
-      ? `Excluir o assessment "${def.name}"? Isso apaga perguntas, convites e ${def.attemptsCount} resultado(s). Irreversível.`
-      : `Excluir o assessment "${def.name}"? Isso apaga perguntas e configurações. Irreversível.`;
+      ? t(locale, 'panel.motivatorsAdmin.config.deleteConfirmWithAttempts', { name: def.name, count: def.attemptsCount })
+      : t(locale, 'panel.motivatorsAdmin.config.deleteConfirmNoAttempts', { name: def.name });
     if (!confirm(msg)) return;
     setDeleteBusy(def.id);
     try {
       const res = await fetch(`/api/admin/ae/definitions/${def.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Erro ao excluir.');
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.config.deleteError'));
       loadConfig();
     } catch (e) {
-      alert(e.message || 'Erro ao excluir.');
+      alert(e.message || t(locale, 'panel.motivatorsAdmin.config.deleteError'));
     } finally {
       setDeleteBusy(null);
     }
@@ -526,17 +553,22 @@ function ConfigPanel() {
     <div style={{ display: 'grid', gap: '20px' }}>
       {definitions.length > 0 ? (
         <div style={S.card}>
-          <span style={S.label}>Assessments cadastrados</span>
+          <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.definitionsTitle')}</span>
           <p style={{ fontSize: '12px', color: C.muted, margin: '0 0 12px' }}>
-            A plataforma suporta vários assessments em paralelo (tabela <code style={{ fontFamily: 'monospace' }}>ae_definitions</code>). Hoje o fluxo público usa o slug do convite.
+            {t(locale, 'panel.motivatorsAdmin.config.definitionsIntro')}
           </p>
           {definitions.map((def) => (
             <div key={def.id} style={{ padding: '12px 0', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: '14px', color: C.text }}>{def.name}</div>
                 <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '4px' }}>
-                  {def.slug} · v{def.version} · {def.questionsCount} perguntas · {def.attemptsCount} resultados
-                  {!def.active ? ' · inativo' : ''}
+                  {t(locale, 'panel.motivatorsAdmin.config.defMeta', {
+                    slug: def.slug,
+                    version: def.version,
+                    questions: def.questionsCount,
+                    results: def.attemptsCount,
+                  })}
+                  {!def.active ? t(locale, 'panel.motivatorsAdmin.config.defInactive') : ''}
                 </div>
               </div>
               <button
@@ -545,15 +577,15 @@ function ConfigPanel() {
                 onClick={() => removeDefinition(def)}
                 style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: 'transparent', color: C.tension, cursor: deleteBusy === def.id ? 'not-allowed' : 'pointer', flexShrink: 0 }}
               >
-                {deleteBusy === def.id ? 'Excluindo…' : 'Excluir'}
+                {deleteBusy === def.id ? t(locale, 'panel.motivatorsAdmin.config.deleting') : t(locale, 'panel.motivatorsAdmin.config.delete')}
               </button>
             </div>
           ))}
         </div>
       ) : null}
       <div style={S.card}>
-        <span style={S.label}>Dimensões ({dims.length})</span>
-        <p style={{ fontSize: '12px', color: C.muted }}>Edite labels e ative/desative dimensões no banco via API admin.</p>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsTitle', { count: dims.length })}</span>
+        <p style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsHint')}</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
           {dims.map((d) => (
             <span key={d.id} style={{ padding: '4px 10px', borderRadius: '16px', fontSize: '11px', background: `${d.color || C.purple}18`, color: d.color || C.purple, opacity: d.active ? 1 : 0.4 }}>
@@ -563,12 +595,12 @@ function ConfigPanel() {
         </div>
       </div>
       <div style={S.card}>
-        <span style={S.label}>Banco de perguntas (amostra)</span>
-        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '12px' }}>68 perguntas únicas no banco (múltipla escolha, ranking e afirmativas); 30 sorteadas por sessão. Ative/desative sem alterar código.</p>
+        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.questionBankTitle')}</span>
+        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '12px' }}>{t(locale, 'panel.motivatorsAdmin.config.questionBankIntro')}</p>
         {questions.map((q) => (
           <div key={q.id} style={{ padding: '10px 0', borderTop: `1px solid ${C.border}`, display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
             <button type="button" onClick={() => toggleQuestion(q.id, q.active)} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', border: `1px solid ${C.border}`, background: q.active ? `${C.synergy}18` : 'transparent', cursor: 'pointer' }}>
-              {q.active ? 'Ativa' : 'Inativa'}
+              {q.active ? t(locale, 'panel.motivatorsAdmin.config.questionActive') : t(locale, 'panel.motivatorsAdmin.config.questionInactive')}
             </button>
             <div style={{ flex: 1, fontSize: '12px', color: q.active ? C.text : C.muted, lineHeight: 1.5 }}>
               <span style={{ fontFamily: 'monospace', fontSize: '10px', color: C.faint }}>{q.questionType} · {q.key}</span>
@@ -581,7 +613,7 @@ function ConfigPanel() {
   );
 }
 
-export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _locale }) {
+export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const view = searchParams.get('motivatorsView') || 'invites';
@@ -602,11 +634,11 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _l
     try {
       const res = await fetch('/api/admin/ae/setup', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Falha ao inicializar');
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.setup.initFailed'));
       setRefreshKey((k) => k + 1);
-      alert('Módulo inicializado com sucesso.');
+      alert(t(locale, 'panel.motivatorsAdmin.setup.initOk'));
     } catch (e) {
-      alert(e.message || 'Erro');
+      alert(e.message || t(locale, 'panel.common.error'));
     } finally {
       setSetupBusy(false);
     }
@@ -619,26 +651,26 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _l
     router.replace(`?${p.toString()}`);
   };
 
-  const visibleViews = VIEWS.filter((v) => !v.adminOnly || isAdmin);
+  const visibleViews = getViews(locale).filter((v) => !v.adminOnly || isAdmin);
 
   return (
     <div>
       <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 'normal', color: C.text }}>Motivadores Profissionais</h2>
-        <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>Convites, resultados e analytics do assessment de motivadores — independente do Eneagrama.</p>
+        <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 'normal', color: C.text }}>{t(locale, 'panel.motivatorsAdmin.title')}</h2>
+        <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.intro')}</p>
       </div>
 
       {moduleStatus && !moduleStatus.ready ? (
         <div style={{ ...S.card, marginBottom: '20px', borderColor: `${C.tension}44`, background: `${C.tension}08` }}>
-          <span style={{ ...S.label, color: C.tension }}>Configuração pendente</span>
+          <span style={{ ...S.label, color: C.tension }}>{t(locale, 'panel.motivatorsAdmin.setup.pendingTitle')}</span>
           <p style={{ fontSize: '13px', color: C.muted, margin: '0 0 12px', lineHeight: 1.6 }}>
             {moduleStatus.reason === 'schema_missing'
-              ? 'As tabelas do banco ainda não foram criadas. Aplique as migrations 010 e 011 no Postgres.'
-              : 'O assessment ainda não foi inicializado (perguntas e dimensões). Clique abaixo ou envie um convite após o deploy mais recente.'}
+              ? t(locale, 'panel.motivatorsAdmin.setup.schemaMissing')
+              : t(locale, 'panel.motivatorsAdmin.setup.notInitialized')}
           </p>
           {moduleStatus.reason !== 'schema_missing' ? (
             <button type="button" disabled={setupBusy} onClick={runSetup} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: C.purple, color: '#fff', cursor: 'pointer' }}>
-              {setupBusy ? 'Inicializando…' : 'Inicializar módulo agora'}
+              {setupBusy ? t(locale, 'panel.motivatorsAdmin.setup.initializing') : t(locale, 'panel.motivatorsAdmin.setup.initializeNow')}
             </button>
           ) : null}
         </div>
@@ -668,13 +700,13 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale: _l
 
       {view === 'invites' ? (
         <>
-          <InviteForm isAdmin={isAdmin} companies={companies} companyId={companyFilter !== 'all' ? companyFilter : ''} onSent={() => setRefreshKey((k) => k + 1)} />
-          <InvitesList refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
+          <InviteForm locale={locale} isAdmin={isAdmin} companies={companies} companyId={companyFilter !== 'all' ? companyFilter : ''} onSent={() => setRefreshKey((k) => k + 1)} />
+          <InvitesList locale={locale} refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
         </>
       ) : null}
-      {view === 'results' ? <ResultsList isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
-      {view === 'dashboard' ? <AnalyticsPanel isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
-      {view === 'config' && isAdmin ? <ConfigPanel /> : null}
+      {view === 'results' ? <ResultsList locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
+      {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
+      {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
     </div>
   );
 }

@@ -12,7 +12,7 @@ function inviteStatusLabel(locale, status) {
   if (s === 'completed') return t(locale, 'recruiting.inviteCompleted');
   if (s === 'cancelled') return t(locale, 'recruiting.inviteCancelled');
   if (s === 'sent') return t(locale, 'recruiting.inviteSent');
-  return 'Sem convite';
+  return t(locale, 'recruiting.noInviteYet');
 }
 
 function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
@@ -41,12 +41,12 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
         }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao salvar notas');
-      setOk('Notas salvas.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setOk(t(locale, 'recruiting.notesSaved'));
       onChanged?.();
       setTimeout(() => setOk(''), 3000);
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -62,13 +62,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
         { method: 'POST' }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao enviar desafio');
-      setOk(`Desafio enviado para ${data.sentTo || row.email}.`);
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setOk(t(locale, 'recruiting.challengeSentTo', { email: data.sentTo || row.email }));
       onChanged?.();
       onPipelineChange?.();
       setTimeout(() => setOk(''), 5000);
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setInviteBusy(false);
     }
@@ -108,7 +108,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
             </span>
             {row.topType != null && (
               <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.purpleLight }}>
-                Tipo {row.topType}
+                {t(locale, 'recruiting.typeShort', { type: row.topType })}
               </span>
             )}
             {row.pipelineStage && (
@@ -133,13 +133,17 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               fontFamily: 'monospace',
             }}
           >
-            {expanded ? 'Ocultar notas' : 'Notas / ações'}
+            {expanded ? t(locale, 'recruiting.hideNotes') : t(locale, 'recruiting.notesActions')}
           </button>
           <button
             type="button"
             onClick={sendChallenge}
             disabled={inviteBusy || alreadyCompleted}
-            title={alreadyCompleted ? 'Teste já respondido' : 'Enviar desafio de eneagrama por e-mail'}
+            title={
+              alreadyCompleted
+                ? t(locale, 'recruiting.testAlreadyDone')
+                : t(locale, 'recruiting.sendEnneagramTitle')
+            }
             style={{
               background: alreadyCompleted ? 'transparent' : `${C.synergy}18`,
               border: `1px solid ${alreadyCompleted ? C.border : `${C.synergy}55`}`,
@@ -152,7 +156,11 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               opacity: inviteBusy ? 0.6 : 1,
             }}
           >
-            {inviteBusy ? 'Enviando…' : alreadyCompleted ? 'Teste ok' : 'Enviar eneagrama'}
+            {inviteBusy
+              ? t(locale, 'recruiting.inviteSending')
+              : alreadyCompleted
+                ? t(locale, 'recruiting.testDone')
+                : t(locale, 'recruiting.sendEnneagram')}
           </button>
         </div>
       </div>
@@ -181,9 +189,9 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               letterSpacing: '0.6px',
             }}
           >
-            Anotações da entrevista
+            {t(locale, 'recruiting.interviewNotesTitle')}
           </span>
-          <RichTextEditor value={notes} onChange={setNotes} />
+          <RichTextEditor value={notes} onChange={setNotes} locale={locale} />
           <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
             <button
               type="button"
@@ -201,7 +209,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 opacity: busy ? 0.6 : 1,
               }}
             >
-              {busy ? 'Salvando…' : 'Salvar notas'}
+              {busy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveNotes')}
             </button>
           </div>
         </div>
@@ -226,15 +234,15 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar candidatos');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setItems(Array.isArray(data.items) ? data.items : []);
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [vacancyId]);
+  }, [vacancyId, locale]);
 
   useEffect(() => {
     load();
@@ -255,15 +263,15 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao cadastrar');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setName('');
       setEmail('');
       setCreateNotes('');
-      setCreateMsg('Candidato cadastrado.');
+      setCreateMsg(t(locale, 'recruiting.candidateRegistered'));
       await load();
       setTimeout(() => setCreateMsg(''), 3000);
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setCreating(false);
     }
@@ -271,10 +279,9 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
 
   return (
     <div>
-      <span style={S.label}>Candidatos da entrevista</span>
+      <span style={S.label}>{t(locale, 'recruiting.interviewCandidatesTitle')}</span>
       <p style={{ fontSize: '12px', color: C.muted, marginTop: '8px', lineHeight: 1.55, marginBottom: '12px' }}>
-        Cadastre o candidato com nome e e-mail após a entrevista. O e-mail é a chave para enviar o eneagrama
-        (e depois os motivadores) e unificar os resultados.
+        {t(locale, 'recruiting.interviewCandidatesIntro')}
       </p>
 
       <div
@@ -297,14 +304,14 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             marginBottom: '10px',
           }}
         >
-          Novo candidato
+          {t(locale, 'recruiting.newCandidate')}
         </span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nome completo"
-            aria-label="Nome do candidato"
+            placeholder={t(locale, 'recruiting.fullNamePh')}
+            aria-label={t(locale, 'recruiting.fullNamePh')}
             style={{
               flex: '1 1 200px',
               background: 'rgba(255,255,255,.8)',
@@ -320,8 +327,8 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@exemplo.com"
-            aria-label="E-mail do candidato"
+            placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')}
+            aria-label={t(locale, 'recruiting.inviteCandidateEmailPh')}
             style={{
               flex: '1 1 220px',
               background: 'rgba(255,255,255,.8)',
@@ -337,8 +344,9 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         <RichTextEditor
           value={createNotes}
           onChange={setCreateNotes}
-          placeholder="Anotações iniciais da entrevista (opcional)…"
+          placeholder={t(locale, 'recruiting.interviewNotesInitialPh')}
           minHeight={100}
+          locale={locale}
         />
         <div style={{ marginTop: '10px' }}>
           <button
@@ -357,7 +365,9 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               opacity: creating || !name.trim() || !email.trim() ? 0.55 : 1,
             }}
           >
-            {creating ? 'Cadastrando…' : 'Cadastrar candidato'}
+            {creating
+              ? t(locale, 'recruiting.registeringCandidate')
+              : t(locale, 'recruiting.registerCandidate')}
           </button>
         </div>
         {createMsg ? (
@@ -372,10 +382,12 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       ) : null}
 
       {loading ? (
-        <p style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>Carregando candidatos…</p>
+        <p style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+          {t(locale, 'recruiting.loadingCandidates')}
+        </p>
       ) : items.length === 0 ? (
         <p style={{ fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
-          Nenhum candidato cadastrado nesta vaga ainda.
+          {t(locale, 'recruiting.noCandidatesYet')}
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

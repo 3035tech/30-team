@@ -5,6 +5,7 @@ import {
   getSessionPayload,
   requireManagerRole,
 } from '../../../../../../lib/ae/require-admin';
+import { apiError } from '../../../../../../lib/api-error';
 
 async function loadInvite(id, { isAdmin, companyId }) {
   const params = [id];
@@ -27,25 +28,25 @@ async function loadInvite(id, { isAdmin, companyId }) {
 }
 
 /** DELETE /api/admin/ae/invites/[id] */
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const invite = await loadInvite(params.id, scope);
-    if (!invite) return NextResponse.json({ error: 'Convite não encontrado.' }, { status: 404 });
+    if (!invite) return apiError(request, 'INVITE_NOT_FOUND', 404);
     if (invite.status === 'completed') {
-      return NextResponse.json({ error: 'Convite já concluído.' }, { status: 400 });
+      return apiError(request, 'INVITE_ALREADY_COMPLETED', 400);
     }
 
     await query(`UPDATE ae_invites SET status = 'cancelled' WHERE id = $1`, [invite.id]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/ae/invites/[id]', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

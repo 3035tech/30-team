@@ -3,32 +3,33 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../../lib/auth';
 import { query, queryRead } from '../../../../../../../lib/db';
 import { audit } from '../../../../../../../lib/audit';
+import { apiError } from '../../../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
   return role === 'admin' || role === 'direction' || role === 'hr';
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   try {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const isAdmin = payload?.role === 'admin';
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     const inviteId = params?.inviteId;
-    if (!vacancyId || !inviteId) return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    if (!vacancyId || !inviteId) return apiError(request, 'INVALID_PARAMS', 400);
 
     const own = await queryRead(
       `SELECT v.id FROM vacancies v WHERE v.id = $1 AND v.deleted = FALSE ${!isAdmin ? 'AND v.company_id = $2' : ''} LIMIT 1`,
       !isAdmin ? [vacancyId, companyId] : [vacancyId]
     );
-    if (own.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    if (own.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
     const inv = await queryRead(
       `SELECT ci.id, ci.status, ci.candidate_name AS "candidateName"
@@ -37,7 +38,7 @@ export async function DELETE(_request, { params }) {
        LIMIT 1`,
       [inviteId, vacancyId]
     );
-    if (inv.rowCount === 0) return NextResponse.json({ error: 'Convite não encontrado' }, { status: 404 });
+    if (inv.rowCount === 0) return apiError(request, 'INVITE_NOT_FOUND', 404);
 
     const status = String(inv.rows[0].status || '');
 
@@ -82,6 +83,6 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

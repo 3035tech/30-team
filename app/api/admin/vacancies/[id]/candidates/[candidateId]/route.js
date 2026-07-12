@@ -3,16 +3,17 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../../lib/auth';
 import { query } from '../../../../../../../lib/db';
 import { sanitizeInterviewNotesHtml } from '../../../../../../../lib/sanitize-html';
+import { apiError } from '../../../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
   return role === 'admin' || role === 'direction' || role === 'hr';
 }
 
-async function loadLink(vacancyId, candidateId, payload) {
+async function loadLink(request, vacancyId, candidateId, payload) {
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) };
+  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
 
   const r = await query(
     `SELECT vc.id, vc.vacancy_id AS "vacancyId", vc.candidate_id AS "candidateId",
@@ -29,9 +30,9 @@ async function loadLink(vacancyId, candidateId, payload) {
      LIMIT 1`,
     [vacancyId, candidateId]
   );
-  if (r.rowCount === 0) return { error: NextResponse.json({ error: 'Não encontrado' }, { status: 404 }) };
+  if (r.rowCount === 0) return { error: apiError(request, 'NOT_FOUND', 404) };
   if (!isAdmin && String(r.rows[0].companyId) !== String(companyId)) {
-    return { error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) };
+    return { error: apiError(request, 'UNAUTHORIZED', 401) };
   }
   return { link: r.rows[0] };
 }
@@ -42,18 +43,18 @@ export async function PATCH(request, { params }) {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = token ? verifyToken(token) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
 
-    const loaded = await loadLink(vacancyId, candidateId, payload);
+    const loaded = await loadLink(request, vacancyId, candidateId, payload);
     if (loaded.error) return loaded.error;
 
     const body = await request.json().catch(() => ({}));
     if (body.interviewNotes === undefined && body.notes === undefined && body.pipelineStage === undefined) {
-      return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 });
+      return apiError(request, 'NOTHING_TO_UPDATE', 400);
     }
 
     const PIPELINE = new Set([
@@ -75,7 +76,7 @@ export async function PATCH(request, { params }) {
     if (body.pipelineStage !== undefined) {
       const s = body.pipelineStage == null ? null : String(body.pipelineStage).trim();
       if (s != null && !PIPELINE.has(s)) {
-        return NextResponse.json({ error: 'pipelineStage inválido' }, { status: 400 });
+        return apiError(request, 'INVALID_PIPELINE_STAGE', 400);
       }
       stage = s;
     }
@@ -106,6 +107,6 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

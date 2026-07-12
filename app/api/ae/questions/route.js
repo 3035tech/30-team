@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
 import { drawMotivatorsQuestions } from '../../../../lib/ae/draw-questions';
 import { toPublicQuestions } from '../../../../lib/ae/to-public-questions';
+import { apiError, localeFromRequest } from '../../../../lib/api-error';
 
 /**
  * GET /api/ae/questions?definition=motivators
@@ -16,16 +17,16 @@ export async function GET(request) {
 
     const result = await drawMotivatorsQuestions(queryRead, definition);
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
+      return apiError(request, result.errorCode || 'INTERNAL', 404);
     }
 
     return NextResponse.json({
       definition: result.definition,
-      questions: toPublicQuestions(result.questions),
+      questions: toPublicQuestions(result.questions, localeFromRequest(request)),
       meta: result.meta,
     });
   } catch (err) {
     console.error('GET /api/ae/questions', err);
-    return NextResponse.json({ error: 'Erro ao carregar perguntas.' }, { status: 500 });
+    return apiError(request, 'QUESTIONS_LOAD_FAILED', 500);
   }
 }

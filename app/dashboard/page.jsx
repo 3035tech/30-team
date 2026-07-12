@@ -426,7 +426,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       );
       leadershipPotentials = buildLeadershipPotentialsByCompany(latestCand.rows, { topPerCompany: 6 });
     } catch (le) {
-      console.error('Erro ao montar potenciais de liderança por empresa:', le);
+      console.error('Failed to build leadership potentials by company:', le);
     }
 
     analytics = {
@@ -443,7 +443,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     };
 
   } catch (e) {
-    console.error('Erro ao buscar resultados:', e);
+    console.error('Failed to fetch results:', e);
   }
 
   return (

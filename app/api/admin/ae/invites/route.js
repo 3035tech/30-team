@@ -12,6 +12,7 @@ import { buildMotivatorsInviteMail } from '../../../../../lib/motivators-invite-
 import { bootstrapMotivators } from '../../../../../lib/ae/bootstrap-motivators';
 
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
+import { apiError, localeFromRequest } from '../../../../../lib/api-error';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INVITE_TTL_DAYS = 30;
@@ -22,7 +23,7 @@ async function resolveDefinitionAndCompany(definitionSlug, targetCompanyId) {
     [targetCompanyId]
   );
   if (companyRes.rowCount === 0) {
-    return { error: 'Empresa não encontrada ou inativa.', status: 404 };
+    return { errorCode: 'COMPANY_NOT_FOUND_OR_INACTIVE', status: 404 };
   }
 
   let defRes = await query(
@@ -39,22 +40,14 @@ async function resolveDefinitionAndCompany(definitionSlug, targetCompanyId) {
       );
     } catch (bootstrapErr) {
       if (bootstrapErr?.code === '42P01') {
-        return {
-          error:
-            'Tabelas do módulo Motivadores ainda não existem. Aplique as migrations 010 e 011 no banco (ou redeploy com RUN_MIGRATIONS=true).',
-          status: 503,
-        };
+        return { errorCode: 'MOTIVATORS_SCHEMA_MISSING', status: 503 };
       }
       throw bootstrapErr;
     }
   }
 
   if (defRes.rowCount === 0) {
-    return {
-      error:
-        'Assessment de motivadores não configurado. Rode npm run db:seed-motivators-all no servidor ou use Configuração → Inicializar.',
-      status: 503,
-    };
+    return { errorCode: 'MOTIVATORS_NOT_CONFIGURED', status: 503 };
   }
 
   return {
@@ -68,10 +61,10 @@ export async function GET(request) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
-    if (!authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const { searchParams } = new URL(request.url);
     const status = String(searchParams.get('status') || '').trim();
@@ -130,7 +123,7 @@ export async function GET(request) {
     return NextResponse.json({ items: listRes.rows, total, page, pageSize });
   } catch (err) {
     console.error('GET /api/admin/ae/invites', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
@@ -139,15 +132,15 @@ export async function POST(request) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
-    if (!authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`ae-invite:${payload?.userId || ip}`, 40, 60 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json({ error: 'Muitos convites nesta hora.' }, { status: 429 });
+      return apiError(request, 'RATE_LIMIT_INVITES', 429);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -159,23 +152,23 @@ export async function POST(request) {
     let targetCompanyId = isAdmin ? Number(body.companyId) : Number(companyId);
 
     if (!candidateName || candidateName.length > 200) {
-      return NextResponse.json({ error: 'Nome obrigatório (máx. 200 caracteres).' }, { status: 400 });
+      return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
     }
     if (!candidateEmail || !EMAIL_RE.test(candidateEmail)) {
-      return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 });
+      return apiError(request, 'INVALID_EMAIL', 400);
     }
     if (!Number.isFinite(targetCompanyId)) {
-      return NextResponse.json({ error: 'Empresa inválida.' }, { status: 400 });
+      return apiError(request, 'INVALID_COMPANY', 400);
     }
 
     const resolved = await resolveDefinitionAndCompany(definitionSlug, targetCompanyId);
-    if (resolved.error) {
-      return NextResponse.json({ error: resolved.error }, { status: resolved.status || 404 });
+    if (resolved.errorCode) {
+      return apiError(request, resolved.errorCode, resolved.status || 404);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return NextResponse.json({ error: 'NEXT_PUBLIC_APP_URL não configurada.' }, { status: 500 });
+      return apiError(request, 'APP_URL_MISSING', 500);
     }
 
     const inviteToken = crypto.randomBytes(24).toString('hex');
@@ -193,10 +186,12 @@ export async function POST(request) {
     const inviteId = ins.rows[0].id;
     const assessmentUrl = `${base}/assessment/motivators/${inviteToken}`;
 
+    const locale = localeFromRequest(request);
     const { subject, text, html } = buildMotivatorsInviteMail({
       candidateFullName: candidateName,
       companyName: resolved.companyName,
       assessmentUrl,
+      locale,
     });
 
     try {
@@ -204,14 +199,14 @@ export async function POST(request) {
     } catch (e) {
       await query(`DELETE FROM ae_invites WHERE id = $1`, [inviteId]).catch(() => {});
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return NextResponse.json({ error: e.message }, { status: 503 });
+        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
       }
-      return NextResponse.json({ error: 'Falha ao enviar e-mail.' }, { status: 502 });
+      return apiError(request, 'MAIL_FAILED', 502);
     }
 
     return NextResponse.json({ ok: true, inviteId, sentTo: candidateEmail, assessmentUrl });
   } catch (err) {
     console.error('POST /api/admin/ae/invites', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

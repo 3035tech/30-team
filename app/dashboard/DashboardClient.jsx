@@ -222,8 +222,13 @@ export default function DashboardClient({
   };
 
   const _pipelineChipLabels = {
-    new: 'Novo', test_completed: 'Teste', screening: 'Triagem',
-    interview: 'Entrevista', approved: 'Aprovado', rejected: 'Reprovado', archived: 'Arquivado',
+    new: t(locale, 'recruiting.pipelineNew'),
+    test_completed: t(locale, 'recruiting.pipelineTestCompleted'),
+    screening: t(locale, 'recruiting.pipelineScreening'),
+    interview: t(locale, 'recruiting.pipelineInterview'),
+    approved: t(locale, 'recruiting.pipelineApproved'),
+    rejected: t(locale, 'recruiting.pipelineRejected'),
+    archived: t(locale, 'recruiting.pipelineArchived'),
   };
   const activeChips = [];
   if (isAdmin && company !== 'all') {
@@ -250,11 +255,11 @@ export default function DashboardClient({
       onRemove: () => { setPipeline('all'); pushFilters({ pipeline: 'all' }); } });
   }
   if (dateFrom) {
-    activeChips.push({ key: 'dateFrom', label: `De: ${dateFrom}`,
+    activeChips.push({ key: 'dateFrom', label: t(locale, 'dashboard.dateFromChip', { date: dateFrom }),
       onRemove: () => { setDateFrom(''); pushFilters({ dateFrom: null, dateTo: dateTo || null }); } });
   }
   if (dateTo) {
-    activeChips.push({ key: 'dateTo', label: `Até: ${dateTo}`,
+    activeChips.push({ key: 'dateTo', label: t(locale, 'dashboard.dateToChip', { date: dateTo }),
       onRemove: () => { setDateTo(''); pushFilters({ dateFrom: dateFrom || null, dateTo: null }); } });
   }
   if (selectedSearch) {
@@ -317,7 +322,7 @@ export default function DashboardClient({
         type="button"
         className="db-hamburger"
         onClick={() => setSidebarOpen(true)}
-        aria-label="Abrir menu"
+        aria-label={t(locale, 'common.openMenu')}
       >
         ☰
       </button>
@@ -339,7 +344,7 @@ export default function DashboardClient({
         }}>
           <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
           <nav style={{ flex: 1 }}>
-            <span style={S.sidebarSection}>Análise</span>
+            <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionAnalysis')}</span>
             <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
             <NavLink id="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
             <NavLink id="compatibility" label={t(locale, 'dashboard.compatibility')} />
@@ -349,9 +354,9 @@ export default function DashboardClient({
             {(canManage || isAdmin) && (
               <>
                 <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
-                <span style={S.sidebarSection}>Gestão</span>
+                <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionManagement')}</span>
                 {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-                {canManage ? <NavLink id="motivators" label="Motivadores" /> : null}
+                {canManage ? <NavLink id="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
                 {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
                 {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
               </>
@@ -395,8 +400,8 @@ export default function DashboardClient({
                   pushFilters({ search: trimmed || null });
                 }
               }}
-              placeholder="Buscar candidato por nome…"
-              aria-label="Busca global de candidatos"
+              placeholder={t(locale, 'dashboard.searchPlaceholder')}
+              aria-label={t(locale, 'dashboard.searchAriaLabel')}
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
                 border: `1px solid ${C.border}`, borderRadius: '12px',
                 padding: '12px 16px 12px 42px', color: C.text, fontSize: '14px',
@@ -412,7 +417,7 @@ export default function DashboardClient({
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   color: C.muted, fontSize: '13px', fontFamily: 'monospace' }}
               >
-                ✕ limpar
+                {t(locale, 'common.clearSearch')}
               </button>
             )}
           </div>
@@ -519,7 +524,7 @@ export default function DashboardClient({
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px',
               background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: '10px',
               padding: '6px 12px' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>De</span>
+              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>{t(locale, 'dashboard.dateFromLabel')}</span>
               <input
                 type="date"
                 value={dateFrom}
@@ -527,7 +532,7 @@ export default function DashboardClient({
                 style={{ border: 'none', background: 'transparent', color: C.muted,
                   fontSize: '12px', fontFamily: FONTS.mono, outline: 'none', minWidth: '120px' }}
               />
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>Até</span>
+              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>{t(locale, 'dashboard.dateToLabel')}</span>
               <input
                 type="date"
                 value={dateTo}
@@ -562,7 +567,7 @@ export default function DashboardClient({
                   background: 'transparent', border: `1px solid ${C.border}`,
                   borderRadius: '20px', padding: '4px 10px', cursor: 'pointer' }}
               >
-                Limpar todos
+                {t(locale, 'common.clearAll')}
               </button>
             </div>
           )}
@@ -670,7 +675,7 @@ export default function DashboardClient({
               )}
               {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'motivators' && canManage && (
-                <Suspense fallback={<div style={{ color: C.muted, padding: '24px' }}>Carregando…</div>}>
+                <Suspense fallback={<div style={{ color: C.muted, padding: '24px' }}>{t(locale, 'common.loading')}</div>}>
                   <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
                 </Suspense>
               )}

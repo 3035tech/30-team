@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
+import { apiError } from '../../../../lib/api-error';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const token = String(searchParams.get('token') || '').trim();
-  if (!token) return NextResponse.json({ errorCode: 'INVALID_TOKEN', error: 'Token inválido' }, { status: 400 });
+  if (!token) return apiError(request, 'INVALID_TOKEN', 400);
 
   const r = await queryRead(
     `SELECT
@@ -19,8 +20,7 @@ export async function GET(request) {
      LIMIT 1`,
     [token]
   );
-  if (r.rowCount === 0) return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 404 });
+  if (r.rowCount === 0) return apiError(request, 'EXPIRED_LINK', 404);
 
   return NextResponse.json(r.rows[0]);
 }
-

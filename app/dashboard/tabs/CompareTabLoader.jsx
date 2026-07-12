@@ -44,7 +44,7 @@ export function CompareTabLoader({ filterQueryString, comparePage, comparePageSi
         });
       })
       .catch((e) => {
-        if (!cancelled) setErr(e?.message || 'Erro');
+        if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

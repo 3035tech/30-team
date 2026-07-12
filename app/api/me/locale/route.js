@@ -3,12 +3,13 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME, MAX_AGE, signToken, verifyToken } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
+import { apiError } from '../../../../lib/api-error';
 
 export async function PATCH(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!payload?.userId) return NextResponse.json({ errorCode: 'UNAUTHORIZED', error: 'Não autorizado' }, { status: 401 });
+  if (!payload?.userId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const locale = normalizeLocale(body.locale);

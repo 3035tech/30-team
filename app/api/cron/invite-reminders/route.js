@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { ensureActiveVacancyLinkToken } from '../../../../lib/vacancy-link';
 import { sendTransactionalMail } from '../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../lib/candidate-challenge-invite-mail';
+import { apiError } from '../../../../lib/api-error';
 
 function publicAppUrlFromEnv() {
   const env = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
@@ -28,12 +29,12 @@ function verifyCron(request) {
 export async function POST(request) {
   try {
     if (!verifyCron(request)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
 
     const base = publicAppUrlFromEnv();
     if (!base) {
-      return NextResponse.json({ error: 'NEXT_PUBLIC_APP_URL ausente' }, { status: 500 });
+      return apiError(request, 'APP_URL_MISSING', 500);
     }
 
     const pending = await queryRead(
@@ -80,6 +81,6 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, processed: pending.rows.length, sent, errors });
   } catch (e) {
     console.error('cron invite-reminders', e);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

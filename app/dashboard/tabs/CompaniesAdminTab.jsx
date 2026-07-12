@@ -3,15 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
+import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 
-export function CompaniesAdminTab({ navigateDashboard }) {
+export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
   const { page: companiesPage, pageSize: companiesPageSize } = parseCompaniesPagination(sp);
   const listSort = parseCompaniesSort(sp);
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
 
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
@@ -47,12 +49,12 @@ export function CompaniesAdminTab({ navigateDashboard }) {
       });
       const res = await fetch(`/api/admin/companies?${qs.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
       setCompanies(Array.isArray(data.items) ? data.items : []);
       setCompaniesTotal(typeof data.total === 'number' ? data.total : 0);
       setCompaniesTotalPages(typeof data.totalPages === 'number' ? data.totalPages : 1);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -73,11 +75,11 @@ export function CompaniesAdminTab({ navigateDashboard }) {
         body: JSON.stringify({ name: name.trim(), slug: slug.trim() || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao criar empresa');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
       setName(''); setSlug('');
       await loadCompanies();
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -89,10 +91,10 @@ export function CompaniesAdminTab({ navigateDashboard }) {
     try {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/link`, { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.rotateLinkFailed'));
       await loadCompanies();
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
 
   const deleteCompany = async (companyId, companyName) => {
     const ok = window.confirm(
-      `Arquivar empresa "${companyName}"? Ela some das listagens, as vagas somem e os links públicos deixam de funcionar. Candidatos e avaliações já feitas continuam visíveis no dashboard.`
+      t(locale, 'panel.admin.archiveCompanyConfirm', { name: companyName })
     );
     if (!ok) return;
     setLoading(true);
@@ -109,23 +111,23 @@ export function CompaniesAdminTab({ navigateDashboard }) {
     try {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar empresa');
-      setMsg('Empresa arquivada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.archiveCompanyFailed'));
+      setMsg(t(locale, 'panel.admin.companyArchived'));
       await loadCompanies();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
   };
 
   const editCompany = async (c) => {
-    const nextName = window.prompt('Nome da empresa', c?.name ?? '');
+    const nextName = window.prompt(t(locale, 'panel.admin.editCompanyName'), c?.name ?? '');
     if (nextName == null) return;
-    const nextSlug = window.prompt('Slug (URL-friendly)', c?.slug ?? '');
+    const nextSlug = window.prompt(t(locale, 'panel.admin.editCompanySlug'), c?.slug ?? '');
     if (nextSlug == null) return;
-    const nextActiveRaw = window.prompt('Ativa? (true/false)', String(Boolean(c?.active)));
+    const nextActiveRaw = window.prompt(t(locale, 'panel.admin.editCompanyActive'), String(Boolean(c?.active)));
     if (nextActiveRaw == null) return;
     const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
 
@@ -139,12 +141,12 @@ export function CompaniesAdminTab({ navigateDashboard }) {
         body: JSON.stringify({ name: String(nextName).trim(), slug: String(nextSlug).trim(), active: nextActive }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar empresa');
-      setMsg('Empresa atualizada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));
+      setMsg(t(locale, 'panel.admin.companyUpdated'));
       await loadCompanies();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -153,10 +155,10 @@ export function CompaniesAdminTab({ navigateDashboard }) {
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      setMsg('Copiado.');
+      setMsg(t(locale, 'panel.common.copied'));
       setTimeout(() => setMsg(''), 1200);
     } catch {
-      setMsg('Não foi possível copiar automaticamente.');
+      setMsg(t(locale, 'panel.common.copyFailed'));
       setTimeout(() => setMsg(''), 1600);
     }
   };
@@ -176,29 +178,28 @@ export function CompaniesAdminTab({ navigateDashboard }) {
         </div>
       ) : null}
 
-      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Empresas</span>
+      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>{t(locale, 'panel.admin.companiesTitle')}</span>
       <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>Cadastro de empresas</span>
+        <span style={S.label}>{t(locale, 'panel.admin.companiesRegister')}</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Inclua a empresa no sistema, edite dados e gere o link público único (/t/…) para candidaturas.
-          Arquivar tira da lista e invalida vínculos; dados de avaliações já recebidas continuam acessíveis no dashboard.
+          {t(locale, 'panel.admin.companiesRegisterDesc')}
         </p>
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Nova empresa</span>
+        <span style={S.label}>{t(locale, 'panel.admin.companiesNew')}</span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nome (ex.: ACME)"
+            placeholder={t(locale, 'panel.admin.companiesNamePlaceholder')}
             style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="Slug opcional (ex.: acme)"
+            placeholder={t(locale, 'panel.admin.slugPlaceholder')}
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
@@ -210,7 +211,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
               borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
           >
-            Criar
+            {t(locale, 'panel.admin.create')}
           </button>
           <button
             type="button"
@@ -220,28 +221,28 @@ export function CompaniesAdminTab({ navigateDashboard }) {
               borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
           >
-            Atualizar
+            {t(locale, 'panel.admin.refresh')}
           </button>
         </div>
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Empresas cadastradas</span>
+        <span style={S.label}>{t(locale, 'panel.admin.companiesList')}</span>
         {companiesTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            Nenhuma empresa ainda.
+            {t(locale, 'panel.admin.noCompaniesYet')}
           </p>
         ) : (
           <div style={{ marginTop: '10px', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '720px' }}>
               <thead>
                 <tr style={{ background: 'rgba(26,22,37,.02)' }}>
-                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>ID</SortableTh>
-                  <SortableTh columnKey="name" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Nome</SortableTh>
-                  <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Slug</SortableTh>
-                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Ativa</SortableTh>
-                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>Criada em</SortableTh>
-                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Link e ações</th>
+                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
+                  <SortableTh columnKey="name" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colName')}</SortableTh>
+                  <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
+                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>{t(locale, 'panel.admin.colLinkActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,15 +256,17 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                       <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{c.id}</td>
                       <td style={{ padding: '12px', color: C.text }}>{c.name}</td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.slug}</td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.active ? 'sim' : 'não'}</td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
                       <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                        {createdAt ? createdAt.toLocaleString() : '—'}
+                        {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <div style={{ marginBottom: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'left' }}>
-                          {token ? link : '(sem link ativo)'}
+                          {token ? link : t(locale, 'panel.admin.noLink')}
                           {token && exp ? (
-                            <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint }}>expira {exp.toLocaleString()}</div>
+                            <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint }}>
+                              {t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}
+                            </div>
                           ) : null}
                         </div>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -275,7 +278,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                               borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                           >
-                            Editar
+                            {t(locale, 'panel.admin.edit')}
                           </button>
                           <button
                             type="button"
@@ -285,7 +288,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                               borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                           >
-                            Rotacionar link
+                            {t(locale, 'panel.admin.rotateLink')}
                           </button>
                           <button
                             type="button"
@@ -295,7 +298,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                               borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                           >
-                            Copiar link
+                            {t(locale, 'panel.admin.copyLink')}
                           </button>
                           <button
                             type="button"
@@ -305,7 +308,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                               borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                           >
-                            Arquivar
+                            {t(locale, 'panel.admin.archive')}
                           </button>
                         </div>
                       </td>
@@ -320,7 +323,11 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                 marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
               }}>
                 <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                  {companiesTotal} empresa(s) · página {companiesPage}/{companiesTotalPages}
+                  {t(locale, 'panel.admin.companyCount', {
+                    total: companiesTotal,
+                    page: companiesPage,
+                    totalPages: companiesTotalPages,
+                  })}
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   <select
@@ -335,7 +342,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                       cursor: 'pointer', fontFamily: 'monospace' }}
                   >
                     {PAGE_SIZE_OPTIONS.map((n) => (
-                      <option key={n} value={String(n)}>{n}/pág.</option>
+                      <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
                     ))}
                   </select>
                   <button
@@ -347,7 +354,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                       borderRadius: '10px', padding: '6px 12px', color: companiesPage <= 1 ? C.faint : C.purple,
                       fontSize: '11px', cursor: companiesPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
                   >
-                    Anterior
+                    {t(locale, 'panel.admin.prev')}
                   </button>
                   <button
                     type="button"
@@ -359,7 +366,7 @@ export function CompaniesAdminTab({ navigateDashboard }) {
                       color: companiesPage >= companiesTotalPages ? C.faint : C.purple,
                       fontSize: '11px', cursor: companiesPage >= companiesTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
                   >
-                    Próxima
+                    {t(locale, 'panel.admin.next')}
                   </button>
                 </div>
               </div>

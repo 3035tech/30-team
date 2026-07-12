@@ -2,11 +2,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { t } from '../../../../lib/i18n';
+import { useLocale } from '../../../../lib/useLocale';
 import MotivatorsFlow from '../../../_components/MotivatorsFlow';
 
 function MotivatorsEntryInner() {
   const params = useParams();
   const token = typeof params?.token === 'string' ? params.token : Array.isArray(params?.token) ? params.token[0] : '';
+  const [locale] = useLocale('pt-BR');
   const [state, setState] = useState({ loading: true, error: '', invite: null });
 
   useEffect(() => {
@@ -17,28 +20,33 @@ function MotivatorsEntryInner() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const t = String(token || '').trim();
-      if (!t) {
-        if (!cancelled) setState({ loading: false, error: 'Link inválido.', invite: null });
+      const tok = String(token || '').trim();
+      if (!tok) {
+        if (!cancelled) setState({ loading: false, error: t(locale, 'motivators.invalidLink'), invite: null });
         return;
       }
       try {
-        const res = await fetch(`/api/public/ae-invite?token=${encodeURIComponent(t)}`);
+        const res = await fetch(`/api/public/ae-invite?token=${encodeURIComponent(tok)}`);
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Convite inválido.');
+        if (!res.ok) throw new Error(data.error || t(locale, 'motivators.invalidInvite'));
         if (!cancelled) setState({ loading: false, error: '', invite: data });
       } catch (e) {
-        if (!cancelled) setState({ loading: false, error: e.message || 'Erro', invite: null });
+        if (!cancelled) setState({ loading: false, error: e.message || t(locale, 'panel.common.error'), invite: null });
       }
     })();
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, locale]);
 
   if (state.loading) {
     return (
       <MotivatorsFlow
         inviteToken={token}
-        notice={{ kind: 'info', title: 'Carregando', message: 'Validando seu convite…' }}
+        initialLocale={locale}
+        notice={{
+          kind: 'info',
+          title: t(locale, 'motivators.loadingInviteTitle'),
+          message: t(locale, 'motivators.loadingInviteMessage'),
+        }}
       />
     );
   }
@@ -47,7 +55,12 @@ function MotivatorsEntryInner() {
     return (
       <MotivatorsFlow
         inviteToken={token}
-        notice={{ kind: 'warning', title: 'Convite indisponível', message: state.error || 'Link inválido.' }}
+        initialLocale={locale}
+        notice={{
+          kind: 'warning',
+          title: t(locale, 'motivators.inviteUnavailableTitle'),
+          message: state.error || t(locale, 'motivators.invalidLink'),
+        }}
         startDisabled
       />
     );
@@ -56,16 +69,17 @@ function MotivatorsEntryInner() {
   return (
     <MotivatorsFlow
       inviteToken={token}
+      initialLocale={locale}
       inviteInfo={{
         candidateName: state.invite.candidateName,
         candidateEmail: state.invite.candidateEmail,
       }}
       notice={{
         kind: 'info',
-        title: state.invite.definitionName || 'Motivadores Profissionais',
+        title: state.invite.definitionName || t(locale, 'motivators.title'),
         message: state.invite.companyName
-          ? `Convite de ${state.invite.companyName}. Use o e-mail para o qual o convite foi enviado.`
-          : 'Use o e-mail para o qual o convite foi enviado.',
+          ? t(locale, 'motivators.inviteFromCompany', { name: state.invite.companyName })
+          : t(locale, 'motivators.inviteEmailHint'),
       }}
     />
   );
@@ -73,7 +87,14 @@ function MotivatorsEntryInner() {
 
 export default function MotivatorsTokenPage() {
   return (
-    <Suspense fallback={<MotivatorsFlow inviteToken="" notice={{ kind: 'info', title: 'Carregando', message: '…' }} />}>
+    <Suspense
+      fallback={
+        <MotivatorsFlow
+          inviteToken=""
+          notice={{ kind: 'info', title: '…', message: '…' }}
+        />
+      }
+    >
       <MotivatorsEntryInner />
     </Suspense>
   );

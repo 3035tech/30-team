@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import {
   PAGE_SIZE_OPTIONS,
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, KANBAN_STAGES, S } from '../dashboard-shared';
+import { clientSortNextDir, getKanbanStages, S } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 
-export function VacancyInviteByEmail({ vacancyId, onSent }) {
+export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
   const [candidateName, setCandidateName] = useState('');
   const [candidateEmail, setCandidateEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,11 +26,11 @@ export function VacancyInviteByEmail({ vacancyId, onSent }) {
     setLocalErr('');
     setLocalOk('');
     if (!name) {
-      setLocalErr('Informe o nome do candidato.');
+      setLocalErr(t(locale, 'recruiting.inviteNeedName'));
       return;
     }
     if (!mail) {
-      setLocalErr('Informe o e-mail do candidato.');
+      setLocalErr(t(locale, 'recruiting.inviteNeedEmail'));
       return;
     }
     setBusy(true);
@@ -41,14 +41,14 @@ export function VacancyInviteByEmail({ vacancyId, onSent }) {
         body: JSON.stringify({ candidateName: name, candidateEmail: mail }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Não foi possível enviar.');
-      setLocalOk(`E-mail enviado para ${mail}.`);
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setLocalOk(t(locale, 'recruiting.inviteSendOk', { email: mail }));
       setCandidateName('');
       setCandidateEmail('');
       onSent?.();
       setTimeout(() => setLocalOk(''), 5000);
     } catch (e) {
-      setLocalErr(e?.message || 'Erro');
+      setLocalErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -57,15 +57,15 @@ export function VacancyInviteByEmail({ vacancyId, onSent }) {
   return (
     <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}`, width: '100%' }}>
       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
-        Convidar candidato — nome, e-mail e envio do desafio por e-mail
+        {t(locale, 'recruiting.inviteEmailIntro')}
       </span>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           value={candidateName}
           onChange={(e) => setCandidateName(e.target.value)}
-          placeholder="Nome do candidato"
+          placeholder={t(locale, 'recruiting.inviteCandidateNamePh')}
           disabled={busy}
-          aria-label="Nome do candidato"
+          aria-label={t(locale, 'recruiting.inviteCandidateNamePh')}
           style={{
             flex: '1 1 160px', minWidth: '140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
             borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace',
@@ -75,9 +75,9 @@ export function VacancyInviteByEmail({ vacancyId, onSent }) {
           type="email"
           value={candidateEmail}
           onChange={(e) => setCandidateEmail(e.target.value)}
-          placeholder="email@exemplo.com"
+          placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')}
           disabled={busy}
-          aria-label="E-mail do candidato"
+          aria-label={t(locale, 'recruiting.inviteCandidateEmailPh')}
           style={{
             flex: '2 1 220px', minWidth: '180px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
             borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '12px', fontFamily: 'monospace',
@@ -93,7 +93,7 @@ export function VacancyInviteByEmail({ vacancyId, onSent }) {
             cursor: 'pointer', fontFamily: 'monospace', opacity: busy ? 0.6 : 1,
           }}
         >
-          {busy ? 'Enviando…' : 'Enviar desafio'}
+          {busy ? t(locale, 'recruiting.inviteSending') : t(locale, 'recruiting.inviteSendChallenge')}
         </button>
       </div>
       {localErr ? (
@@ -128,10 +128,10 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Erro');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       if (!cancelled.current) setRows(Array.isArray(data.invites) ? data.invites : []);
     } catch (e) {
-      if (!cancelled.current) setErr(e?.message || 'Erro');
+      if (!cancelled.current) setErr(e?.message || t(locale, 'panel.common.error'));
     }
   };
 
@@ -150,10 +150,10 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
         { method: 'POST' }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       await fetchInvites();
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(null);
     }
@@ -175,10 +175,10 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
         { method: 'DELETE' }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       await fetchInvites();
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(null);
     }
@@ -228,8 +228,12 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                   <span style={{ color: C.purpleLight }}>{inviteStatusLabel(locale, inv.status)}</span>
                   {reminderCount > 0 && (
                     <span style={{ color: C.faint, fontSize: '11px' }}>
-                      {reminderCount} lembrete{reminderCount > 1 ? 's' : ''} enviado{reminderCount > 1 ? 's' : ''}
-                      {lastReminder ? ` · último: ${lastReminder.toLocaleDateString('pt-BR')}` : ''}
+                      {t(locale, 'recruiting.reminderSentCount', { n: reminderCount })}
+                      {lastReminder
+                        ? t(locale, 'recruiting.lastReminderSuffix', {
+                            date: lastReminder.toLocaleDateString(localeHtmlLang(locale)),
+                          })
+                        : ''}
                     </span>
                   )}
                 </div>
@@ -248,7 +252,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                     }}
                   >
                     {busy === String(inv.id)
-                      ? <><span className="spinner" />Enviando</>
+                      ? <><span className="spinner" />{t(locale, 'recruiting.sendingShort')}</>
                       : t(locale, 'recruiting.inviteRemind')}
                   </button>
                 ) : null}
@@ -265,7 +269,7 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                   }}
                 >
                   {busy === `del:${inv.id}`
-                    ? <><span className="spinner" />Removendo</>
+                    ? <><span className="spinner" />{t(locale, 'recruiting.removingShort')}</>
                     : t(locale, 'recruiting.inviteRemove')}
                 </button>
               </div>
@@ -291,7 +295,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
       try {
         const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`);
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         if (cancelled) return;
         const w = data.vacancyFitWeights || {};
         const next = {};
@@ -302,7 +306,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
         setWeights(next);
         setNotes(data.vacancyRubricNotes != null ? String(data.vacancyRubricNotes) : '');
       } catch (e) {
-        if (!cancelled) setErr(e?.message || 'Erro');
+        if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -327,11 +331,11 @@ function VacancyRubricEditor({ vacancyId, locale }) {
         body: JSON.stringify({ vacancyFitWeights: wObj, vacancyRubricNotes: notes }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setMsg(t(locale, 'recruiting.rubricSaved'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setErr(e?.message || 'Erro');
+      setErr(e?.message || t(locale, 'panel.common.error'));
     }
   };
 
@@ -371,6 +375,7 @@ function VacancyRubricEditor({ vacancyId, locale }) {
           onChange={setNotes}
           placeholder={t(locale, 'recruiting.rubricNotes')}
           minHeight={120}
+          locale={locale}
         />
       </div>
       <button
@@ -404,12 +409,11 @@ function formatRelativeAgo(dateLike, locale = 'pt-BR') {
   const min = Math.floor(sec / 60);
   const hr = Math.floor(min / 60);
   const day = Math.floor(hr / 24);
-  const en = String(locale || '').toLowerCase().startsWith('en');
-  if (sec < 60) return en ? 'just now' : 'agora';
-  if (min < 60) return en ? `${min}m ago` : `há ${min} min`;
-  if (hr < 48) return en ? `${hr}h ago` : `há ${hr}h`;
-  if (day < 30) return en ? `${day}d ago` : `há ${day} dia${day !== 1 ? 's' : ''}`;
-  return d.toLocaleDateString(en ? 'en-US' : 'pt-BR', { day: '2-digit', month: '2-digit' });
+  if (sec < 60) return t(locale, 'recruiting.timeJustNow');
+  if (min < 60) return t(locale, 'recruiting.timeMinutesAgo', { min });
+  if (hr < 48) return t(locale, 'recruiting.timeHoursAgo', { hr });
+  if (day < 30) return t(locale, 'recruiting.timeDaysAgo', { day });
+  return d.toLocaleDateString(localeHtmlLang(locale), { day: '2-digit', month: '2-digit' });
 }
 
 function inviteStatusShort(locale, status) {
@@ -428,6 +432,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [moving, setMoving] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
+  const stages = getKanbanStages(locale);
 
   useEffect(() => {
     let cancelled = false;
@@ -437,10 +442,10 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
       try {
         const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         if (!cancelled) setRows(Array.isArray(data.ranking) ? data.ranking : []);
       } catch (e) {
-        if (!cancelled) setErr(e?.message || 'Erro');
+        if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -465,7 +470,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
           }
         );
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         setRows((prev) =>
           prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
         );
@@ -476,19 +481,19 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
           body: JSON.stringify({ pipelineStage: stage }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'Erro');
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         setRows((prev) =>
           prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r))
         );
       }
     } catch (e) {
-      setErr(e?.message || 'Erro ao mover candidato');
+      setErr(e?.message || t(locale, 'recruiting.moveCandidateError'));
     } finally {
       setMoving(null);
     }
   };
 
-  const grouped = Object.fromEntries(KANBAN_STAGES.map((s) => [s.id, []]));
+  const grouped = Object.fromEntries(stages.map((s) => [s.id, []]));
   rows.forEach((r) => {
     const stage = r.pipelineStage || 'new';
     if (grouped[stage]) grouped[stage].push(r);
@@ -502,12 +507,12 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
         <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase',
           letterSpacing: '1.5px' }}>
-          Pipeline de Candidatos
+          {t(locale, 'recruiting.pipelineTitle')}
         </span>
         {loading && <span className="spinner" style={{ color: C.muted }} />}
         {!loading && hasAny && (
           <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-            {rows.length} candidato{rows.length !== 1 ? 's' : ''}
+            {t(locale, 'recruiting.candidatesCount', { n: rows.length })}
           </span>
         )}
       </div>
@@ -516,7 +521,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
 
       {!loading && !hasAny ? (
         <p style={{ fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
-          Nenhum candidato nesta vaga ainda.
+          {t(locale, 'recruiting.pipelineEmpty')}
         </p>
       ) : null}
 
@@ -524,7 +529,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
         <div className="kanban-scroll" style={{ overflowX: 'auto', paddingBottom: '8px',
           WebkitOverflowScrolling: 'touch' }}>
           <div style={{ display: 'flex', gap: '10px', minWidth: 'max-content', alignItems: 'flex-start' }}>
-            {KANBAN_STAGES.map((stage) => {
+            {stages.map((stage) => {
               const cards = grouped[stage.id] || [];
               const isDropTarget = dragOverStage === stage.id;
               return (
@@ -618,18 +623,18 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           {(inviteLabel || ago) ? (
                             <div style={{ marginTop: '5px', fontSize: '10px', fontFamily: 'monospace', color: C.muted,
                               lineHeight: 1.35 }}>
-                              {inviteLabel ? `Convite: ${inviteLabel}` : null}
+                              {inviteLabel ? t(locale, 'recruiting.inviteLine', { status: inviteLabel }) : null}
                               {inviteLabel && ago ? ' · ' : null}
                               {ago || null}
                             </div>
                           ) : r.pendingTest ? (
                             <div style={{ marginTop: '5px', fontSize: '10px', fontFamily: 'monospace', color: C.faint }}>
-                              Aguardando teste
+                              {t(locale, 'recruiting.waitingTest')}
                             </div>
                           ) : null}
                           {r.hasNotes ? (
                             <div style={{ marginTop: '4px', fontSize: '10px', fontFamily: 'monospace', color: C.purpleLight }}>
-                              Com anotações
+                              {t(locale, 'recruiting.withNotes')}
                             </div>
                           ) : null}
                         </div>
@@ -721,7 +726,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (vacFilterFromUrl && vacFilterFromUrl !== 'all') qs.set('vacancy', vacFilterFromUrl);
       const res = await fetch(`/api/admin/vacancies?${qs.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar vagas');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.loadVacanciesFailed'));
       const rows = Array.isArray(data?.items)
         ? data.items
         : Array.isArray(data)
@@ -735,7 +740,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setVacTotal(total);
       setVacTotalPages(tpg);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -748,11 +753,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       const res = await fetch('/api/admin/companies?forSelect=1');
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar empresas');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
       setCompanies(Array.isArray(data) ? data : []);
       if (!companyId && Array.isArray(data) && data.length) setCompanyId(String(data[0].id));
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -773,11 +778,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(id)}`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar vaga');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.loadVacancyFailed'));
       setDetailVacancy(data);
     } catch (e) {
       setDetailVacancy(null);
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setDetailLoading(false);
     }
@@ -805,10 +810,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      setMsg('Copiado.');
+      setMsg(t(locale, 'recruiting.copied'));
       setTimeout(() => setMsg(''), 3000);
     } catch {
-      setMsg('Não foi possível copiar automaticamente.');
+      setMsg(t(locale, 'recruiting.copyFailed'));
       setTimeout(() => setMsg(''), 3000);
     }
   };
@@ -831,13 +836,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao criar vaga');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
-      setMsg('Vaga criada.');
+      setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -851,13 +856,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/link`, { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao rotacionar link');
-      setMsg('Link rotacionado.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.rotateLinkFailed'));
+      setMsg(t(locale, 'recruiting.linkRotated'));
       if (isDetailView) await loadVacancyDetail(vacancyId);
       else await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -867,7 +872,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     if (!linkExpiryEdit?.vacancyId) return;
     const parsed = new Date(linkExpiryEdit.value);
     if (Number.isNaN(parsed.getTime())) {
-      setError('Data de expiração inválida.');
+      setError(t(locale, 'recruiting.invalidExpiry'));
       return;
     }
     setLoading(true);
@@ -880,14 +885,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         body: JSON.stringify({ expiresAt: parsed.toISOString() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar expiração');
-      setMsg('Expiração do link atualizada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateExpiryFailed'));
+      setMsg(t(locale, 'recruiting.expiryUpdated'));
       setLinkExpiryEdit(null);
       if (isDetailView) await loadVacancyDetail(linkExpiryEdit.vacancyId);
       else await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -904,13 +909,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         body: JSON.stringify({ status: nextStatus }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
-      setMsg('Vaga atualizada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
+      setMsg(t(locale, 'recruiting.vacancyUpdated'));
       if (isDetailView) await loadVacancyDetail(vacancyId);
       else await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -930,7 +935,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const saveVacancyEdit = async () => {
     if (!editingVacancy) return;
     const { id, title, slug, status, positionsCount, targetDate } = editingVacancy;
-    if (!title.trim()) { setError('O título é obrigatório.'); return; }
+    if (!title.trim()) { setError(t(locale, 'recruiting.titleRequired')); return; }
     setLoading(true);
     setError('');
     setMsg('');
@@ -947,14 +952,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar vaga');
-      setMsg('Vaga atualizada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
+      setMsg(t(locale, 'recruiting.vacancyUpdated'));
       setEditingVacancy(null);
       if (isDetailView) await loadVacancyDetail(id);
       else await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -962,7 +967,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
   const archiveVacancy = async (vacancyId, title) => {
     const ok = window.confirm(
-      `Arquivar vaga "${title}"? Ela some das listagens e o link público deixa de funcionar. Candidatos que já responderam continuam no dashboard.`
+      t(locale, 'recruiting.archiveConfirm', { title })
     );
     if (!ok) return;
     setLoading(true);
@@ -971,8 +976,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao arquivar vaga');
-      setMsg('Vaga arquivada.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.archiveVacancyFailed'));
+      setMsg(t(locale, 'recruiting.vacancyArchived'));
       if (isDetailView) {
         backToVacanciesList();
       } else {
@@ -980,7 +985,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       }
       setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -1006,9 +1011,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 cursor: 'pointer', fontFamily: 'monospace',
               }}
             >
-              ← Voltar para vagas
+              {t(locale, 'recruiting.backToVacancies')}
             </button>
-            <span style={S.label}>Detalhes da vaga</span>
+            <span style={S.label}>{t(locale, 'recruiting.vacancyDetailTitle')}</span>
           </div>
           {error ? (
             <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
@@ -1022,7 +1027,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           ) : null}
           {(detailLoading || loading) && !v ? (
             <p style={{ marginTop: '14px', color: C.muted, fontSize: '13px', fontFamily: 'monospace' }}>
-              Carregando vaga…
+              {t(locale, 'recruiting.loadingVacancy')}
             </p>
           ) : null}
           {!detailLoading && !v && error ? (
@@ -1035,7 +1040,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 cursor: 'pointer', fontFamily: 'monospace',
               }}
             >
-              Voltar à listagem
+              {t(locale, 'recruiting.backToList')}
             </button>
           ) : null}
         </div>
@@ -1044,7 +1049,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           <>
             {/* 1–4. Informações e ações da vaga + rubrica */}
             <div style={{ ...S.card }}>
-              <span style={{ ...S.label, marginBottom: '14px', display: 'block' }}>Informações da vaga</span>
+              <span style={{ ...S.label, marginBottom: '14px', display: 'block' }}>{t(locale, 'recruiting.vacancyInfoTitle')}</span>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div style={{ flex: '1 1 280px', minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap' }}>
@@ -1057,7 +1062,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         borderRadius: '999px', padding: '2px 8px',
                       }}
                     >
-                      {v.status === 'open' ? 'Aberta' : 'Fechada'}
+                      {v.status === 'open' ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
                     </span>
                     {isAdmin && (
                       <span style={{ fontFamily: 'monospace', color: C.faint, fontSize: '12px' }}>
@@ -1071,23 +1076,25 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </div>
                   ) : (
                     <div style={{ marginTop: '8px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
-                      (sem link ativo)
+                      {t(locale, 'recruiting.noActiveLink')}
                     </div>
                   )}
                   {token && exp ? (
                     <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                      expira em {exp.toLocaleString()}
+                      {t(locale, 'recruiting.expiresAt', { when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') })}
                     </div>
                   ) : null}
                   <div style={{ marginTop: '8px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {v.positionsCount != null && v.positionsCount > 0 && (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                        {v.positionsCount} vaga{v.positionsCount !== 1 ? 's' : ''}
+                        {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                       </span>
                     )}
                     {v.targetDate && (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                        alvo: {new Date(v.targetDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        {t(locale, 'recruiting.targetDate', {
+                          date: new Date(v.targetDate + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                        })}
                       </span>
                     )}
                   </div>
@@ -1102,7 +1109,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.purpleLight, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace' }}
                 >
-                  Ver candidatos
+                  {t(locale, 'recruiting.viewCandidates')}
                 </button>
                 <button
                   type="button"
@@ -1112,7 +1119,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                 >
-                  Editar
+                  {t(locale, 'recruiting.editVacancy')}
                 </button>
                 <button
                   type="button"
@@ -1122,7 +1129,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                 >
-                  {v.status === 'open' ? 'Fechar' : 'Reabrir'}
+                  {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
                 </button>
                 <button
                   type="button"
@@ -1132,7 +1139,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                 >
-                  Rotacionar link
+                  {t(locale, 'recruiting.rotateLink')}
                 </button>
                 <button
                   type="button"
@@ -1142,7 +1149,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                 >
-                  Copiar link
+                  {t(locale, 'recruiting.copyLink')}
                 </button>
                 <button
                   type="button"
@@ -1164,7 +1171,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                 >
-                  Editar expiração
+                  {t(locale, 'recruiting.editLinkExpiry')}
                 </button>
                 <button
                   type="button"
@@ -1174,7 +1181,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
                     cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                 >
-                  Arquivar
+                  {t(locale, 'recruiting.archiveVacancy')}
                 </button>
               </div>
 
@@ -1185,47 +1192,47 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 }}>
                   <span style={{ fontSize: '11px', color: C.purpleLight, fontFamily: 'monospace',
                     textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
-                    Editar vaga
+                    {t(locale, 'recruiting.editVacancyForm')}
                   </span>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     <input
                       value={editingVacancy.title}
                       onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                      placeholder="Título da vaga"
-                      aria-label="Título da vaga"
+                      placeholder={t(locale, 'recruiting.vacancyTitlePh')}
+                      aria-label={t(locale, 'recruiting.vacancyTitlePh')}
                       style={{ flex: '2 1 280px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                         borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
                     />
                     <input
                       value={editingVacancy.slug}
                       onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                      placeholder="Slug (ex.: dev-fullstack)"
-                      aria-label="Slug da vaga"
+                      placeholder={t(locale, 'recruiting.vacancySlugPh')}
+                      aria-label={t(locale, 'recruiting.vacancySlugPh')}
                       style={{ flex: '1 1 200px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                         borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
                     />
                     <select
                       value={editingVacancy.status}
                       onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                      aria-label="Status da vaga"
+                      aria-label={t(locale, 'recruiting.sortStatus')}
                       style={{ flex: '0 0 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                         borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px',
                         cursor: 'pointer', fontFamily: 'monospace' }}
                     >
-                      <option value="open">Aberta</option>
-                      <option value="closed">Fechada</option>
+                      <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                      <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
                       fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                      Nº de vagas
+                      {t(locale, 'recruiting.positionsLabel')}
                       <input
                         type="number"
                         min="1"
                         value={editingVacancy.positionsCount}
                         onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
-                        aria-label="Número de posições"
+                        aria-label={t(locale, 'recruiting.positionsLabel')}
                         style={{ width: '70px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                           borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
                           fontFamily: 'monospace' }}
@@ -1233,12 +1240,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
                       fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                      Data-alvo
+                      {t(locale, 'recruiting.targetDateLabel')}
                       <input
                         type="date"
                         value={editingVacancy.targetDate}
                         onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
-                        aria-label="Data-alvo de encerramento"
+                        aria-label={t(locale, 'recruiting.targetDateLabel')}
                         style={{ background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                           borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
                           fontFamily: 'monospace' }}
@@ -1254,7 +1261,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         borderRadius: '10px', padding: '9px 18px', color: C.purple, fontSize: '13px',
                         cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                     >
-                      Salvar alterações
+                      {t(locale, 'panel.admin.save')}
                     </button>
                     <button
                       type="button"
@@ -1264,7 +1271,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         borderRadius: '10px', padding: '9px 14px', color: C.muted, fontSize: '13px',
                         cursor: 'pointer', fontFamily: 'monospace' }}
                     >
-                      Cancelar
+                      {t(locale, 'panel.admin.cancel')}
                     </button>
                   </div>
                 </div>
@@ -1277,7 +1284,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
                 }}>
                   <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                    Nova data de expiração (horário local)
+                    {t(locale, 'panel.admin.expiringOn')}
                   </span>
                   <input
                     type="datetime-local"
@@ -1288,7 +1295,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       )
                     }
                     disabled={loading}
-                    aria-label="Nova data de expiração do link"
+                    aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
                     style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
                       border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
                       color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
@@ -1297,13 +1304,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
                       borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
                       cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                    Salvar
+                    {t(locale, 'panel.admin.save')}
                   </button>
                   <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
                     style={{ background: 'transparent', border: `1px solid ${C.border}`,
                       borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
                       cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                    Cancelar
+                    {t(locale, 'panel.admin.cancel')}
                   </button>
                 </div>
               )}
@@ -1323,6 +1330,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               />
               <VacancyInviteByEmail
                 vacancyId={v.id}
+                locale={locale}
                 onSent={() => {
                   setInvitesRefresh((x) => x + 1);
                   setPipelineRefresh((x) => x + 1);
@@ -1344,7 +1352,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>Vagas</span>
+        <span style={S.label}>{t(locale, 'recruiting.vacanciesTitle')}</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
           {t(locale, 'recruiting.vacanciesIntro')}
         </p>
@@ -1361,7 +1369,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Criar vaga</span>
+        <span style={S.label}>{t(locale, 'recruiting.createVacancy')}</span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
           {isAdmin && (
             <select
@@ -1372,7 +1380,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 cursor: 'pointer', fontFamily: 'monospace' }}
             >
               {companies.length === 0 ? (
-                <option value="">(carregando empresas…)</option>
+                <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
               ) : companies.map((c) => (
                 <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
               ))}
@@ -1381,14 +1389,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título (ex.: Pessoa Dev Fullstack)"
+            placeholder={t(locale, 'recruiting.createTitlePh')}
             style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="Slug opcional (ex.: dev-fullstack)"
+            placeholder={t(locale, 'recruiting.createSlugPh')}
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
@@ -1399,30 +1407,30 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace' }}
           >
-            <option value="open">Aberta</option>
-            <option value="closed">Fechada</option>
+            <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+            <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
           </select>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
             fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            Vagas
+            {t(locale, 'recruiting.positionsLabel')}
             <input
               type="number"
               min="1"
               value={positionsCount}
               onChange={(e) => setPositionsCount(e.target.value)}
-              aria-label="Número de posições"
+              aria-label={t(locale, 'recruiting.positionsLabel')}
               style={{ width: '60px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
                 borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
             />
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
             fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            Alvo
+            {t(locale, 'recruiting.targetDateLabel')}
             <input
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              aria-label="Data-alvo de encerramento"
+              aria-label={t(locale, 'recruiting.targetDateLabel')}
               style={{ background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
                 borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
             />
@@ -1437,7 +1445,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             {loading ? <span className="spinner" /> : null}
-            Criar
+            {t(locale, 'panel.admin.create')}
           </button>
           <button
             type="button"
@@ -1449,17 +1457,17 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             {loading ? <span className="spinner" /> : null}
-            Atualizar
+            {t(locale, 'recruiting.refresh')}
           </button>
         </div>
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Vagas cadastradas</span>
+        <span style={S.label}>{t(locale, 'recruiting.registeredVacancies')}</span>
         {vacFilterFromUrl !== 'all' ? (
           <div style={{ marginTop: '10px', padding: '10px 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.03)' }}>
             <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
-              A lista abaixo está limitada à vaga do filtro superior.{' '}
+              {t(locale, 'recruiting.filterLimited')}{' '}
               <button
                 type="button"
                 onClick={() => navigateDashboard({ vacancy: 'all', vacanciesPage: 1, tab: 'vacancies' })}
@@ -1474,20 +1482,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   textDecoration: 'underline',
                 }}
               >
-                Mostrar todas as vagas
+                {t(locale, 'recruiting.showAllVacancies')}
               </button>
             </p>
           </div>
         ) : null}
         {vacTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            {vacFilterFromUrl !== 'all' ? 'Nenhuma vaga corresponde ao filtro atual.' : 'Nenhuma vaga ainda.'}
+            {vacFilterFromUrl !== 'all' ? t(locale, 'recruiting.noVacancyFilter') : t(locale, 'recruiting.noVacanciesYet')}
           </p>
         ) : (
           <>
             <div
               role="group"
-              aria-label="Ordenar vagas"
+              aria-label={t(locale, 'recruiting.sortVacanciesAria')}
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
@@ -1501,14 +1509,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               }}
             >
               <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Ordenar por
+                {t(locale, 'recruiting.sortBy')}
               </span>
               {[
                 { k: 'id', label: 'ID' },
-                { k: 'title', label: 'Título' },
-                { k: 'status', label: 'Status' },
-                ...(isAdmin ? [{ k: 'companyName', label: 'Empresa' }] : []),
-                { k: 'createdAt', label: 'Criada em' },
+                { k: 'title', label: t(locale, 'recruiting.sortTitle') },
+                { k: 'status', label: t(locale, 'recruiting.sortStatus') },
+                ...(isAdmin ? [{ k: 'companyName', label: t(locale, 'recruiting.sortCompany') }] : []),
+                { k: 'createdAt', label: t(locale, 'recruiting.sortCreated') },
               ].map(({ k, label }) => {
                 const active = vacSortSt.sort === k;
                 return (
@@ -1560,7 +1568,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             border: `1px solid ${v.status === 'open' ? 'rgba(21,128,61,.3)' : C.border}`,
                           }}
                         >
-                          {v.status === 'open' ? 'Aberta' : 'Fechada'}
+                          {v.status === 'open' ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
                         </span>
                         {isAdmin && (
                           <span style={{ fontFamily: 'monospace', color: C.faint, marginLeft: '10px', fontSize: '12px' }}>
@@ -1574,23 +1582,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         </div>
                       ) : (
                         <div style={{ marginTop: '6px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
-                          (sem link ativo)
+                          {t(locale, 'recruiting.noActiveLink')}
                         </div>
                       )}
                       {token && exp ? (
                         <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                          expira em {exp.toLocaleString()}
+                          {t(locale, 'recruiting.expiresAt', { when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') })}
                         </div>
                       ) : null}
                       <div style={{ marginTop: '6px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                         {v.positionsCount != null && v.positionsCount > 0 && (
                           <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                            {v.positionsCount} vaga{v.positionsCount !== 1 ? 's' : ''}
+                            {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                           </span>
                         )}
                         {v.targetDate && (
                           <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                            alvo: {new Date(v.targetDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            {t(locale, 'recruiting.targetDate', { date: new Date(v.targetDate + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR') })}
                           </span>
                         )}
                       </div>
@@ -1603,7 +1611,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.purpleLight, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace' }}
                       >
-                        Ver candidatos
+                        {t(locale, 'recruiting.viewCandidates')}
                       </button>
                       <button
                         type="button"
@@ -1613,7 +1621,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
-                        Editar
+                        {t(locale, 'recruiting.editVacancy')}
                       </button>
                       <button
                         type="button"
@@ -1623,7 +1631,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
-                        {v.status === 'open' ? 'Fechar' : 'Reabrir'}
+                        {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
                       </button>
                       <button
                         type="button"
@@ -1633,7 +1641,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
-                        Rotacionar link
+                        {t(locale, 'recruiting.rotateLink')}
                       </button>
                       <button
                         type="button"
@@ -1643,7 +1651,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                       >
-                        Copiar link
+                        {t(locale, 'recruiting.copyLink')}
                       </button>
                       <button
                         type="button"
@@ -1653,7 +1661,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                       >
-                        Arquivar
+                        {t(locale, 'recruiting.archiveVacancy')}
                       </button>
                       <button
                         type="button"
@@ -1661,9 +1669,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         style={{ background: `${C.synergy}14`, border: `1px solid ${C.synergy}44`,
                           borderRadius: '10px', padding: '8px 10px', color: C.synergy, fontSize: '12px',
                           cursor: 'pointer', fontFamily: 'monospace' }}
-                        title="Abrir detalhes da vaga"
+                        title={t(locale, 'recruiting.openDetailsTitle')}
                       >
-                        Detalhes
+                        {t(locale, 'recruiting.details')}
                       </button>
                     </div>
                   </div>
@@ -1676,47 +1684,47 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     }}>
                       <span style={{ fontSize: '11px', color: C.purpleLight, fontFamily: 'monospace',
                         textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
-                        Editar vaga
+                        {t(locale, 'recruiting.editVacancyForm')}
                       </span>
                       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                         <input
                           value={editingVacancy.title}
                           onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                          placeholder="Título da vaga"
-                          aria-label="Título da vaga"
+                          placeholder={t(locale, 'recruiting.vacancyTitlePh')}
+                          aria-label={t(locale, 'recruiting.vacancyTitlePh')}
                           style={{ flex: '2 1 280px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                             borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
                         />
                         <input
                           value={editingVacancy.slug}
                           onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                          placeholder="Slug (ex.: dev-fullstack)"
-                          aria-label="Slug da vaga"
+                          placeholder={t(locale, 'recruiting.vacancySlugPh')}
+                          aria-label={t(locale, 'recruiting.vacancySlugPh')}
                           style={{ flex: '1 1 200px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                             borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
                         />
                         <select
                           value={editingVacancy.status}
                           onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                          aria-label="Status da vaga"
+                          aria-label={t(locale, 'recruiting.sortStatus')}
                           style={{ flex: '0 0 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                             borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '13px',
                             cursor: 'pointer', fontFamily: 'monospace' }}
                         >
-                          <option value="open">Aberta</option>
-                          <option value="closed">Fechada</option>
+                          <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                          <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
                         </select>
                       </div>
                       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
                           fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                          Nº de vagas
+                          {t(locale, 'recruiting.positionsLabel')}
                           <input
                             type="number"
                             min="1"
                             value={editingVacancy.positionsCount}
                             onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
-                            aria-label="Número de posições"
+                            aria-label={t(locale, 'recruiting.positionsLabel')}
                             style={{ width: '70px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                               borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
                               fontFamily: 'monospace' }}
@@ -1724,12 +1732,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px',
                           fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                          Data-alvo
+                          {t(locale, 'recruiting.targetDateLabel')}
                           <input
                             type="date"
                             value={editingVacancy.targetDate}
                             onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
-                            aria-label="Data-alvo de encerramento"
+                            aria-label={t(locale, 'recruiting.targetDateLabel')}
                             style={{ background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
                               borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
                               fontFamily: 'monospace' }}
@@ -1745,7 +1753,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             borderRadius: '10px', padding: '9px 18px', color: C.purple, fontSize: '13px',
                             cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                         >
-                          Salvar alterações
+                          {t(locale, 'panel.admin.save')}
                         </button>
                         <button
                           type="button"
@@ -1755,7 +1763,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             borderRadius: '10px', padding: '9px 14px', color: C.muted, fontSize: '13px',
                             cursor: 'pointer', fontFamily: 'monospace' }}
                         >
-                          Cancelar
+                          {t(locale, 'panel.admin.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1769,7 +1777,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`,
             }}>
               <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                {vacTotal} vaga(s) · página {vacPage}/{vacTotalPages}
+                {t(locale, 'recruiting.vacanciesPage', { total: vacTotal, page: vacPage, pages: vacTotalPages })}
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                 <select
@@ -1784,7 +1792,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     cursor: 'pointer', fontFamily: 'monospace' }}
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => (
-                    <option key={n} value={String(n)}>{n}/pág.</option>
+                    <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
                   ))}
                 </select>
                 <button
@@ -1796,7 +1804,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     borderRadius: '10px', padding: '6px 12px', color: vacPage <= 1 ? C.faint : C.purple,
                     fontSize: '11px', cursor: vacPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
                 >
-                  Anterior
+                  {t(locale, 'panel.admin.prev')}
                 </button>
                 <button
                   type="button"
@@ -1808,7 +1816,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     color: vacPage >= vacTotalPages ? C.faint : C.purple,
                     fontSize: '11px', cursor: vacPage >= vacTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
                 >
-                  Próxima
+                  {t(locale, 'panel.admin.next')}
                 </button>
               </div>
             </div>

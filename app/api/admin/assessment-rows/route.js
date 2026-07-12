@@ -7,6 +7,7 @@ import {
   PAGE_SIZE_OPTIONS,
   sqlWhere,
 } from '../../../../lib/assessment-filters';
+import { apiError } from '../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -27,11 +28,11 @@ export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const url = new URL(request.url);
   const selectedArea = (url.searchParams.get('area') || 'all').toString();

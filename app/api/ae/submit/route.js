@@ -7,6 +7,7 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit'
 import { AE_SCORING_ENGINE_VERSION } from '../../../../lib/ae/ae-id';
 import { bootstrapMotivators } from '../../../../lib/ae/bootstrap-motivators';
 import { formatScoringFailure, summarizeScoringInput } from '../../../../lib/ae/scoring-diagnostics';
+import { apiError } from '../../../../lib/api-error';
 
 /**
  * POST /api/ae/submit
@@ -17,7 +18,7 @@ export async function POST(request) {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`ae-submit:${ip}`, 30, 10 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json({ error: 'Muitas tentativas. Aguarde.' }, { status: 429 });
+      return apiError(request, 'RATE_LIMIT_SHORT', 429);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -26,7 +27,7 @@ export async function POST(request) {
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (!Number.isFinite(attemptId) || !Array.isArray(answers)) {
-      return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 });
+      return apiError(request, 'INVALID_DATA', 400);
     }
 
     const att = await query(
@@ -38,11 +39,11 @@ export async function POST(request) {
       [attemptId]
     );
     if (att.rowCount === 0) {
-      return NextResponse.json({ error: 'Sessão não encontrada.' }, { status: 404 });
+      return apiError(request, 'SESSION_NOT_FOUND', 404);
     }
     const attempt = att.rows[0];
     if (attempt.status !== 'in_progress') {
-      return NextResponse.json({ error: 'Esta sessão já foi finalizada.' }, { status: 409 });
+      return apiError(request, 'SESSION_DONE', 409);
     }
 
     let questions = await loadQuestionsForScoring(query, attempt.questionIds);
@@ -101,6 +102,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('POST /api/ae/submit', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

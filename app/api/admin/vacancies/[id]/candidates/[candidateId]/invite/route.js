@@ -7,6 +7,7 @@ import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacanc
 import { sendTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
+import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -28,24 +29,21 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const isAdmin = payload?.role === 'admin';
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rl = checkRateLimit(`invite:${uid || ip}`, 40, 60 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json(
-        { error: 'Muitos convites enviados nesta hora. Aguarde e tente novamente.' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
-      );
+      return apiError(request, 'RATE_LIMIT_INVITES', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const link = await query(
@@ -62,19 +60,16 @@ export async function POST(request, { params }) {
        LIMIT 1`,
       [vacancyId, candidateId]
     );
-    if (link.rowCount === 0) return NextResponse.json({ error: 'Candidato não encontrado nesta vaga' }, { status: 404 });
+    if (link.rowCount === 0) return apiError(request, 'CANDIDATE_NOT_FOUND', 404);
     const row = link.rows[0];
     if (!isAdmin && String(row.companyId) !== String(companyId)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     if (!row.email) {
-      return NextResponse.json({ error: 'Candidato sem e-mail cadastrado.' }, { status: 400 });
+      return apiError(request, 'CANDIDATE_NO_EMAIL', 400);
     }
     if (String(row.status || '') === 'closed') {
-      return NextResponse.json(
-        { error: 'Esta vaga está encerrada. Reabra a vaga antes de enviar convites.' },
-        { status: 400 }
-      );
+      return apiError(request, 'VACANCY_CLOSED', 400);
     }
 
     const existingDone = await query(
@@ -82,18 +77,12 @@ export async function POST(request, { params }) {
       [candidateId, vacancyId]
     );
     if (existingDone.rowCount > 0) {
-      return NextResponse.json(
-        { error: 'Este candidato já respondeu o teste desta vaga.' },
-        { status: 409 }
-      );
+      return apiError(request, 'CANDIDATE_ALREADY_ANSWERED', 409);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return NextResponse.json(
-        { error: 'URL pública do app não configurada. Defina NEXT_PUBLIC_APP_URL no servidor.' },
-        { status: 500 }
-      );
+      return apiError(request, 'APP_URL_MISSING', 500);
     }
 
     const linkToken = await ensureActiveVacancyLinkToken(row.vacancyId);
@@ -113,11 +102,13 @@ export async function POST(request, { params }) {
     const inviteId = ins.rows[0]?.id;
     const challengeUrl = `${base}/v/${linkToken}?invite=${encodeURIComponent(inviteToken)}`;
 
+    const locale = localeFromRequest(request);
     const { subject, text, html } = buildCandidateChallengeInviteMail({
       candidateFullName: candidateName,
       vacancyTitle: row.title,
       companyName: row.companyName ?? null,
       challengeUrl,
+      locale,
     });
 
     try {
@@ -127,10 +118,10 @@ export async function POST(request, { params }) {
         await query(`DELETE FROM candidate_invites WHERE id = $1`, [inviteId]).catch(() => {});
       }
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return NextResponse.json({ error: e.message }, { status: 503 });
+        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
       }
       console.error('invite mail error', e);
-      return NextResponse.json({ error: 'Falha ao enviar e-mail. Verifique a configuração SMTP no servidor.' }, { status: 502 });
+      return apiError(request, 'MAIL_FAILED', 502);
     }
 
     // Entra no kanban como "Novo" assim que o desafio é enviado
@@ -144,6 +135,6 @@ export async function POST(request, { params }) {
     return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'new' });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
+import { apiError, localeFromRequest } from '../../../../lib/api-error';
+import { t } from '../../../../lib/i18n';
 
 /** GET /api/public/ae-invite?token= — valida convite de motivadores. */
 export async function GET(request) {
@@ -7,7 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const token = String(searchParams.get('token') || '').trim();
     if (!token) {
-      return NextResponse.json({ errorCode: 'INVALID_TOKEN', error: 'Link inválido.' }, { status: 400 });
+      return apiError(request, 'INVALID_TOKEN', 400);
     }
 
     const res = await queryRead(
@@ -24,21 +26,22 @@ export async function GET(request) {
     );
 
     if (res.rowCount === 0) {
-      return NextResponse.json({ errorCode: 'INVITE_NOT_FOUND', error: 'Convite não encontrado.' }, { status: 404 });
+      return apiError(request, 'INVITE_NOT_FOUND', 404);
     }
 
     const row = res.rows[0];
     if (new Date(row.expiresAt) < new Date()) {
-      return NextResponse.json({ errorCode: 'INVITE_EXPIRED', error: 'Este convite expirou.' }, { status: 403 });
+      return apiError(request, 'INVITE_EXPIRED', 403);
     }
     if (row.status === 'cancelled') {
-      return NextResponse.json({ errorCode: 'INVITE_CANCELLED', error: 'Este convite foi cancelado.' }, { status: 403 });
+      return apiError(request, 'INVITE_CANCELLED', 403);
     }
     if (row.status === 'completed') {
+      const locale = localeFromRequest(request);
       return NextResponse.json(
         {
           errorCode: 'INVITE_COMPLETED',
-          error: 'Este convite já foi utilizado. O RH pode enviar um novo convite para uma nova avaliação.',
+          error: t(locale, 'errors.INVITE_COMPLETED'),
           completed: true,
         },
         { status: 409 }
@@ -58,6 +61,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('GET /api/public/ae-invite', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

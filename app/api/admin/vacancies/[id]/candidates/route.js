@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import { upsertCandidatePreInterview } from '../../../../../../lib/ae/candidate-upsert';
 import { sanitizeInterviewNotesHtml } from '../../../../../../lib/sanitize-html';
+import { apiError } from '../../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -12,10 +13,10 @@ function requireRole(payload) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function loadVacancyForActor(vacancyId, payload) {
+async function loadVacancyForActor(request, vacancyId, payload) {
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) };
+  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
 
   if (!isAdmin) {
     const owned = await query(
@@ -26,7 +27,7 @@ async function loadVacancyForActor(vacancyId, payload) {
        LIMIT 1`,
       [vacancyId, companyId]
     );
-    if (owned.rowCount === 0) return { error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) };
+    if (owned.rowCount === 0) return { error: apiError(request, 'UNAUTHORIZED', 401) };
     return { vacancy: owned.rows[0], isAdmin };
   }
 
@@ -38,22 +39,22 @@ async function loadVacancyForActor(vacancyId, payload) {
      LIMIT 1`,
     [vacancyId]
   );
-  if (exists.rowCount === 0) return { error: NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 }) };
+  if (exists.rowCount === 0) return { error: apiError(request, 'VACANCY_NOT_FOUND', 404) };
   return { vacancy: exists.rows[0], isAdmin };
 }
 
 /** Lista candidatos pré-cadastrados na vaga + status do último convite eneagrama. */
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = token ? verifyToken(token) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
 
-    const loaded = await loadVacancyForActor(vacancyId, payload);
+    const loaded = await loadVacancyForActor(request, vacancyId, payload);
     if (loaded.error) return loaded.error;
 
     const rows = await query(
@@ -103,7 +104,7 @@ export async function GET(_request, { params }) {
     return NextResponse.json({ items: rows.rows });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
@@ -113,12 +114,12 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = token ? verifyToken(token) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
 
-    const loaded = await loadVacancyForActor(vacancyId, payload);
+    const loaded = await loadVacancyForActor(request, vacancyId, payload);
     if (loaded.error) return loaded.error;
     const { vacancy } = loaded;
 
@@ -128,10 +129,10 @@ export async function POST(request, { params }) {
     const notes = sanitizeInterviewNotesHtml(body.interviewNotes ?? body.notes ?? null);
 
     if (!fullName || fullName.length > 200) {
-      return NextResponse.json({ error: 'Nome do candidato é obrigatório (máx. 200).' }, { status: 400 });
+      return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
     }
     if (!email || !EMAIL_RE.test(email)) {
-      return NextResponse.json({ error: 'E-mail do candidato inválido.' }, { status: 400 });
+      return apiError(request, 'INVALID_CANDIDATE_EMAIL', 400);
     }
 
     const up = await upsertCandidatePreInterview({
@@ -139,7 +140,7 @@ export async function POST(request, { params }) {
       fullName,
       email,
     });
-    if (!up.ok) return NextResponse.json({ error: up.error || 'Falha ao cadastrar' }, { status: 400 });
+    if (!up.ok) return apiError(request, up.errorCode || 'INTERNAL', 400);
 
     const createdBy = payload?.userId != null ? Number(payload.userId) : null;
     const createdBySql = Number.isFinite(createdBy) ? createdBy : null;
@@ -167,6 +168,6 @@ export async function POST(request, { params }) {
     );
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

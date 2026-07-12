@@ -75,7 +75,7 @@ function LoginForm() {
             border:`1px solid ${C.border}`, borderRadius:'10px',
             padding:'14px 18px', color:C.text, fontSize:'15px',
             fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
-          value={email} placeholder="voce@empresa.com"
+          value={email} placeholder={t(locale, 'login.emailPlaceholder')}
           onChange={e=>setEmail(e.target.value)}
           onKeyDown={e=>e.key==='Enter'&&login()}/>
         <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
@@ -86,7 +86,7 @@ function LoginForm() {
             border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
             padding:'14px 18px', color:C.text, fontSize:'15px',
             fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
-          value={password} placeholder="••••••••"
+          value={password} placeholder={t(locale, 'login.passwordPlaceholder')}
           onChange={e=>setPassword(e.target.value)}
           onKeyDown={e=>e.key==='Enter'&&login()}/>
         {error&&(

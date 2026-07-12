@@ -4,9 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../lib/auth';
 import { cookies } from 'next/headers';
 import { computeAssessmentFromAnswers } from '../../../lib/assessment-score';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
-
-const DUPLICATE_VACANCY_MESSAGE =
-  'Já existe um teste respondido com este e-mail para esta vaga. Para refazer, avise o RH para excluir o teste já feito.';
+import { apiError } from '../../../lib/api-error';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -19,10 +17,7 @@ export async function POST(request) {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json(
-        { errorCode: 'RATE_LIMIT', error: 'Muitas tentativas. Aguarde e tente novamente.' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
-      );
+      return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const body = await request.json().catch(() => ({}));
@@ -44,12 +39,12 @@ export async function POST(request) {
     }
 
     if ((!companyToken && !vacancyToken) || !name || !areaKey || consent !== true) {
-      return NextResponse.json({ errorCode: 'INCOMPLETE_DATA', error: 'Dados incompletos' }, { status: 400 });
+      return apiError(request, 'INCOMPLETE_DATA', 400);
     }
 
     const scored = computeAssessmentFromAnswers(answers);
     if (!scored.ok) {
-      return NextResponse.json({ error: scored.error }, { status: 400 });
+      return apiError(request, scored.errorCode, 400, scored.values);
     }
     const { topType, scores } = scored;
 
@@ -71,18 +66,15 @@ export async function POST(request) {
         [token]
       );
       if (link.rowCount === 0) {
-        return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 403 });
+        return apiError(request, 'EXPIRED_LINK', 403);
       }
       if (String(link.rows[0].status || '') === 'closed') {
-        return NextResponse.json({ errorCode: 'CLOSED_VACANCY', error: 'Essa vaga não está mais aberta' }, { status: 403 });
+        return apiError(request, 'CLOSED_VACANCY', 403);
       }
       companyId = link.rows[0].companyId;
       resolvedVacancyId = link.rows[0].vacancyId;
       if (!safeEmail) {
-        return NextResponse.json(
-          { errorCode: 'REQUIRED_VACANCY_EMAIL', error: 'Este link exige e-mail para validar se já existe uma resposta para esta vaga.' },
-          { status: 400 }
-        );
+        return apiError(request, 'REQUIRED_VACANCY_EMAIL', 400);
       }
 
       if (inviteToken) {
@@ -94,23 +86,14 @@ export async function POST(request) {
           [inviteToken]
         );
         if (inv.rowCount === 0) {
-          return NextResponse.json(
-            { errorCode: 'INVITE_INVALID', error: 'Convite inválido ou já utilizado.' },
-            { status: 400 }
-          );
+          return apiError(request, 'INVITE_INVALID', 400);
         }
         const invRow = inv.rows[0];
         if (Number(invRow.vacancyId) !== Number(resolvedVacancyId)) {
-          return NextResponse.json(
-            { errorCode: 'INVITE_INVALID', error: 'Este convite não corresponde a esta vaga.' },
-            { status: 400 }
-          );
+          return apiError(request, 'INVITE_INVALID', 400);
         }
         if (invRow.inviteEmail !== safeEmail) {
-          return NextResponse.json(
-            { errorCode: 'INVITE_EMAIL_MISMATCH', error: 'Use o mesmo e-mail para o qual o convite foi enviado.' },
-            { status: 400 }
-          );
+          return apiError(request, 'INVITE_EMAIL_MISMATCH', 400);
         }
         resolvedInviteId = invRow.id;
       }
@@ -127,14 +110,11 @@ export async function POST(request) {
         [token]
       );
       if (link.rowCount === 0) {
-        return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 403 });
+        return apiError(request, 'EXPIRED_LINK', 403);
       }
       companyId = link.rows[0].companyId;
       if (link.rows[0].requireCandidateEmail && !safeEmail) {
-        return NextResponse.json(
-          { errorCode: 'REQUIRED_CONTACT_EMAIL', error: 'Este link exige e-mail para que o RH possa retornar o contato.' },
-          { status: 400 }
-        );
+        return apiError(request, 'REQUIRED_CONTACT_EMAIL', 400);
       }
     }
 
@@ -142,7 +122,7 @@ export async function POST(request) {
 
     const areaRes = await query(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [areaKey]);
     if (areaRes.rowCount === 0) {
-      return NextResponse.json({ errorCode: 'INVALID_AREA', error: 'Área inválida' }, { status: 400 });
+      return apiError(request, 'INVALID_AREA', 400);
     }
     const areaId = areaRes.rows[0].id;
 
@@ -187,7 +167,7 @@ export async function POST(request) {
         [candidateId, resolvedVacancyId]
       );
       if (existingAssessment.rowCount > 0) {
-        return NextResponse.json({ errorCode: 'DUPLICATE_VACANCY_SUBMISSION', error: DUPLICATE_VACANCY_MESSAGE }, { status: 409 });
+        return apiError(request, 'DUPLICATE_VACANCY_SUBMISSION', 409);
       }
     }
 
@@ -236,18 +216,18 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Erro ao salvar resultado:', error);
-    return NextResponse.json({ errorCode: 'INTERNAL', error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
 // GET /api/results — legado: tabela `results` (global por nome). Preferir dados do dashboard via assessments.
-export async function GET() {
+export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
 
   if (!payload || payload?.role !== 'admin') {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    return apiError(request, 'UNAUTHORIZED', 401);
   }
 
   try {
@@ -259,6 +239,6 @@ export async function GET() {
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar resultados:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

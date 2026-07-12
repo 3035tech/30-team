@@ -1,10 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { t } from '../lib/i18n';
+import { useLocale } from '../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../lib/theme';
+import LanguageSelect from './_components/LanguageSelect';
 
 export default function HomePage() {
   const router = useRouter();
+  const [locale, setLocale] = useLocale();
 
   return (
     <div
@@ -47,19 +51,21 @@ export default function HomePage() {
           zIndex: 1,
         }}
       >
-        <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '3px',
-            textTransform: 'uppercase',
-            color: 'rgba(124,58,237,.55)',
-            fontFamily: FONTS.mono,
-            marginBottom: '16px',
-            display: 'block',
-          }}
-        >
-          ◈ 30Team
-        </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+          <span
+            style={{
+              fontSize: '10px',
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
+              color: 'rgba(124,58,237,.55)',
+              fontFamily: FONTS.mono,
+              display: 'block',
+            }}
+          >
+            {t(locale, 'home.brand')}
+          </span>
+          <LanguageSelect locale={locale} onChange={setLocale} compact />
+        </div>
 
         <p
           style={{
@@ -73,7 +79,7 @@ export default function HomePage() {
             lineHeight: 1.5,
           }}
         >
-          Para RH e gestores
+          {t(locale, 'home.audience')}
         </p>
 
         <h1
@@ -87,22 +93,24 @@ export default function HomePage() {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Teste de Perfil
-          <br />
-          30Team
+          {t(locale, 'home.title').split('\n').map((line, i) => (
+            <span key={i}>
+              {i > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
         </h1>
 
         <p style={{ fontSize: '16px', color: C.text, lineHeight: 1.55, margin: '0 0 10px', fontWeight: 'normal' }}>
-          Um retrato objetivo de perfil para alinhar time interno, liderança e contratação — com visão por empresa, área e vaga.
+          {t(locale, 'home.lead')}
         </p>
         <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.65, margin: '0 0 22px', fontStyle: 'normal' }}>
-          Adequado a RH e liderança que precisam de visão agregada por empresa e vaga — para apoiar decisões combinando dados e conversa, com rastreio passível de auditoria.
+          {t(locale, 'home.body')}
         </p>
 
         <div id="como-funciona">
           <p style={{ fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '22px', fontStyle: 'italic' }}>
-            Para iniciar o formulário, você precisa acessar um <b>link com token válido</b> enviado pela empresa (ex.: <code>/t/&lt;token&gt;</code> ou{' '}
-            <code>/v/&lt;token&gt;</code>).
+            {t(locale, 'home.howItWorks')}
           </p>
         </div>
 
@@ -120,7 +128,7 @@ export default function HomePage() {
               fontFamily: FONTS.serif,
             }}
           >
-            Sou gestor (dashboard) →
+            {t(locale, 'home.managerCta')}
           </button>
           <button
             type="button"
@@ -136,15 +144,17 @@ export default function HomePage() {
               fontFamily: FONTS.serif,
             }}
           >
-            Como funciona
+            {t(locale, 'home.howCta')}
           </button>
         </div>
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '18px' }}>
-          <div style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, marginBottom: '6px' }}>Acesso do formulário</div>
+          <div style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, marginBottom: '6px' }}>
+            {t(locale, 'home.formAccess')}
+          </div>
           <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
-            - Empresa: <code>/t/&lt;token&gt;</code>
-            <br />- Vaga: <code>/v/&lt;token&gt;</code>
+            - {t(locale, 'home.companyPath')}
+            <br />- {t(locale, 'home.vacancyPath')}
           </div>
         </div>
       </div>

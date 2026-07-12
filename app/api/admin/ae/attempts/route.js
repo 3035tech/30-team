@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../lib/ae/require-admin';
+import { apiError } from '../../../../../lib/api-error';
 
 /** GET /api/admin/ae/attempts — resultados / tentativas */
 export async function GET(request) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
-    if (!authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const { searchParams } = new URL(request.url);
     const status = String(searchParams.get('status') || 'completed').trim();
@@ -80,6 +81,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

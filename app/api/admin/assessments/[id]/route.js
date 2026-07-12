@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
+import { apiError } from '../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -24,19 +25,19 @@ export async function PATCH(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const isAdmin = payload?.role === 'admin';
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
     const id = params?.id;
-    if (!id) return NextResponse.json({ error: 'Inválido' }, { status: 400 });
+    if (!id) return apiError(request, 'INVALID_ID', 400);
 
     const body = await request.json().catch(() => ({}));
     const stage = body.pipelineStage != null ? String(body.pipelineStage).trim() : null;
     if (stage == null || !PIPELINE.has(stage)) {
-      return NextResponse.json({ error: 'pipelineStage inválido' }, { status: 400 });
+      return apiError(request, 'INVALID_PIPELINE_STAGE', 400);
     }
 
     const own = await queryRead(
@@ -45,7 +46,7 @@ export async function PATCH(request, { params }) {
        LIMIT 1`,
       !isAdmin ? [id, companyId] : [id]
     );
-    if (own.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    if (own.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
     const currentStage = own.rows[0]?.currentStage || null;
 
     const up = await query(
@@ -70,23 +71,23 @@ export async function PATCH(request, { params }) {
     return NextResponse.json(up.rows[0]);
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   try {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const isAdmin = payload?.role === 'admin';
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
     const id = params?.id;
-    if (!id) return NextResponse.json({ error: 'Inválido' }, { status: 400 });
+    if (!id) return apiError(request, 'INVALID_ID', 400);
 
     const row = await queryRead(
       `SELECT ass.id, ass.invite_id AS "inviteId"
@@ -95,7 +96,7 @@ export async function DELETE(_request, { params }) {
        LIMIT 1`,
       !isAdmin ? [id, companyId] : [id]
     );
-    if (row.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    if (row.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
     const inviteId = row.rows[0]?.inviteId;
 
@@ -118,6 +119,6 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

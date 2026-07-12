@@ -155,7 +155,7 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
       const err = await onStart(startPayload);
       if (err) setStartError(err);
     } catch (e) {
-      console.error('Erro ao iniciar teste:', e);
+      console.error('Failed to start test:', e);
       setStartError(t(locale, 'candidate.startValidationError'));
     } finally {
       setStartBusy(false);
@@ -691,7 +691,7 @@ export default function AssessmentFlow({
           return body?.errorCode ? errorMessage(locale, body.errorCode, body.error) : body?.error || t(locale, 'candidate.vacancyValidationError');
         }
       } catch (e) {
-        console.error('Erro ao validar inscrição da vaga:', e);
+        console.error('Failed to validate vacancy application:', e);
         return t(locale, 'candidate.vacancyValidationError');
       }
     }
@@ -711,10 +711,10 @@ export default function AssessmentFlow({
         body: JSON.stringify(retryPayload),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || `Erro ${res.status}`;
+      if (!res.ok) errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || t(locale, 'errors.HTTP_ERROR', { status: res.status });
     } catch (e) {
-      console.error('Erro ao reenviar resultado:', e);
-      errMsg = 'Falha de rede ao salvar';
+      console.error('Failed to resend result:', e);
+      errMsg = t(locale, 'candidate.networkSaveError');
     }
     setRetryBusy(false);
     setSaveError(errMsg);
@@ -750,11 +750,11 @@ export default function AssessmentFlow({
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || `Erro ${res.status}`;
+        errMsg = body.errorCode ? errorMessage(locale, body.errorCode, body.error) : body.error || t(locale, 'errors.HTTP_ERROR', { status: res.status });
       }
     } catch (e) {
-      console.error('Erro ao salvar resultado:', e);
-      errMsg = 'Falha de rede ao salvar';
+      console.error('Failed to save result:', e);
+      errMsg = t(locale, 'candidate.networkSaveError');
     }
     setSaveError(errMsg);
     setRetryPayload(errMsg ? payload : null);

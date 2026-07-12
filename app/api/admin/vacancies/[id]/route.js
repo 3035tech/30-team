@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead } from '../../../../../lib/db';
 import { sanitizeInterviewNotesHtml } from '../../../../../lib/sanitize-html';
+import { apiError } from '../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -51,22 +52,22 @@ async function attachActiveToken(vacancy) {
   return { ...vacancy, activeToken: t.rows?.[0]?.token || null, activeTokenExpiresAt: t.rows?.[0]?.expiresAt || null };
 }
 
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
-  if (!id) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+  if (!id) return apiError(request, 'INVALID_VACANCY', 400);
 
   const v = await getVacancyOr404(id);
-  if (!v) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
-  if (!isAdmin && String(v.companyId) !== String(companyId)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!v) return apiError(request, 'NOT_FOUND', 404);
+  if (!isAdmin && String(v.companyId) !== String(companyId)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const rub = await queryRead(
     `SELECT desired_type_weights AS "vacancyFitWeights", notes AS "vacancyRubricNotes", updated_at AS "vacancyRubricUpdatedAt"
@@ -89,18 +90,18 @@ export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
-  if (!id) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+  if (!id) return apiError(request, 'INVALID_VACANCY', 400);
 
   const current = await getVacancyOr404(id);
-  if (!current) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
-  if (!isAdmin && String(current.companyId) !== String(companyId)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!current) return apiError(request, 'NOT_FOUND', 404);
+  if (!isAdmin && String(current.companyId) !== String(companyId)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const title = body.title != null ? String(body.title || '').trim() : null;
@@ -113,15 +114,15 @@ export async function PATCH(request, { params }) {
     ? (/^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || '')) ? String(body.targetDate) : null)
     : undefined;
 
-  if (status !== null && !['open', 'closed'].includes(status)) return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
-  if (slug !== null && !slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 });
+  if (status !== null && !['open', 'closed'].includes(status)) return apiError(request, 'INVALID_STATUS', 400);
+  if (slug !== null && !slug) return apiError(request, 'INVALID_SLUG', 400);
 
   const nextTitle = title !== null ? title : current.title;
   const nextStatus = status !== null ? status : current.status;
   const nextSlug = slug !== null ? slug : current.slug;
   const nextPositions = positionsCount !== null ? positionsCount : (current.positionsCount ?? 1);
   const nextTargetDate = targetDate !== undefined ? targetDate : (current.targetDate ?? null);
-  if (!nextTitle) return NextResponse.json({ error: 'Título obrigatório' }, { status: 400 });
+  if (!nextTitle) return apiError(request, 'TITLE_REQUIRED', 400);
 
   const up = await query(
     `UPDATE vacancies
@@ -143,7 +144,7 @@ export async function PATCH(request, { params }) {
 
     const w = body.vacancyFitWeights != null ? body.vacancyFitWeights : prevW;
     if (typeof w !== 'object' || Array.isArray(w)) {
-      return NextResponse.json({ error: 'vacancyFitWeights deve ser um objeto JSON' }, { status: 400 });
+      return apiError(request, 'INVALID_FIT_WEIGHTS', 400);
     }
     const notes =
       body.vacancyRubricNotes !== undefined
@@ -182,25 +183,25 @@ export async function PATCH(request, { params }) {
   });
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
-  if (!id) return NextResponse.json({ error: 'Vaga inválida' }, { status: 400 });
+  if (!id) return apiError(request, 'INVALID_VACANCY', 400);
 
   if (!isAdmin) {
     const owned = await queryRead(
       `SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 AND deleted = FALSE LIMIT 1`,
       [id, companyId]
     );
-    if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
   }
 
   await query(
@@ -208,8 +209,7 @@ export async function DELETE(_request, { params }) {
     [id]
   );
   const del = await query(`UPDATE vacancies SET deleted = TRUE WHERE id = $1 AND deleted = FALSE RETURNING id`, [id]);
-  if (del.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  if (del.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
   return NextResponse.json({ ok: true });
 }
-

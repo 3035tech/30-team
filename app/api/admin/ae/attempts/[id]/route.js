@@ -3,16 +3,17 @@ import { query } from '../../../../../../lib/db';
 import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../../lib/ae/require-admin';
 import { buildHrInsights } from '../../../../../../lib/ae/hr-insights';
 import { buildDimensionRanking, maybeRescoreAndPersist } from '../../../../../../lib/ae/rescore-attempt';
+import { apiError } from '../../../../../../lib/api-error';
 
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const sqlParams = [params.id];
     let companyScope = '';
@@ -36,7 +37,7 @@ export async function GET(_request, { params }) {
       sqlParams
     );
     if (res.rowCount === 0) {
-      return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
+      return apiError(request, 'RESULT_NOT_FOUND', 404);
     }
     let attempt = res.rows[0];
 
@@ -93,19 +94,19 @@ export async function GET(_request, { params }) {
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts/[id]', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
 /** POST /api/admin/ae/attempts/[id] — recalcula pontuação a partir das respostas salvas */
-export async function POST(_request, { params }) {
+export async function POST(request, { params }) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const sqlParams = [params.id];
     let companyScope = '';
@@ -119,13 +120,13 @@ export async function POST(_request, { params }) {
       sqlParams
     );
     if (exists.rowCount === 0) {
-      return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
+      return apiError(request, 'RESULT_NOT_FOUND', 404);
     }
 
     const rescore = await maybeRescoreAndPersist(query, params.id, { force: true });
     if (!rescore.rescored) {
       return NextResponse.json(
-        { error: rescore.error || 'Não foi possível recalcular.', diagnostics: rescore.diagnostics || null },
+        { error: rescore.error || 'Could not recalculate.', diagnostics: rescore.diagnostics || null },
         { status: 400 }
       );
     }
@@ -137,23 +138,23 @@ export async function POST(_request, { params }) {
     });
   } catch (err) {
     console.error('POST /api/admin/ae/attempts/[id]', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }
 
 /** DELETE /api/admin/ae/attempts/[id] — remove resultado e libera novo envio do convite */
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   try {
     const payload = getSessionPayload();
     if (!requireManagerRole(payload)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const attemptId = Number(params.id);
     if (!Number.isFinite(attemptId)) {
-      return NextResponse.json({ error: 'ID inválido.' }, { status: 400 });
+      return apiError(request, 'INVALID_ID', 400);
     }
 
     const sqlParams = [attemptId];
@@ -171,7 +172,7 @@ export async function DELETE(_request, { params }) {
       sqlParams
     );
     if (row.rowCount === 0) {
-      return NextResponse.json({ error: 'Resultado não encontrado.' }, { status: 404 });
+      return apiError(request, 'RESULT_NOT_FOUND', 404);
     }
 
     const { inviteId } = row.rows[0];
@@ -190,6 +191,6 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/ae/attempts/[id]', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

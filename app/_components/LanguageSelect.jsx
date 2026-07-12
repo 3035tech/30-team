@@ -17,7 +17,7 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
           body: JSON.stringify({ locale: next }),
         });
       } catch (e) {
-        console.error('Erro ao persistir idioma:', e);
+        console.error('Failed to persist locale:', e);
       }
     }
   };

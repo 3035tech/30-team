@@ -4,6 +4,7 @@ import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { queryRead } from '../../../../lib/db';
 import { audit } from '../../../../lib/audit';
 import { parsePipelineFilter, parseDateFilter, parseNameSearch } from '../../../../lib/assessment-filters';
+import { apiError } from '../../../../lib/api-error';
 
 function csvEscape(value) {
   const s = String(value ?? '');
@@ -16,10 +17,10 @@ export async function GET(request) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
   const allowed = payload?.role === 'admin' || payload?.role === 'direction' || payload?.role === 'hr';
-  if (!allowed) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!allowed) return apiError(request, 'UNAUTHORIZED', 401);
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const { searchParams } = new URL(request.url);
   const area = (searchParams.get('area') || 'all').toString();

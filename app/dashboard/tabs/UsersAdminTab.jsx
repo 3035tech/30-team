@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
+import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 
-export function UsersAdminTab({ navigateDashboard }) {
+export function UsersAdminTab({ navigateDashboard, locale }) {
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
 
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
   const { page: usersPage, pageSize: usersPageSize } = parseUsersPagination(sp);
@@ -38,14 +40,14 @@ export function UsersAdminTab({ navigateDashboard }) {
       try {
         const rc = await fetch('/api/admin/companies?forSelect=1');
         const dc = await rc.json();
-        if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
+        if (!rc.ok) throw new Error(dc?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
         const list = Array.isArray(dc) ? dc : [];
         if (!cancelled) {
           setCompanyOptions(list);
           setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
         }
       } catch (e) {
-        if (!cancelled) setError(e?.message || 'Erro');
+        if (!cancelled) setError(e?.message || t(locale, 'panel.common.error'));
       }
     })();
     return () => {
@@ -70,14 +72,14 @@ export function UsersAdminTab({ navigateDashboard }) {
         });
         const ru = await fetch(`/api/admin/users?${qs.toString()}`);
         const du = await ru.json();
-        if (!ru.ok) throw new Error(du?.error || 'Falha ao carregar usuários');
+        if (!ru.ok) throw new Error(du?.error || t(locale, 'panel.admin.loadUsersFailed'));
         if (!cancelled) {
           setUsers(Array.isArray(du.items) ? du.items : []);
           setUsersTotal(typeof du.total === 'number' ? du.total : 0);
           setUsersTotalPages(typeof du.totalPages === 'number' ? du.totalPages : 1);
         }
       } catch (e) {
-        if (!cancelled) setError(e?.message || 'Erro');
+        if (!cancelled) setError(e?.message || t(locale, 'panel.common.error'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -102,12 +104,12 @@ export function UsersAdminTab({ navigateDashboard }) {
     try {
       const res = await fetch(`/api/admin/users?${qs.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao carregar usuários');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadUsersFailed'));
       setUsers(Array.isArray(data.items) ? data.items : []);
       setUsersTotal(typeof data.total === 'number' ? data.total : 0);
       setUsersTotalPages(typeof data.totalPages === 'number' ? data.totalPages : 1);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -117,12 +119,12 @@ export function UsersAdminTab({ navigateDashboard }) {
     try {
       const rc = await fetch('/api/admin/companies?forSelect=1');
       const dc = await rc.json();
-      if (!rc.ok) throw new Error(dc?.error || 'Falha ao carregar empresas');
+      if (!rc.ok) throw new Error(dc?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
       const list = Array.isArray(dc) ? dc : [];
       setCompanyOptions(list);
       setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     }
   };
 
@@ -142,14 +144,14 @@ export function UsersAdminTab({ navigateDashboard }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao criar usuário');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createUserFailed'));
       setNewUserEmail('');
       setNewUserPassword('');
-      setMsg('Usuário criado.');
+      setMsg(t(locale, 'panel.admin.userCreated'));
       await loadUsersOnly();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -162,31 +164,31 @@ export function UsersAdminTab({ navigateDashboard }) {
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir usuário');
-      setMsg('Usuário desativado (exclusão lógica).');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.deleteUserFailed'));
+      setMsg(t(locale, 'panel.admin.userDeactivated'));
       await loadUsersOnly();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
   };
 
   const editUser = async (u) => {
-    const nextEmail = window.prompt('Email', u?.email ?? '');
+    const nextEmail = window.prompt(t(locale, 'panel.admin.editUserEmail'), u?.email ?? '');
     if (nextEmail == null) return;
-    const nextRole = window.prompt('Role (hr/direction/admin)', u?.role ?? 'hr');
+    const nextRole = window.prompt(t(locale, 'panel.admin.editUserRole'), u?.role ?? 'hr');
     if (nextRole == null) return;
     const nextCompanyIdRaw =
       nextRole.trim() === 'admin'
         ? ''
-        : window.prompt('Company ID (obrigatório para hr/direction)', u?.companyId != null ? String(u.companyId) : '');
+        : window.prompt(t(locale, 'panel.admin.editUserCompanyId'), u?.companyId != null ? String(u.companyId) : '');
     if (nextCompanyIdRaw == null) return;
-    const nextActiveRaw = window.prompt('Ativo? (true/false)', String(Boolean(u?.active)));
+    const nextActiveRaw = window.prompt(t(locale, 'panel.admin.editUserActive'), String(Boolean(u?.active)));
     if (nextActiveRaw == null) return;
     const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
-    const nextPassword = window.prompt('Nova senha (deixe em branco para não alterar)', '');
+    const nextPassword = window.prompt(t(locale, 'panel.admin.editUserPassword'), '');
     if (nextPassword == null) return;
 
     const payload = {
@@ -211,12 +213,12 @@ export function UsersAdminTab({ navigateDashboard }) {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar usuário');
-      setMsg('Usuário atualizado.');
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateUserFailed'));
+      setMsg(t(locale, 'panel.admin.userUpdated'));
       await loadUsersOnly();
       setTimeout(() => setMsg(''), 1600);
     } catch (e) {
-      setError(e?.message || 'Erro');
+      setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
     }
@@ -235,29 +237,30 @@ export function UsersAdminTab({ navigateDashboard }) {
         </div>
       ) : null}
 
-      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>Usuários</span>
+      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>{t(locale, 'panel.admin.usersTitle')}</span>
       <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>Contas do painel</span>
+        <span style={S.label}>{t(locale, 'panel.admin.usersAccounts')}</span>
         <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
-          Perfis RH e Direção precisam de uma empresa cadastrada em <strong style={{ color: C.text, fontWeight: 600 }}>Empresas</strong>.
-          Admin tem acesso global. O login usa e-mail e senha definidos aqui.
+          {t(locale, 'panel.admin.usersIntro')}
+          <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.admin.companiesTitle')}</strong>
+          {t(locale, 'panel.admin.usersIntroSuffix')}
         </p>
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Novo usuário (RH / Direção / admin)</span>
+        <span style={S.label}>{t(locale, 'panel.admin.usersNew')}</span>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
           <input
             value={newUserEmail}
             onChange={(e) => setNewUserEmail(e.target.value)}
-            placeholder="email@empresa.com"
+            placeholder={t(locale, 'panel.admin.emailPh')}
             style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
           />
           <input
             value={newUserPassword}
             onChange={(e) => setNewUserPassword(e.target.value)}
-            placeholder="Senha"
+            placeholder={t(locale, 'panel.admin.passwordPh')}
             type="password"
             style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
               borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
@@ -282,7 +285,7 @@ export function UsersAdminTab({ navigateDashboard }) {
               cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
           >
             {companyOptions.length === 0 ? (
-              <option value="">(nenhuma empresa — cadastre em Empresas)</option>
+              <option value="">{t(locale, 'panel.admin.noCompanyOption')}</option>
             ) : companyOptions.map((c) => (
               <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
             ))}
@@ -295,7 +298,7 @@ export function UsersAdminTab({ navigateDashboard }) {
               borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !newUserEmail.trim() || !newUserPassword.trim()) ? 0.6 : 1 }}
           >
-            Criar usuário
+            {t(locale, 'panel.admin.createUserBtn')}
           </button>
           <button
             type="button"
@@ -308,34 +311,34 @@ export function UsersAdminTab({ navigateDashboard }) {
               borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
           >
-            Atualizar
+            {t(locale, 'panel.admin.refresh')}
           </button>
         </div>
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>Usuários cadastrados</span>
+        <span style={S.label}>{t(locale, 'panel.admin.usersList')}</span>
         {usersTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            Nenhum usuário ainda.
+            {t(locale, 'panel.admin.noUsersYet')}
           </p>
         ) : (
           <div style={{ marginTop: '10px', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
               <thead>
                 <tr style={{ background: 'rgba(26,22,37,.02)' }}>
-                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>ID</SortableTh>
-                  <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Email</SortableTh>
-                  <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Função</SortableTh>
-                  <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Empresa</SortableTh>
-                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Ativo</SortableTh>
-                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>Criado em</SortableTh>
-                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>Ações</th>
+                  <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
+                  <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
+                  <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
+                  <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
+                  <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
+                  <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
+                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>{t(locale, 'panel.admin.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => {
-                  const companyLabel = u.role === 'admin' ? '—' : (u.companyName || `#${u.companyId || '—'}`);
+                  const companyLabel = u.role === 'admin' ? t(locale, 'panel.common.notApplicable') : (u.companyName || `#${u.companyId || t(locale, 'panel.common.notApplicable')}`);
                   const createdAt = u.createdAt ? new Date(u.createdAt) : null;
                   return (
                     <tr key={u.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
@@ -349,9 +352,9 @@ export function UsersAdminTab({ navigateDashboard }) {
                         </span>
                       </td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{companyLabel}</td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? 'sim' : 'não'}</td>
+                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
                       <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                        {createdAt ? createdAt.toLocaleString() : '—'}
+                        {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -363,18 +366,18 @@ export function UsersAdminTab({ navigateDashboard }) {
                               borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                           >
-                            Editar
+                            {t(locale, 'panel.admin.editUser')}
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteUser(u.id)}
                             disabled={loading}
-                            title="Desativa o usuário (exclusão lógica)"
+                            title={t(locale, 'panel.admin.deactivateTitle')}
                             style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
                               borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
                               cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
                           >
-                            Desativar
+                            {t(locale, 'panel.admin.deactivate')}
                           </button>
                         </div>
                       </td>
@@ -389,7 +392,11 @@ export function UsersAdminTab({ navigateDashboard }) {
                 marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
               }}>
                 <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                  {usersTotal} usuário(s) · página {usersPage}/{usersTotalPages}
+                  {t(locale, 'panel.admin.userCount', {
+                    total: usersTotal,
+                    page: usersPage,
+                    totalPages: usersTotalPages,
+                  })}
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   <select
@@ -404,7 +411,7 @@ export function UsersAdminTab({ navigateDashboard }) {
                       cursor: 'pointer', fontFamily: 'monospace' }}
                   >
                     {PAGE_SIZE_OPTIONS.map((n) => (
-                      <option key={n} value={String(n)}>{n}/pág.</option>
+                      <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
                     ))}
                   </select>
                   <button
@@ -416,7 +423,7 @@ export function UsersAdminTab({ navigateDashboard }) {
                       borderRadius: '10px', padding: '6px 12px', color: usersPage <= 1 ? C.faint : C.purple,
                       fontSize: '11px', cursor: usersPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
                   >
-                    Anterior
+                    {t(locale, 'panel.admin.prev')}
                   </button>
                   <button
                     type="button"
@@ -428,7 +435,7 @@ export function UsersAdminTab({ navigateDashboard }) {
                       color: usersPage >= usersTotalPages ? C.faint : C.purple,
                       fontSize: '11px', cursor: usersPage >= usersTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
                   >
-                    Próxima
+                    {t(locale, 'panel.admin.next')}
                   </button>
                 </div>
               </div>

@@ -4,22 +4,20 @@ import { verifyPassword, signToken, COOKIE_NAME, MAX_AGE } from '../../../../lib
 import { audit } from '../../../../lib/audit';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
+import { apiError } from '../../../../lib/api-error';
 
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
     if (!rl.ok) {
-      return NextResponse.json(
-        { errorCode: 'RATE_LIMIT', error: 'Muitas tentativas. Aguarde e tente novamente.' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
-      );
+      return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return NextResponse.json({ errorCode: 'REQUIRED_LOGIN', error: 'Email e senha obrigatórios' }, { status: 400 });
+      return apiError(request, 'REQUIRED_LOGIN', 400);
     }
 
     const res = await query(
@@ -45,14 +43,14 @@ export async function POST(request) {
     if (res.rowCount === 0 || !row0?.active || row0?.userDeleted || companyBlocked) {
       // Delay para dificultar brute force
       await new Promise(r => setTimeout(r, 500));
-      return NextResponse.json({ errorCode: 'INVALID_CREDENTIALS', error: 'Credenciais inválidas' }, { status: 401 });
+      return apiError(request, 'INVALID_CREDENTIALS', 401);
     }
 
     const u = res.rows[0];
     const valid = await verifyPassword(password, u.passwordHash);
     if (!valid) {
       await new Promise(r => setTimeout(r, 500));
-      return NextResponse.json({ errorCode: 'INVALID_CREDENTIALS', error: 'Credenciais inválidas' }, { status: 401 });
+      return apiError(request, 'INVALID_CREDENTIALS', 401);
     }
 
     // Update last login (best-effort)
@@ -97,6 +95,6 @@ export async function POST(request) {
     return response;
   } catch (error) {
     console.error('Erro no login:', error);
-    return NextResponse.json({ errorCode: 'INTERNAL', error: 'Erro interno' }, { status: 500 });
+    return apiError(request, 'INTERNAL', 500);
   }
 }

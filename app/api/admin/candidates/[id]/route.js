@@ -3,20 +3,21 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
+import { apiError } from '../../../../../lib/api-error';
 
 function requireRole(payload) {
   const role = payload?.role;
   return role === 'admin' || role === 'direction' || role === 'hr';
 }
 
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
   const c = await query(
@@ -25,9 +26,9 @@ export async function GET(_request, { params }) {
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
   );
-  if (c.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  if (c.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
   if (!isAdmin && String(c.rows[0].companyId) !== String(companyId)) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    return apiError(request, 'UNAUTHORIZED', 401);
   }
 
   const a = await query(
@@ -98,28 +99,28 @@ export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
-  if (!id) return NextResponse.json({ error: 'Inválido' }, { status: 400 });
+  if (!id) return apiError(request, 'INVALID_ID', 400);
 
   if (!isAdmin) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
-    if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
   }
 
   const body = await request.json().catch(() => ({}));
-  if (body.hrNotes === undefined) return NextResponse.json({ error: 'hrNotes obrigatório' }, { status: 400 });
+  if (body.hrNotes === undefined) return apiError(request, 'HR_NOTES_REQUIRED', 400);
   const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
 
   const up = await query(
     `UPDATE candidates SET hr_notes = $2 WHERE id = $1 RETURNING id, hr_notes AS "hrNotes"`,
     [id, notes || null]
   );
-  if (up.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  if (up.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
   await audit({
     actorUserId: payload.userId || null,
@@ -131,26 +132,26 @@ export async function PATCH(request, { params }) {
   return NextResponse.json(up.rows[0]);
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
   const isAdmin = payload?.role === 'admin';
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.id;
   if (!isAdmin) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
-    if (owned.rowCount === 0) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
   }
   const cand = await query(`SELECT full_name AS "fullName" FROM candidates WHERE id = $1 LIMIT 1`, [id]);
-  if (cand.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  if (cand.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
   const fullName = cand.rows?.[0]?.fullName || null;
 
   const del = await query(`DELETE FROM candidates WHERE id = $1 RETURNING id`, [id]);
-  if (del.rowCount === 0) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  if (del.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
   // Best-effort cleanup: legacy table used by /api/results
   if (fullName) {
@@ -166,4 +167,3 @@ export async function DELETE(_request, { params }) {
 
   return NextResponse.json({ ok: true });
 }
-

@@ -4,36 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MOTIVATORS_DEFINITION } from '../../lib/ae/motivators-dimensions.js';
 import { localizeAreaLabel } from '../../lib/i18n-data';
+import { t } from '../../lib/i18n';
+import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
 import LanguageSelect from './LanguageSelect';
 
 const SESSION_CFG = MOTIVATORS_DEFINITION.config;
 const SESSION_QUESTIONS = SESSION_CFG.questions_per_session ?? 30;
 const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
-
-function homeCopy(locale) {
-  if (locale === 'en') {
-    return {
-      intro:
-        'Discover what motivates you most at work — recognition, autonomy, growth and more. This is not a personality test. Allow about ' +
-        SESSION_MINUTES +
-        ' minutes.',
-      stats: [
-        [String(SESSION_QUESTIONS), 'Questions'],
-        [`~${SESSION_MINUTES}`, 'Minutes'],
-        ['3', 'Question types'],
-      ],
-    };
-  }
-  return {
-    intro: `Descubra o que mais motiva você no trabalho — reconhecimento, autonomia, crescimento e muito mais. Não é um teste de personalidade. Reserve cerca de ${SESSION_MINUTES} minutos.`,
-    stats: [
-      [String(SESSION_QUESTIONS), 'Perguntas'],
-      [`~${SESSION_MINUTES}`, 'Minutos'],
-      ['3', 'Tipos de pergunta'],
-    ],
-  };
-}
 
 const S = {
   app: {
@@ -108,30 +86,15 @@ const S = {
 };
 
 function ThankYouScreen({ locale, saveError, onDone }) {
-  const copy =
-    locale === 'en'
-      ? {
-          label: 'Assessment complete',
-          title: 'Thank you!',
-          body: 'Your responses have been saved successfully. Your manager or HR team will review your motivators profile.',
-          done: 'Close',
-        }
-      : {
-          label: 'Assessment concluído',
-          title: 'Obrigado!',
-          body: 'Suas respostas foram registradas com sucesso. Seu gestor ou o time de RH terá acesso ao seu perfil de motivadores.',
-          done: 'Concluir',
-        };
-
   return (
     <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
       <div className="cand-flow-card" style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
-        <span style={S.label}>{copy.label}</span>
-        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{copy.title}</h1>
+        <span style={S.label}>{t(locale, 'motivators.thankYouLabel')}</span>
+        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{t(locale, 'motivators.thankYouTitle')}</h1>
         {saveError ? <p style={{ color: C.tension, marginBottom: '16px', fontSize: '14px' }}>{saveError}</p> : null}
-        <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{copy.body}</p>
-        <button type="button" style={S.btn()} onClick={onDone}>{copy.done}</button>
+        <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{t(locale, 'motivators.thankYouBody')}</p>
+        <button type="button" style={S.btn()} onClick={onDone}>{t(locale, 'motivators.thankYouDone')}</button>
       </div>
     </div>
   );
@@ -161,7 +124,6 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
   }, [areaOptions, areaKey]);
 
   const ready = name.trim().length > 1 && EMAIL_RE.test(email.trim()) && areaKey && consent && !startDisabled;
-  const copy = homeCopy(locale);
 
   const submit = async () => {
     if (!ready || busy) return;
@@ -172,16 +134,22 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
     setBusy(false);
   };
 
+  const stats = [
+    [String(SESSION_QUESTIONS), t(locale, 'motivators.statsQuestions')],
+    [`~${SESSION_MINUTES}`, t(locale, 'motivators.statsMinutes')],
+    ['3', t(locale, 'motivators.statsTypes')],
+  ];
+
   return (
     <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
       <div className="cand-flow-card" style={S.card}>
         <div className="cand-flow-header" style={{ marginBottom: '16px' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>◈ Motivadores</span>
+          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'motivators.brand')}</span>
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 style={{ ...S.h1, fontSize: 'clamp(24px, 6vw, 40px)' }}>Assessment de Motivadores Profissionais</h1>
-        <p style={S.p}>{copy.intro}</p>
+        <h1 style={{ ...S.h1, fontSize: 'clamp(24px, 6vw, 40px)' }}>{t(locale, 'motivators.title')}</h1>
+        <p style={S.p}>{t(locale, 'motivators.intro', { minutes: SESSION_MINUTES })}</p>
 
         {notice ? (
           <div
@@ -201,7 +169,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         ) : null}
 
         <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', flexWrap: 'wrap' }}>
-          {copy.stats.map(([n, l]) => (
+          {stats.map(([n, l]) => (
             <div key={l}>
               <div style={{ fontSize: '22px', color: C.purpleLight }}>{n}</div>
               <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'monospace' }}>{l}</div>
@@ -209,13 +177,13 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           ))}
         </div>
 
-        <label style={{ fontSize: '12px', color: C.muted }}>Nome completo</label>
-        <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
+        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'candidate.fullName')}</label>
+        <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder={t(locale, 'candidate.namePlaceholder')} />
 
-        <label style={{ fontSize: '12px', color: C.muted }}>E-mail (do convite)</label>
-        <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" />
+        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.emailInvite')}</label>
+        <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
 
-        <label style={{ fontSize: '12px', color: C.muted }}>Área / função</label>
+        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.areaLabel')}</label>
         <select style={{ ...S.input, cursor: 'pointer' }} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
           {areaOptions.map((a) => (
             <option key={a.key} value={a.key}>{localizeAreaLabel(a, locale)}</option>
@@ -224,19 +192,19 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
 
         <label style={{ display: 'flex', gap: '10px', fontSize: '12px', color: C.muted, marginBottom: '16px' }}>
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          Concordo com o uso dos meus dados conforme a política de privacidade da empresa.
+          {t(locale, 'motivators.consent')}
         </label>
 
         {error ? <p style={{ color: C.tension, fontSize: '13px' }}>{error}</p> : null}
 
         <button type="button" disabled={!ready || busy} style={{ ...S.btn(), opacity: ready ? 1 : 0.45 }} onClick={submit}>
-          {busy ? 'Iniciando…' : 'Iniciar assessment'}
+          {busy ? t(locale, 'motivators.starting') : t(locale, 'motivators.startAssessment')}
         </button>
 
         <p style={{ marginTop: '20px', fontSize: '11px', color: C.faint }}>
-          Gestor?{' '}
+          {t(locale, 'candidate.manager')}{' '}
           <span style={{ color: C.purpleLight, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/login')}>
-            Acessar painel
+            {t(locale, 'motivators.accessPanel')}
           </span>
         </p>
       </div>
@@ -244,7 +212,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
   );
 }
 
-function RankingChoice({ question, onConfirm }) {
+function RankingChoice({ question, onConfirm, locale }) {
   const [order, setOrder] = useState([]);
   const options = question.options || [];
   const complete = order.length === options.length && options.length > 0;
@@ -256,7 +224,7 @@ function RankingChoice({ question, onConfirm }) {
   return (
     <div>
       <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px', fontStyle: 'italic' }}>
-        Toque nas opções na ordem do que é mais importante para você — da mais para a menos importante.
+        {t(locale, 'motivators.rankingInstruction')}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {options.map((opt) => {
@@ -319,7 +287,7 @@ function RankingChoice({ question, onConfirm }) {
             fontSize: '13px',
           }}
         >
-          Limpar
+          {t(locale, 'motivators.clearRanking')}
         </button>
         <button
           type="button"
@@ -327,14 +295,14 @@ function RankingChoice({ question, onConfirm }) {
           onClick={() => onConfirm(order)}
           style={{ ...S.btn(), opacity: complete ? 1 : 0.45, marginLeft: 'auto' }}
         >
-          Confirmar ordem
+          {t(locale, 'motivators.confirmOrder')}
         </button>
       </div>
     </div>
   );
 }
 
-function TestScreen({ questions, onComplete }) {
+function TestScreen({ questions, onComplete, locale }) {
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [fade, setFade] = useState(false);
@@ -368,7 +336,7 @@ function TestScreen({ questions, onComplete }) {
       <div style={S.glow} />
       <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px', opacity: fade ? 0.6 : 1, transition: 'opacity 0.2s' }}>
         <span style={S.label}>
-          Pergunta {idx + 1} de {questions.length}
+          {t(locale, 'motivators.questionProgress', { current: idx + 1, total: questions.length })}
         </span>
         <div style={{ height: '4px', background: 'rgba(26,22,37,.08)', borderRadius: 2, marginBottom: '24px' }}>
           <div style={{ width: `${progress}%`, height: '100%', background: C.purple, borderRadius: 2 }} />
@@ -399,12 +367,12 @@ function TestScreen({ questions, onComplete }) {
             ))}
           </div>
         ) : q.questionType === 'ranking' ? (
-          <RankingChoice key={q.id} question={q} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
+          <RankingChoice key={q.id} question={q} locale={locale} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
         ) : (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C.muted, marginBottom: '12px', gap: '8px' }}>
-              <span>{q.likertScale?.minLabel || 'Discordo'}</span>
-              <span>{q.likertScale?.maxLabel || 'Concordo'}</span>
+              <span>{q.likertScale?.minLabel || t(locale, 'motivators.likertMinShort')}</span>
+              <span>{q.likertScale?.maxLabel || t(locale, 'motivators.likertMaxShort')}</span>
             </div>
             <div className="cand-likert-row">
               {[1, 2, 3, 4, 5].map((v) => (
@@ -438,16 +406,12 @@ function TestScreen({ questions, onComplete }) {
             style={{ marginTop: '24px', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: '13px' }}
             onClick={() => { setIdx((i) => i - 1); setFade(false); }}
           >
-            ← Anterior
+            {t(locale, 'candidate.previous')}
           </button>
         ) : null}
       </div>
     </div>
   );
-}
-
-function ResultScreen({ locale, saveError, onDone }) {
-  return <ThankYouScreen locale={locale} saveError={saveError} onDone={onDone} />;
 }
 
 export default function MotivatorsFlow({
@@ -457,7 +421,7 @@ export default function MotivatorsFlow({
   startDisabled = false,
   initialLocale = 'pt-BR',
 }) {
-  const [locale, setLocale] = useState(initialLocale);
+  const [locale, setLocale] = useLocale(initialLocale);
   const [screen, setScreen] = useState('home');
   const [session, setSession] = useState(null);
   const [saveError, setSaveError] = useState(null);
@@ -468,15 +432,15 @@ export default function MotivatorsFlow({
       const res = await fetch('/api/ae/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteToken, ...candidate }),
+        body: JSON.stringify({ inviteToken, ...candidate, locale }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return data.error || 'Não foi possível iniciar.';
+      if (!res.ok) return data.error || t(locale, 'motivators.startFailed');
       setSession({ attemptId: data.attemptId, questions: data.questions });
       setScreen('test');
       return null;
     } catch {
-      return 'Falha de rede. Tente novamente.';
+      return t(locale, 'motivators.networkError');
     }
   };
 
@@ -490,9 +454,9 @@ export default function MotivatorsFlow({
         body: JSON.stringify({ attemptId: session.attemptId, answers, locale }),
       });
       resData = await res.json().catch(() => ({}));
-      if (!res.ok) errMsg = resData.error || 'Erro ao salvar.';
+      if (!res.ok) errMsg = resData.error || t(locale, 'motivators.saveFailed');
     } catch {
-      errMsg = 'Falha de rede ao salvar.';
+      errMsg = t(locale, 'motivators.networkSaveError');
     }
     setSaveError(errMsg);
     setSubmitOk(Boolean(resData?.ok));
@@ -500,7 +464,7 @@ export default function MotivatorsFlow({
   };
 
   if (screen === 'test' && session) {
-    return <TestScreen questions={session.questions} onComplete={handleComplete} />;
+    return <TestScreen questions={session.questions} onComplete={handleComplete} locale={locale} />;
   }
   if (screen === 'result') {
     if (!submitOk && saveError) {
@@ -509,13 +473,13 @@ export default function MotivatorsFlow({
           <div style={S.glow} />
           <div className="cand-flow-card" style={S.card}>
             <p style={S.p}>{saveError}</p>
-            <button type="button" style={S.btn()} onClick={() => setScreen('home')}>Voltar</button>
+            <button type="button" style={S.btn()} onClick={() => setScreen('home')}>{t(locale, 'common.back')}</button>
           </div>
         </div>
       );
     }
     return (
-      <ResultScreen
+      <ThankYouScreen
         locale={locale}
         saveError={saveError}
         onDone={() => { setScreen('home'); setSubmitOk(false); setSession(null); }}

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
-
-const DUPLICATE_VACANCY_MESSAGE =
-  'Já existe um teste respondido com este e-mail para esta vaga. Para refazer, avise o RH para excluir o teste já feito.';
+import { apiError, localeFromRequest } from '../../../../lib/api-error';
+import { t } from '../../../../lib/i18n';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -13,7 +12,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const token = String(searchParams.get('token') || '').trim();
   const email = normalizeEmail(searchParams.get('email'));
-  if (!token) return NextResponse.json({ errorCode: 'INVALID_TOKEN', error: 'Token inválido' }, { status: 400 });
+  if (!token) return apiError(request, 'INVALID_TOKEN', 400);
 
   const r = await query(
     `SELECT
@@ -31,7 +30,7 @@ export async function GET(request) {
      LIMIT 1`,
     [token]
   );
-  if (r.rowCount === 0) return NextResponse.json({ errorCode: 'EXPIRED_LINK', error: 'Link inválido ou expirado' }, { status: 404 });
+  if (r.rowCount === 0) return apiError(request, 'EXPIRED_LINK', 404);
 
   const vacancy = r.rows[0];
 
@@ -48,10 +47,17 @@ export async function GET(request) {
     );
 
     if (existing.rowCount > 0) {
-      return NextResponse.json({ errorCode: 'DUPLICATE_VACANCY_SUBMISSION', error: DUPLICATE_VACANCY_MESSAGE, alreadySubmitted: true }, { status: 409 });
+      const locale = localeFromRequest(request);
+      return NextResponse.json(
+        {
+          errorCode: 'DUPLICATE_VACANCY_SUBMISSION',
+          error: t(locale, 'errors.DUPLICATE_VACANCY_SUBMISSION'),
+          alreadySubmitted: true,
+        },
+        { status: 409 }
+      );
     }
   }
 
   return NextResponse.json({ ...vacancy, alreadySubmitted: false });
 }
-

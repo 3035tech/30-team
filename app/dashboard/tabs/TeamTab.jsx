@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, KANBAN_STAGES, S, TypeBadge } from '../dashboard-shared';
+import { Bar, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -17,6 +17,16 @@ const PIPELINE_OPTIONS = [
   'archived',
 ];
 
+
+function fitBandLabel(locale, code) {
+  const map = {
+    high: 'recruiting.fitHigh',
+    medium: 'recruiting.fitMedium',
+    low: 'recruiting.fitLow',
+  };
+  const key = map[code];
+  return key ? t(locale, key) : code;
+}
 
 function pipelineLabel(locale, code) {
   const map = {
@@ -61,10 +71,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
   const [notesEditing, setNotesEditing] = useState(false);
   const [notesBusy, setNotesBusy] = useState(false);
   const [notesMsg, setNotesMsg] = useState('');
+  const [notesMsgIsError, setNotesMsgIsError] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkStage, setBulkStage] = useState('test_completed');
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
+  const [bulkMsgIsError, setBulkMsgIsError] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [stageOverrides, setStageOverrides] = useState({});
   const [draggingId, setDraggingId] = useState(null);
@@ -168,10 +180,12 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setDetail((prev) => prev ? { ...prev, candidate: { ...prev.candidate, hrNotes: data.hrNotes } } : prev);
       setNotesEditing(false);
-      setNotesMsg('Notas salvas.');
+      setNotesMsgIsError(false);
+      setNotesMsg(t(locale, 'panel.team.notesSaved'));
       setTimeout(() => setNotesMsg(''), 3000);
     } catch (e) {
-      setNotesMsg(e?.message || 'Erro ao salvar notas.');
+      setNotesMsgIsError(true);
+      setNotesMsg(e?.message || t(locale, 'panel.team.saveNotesError'));
     } finally {
       setNotesBusy(false);
     }
@@ -201,11 +215,13 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
         )
       );
       setSelectedIds(new Set());
-      setBulkMsg(`${selectedIds.size} candidato(s) atualizados.`);
+      setBulkMsgIsError(false);
+      setBulkMsg(t(locale, 'panel.team.bulkUpdatedCount', { n: selectedIds.size }));
       setTimeout(() => setBulkMsg(''), 3000);
       router.refresh();
     } catch {
-      setBulkMsg('Erro ao atualizar em massa.');
+      setBulkMsgIsError(true);
+      setBulkMsg(t(locale, 'panel.team.bulkUpdateError'));
     } finally {
       setBulkBusy(false);
     }
@@ -232,8 +248,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           type="search"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
-          placeholder="Buscar candidato por nome…"
-          aria-label="Buscar candidato por nome"
+          placeholder={t(locale, 'dashboard.searchPlaceholder')}
+          aria-label={t(locale, 'panel.team.searchAriaLabel')}
           style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
             border: `1px solid ${C.border}`, borderRadius: '12px', padding: '12px 16px 12px 40px',
             color: C.text, fontSize: '14px', fontFamily: "'Georgia',serif", outline: 'none' }}
@@ -245,7 +261,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
         {q && (
           <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
             color: C.faint, fontSize: '11px', fontFamily: 'monospace' }}>
-            {filtered.length} resultado{filtered.length !== 1 ? 's' : ''} nesta página
+            {t(locale, 'panel.team.pageResults', { n: filtered.length })}
           </span>
         )}
       </div>
@@ -269,10 +285,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
             type="checkbox"
             checked={allSelected}
             onChange={toggleSelectAll}
-            aria-label="Selecionar todos nesta página"
+            aria-label={t(locale, 'panel.team.selectAllPage')}
             style={{ width: '14px', height: '14px', accentColor: C.purple }}
           />
-          Todos
+          {t(locale, 'panel.team.all')}
         </label>
         <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {t(locale, 'panel.team.sortBy')}
@@ -303,8 +319,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
         })}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
           {[
-            { id: 'list',   icon: '≡', label: 'Lista' },
-            { id: 'kanban', icon: '⊞', label: 'Kanban' },
+            { id: 'list',   icon: '≡', label: t(locale, 'panel.team.viewList') },
+            { id: 'kanban', icon: '⊞', label: t(locale, 'panel.team.viewKanban') },
           ].map(({ id, icon, label }) => (
             <button
               key={id}
@@ -333,7 +349,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
             WebkitOverflowScrolling: 'touch' }}
         >
           <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content', alignItems: 'flex-start' }}>
-            {KANBAN_STAGES.map((stage) => {
+            {getKanbanStages(locale).map((stage) => {
               const items = filtered.filter((r) => getEffectiveStage(r) === stage.id);
               const isDropTarget = dragOverStage === stage.id;
               return (
@@ -440,7 +456,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                         fontFamily: 'monospace', fontStyle: 'italic',
                         border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
                         borderRadius: '8px', transition: 'all 0.12s' }}>
-                        {isDropTarget ? '↓ Soltar aqui' : '—'}
+                        {isDropTarget ? t(locale, 'panel.team.dropHere') : '—'}
                       </div>
                     )}
                   </div>
@@ -451,7 +467,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           {filtered.length === 0 && q && (
             <div style={{ textAlign: 'center', padding: '40px', color: C.muted,
               fontStyle: 'italic', fontSize: '14px' }}>
-              Nenhum candidato encontrado para &quot;{localSearch}&quot; nesta página.
+              {t(locale, 'panel.team.noResultsFor', { query: localSearch })}
             </div>
           )}
         </div>
@@ -462,7 +478,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
           padding: '12px 16px', borderRadius: '12px', border: `1px solid ${C.purple}44`,
           background: `${C.purple}0a` }}>
           <span style={{ fontSize: '13px', color: C.purple, fontFamily: 'monospace' }}>
-            {selectedIds.size} selecionado(s)
+            {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
           </span>
           <select
             value={bulkStage}
@@ -486,7 +502,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
               opacity: bulkBusy ? 0.6 : 1 }}
           >
             {bulkBusy ? <span className="spinner" /> : null}
-            Aplicar estágio
+            {t(locale, 'panel.team.applyStage')}
           </button>
           <button
             type="button"
@@ -496,10 +512,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
               border: `1px solid ${C.border}`, background: 'transparent',
               color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
           >
-            Limpar seleção
+            {t(locale, 'panel.compare.clearSelection')}
           </button>
           {bulkMsg && (
-            <span style={{ fontSize: '12px', color: bulkMsg.includes('Erro') ? C.tension : C.synergy,
+            <span style={{ fontSize: '12px', color: bulkMsgIsError ? C.tension : C.synergy,
               fontFamily: 'monospace' }}>
               {bulkMsg}
             </span>
@@ -508,7 +524,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
       )}
       {viewMode === 'list' && filtered.length === 0 && q ? (
         <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
-          Nenhum candidato encontrado para &quot;{localSearch}&quot; nesta página.
+          {t(locale, 'panel.team.noResultsFor', { query: localSearch })}
         </div>
       ) : null}
       {viewMode === 'list' && filtered.map((r) => {
@@ -551,7 +567,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                 checked={selectedIds.has(id)}
                 onClick={(e) => e.stopPropagation()}
                 onChange={() => toggleSelect(id)}
-                aria-label={`Selecionar ${r.name}`}
+                aria-label={t(locale, 'panel.team.selectPersonAria', { name: r.name })}
                 style={{ width: '16px', height: '16px', flexShrink: 0, accentColor: C.purple, cursor: 'pointer' }}
               />
               <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
@@ -614,7 +630,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                         fontFamily: 'monospace',
                       }}
                     >
-                      {t(locale, 'recruiting.fitLabel')}: {r.fitLabel}
+                      {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
                     </span>
                   )}
                   {showVacancyFit ? (
@@ -756,14 +772,15 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                                     ? '#b45309'
                                     : C.faint,
                                 }}
-                                title="Telemetria de integridade (somente admin)"
+                                title={t(locale, 'panel.team.integrityTitle')}
                               >
-                                Tempo do teste:{' '}
-                                {formatFillDuration(a.fillDurationMs) || '—'}
-                                {isSuspiciouslyFast(a.fillDurationMs) ? ' · rápido' : ''}
+                                {t(locale, 'panel.team.testDuration', {
+                                  duration: formatFillDuration(a.fillDurationMs) || t(locale, 'panel.common.notApplicable'),
+                                })}
+                                {isSuspiciouslyFast(a.fillDurationMs) ? t(locale, 'panel.team.fastFlag') : ''}
                                 {' · '}
-                                Cópias na tela: {a.copyEventCount ?? 0}
-                                {(a.copyEventCount || 0) > 0 ? ' · atenção' : ''}
+                                {t(locale, 'panel.team.screenCopies', { n: a.copyEventCount ?? 0 })}
+                                {(a.copyEventCount || 0) > 0 ? t(locale, 'panel.team.attentionFlag') : ''}
                               </div>
                             )}
                             {a.pipelineHistory?.length > 0 && (
@@ -772,7 +789,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                                 {a.pipelineHistory.map((h, i) => (
                                   <span key={i} style={{ marginRight: '10px' }}>
                                     {h.fromStage || '—'} → {h.toStage} ·{' '}
-                                    {new Date(h.changedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                    {new Date(h.changedAt).toLocaleDateString(localeHtmlLang(locale), { day: '2-digit', month: '2-digit', year: '2-digit' })}
                                   </span>
                                 ))}
                               </div>
@@ -829,7 +846,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
                   border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ ...S.label, marginBottom: 0 }}>Notas de RH</span>
+                    <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.team.hrNotes')}</span>
                     {!notesEditing && (
                       <button
                         type="button"
@@ -837,7 +854,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                         style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
                           background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
                       >
-                        {detail?.candidate?.hrNotes ? 'Editar' : '+ Adicionar nota'}
+                        {detail?.candidate?.hrNotes ? t(locale, 'panel.team.editNote') : t(locale, 'panel.team.addNote')}
                       </button>
                     )}
                   </div>
@@ -849,7 +866,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                       </p>
                     ) : (
                       <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
-                        Nenhuma nota registrada.
+                        {t(locale, 'panel.team.noNotes')}
                       </p>
                     )
                   ) : (
@@ -858,8 +875,8 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                         value={notesDraft}
                         onChange={(e) => setNotesDraft(e.target.value)}
                         rows={4}
-                        placeholder="Observações sobre o candidato…"
-                        aria-label="Notas de RH"
+                        placeholder={t(locale, 'panel.team.notesPlaceholder')}
+                        aria-label={t(locale, 'panel.team.notesAria')}
                         style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px',
                           borderRadius: '8px', border: `1px solid ${C.border}`, fontSize: '13px',
                           fontFamily: "'Georgia',serif", background: 'rgba(26,22,37,.03)',
@@ -877,7 +894,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                             opacity: notesBusy ? 0.6 : 1 }}
                         >
                           {notesBusy ? <span className="spinner" /> : null}
-                          Salvar
+                          {t(locale, 'panel.admin.save')}
                         </button>
                         <button
                           type="button"
@@ -887,10 +904,10 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                             border: `1px solid ${C.border}`, background: 'transparent',
                             color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
                         >
-                          Cancelar
+                          {t(locale, 'panel.admin.cancel')}
                         </button>
                         {notesMsg && (
-                          <span style={{ fontSize: '12px', color: notesMsg.includes('Erro') ? C.tension : C.synergy,
+                          <span style={{ fontSize: '12px', color: notesMsgIsError ? C.tension : C.synergy,
                             fontFamily: 'monospace' }}>
                             {notesMsg}
                           </span>
@@ -899,7 +916,7 @@ export function TeamTab({ results, sortKey, sortDir, onSort, locale = 'pt-BR', i
                     </div>
                   )}
                   {!notesEditing && notesMsg && (
-                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.synergy, fontFamily: 'monospace' }}>
+                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: notesMsgIsError ? C.tension : C.synergy, fontFamily: 'monospace' }}>
                       {notesMsg}
                     </p>
                   )}
