@@ -18,7 +18,7 @@ import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '..
 import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
-import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText } from '../../../lib/rubric-prompt';
+import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 
 function htmlToPlainText(html) {
   if (!html) return '';
@@ -419,6 +419,10 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
 
   const copyPrompt = async () => {
     setErr('');
+    if (!isRubricContextFilledEnough(jobDesc)) {
+      setErr(t(locale, 'recruiting.rubricAiNeedContext'));
+      return;
+    }
     const prompt = buildRubricWeightsPrompt({ locale, context: jobDesc });
     try {
       await navigator.clipboard.writeText(prompt);
@@ -531,6 +535,20 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
           <>
             <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.55, margin: '0 0 10px' }}>
               {t(locale, 'recruiting.rubricAiIntro')}
+            </p>
+            <p
+              style={{
+                fontSize: '12px',
+                color: C.text,
+                lineHeight: 1.55,
+                margin: '0 0 10px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                background: `${C.purple}0c`,
+                border: `1px solid ${C.purple}33`,
+              }}
+            >
+              {t(locale, 'recruiting.rubricAiFillSteps')}
             </p>
             <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
               {t(locale, 'recruiting.rubricAiJobLabel')}
