@@ -5,6 +5,7 @@ import { t } from '../lib/i18n';
 import { useLocale } from '../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../lib/theme';
 import LanguageSelect from './_components/LanguageSelect';
+import { BrandMark } from './_components/BrandMark';
 
 export default function HomePage() {
   const router = useRouter();
@@ -51,19 +52,8 @@ export default function HomePage() {
           zIndex: 1,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-              color: 'rgba(124,58,237,.55)',
-              fontFamily: FONTS.mono,
-              display: 'block',
-            }}
-          >
-            {t(locale, 'home.brand')}
-          </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
 

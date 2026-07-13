@@ -8,6 +8,7 @@ import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, GRADIENT } from '../../lib/theme';
 import LanguageSelect from '../_components/LanguageSelect';
+import { BrandMark } from '../_components/BrandMark';
 
 import {
   PAGE_SIZE_OPTIONS,
@@ -364,7 +365,10 @@ export default function DashboardClient({
           flexDirection: 'column',
           gap: '8px',
         }}>
-          <span style={{ ...S.label, marginBottom: '4px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
+          <div style={{ marginBottom: '12px' }}>
+            <BrandMark size={28} withWordmark />
+            <span style={{ ...S.label, marginTop: '10px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
+          </div>
           <nav style={{ flex: 1 }}>
             <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionAnalysis')}</span>
             <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
@@ -451,7 +455,10 @@ export default function DashboardClient({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
             flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <span style={S.label}>◈ 30Team · {t(locale, 'dashboard.dashboard')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <BrandMark size={22} />
+                <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'dashboard.dashboard')}</span>
+              </div>
               <h2 style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
                 background: GRADIENT.title,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>

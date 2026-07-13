@@ -8,6 +8,7 @@ import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW_SINGLE, GRADIENT, SHADOW } from '../../lib/theme';
 import LanguageSelect from '../_components/LanguageSelect';
+import { BrandMark } from '../_components/BrandMark';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -52,11 +53,12 @@ function LoginForm() {
         backdropFilter:'blur(24px)', position:'relative', zIndex:1,
         boxShadow:SHADOW.cardElevated }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
-          <span style={{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
-            color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
-            display:'block' }}>{t(locale, 'login.restricted')}</span>
+          <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
+        <p style={{ fontSize:'10px', letterSpacing:'3px', textTransform:'uppercase',
+            color:'rgba(137,48,184,.55)', fontFamily:FONTS.mono,
+            display:'block', margin:'0 0 12px' }}>{t(locale, 'login.restricted')}</p>
         <h2 style={{ fontSize:'32px', fontWeight:'normal', lineHeight:1.2, marginBottom:'12px',
           background:GRADIENT.titleLogin,
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
