@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 
@@ -28,6 +29,7 @@ const cardStyle = {
 
 /**
  * In-app notice dialog (replaces browser alert).
+ * Portaled to document.body so the backdrop covers the full viewport.
  * @param {{ open: boolean, title?: string, message: string, locale?: string, tone?: 'ok'|'error'|'info', onClose: () => void }} props
  */
 export function SystemNoticeModal({
@@ -38,21 +40,32 @@ export function SystemNoticeModal({
   tone = 'info',
   onClose,
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape') onClose?.();
     };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [open, onClose]);
 
-  if (!open || !message) return null;
+  if (!mounted || !open || !message) return null;
 
   const accent = tone === 'ok' ? C.synergy : tone === 'error' ? C.tension : C.purple;
   const heading = title || t(locale, 'panel.common.noticeTitle');
 
-  return (
+  return createPortal(
     <div
       style={overlayStyle}
       role="presentation"
@@ -112,6 +125,7 @@ export function SystemNoticeModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
