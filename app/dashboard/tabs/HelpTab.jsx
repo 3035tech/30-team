@@ -110,7 +110,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     enneagram: 6,
     vacancies: 5,
     candidates: 5,
-    pipeline: 5,
+    pipeline: 6,
     team: 5,
     report: 5,
     motivators: 7,

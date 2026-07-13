@@ -156,14 +156,16 @@ export async function POST(request, { params }) {
 
     const link = await query(
       `INSERT INTO vacancy_candidates (
-         vacancy_id, candidate_id, company_id, interview_notes, created_by_user_id
-       ) VALUES ($1, $2, $3, $4, $5)
+         vacancy_id, candidate_id, company_id, interview_notes, pipeline_stage, created_by_user_id
+       ) VALUES ($1, $2, $3, $4, 'interview', $5)
        ON CONFLICT (vacancy_id, candidate_id)
        DO UPDATE SET
          interview_notes = COALESCE(EXCLUDED.interview_notes, vacancy_candidates.interview_notes),
+         pipeline_stage = COALESCE(vacancy_candidates.pipeline_stage, 'interview'),
          updated_at = NOW()
        RETURNING id, vacancy_id AS "vacancyId", candidate_id AS "candidateId",
-                 interview_notes AS "interviewNotes", created_at AS "createdAt", updated_at AS "updatedAt"`,
+                 interview_notes AS "interviewNotes", pipeline_stage AS "pipelineStage",
+                 created_at AS "createdAt", updated_at AS "updatedAt"`,
       [vacancy.id, up.candidateId, vacancy.companyId, notes, createdBySql]
     );
 

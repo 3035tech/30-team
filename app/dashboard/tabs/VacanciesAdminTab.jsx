@@ -664,9 +664,9 @@ function fitBandLabel(locale, code) {
 function pipelineStageLabel(locale, code) {
   const map = {
     new: 'recruiting.pipelineNew',
+    interview: 'recruiting.pipelineInterview',
     test_completed: 'recruiting.pipelineTestCompleted',
     screening: 'recruiting.pipelineScreening',
-    interview: 'recruiting.pipelineInterview',
     approved: 'recruiting.pipelineApproved',
     hired: 'recruiting.pipelineHired',
     rejected: 'recruiting.pipelineRejected',

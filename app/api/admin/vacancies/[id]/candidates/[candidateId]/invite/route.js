@@ -124,15 +124,15 @@ export async function POST(request, { params }) {
       return apiError(request, 'MAIL_FAILED', 502);
     }
 
-    // Entra no kanban como "Novo" assim que o desafio é enviado
+    // Entrevista já aconteceu — entra no kanban em "Entrevista" até o teste ser concluído
     await query(
       `UPDATE vacancy_candidates
-       SET pipeline_stage = COALESCE(pipeline_stage, 'new'), updated_at = NOW()
+       SET pipeline_stage = 'interview', updated_at = NOW()
        WHERE vacancy_id = $1 AND candidate_id = $2`,
       [vacancyId, candidateId]
     );
 
-    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'new', queued: true });
+    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'interview', queued: true });
   } catch (error) {
     console.error(error);
     return apiError(request, 'INTERNAL', 500);

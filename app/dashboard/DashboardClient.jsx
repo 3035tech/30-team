@@ -233,9 +233,9 @@ export default function DashboardClient({
 
   const _pipelineChipLabels = {
     new: t(locale, 'recruiting.pipelineNew'),
+    interview: t(locale, 'recruiting.pipelineInterview'),
     test_completed: t(locale, 'recruiting.pipelineTestCompleted'),
     screening: t(locale, 'recruiting.pipelineScreening'),
-    interview: t(locale, 'recruiting.pipelineInterview'),
     approved: t(locale, 'recruiting.pipelineApproved'),
     rejected: t(locale, 'recruiting.pipelineRejected'),
     archived: t(locale, 'recruiting.pipelineArchived'),
@@ -553,9 +553,9 @@ export default function DashboardClient({
             <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} style={S.select}>
               <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
               <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
+              <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
               <option value="test_completed">{t(locale, 'recruiting.pipelineTestCompleted')}</option>
               <option value="screening">{t(locale, 'recruiting.pipelineScreening')}</option>
-              <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
               <option value="approved">{t(locale, 'recruiting.pipelineApproved')}</option>
               <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>

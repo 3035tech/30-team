@@ -15,9 +15,9 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 
 const PIPELINE_OPTIONS = [
   'new',
+  'interview',
   'test_completed',
   'screening',
-  'interview',
   'approved',
   'hired',
   'rejected',
@@ -38,9 +38,9 @@ function fitBandLabel(locale, code) {
 function pipelineLabel(locale, code) {
   const map = {
     new: 'recruiting.pipelineNew',
+    interview: 'recruiting.pipelineInterview',
     test_completed: 'recruiting.pipelineTestCompleted',
     screening: 'recruiting.pipelineScreening',
-    interview: 'recruiting.pipelineInterview',
     approved: 'recruiting.pipelineApproved',
     hired: 'recruiting.pipelineHired',
     rejected: 'recruiting.pipelineRejected',
