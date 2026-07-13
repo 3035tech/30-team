@@ -23,6 +23,7 @@ import {
   globalTopTypeCounts,
   rubricAlignmentShare,
 } from '../../lib/leadership-analytics';
+import { buildOverviewMetrics } from '../../lib/overview-metrics';
 
 function buildCompatBundles(lightRows, locale) {
   const people = lightRows.map((r) => ({
@@ -121,6 +122,7 @@ export default async function DashboardPage({ searchParams }) {
   };
   let interactionPeople = [];
   let enneagram = 'all';
+  let overviewMetrics = null;
 
   try {
     const a = await queryRead(`SELECT key, label FROM areas ORDER BY label ASC`);
@@ -327,6 +329,19 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     };
     interactionPeople = bundles.people;
 
+    overviewMetrics = await buildOverviewMetrics({
+      isAdmin,
+      companyId,
+      scopeCompanyFilter,
+      selectedArea,
+      selectedVacancy,
+      enneagram,
+      dateFrom: selectedDateFrom,
+      dateTo: selectedDateTo,
+      nameSearch,
+      typeCount: typeCountAgg,
+    });
+
     const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey, vacancyRubricByVacancyId };
     const pageParams = [...extParams];
     pageParams.push(pageSize);
@@ -483,6 +498,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         areaStats={areaStats}
         areaRubric={areaRubric}
         analytics={analytics}
+        overviewMetrics={overviewMetrics}
         auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null, locale }}
         initialLocale={locale}
       />

@@ -56,6 +56,7 @@ export default function DashboardClient({
   interactionPeople = [],
   selectedEnneagram = 'all',
   analytics = null,
+  overviewMetrics = null,
   auth = null,
   initialLocale = 'pt-BR',
 }) {
@@ -583,7 +584,8 @@ export default function DashboardClient({
             && tab !== 'users'
             && tab !== 'vacancies'
             && tab !== 'motivators'
-            && tab !== 'help' ? (
+            && tab !== 'help'
+            && tab !== 'overview' ? (
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
               <p style={{ color: C.muted, fontStyle: 'italic' }}>
@@ -598,7 +600,36 @@ export default function DashboardClient({
           ) : (
             <>
               {tab === 'leadership' && <LeadershipTab analytics={analytics} locale={locale} />}
-              {tab === 'overview' && <OverviewTab typeCount={typeCount} maxCount={maxCount} distributionTotal={listTotal} tensions={tensions} synergies={synergies} locale={locale} />}
+              {tab === 'overview' && (
+                <OverviewTab
+                  overview={overviewMetrics}
+                  typeCount={typeCount}
+                  distributionTotal={listTotal}
+                  locale={locale}
+                  filters={{
+                    companyLabel:
+                      isAdmin && company !== 'all'
+                        ? (companies.find((c) => String(c.id) === String(company))?.name || company)
+                        : null,
+                    area,
+                    areaLabel: areas.find((a) => a.key === area)?.label,
+                    vacancy,
+                    vacancyLabel: vacancies.find((v) => String(v.id) === String(vacancy))?.title,
+                    dateFrom: dateFrom || null,
+                    dateTo: dateTo || null,
+                    search: selectedSearch || null,
+                  }}
+                  navigateDashboard={(opts) => {
+                    if (opts.pipeline != null) setPipeline(opts.pipeline);
+                    if (opts.search != null) setSearch(opts.search || '');
+                    navigateWithOpts({
+                      ...opts,
+                      teamPage: 1,
+                      ...(opts.search !== undefined ? { search: opts.search } : {}),
+                    });
+                  }}
+                />
+              )}
               {tab === 'team' && (
                 <>
                   <TeamTab
