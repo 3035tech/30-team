@@ -18,6 +18,23 @@ import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '..
 import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
+import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText } from '../../../lib/rubric-prompt';
+
+function htmlToPlainText(html) {
+  if (!html) return '';
+  return String(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -313,12 +330,31 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   );
 }
 
-function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
+function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDescription = '', onSaved }) {
   const [weights, setWeights] = useState(() => Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, ''])));
   const [notes, setNotes] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [jobDesc, setJobDesc] = useState(() =>
+    buildRubricContextDraft({
+      locale,
+      title: vacancyTitle,
+      descriptionPlain: htmlToPlainText(vacancyDescription),
+    })
+  );
+  const [aiPaste, setAiPaste] = useState('');
+
+  useEffect(() => {
+    setJobDesc(
+      buildRubricContextDraft({
+        locale,
+        title: vacancyTitle,
+        descriptionPlain: htmlToPlainText(vacancyDescription),
+      })
+    );
+  }, [vacancyId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset draft only when switching vacancy
 
   useEffect(() => {
     let cancelled = false;
@@ -331,12 +367,21 @@ function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
         if (cancelled) return;
         const w = data.vacancyFitWeights || {};
         const next = {};
-        for (let t = 1; t <= 9; t++) {
-          const v = w[String(t)] ?? w[t];
-          next[t] = v != null && v !== '' ? String(v) : '';
+        for (let typeNum = 1; typeNum <= 9; typeNum++) {
+          const v = w[String(typeNum)] ?? w[typeNum];
+          next[typeNum] = v != null && v !== '' ? String(v) : '';
         }
         setWeights(next);
         setNotes(data.vacancyRubricNotes != null ? String(data.vacancyRubricNotes) : '');
+        if (!vacancyTitle && !htmlToPlainText(vacancyDescription)) {
+          setJobDesc(
+            buildRubricContextDraft({
+              locale,
+              title: data.title || '',
+              descriptionPlain: htmlToPlainText(data.description || ''),
+            })
+          );
+        }
       } catch (e) {
         if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
       } finally {
@@ -344,17 +389,17 @@ function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [vacancyId]);
+  }, [vacancyId, locale]);
 
   const save = async () => {
     setErr('');
     setMsg('');
     const wObj = {};
-    for (let t = 1; t <= 9; t++) {
-      const raw = String(weights[t] ?? '').trim();
+    for (let typeNum = 1; typeNum <= 9; typeNum++) {
+      const raw = String(weights[typeNum] ?? '').trim();
       if (!raw) continue;
       const n = parseFloat(raw);
-      if (Number.isFinite(n) && n > 0) wObj[String(t)] = n;
+      if (Number.isFinite(n) && n > 0) wObj[String(typeNum)] = n;
     }
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
@@ -372,21 +417,74 @@ function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
     }
   };
 
+  const copyPrompt = async () => {
+    setErr('');
+    const prompt = buildRubricWeightsPrompt({ locale, context: jobDesc });
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setMsg(t(locale, 'recruiting.rubricAiCopied'));
+      setTimeout(() => setMsg(''), 3000);
+    } catch {
+      setErr(t(locale, 'recruiting.rubricAiCopyFailed'));
+    }
+  };
+
+  const applyAiWeights = () => {
+    setErr('');
+    const parsed = parseRubricWeightsFromAiText(aiPaste, locale);
+    if (!parsed.ok) {
+      setErr(t(locale, 'recruiting.rubricAiParseError'));
+      return;
+    }
+    const next = {};
+    for (let n = 1; n <= 9; n++) {
+      const v = parsed.weights[String(n)];
+      next[n] = v != null && Number(v) > 0 ? String(v) : '';
+    }
+    setWeights(next);
+    if (parsed.notes) {
+      setNotes((prev) => {
+        const cur = String(prev || '').trim();
+        if (!cur) return parsed.notes;
+        if (cur.includes(parsed.notes.slice(0, 40))) return cur;
+        return `${cur}\n\n${parsed.notes}`;
+      });
+      setMsg(t(locale, 'recruiting.rubricAiAppliedWithNotes'));
+    } else {
+      setMsg(t(locale, 'recruiting.rubricAiApplied'));
+    }
+    setTimeout(() => setMsg(''), 5000);
+  };
+
+  const btnSm = {
+    fontSize: '11px',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    border: `1px solid ${C.purple}55`,
+    background: `${C.purple}18`,
+    color: C.purple,
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+  };
+
   return (
     <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', display: 'block', marginBottom: '8px' }}>
         {t(locale, 'recruiting.rubricTitle')}
       </span>
+      <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '0 0 10px' }}>
+        {t(locale, 'recruiting.rubricWeightHint')}
+      </p>
       {loading ? <p style={{ fontSize: '11px', color: C.faint }}>…</p> : null}
       {err ? <p style={{ fontSize: '11px', color: C.tension }}>{err}</p> : null}
       {msg ? <p style={{ fontSize: '11px', color: C.synergy }}>{msg}</p> : null}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
-          <label key={t} style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
-            T{t}
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
+          <label key={typeNum} style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            T{typeNum}
             <input
-              value={weights[t] ?? ''}
-              onChange={(e) => setWeights((prev) => ({ ...prev, [t]: e.target.value }))}
+              value={weights[typeNum] ?? ''}
+              onChange={(e) => setWeights((prev) => ({ ...prev, [typeNum]: e.target.value }))}
               placeholder="0"
               style={{
                 width: '44px',
@@ -402,6 +500,92 @@ function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
           </label>
         ))}
       </div>
+
+      <div
+        style={{
+          marginBottom: '12px',
+          padding: '12px',
+          borderRadius: '10px',
+          border: `1px solid ${C.border}`,
+          background: 'rgba(26,22,37,.02)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setAiOpen((o) => !o)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            fontSize: '11px',
+            color: C.purple,
+            fontFamily: 'monospace',
+            marginBottom: aiOpen ? '8px' : 0,
+          }}
+        >
+          {aiOpen ? '▾ ' : '▸ '}
+          {t(locale, 'recruiting.rubricAiTitle')}
+        </button>
+        {aiOpen ? (
+          <>
+            <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.55, margin: '0 0 10px' }}>
+              {t(locale, 'recruiting.rubricAiIntro')}
+            </p>
+            <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
+              {t(locale, 'recruiting.rubricAiJobLabel')}
+            </label>
+            <textarea
+              value={jobDesc}
+              onChange={(e) => setJobDesc(e.target.value)}
+              placeholder={t(locale, 'recruiting.rubricAiJobPh')}
+              rows={10}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${C.border}`,
+                fontSize: '12px',
+                fontFamily: 'inherit',
+                color: C.text,
+                background: C.card,
+                marginBottom: '8px',
+                resize: 'vertical',
+              }}
+            />
+            <button type="button" onClick={copyPrompt} style={{ ...btnSm, marginBottom: '12px' }}>
+              {t(locale, 'recruiting.rubricAiCopyPrompt')}
+            </button>
+            <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
+              {t(locale, 'recruiting.rubricAiPasteLabel')}
+            </label>
+            <textarea
+              value={aiPaste}
+              onChange={(e) => setAiPaste(e.target.value)}
+              placeholder={t(locale, 'recruiting.rubricAiPastePh')}
+              rows={6}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${C.border}`,
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                color: C.text,
+                background: C.card,
+                marginBottom: '8px',
+                resize: 'vertical',
+              }}
+            />
+            <button type="button" onClick={applyAiWeights} style={btnSm}>
+              {t(locale, 'recruiting.rubricAiApply')}
+            </button>
+          </>
+        ) : null}
+      </div>
+
       <div style={{ marginBottom: '8px' }}>
         <RichTextEditor
           value={notes}
@@ -416,14 +600,8 @@ function VacancyRubricEditor({ vacancyId, locale, onSaved }) {
         onClick={save}
         disabled={loading}
         style={{
-          fontSize: '11px',
-          padding: '6px 12px',
-          borderRadius: '8px',
-          border: `1px solid ${C.purple}55`,
-          background: `${C.purple}18`,
-          color: C.purple,
-          cursor: 'pointer',
-          fontFamily: 'monospace',
+          ...btnSm,
+          opacity: loading ? 0.6 : 1,
         }}
       >
         {t(locale, 'recruiting.rubricSave')}
@@ -1586,6 +1764,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               <VacancyRubricEditor
                 vacancyId={v.id}
                 locale={locale}
+                vacancyTitle={v.title || ''}
+                vacancyDescription={v.description || ''}
                 onSaved={() => setPipelineRefresh((x) => x + 1)}
               />
             </div>
