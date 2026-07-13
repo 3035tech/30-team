@@ -14,6 +14,7 @@ import {
   parsePipelineFilter,
   parseDateFilter,
   parseNameSearch,
+  parseRosterScope,
   sqlWhere,
 } from '../../lib/assessment-filters';
 import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
@@ -82,6 +83,7 @@ export default async function DashboardPage({ searchParams }) {
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
   const selectedPipeline = parsePipelineFilter(searchParams);
+  const selectedRoster = parseRosterScope(searchParams);
   const { dateFrom: selectedDateFrom, dateTo: selectedDateTo } = parseDateFilter(searchParams);
   const nameSearch = parseNameSearch(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
@@ -277,6 +279,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       pipelineStage: selectedPipeline,
       dateFrom: selectedDateFrom,
       dateTo: selectedDateTo,
+      rosterScope: selectedRoster,
     });
     const assessmentWhere = sqlWhere(whereParts);
 
@@ -360,6 +363,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         dateTo: selectedDateTo,
         nameSearch,
         typeCount: typeCountAgg,
+        rosterScope: selectedRoster,
       });
     }
 
@@ -520,6 +524,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         selectedArea={selectedArea}
         selectedVacancy={selectedVacancy}
         selectedPipeline={selectedPipeline}
+        selectedRoster={selectedRoster}
         selectedCompany={scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all'}
         selectedDateFrom={selectedDateFrom}
         selectedDateTo={selectedDateTo}

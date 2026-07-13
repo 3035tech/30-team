@@ -41,6 +41,7 @@ export default function DashboardClient({
   selectedArea = 'all',
   selectedVacancy = 'all',
   selectedPipeline = 'all',
+  selectedRoster = 'internal',
   selectedCompany = 'all',
   selectedDateFrom = null,
   selectedDateTo = null,
@@ -69,6 +70,7 @@ export default function DashboardClient({
   const [company, setCompany] = useState(selectedCompany);
   const [enneagram, setEnneagram] = useState(selectedEnneagram);
   const [pipeline, setPipeline] = useState(selectedPipeline);
+  const [roster, setRoster] = useState(selectedRoster);
   const [dateFrom, setDateFrom] = useState(selectedDateFrom || '');
   const [dateTo, setDateTo] = useState(selectedDateTo || '');
   const [search, setSearch] = useState(selectedSearch || '');
@@ -103,6 +105,9 @@ export default function DashboardClient({
   useEffect(() => {
     setPipeline(selectedPipeline);
   }, [selectedPipeline]);
+  useEffect(() => {
+    setRoster(selectedRoster);
+  }, [selectedRoster]);
   useEffect(() => { setDateFrom(selectedDateFrom || ''); }, [selectedDateFrom]);
   useEffect(() => { setDateTo(selectedDateTo || ''); }, [selectedDateTo]);
   useEffect(() => { setSearch(selectedSearch || ''); }, [selectedSearch]);
@@ -201,8 +206,9 @@ export default function DashboardClient({
     if (area && area !== 'all') sp.set('area', area);
     if (vacancy && vacancy !== 'all') sp.set('vacancy', vacancy);
     if (enneagram && enneagram !== 'all') sp.set('enneagram', enneagram);
+    if (roster && roster !== 'internal') sp.set('roster', roster);
     return sp.toString();
-  }, [isAdmin, company, area, vacancy, enneagram]);
+  }, [isAdmin, company, area, vacancy, enneagram, roster]);
 
   const comparePagSnap = parseComparePagination(snapshot());
   const compatListPagination = parseCompatTabPagination(snapshot());
@@ -212,13 +218,14 @@ export default function DashboardClient({
     setArea('all');
     setVacancy('all');
     setPipeline('all');
+    setRoster('internal');
     setEnneagram('all');
     setDateFrom('');
     setDateTo('');
     setSearch('');
     if (isAdmin) setCompany('all');
     pushFilters({
-      area: 'all', vacancy: 'all', pipeline: 'all', enneagram: 'all',
+      area: 'all', vacancy: 'all', pipeline: 'all', roster: 'internal', enneagram: 'all',
       dateFrom: null, dateTo: null, search: null,
       ...(isAdmin ? { company: 'all' } : {}),
     });
@@ -257,6 +264,15 @@ export default function DashboardClient({
     activeChips.push({ key: 'pipeline', label: _pipelineChipLabels[pipeline] || pipeline,
       onRemove: () => { setPipeline('all'); pushFilters({ pipeline: 'all' }); } });
   }
+  if (roster !== 'internal') {
+    activeChips.push({
+      key: 'roster',
+      label: roster === 'recruiting'
+        ? t(locale, 'dashboard.rosterRecruiting')
+        : t(locale, 'dashboard.rosterAll'),
+      onRemove: () => { setRoster('internal'); pushFilters({ roster: 'internal' }); },
+    });
+  }
   if (dateFrom) {
     activeChips.push({ key: 'dateFrom', label: t(locale, 'dashboard.dateFromChip', { date: dateFrom }),
       onRemove: () => { setDateFrom(''); pushFilters({ dateFrom: null, dateTo: dateTo || null }); } });
@@ -273,6 +289,8 @@ export default function DashboardClient({
   const exportUrl = `/api/admin/export?area=${encodeURIComponent(area)}${
     isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
   }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
+    roster && roster !== 'internal' ? `&roster=${encodeURIComponent(roster)}` : ''
+  }${
     pipeline && pipeline !== 'all' ? `&pipeline=${encodeURIComponent(pipeline)}` : ''
   }${dateFrom ? `&dateFrom=${encodeURIComponent(dateFrom)}` : ''}${
     dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
@@ -486,6 +504,20 @@ export default function DashboardClient({
                   {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
                 </option>
               ))}
+            </select>
+            <select
+              value={roster}
+              onChange={(e) => {
+                const v = e.target.value;
+                setRoster(v);
+                pushFilters({ roster: v });
+              }}
+              style={S.select}
+              title={t(locale, 'dashboard.rosterHint')}
+            >
+              <option value="internal">{t(locale, 'dashboard.rosterInternal')}</option>
+              <option value="recruiting">{t(locale, 'dashboard.rosterRecruiting')}</option>
+              <option value="all">{t(locale, 'dashboard.rosterAll')}</option>
             </select>
             <select
               value={vacancy}

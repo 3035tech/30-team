@@ -50,6 +50,10 @@ export function useDashboardNavigation({
 
     if (nextVacancy && nextVacancy !== 'all') p.set('vacancy', String(nextVacancy));
 
+    const nextRoster = opts.roster !== undefined ? opts.roster : urlParams.get('roster') || 'internal';
+    if (nextRoster && nextRoster !== 'internal') p.set('roster', String(nextRoster));
+    // Default internal: omit from URL for cleaner links; still apply on server.
+
     if (nextEnneagram && nextEnneagram !== 'all') p.set('enneagram', nextEnneagram);
 
     if (nextDateFrom) p.set('dateFrom', nextDateFrom);
@@ -139,6 +143,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.vacancy != null ? { vacancy: nextFilter.vacancy } : {}),
       ...(nextFilter?.enneagram != null ? { enneagram: nextFilter.enneagram } : {}),
       ...(nextFilter?.pipeline != null ? { pipeline: nextFilter.pipeline } : {}),
+      ...(nextFilter?.roster != null ? { roster: nextFilter.roster } : {}),
       ...(nextFilter?.dateFrom !== undefined ? { dateFrom: nextFilter.dateFrom } : {}),
       ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
       ...(nextFilter?.search !== undefined ? { search: nextFilter.search } : {}),

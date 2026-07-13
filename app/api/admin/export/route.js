@@ -3,7 +3,14 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
 import { queryRead } from '../../../../lib/db';
 import { audit } from '../../../../lib/audit';
-import { parsePipelineFilter, parseDateFilter, parseNameSearch } from '../../../../lib/assessment-filters';
+import {
+  assessmentListWhereParts,
+  parsePipelineFilter,
+  parseDateFilter,
+  parseNameSearch,
+  parseRosterScope,
+  sqlWhere,
+} from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
 
 function csvEscape(value) {
@@ -29,50 +36,33 @@ export async function GET(request) {
   const pipelineStage = parsePipelineFilter(searchParams);
   const { dateFrom, dateTo } = parseDateFilter(searchParams);
   const nameSearch = parseNameSearch(searchParams);
+  const rosterScope = parseRosterScope(searchParams);
 
-  const whereParts = [];
-  const params = [];
-  if (!isAdmin) {
-    params.push(companyId);
-    whereParts.push(`ass.company_id = $${params.length}`);
-  } else if (rawExportCompany !== 'all') {
+  let scopeCompanyFilter = null;
+  if (isAdmin && rawExportCompany !== 'all') {
     const cid = parseInt(rawExportCompany, 10);
     if (Number.isFinite(cid)) {
       const ok = await queryRead(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);
-      if (ok.rowCount > 0) {
-        params.push(cid);
-        whereParts.push(`ass.company_id = $${params.length}`);
-      }
+      if (ok.rowCount > 0) scopeCompanyFilter = cid;
     }
   }
-  if (area !== 'all') {
-    params.push(area);
-    whereParts.push(`ar.key = $${params.length}`);
-  }
-  if (rawVacancy !== '' && rawVacancy !== 'all') {
-    const vid = parseInt(rawVacancy, 10);
-    if (Number.isFinite(vid)) {
-      params.push(vid);
-      whereParts.push(`ass.vacancy_id = $${params.length}`);
-    }
-  }
-  if (pipelineStage !== 'all') {
-    params.push(pipelineStage);
-    whereParts.push(`ass.pipeline_stage = $${params.length}`);
-  }
-  if (dateFrom) {
-    params.push(dateFrom);
-    whereParts.push(`ass.created_at >= $${params.length}::date`);
-  }
-  if (dateTo) {
-    params.push(dateTo);
-    whereParts.push(`ass.created_at < ($${params.length}::date + INTERVAL '1 day')`);
-  }
-  if (nameSearch) {
-    params.push(`%${nameSearch}%`);
-    whereParts.push(`c.full_name ILIKE $${params.length}`);
-  }
-  const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+  const { whereParts, params } = assessmentListWhereParts({
+    isAdmin,
+    companyId,
+    scopeCompanyFilter,
+    selectedArea: area,
+    selectedVacancy: rawVacancy,
+    pipelineStage,
+    dateFrom,
+    dateTo,
+    rosterScope,
+  });
+  const extWhereParts = nameSearch
+    ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
+    : whereParts;
+  const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
+  const where = sqlWhere(extWhereParts);
 
   const r = await queryRead(
     `SELECT
@@ -98,7 +88,7 @@ export async function GET(request) {
      JOIN areas ar ON ar.id = ass.area_id
      ${where}
      ORDER BY ass.created_at DESC`,
-    params
+    extParams
   );
 
   const header = [

@@ -139,6 +139,17 @@ export async function POST(request) {
     if (!up.ok) return apiError(request, up.errorCode || 'INCOMPLETE_DATA', 400);
     const candidateId = up.candidateId;
 
+    // Company link (/t/…) is for the internal team — mark as employee (not recruiting).
+    if (!resolvedVacancyId) {
+      await query(
+        `UPDATE candidates
+         SET employment_status = 'employee'
+         WHERE id = $1
+           AND employment_status = 'candidate'`,
+        [candidateId]
+      );
+    }
+
     if (resolvedVacancyId) {
       const existingAssessment = await query(
         `SELECT 1

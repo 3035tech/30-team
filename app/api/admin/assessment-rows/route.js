@@ -6,6 +6,7 @@ import {
   assessmentListWhereParts,
   PAGE_SIZE_OPTIONS,
   parseNameSearch,
+  parseRosterScope,
   sqlWhere,
 } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
@@ -66,6 +67,7 @@ export async function GET(request) {
     selectedArea,
     selectedVacancy,
     enneagram,
+    rosterScope: parseRosterScope(url.searchParams),
   });
   const nameSearch = parseNameSearch(url.searchParams);
   const extWhereParts = nameSearch
