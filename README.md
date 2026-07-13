@@ -1,23 +1,26 @@
 # 30Team
+
 > Perfis e dinâmica de equipe (time interno e contratações) — Next.js + Postgres + Docker/K8s
 
-A avaliação do candidato é um **mapa de perfil de trabalho** baseado no **modelo do Eneagrama** (tipos **T1–T9** no produto). Os resultados servem para **triagem, comparativos e conversas** — não substituem entrevista técnica nem constituem diagnóstico clínico. Para **pesos da rubrica por vaga** (como a IA deve interpretar T1–T9), veja `docs/rubrica-por-vaga.md`.
+Avaliação baseada no **modelo do Eneagrama** (tipos **T1–T9**): mapa de perfil de trabalho para triagem, comparativos e conversas — **não** substitui entrevista técnica nem é diagnóstico clínico.
+
+Também há fluxo de **Motivadores** (Assessment Engine). Rubrica por vaga: [`docs/rubrica-por-vaga.md`](docs/rubrica-por-vaga.md). LGPD interno: [`docs/privacidade-lgpd-interno.md`](docs/privacidade-lgpd-interno.md).
 
 ---
 
 ## Arquitetura
 
 ```
-Navegador (React) → Next.js (App Router) → Postgres
-     cliente              servidor               banco
+Navegador (React) → Next.js (App Router) → PostgreSQL 16
 ```
 
-- **Frontend**: React com Next.js App Router
-- **Backend**: API Routes + Server Components do Next.js
-- **Banco de dados**: PostgreSQL 16
-- **Autenticação**: usuários na tabela `users` + JWT em cookie httpOnly
-- **Containers**: Docker + docker-compose
-- **Configuração**: a app lê variáveis via `process.env` (K8s/Compose/Vercel/etc.)
+| Camada | Detalhe |
+|--------|---------|
+| Frontend | React + Next.js App Router |
+| Backend | API Routes + Server Components |
+| Auth | Tabela `users` + JWT em cookie httpOnly |
+| Roles | `admin`, `direction`, `hr` |
+| Config | `process.env` (Compose / K8s / Vercel / etc.) |
 
 ---
 
@@ -26,134 +29,108 @@ Navegador (React) → Next.js (App Router) → Postgres
 ```
 30Team/
 ├── app/
-│   ├── layout.jsx                  ← Layout raiz
-│   ├── page.jsx                    ← Home + Teste + Resultado (client)
-│   ├── t/[token]/page.jsx          ← Entrada pública por empresa (client)
-│   ├── login/page.jsx              ← Login do gestor (client)
-│   ├── dashboard/
-│   │   ├── page.jsx                ← Busca dados no banco (server)
-│   │   └── DashboardClient.jsx     ← UI do dashboard (client)
-│   └── api/
-│       ├── results/route.js        ← GET /api/results, POST /api/results
-│       ├── admin/
-│       │   ├── companies/route.js  ← GET/POST empresas (admin)
-│       │   ├── companies/[id]/link ← POST rotaciona token (admin)
-│       │   ├── users/route.js      ← GET/POST lista/cria usuários (admin)
-│       │   └── users/[userId]      ← DELETE exclui usuário (admin)
-│       └── auth/
-│           ├── login/route.js      ← POST /api/auth/login
-│           └── logout/route.js     ← POST /api/auth/logout
-├── lib/
-│   ├── db.js                       ← Connection pool com Postgres (pg)
-│   ├── auth.js                     ← JWT + bcrypt helpers
-│   └── data.js                     ← 300 questões, tipos, matriz de compatibilidade
-├── middleware.js                   ← Protege /dashboard com JWT
-├── scripts/rds-bootstrap-completo.sql ← Migração completa (rodar direto no DB)
-├── scripts/seed-data.js            ← Popula dados fake (opcional)
-├── scripts/clear-data.js           ← Limpa dados (dev)
-├── init.sql                        ← Bootstrap do banco no Docker (cria DB/user se necessário)
-├── Dockerfile                      ← Build multi-stage da aplicação
-├── docker-compose.yml              ← Produção (app + postgres)
-├── docker-compose.dev.yml          ← Dev com hot reload
-└── .env.example                    ← Template de variáveis de ambiente
+│   ├── page.jsx                 ← Landing / teste (client)
+│   ├── t/[token]/               ← Entrada pública por empresa
+│   ├── v/[token]/               ← Entrada pública por vaga
+│   ├── assessment/              ← Fluxos de avaliação (eneagrama / AE)
+│   ├── login/                   ← Login do painel
+│   ├── dashboard/               ← Painel (SSR + tabs: overview, equipe, vagas…)
+│   └── api/                     ← results, auth, admin, ae, public, cron…
+├── lib/                         ← DB, auth, i18n, pipeline, métricas, scoring…
+├── migrations/                  ← Schema versionado (fonte canônica)
+├── scripts/
+│   ├── migrate.js               ← npm run db:migrate
+│   ├── rds-bootstrap-completo.sql
+│   ├── scripts-banco-pendentes.sql
+│   └── seed-*.js / clear-data.js
+├── docs/                        ← Rubrica, LGPD
+├── init.sql                     ← Stub Docker only (vazio de propósito)
+├── docker-compose.yml
+├── docker-compose.dev.yml
+└── .env.example
+```
+
+**SQL:** na raiz só `init.sql` (montagem Docker). Schema e deltas ficam em `migrations/` e `scripts/`. Ver [`migrations/README.md`](migrations/README.md).
+
+---
+
+## Banco de dados
+
+| Arquivo / comando | Quando usar |
+|-------------------|-------------|
+| `npm run db:migrate` | Ambiente já existente — aplica `migrations/*.sql` pendentes |
+| `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
+| `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
+
+```bash
+# Migrações incrementais
+npm run db:migrate
+
+# Bootstrap completo (psql / pgAdmin)
+psql "$DATABASE_URL" -f scripts/rds-bootstrap-completo.sql
 ```
 
 ---
 
-## Quickstart com Docker
+## Quickstart
 
-### 1. Clonar e configurar
+### 1. Configurar
 
 ```bash
-git clone <seu-repositorio>
-cd 30Team
-
-# Copiar e editar o .env
 cp .env.example .env
+# Editar senhas, JWT_SECRET, BOOTSTRAP_ADMIN_*
 ```
 
-Editar o `.env` com suas configurações:
+Gerar `JWT_SECRET`:
 
-```env
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_DB=enneagram
-POSTGRES_USER=enneagram_user
-POSTGRES_PASSWORD=troque_esta_senha_forte
-
-BOOTSTRAP_ADMIN_EMAIL=admin@suaempresa.com
-BOOTSTRAP_ADMIN_PASSWORD=sua_senha_do_dashboard
-
-JWT_SECRET=gere_um_valor_longo_aqui
-
-# URL externa usada para decidir cookie Secure em produção (HTTPS)
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-Para gerar um JWT_SECRET seguro:
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-### 2. Subir em produção
+### 2. Produção (Docker)
 
 ```bash
 docker compose up -d
 ```
 
-O docker-compose irá:
-- Subir o container do **Postgres**
-- Fazer o **build** da aplicação Next.js (com `output: 'standalone'`)
-- Subir o container da **app** na porta 3000
+- App: http://localhost:3000  
+- Login: http://localhost:3000/login  
+- Teste público: criar empresa no dashboard → link `/t/<token>`
 
-Aguarde ~2 minutos no primeiro build. Após isso:
-- **Teste (exige link por empresa)**: crie a empresa no dashboard e use `http://localhost:3000/t/<token>`
-- **Dashboard**: http://localhost:3000/login
-
-### 3. Desenvolvimento com hot reload
+### 3. Desenvolvimento (hot reload)
 
 ```bash
 docker compose -f docker-compose.dev.yml up
 ```
 
-As alterações nos arquivos são refletidas automaticamente (hot reload).
+### 4. Local sem Docker (Postgres já rodando)
+
+```bash
+npm install
+cp .env.example .env
+npm run db:migrate
+npm run dev
+```
 
 ---
 
-## Como funciona o fluxo de dados
+## Fluxos principais
 
-### Funcionário responde o teste
+### Candidato / colaborador
+
 ```
-1. Acessa o link da empresa: http://seu-dominio.com/t/<token>
-2. Digite o nome → responde 54 questões (sorteadas do banco de 300)
-3. Clica em uma opção → próxima questão automática
-4. Ao final: React faz POST /api/results
-5. API Route (servidor) salva no Postgres
-6. Usuário vê o resultado
-```
-
-## Resetar a base (dev)
-- Para zerar o banco (inclui companies/links), remova o volume do Postgres e suba novamente:
-
-```bash
-docker compose down -v
-docker compose up -d
+1. Abre /t/<token> (empresa) ou /v/<token> (vaga)
+2. Informa dados → responde questões do eneagrama (54, sorteadas)
+3. POST /api/results → grava no Postgres
+4. Vê o resultado na tela
 ```
 
-- Em dev (`docker-compose.dev.yml`), o comando é equivalente:
+### Gestor no dashboard
 
-```bash
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up
 ```
-
-### Gestor acessa o dashboard
-```
-1. Acessa /login → digita a senha
-2. POST /api/auth/login → servidor verifica senha, gera JWT, seta cookie httpOnly
-3. Redirect para /dashboard
-4. Next.js Server Component busca dados DIRETAMENTE no Postgres (sem API)
-5. Página chega ao browser já com os dados renderizados
+1. /login → JWT em cookie httpOnly
+2. /dashboard → Server Component lê o Postgres (dados por aba)
+3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, etc.
 ```
 
 ---
@@ -162,58 +139,45 @@ docker compose -f docker-compose.dev.yml up
 
 | Aspecto | Implementação |
 |---------|---------------|
-| Credenciais do banco | Só no servidor, nunca no browser |
-| Autenticação | JWT em cookie httpOnly (inacessível ao JavaScript) |
-| Proteção de rotas | Middleware verifica JWT em toda rota /dashboard |
-| Senha do gestor | Verificada contra `users.password_hash` (bcrypt) |
-| Brute force | Delay de 500ms em tentativas inválidas |
-| Leitura de resultados | Só com JWT válido (apenas admin autenticado) |
-| Escrita de resultados | Aberta (qualquer funcionário pode salvar) |
+| Credenciais do banco | Só no servidor |
+| Autenticação | JWT httpOnly |
+| Rotas do painel | Middleware + roles `admin` / `direction` / `hr` |
+| Senha | `users.password_hash` (bcrypt) |
+| Escrita do teste | Endpoints públicos de resultado / convite (com token de link) |
 
 ---
 
 ## Variáveis de ambiente
 
-| Variável | Descrição | Exemplo |
-|----------|-----------|---------|
-| `POSTGRES_HOST` | Host do Postgres (nome do service no docker-compose) | `postgres` |
-| `POSTGRES_PORT` | Porta do Postgres | `5432` |
-| `POSTGRES_DB` | Nome do banco | `enneagram` |
-| `POSTGRES_USER` | Usuário do banco | `enneagram_user` |
-| `POSTGRES_PASSWORD` | Senha do banco | `senha_forte_aqui` |
-| `BOOTSTRAP_ADMIN_EMAIL` | Email do admin inicial (criado no primeiro `db:migrate`) | `admin@empresa.com` |
-| `BOOTSTRAP_ADMIN_PASSWORD` | Senha do admin inicial (criado no primeiro `db:migrate`) | `minha_senha` |
-| `JWT_SECRET` | Segredo para assinar os tokens JWT | `string_aleatoria_longa` |
-| `NEXT_PUBLIC_APP_URL` | URL externa (define cookie Secure quando HTTPS) | `http://localhost:3000` |
-| `COOKIE_SECURE` | Força cookie Secure (`true`/`false`) | `false` |
-| `RETENTION_DAYS` | Retenção/LGPD (limpeza de dados antigos) | `180` |
+Principais (lista completa em `.env.example`):
+
+| Variável | Descrição |
+|----------|-----------|
+| `POSTGRES_*` | Conexão ao banco |
+| `POSTGRES_READ_HOST` | Réplica só-leitura (opcional) |
+| `BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD` | Admin inicial |
+| `JWT_SECRET` | Assinatura do JWT (≥32 chars em produção) |
+| `NEXT_PUBLIC_APP_URL` | URL pública (cookie Secure em HTTPS) |
+| `COOKIE_SECURE` | Força Secure (`true`/`false`) |
+| `RETENTION_DAYS` | Retenção / LGPD |
 
 ---
 
-## Deploy em produção (VPS ou EC2)
+## Deploy (VPS / EC2)
 
-1. Instale Docker e Docker Compose na máquina
-2. Clone o repositório
-3. Configure o `.env`
-4. Rode `docker compose up -d`
-5. Configure um reverse proxy (Nginx ou Traefik) na porta 3000
-6. Configure SSL com Certbot (Let's Encrypt)
+1. Docker + Compose na máquina  
+2. Clone + `.env`  
+3. `docker compose up -d`  
+4. Reverse proxy (Nginx/Traefik) → porta 3000 + SSL  
 
-### Exemplo de configuração Nginx
+Exemplo Nginx:
 
 ```nginx
 server {
-    listen 80;
-    server_name enneagram.3035tech.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
     listen 443 ssl;
-    server_name enneagram.3035tech.com;
-
-    ssl_certificate     /etc/letsencrypt/live/enneagram.3035tech.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/enneagram.3035tech.com/privkey.pem;
+    server_name app.exemplo.com;
+    ssl_certificate     /etc/letsencrypt/live/app.exemplo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.exemplo.com/privkey.pem;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -232,43 +196,34 @@ server {
 ## Comandos úteis
 
 ```bash
-# Rodar local sem Docker (precisa de Postgres rodando)
-npm install
-cp .env.example .env
-npm run db:migrate
-npm run dev
-
-# Banco (rodar direto no Postgres)
-# psql "postgresql://USER:PASS@HOST:5432/SEU_DATABASE" -f scripts/rds-bootstrap-completo.sql
-
-# Dados (opcional)
+# Dados de desenvolvimento
 npm run db:seed
 npm run db:clear
 
-# Ver logs da aplicação
+# Logs
 docker compose logs -f app
-
-# Ver logs do banco
 docker compose logs -f postgres
 
-# Acessar o banco diretamente
+# psql no container
 docker compose exec postgres psql -U enneagram_user -d enneagram
 
-# Ver todos os resultados no banco
-docker compose exec postgres psql -U enneagram_user -d enneagram \
-  -c "SELECT name, top_type, created_at FROM results ORDER BY created_at DESC;"
+# Últimas avaliações
+docker compose exec postgres psql -U enneagram_user -d enneagram -c \
+  "SELECT c.full_name, a.top_type, a.created_at
+   FROM assessments a
+   JOIN candidates c ON c.id = a.candidate_id
+   ORDER BY a.created_at DESC
+   LIMIT 20;"
 
-# Parar tudo
-docker compose down
+# Reset volume (dev)
+docker compose down -v && docker compose up -d
 
-# Parar e apagar os dados do banco
-docker compose down -v
-
-# Rebuild após mudanças no código
+# Rebuild
 docker compose up -d --build
 ```
 
 ---
 
 ## Suporte
-contact@3035tech.com | +55 51 99644-2104
+
+contact@3035tech.com · +55 51 99644-2104

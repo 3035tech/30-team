@@ -5,7 +5,7 @@ import { t } from '../../../lib/i18n';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { C } from '../../../lib/theme';
-import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-metrics';
+import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { S } from '../dashboard-shared';
 
 const FUNNEL_LABEL_KEYS = {
@@ -130,6 +130,9 @@ export function OverviewTab({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {data.error ? (
+        <p style={{ ...S.muted, color: '#b91c1c', margin: 0 }}>{t(locale, 'panel.overview.loadError')}</p>
+      ) : null}
       <div style={{ ...S.card, padding: '20px 24px' }}>
         <span style={S.label}>{t(locale, 'dashboard.overview')}</span>
         <h2

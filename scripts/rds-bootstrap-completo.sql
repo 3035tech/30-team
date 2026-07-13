@@ -547,6 +547,10 @@ ALTER TABLE vacancy_candidates ADD CONSTRAINT vacancy_candidates_pipeline_stage_
   )
 );
 
+-- ── 019 candidate hr_notes ─────────────────────────────────────────────────
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS hr_notes TEXT;
+
 -- ── Controle de migrations (opcional, alinha com scripts/migrate.js) ─────────
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
