@@ -12,6 +12,7 @@ import {
 } from '../../../lib/assessment-filters';
 import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
+import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
@@ -1416,6 +1417,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 >
                   {t(locale, 'recruiting.archiveVacancy')}
                 </button>
+              </div>
+
+              <div style={{ marginTop: '12px' }}>
+                <VacancyClientReportBlock vacancyId={v.id} locale={locale} appUrl={appUrl} />
               </div>
 
               {isEditing && (

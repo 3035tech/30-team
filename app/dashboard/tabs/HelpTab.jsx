@@ -14,6 +14,7 @@ const SECTIONS = [
   'candidates',
   'pipeline',
   'team',
+  'report',
   'motivators',
   'tips',
 ];
@@ -111,6 +112,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     candidates: 5,
     pipeline: 5,
     team: 5,
+    report: 5,
     motivators: 7,
     tips: 6,
   };
