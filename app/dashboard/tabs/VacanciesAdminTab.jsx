@@ -15,7 +15,8 @@ import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
-import { promptPipelineExtras, rejectionReasonLabel } from '../pipeline-prompts';
+import { rejectionReasonLabel } from '../pipeline-prompts';
+import { usePipelineExtras } from '../PipelineExtrasContext';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -623,6 +624,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
   const stages = getKanbanStages(locale);
+  const { requestPipelineExtras } = usePipelineExtras();
 
   useEffect(() => {
     let cancelled = false;
@@ -641,13 +643,13 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [vacancyId, refreshKey]);
+  }, [vacancyId, refreshKey, locale]);
 
   const cardKey = (r) =>
     r.assessmentId != null ? `a:${r.assessmentId}` : `vc:${r.vacancyCandidateId}`;
 
   const moveTo = async (row, stage) => {
-    const extras = promptPipelineExtras(locale, stage);
+    const extras = await requestPipelineExtras(locale, stage);
     if (extras == null) return;
     const key = cardKey(row);
     setMoving(key);

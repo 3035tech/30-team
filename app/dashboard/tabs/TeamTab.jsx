@@ -10,7 +10,8 @@ import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { titleCasePersonName } from '../../../lib/person-name';
-import { promptPipelineExtras, rejectionReasonLabel } from '../pipeline-prompts';
+import { rejectionReasonLabel } from '../pipeline-prompts';
+import { usePipelineExtras } from '../PipelineExtrasContext';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -147,6 +148,7 @@ export function TeamTab({
   const [stageOverrides, setStageOverrides] = useState({});
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
+  const { requestPipelineExtras } = usePipelineExtras();
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -227,7 +229,7 @@ export function TeamTab({
   };
 
   const patchPipeline = async (assessmentId, pipelineStage) => {
-    const extras = promptPipelineExtras(locale, pipelineStage);
+    const extras = await requestPipelineExtras(locale, pipelineStage);
     if (extras == null) return;
     setStageBusy(String(assessmentId));
     try {
@@ -329,7 +331,7 @@ export function TeamTab({
 
   const applyBulk = async () => {
     if (selectedIds.size === 0 || !bulkStage) return;
-    const extras = promptPipelineExtras(locale, bulkStage);
+    const extras = await requestPipelineExtras(locale, bulkStage);
     if (extras == null) return;
     setBulkBusy(true);
     setBulkMsg('');

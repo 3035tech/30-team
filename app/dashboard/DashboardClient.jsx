@@ -30,6 +30,7 @@ import { UsersAdminTab } from './tabs/UsersAdminTab';
 import { VacanciesAdminTab } from './tabs/VacanciesAdminTab';
 import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
 import { HelpTab } from './tabs/HelpTab';
+import { PipelineExtrasProvider } from './PipelineExtrasContext';
 
 export default function DashboardClient({
   results,
@@ -309,6 +310,7 @@ export default function DashboardClient({
   );
 
   return (
+    <PipelineExtrasProvider>
     <div style={{
       minHeight: '100vh',
       background: C.bg,
@@ -721,5 +723,6 @@ export default function DashboardClient({
         </div>
       </div>
     </div>
+    </PipelineExtrasProvider>
   );
 }
