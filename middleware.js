@@ -39,6 +39,8 @@ export async function middleware(request) {
 }
 
 export const config = {
-  // Inclui HTML e APIs para HSTS/CSP opcionais; auth só nos paths abaixo.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Skip Next internals + static brand assets so favicon/icons always load.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand/|site.webmanifest).*)',
+  ],
 };
