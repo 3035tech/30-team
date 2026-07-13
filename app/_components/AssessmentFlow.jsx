@@ -108,7 +108,16 @@ const Bar = ({ value, max, color, h = 6 }) => (
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function HomeScreen({ onStart, notice = null, startDisabled = false, requireCandidateEmail = false, locale, setLocale }) {
+function HomeScreen({
+  onStart,
+  notice = null,
+  startDisabled = false,
+  requireCandidateEmail = false,
+  inviteToken = '',
+  vacancyToken = '',
+  locale,
+  setLocale,
+}) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [areaKey, setAreaKey] = useState('');
@@ -122,6 +131,8 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   const [stateUf, setStateUf] = useState('');
   const [startBusy, setStartBusy] = useState(false);
   const [startError, setStartError] = useState('');
+  const [inviteIdentity, setInviteIdentity] = useState(null);
+  const [inviteIdentityLoading, setInviteIdentityLoading] = useState(Boolean(inviteToken));
   const router = useRouter();
 
   useEffect(() => {
@@ -147,16 +158,66 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
   }, []);
 
   useEffect(() => {
+    if (!inviteToken) {
+      setInviteIdentity(null);
+      setInviteIdentityLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setInviteIdentityLoading(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams({ token: inviteToken });
+        if (vacancyToken) params.set('vacancyToken', vacancyToken);
+        const res = await fetch(`/api/public/candidate-invite?${params.toString()}`);
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled) {
+          if (res.ok && data?.candidateName && data?.candidateEmail) {
+            setInviteIdentity({
+              candidateName: String(data.candidateName),
+              candidateEmail: String(data.candidateEmail),
+            });
+          } else {
+            setInviteIdentity(null);
+          }
+        }
+      } catch {
+        if (!cancelled) setInviteIdentity(null);
+      } finally {
+        if (!cancelled) setInviteIdentityLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken, vacancyToken]);
+
+  useEffect(() => {
     if (areaOptions.length === 0) return;
     setAreaKey((k) => (k && areaOptions.some((a) => a.key === k) ? k : areaOptions[0].key));
   }, [areaOptions]);
 
-  const emailOk = !requireCandidateEmail || EMAIL_RE.test(email.trim());
-  const ready = name.trim().length > 1 && !!areaKey && consent && emailOk;
-  const canStart = ready && !startDisabled && !areasLoading && !areasError && areaOptions.length > 0 && !startBusy;
+  const identityLocked = Boolean(
+    inviteIdentity?.candidateName?.trim()?.length > 1 &&
+      inviteIdentity?.candidateEmail &&
+      EMAIL_RE.test(String(inviteIdentity.candidateEmail).trim())
+  );
+  const effectiveName = identityLocked ? String(inviteIdentity.candidateName) : name;
+  const effectiveEmail = identityLocked ? String(inviteIdentity.candidateEmail).trim() : email.trim();
+
+  const emailOk = !requireCandidateEmail || EMAIL_RE.test(effectiveEmail);
+  const ready = effectiveName.trim().length > 1 && !!areaKey && consent && emailOk;
+  const canStart =
+    ready &&
+    !startDisabled &&
+    !areasLoading &&
+    !areasError &&
+    areaOptions.length > 0 &&
+    !startBusy &&
+    !inviteIdentityLoading;
   const startPayload = {
-    name: titleCasePersonName(name),
-    email: email.trim(),
+    name: titleCasePersonName(effectiveName),
+    email: effectiveEmail,
     areaKey,
     consent,
     phone: stripPhone(phone) || '',
@@ -244,15 +305,41 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           ))}
         </div>
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.fullName')}</label>
-        <input
-          style={S.input}
-          placeholder={t(locale, 'candidate.namePlaceholder')}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => setName(titleCasePersonName(name))}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
-        />
+        {inviteIdentityLoading ? (
+          <div style={{ ...S.input, color: C.muted, marginBottom: '16px' }}>{t(locale, 'candidate.inviteIdentityLoading')}</div>
+        ) : identityLocked ? (
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '14px 16px',
+              background: `${C.purple}0a`,
+              border: `1px solid ${C.purple}33`,
+              borderRadius: '12px',
+            }}
+          >
+            <div style={{ fontSize: '16px', color: C.text, marginBottom: '6px' }}>
+              {t(locale, 'candidate.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
+            </div>
+            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
+              {t(locale, 'candidate.inviteIdentityNote')}
+            </div>
+            <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+              {t(locale, 'candidate.inviteIdentityEmail', { email: effectiveEmail })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.fullName')}</label>
+            <input
+              style={S.input}
+              placeholder={t(locale, 'candidate.namePlaceholder')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setName(titleCasePersonName(name))}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
+            />
+          </>
+        )}
 
         <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.area')}</label>
         {areasLoading ? (
@@ -283,22 +370,26 @@ function HomeScreen({ onStart, notice = null, startDisabled = false, requireCand
           </select>
         )}
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '4px' }}>
-          {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
-        </label>
-        <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '0 0 8px' }}>
-          {requireCandidateEmail
-            ? t(locale, 'candidate.emailHelpRequired')
-            : t(locale, 'candidate.emailHelpOptional')}
-        </p>
-        <input
-          style={{ ...S.input, marginBottom: '16px', borderColor: requireCandidateEmail && !emailOk && email.length > 0 ? 'rgba(232,71,71,.4)' : undefined }}
-          placeholder={t(locale, 'candidate.emailPlaceholder')}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          inputMode={requireCandidateEmail ? 'email' : undefined}
-          autoComplete="email"
-        />
+        {!inviteIdentityLoading && !identityLocked ? (
+          <>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '4px' }}>
+              {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
+            </label>
+            <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '0 0 8px' }}>
+              {requireCandidateEmail
+                ? t(locale, 'candidate.emailHelpRequired')
+                : t(locale, 'candidate.emailHelpOptional')}
+            </p>
+            <input
+              style={{ ...S.input, marginBottom: '16px', borderColor: requireCandidateEmail && !emailOk && email.length > 0 ? 'rgba(232,71,71,.4)' : undefined }}
+              placeholder={t(locale, 'candidate.emailPlaceholder')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              inputMode={requireCandidateEmail ? 'email' : undefined}
+              autoComplete="email"
+            />
+          </>
+        ) : null}
 
         <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.phone')}</label>
         <input
@@ -863,6 +954,8 @@ export default function AssessmentFlow({
       notice={notice}
       startDisabled={startDisabled}
       requireCandidateEmail={requireCandidateEmail || !!vacancyToken}
+      inviteToken={inviteToken}
+      vacancyToken={vacancyToken}
       locale={locale}
       setLocale={setLocale}
     />

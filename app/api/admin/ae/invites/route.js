@@ -7,7 +7,7 @@ import {
   publicAppUrl,
   requireManagerRole,
 } from '../../../../../lib/ae/require-admin';
-import { sendTransactionalMail } from '../../../../../lib/mail';
+import { enqueueTransactionalMail } from '../../../../../lib/mail';
 import { buildMotivatorsInviteMail } from '../../../../../lib/motivators-invite-mail';
 import { bootstrapMotivators } from '../../../../../lib/ae/bootstrap-motivators';
 
@@ -195,7 +195,7 @@ export async function POST(request) {
     });
 
     try {
-      await sendTransactionalMail({ to: candidateEmail, subject, text, html });
+      enqueueTransactionalMail({ to: candidateEmail, subject, text, html });
     } catch (e) {
       await query(`DELETE FROM ae_invites WHERE id = $1`, [inviteId]).catch(() => {});
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
@@ -204,7 +204,7 @@ export async function POST(request) {
       return apiError(request, 'MAIL_FAILED', 502);
     }
 
-    return NextResponse.json({ ok: true, inviteId, sentTo: candidateEmail, assessmentUrl });
+    return NextResponse.json({ ok: true, inviteId, sentTo: candidateEmail, assessmentUrl, queued: true });
   } catch (err) {
     console.error('POST /api/admin/ae/invites', err);
     return apiError(request, 'INTERNAL', 500);

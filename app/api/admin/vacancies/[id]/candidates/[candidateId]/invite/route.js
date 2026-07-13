@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { query } from '../../../../../../../../lib/db';
 import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacancy-link';
-import { sendTransactionalMail } from '../../../../../../../../lib/mail';
+import { enqueueTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
@@ -112,7 +112,7 @@ export async function POST(request, { params }) {
     });
 
     try {
-      await sendTransactionalMail({ to: candidateEmail, subject, text, html });
+      enqueueTransactionalMail({ to: candidateEmail, subject, text, html });
     } catch (e) {
       if (inviteId != null) {
         await query(`DELETE FROM candidate_invites WHERE id = $1`, [inviteId]).catch(() => {});
@@ -132,7 +132,7 @@ export async function POST(request, { params }) {
       [vacancyId, candidateId]
     );
 
-    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'new' });
+    return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, pipelineStage: 'new', queued: true });
   } catch (error) {
     console.error(error);
     return apiError(request, 'INTERNAL', 500);

@@ -115,7 +115,7 @@ export async function POST(request) {
         return apiError(request, 'EXPIRED_LINK', 403);
       }
       companyId = link.rows[0].companyId;
-      if (link.rows[0].requireCandidateEmail && !safeEmail) {
+      if (!safeEmail) {
         return apiError(request, 'REQUIRED_CONTACT_EMAIL', 400);
       }
     }

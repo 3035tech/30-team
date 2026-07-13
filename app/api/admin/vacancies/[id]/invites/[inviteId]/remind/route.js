@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { query, queryRead } from '../../../../../../../../lib/db';
 import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacancy-link';
-import { sendTransactionalMail } from '../../../../../../../../lib/mail';
+import { enqueueTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
@@ -86,7 +86,7 @@ export async function POST(request, { params }) {
     });
 
     try {
-      await sendTransactionalMail({ to: row.candidateEmail, subject, text, html });
+      enqueueTransactionalMail({ to: row.candidateEmail, subject, text, html });
     } catch (e) {
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
         return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
@@ -103,7 +103,7 @@ export async function POST(request, { params }) {
       [inviteId]
     );
 
-    return NextResponse.json({ ok: true, ...up.rows[0] });
+    return NextResponse.json({ ok: true, queued: true, ...up.rows[0] });
   } catch (e) {
     console.error(e);
     return apiError(request, 'INTERNAL', 500);

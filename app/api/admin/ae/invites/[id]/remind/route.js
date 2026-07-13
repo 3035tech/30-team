@@ -6,7 +6,7 @@ import {
   publicAppUrl,
   requireManagerRole,
 } from '../../../../../../../lib/ae/require-admin';
-import { sendTransactionalMail } from '../../../../../../../lib/mail';
+import { enqueueTransactionalMail } from '../../../../../../../lib/mail';
 import { buildMotivatorsInviteMail } from '../../../../../../../lib/motivators-invite-mail';
 import { apiError, localeFromRequest } from '../../../../../../../lib/api-error';
 
@@ -57,14 +57,22 @@ export async function POST(request, { params }) {
       locale,
     });
 
-    await sendTransactionalMail({ to: invite.candidateEmail, subject, text, html });
+    try {
+      enqueueTransactionalMail({ to: invite.candidateEmail, subject, text, html });
+    } catch (err) {
+      if (err?.code === 'MAIL_NOT_CONFIGURED') {
+        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
+      }
+      console.error('POST /api/admin/ae/invites/[id]/remind', err);
+      return apiError(request, 'MAIL_FAILED', 502);
+    }
     await query(
       `UPDATE ae_invites SET last_reminder_at = NOW(), reminder_count = reminder_count + 1 WHERE id = $1`,
       [invite.id]
     );
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, queued: true });
   } catch (err) {
     console.error('POST /api/admin/ae/invites/[id]/remind', err);
-    return apiError(request, 'MAIL_FAILED', 502);
+    return apiError(request, 'INTERNAL', 500);
   }
 }

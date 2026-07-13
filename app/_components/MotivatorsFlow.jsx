@@ -124,13 +124,31 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
     if (areaOptions.length && !areaKey) setAreaKey(areaOptions[0].key);
   }, [areaOptions, areaKey]);
 
-  const ready = name.trim().length > 1 && EMAIL_RE.test(email.trim()) && areaKey && consent && !startDisabled;
+  useEffect(() => {
+    if (inviteInfo?.candidateName) setName(inviteInfo.candidateName);
+    if (inviteInfo?.candidateEmail) setEmail(inviteInfo.candidateEmail);
+  }, [inviteInfo?.candidateName, inviteInfo?.candidateEmail]);
+
+  const identityLocked = Boolean(
+    inviteInfo?.candidateName?.trim()?.length > 1 &&
+      inviteInfo?.candidateEmail &&
+      EMAIL_RE.test(String(inviteInfo.candidateEmail).trim())
+  );
+  const effectiveName = identityLocked ? String(inviteInfo.candidateName) : name;
+  const effectiveEmail = identityLocked ? String(inviteInfo.candidateEmail).trim().toLowerCase() : email.trim().toLowerCase();
+
+  const ready = effectiveName.trim().length > 1 && EMAIL_RE.test(effectiveEmail) && areaKey && consent && !startDisabled;
 
   const submit = async () => {
     if (!ready || busy) return;
     setBusy(true);
     setError('');
-    const err = await onStart({ name: titleCasePersonName(name), email: email.trim().toLowerCase(), areaKey, consent });
+    const err = await onStart({
+      name: titleCasePersonName(effectiveName),
+      email: effectiveEmail,
+      areaKey,
+      consent,
+    });
     if (err) setError(err);
     setBusy(false);
   };
@@ -178,17 +196,41 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           ))}
         </div>
 
-        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'candidate.fullName')}</label>
-        <input
-          style={S.input}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => setName(titleCasePersonName(name))}
-          placeholder={t(locale, 'candidate.namePlaceholder')}
-        />
+        {identityLocked ? (
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '14px 16px',
+              background: `${C.purple}0a`,
+              border: `1px solid ${C.purple}33`,
+              borderRadius: '12px',
+            }}
+          >
+            <div style={{ fontSize: '16px', color: C.text, marginBottom: '6px' }}>
+              {t(locale, 'motivators.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
+            </div>
+            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
+              {t(locale, 'motivators.inviteIdentityNote')}
+            </div>
+            <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+              {t(locale, 'motivators.inviteIdentityEmail', { email: effectiveEmail })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'candidate.fullName')}</label>
+            <input
+              style={S.input}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setName(titleCasePersonName(name))}
+              placeholder={t(locale, 'candidate.namePlaceholder')}
+            />
 
-        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.emailInvite')}</label>
-        <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+            <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.emailInvite')}</label>
+            <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+          </>
+        )}
 
         <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.areaLabel')}</label>
         <select style={{ ...S.input, cursor: 'pointer' }} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>

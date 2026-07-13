@@ -61,6 +61,6 @@ export default function CompanyTokenEntryPage() {
     ? { kind: 'info', title: t(locale, 'publicPages.companyTitle'), message: t(locale, 'publicPages.companyMessage', { name: c.name }) }
     : { kind: 'info', title: t(locale, 'publicPages.validLinkTitle'), message: t(locale, 'publicPages.validLinkMessage') };
 
-  return <AssessmentFlow companyToken={token || ''} notice={notice} requireCandidateEmail={!!c?.requireCandidateEmail} initialLocale={locale} />;
+  return <AssessmentFlow companyToken={token || ''} notice={notice} requireCandidateEmail={true} initialLocale={locale} />;
 }
 
