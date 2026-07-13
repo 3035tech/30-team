@@ -516,7 +516,7 @@ function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
     return () => { cancelled = true; };
   }, [vacancyId, refreshKey, locale]);
 
-  const scoreColor = (s) => (s >= 7 ? C.synergy : s >= 4 ? '#d97706' : C.tension);
+  const scoreColor = (s) => (s >= 7 ? C.success : s >= 4 ? C.warning : C.danger);
 
   return (
     <div>
@@ -819,7 +819,7 @@ function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                             )}
                             {r.vacancyFitScore010 != null && (
                               <span style={{ fontSize: '11px', fontFamily: 'monospace',
-                                color: r.vacancyFitScore010 >= 7 ? C.synergy : r.vacancyFitScore010 >= 4 ? '#d97706' : C.tension }}>
+                                color: r.vacancyFitScore010 >= 7 ? C.success : r.vacancyFitScore010 >= 4 ? C.warning : C.danger }}>
                                 {r.vacancyFitScore010}/10
                               </span>
                             )}

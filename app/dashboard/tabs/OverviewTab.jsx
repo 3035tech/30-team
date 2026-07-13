@@ -4,7 +4,7 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
 import { rejectionReasonLabel } from '../pipeline-prompts';
-import { C } from '../../../lib/theme';
+import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { S } from '../dashboard-shared';
 
@@ -19,20 +19,11 @@ const FUNNEL_LABEL_KEYS = {
   archived: 'recruiting.pipelineArchived',
 };
 
-const FUNNEL_COLORS = {
-  new: 'rgba(26,22,37,.5)',
-  test_completed: '#7C3AED',
-  screening: '#0284c7',
-  interview: '#d97706',
-  approved: '#15803d',
-  hired: '#0f766e',
-  rejected: '#dc2626',
-  archived: 'rgba(26,22,37,.35)',
-};
+const FUNNEL_COLORS = { ...PIPELINE_STAGE_COLORS };
 
 const PRIORITY_STYLE = {
-  high: { color: C.tension, bg: 'rgba(220,38,38,.08)', border: 'rgba(220,38,38,.25)' },
-  medium: { color: '#d97706', bg: 'rgba(217,119,6,.08)', border: 'rgba(217,119,6,.25)' },
+  high: { color: C.danger, bg: 'rgba(220,38,38,.08)', border: 'rgba(220,38,38,.25)' },
+  medium: { color: C.warning, bg: 'rgba(217,119,6,.08)', border: 'rgba(217,119,6,.25)' },
   low: { color: C.muted, bg: 'rgba(26,22,37,.04)', border: C.border },
 };
 

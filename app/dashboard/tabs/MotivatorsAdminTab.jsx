@@ -32,7 +32,7 @@ function inviteStatusLabel(locale, status) {
 function statusBadge(locale, status) {
   const colors = {
     sent: C.muted,
-    opened: C.purple,
+    opened: C.info,
     completed: C.synergy,
     cancelled: C.tension,
     expired: C.tension,

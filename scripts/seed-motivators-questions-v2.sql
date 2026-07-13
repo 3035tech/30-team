@@ -22,7 +22,7 @@ UPDATE ae_definitions SET
 WHERE LOWER(slug) = LOWER('motivators');
 
 INSERT INTO ae_dimensions (definition_id, key, label, sort_order, active, color)
-SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'reconhecimento', 'Reconhecimento', 1, TRUE, '#7c3aed'
+SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'reconhecimento', 'Reconhecimento', 1, TRUE, '#c026d3'
 ON CONFLICT (definition_id, LOWER(key))
 DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order, color = EXCLUDED.color, active = TRUE;
 INSERT INTO ae_dimensions (definition_id, key, label, sort_order, active, color)
@@ -62,11 +62,11 @@ SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LI
 ON CONFLICT (definition_id, LOWER(key))
 DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order, color = EXCLUDED.color, active = TRUE;
 INSERT INTO ae_dimensions (definition_id, key, label, sort_order, active, color)
-SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'desafio', 'Desafio', 11, TRUE, '#dc2626'
+SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'desafio', 'Desafio', 11, TRUE, '#ea580c'
 ON CONFLICT (definition_id, LOWER(key))
 DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order, color = EXCLUDED.color, active = TRUE;
 INSERT INTO ae_dimensions (definition_id, key, label, sort_order, active, color)
-SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'criatividade', 'Criatividade', 12, TRUE, '#9333ea'
+SELECT (SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER('motivators') LIMIT 1), 'criatividade', 'Criatividade', 12, TRUE, '#7e22ce'
 ON CONFLICT (definition_id, LOWER(key))
 DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order, color = EXCLUDED.color, active = TRUE;
 INSERT INTO ae_dimensions (definition_id, key, label, sort_order, active, color)

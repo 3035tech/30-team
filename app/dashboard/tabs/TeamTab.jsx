@@ -570,7 +570,7 @@ export function TeamTab({
                               <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
                                 background: fitScore >= 7 ? 'rgba(21,128,61,.1)' : fitScore >= 4 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
                                 border: `1px solid ${fitScore >= 7 ? 'rgba(21,128,61,.3)' : fitScore >= 4 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
-                                color: fitScore >= 7 ? C.synergy : fitScore >= 4 ? '#d97706' : C.tension,
+                                color: fitScore >= 7 ? C.success : fitScore >= 4 ? C.warning : C.danger,
                                 fontFamily: 'monospace' }}>
                                 {fitScore}/10
                               </span>

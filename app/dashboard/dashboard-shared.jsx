@@ -3,13 +3,13 @@
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { typeFullName, typeShortLabel } from '../../lib/type-en';
-import { C, FONTS } from '../../lib/theme';
+import { C, FONTS, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 
 const S = {
   label:{ fontSize:'11px', letterSpacing:'2.5px', textTransform:'uppercase',
     color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
     marginBottom:'12px', display:'block' },
-  card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:'16px',
+  card:{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:'16px',
     padding:'28px', backdropFilter:'blur(16px)' },
   select:{ background:C.inputBg, border:`1px solid ${C.border}`, borderRadius:'10px',
     padding:'9px 12px', color:C.muted, fontSize:'13px', cursor:'pointer', fontFamily:FONTS.serif },
@@ -18,7 +18,7 @@ const S = {
     padding:'0 12px', marginBottom:'4px' },
   filterChip:{ display:'inline-flex', alignItems:'center', gap:'4px',
     padding:'4px 10px', background:`${C.purple}12`, border:`1px solid ${C.purple}40`,
-    borderRadius:'20px', fontSize:'12px', color:C.purpleLight, fontFamily:FONTS.mono },
+    borderRadius:'20px', fontSize:'12px', color:C.purpleDeep, fontFamily:FONTS.mono },
 };
 
 const Bar = ({ value, max, color, h=6 }) => (
@@ -82,7 +82,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
       style={{
         textAlign: align,
         padding: '10px 12px',
-        color: active ? C.purpleLight : C.muted,
+        color: active ? C.purpleDeep : C.muted,
         fontWeight: 600,
         fontFamily: 'monospace',
         fontSize: '11px',
@@ -132,14 +132,14 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
 };
 
 const KANBAN_STAGE_DEFS = [
-  { id: 'new', color: 'rgba(26,22,37,.5)', labelKey: 'recruiting.pipelineNew' },
-  { id: 'test_completed', color: '#7C3AED', labelKey: 'recruiting.pipelineTestCompleted' },
-  { id: 'screening', color: '#0284c7', labelKey: 'recruiting.pipelineScreening' },
-  { id: 'interview', color: '#d97706', labelKey: 'recruiting.pipelineInterview' },
-  { id: 'approved', color: '#15803d', labelKey: 'recruiting.pipelineApproved' },
-  { id: 'hired', color: '#0f766e', labelKey: 'recruiting.pipelineHired' },
-  { id: 'rejected', color: '#dc2626', labelKey: 'recruiting.pipelineRejected' },
-  { id: 'archived', color: 'rgba(26,22,37,.3)', labelKey: 'recruiting.pipelineArchived' },
+  { id: 'new', color: PIPELINE_STAGE_COLORS.new, labelKey: 'recruiting.pipelineNew' },
+  { id: 'test_completed', color: PIPELINE_STAGE_COLORS.test_completed, labelKey: 'recruiting.pipelineTestCompleted' },
+  { id: 'screening', color: PIPELINE_STAGE_COLORS.screening, labelKey: 'recruiting.pipelineScreening' },
+  { id: 'interview', color: PIPELINE_STAGE_COLORS.interview, labelKey: 'recruiting.pipelineInterview' },
+  { id: 'approved', color: PIPELINE_STAGE_COLORS.approved, labelKey: 'recruiting.pipelineApproved' },
+  { id: 'hired', color: PIPELINE_STAGE_COLORS.hired, labelKey: 'recruiting.pipelineHired' },
+  { id: 'rejected', color: PIPELINE_STAGE_COLORS.rejected, labelKey: 'recruiting.pipelineRejected' },
+  { id: 'archived', color: PIPELINE_STAGE_COLORS.archived, labelKey: 'recruiting.pipelineArchived' },
 ];
 
 function getKanbanStages(locale = 'pt-BR') {
