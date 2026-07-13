@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { S, Bar } from '../dashboard-shared';
+import { SystemNoticeModal } from '../SystemNoticeModal';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -145,6 +146,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
+  const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,12 +168,35 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   };
 
   const remind = async (id) => {
-    await fetch(`/api/admin/ae/invites/${id}/remind`, { method: 'POST' });
-    alert(t(locale, 'panel.motivatorsAdmin.invites.reminderSent'));
+    try {
+      const res = await fetch(`/api/admin/ae/invites/${id}/remind`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.common.error'));
+      setNotice({
+        tone: 'ok',
+        title: t(locale, 'panel.common.successTitle'),
+        message: t(locale, 'panel.motivatorsAdmin.invites.reminderSent'),
+      });
+      load();
+    } catch (e) {
+      setNotice({
+        tone: 'error',
+        title: t(locale, 'panel.common.error'),
+        message: e?.message || t(locale, 'panel.common.error'),
+      });
+    }
   };
 
   return (
     <div style={S.card}>
+      <SystemNoticeModal
+        open={Boolean(notice)}
+        locale={locale}
+        tone={notice?.tone || 'info'}
+        title={notice?.title}
+        message={notice?.message || ''}
+        onClose={() => setNotice(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
         <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
         <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
@@ -225,6 +250,7 @@ function ResultsList({ locale, isAdmin, companyFilter }) {
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const load = useCallback(() => {
     const p = new URLSearchParams({ status: 'completed', pageSize: '30' });
@@ -259,7 +285,11 @@ function ResultsList({ locale, isAdmin, companyFilter }) {
       reloadDetail();
       load();
     } catch (e) {
-      alert(e.message || t(locale, 'panel.motivatorsAdmin.results.rescoreError'));
+      setNotice({
+        tone: 'error',
+        title: t(locale, 'panel.common.error'),
+        message: e.message || t(locale, 'panel.motivatorsAdmin.results.rescoreError'),
+      });
     } finally {
       setBusy(false);
     }
@@ -282,7 +312,11 @@ function ResultsList({ locale, isAdmin, companyFilter }) {
       }
       load();
     } catch (e) {
-      alert(e.message || t(locale, 'panel.motivatorsAdmin.results.deleteError'));
+      setNotice({
+        tone: 'error',
+        title: t(locale, 'panel.common.error'),
+        message: e.message || t(locale, 'panel.motivatorsAdmin.results.deleteError'),
+      });
     } finally {
       setBusy(false);
     }
@@ -290,6 +324,14 @@ function ResultsList({ locale, isAdmin, companyFilter }) {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: detail ? '1fr 1fr' : '1fr', gap: '20px' }}>
+      <SystemNoticeModal
+        open={Boolean(notice)}
+        locale={locale}
+        tone={notice?.tone || 'info'}
+        title={notice?.title}
+        message={notice?.message || ''}
+        onClose={() => setNotice(null)}
+      />
       <div style={S.card}>
         <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -506,6 +548,7 @@ function ConfigPanel({ locale }) {
   const [dims, setDims] = useState([]);
   const [definitions, setDefinitions] = useState([]);
   const [deleteBusy, setDeleteBusy] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   const loadConfig = useCallback(() => {
     fetch('/api/admin/ae/config/questions?definition=motivators')
@@ -534,7 +577,11 @@ function ConfigPanel({ locale }) {
       if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.config.deleteError'));
       loadConfig();
     } catch (e) {
-      alert(e.message || t(locale, 'panel.motivatorsAdmin.config.deleteError'));
+      setNotice({
+        tone: 'error',
+        title: t(locale, 'panel.common.error'),
+        message: e.message || t(locale, 'panel.motivatorsAdmin.config.deleteError'),
+      });
     } finally {
       setDeleteBusy(null);
     }
@@ -551,6 +598,14 @@ function ConfigPanel({ locale }) {
 
   return (
     <div style={{ display: 'grid', gap: '20px' }}>
+      <SystemNoticeModal
+        open={Boolean(notice)}
+        locale={locale}
+        tone={notice?.tone || 'info'}
+        title={notice?.title}
+        message={notice?.message || ''}
+        onClose={() => setNotice(null)}
+      />
       {definitions.length > 0 ? (
         <div style={S.card}>
           <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.definitionsTitle')}</span>
@@ -621,6 +676,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
   const [refreshKey, setRefreshKey] = useState(0);
   const [moduleStatus, setModuleStatus] = useState(null);
   const [setupBusy, setSetupBusy] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     fetch('/api/admin/ae/status')
@@ -636,9 +692,17 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.setup.initFailed'));
       setRefreshKey((k) => k + 1);
-      alert(t(locale, 'panel.motivatorsAdmin.setup.initOk'));
+      setNotice({
+        tone: 'ok',
+        title: t(locale, 'panel.common.successTitle'),
+        message: t(locale, 'panel.motivatorsAdmin.setup.initOk'),
+      });
     } catch (e) {
-      alert(e.message || t(locale, 'panel.common.error'));
+      setNotice({
+        tone: 'error',
+        title: t(locale, 'panel.common.error'),
+        message: e.message || t(locale, 'panel.common.error'),
+      });
     } finally {
       setSetupBusy(false);
     }
@@ -655,6 +719,14 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
 
   return (
     <div>
+      <SystemNoticeModal
+        open={Boolean(notice)}
+        locale={locale}
+        tone={notice?.tone || 'info'}
+        title={notice?.title}
+        message={notice?.message || ''}
+        onClose={() => setNotice(null)}
+      />
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 'normal', color: C.text }}>{t(locale, 'panel.motivatorsAdmin.title')}</h2>
         <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.intro')}</p>
