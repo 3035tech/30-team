@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
+import { getKanbanStages, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
@@ -13,7 +13,18 @@ import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { EnneagramCross } from '../../_components/EnneagramCross';
-import { buildEnneagramCross } from '../../../lib/enneagram-cross';
+import { TypeScoreChart } from '../../_components/TypeScoreChart';
+import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
+
+function nearbyCluster(scores) {
+  return clusterCloseTypes(rankEnneagramScores(scores));
+}
+
+function NearbyTypeBadges({ scores, topType, locale }) {
+  const extras = nearbyCluster(scores).filter((item) => item.type !== topType);
+  if (extras.length === 0) return null;
+  return extras.map((item) => <TypeBadge key={item.type} type={item.type} locale={locale} />);
+}
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -561,6 +572,7 @@ export function TeamTab({
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '7px' }}>
                             <TypeBadge type={r.topType} locale={locale} />
+                            <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                             {r.areaLabel && (
                               <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
                                 background: C.inputBg, border: `1px solid ${C.border}`,
@@ -668,11 +680,7 @@ export function TeamTab({
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
         const isOpen = open === id;
-        const sorted = Object.entries(r.scores || {}).sort((a, b) => b[1] - a[1]);
-        const maxS = sorted[0] ? parseInt(sorted[0][1], 10) : 0;
-        const clusterTypes = isOpen
-          ? new Set(buildEnneagramCross(r.scores, locale)?.clusterTypes || [])
-          : new Set();
+        const clusterTypes = new Set(nearbyCluster(r.scores).map((item) => item.type));
         const showVacancyFit = r.vacancyFitScore010 != null && r.vacancyFitScore010 !== undefined;
         const created = r.createdAt != null ? new Date(r.createdAt) : null;
         const createdLabel =
@@ -737,6 +745,7 @@ export function TeamTab({
                 ) : null}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <TypeBadge type={r.topType} locale={locale} />
+                  <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
                     <span
                       style={{
@@ -845,6 +854,16 @@ export function TeamTab({
             {isOpen && (
               <div style={{ borderTop: `1px solid ${C.border}`, padding: '20px 24px' }} onClick={(e) => e.stopPropagation()}>
                 <EnneagramCross scores={r.scores} locale={locale} />
+
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
+                  {clusterTypes.size > 1 ? (
+                    <p style={{ margin: '0 0 8px', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
+                      {t(locale, 'panel.team.scoresClusterHint')}
+                    </p>
+                  ) : null}
+                  <TypeScoreChart scores={r.scores} locale={locale} highlightTypes={clusterTypes} />
+                </div>
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
@@ -1250,28 +1269,6 @@ export function TeamTab({
                       {notesMsg}
                     </p>
                   )}
-                </div>
-
-                <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                  {sorted.map(([typeKey, s]) => {
-                    const typeNum = parseInt(typeKey, 10);
-                    const highlight = clusterTypes.size > 1 ? clusterTypes.has(typeNum) : typeNum === r.topType;
-                    return (
-                    <div key={typeKey} style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: highlight ? 1 : 0.72 }}>
-                      <span
-                        title={TYPE_DATA?.[typeNum]?.name ? `${TYPE_DATA[typeNum].name} (T${typeNum})` : `T${typeNum}`}
-                        style={{ width: '60px', fontSize: '11px', color: TYPE_DATA[typeNum].color, fontFamily: 'monospace', fontWeight: highlight ? 600 : 400 }}
-                      >
-                        {TYPE_DATA[typeNum].emoji} T{typeNum}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <Bar value={parseInt(s, 10)} max={maxS} color={TYPE_DATA[typeNum].color} h={highlight ? 6 : 5} />
-                      </div>
-                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', width: '24px', textAlign: 'right' }}>{s}</span>
-                    </div>
-                    );
-                  })}
                 </div>
               </div>
             )}

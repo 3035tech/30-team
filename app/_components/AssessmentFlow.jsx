@@ -13,6 +13,7 @@ import { BrCitySelect } from './BrCitySelect';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
 import { EnneagramCross } from './EnneagramCross';
+import { TypeScoreChart } from './TypeScoreChart';
 
 const S = {
   app: {
@@ -93,19 +94,6 @@ const S = {
     marginBottom: '16px',
   },
 };
-
-const Bar = ({ value, max, color, h = 6 }) => (
-  <div style={{ width: '100%', height: h, background: 'rgba(26,22,37,.08)', borderRadius: h / 2, overflow: 'hidden' }}>
-    <div
-      style={{
-        height: '100%',
-        width: `${(value / Math.max(max, 1)) * 100}%`,
-        background: `linear-gradient(90deg,${color}99,${color})`,
-        borderRadius: h / 2,
-      }}
-    />
-  </div>
-);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -700,10 +688,6 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
   const { name, scores, topType } = result;
   const typeData = getTypeData(locale);
   const d = typeData[topType];
-  const sorted = Object.entries(scores)
-    .sort((a, b) => b[1] - a[1])
-    .map(([t, s]) => ({ type: parseInt(t), score: s }));
-  const maxScore = sorted[0].score;
 
   return (
     <div className="cand-flow" style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
@@ -758,19 +742,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
           <span style={S.label}>{t(locale, 'candidate.profileByType')}</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {sorted.map(({ type, score }) => (
-              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span className="cand-type-label" style={{ width: '90px', fontSize: '11px', color: typeData[type].color, fontFamily: 'monospace', flexShrink: 0 }}>
-                  {typeData[type].emoji} T{type}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <Bar value={score} max={maxScore} color={typeData[type].color} />
-                </div>
-                <span style={{ width: '24px', fontSize: '11px', color: C.muted, textAlign: 'right', fontFamily: 'monospace' }}>{score}</span>
-              </div>
-            ))}
-          </div>
+          <TypeScoreChart scores={scores} locale={locale} />
         </div>
 
         <button style={{ ...S.btn(), fontSize: '13px' }} onClick={onRestart}>

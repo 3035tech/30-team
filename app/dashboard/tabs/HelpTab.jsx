@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { t } from '../../../lib/i18n';
-import { C } from '../../../lib/theme';
+import { getTypeData } from '../../../lib/i18n-data';
+import { typeFullName, typeShortLabel } from '../../../lib/type-en';
+import { C, FONTS } from '../../../lib/theme';
 import { S } from '../dashboard-shared';
 
 const SECTIONS = [
@@ -18,6 +20,101 @@ const SECTIONS = [
   'motivators',
   'tips',
 ];
+
+function TypeCatalog({ locale }) {
+  const typeData = getTypeData(locale);
+  return (
+    <div style={{ marginTop: '18px' }}>
+      <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
+        {t(locale, 'panel.help.typesCatalogIntro')}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+          const d = typeData[n];
+          if (!d) return null;
+          return (
+            <article
+              key={n}
+              style={{
+                border: `1px solid ${d.color}33`,
+                borderLeft: `4px solid ${d.color}`,
+                borderRadius: '12px',
+                padding: '14px 16px',
+                background: `${d.color}08`,
+              }}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'baseline', marginBottom: '8px' }}>
+                <span style={{ fontSize: '18px', lineHeight: 1 }}>{d.emoji}</span>
+                <span style={{ fontSize: '15px', color: C.text, fontFamily: "'Georgia',serif" }}>
+                  T{n} · {typeFullName(n, locale)}
+                </span>
+                <span style={{
+                  fontSize: '11px',
+                  fontFamily: FONTS.mono,
+                  color: d.color,
+                  padding: '2px 8px',
+                  borderRadius: '999px',
+                  border: `1px solid ${d.color}44`,
+                  background: `${d.color}14`,
+                }}
+                >
+                  {typeShortLabel(n, locale)}
+                </span>
+              </div>
+              <p style={{ margin: '0 0 10px', fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{d.desc}</p>
+              <p style={{ margin: '0 0 10px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
+                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesAtWork')}.</strong>
+                {' '}
+                {t(locale, `panel.help.typeAtWork${n}`)}
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
+                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesWatch')}.</strong>
+                {' '}
+                {t(locale, `panel.help.typeWatch${n}`)}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                <span style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  fontFamily: FONTS.mono,
+                  color: C.faint,
+                  width: '100%',
+                }}
+                >
+                  {t(locale, 'panel.help.typesStrengths')}
+                </span>
+                {d.strengths.map((s) => (
+                  <span
+                    key={s}
+                    style={{
+                      padding: '3px 10px',
+                      fontSize: '11px',
+                      borderRadius: '20px',
+                      background: `${d.color}18`,
+                      border: `1px solid ${d.color}35`,
+                      color: d.color,
+                    }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+              <p style={{ margin: '0 0 6px', fontSize: '12px', color: C.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+                {t(locale, 'panel.help.typesChallenge')}: {d.challenge}
+              </p>
+              <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesTeam')}.</strong>
+                {' '}
+                {d.team}
+              </p>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function StepList({ locale, sectionKey, count }) {
   const items = [];
@@ -167,6 +264,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
                 {stepCounts[key] > 0 ? (
                   <StepList locale={locale} sectionKey={key} count={stepCounts[key]} />
                 ) : null}
+                {key === 'enneagram' ? <TypeCatalog locale={locale} /> : null}
                 {key === 'flow' ? (
                   <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.faint, fontFamily: 'monospace', lineHeight: 1.6 }}>
                     {t(locale, 'panel.help.flowAlt')}
