@@ -12,6 +12,7 @@ import { BrStateSelect } from './BrStateSelect';
 import { BrCitySelect } from './BrCitySelect';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
+import { EnneagramCross } from './EnneagramCross';
 
 const S = {
   app: {
@@ -703,7 +704,6 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
     .sort((a, b) => b[1] - a[1])
     .map(([t, s]) => ({ type: parseInt(t), score: s }));
   const maxScore = sorted[0].score;
-  const second = sorted[1];
 
   return (
     <div className="cand-flow" style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
@@ -754,21 +754,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
           <p style={{ ...S.p, marginBottom: 0 }}>{d.desc}</p>
         </div>
 
-        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>{t(locale, 'candidate.strengths')}</span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {d.strengths.map((s) => (
-              <span key={s} style={{ padding: '5px 13px', background: `${d.color}15`, border: `1px solid ${d.color}40`, borderRadius: '20px', fontSize: '12px', color: d.color }}>
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>{t(locale, 'candidate.challenge')}</span>
-          <p style={{ fontSize: '15px', color: C.muted, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{d.challenge}"</p>
-        </div>
+        <EnneagramCross scores={scores} locale={locale} />
 
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
           <span style={S.label}>{t(locale, 'candidate.profileByType')}</span>
@@ -785,20 +771,6 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
               </div>
             ))}
           </div>
-        </div>
-
-        {second ? (
-          <div style={{ background: `${d.color}0a`, border: `1px solid ${d.color}25`, borderRadius: '12px', padding: '16px 20px', marginBottom: '24px' }}>
-            <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>{t(locale, 'candidate.wing')}</span>
-            <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.6, margin: 0 }}>
-              {t(locale, 'candidate.wingText', { typeName: typeData[second.type].name })}
-            </p>
-          </div>
-        ) : null}
-
-        <div style={{ background: `${d.color}0a`, border: `1px solid ${d.color}25`, borderRadius: '12px', padding: '16px 20px', marginBottom: '28px' }}>
-          <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}80` }}>{t(locale, 'candidate.teamContribution')}</span>
-          <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.7, margin: 0 }}>{d.team}</p>
         </div>
 
         <button style={{ ...S.btn(), fontSize: '13px' }} onClick={onRestart}>

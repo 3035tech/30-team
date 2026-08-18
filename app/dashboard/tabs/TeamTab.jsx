@@ -12,6 +12,8 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
+import { EnneagramCross } from '../../_components/EnneagramCross';
+import { buildEnneagramCross } from '../../../lib/enneagram-cross';
 
 const PIPELINE_OPTIONS = [
   'new',
@@ -667,8 +669,10 @@ export function TeamTab({
         const d = TYPE_DATA[r.topType];
         const isOpen = open === id;
         const sorted = Object.entries(r.scores || {}).sort((a, b) => b[1] - a[1]);
-        const second = sorted[1];
         const maxS = sorted[0] ? parseInt(sorted[0][1], 10) : 0;
+        const clusterTypes = isOpen
+          ? new Set(buildEnneagramCross(r.scores, locale)?.clusterTypes || [])
+          : new Set();
         const showVacancyFit = r.vacancyFitScore010 != null && r.vacancyFitScore010 !== undefined;
         const created = r.createdAt != null ? new Date(r.createdAt) : null;
         const createdLabel =
@@ -840,44 +844,7 @@ export function TeamTab({
             </div>
             {isOpen && (
               <div style={{ borderTop: `1px solid ${C.border}`, padding: '20px 24px' }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                  <div>
-                    <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'candidate.strengths')}</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {d.strengths.slice(0, 3).map((s) => (
-                        <span
-                          key={s}
-                          style={{
-                            padding: '3px 10px',
-                            background: `${d.color}15`,
-                            border: `1px solid ${d.color}35`,
-                            borderRadius: '20px',
-                            fontSize: '11px',
-                            color: d.color,
-                          }}
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'candidate.wing')}</span>
-                    {second && <TypeBadge type={parseInt(second[0], 10)} locale={locale} />}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: `${d.color}0a`,
-                    border: `1px solid ${d.color}20`,
-                    borderRadius: '10px',
-                    padding: '14px 16px',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <span style={{ ...S.label, marginBottom: '6px', color: `${d.color}70` }}>{t(locale, 'candidate.teamContribution')}</span>
-                  <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.65, margin: 0 }}>{d.team}</p>
-                </div>
+                <EnneagramCross scores={r.scores} locale={locale} />
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
@@ -1287,20 +1254,24 @@ export function TeamTab({
 
                 <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                  {sorted.map(([t, s]) => (
-                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {sorted.map(([typeKey, s]) => {
+                    const typeNum = parseInt(typeKey, 10);
+                    const highlight = clusterTypes.size > 1 ? clusterTypes.has(typeNum) : typeNum === r.topType;
+                    return (
+                    <div key={typeKey} style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: highlight ? 1 : 0.72 }}>
                       <span
-                        title={TYPE_DATA?.[parseInt(t, 10)]?.name ? `${TYPE_DATA[parseInt(t, 10)].name} (T${t})` : `T${t}`}
-                        style={{ width: '60px', fontSize: '11px', color: TYPE_DATA[parseInt(t, 10)].color, fontFamily: 'monospace' }}
+                        title={TYPE_DATA?.[typeNum]?.name ? `${TYPE_DATA[typeNum].name} (T${typeNum})` : `T${typeNum}`}
+                        style={{ width: '60px', fontSize: '11px', color: TYPE_DATA[typeNum].color, fontFamily: 'monospace', fontWeight: highlight ? 600 : 400 }}
                       >
-                        {TYPE_DATA[parseInt(t, 10)].emoji} T{t}
+                        {TYPE_DATA[typeNum].emoji} T{typeNum}
                       </span>
                       <div style={{ flex: 1 }}>
-                        <Bar value={parseInt(s, 10)} max={maxS} color={TYPE_DATA[parseInt(t, 10)].color} h={5} />
+                        <Bar value={parseInt(s, 10)} max={maxS} color={TYPE_DATA[typeNum].color} h={highlight ? 6 : 5} />
                       </div>
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', width: '24px', textAlign: 'right' }}>{s}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

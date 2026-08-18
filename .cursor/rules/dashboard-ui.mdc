@@ -1,0 +1,16 @@
+---
+description: Padrões ao editar páginas, dashboard e componentes React
+globs: app/**/*.jsx,app/_components/**/*.jsx
+alwaysApply: false
+---
+
+# UI (App Router + JSX)
+
+1. Copy: `t(locale, 'key')` — adicionar a chave em **pt-BR e en** em `lib/i18n.js`.
+2. Cores e tipografia: `C`, `FONTS`, `PIPELINE_STAGE_COLORS` de `lib/theme.js`. Status semântico ≠ roxo da marca.
+3. Reutilizar `app/dashboard/dashboard-shared.jsx` e helpers das tabs; não copiar cards/chips/badges.
+4. Dashboard: Server Component em `page.jsx` carrega **só a aba ativa**. Dados pesados (compat O(n²), ranking) só na aba que precisa.
+5. Tipos: `typeFullName` / `typeShortLabel` (`lib/type-en.js`) — não hardcodar nomes T1–T9.
+6. Pipeline no kanban: drag-and-drop atualiza o estágio; **sem** select de status no card.
+7. Público (`/t`, `/v`, assessment): fluxo em `AssessmentFlow.jsx` / `MotivatorsFlow.jsx`; resultado vem da API, não do cálculo no cliente.
+8. Não adicionar TypeScript nem CSS-in-JS novo; seguir o estilo inline + tokens já usado.

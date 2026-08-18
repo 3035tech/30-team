@@ -1,0 +1,17 @@
+---
+description: Convenções de API Routes, auth e isolamento por empresa
+globs: app/api/**/*.js,middleware.js,lib/auth.js,lib/auth-edge.js,lib/api-error.js
+alwaysApply: false
+---
+
+# API e auth
+
+1. Erros: `return apiError(request, 'UNAUTHORIZED', 401)` — nunca `{ error: '...' }` solto.
+2. Sessão gestor: cookie `team30_session`; reusar `verifyToken` + `getManagerScope` / `requireManagerRole`.
+3. Não-admin: filtrar `company_id` em **todo** SELECT/UPDATE. Sem `company_id` → 401.
+4. `/api/admin/*` já passa pelo middleware; ainda assim validar role e escopo na rota.
+5. Endpoints públicos (`/api/results`, `/api/public/*`, `/api/ae/*`) autenticam por **token de link/convite**, não JWT de gestor.
+6. Escrita: `query`. Leitura que pode ir à réplica: `queryRead`.
+7. SQL só com placeholders `$1`. Soft delete: `deleted = FALSE`.
+8. Mutações sensíveis (user, company, hire/reject, purge): `audit({ actorUserId, action, ... })`.
+9. Cron: exigir `CRON_SECRET`. Não vazar stack traces para o cliente.

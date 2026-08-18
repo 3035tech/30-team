@@ -1,0 +1,16 @@
+---
+description: Regras de domínio em lib/ — scoring, pipeline, i18n, db
+globs: lib/**/*.js
+alwaysApply: false
+---
+
+# lib/ — domínio
+
+1. Nova regra de negócio entra em `lib/` (ou `lib/ae/` se for Motivadores), não duplicada nas rotas.
+2. T1–T9: banco/perguntas em `lib/data.js`; pontuação só em `lib/assessment-score.js`.
+3. Pipeline e recusa/contratação: `lib/pipeline.js` + `lib/hire.js`. Não inventar estágios.
+4. Rubrica altera pesos, **não** o questionário. Ranking usa aderência 0–10.
+5. Compatibilidade: `lib/compat-en.js` / `lib/compat-bundles.js`. Respeitar caps (`COMPAT_PEOPLE_CAP`); não montar grafo completo sem necessidade.
+6. Filtros de lista: `lib/assessment-filters.js` (`assessmentListWhereParts`) — reusar, não copiar WHERE.
+7. i18n: novas chaves nos dois locales em `lib/i18n.js`.
+8. DB: `query` / `queryRead` de `lib/db.js`. Parametrizar sempre.

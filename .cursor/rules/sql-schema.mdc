@@ -1,0 +1,16 @@
+---
+description: Schema SQL — migrations canônicas e scripts para pgAdmin
+globs: migrations/**/*.sql,scripts/**/*.sql,scripts/migrate.js
+alwaysApply: false
+---
+
+# SQL e schema
+
+1. Fonte canônica: `migrations/NNN_descricao.sql` (próximo número livre). Runner: `npm run db:migrate`.
+2. Postgres novo: `scripts/rds-bootstrap-completo.sql`.
+3. Operação no pgAdmin: incluir o delta idempotente em `scripts/scripts-banco-pendentes.sql`.
+4. **Não** criar `.sql` na raiz do repo. `init.sql` é stub Docker — manter vazio.
+5. Preferir `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS` em scripts de operador.
+6. Soft delete já existe (`deleted`); não mudar para delete físico sem pedido.
+7. Índices de performance: seguir o estilo de `migrations/006_performance_indexes.sql`.
+8. Seeds ficam em `scripts/seed-*.js` / `scripts/seed-*.sql`, não misturados com DDL de produção.
