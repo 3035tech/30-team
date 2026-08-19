@@ -1,4 +1,9 @@
--- Re-seed Motivadores v2 (68 perguntas únicas)
+-- NÃO EXECUTE ESTE ARQUIVO.
+-- Foi substituído por scripts/seed-motivators-questions-v3.sql, que NÃO apaga
+-- perguntas antigas e preserva tentativas já feitas.
+-- Este script faz DELETE FROM ae_questions e quebraria testes concluídos.
+
+-- Re-seed Motivadores v2 (68 perguntas únicas) — legado
 -- Rode no pgAdmin. NÃO mexe em assessments (Eneagrama).
 -- Equivalente a: FORCE=1 node scripts/seed-motivators-questions.js
 

@@ -551,7 +551,7 @@ function ConfigPanel({ locale }) {
   const [notice, setNotice] = useState(null);
 
   const loadConfig = useCallback(() => {
-    fetch('/api/admin/ae/config/questions?definition=motivators')
+    fetch('/api/admin/ae/config/questions?definition=motivators&activeOnly=1')
       .then((r) => r.json())
       .then((d) => setQuestions((d.items || []).slice(0, 100)));
     fetch('/api/admin/ae/config/dimensions')

@@ -1,6 +1,10 @@
 /**
- * Gera SQL para re-seed manual dos Motivadores (equivalente a FORCE=1 node scripts/seed-motivators-questions.js).
- * Uso: node scripts/generate-motivators-seed-sql.js > scripts/seed-motivators-questions-v2.sql
+ * Gera SQL para publicar o banco situacional v3 SEM apagar perguntas antigas.
+ * Uso: node scripts/generate-motivators-seed-sql.js > scripts/seed-motivators-questions-v3.sql
+ *
+ * Desativa o banco anterior e insere as perguntas v3 (chaves v3_*).
+ * Tentativas já concluídas ou em andamento continuam apontando para os IDs originais.
+ * Assessments de Eneagrama não são afetados.
  */
 import { MOTIVATORS_DEFINITION, MOTIVATORS_DIMENSIONS } from '../lib/ae/motivators-dimensions.js';
 import { generateMotivatorsQuestionBank } from '../lib/ae/motivators-question-bank.js';
@@ -13,12 +17,15 @@ function sqlJson(obj) {
   return `'${JSON.stringify(obj).replace(/'/g, "''")}'::jsonb`;
 }
 
-const defSub = `(SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER(${sqlStr(MOTIVATORS_DEFINITION.slug)}) LIMIT 1)`;
+const def = MOTIVATORS_DEFINITION;
+const bank = generateMotivatorsQuestionBank();
+const defSub = `(SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER(${sqlStr(def.slug)}) LIMIT 1)`;
 
 const lines = [];
-lines.push('-- Re-seed Motivadores v2 (68 perguntas únicas)');
-lines.push('-- Rode no pgAdmin. NÃO mexe em assessments (Eneagrama).');
-lines.push('-- Equivalente a: FORCE=1 node scripts/seed-motivators-questions.js');
+lines.push(`-- Publica Motivadores v${def.version} (${bank.length} perguntas situacionais)`);
+lines.push('-- NÃO apaga perguntas antigas: só desativa e insere v3_*.');
+lines.push('-- Preserva tentativas já feitas (scores, respostas, question_ids).');
+lines.push('-- Equivalente a: npm run db:seed-motivators');
 lines.push('');
 lines.push('BEGIN;');
 lines.push('');
@@ -28,7 +35,6 @@ lines.push("  ADD CONSTRAINT ae_questions_question_type_check");
 lines.push("  CHECK (question_type IN ('forced_choice', 'likert', 'ranking'));");
 lines.push('');
 
-const def = MOTIVATORS_DEFINITION;
 lines.push(`INSERT INTO ae_definitions (slug, name, description, version, active, config)`);
 lines.push(`VALUES (${sqlStr(def.slug)}, ${sqlStr(def.name)}, ${sqlStr(def.description)}, ${def.version}, TRUE, ${sqlJson(def.config)})`);
 lines.push(`ON CONFLICT DO NOTHING;`);
@@ -50,15 +56,23 @@ for (const dim of MOTIVATORS_DIMENSIONS) {
 }
 
 lines.push('');
-lines.push(`DELETE FROM ae_questions WHERE definition_id = ${defSub};`);
+lines.push(`-- Desativa o banco anterior. NÃO apaga perguntas (preserva tentativas já feitas).`);
+lines.push(`UPDATE ae_questions`);
+lines.push(`SET active = FALSE`);
+lines.push(`WHERE definition_id = ${defSub}`);
+lines.push(`  AND active = TRUE`);
+lines.push(`  AND NOT (key = ANY(ARRAY[${bank.map((q) => sqlStr(q.key)).join(', ')}]::text[]));`);
 lines.push('');
 
-const bank = generateMotivatorsQuestionBank();
 for (const q of bank) {
   lines.push(`INSERT INTO ae_questions (definition_id, key, text, question_type, category, weight, sort_order, active)`);
   lines.push(
-    `SELECT ${defSub}, ${sqlStr(q.key)}, ${sqlStr(q.text)}, ${sqlStr(q.questionType)}, ${sqlStr(q.category)}, ${q.weight}, ${q.sortOrder}, TRUE;`
+    `SELECT ${defSub}, ${sqlStr(q.key)}, ${sqlStr(q.text)}, ${sqlStr(q.questionType)}, ${sqlStr(q.category)}, ${q.weight}, ${q.sortOrder}, TRUE`
   );
+  lines.push(`ON CONFLICT (definition_id, key) DO UPDATE`);
+  lines.push(`  SET text = EXCLUDED.text, question_type = EXCLUDED.question_type,`);
+  lines.push(`      category = EXCLUDED.category, weight = EXCLUDED.weight,`);
+  lines.push(`      sort_order = EXCLUDED.sort_order, active = TRUE;`);
 
   if (q.options?.length) {
     for (const opt of q.options) {
@@ -66,7 +80,9 @@ for (const q of bank) {
       lines.push(`SELECT q.id, ${sqlStr(opt.key)}, ${sqlStr(opt.text)}, ${opt.sortOrder}, TRUE`);
       lines.push(`FROM ae_questions q`);
       lines.push(`JOIN ae_definitions d ON d.id = q.definition_id`);
-      lines.push(`WHERE LOWER(d.slug) = LOWER(${sqlStr(def.slug)}) AND q.key = ${sqlStr(q.key)};`);
+      lines.push(`WHERE LOWER(d.slug) = LOWER(${sqlStr(def.slug)}) AND q.key = ${sqlStr(q.key)}`);
+      lines.push(`ON CONFLICT (question_id, key) DO UPDATE`);
+      lines.push(`  SET text = EXCLUDED.text, sort_order = EXCLUDED.sort_order, active = TRUE;`);
 
       for (const [dimKey, weight] of Object.entries(opt.weights || {})) {
         lines.push(`INSERT INTO ae_option_dimension_weights (option_id, dimension_id, weight)`);
@@ -99,6 +115,7 @@ lines.push('COMMIT;');
 lines.push('');
 lines.push('-- Validação (rode depois):');
 lines.push("-- SELECT slug, version, config FROM ae_definitions WHERE LOWER(slug) = 'motivators';");
-lines.push("-- SELECT question_type, COUNT(*)::int FROM ae_questions q JOIN ae_definitions d ON d.id = q.definition_id WHERE LOWER(d.slug) = 'motivators' AND q.active GROUP BY 1 ORDER BY 1;");
+lines.push("-- SELECT question_type, active, COUNT(*)::int FROM ae_questions q JOIN ae_definitions d ON d.id = q.definition_id WHERE LOWER(d.slug) = 'motivators' GROUP BY 1, 2 ORDER BY 1, 2;");
+lines.push("-- SELECT COUNT(*)::int AS attempts FROM ae_attempts;");
 
 process.stdout.write(lines.join('\n'));

@@ -2,15 +2,14 @@ import { createRequire } from 'node:module';
 import process from 'node:process';
 import { getPgBaseConfig } from '../lib/pg-config.js';
 import { MOTIVATORS_DEFINITION, MOTIVATORS_DIMENSIONS } from '../lib/ae/motivators-dimensions.js';
-import { generateMotivatorsQuestionBank, getQuestionBankStats } from '../lib/ae/motivators-question-bank.js';
-import { usesOptions } from '../lib/ae/normalize-question-type.js';
+import { getQuestionBankStats } from '../lib/ae/motivators-question-bank.js';
+import { syncMotivatorsQuestionBank } from '../lib/ae/sync-question-bank.js';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
 
 async function main() {
   const stats = getQuestionBankStats();
-  const force = process.env.FORCE === '1';
   const client = new Client(getPgBaseConfig());
   await client.connect();
 
@@ -66,97 +65,14 @@ async function main() {
       dimIdByKey[r.rows[0].key] = r.rows[0].id;
     }
 
-    const existing = await client.query(
-      `SELECT COUNT(*)::int AS n FROM ae_questions WHERE definition_id = $1`,
-      [definitionId]
-    );
-    const existingCount = existing.rows[0].n;
-
-    if (existingCount > 0 && !force) {
-      process.stdout.write(
-        `Motivators bank already seeded (${existingCount} questions). Set FORCE=1 to replace.\n`
-      );
-      await client.query('COMMIT');
-      return;
-    }
-
-    if (force && existingCount > 0) {
-      await client.query(
-        `DELETE FROM ae_questions WHERE definition_id = $1`,
-        [definitionId]
-      );
-    }
-
-    const bank = generateMotivatorsQuestionBank();
-    let inserted = 0;
-
-    for (const q of bank) {
-      const qIns = await client.query(
-        `INSERT INTO ae_questions
-           (definition_id, key, text, question_type, category, weight, sort_order, active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-         ON CONFLICT (definition_id, key) DO UPDATE
-           SET text = EXCLUDED.text, question_type = EXCLUDED.question_type,
-               category = EXCLUDED.category, weight = EXCLUDED.weight,
-               sort_order = EXCLUDED.sort_order, active = TRUE
-         RETURNING id`,
-        [definitionId, q.key, q.text, q.questionType, q.category, q.weight, q.sortOrder]
-      );
-      const questionId = qIns.rows[0].id;
-      inserted += 1;
-
-      if (usesOptions(q) && q.options) {
-        for (const opt of q.options) {
-          const oIns = await client.query(
-            `INSERT INTO ae_question_options (question_id, key, text, sort_order, active)
-             VALUES ($1, $2, $3, $4, TRUE)
-             ON CONFLICT (question_id, key) DO UPDATE
-               SET text = EXCLUDED.text, sort_order = EXCLUDED.sort_order, active = TRUE
-             RETURNING id`,
-            [questionId, opt.key, opt.text, opt.sortOrder]
-          );
-          const optionId = oIns.rows[0].id;
-
-          await client.query(
-            `DELETE FROM ae_option_dimension_weights WHERE option_id = $1`,
-            [optionId]
-          );
-
-          for (const [dimKey, weight] of Object.entries(opt.weights)) {
-            const dimId = dimIdByKey[dimKey];
-            if (!dimId) continue;
-            await client.query(
-              `INSERT INTO ae_option_dimension_weights (option_id, dimension_id, weight)
-               VALUES ($1, $2, $3)
-               ON CONFLICT (option_id, dimension_id) DO UPDATE SET weight = EXCLUDED.weight`,
-              [optionId, dimId, weight]
-            );
-          }
-        }
-      }
-
-      if (q.questionType === 'likert' && q.dimensionWeights) {
-        await client.query(
-          `DELETE FROM ae_question_dimension_weights WHERE question_id = $1`,
-          [questionId]
-        );
-        for (const [dimKey, weightPerPoint] of Object.entries(q.dimensionWeights)) {
-          const dimId = dimIdByKey[dimKey];
-          if (!dimId) continue;
-          await client.query(
-            `INSERT INTO ae_question_dimension_weights (question_id, dimension_id, weight_per_point)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (question_id, dimension_id) DO UPDATE SET weight_per_point = EXCLUDED.weight_per_point`,
-            [questionId, dimId, weightPerPoint]
-          );
-        }
-      }
-    }
+    const synced = await syncMotivatorsQuestionBank(client, { definitionId, dimIdByKey });
 
     await client.query('COMMIT');
     process.stdout.write(
-      `Motivators seed complete. definition_id=${definitionId} questions=${inserted} ` +
-        `(bank: ${stats.total} = ${stats.forcedChoice} forced + ${stats.ranking} ranking + ${stats.likert} likert)\n`
+      `Motivators seed complete. definition_id=${definitionId} ` +
+        `active=${synced.activeCount} upserted=${synced.upserted} retired=${synced.retiredCount} ` +
+        `(bank: ${stats.total} = ${stats.forcedChoice} forced + ${stats.ranking} ranking + ${stats.likert} likert). ` +
+        `Previous questions were deactivated, not deleted.\n`
     );
   } catch (err) {
     await client.query('ROLLBACK');

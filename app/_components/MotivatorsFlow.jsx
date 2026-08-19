@@ -317,7 +317,19 @@ function RankingChoice({ question, onConfirm, locale }) {
               >
                 {ranked ? pos + 1 : '+'}
               </span>
-              {opt.text}
+              <span>
+                {opt.text}
+                {ranked && pos === 0 ? (
+                  <span style={{ display: 'block', fontSize: '11px', color: C.muted, marginTop: '4px' }}>
+                    {t(locale, 'motivators.rankingMost')}
+                  </span>
+                ) : null}
+                {ranked && complete && pos === order.length - 1 && order.length > 1 ? (
+                  <span style={{ display: 'block', fontSize: '11px', color: C.muted, marginTop: '4px' }}>
+                    {t(locale, 'motivators.rankingLeast')}
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}
