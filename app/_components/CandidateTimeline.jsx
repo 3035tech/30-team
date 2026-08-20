@@ -292,7 +292,7 @@ export function CandidateTimeline({
           style={{
             listStyle: 'none',
             margin: 0,
-            padding: 0,
+            padding: '4px 0 0',
             display: 'flex',
             alignItems: 'flex-start',
             minWidth: 'min-content',
@@ -302,14 +302,25 @@ export function CandidateTimeline({
           {steps.map((step, i) => {
             const color = PIPELINE_STAGE_COLORS[step.id] || C.muted;
             const styles = statusStyles(step.status, color);
+            const isFirst = i === 0;
             const isLast = i === steps.length - 1;
+            const prev = steps[i - 1];
             const next = steps[i + 1];
-            const connectorColor =
-              step.status === 'done' && next && (next.status === 'done' || next.status === 'current')
-                ? color
-                : C.border;
-            // Raio do nó (36/2) + borda — linha para fora da bolinha
-            const nodeClear = 20;
+
+            const segmentDone = (from, to) =>
+              from
+              && (from.status === 'done' || from.status === 'current')
+              && to
+              && (to.status === 'done' || to.status === 'current');
+
+            // Cor da meia-linha à esquerda (vem do passo anterior → este)
+            const leftLineColor = segmentDone(prev, step)
+              ? (PIPELINE_STAGE_COLORS[prev.id] || C.border)
+              : C.border;
+            // Cor da meia-linha à direita (este → próximo)
+            const rightLineColor = segmentDone(step, next)
+              ? color
+              : C.border;
 
             return (
               <li
@@ -320,11 +331,13 @@ export function CandidateTimeline({
                   maxWidth: '130px',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
+                  alignItems: 'stretch',
                   opacity: styles.opacity,
-                  position: 'relative',
                 }}
               >
+                {/*
+                  Linha | bolinha | linha — a linha NUNCA fica atrás do círculo.
+                */}
                 <div
                   style={{
                     display: 'flex',
@@ -332,24 +345,17 @@ export function CandidateTimeline({
                     width: '100%',
                     height: '40px',
                     marginBottom: '8px',
-                    position: 'relative',
                   }}
                 >
-                  {!isLast ? (
-                    <div
-                      aria-hidden
-                      style={{
-                        position: 'absolute',
-                        left: `calc(50% + ${nodeClear}px)`,
-                        right: `calc(-50% + ${nodeClear}px)`,
-                        top: '50%',
-                        height: '3px',
-                        background: connectorColor,
-                        transform: 'translateY(-50%)',
-                        zIndex: 0,
-                      }}
-                    />
-                  ) : null}
+                  <div
+                    aria-hidden
+                    style={{
+                      flex: 1,
+                      height: '3px',
+                      background: isFirst ? 'transparent' : leftLineColor,
+                      borderRadius: '2px',
+                    }}
+                  />
                   <div
                     title={
                       step.status === 'current'
@@ -364,7 +370,7 @@ export function CandidateTimeline({
                       width: '36px',
                       height: '36px',
                       borderRadius: '50%',
-                      margin: '0 auto',
+                      flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -372,8 +378,6 @@ export function CandidateTimeline({
                       color: styles.nodeColor,
                       border: `2.5px solid ${styles.nodeBorder}`,
                       boxShadow: styles.ring,
-                      zIndex: 1,
-                      position: 'relative',
                     }}
                   >
                     {step.status === 'done' ? (
@@ -384,6 +388,15 @@ export function CandidateTimeline({
                       STAGE_ICONS[step.id]
                     )}
                   </div>
+                  <div
+                    aria-hidden
+                    style={{
+                      flex: 1,
+                      height: '3px',
+                      background: isLast ? 'transparent' : rightLineColor,
+                      borderRadius: '2px',
+                    }}
+                  />
                 </div>
                 <div
                   style={{
@@ -408,11 +421,14 @@ export function CandidateTimeline({
                       color,
                       fontFamily: FONTS.mono,
                       fontWeight: 700,
+                      textAlign: 'center',
                     }}
                   >
                     {t(locale, 'recruiting.timelineNow')}
                   </div>
-                ) : null}
+                ) : (
+                  <div style={{ height: '18px' }} aria-hidden />
+                )}
               </li>
             );
           })}
