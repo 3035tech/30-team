@@ -18,10 +18,19 @@ function pipelineLabel(locale, code) {
   return t(locale, map[code] || 'recruiting.pipelineNew');
 }
 
-function Icon({ children }) {
+function Icon({ children, size = 18 }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {children}
     </svg>
   );
@@ -30,8 +39,9 @@ function Icon({ children }) {
 const ICONS = {
   user: (
     <Icon>
-      <path d="M20 21a8 8 0 0 0-16 0" />
-      <circle cx="12" cy="7" r="4" />
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M19 8v6M22 11h-6" />
     </Icon>
   ),
   briefcase: (
@@ -101,34 +111,19 @@ const ICONS = {
   ),
 };
 
-function metaForEvent(ev, locale) {
+function metaForEvent(ev) {
   if (ev.type === 'pipeline.change') {
     const to = ev.toStage;
-    if (to === 'hired') {
-      return { icon: ICONS.hire, color: PIPELINE_STAGE_COLORS.hired };
-    }
-    if (to === 'rejected') {
-      return { icon: ICONS.reject, color: PIPELINE_STAGE_COLORS.rejected };
-    }
-    if (to === 'interview') {
-      return { icon: ICONS.interview, color: PIPELINE_STAGE_COLORS.interview };
-    }
-    if (to === 'screening') {
-      return { icon: ICONS.screening, color: PIPELINE_STAGE_COLORS.screening };
-    }
-    if (to === 'approved') {
-      return { icon: ICONS.check, color: PIPELINE_STAGE_COLORS.approved };
-    }
+    if (to === 'hired') return { icon: ICONS.hire, color: PIPELINE_STAGE_COLORS.hired };
+    if (to === 'rejected') return { icon: ICONS.reject, color: PIPELINE_STAGE_COLORS.rejected };
+    if (to === 'interview') return { icon: ICONS.interview, color: PIPELINE_STAGE_COLORS.interview };
+    if (to === 'screening') return { icon: ICONS.screening, color: PIPELINE_STAGE_COLORS.screening };
+    if (to === 'approved') return { icon: ICONS.check, color: PIPELINE_STAGE_COLORS.approved };
     if (to === 'test_completed') {
       return { icon: ICONS.clipboard, color: PIPELINE_STAGE_COLORS.test_completed };
     }
-    if (to === 'archived') {
-      return { icon: ICONS.archive, color: PIPELINE_STAGE_COLORS.archived };
-    }
-    return {
-      icon: ICONS.arrow,
-      color: PIPELINE_STAGE_COLORS[to] || C.muted,
-    };
+    if (to === 'archived') return { icon: ICONS.archive, color: PIPELINE_STAGE_COLORS.archived };
+    return { icon: ICONS.arrow, color: PIPELINE_STAGE_COLORS[to] || C.muted };
   }
 
   switch (ev.type) {
@@ -165,15 +160,31 @@ function formatAt(at, locale) {
   if (!at) return '—';
   return new Date(at).toLocaleString(localeHtmlLang(locale), {
     day: '2-digit',
-    month: '2-digit',
+    month: 'short',
     year: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   });
 }
 
+function eventTags(ev, locale) {
+  const tags = [];
+  if (ev.vacancyTitle) tags.push({ label: ev.vacancyTitle, tone: 'default' });
+  if (ev.reason) tags.push({ label: rejectionReasonLabel(locale, ev.reason), tone: 'danger' });
+  if (ev.startDate) {
+    tags.push({
+      label: `${t(locale, 'recruiting.startDateLabel')}: ${ev.startDate}`,
+      tone: 'default',
+    });
+  }
+  if (ev.topType != null) tags.push({ label: `T${ev.topType}`, tone: 'accent' });
+  if (ev.toStage) tags.push({ label: pipelineLabel(locale, ev.toStage), tone: 'stage' });
+  return tags;
+}
+
 /**
- * Linha do tempo visual do candidato (ícones por tipo de evento).
+ * Linha do tempo horizontal do candidato (cards + ícones por evento).
+ * Inspirada em timelines com eixo e cards — adaptada ao painel (scroll horizontal).
  */
 export function CandidateTimeline({ locale = 'pt-BR', events = [], loading = false }) {
   if (loading) {
@@ -188,96 +199,175 @@ export function CandidateTimeline({ locale = 'pt-BR', events = [], loading = fal
   }
 
   return (
-    <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {events.map((ev, i) => {
-        const { icon, color } = metaForEvent(ev, locale);
-        const title = eventTitle(ev, locale);
-        const details = [];
-        if (ev.vacancyTitle) details.push(ev.vacancyTitle);
-        if (ev.reason) details.push(rejectionReasonLabel(locale, ev.reason));
-        if (ev.startDate) details.push(`${t(locale, 'recruiting.startDateLabel')}: ${ev.startDate}`);
-        if (ev.topType != null) details.push(`T${ev.topType}`);
-        const isLast = i === events.length - 1;
+    <div
+      style={{
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        paddingBottom: '6px',
+        margin: '0 -4px',
+      }}
+    >
+      <ol
+        style={{
+          listStyle: 'none',
+          margin: 0,
+          padding: '8px 4px 4px',
+          display: 'flex',
+          alignItems: 'stretch',
+          gap: 0,
+          minWidth: 'min-content',
+        }}
+      >
+        {events.map((ev, i) => {
+          const { icon, color } = metaForEvent(ev);
+          const title = eventTitle(ev, locale);
+          const tags = eventTags(ev, locale);
+          const isLast = i === events.length - 1;
 
-        return (
-          <li
-            key={`${ev.type}-${ev.at || i}-${i}`}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '36px 1fr',
-              gap: '10px',
-              position: 'relative',
-              paddingBottom: isLast ? 0 : '14px',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          return (
+            <li
+              key={`${ev.type}-${ev.at || i}-${i}`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '200px',
+                flexShrink: 0,
+                position: 'relative',
+              }}
+            >
+              {/* eixo + nó */}
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `${color}18`,
-                  border: `1.5px solid ${color}55`,
-                  color,
-                  flexShrink: 0,
-                  zIndex: 1,
+                  height: '40px',
+                  marginBottom: '10px',
+                  position: 'relative',
                 }}
               >
-                {icon}
-              </div>
-              {!isLast ? (
                 <div
                   style={{
-                    width: '2px',
-                    flex: 1,
-                    minHeight: '12px',
-                    marginTop: '4px',
-                    background: `linear-gradient(180deg, ${color}44, ${C.border})`,
-                    borderRadius: '1px',
+                    position: 'absolute',
+                    left: 0,
+                    right: isLast ? '50%' : 0,
+                    top: '50%',
+                    height: '2px',
+                    background: C.border,
+                    transform: 'translateY(-50%)',
                   }}
                 />
-              ) : null}
-            </div>
-            <div style={{ paddingTop: '4px', minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontFamily: FONTS.mono,
-                  color: C.faint,
-                  marginBottom: '2px',
-                }}
-              >
-                {formatAt(ev.at, locale)}
-              </div>
-              <div
-                style={{
-                  fontSize: '13px',
-                  color: C.text,
-                  lineHeight: 1.45,
-                  fontWeight: 500,
-                }}
-              >
-                {title}
-              </div>
-              {details.length ? (
+                {i > 0 ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      width: '50%',
+                      top: '50%',
+                      height: '2px',
+                      background: C.border,
+                      transform: 'translateY(-50%)',
+                    }}
+                  />
+                ) : null}
                 <div
                   style={{
-                    marginTop: '3px',
-                    fontSize: '12px',
-                    color: C.muted,
-                    lineHeight: 1.45,
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    margin: '0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: color,
+                    color: '#fff',
+                    boxShadow: `0 0 0 4px ${C.surface || '#fff'}, 0 2px 8px ${color}44`,
+                    zIndex: 1,
+                    position: 'relative',
                   }}
                 >
-                  {details.join(' · ')}
+                  {icon}
                 </div>
-              ) : null}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+              </div>
+
+              {/* card */}
+              <div
+                style={{
+                  margin: '0 8px',
+                  borderRadius: '12px',
+                  border: `1px solid ${C.border}`,
+                  background: '#fff',
+                  boxShadow: '0 4px 14px rgba(26,22,37,.06)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: '140px',
+                  flex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    background: 'rgba(26,22,37,.04)',
+                    borderBottom: `1px solid ${C.border}`,
+                    fontSize: '11px',
+                    fontFamily: FONTS.mono,
+                    color: C.muted,
+                    textAlign: 'center',
+                  }}
+                >
+                  {formatAt(ev.at, locale)}
+                </div>
+                <div style={{ padding: '12px 12px 10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: C.text,
+                      lineHeight: 1.35,
+                      textAlign: 'center',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    {title}
+                  </div>
+                  {tags.length ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '4px',
+                        justifyContent: 'center',
+                        marginTop: 'auto',
+                      }}
+                    >
+                      {tags.map((tag) => (
+                        <span
+                          key={`${tag.label}-${tag.tone}`}
+                          style={{
+                            fontSize: '10px',
+                            fontFamily: FONTS.mono,
+                            padding: '3px 8px',
+                            borderRadius: '999px',
+                            background: tag.tone === 'danger' ? `${C.tension}14` : `${color}14`,
+                            color: tag.tone === 'danger' ? C.tension : color,
+                            border: `1px solid ${tag.tone === 'danger' ? `${C.tension}33` : `${color}33`}`,
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {tag.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
