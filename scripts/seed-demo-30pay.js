@@ -1,21 +1,20 @@
 /**
- * Seed DEMO isolado — empresa 30pay
+ * Seed DEMO isolado — empresa 30pay-demo
  *
- * Cria/recria APENAS o tenant slug=30pay (não mexe em outras empresas).
- * Cobre: login RH, Equipe, Compat (tensão/sinergia), Vagas/kanban, Motivadores,
- * People 1:1, notas HTML, timeline, relatório cliente /r.
+ * Cria/recria APENAS o tenant slug=30pay-demo (nunca apaga outras empresas).
+ * ATENÇÃO: o purge apaga TODOS os dados desse slug. Não use slug de empresa real.
  *
  * Pré-requisitos:
  *   - migrations aplicadas
  *   - areas populadas
- *   - opcional: npm run db:seed-motivators (se ae_definitions.motivators não existir, o script avisa)
+ *   - opcional: npm run db:seed-motivators
  *
- * Uso:
- *   node --env-file=.env scripts/seed-demo-30pay.js
- *   # ou com POSTGRES_* no ambiente
- *   npm run db:seed-demo-30pay
+ * Uso (confirmação obrigatória):
+ *   CONFIRM_DEMO_PURGE=1 npm run db:seed-demo-30pay
+ *   # ou: CONFIRM_DEMO_PURGE=1 node --env-file=.env scripts/seed-demo-30pay.js
  *
  * Alternativa SQL (pgAdmin): scripts/seed-demo-30pay.sql
+ *   (exige set_config app.allow_demo_purge = yes na mesma sessão)
  *
  * Login demo:
  *   email:    hr@30pay.demo
@@ -27,6 +26,7 @@ import process from 'node:process';
 import { createRequire } from 'node:module';
 import { getPgBaseConfig } from '../lib/pg-config.js';
 import { MOTIVATORS_DIMENSIONS } from '../lib/ae/motivators-dimensions.js';
+import { AE_SCORING_ENGINE_VERSION } from '../lib/ae/ae-id.js';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
@@ -36,11 +36,13 @@ async function hashPassword(password) {
   return bcrypt.hash(password, 10);
 }
 
-const SLUG = '30pay';
-const COMPANY_NAME = '30pay';
+/** Slug dedicado ao mock — NÃO usar '30pay' (pode ser empresa real). */
+const SLUG = '30pay-demo';
+const COMPANY_NAME = '30pay (demo)';
 const HR_EMAIL = 'hr@30pay.demo';
 const HR_PASSWORD = process.env.DEMO_30PAY_PASSWORD || 'Demo30pay!2026';
 const DOMAIN = '30pay.demo';
+const LEGACY_DEMO_SLUGS = ['30pay-demo']; // só estes são elegíveis a purge
 
 function token(bytes = 24) {
   return crypto.randomBytes(bytes).toString('hex');
@@ -313,8 +315,34 @@ const EXTRA_APPLICANTS = [
   },
 ];
 
+async function assertSafePurgeTarget(client, companyId, slug) {
+  if (!LEGACY_DEMO_SLUGS.includes(String(slug || '').toLowerCase())) {
+    throw new Error(
+      `Recusa de purge: slug "${slug}" não é tenant demo permitido (${LEGACY_DEMO_SLUGS.join(', ')}).`
+    );
+  }
+  const check = await client.query(
+    `SELECT c.id, c.slug, c.name,
+            (SELECT COUNT(*)::int FROM candidates x WHERE x.company_id = c.id) AS candidates,
+            (SELECT COUNT(*)::int FROM users u WHERE u.company_id = c.id AND u.email NOT ILIKE '%.demo') AS non_demo_users
+     FROM companies c WHERE c.id = $1`,
+    [companyId]
+  );
+  if (!check.rowCount) return;
+  const row = check.rows[0];
+  if (row.non_demo_users > 0) {
+    throw new Error(
+      `Recusa de purge: company_id=${companyId} tem usuário(s) sem e-mail *.demo. ` +
+        `Parece tenant real — não apago.`
+    );
+  }
+  console.log(
+    `↻ Purge demo id=${row.id} slug=${row.slug} (candidatos=${row.candidates})…`
+  );
+}
+
 async function purgeCompany(client, companyId) {
-  // Ordem segura (FKs). Escopo: só este company_id.
+  // Ordem segura (FKs). Escopo: só este company_id (nunca sem filtro).
   await client.query(`DELETE FROM vacancy_report_shares WHERE company_id = $1`, [companyId]);
   await client.query(`DELETE FROM one_on_ones WHERE company_id = $1`, [companyId]);
   await client.query(`DELETE FROM ae_attempts WHERE company_id = $1`, [companyId]);
@@ -353,6 +381,19 @@ async function purgeCompany(client, companyId) {
 }
 
 async function main() {
+  if (process.env.CONFIRM_DEMO_PURGE !== '1') {
+    console.error(`
+ABORTADO — seed demo é destrutivo para o tenant slug=${SLUG}.
+
+Não apaga outras empresas, mas remove TODO o conteúdo desse slug.
+
+Para confirmar (só em banco de demo / staging):
+  CONFIRM_DEMO_PURGE=1 npm run db:seed-demo-30pay
+`);
+    process.exitCode = 1;
+    return;
+  }
+
   const client = new Client(getPgBaseConfig());
   await client.connect();
 
@@ -370,11 +411,11 @@ async function main() {
   await client.query('BEGIN');
   try {
     const existing = await client.query(
-      `SELECT id FROM companies WHERE LOWER(slug) = LOWER($1) AND deleted = FALSE LIMIT 1`,
+      `SELECT id, slug FROM companies WHERE LOWER(slug) = LOWER($1) AND deleted = FALSE LIMIT 1`,
       [SLUG]
     );
     if (existing.rowCount) {
-      console.log(`↻ Removendo tenant demo anterior id=${existing.rows[0].id}…`);
+      await assertSafePurgeTarget(client, existing.rows[0].id, existing.rows[0].slug);
       await purgeCompany(client, existing.rows[0].id);
     }
 
@@ -573,7 +614,7 @@ async function main() {
            ) VALUES (
              $1,$2,$3,$4,'completed',
              NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days',
-             $5::jsonb, $6::jsonb, $7, 'demo-seed'
+             $5::jsonb, $6::jsonb, $7, $8
            )`,
           [
             motivatorsDefId,
@@ -583,6 +624,8 @@ async function main() {
             JSON.stringify(dimensionScores),
             JSON.stringify(ranking),
             `Demo: tende a buscar ${p.motivators.slice(0, 2).join(' e ')} no dia a dia.`,
+            // Mesma versão do motor → detalhe admin não tenta rescore (question_ids vazios no mock).
+            AE_SCORING_ENGINE_VERSION,
           ]
         );
       }
@@ -658,9 +701,9 @@ async function main() {
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 
     console.log('\n══════════════════════════════════════════════════');
-    console.log('  DEMO 30pay pronta (tenant isolado)');
+    console.log('  DEMO 30pay-demo pronta (tenant isolado)');
     console.log('══════════════════════════════════════════════════');
-    console.log(`  Empresa:     ${COMPANY_NAME} (id=${companyId})`);
+    console.log(`  Empresa:     ${COMPANY_NAME} slug=${SLUG} (id=${companyId})`);
     console.log(`  Login HR:    ${HR_EMAIL}`);
     console.log(`  Senha:       ${HR_PASSWORD}`);
     console.log(`  Pessoas:     ${created.length} (Equipe + kanban)`);

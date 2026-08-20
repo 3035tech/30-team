@@ -1,5 +1,5 @@
 -- =============================================================================
--- DEMO 30pay — seed SQL isolado (só este tenant)
+-- DEMO 30pay — seed SQL isolado (só tenant slug = 30pay-demo)
 -- =============================================================================
 -- Login:  hr@30pay.demo
 -- Senha:  Demo30pay!2026
@@ -7,14 +7,18 @@
 -- Pré-requisitos: migrations aplicadas; tabela areas populada.
 -- Motivadores: se existir ae_definitions.slug = motivators, preenche ae_attempts.
 --
--- Idempotente: remove empresa slug=30pay (e dependências) e recria.
--- Rodar no pgAdmin / psql em uma única execução (BEGIN…COMMIT).
+-- DESTRUTIVO só para slug=30pay-demo (não apaga outras empresas).
+-- NÃO use slug de empresa real.
+-- SEGURANÇA: no DO block, altere v_i_confirm_purge para TRUE antes de executar.
 -- =============================================================================
 
 BEGIN;
 
 DO $demo$
 DECLARE
+  -- >>> mude para TRUE só em banco de demo / staging <<<
+  v_i_confirm_purge BOOLEAN := FALSE;
+
   v_company_id   BIGINT;
   v_user_id      BIGINT;
   v_vacancy_id   BIGINT;
@@ -23,18 +27,36 @@ DECLARE
   v_ass_id       BIGINT;
   v_vc_id        BIGINT;
   v_area_id      INT;
+  v_non_demo     INT;
   v_company_tok  TEXT := 'a1b2c3d4e5f60718293a4b5c6d7e8f9011';
   v_vacancy_tok  TEXT := 'b2c3d4e5f60718293a4b5c6d7e8f901122';
   v_report_tok   TEXT := 'c3d4e5f60718293a4b5c6d7e8f90112233';
   v_pwd_hash     TEXT := '$2a$10$3CzxuPoTExWX4rxbO9vfxOWc/1Y2GSEJwznek27JCZ3Tc5.nQ61p2';
 BEGIN
-  -- ---------- purge tenant 30pay ----------
+  IF NOT v_i_confirm_purge THEN
+    RAISE EXCEPTION
+      'ABORTADO: defina v_i_confirm_purge := TRUE no DO block. '
+      'Isto apaga apenas o tenant slug=30pay-demo e recria mock.';
+  END IF;
+
+  -- ---------- purge tenant 30pay-demo ONLY ----------
   SELECT id INTO v_company_id
   FROM companies
-  WHERE LOWER(slug) = '30pay' AND deleted = FALSE
+  WHERE LOWER(slug) = '30pay-demo' AND deleted = FALSE
   LIMIT 1;
 
   IF v_company_id IS NOT NULL THEN
+    SELECT COUNT(*)::int INTO v_non_demo
+    FROM users
+    WHERE company_id = v_company_id
+      AND email NOT ILIKE '%.demo';
+
+    IF v_non_demo > 0 THEN
+      RAISE EXCEPTION
+        'ABORTADO: company_id=% parece tenant real (usuários sem e-mail *.demo).',
+        v_company_id;
+    END IF;
+
     DELETE FROM vacancy_report_shares WHERE company_id = v_company_id;
     DELETE FROM one_on_ones WHERE company_id = v_company_id;
     DELETE FROM ae_attempts WHERE company_id = v_company_id;
@@ -70,7 +92,7 @@ BEGIN
 
   -- ---------- company + HR user + links ----------
   INSERT INTO companies (name, slug, active, deleted)
-  VALUES ('30pay', '30pay', TRUE, FALSE)
+  VALUES ('30pay (demo)', '30pay-demo', TRUE, FALSE)
   RETURNING id INTO v_company_id;
 
   INSERT INTO users (company_id, email, password_hash, role, locale, active, deleted)
@@ -154,7 +176,7 @@ BEGIN
       '{"reconhecimento":40,"financeiro":45,"crescimento":55,"desenvolvimento":78,"autonomia":50,"flexibilidade":48,"proposito":82,"relacionamentos":52,"seguranca":90,"lideranca":35,"desafio":44,"criatividade":30,"equilibrio":60}'::jsonb,
       '["seguranca","proposito","desenvolvimento","crescimento","equilibrio","relacionamentos","autonomia","flexibilidade","financeiro","desafio","reconhecimento","lideranca","criatividade"]'::jsonb,
       'Demo: tende a buscar segurança e propósito no dia a dia.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -208,7 +230,7 @@ BEGIN
       '{"reconhecimento":48,"financeiro":35,"crescimento":50,"desenvolvimento":55,"autonomia":42,"flexibilidade":60,"proposito":80,"relacionamentos":92,"seguranca":58,"lideranca":40,"desafio":38,"criatividade":45,"equilibrio":85}'::jsonb,
       '["relacionamentos","equilibrio","proposito","flexibilidade","seguranca","desenvolvimento","crescimento","reconhecimento","criatividade","autonomia","lideranca","desafio","financeiro"]'::jsonb,
       'Demo: tende a buscar relacionamentos e equilíbrio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -262,7 +284,7 @@ BEGIN
       '{"reconhecimento":90,"financeiro":82,"crescimento":70,"desenvolvimento":48,"autonomia":55,"flexibilidade":50,"proposito":40,"relacionamentos":45,"seguranca":35,"lideranca":68,"desafio":88,"criatividade":42,"equilibrio":30}'::jsonb,
       '["reconhecimento","desafio","financeiro","lideranca","crescimento","autonomia","flexibilidade","desenvolvimento","relacionamentos","criatividade","proposito","seguranca","equilibrio"]'::jsonb,
       'Demo: tende a buscar reconhecimento e desafio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -341,7 +363,7 @@ BEGIN
       '{"reconhecimento":35,"financeiro":40,"crescimento":80,"desenvolvimento":70,"autonomia":92,"flexibilidade":55,"proposito":48,"relacionamentos":38,"seguranca":60,"lideranca":42,"desafio":85,"criatividade":50,"equilibrio":45}'::jsonb,
       '["autonomia","desafio","crescimento","desenvolvimento","seguranca","flexibilidade","criatividade","proposito","equilibrio","lideranca","financeiro","relacionamentos","reconhecimento"]'::jsonb,
       'Demo: tende a buscar autonomia e desafio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -388,7 +410,7 @@ BEGIN
       '{"reconhecimento":40,"financeiro":42,"crescimento":50,"desenvolvimento":55,"autonomia":48,"flexibilidade":52,"proposito":58,"relacionamentos":80,"seguranca":90,"lideranca":35,"desafio":45,"criatividade":32,"equilibrio":85}'::jsonb,
       '["seguranca","equilibrio","relacionamentos","proposito","desenvolvimento","flexibilidade","crescimento","autonomia","desafio","financeiro","reconhecimento","lideranca","criatividade"]'::jsonb,
       'Demo: tende a buscar segurança e equilíbrio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -427,7 +449,7 @@ BEGIN
       '{"reconhecimento":55,"financeiro":50,"crescimento":90,"desenvolvimento":60,"autonomia":70,"flexibilidade":88,"proposito":45,"relacionamentos":52,"seguranca":30,"lideranca":48,"desafio":85,"criatividade":65,"equilibrio":40}'::jsonb,
       '["crescimento","flexibilidade","desafio","autonomia","criatividade","desenvolvimento","reconhecimento","relacionamentos","financeiro","lideranca","proposito","equilibrio","seguranca"]'::jsonb,
       'Demo: tende a buscar crescimento e flexibilidade.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -473,7 +495,7 @@ BEGIN
       '{"reconhecimento":60,"financeiro":85,"crescimento":70,"desenvolvimento":45,"autonomia":75,"flexibilidade":40,"proposito":38,"relacionamentos":42,"seguranca":50,"lideranca":95,"desafio":88,"criatividade":35,"equilibrio":28}'::jsonb,
       '["lideranca","desafio","financeiro","autonomia","crescimento","reconhecimento","seguranca","desenvolvimento","relacionamentos","flexibilidade","proposito","criatividade","equilibrio"]'::jsonb,
       'Demo: tende a buscar liderança e desafio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -520,7 +542,7 @@ BEGIN
       '{"reconhecimento":42,"financeiro":38,"crescimento":50,"desenvolvimento":55,"autonomia":48,"flexibilidade":60,"proposito":80,"relacionamentos":90,"seguranca":58,"lideranca":30,"desafio":35,"criatividade":45,"equilibrio":88}'::jsonb,
       '["relacionamentos","equilibrio","proposito","flexibilidade","seguranca","desenvolvimento","crescimento","criatividade","autonomia","reconhecimento","financeiro","desafio","lideranca"]'::jsonb,
       'Demo: tende a buscar relacionamentos e equilíbrio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -570,7 +592,7 @@ BEGIN
       '{"reconhecimento":40,"financeiro":55,"crescimento":82,"desenvolvimento":68,"autonomia":90,"flexibilidade":60,"proposito":45,"relacionamentos":40,"seguranca":50,"lideranca":38,"desafio":85,"criatividade":48,"equilibrio":42}'::jsonb,
       '["autonomia","desafio","crescimento","desenvolvimento","flexibilidade","financeiro","seguranca","criatividade","proposito","equilibrio","reconhecimento","relacionamentos","lideranca"]'::jsonb,
       'Demo: candidato — autonomia e desafio.',
-      'demo-seed'
+      'ae-scoring-v2'
     );
   END IF;
 
@@ -679,7 +701,7 @@ BEGIN
     v_user_id
   );
 
-  RAISE NOTICE 'DEMO 30pay OK — company_id=% | login hr@30pay.demo / Demo30pay!2026', v_company_id;
+  RAISE NOTICE 'DEMO 30pay-demo OK — company_id=% | login hr@30pay.demo / Demo30pay!2026', v_company_id;
   RAISE NOTICE 'Tokens: /t/%  /v/%  /r/%', v_company_tok, v_vacancy_tok, v_report_tok;
   IF v_def_id IS NULL THEN
     RAISE NOTICE 'Motivadores NÃO seedados (rode seed de ae_definitions/questions se quiser hipóteses).';
@@ -690,7 +712,7 @@ $demo$;
 COMMIT;
 
 -- Conferência:
--- SELECT id, name, slug FROM companies WHERE slug = '30pay';
+-- SELECT id, name, slug FROM companies WHERE slug = '30pay-demo';
 -- SELECT email, role FROM users WHERE email = 'hr@30pay.demo';
 -- SELECT full_name, employment_status FROM candidates c
---   JOIN companies co ON co.id = c.company_id WHERE co.slug = '30pay';
+--   JOIN companies co ON co.id = c.company_id WHERE co.slug = '30pay-demo';
