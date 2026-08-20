@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { t, localeHtmlLang } from '../../../lib/i18n';
-import { C } from '../../../lib/theme';
-import { S } from '../../dashboard/dashboard-shared';
+import { t, localeHtmlLang } from '../../lib/i18n';
+import { C } from '../../lib/theme';
+import { S } from '../dashboard/dashboard-shared';
 
 function todayIso() {
   const d = new Date();

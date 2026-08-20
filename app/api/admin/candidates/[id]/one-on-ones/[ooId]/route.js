@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../../../lib/db';
-import { apiError } from '../../../../../../lib/api-error';
-import { audit } from '../../../../../../lib/audit';
+import { query } from '../../../../../../../lib/db';
+import { apiError } from '../../../../../../../lib/api-error';
+import { audit } from '../../../../../../../lib/audit';
 import {
   getManagerScope,
   getSessionPayload,
   requireManagerRole,
-} from '../../../../../../lib/ae/require-admin';
-import { deleteOneOnOne, updateOneOnOne } from '../../../../../../lib/people/one-on-ones';
+} from '../../../../../../../lib/ae/require-admin';
+import { deleteOneOnOne, updateOneOnOne } from '../../../../../../../lib/people/one-on-ones';
 
 async function assertOwned(oneOnOneId, scope) {
   const res = await query(
