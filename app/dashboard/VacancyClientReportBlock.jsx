@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
+import { RichTextEditor } from '../_components/RichTextEditor';
 
 const REPORT_EXPIRY_DAYS = [7, 14, 30];
 const DEFAULT_REPORT_EXPIRY_DAYS = 14;
@@ -264,19 +265,15 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
             </select>
           </div>
 
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t(locale, 'panel.report.notePlaceholder')}
-            rows={3}
-            style={{
-              ...S.select,
-              width: '100%',
-              marginTop: '10px',
-              resize: 'vertical',
-              fontFamily: 'Georgia, serif',
-            }}
-          />
+          <div style={{ marginTop: '10px' }}>
+            <RichTextEditor
+              value={note}
+              onChange={setNote}
+              placeholder={t(locale, 'panel.report.notePlaceholder')}
+              minHeight={90}
+              locale={locale}
+            />
+          </div>
 
           <div style={{ marginTop: '12px', maxHeight: '240px', overflow: 'auto', border: `1px solid ${C.border}`, borderRadius: '10px' }}>
             {loading ? (

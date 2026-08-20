@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { t } from '../../lib/i18n';
+import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { C } from '../../lib/theme';
 
 function ToolbarButton({ label, title, onClick }) {
@@ -31,7 +32,7 @@ function ToolbarButton({ label, title, onClick }) {
 }
 
 /**
- * Editor rico leve (negrito, itálico, listas) para anotações de entrevista.
+ * Editor rico leve (negrito, itálico, listas) para notas livres.
  * Valor em HTML; onChange recebe HTML.
  */
 export function RichTextEditor({
@@ -40,6 +41,7 @@ export function RichTextEditor({
   placeholder,
   minHeight = 140,
   locale = 'pt-BR',
+  'aria-label': ariaLabel,
 }) {
   const ref = useRef(null);
   const lastHtml = useRef('');
@@ -69,7 +71,7 @@ export function RichTextEditor({
     onChange?.(html);
   };
 
-  const isEmpty = !value || value === '<br>' || value === '<p><br></p>' || value === '<div><br></div>';
+  const isEmpty = isRichTextEmpty(value);
 
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden', background: 'rgba(255,255,255,.55)' }}>
@@ -125,7 +127,7 @@ export function RichTextEditor({
           contentEditable
           role="textbox"
           aria-multiline="true"
-          aria-label={ph}
+          aria-label={ariaLabel || ph}
           onInput={emit}
           onBlur={emit}
           style={{

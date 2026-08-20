@@ -8,6 +8,7 @@ import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile'
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
 import { buildCandidatePeopleBrief } from '../../../../../lib/people/candidate-people-brief';
+import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/sanitize-html';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -173,9 +174,12 @@ export async function PATCH(request, { params }) {
     sqlParams.push(name);
   }
   if (hasHrNotes) {
-    const notes = body.hrNotes !== null ? String(body.hrNotes).slice(0, 4000) : null;
+    const notes =
+      body.hrNotes == null || body.hrNotes === ''
+        ? null
+        : sanitizeRichTextHtml(body.hrNotes, 20_000);
     sets.push(`hr_notes = $${n++}`);
-    sqlParams.push(notes || null);
+    sqlParams.push(notes && !isRichTextEmpty(notes) ? notes : null);
   }
   if (body.phone !== undefined || body.telefone !== undefined) {
     sets.push(`phone = $${n++}`);

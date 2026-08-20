@@ -24,6 +24,7 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Cores/status via `lib/theme.js` (`C`) — roxo da marca não é cor de pipeline
 - SQL parametrizado; `query` vs `queryRead`
 - Perfil: linguagem “tende a”; hipóteses ≠ diagnóstico
+- **Reutilizar antes de criar** — buscar em `app/_components` / `lib/` / `dashboard-shared`; só criar o novo se nada servir (ver `.cursor/rules/reuse-before-create.mdc`)
 
 ## Proibido
 - Conta de candidato (acesso é por token `/t` `/v` `/r`)
@@ -32,3 +33,4 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Commit sem pedido explícito; não commitar `.env`
 - Carregar dados de todas as abas do dashboard em todo request
 - Apagar `ae_questions` com tentativas existentes (desativar/sync em vez de DELETE)
+- Duplicar componentes/helpers que já existem (ex.: segundo editor rico)

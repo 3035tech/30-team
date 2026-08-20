@@ -14,27 +14,12 @@ import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-s
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
+import { RichTextView } from '../../_components/RichTextView';
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
-import { sanitizeInterviewNotesHtml } from '../../../lib/sanitize-html';
+import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
-
-function htmlToPlainText(html) {
-  if (!html) return '';
-  return String(html)
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -46,18 +31,14 @@ function formatVacancySalaryRange(locale, min, max) {
 }
 
 function VacancyDescriptionHtml({ html }) {
-  const safe = sanitizeInterviewNotesHtml(html);
-  if (!safe) return null;
   return (
-    <div
+    <RichTextView
+      html={html}
       style={{
         marginTop: '12px',
         fontSize: '13px',
-        color: C.text,
         lineHeight: 1.65,
-        fontFamily: 'Georgia, serif',
       }}
-      dangerouslySetInnerHTML={{ __html: safe }}
     />
   );
 }

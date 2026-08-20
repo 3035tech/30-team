@@ -12,6 +12,7 @@ import {
   sqlWhere,
 } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
+import { htmlToPlainText } from '../../../../lib/sanitize-html';
 
 function csvEscape(value) {
   const s = String(value ?? '');
@@ -129,7 +130,7 @@ export async function GET(request) {
         csvEscape(row.area_label),
         row.top_type,
         csvEscape(row.pipeline_stage || ''),
-        csvEscape(row.hr_notes || ''),
+        csvEscape(htmlToPlainText(row.hr_notes || '')),
         csvEscape(JSON.stringify(row.scores)),
         row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
       ].join(',')

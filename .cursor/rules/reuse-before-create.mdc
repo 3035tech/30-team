@@ -1,0 +1,16 @@
+---
+description: Sempre reutilizar componentes/helpers existentes antes de criar novos
+alwaysApply: true
+---
+
+# Reutilizar antes de criar
+
+Antes de implementar UI ou helper novo:
+
+1. **Buscar no repo** (grep/`app/_components`, `lib/`, `dashboard-shared`) se já existe algo equivalente.
+2. **Preferir reutilizar** e estender (props, i18n, sanitização) em vez de duplicar.
+3. **Só criar componente/arquivo novo** se nada servir — e documentar no PR/resumo por quê.
+4. Notas / texto livre com marcação → `RichTextEditor` + `RichTextView` + `lib/sanitize-html.js` (não outro editor).
+5. Cores, labels, pipeline, filtros → tokens/`lib/` existentes; não copiar entre tabs.
+
+Exemplo: pedido de “negrito nas notas” → localizar `RichTextEditor` e plugar nos campos que ainda usam `<textarea>`, não reinventar toolbar.

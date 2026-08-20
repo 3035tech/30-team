@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { C } from '../../lib/theme';
+import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { S } from '../dashboard/dashboard-shared';
+import { RichTextEditor } from './RichTextEditor';
+import { RichTextView } from './RichTextView';
 
 function todayIso() {
   const d = new Date();
@@ -54,7 +57,7 @@ export function PeopleManagementPanel({
   const topMot = management?.motivators?.top || [];
 
   const save = async () => {
-    if (!candidateId || !notes.trim()) return;
+    if (!candidateId || isRichTextEmpty(notes)) return;
     setBusy(true);
     setMsg('');
     try {
@@ -236,54 +239,34 @@ export function PeopleManagementPanel({
               }}
             />
           </label>
-          <label style={{ fontSize: '12px', color: C.muted }}>
+          <label style={{ fontSize: '12px', color: C.muted, display: 'block' }}>
             {t(locale, 'panel.team.oneOnOneNotes')}
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder={t(locale, 'panel.team.oneOnOneNotesPlaceholder')}
-              style={{
-                display: 'block',
-                marginTop: '4px',
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                background: C.card,
-                color: C.text,
-                fontFamily: 'inherit',
-                resize: 'vertical',
-              }}
-            />
+            <div style={{ marginTop: '4px' }}>
+              <RichTextEditor
+                value={notes}
+                onChange={setNotes}
+                placeholder={t(locale, 'panel.team.oneOnOneNotesPlaceholder')}
+                minHeight={100}
+                locale={locale}
+              />
+            </div>
           </label>
-          <label style={{ fontSize: '12px', color: C.muted }}>
+          <label style={{ fontSize: '12px', color: C.muted, display: 'block' }}>
             {t(locale, 'panel.team.oneOnOneNextSteps')}
-            <textarea
-              value={nextSteps}
-              onChange={(e) => setNextSteps(e.target.value)}
-              rows={2}
-              placeholder={t(locale, 'panel.team.oneOnOneNextStepsPlaceholder')}
-              style={{
-                display: 'block',
-                marginTop: '4px',
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                background: C.card,
-                color: C.text,
-                fontFamily: 'inherit',
-                resize: 'vertical',
-              }}
-            />
+            <div style={{ marginTop: '4px' }}>
+              <RichTextEditor
+                value={nextSteps}
+                onChange={setNextSteps}
+                placeholder={t(locale, 'panel.team.oneOnOneNextStepsPlaceholder')}
+                minHeight={80}
+                locale={locale}
+              />
+            </div>
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               type="button"
-              disabled={busy || !notes.trim()}
+              disabled={busy || isRichTextEmpty(notes)}
               onClick={save}
               style={{
                 background: C.purple,
@@ -292,8 +275,8 @@ export function PeopleManagementPanel({
                 borderRadius: '8px',
                 padding: '8px 14px',
                 fontSize: '13px',
-                cursor: busy || !notes.trim() ? 'default' : 'pointer',
-                opacity: busy || !notes.trim() ? 0.5 : 1,
+                cursor: busy || isRichTextEmpty(notes) ? 'default' : 'pointer',
+                opacity: busy || isRichTextEmpty(notes) ? 0.5 : 1,
                 fontFamily: 'inherit',
               }}
             >
@@ -342,13 +325,13 @@ export function PeopleManagementPanel({
                     {t(locale, 'panel.team.oneOnOneDelete')}
                   </button>
                 </div>
-                <div style={{ fontSize: '13px', color: C.text, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                  {item.notes}
-                </div>
-                {item.nextSteps ? (
-                  <div style={{ marginTop: '6px', fontSize: '12px', color: C.muted, lineHeight: 1.5 }}>
-                    <strong style={{ color: C.text }}>{t(locale, 'panel.team.oneOnOneNextSteps')}: </strong>
-                    {item.nextSteps}
+                <RichTextView html={item.notes} />
+                {!isRichTextEmpty(item.nextSteps) ? (
+                  <div style={{ marginTop: '6px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '2px' }}>
+                      {t(locale, 'panel.team.oneOnOneNextSteps')}
+                    </div>
+                    <RichTextView html={item.nextSteps} style={{ fontSize: '12px', color: C.muted }} />
                   </div>
                 ) : null}
               </div>

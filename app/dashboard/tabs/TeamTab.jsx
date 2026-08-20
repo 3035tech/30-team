@@ -15,6 +15,9 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
+import { RichTextEditor } from '../../_components/RichTextEditor';
+import { RichTextView } from '../../_components/RichTextView';
+import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 
 function nearbyCluster(scores) {
@@ -1213,16 +1216,15 @@ export function TeamTab({
                         style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
                           background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
                       >
-                        {detail?.candidate?.hrNotes ? t(locale, 'panel.team.editNote') : t(locale, 'panel.team.addNote')}
+                        {detail?.candidate?.hrNotes && !isRichTextEmpty(detail.candidate.hrNotes)
+                          ? t(locale, 'panel.team.editNote')
+                          : t(locale, 'panel.team.addNote')}
                       </button>
                     )}
                   </div>
                   {!notesEditing ? (
-                    detail?.candidate?.hrNotes ? (
-                      <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.6,
-                        whiteSpace: 'pre-wrap', fontFamily: "'Georgia',serif" }}>
-                        {detail.candidate.hrNotes}
-                      </p>
+                    !isRichTextEmpty(detail?.candidate?.hrNotes) ? (
+                      <RichTextView html={detail.candidate.hrNotes} />
                     ) : (
                       <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
                         {t(locale, 'panel.team.noNotes')}
@@ -1230,17 +1232,16 @@ export function TeamTab({
                     )
                   ) : (
                     <div>
-                      <textarea
-                        value={notesDraft}
-                        onChange={(e) => setNotesDraft(e.target.value)}
-                        rows={4}
-                        placeholder={t(locale, 'panel.team.notesPlaceholder')}
-                        aria-label={t(locale, 'panel.team.notesAria')}
-                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px',
-                          borderRadius: '8px', border: `1px solid ${C.border}`, fontSize: '13px',
-                          fontFamily: "'Georgia',serif", background: 'rgba(26,22,37,.03)',
-                          color: C.text, resize: 'vertical', marginBottom: '8px' }}
-                      />
+                      <div style={{ marginBottom: '8px' }}>
+                        <RichTextEditor
+                          value={notesDraft}
+                          onChange={setNotesDraft}
+                          placeholder={t(locale, 'panel.team.notesPlaceholder')}
+                          aria-label={t(locale, 'panel.team.notesAria')}
+                          minHeight={120}
+                          locale={locale}
+                        />
+                      </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <button
                           type="button"

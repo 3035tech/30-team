@@ -7,6 +7,8 @@ import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../../lib/theme';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
+import { RichTextView } from '../../_components/RichTextView';
+import { isRichTextEmpty } from '../../../lib/sanitize-html';
 
 function ScoreBars({ scores }) {
   const entries = [];
@@ -163,7 +165,7 @@ function ReportInner() {
         </p>
       </header>
 
-      {note ? (
+      {!isRichTextEmpty(note) ? (
         <section
           style={{
             marginBottom: '24px',
@@ -176,7 +178,7 @@ function ReportInner() {
           <p style={{ margin: '0 0 6px', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: C.sectionLabel, fontFamily: FONTS.mono }}>
             {t(locale, 'panel.report.executiveNote')}
           </p>
-          <p style={{ margin: 0, fontSize: '14px', color: C.text, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{note}</p>
+          <RichTextView html={note} style={{ fontSize: '14px', margin: 0 }} />
         </section>
       ) : null}
 

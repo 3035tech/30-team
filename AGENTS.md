@@ -74,8 +74,13 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) em v
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
 | Nomes de arquivo/export em inglês | Pastas novas fora de `app/` / `lib/` / `migrations/` |
+| **Reutilizar** componente/helper existente (`app/_components`, `lib/`, `dashboard-shared`) | Criar duplicata; só criar o novo se a busca no repo não achar equivalente |
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
+
+**Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
+
+Antes de implementar feature de UI: **grep** por nomes óbvios (`RichText`, `TypeBadge`, `sanitize`, etc.) e ler usos existentes. Estender o que já existe > copiar > criar do zero.
 
 ## i18n
 
@@ -107,6 +112,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não commitar `.env`, senhas, `node_modules`
 - Não commitar salvo pedido explícito do usuário
 - Não refatorar fora do escopo do pedido
+- Não duplicar componentes ou helpers que já existem no repo (reutilizar / estender primeiro)
 
 ## Arquivos por tipo de tarefa
 
@@ -120,6 +126,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
 | Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
+| Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Cores / marca | `lib/theme.js`, `lib/brand.js` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
