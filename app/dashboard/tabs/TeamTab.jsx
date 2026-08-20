@@ -880,7 +880,7 @@ export function TeamTab({
                 ) : null}
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-                  <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
+                  <span style={{ ...S.label, marginBottom: '8px', display: 'block', textAlign: 'center' }}>{t(locale, 'recruiting.timelineTitle')}</span>
                   <CandidateTimeline
                     locale={locale}
                     loading={detailLoading}

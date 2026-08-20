@@ -260,13 +260,14 @@ export function CandidateTimeline({
   );
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: '12px 16px',
           marginBottom: '14px',
+          justifyContent: 'center',
         }}
       >
         <LegendDot color={C.success} label={t(locale, 'recruiting.timelineLegendDone')} />
@@ -285,7 +286,9 @@ export function CandidateTimeline({
         style={{
           overflowX: 'auto',
           padding: '10px 4px 4px',
-          margin: '0 -4px',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         <ol
@@ -295,7 +298,9 @@ export function CandidateTimeline({
             padding: '4px 0 0',
             display: 'flex',
             alignItems: 'flex-start',
+            justifyContent: 'center',
             minWidth: 'min-content',
+            maxWidth: '920px',
             width: '100%',
           }}
         >
@@ -327,8 +332,8 @@ export function CandidateTimeline({
                 key={`${step.id}-${i}`}
                 style={{
                   flex: '1 1 0',
-                  minWidth: '84px',
-                  maxWidth: '130px',
+                  minWidth: '96px',
+                  maxWidth: '140px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -436,13 +441,13 @@ export function CandidateTimeline({
       </div>
 
       {stage === 'rejected' && rejectionEv?.reason ? (
-        <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.tension }}>
+        <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.tension, textAlign: 'center', width: '100%' }}>
           {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, rejectionEv.reason)}
         </p>
       ) : null}
 
       {events.length > 0 ? (
-        <details style={{ marginTop: '14px' }}>
+        <details style={{ marginTop: '14px', width: '100%', maxWidth: '520px' }}>
           <summary
             style={{
               cursor: 'pointer',
@@ -451,11 +456,13 @@ export function CandidateTimeline({
               color: C.muted,
               letterSpacing: '0.04em',
               userSelect: 'none',
+              textAlign: 'center',
+              listStylePosition: 'inside',
             }}
           >
             {t(locale, 'recruiting.timelineHistory', { n: events.length })}
           </summary>
-          <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0 }}>
+          <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, textAlign: 'left' }}>
             {[...events]
               .reverse()
               .slice(0, 12)
