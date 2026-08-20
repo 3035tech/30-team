@@ -7,6 +7,7 @@ import { apiError } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
+import { buildCandidatePeopleBrief } from '../../../../../lib/people/candidate-people-brief';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -110,10 +111,27 @@ export async function GET(request, { params }) {
     console.error('candidate timeline:', e);
   }
 
+  let people = null;
+  try {
+    const { searchParams } = new URL(request.url);
+    const loc = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+    people = await buildCandidatePeopleBrief(query, {
+      candidateId: id,
+      companyId: c.rows[0].companyId,
+      isAdmin,
+      locale: loc,
+      scores: assessmentsWithHistory[0]?.scores || null,
+      topType: assessmentsWithHistory[0]?.topType ?? null,
+    });
+  } catch (e) {
+    console.error('candidate people brief:', e);
+  }
+
   return NextResponse.json({
     candidate: c.rows[0],
     assessments: assessmentsWithHistory,
     timeline,
+    people,
   });
 }
 

@@ -60,6 +60,9 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) em v
 - Pipeline: `new → interview → test_completed → screening → approved → hired | rejected | archived` (`lib/pipeline.js`).
 - Rubrica da vaga **não muda o teste** — só os pesos T1–T9 na interpretação (`docs/rubrica-por-vaga.md`). Aderência 0–10 para ranking.
 - Motivadores é motor **separado** (`ae_*`), mas reusa `candidates` da mesma empresa.
+- **Identidade da pessoa:** `candidates` é o hub. Chave estável: `company_id` + e-mail (`upsert` por e-mail). Eneagrama (`assessments.candidate_id`), Motivadores (`ae_attempts.candidate_id` / convites AE) e People (`one_on_ones.candidate_id`) apontam para o **mesmo** registro. Não inventar merge por nome nem tabelas de pessoa paralelas.
+- **People (gestão):** hipóteses + 1:1 em `lib/people/` e na Equipe. `candidates.hr_notes` = nota livre de triagem; **não** usar como log de 1:1 (isso é `one_on_ones`).
+- Linguagem de perfil: hedging (“tende a”). Hipóteses de gestão são roteiro para conversa — não rótulo nem diagnóstico.
 
 ## Convenções de código
 
@@ -92,12 +95,15 @@ UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das 
 
 Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotente). Não deixar `.sql` solto na raiz. Ver `migrations/README.md`.
 
+**Motivadores — banco de perguntas:** itens situacionais (o respondente não vê nomes de dimensões; pesos só no servidor). Publicar banco novo com sync/desativar chaves antigas (`lib/ae/sync-question-bank.js` / `scripts/seed-motivators-questions-v3.sql`) — **não** `DELETE` de `ae_questions` se houver tentativas (preserva `question_ids` / scores). Seed: `npm run db:seed-motivators` ou o SQL v3 no pgAdmin.
+
 ## O que não fazer
 
 - Não tratar T1–T9 como diagnóstico clínico ou “personalidade oficial”
 - Não expor dados de uma empresa a gestor de outra
 - Não confiar no body do cliente para `top_type` / scores finais
 - Não carregar o grafo de compatibilidade de toda a empresa em toda aba do dashboard
+- Não apagar `ae_questions` quando houver tentativas — desativar / sync de banco novo
 - Não commitar `.env`, senhas, `node_modules`
 - Não commitar salvo pedido explícito do usuário
 - Não refatorar fora do escopo do pedido
@@ -110,7 +116,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Links públicos | `app/t`, `app/v`, `app/api/public/*`, `lib/vacancy-link.js` |
 | Dashboard | `app/dashboard/page.jsx`, `tabs/*`, `lib/overview-metrics.js`, `lib/compat-bundles.js` |
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
-| Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*` |
+| Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v3.sql` |
+| People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
 | Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
 | Cores / marca | `lib/theme.js`, `lib/brand.js` |

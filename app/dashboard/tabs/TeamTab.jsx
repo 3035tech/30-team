@@ -14,6 +14,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
+import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 
 function nearbyCluster(scores) {
@@ -192,7 +193,7 @@ export function TeamTab({
     setProfileEditing(false);
     setProfileMsg('');
     try {
-      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`);
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}?locale=${encodeURIComponent(locale === 'en' ? 'en' : 'pt-BR')}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
@@ -864,6 +865,15 @@ export function TeamTab({
                   ) : null}
                   <TypeScoreChart scores={r.scores} locale={locale} highlightTypes={clusterTypes} />
                 </div>
+
+                {!detailLoading && detail?.candidate?.id === r.candidateId ? (
+                  <PeopleManagementPanel
+                    locale={locale}
+                    candidateId={detail.candidate.id}
+                    people={detail.people}
+                    onRefresh={() => loadDetail(detail.candidate.id)}
+                  />
+                ) : null}
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
