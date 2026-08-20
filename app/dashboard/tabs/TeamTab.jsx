@@ -885,6 +885,7 @@ export function TeamTab({
                     locale={locale}
                     loading={detailLoading}
                     events={detail?.timeline || []}
+                    currentStage={getEffectiveStage(r)}
                   />
                 </div>
 
