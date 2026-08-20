@@ -1081,6 +1081,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   );
   const vacSortSt = parseVacanciesSort(Object.fromEntries(urlParams.entries()), { isAdmin });
   const vacFilterFromUrl = String(urlParams.get('vacancy') || 'all');
+  const companyFilterFromUrl = String(urlParams.get('company') || 'all');
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
 
@@ -1119,6 +1120,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         sortDir: vacSortSt.dir,
       });
       if (vacFilterFromUrl && vacFilterFromUrl !== 'all') qs.set('vacancy', vacFilterFromUrl);
+      if (isAdmin && companyFilterFromUrl && companyFilterFromUrl !== 'all') {
+        qs.set('company', companyFilterFromUrl);
+      }
       const res = await fetch(`/api/admin/vacancies?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.loadVacanciesFailed'));
@@ -1150,7 +1154,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
       setCompanies(Array.isArray(data) ? data : []);
-      if (!companyId && Array.isArray(data) && data.length) setCompanyId(String(data[0].id));
+      if (!companyId && Array.isArray(data) && data.length) {
+        const fromFilter =
+          companyFilterFromUrl !== 'all' &&
+          data.some((c) => String(c.id) === companyFilterFromUrl)
+            ? companyFilterFromUrl
+            : String(data[0].id);
+        setCompanyId(fromFilter);
+      }
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -1161,11 +1172,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   useEffect(() => {
     if (isDetailView) return;
     loadVacancies();
-  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir, vacFilterFromUrl, isDetailView]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir, vacFilterFromUrl, companyFilterFromUrl, isDetailView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadCompanies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    if (companyFilterFromUrl !== 'all') setCompanyId(companyFilterFromUrl);
+  }, [companyFilterFromUrl, isAdmin]);
 
   const loadVacancyDetail = async (id) => {
     setDetailLoading(true);

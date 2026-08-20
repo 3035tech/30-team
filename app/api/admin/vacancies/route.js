@@ -61,9 +61,16 @@ export async function GET(request) {
 
   const whereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
   const params = [];
+  const companyFilter = String(url.searchParams.get('company') || '').trim();
   if (!isAdmin) {
     params.push(companyId);
     whereParts.push(`v.company_id = $${params.length}`);
+  } else if (companyFilter && companyFilter !== 'all') {
+    const cid = parseInt(companyFilter, 10);
+    if (Number.isFinite(cid)) {
+      params.push(cid);
+      whereParts.push(`v.company_id = $${params.length}`);
+    }
   }
   if (filterVacancyId != null) {
     params.push(filterVacancyId);
