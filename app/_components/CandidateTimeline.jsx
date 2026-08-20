@@ -171,7 +171,7 @@ function statusStyles(status, color) {
   }
   if (status === 'current') {
     return {
-      nodeBg: '#fff',
+      nodeBg: C.surface || '#fff',
       nodeColor: color,
       nodeBorder: color,
       labelColor: color,
@@ -182,7 +182,7 @@ function statusStyles(status, color) {
   }
   if (status === 'skipped') {
     return {
-      nodeBg: 'rgba(26,22,37,.04)',
+      nodeBg: C.surface || '#fff',
       nodeColor: C.faint,
       nodeBorder: C.border,
       labelColor: C.faint,
@@ -192,7 +192,7 @@ function statusStyles(status, color) {
     };
   }
   return {
-    nodeBg: 'rgba(26,22,37,.03)',
+    nodeBg: C.surface || '#fff',
     nodeColor: C.muted,
     nodeBorder: C.border,
     labelColor: C.muted,
@@ -308,6 +308,8 @@ export function CandidateTimeline({
               step.status === 'done' && next && (next.status === 'done' || next.status === 'current')
                 ? color
                 : C.border;
+            // Raio do nó (36/2) + borda — linha para fora da bolinha
+            const nodeClear = 20;
 
             return (
               <li
@@ -338,8 +340,8 @@ export function CandidateTimeline({
                       aria-hidden
                       style={{
                         position: 'absolute',
-                        left: '50%',
-                        right: '-50%',
+                        left: `calc(50% + ${nodeClear}px)`,
+                        right: `calc(-50% + ${nodeClear}px)`,
                         top: '50%',
                         height: '3px',
                         background: connectorColor,
