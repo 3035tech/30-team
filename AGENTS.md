@@ -124,6 +124,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
 | Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v3.sql` |
 | People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
+| Timeline do candidato | `app/_components/CandidateTimeline.jsx`, `lib/hire.js` (`buildCandidateTimeline`) |
 | Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |

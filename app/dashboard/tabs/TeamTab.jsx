@@ -15,6 +15,7 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
+import { CandidateTimeline } from '../../_components/CandidateTimeline';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
@@ -880,43 +881,11 @@ export function TeamTab({
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.timelineTitle')}</span>
-                  {detailLoading ? (
-                    <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>…</p>
-                  ) : detail?.timeline?.length ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {detail.timeline.map((ev, i) => {
-                        let text = t(locale, ev.labelKey || 'recruiting.timelinePipelineChange');
-                        if (ev.type === 'pipeline.change') {
-                          text = t(locale, 'recruiting.timelinePipelineChange', {
-                            from: pipelineLabel(locale, ev.fromStage || '—'),
-                            to: pipelineLabel(locale, ev.toStage || '—'),
-                          });
-                        }
-                        const bits = [text];
-                        if (ev.vacancyTitle) bits.push(ev.vacancyTitle);
-                        if (ev.reason) bits.push(rejectionReasonLabel(locale, ev.reason));
-                        if (ev.startDate) bits.push(`${t(locale, 'recruiting.startDateLabel')}: ${ev.startDate}`);
-                        if (ev.topType != null) bits.push(`T${ev.topType}`);
-                        return (
-                          <div key={`${ev.type}-${i}`} style={{ fontSize: '12px', fontFamily: 'monospace', color: C.muted, lineHeight: 1.5 }}>
-                            <span style={{ color: C.faint }}>
-                              {ev.at
-                                ? new Date(ev.at).toLocaleString(localeHtmlLang(locale), {
-                                    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
-                                  })
-                                : '—'}
-                            </span>
-                            {' · '}
-                            <span style={{ color: C.text }}>{bits.filter(Boolean).join(' · ')}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
-                      {t(locale, 'recruiting.timelineEmpty')}
-                    </p>
-                  )}
+                  <CandidateTimeline
+                    locale={locale}
+                    loading={detailLoading}
+                    events={detail?.timeline || []}
+                  />
                 </div>
 
                 <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
