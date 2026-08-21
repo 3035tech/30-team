@@ -28,6 +28,7 @@ export async function POST(request) {
          u.role,
          u.locale,
          u.active,
+         u.must_change_password AS "mustChangePassword",
          u.company_id AS "companyId",
          u.deleted AS "userDeleted",
          c.deleted AS "companyDeleted"
@@ -60,7 +61,10 @@ export async function POST(request) {
 
     const locale = normalizeLocale(u.locale);
     const token = signToken({ userId: u.id, role: u.role, companyId: u.companyId ?? null, locale });
-    const response = NextResponse.json({ ok: true });
+    const response = NextResponse.json({
+      ok: true,
+      mustChangePassword: Boolean(u.mustChangePassword),
+    });
 
     // Em Docker local, o container roda com NODE_ENV=production, mas você acessa via HTTP.
     // Cookie Secure em HTTP não é aceito pelo browser, causando loop de redirect no dashboard.

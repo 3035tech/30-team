@@ -125,7 +125,7 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
   return (
     <article
       style={{
-        padding: '16px',
+        padding: '20px',
         borderRadius: '12px',
         border: `1px solid ${C.border}`,
         background: '#fff',
@@ -155,23 +155,23 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
       ) : null}
 
       {(why || c.watchOut || c.interviewProbe) ? (
-        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {why ? (
-            <div>
+            <div style={{ minHeight: '46px' }}>
               <div style={miniLabel()}>{t(locale, 'panel.report.fieldWhy')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{why}</p>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{why}</p>
             </div>
           ) : null}
           {c.watchOut ? (
-            <div>
+            <div style={{ minHeight: '46px' }}>
               <div style={miniLabel()}>{t(locale, 'panel.report.fieldWatch')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{c.watchOut}</p>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{c.watchOut}</p>
             </div>
           ) : null}
           {c.interviewProbe ? (
-            <div>
+            <div style={{ minHeight: '46px' }}>
               <div style={miniLabel()}>{t(locale, 'panel.report.fieldProbe')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{c.interviewProbe}</p>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{c.interviewProbe}</p>
             </div>
           ) : null}
         </div>
@@ -579,7 +579,7 @@ function ReportInner() {
         <h2 style={{ fontFamily: FONTS.serif, fontSize: '18px', color: C.text, margin: '0 0 14px' }}>
           {t(locale, 'panel.report.profilesTitle')}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
           {candidates.map((c, i) => (
             <CandidateCard
               key={`card-${c.name}-${i}`}

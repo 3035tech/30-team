@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import crypto from 'crypto';
 import { COOKIE_NAME, hashPassword } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { PAGE_SIZE_OPTIONS, sqlUsersOrderBy } from '../../../../lib/assessment-filters';
@@ -10,6 +11,8 @@ import {
   verifySessionWithCapabilities,
 } from '../../../../lib/user-capabilities';
 import { audit } from '../../../../lib/audit';
+import { buildUserAccessMail } from '../../../../lib/user-access-mail';
+import { enqueueTransactionalMail, isMailConfigured } from '../../../../lib/mail';
 
 const USER_SORT_KEYS = new Set(['id', 'email', 'role', 'companyName', 'active', 'createdAt']);
 
@@ -111,11 +114,17 @@ export async function POST(request) {
 
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || '').trim().toLowerCase();
-  const password = String(body.password || '').trim();
+  const suppliedPassword = String(body.password || '').trim();
   const role = String(body.role || '').trim();
   const companyId = body.companyId ?? null;
+  const generatedPassword =
+    !suppliedPassword || body.sendInvite === true || body.temporaryPassword === true;
+  const password = generatedPassword
+    ? crypto.randomBytes(9).toString('base64url')
+    : suppliedPassword;
+  const mustChangePassword = generatedPassword || body.forcePasswordChange === true;
 
-  if (!email || !password) return apiError(request, 'REQUIRED_LOGIN', 400);
+  if (!email) return apiError(request, 'EMAIL_REQUIRED', 400);
   if (!['hr', 'direction', 'admin'].includes(role)) return apiError(request, 'INVALID_ROLE', 400);
   if (role !== 'admin' && !companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
@@ -126,10 +135,10 @@ export async function POST(request) {
 
   const hash = await hashPassword(password);
   const ins = await query(
-    `INSERT INTO users (email, password_hash, role, active, company_id)
-     VALUES ($1, $2, $3, TRUE, $4)
+    `INSERT INTO users (email, password_hash, role, active, company_id, must_change_password)
+     VALUES ($1, $2, $3, TRUE, $4, $5)
      RETURNING id, email, role, active, company_id AS "companyId", created_at AS "createdAt"`,
-    [email, hash, role, companyId]
+    [email, hash, role, companyId, mustChangePassword]
   );
   const created = ins.rows[0];
 
@@ -149,5 +158,26 @@ export async function POST(request) {
     meta: { email, role },
   });
 
-  return NextResponse.json({ ...created, modules, capabilitiesCustomized: customized }, { status: 201 });
+  const temporaryPasswordResult = {};
+  if (generatedPassword) {
+    if (isMailConfigured()) {
+      const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin).replace(/\/+$/, '');
+      const mail = buildUserAccessMail({
+        email,
+        temporaryPassword: password,
+        loginUrl: `${appUrl}/login`,
+      });
+      enqueueTransactionalMail({ to: email, ...mail });
+      temporaryPasswordResult.temporaryPasswordSent = true;
+    } else {
+      temporaryPasswordResult.temporaryPassword = password;
+    }
+  }
+
+  return NextResponse.json({
+    ...created,
+    modules,
+    capabilitiesCustomized: customized,
+    ...temporaryPasswordResult,
+  }, { status: 201 });
 }

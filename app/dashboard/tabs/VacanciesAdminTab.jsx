@@ -26,6 +26,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
+import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -1189,6 +1190,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [descAiBusy, setDescAiBusy] = useState(false);
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
+  const [employmentType, setEmploymentType] = useState('');
   const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
   const [companyId, setCompanyId] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -1339,6 +1341,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         positionsCount: parseInt(positionsCount, 10) || 1,
         targetDate: targetDate || null,
         description,
+        employmentType,
         salaryMin: stripSalary(salaryMin),
         salaryMax: stripSalary(salaryMax),
         clientReportShowSalary,
@@ -1352,7 +1355,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
-      setDescription(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
+      setDescription(''); setEmploymentType(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
       setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
@@ -1447,6 +1450,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       positionsCount: String(v.positionsCount ?? 1),
       targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
       description: v.description ?? '',
+      employmentType: v.employmentType ?? '',
       salaryMin: salaryToCentsDigits(v.salaryMin),
       salaryMax: salaryToCentsDigits(v.salaryMax),
       clientReportShowSalary: Boolean(v.clientReportShowSalary),
@@ -1463,6 +1467,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       positionsCount,
       targetDate,
       description,
+      employmentType,
       salaryMin,
       salaryMax,
       clientReportShowSalary,
@@ -1482,6 +1487,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           positionsCount: parseInt(positionsCount, 10) || 1,
           targetDate: targetDate || null,
           description,
+          employmentType,
           salaryMin: stripSalary(salaryMin),
           salaryMax: stripSalary(salaryMax),
           clientReportShowSalary: Boolean(clientReportShowSalary),
@@ -1657,10 +1663,26 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
             gap: '10px',
-            maxWidth: '420px',
+            maxWidth: '640px',
           }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+              fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+              {t(locale, 'recruiting.employmentTypeLabel')}
+              <select
+                value={employmentType}
+                onChange={(e) => setEmploymentType(e.target.value)}
+                style={{ width: '100%', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'monospace', boxSizing: 'border-box' }}
+              >
+                <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
+                {VACANCY_EMPLOYMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                ))}
+              </select>
+            </label>
             <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
               fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
               {t(locale, 'recruiting.salaryMinPh')}
@@ -1875,10 +1897,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
               gap: '10px',
-              maxWidth: '420px',
+              maxWidth: '640px',
             }}>
+              <select
+                value={editingVacancy.employmentType}
+                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
+                aria-label={t(locale, 'recruiting.employmentTypeLabel')}
+                style={{ width: '100%', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '13px',
+                  cursor: 'pointer', fontFamily: 'monospace', boxSizing: 'border-box' }}
+              >
+                <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
+                {VACANCY_EMPLOYMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                ))}
+              </select>
               <input
                 value={formatSalaryBr(editingVacancy.salaryMin)}
                 onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
@@ -2112,6 +2147,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
                         {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                      </span>
+                    ) : null}
+                    {employmentTypeLabelKey(v.employmentType) ? (
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        {t(locale, employmentTypeLabelKey(v.employmentType))}
                       </span>
                     ) : null}
                   </div>

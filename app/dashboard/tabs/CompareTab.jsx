@@ -271,6 +271,8 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             {t(locale, 'panel.compare.inTable', { selected: nSel, total: nTot })}
           </span>
           <input
+            id="compare-search"
+            name="compareSearch"
             type="search"
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
@@ -368,7 +370,10 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                   }}
                 >
                   <input
+                    id={`compare-candidate-${id}`}
+                    name="compareCandidateIds"
                     type="checkbox"
+                    value={id}
                     checked={on}
                     onChange={() => toggleId(id)}
                     style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}

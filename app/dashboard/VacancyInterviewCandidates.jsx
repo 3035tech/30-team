@@ -510,6 +510,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 }
 
 export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipelineChange }) {
+  const { notice, toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -523,6 +524,8 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
   const [availability, setAvailability] = useState('');
   const [source, setSource] = useState('');
   const [createNotes, setCreateNotes] = useState('');
+  const [sendEnneagramInvite, setSendEnneagramInvite] = useState(false);
+  const [sendMotivatorsInvite, setSendMotivatorsInvite] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createMsg, setCreateMsg] = useState('');
 
@@ -569,6 +572,38 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+
+      const requestedInvites = [
+        sendEnneagramInvite ? 'invite' : null,
+        sendMotivatorsInvite ? 'motivators-invite' : null,
+      ].filter(Boolean);
+      let invitesFailed = false;
+      let enneagramSent = false;
+      if (requestedInvites.length) {
+        if (data.candidateId == null) {
+          invitesFailed = true;
+        } else {
+          const inviteResults = await Promise.allSettled(
+            requestedInvites.map(async (endpoint) => {
+              const inviteRes = await fetch(
+                `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(data.candidateId)}/${endpoint}`,
+                { method: 'POST' }
+              );
+              const inviteData = await inviteRes.json().catch(() => ({}));
+              if (!inviteRes.ok) {
+                throw new Error(inviteData?.error || t(locale, 'panel.common.error'));
+              }
+              return inviteData;
+            })
+          );
+          invitesFailed = inviteResults.some((result) => result.status === 'rejected');
+          const enneagramIndex = requestedInvites.indexOf('invite');
+          enneagramSent =
+            enneagramIndex >= 0 && inviteResults[enneagramIndex]?.status === 'fulfilled';
+          if (!invitesFailed) toast(t(locale, 'recruiting.createInvitesSent'), 'ok');
+        }
+      }
+
       setName('');
       setEmail('');
       setPhone('');
@@ -579,8 +614,18 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       setAvailability('');
       setSource('');
       setCreateNotes('');
+      setSendEnneagramInvite(false);
+      setSendMotivatorsInvite(false);
       setCreateMsg(t(locale, 'recruiting.candidateRegistered'));
       await load();
+      if (invitesFailed) {
+        await notice({
+          title: t(locale, 'panel.common.errorTitle'),
+          message: t(locale, 'recruiting.createInvitePartial'),
+          tone: 'error',
+        });
+      }
+      if (enneagramSent) onPipelineChange?.();
       setTimeout(() => setCreateMsg(''), 3000);
     } catch (e) {
       setErr(e?.message || t(locale, 'panel.common.error'));
@@ -682,6 +727,33 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           minHeight={100}
           locale={locale}
         />
+        <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '12px 18px' }}>
+          <label htmlFor="create-send-enneagram" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.muted, cursor: 'pointer' }}>
+            <input
+              id="create-send-enneagram"
+              name="sendEnneagramInvite"
+              type="checkbox"
+              checked={sendEnneagramInvite}
+              onChange={(e) => setSendEnneagramInvite(e.target.checked)}
+              style={{ accentColor: C.purple }}
+            />
+            {t(locale, 'recruiting.createSendEnneagram')}
+          </label>
+          <label htmlFor="create-send-motivators" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.muted, cursor: 'pointer' }}>
+            <input
+              id="create-send-motivators"
+              name="sendMotivatorsInvite"
+              type="checkbox"
+              checked={sendMotivatorsInvite}
+              onChange={(e) => setSendMotivatorsInvite(e.target.checked)}
+              style={{ accentColor: C.purple }}
+            />
+            {t(locale, 'recruiting.createSendMotivators')}
+          </label>
+          <span style={{ flexBasis: '100%', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            {t(locale, 'recruiting.createInvitesHint')}
+          </span>
+        </div>
         <div style={{ marginTop: '10px' }}>
           <button
             type="button"

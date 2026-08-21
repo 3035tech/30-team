@@ -15,6 +15,7 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-
 import {
   suggestCandidateFieldsAi,
   suggestExecutiveNoteAi,
+  suggestShortlistAi,
   suggestVacancyDescriptionAi,
   summarizeInterviewNotesAi,
 } from '../../../../../../lib/vacancy-assist-ai';
@@ -70,7 +71,7 @@ async function enrichCandidatesWithNotes(vacancyId, candidates, { isAdmin, compa
 
 /**
  * POST /api/admin/vacancies/[id]/assist-ai
- * actions: executiveNote | candidateFields | summarizeNotes | vacancyDescription
+ * actions: executiveNote | suggestShortlist | candidateFields | summarizeNotes | vacancyDescription
  */
 export async function POST(request, { params }) {
   const cookieStore = cookies();
@@ -113,6 +114,22 @@ export async function POST(request, { params }) {
       if (!candidates.length) return apiError(request, 'ASSIST_AI_NEED_CANDIDATES', 400);
       const out = await suggestExecutiveNoteAi({ vacancy, candidates, locale });
       return NextResponse.json({ ok: true, action, executiveNote: out.executiveNote, model: out.model });
+    }
+
+    if (action === 'suggestShortlist') {
+      const candidates = await enrichCandidatesWithNotes(
+        vacancyId,
+        Array.isArray(body.candidates) ? body.candidates : [],
+        scope
+      );
+      if (!candidates.length) return apiError(request, 'ASSIST_AI_NEED_CANDIDATES', 400);
+      const out = await suggestShortlistAi({ vacancy, candidates, locale });
+      return NextResponse.json({
+        ok: true,
+        action,
+        candidateIds: out.candidateIds,
+        rationaleHtml: out.rationaleHtml,
+      });
     }
 
     if (action === 'candidateFields') {

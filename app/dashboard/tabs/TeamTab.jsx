@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
-import { C } from '../../../lib/theme';
+import { C, FONTS } from '../../../lib/theme';
 import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
@@ -22,6 +22,7 @@ import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
+import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
 
 function nearbyCluster(scores) {
   return clusterCloseTypes(rankEnneagramScores(scores));
@@ -31,6 +32,43 @@ function NearbyTypeBadges({ scores, topType, locale }) {
   const extras = nearbyCluster(scores).filter((item) => item.type !== topType);
   if (extras.length === 0) return null;
   return extras.map((item) => <TypeBadge key={item.type} type={item.type} locale={locale} compact />);
+}
+
+function IntegratedProfileSynthesis({ synthesis, locale }) {
+  if (!synthesis || synthesis.completeness === 'empty') return null;
+  const sections = [
+    ['convergences', 'panel.team.synthesisConvergences'],
+    ['tensions', 'panel.team.synthesisTensions'],
+    ['howToLead', 'panel.team.synthesisHowToLead'],
+    ['pdiIdeas', 'panel.team.synthesisPdiIdeas'],
+  ].filter(([key]) => synthesis[key]?.length);
+
+  return (
+    <section style={{
+      marginBottom: '16px',
+      padding: '14px',
+      borderRadius: '10px',
+      border: `1px solid ${C.border}`,
+      background: C.cardTint,
+    }}>
+      <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.synthesisTitle')}</span>
+      <p style={{ margin: '0 0 12px', color: C.text, fontFamily: FONTS.serif, fontSize: '14px', lineHeight: 1.55 }}>
+        {synthesis.headline}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+        {sections.map(([key, labelKey]) => (
+          <div key={key}>
+            <span style={{ fontSize: '10px', color: C.faint, fontFamily: FONTS.mono, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {t(locale, labelKey)}
+            </span>
+            <ul style={{ margin: '6px 0 0', paddingLeft: '18px', color: C.muted, fontSize: '12px', lineHeight: 1.55 }}>
+              {synthesis[key].map((item) => <li key={item} style={{ marginBottom: '4px' }}>{item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 const PIPELINE_OPTIONS = [
@@ -450,6 +488,16 @@ export function TeamTab({
   const openCluster = openRow?.scores
     ? new Set(nearbyCluster(openRow.scores).map((item) => item.type))
     : new Set();
+  const detailMatchesOpen = detail?.candidate?.id != null
+    && String(detail.candidate.id) === String(openRow?.candidateId);
+  const synthesis = openRow
+    ? buildProfileSynthesis({
+        locale,
+        topType: openRow.topType,
+        scores: openRow.scores,
+        motivatorsTop: detailMatchesOpen ? detail?.people?.management?.motivators?.top : null,
+      })
+    : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -956,6 +1004,7 @@ export function TeamTab({
             {personTab === 'style' ? (
               <div>
                 <EnneagramCross scores={openRow.scores} locale={locale} />
+                <IntegratedProfileSynthesis synthesis={synthesis} locale={locale} />
 
                 <div style={{ marginBottom: '16px' }}>
                   <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>

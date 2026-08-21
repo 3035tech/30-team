@@ -151,7 +151,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     const defaultCompanyId = companyOptions[0] ? String(companyOptions[0].id) : '';
     const values = await promptForm({
       title: t(locale, 'panel.admin.createUserTitle'),
-      message: t(locale, 'panel.admin.userModulesHint'),
+      message: `${t(locale, 'panel.admin.passwordOptionalHelp')} ${t(locale, 'panel.admin.userModulesHint')}`,
       confirmLabel: t(locale, 'panel.admin.createUserBtn'),
       fields: [
         {
@@ -196,14 +196,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     const email = String(values.email || '').trim();
     const password = String(values.password || '');
     const role = String(values.role || '').trim();
-    if (!email || !password) return;
+    if (!email) return;
 
     const body = {
       email,
-      password,
       role,
       companyId: role === 'admin' ? null : (values.companyId ? parseInt(String(values.companyId), 10) : null),
     };
+    if (password.trim()) body.password = password;
+    else body.sendInvite = true;
     if (Array.isArray(values.modules)) body.modules = values.modules;
 
     setLoading(true);
@@ -217,9 +218,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createUserFailed'));
-      setMsg(t(locale, 'panel.admin.userCreated'));
+      if (data.temporaryPasswordSent) {
+        setMsg(t(locale, 'panel.admin.userCreatedMailSent', { email }));
+      } else if (data.temporaryPassword) {
+        setMsg(t(locale, 'panel.admin.userCreatedWithTempPassword', { password: data.temporaryPassword }));
+      } else {
+        setMsg(t(locale, 'panel.admin.userCreated'));
+      }
       await loadUsersOnly();
-      setTimeout(() => setMsg(''), 1600);
+      if (!data.temporaryPassword) setTimeout(() => setMsg(''), 1600);
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {

@@ -13,8 +13,13 @@ import { BrandMark } from '../_components/BrandMark';
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
+  const [success,  setSuccess]  = useState('');
   const router      = useRouter();
   const searchParams = useSearchParams();
   const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
@@ -29,12 +34,44 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+      const data = await res.json();
       if (res.ok) {
-        router.push(redirect);
+        if (data.mustChangePassword) {
+          setCurrentPassword(password);
+          setMustChangePassword(true);
+        } else {
+          router.push(redirect);
+        }
       } else {
-        const data = await res.json();
         setError(data.errorCode ? errorMessage(locale, data.errorCode, data.error) : data.error || t(locale, 'login.wrongPassword'));
       }
+    } catch {
+      setError(t(locale, 'login.connectionError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!currentPassword || !newPassword) return;
+    if (newPassword !== confirmPassword) {
+      setError(t(locale, 'login.changePasswordMismatch'));
+      return;
+    }
+    setLoading(true); setError(''); setSuccess('');
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.errorCode ? errorMessage(locale, data.errorCode, data.error) : data.error || t(locale, 'login.connectionError'));
+        return;
+      }
+      setSuccess(t(locale, 'login.changePasswordOk'));
+      setTimeout(() => router.push(redirect), 500);
     } catch {
       setError(t(locale, 'login.connectionError'));
     } finally {
@@ -62,44 +99,91 @@ function LoginForm() {
         <h2 style={{ fontSize:'32px', fontWeight:'normal', lineHeight:1.2, marginBottom:'12px',
           background:GRADIENT.titleLogin,
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-          {t(locale, 'login.title').split('\n').map((line, i) => (
+          {(mustChangePassword ? t(locale, 'login.changePasswordTitle') : t(locale, 'login.title')).split('\n').map((line, i) => (
             <span key={line}>{i > 0 ? <br /> : null}{line}</span>
           ))}
         </h2>
-        <p style={{ fontSize:'14px', color:C.muted, lineHeight:1.7, marginBottom:'28px', fontStyle:'italic' }}>
-          {t(locale, 'login.intro')}
-        </p>
-        <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
-          {t(locale, 'login.email')}
-        </label>
-        <input type="email"
-          style={{ width:'100%', background:'rgba(26,22,37,.04)',
-            border:`1px solid ${C.border}`, borderRadius:'10px',
-            padding:'14px 18px', color:C.text, fontSize:'15px',
-            fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
-          value={email} placeholder={t(locale, 'login.emailPlaceholder')}
-          onChange={e=>setEmail(e.target.value)}
-          onKeyDown={e=>e.key==='Enter'&&login()}/>
-        <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
-          {t(locale, 'login.password')}
-        </label>
-        <input type="password"
-          style={{ width:'100%', background:'rgba(26,22,37,.04)',
-            border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
-            padding:'14px 18px', color:C.text, fontSize:'15px',
-            fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
-          value={password} placeholder={t(locale, 'login.passwordPlaceholder')}
-          onChange={e=>setPassword(e.target.value)}
-          onKeyDown={e=>e.key==='Enter'&&login()}/>
+        {!mustChangePassword ? (
+          <p style={{ fontSize:'14px', color:C.muted, lineHeight:1.7, marginBottom:'28px', fontStyle:'italic' }}>
+            {t(locale, 'login.intro')}
+          </p>
+        ) : null}
+        {mustChangePassword ? (
+          <>
+            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+              {t(locale, 'login.changePasswordCurrent')}
+            </label>
+            <input type="password"
+              style={{ width:'100%', background:'rgba(26,22,37,.04)',
+                border:`1px solid ${C.border}`, borderRadius:'10px',
+                padding:'14px 18px', color:C.text, fontSize:'15px',
+                fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
+              value={currentPassword}
+              onChange={e=>setCurrentPassword(e.target.value)}/>
+            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+              {t(locale, 'login.changePasswordNew')}
+            </label>
+            <input type="password"
+              style={{ width:'100%', background:'rgba(26,22,37,.04)',
+                border:`1px solid ${C.border}`, borderRadius:'10px',
+                padding:'14px 18px', color:C.text, fontSize:'15px',
+                fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
+              value={newPassword}
+              onChange={e=>setNewPassword(e.target.value)}/>
+            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+              {t(locale, 'login.changePasswordConfirm')}
+            </label>
+            <input type="password"
+              style={{ width:'100%', background:'rgba(26,22,37,.04)',
+                border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
+                padding:'14px 18px', color:C.text, fontSize:'15px',
+                fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
+              value={confirmPassword}
+              onChange={e=>setConfirmPassword(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&changePassword()}/>
+          </>
+        ) : (
+          <>
+            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+              {t(locale, 'login.email')}
+            </label>
+            <input type="email"
+              style={{ width:'100%', background:'rgba(26,22,37,.04)',
+                border:`1px solid ${C.border}`, borderRadius:'10px',
+                padding:'14px 18px', color:C.text, fontSize:'15px',
+                fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
+              value={email} placeholder={t(locale, 'login.emailPlaceholder')}
+              onChange={e=>setEmail(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&login()}/>
+            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+              {t(locale, 'login.password')}
+            </label>
+            <input type="password"
+              style={{ width:'100%', background:'rgba(26,22,37,.04)',
+                border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
+                padding:'14px 18px', color:C.text, fontSize:'15px',
+                fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
+              value={password} placeholder={t(locale, 'login.passwordPlaceholder')}
+              onChange={e=>setPassword(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&login()}/>
+          </>
+        )}
         {error&&(
           <p style={{ color:C.tension, fontSize:'12px', marginTop:'-8px', marginBottom:'16px' }}>{error}</p>
+        )}
+        {success&&(
+          <p style={{ color:C.synergy, fontSize:'12px', marginTop:'-8px', marginBottom:'16px' }}>{success}</p>
         )}
         <button
           style={{ background:GRADIENT.primaryBtn(C.purple,'#4C1D95'), border:'none',
             borderRadius:'10px', padding:'14px 32px', color:'#fff', fontSize:'14px',
             cursor:'pointer', fontFamily:FONTS.serif, opacity:loading?.6:1, marginBottom:'16px' }}
-          onClick={login} disabled={loading}>
-          {loading ? t(locale, 'login.entering') : t(locale, 'login.enter')}
+          onClick={mustChangePassword ? changePassword : login} disabled={loading}>
+          {loading
+            ? t(locale, 'login.entering')
+            : mustChangePassword
+              ? t(locale, 'login.changePasswordSubmit')
+              : t(locale, 'login.enter')}
         </button>
         <br/>
         <button onClick={()=>router.push('/')}

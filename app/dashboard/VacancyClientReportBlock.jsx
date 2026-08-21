@@ -374,6 +374,82 @@ export function VacancyClientReportBlock({
     }
   };
 
+  const suggestShortlistWithAi = async () => {
+    const eligibleCandidates = candidates
+      .filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude')
+      .slice(0, 12)
+      .map((c) => ({
+        candidateId: c.candidateId,
+        name: c.name,
+        topType: c.topType,
+        vacancyFitScore010: c.vacancyFitScore010,
+        recommendation: effectiveRec(c),
+        why: overrides[c.candidateId]?.why || '',
+        watchOut: overrides[c.candidateId]?.watchOut || '',
+        interviewNotes: c.interviewNotes || '',
+        motivatorsTop: c.motivatorsTop || [],
+      }));
+    if (!eligibleCandidates.length) {
+      void showError(t(locale, 'panel.report.noCandidates'));
+      return;
+    }
+
+    setAiBusy('shortlist');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'suggestShortlist', candidates: eligibleCandidates, locale }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+        );
+      }
+
+      const allowedIds = new Set(eligibleCandidates.map((c) => Number(c.candidateId)));
+      const suggestedIds = [...new Set(
+        (Array.isArray(data.candidateIds) ? data.candidateIds : [])
+          .map(Number)
+          .filter((id) => Number.isFinite(id) && allowedIds.has(id))
+      )].slice(0, 5);
+      if (!suggestedIds.length) {
+        void showError(t(locale, 'panel.report.suggestShortlistAiEmpty'));
+        return;
+      }
+
+      const suggestedIdSet = new Set(suggestedIds);
+      const suggestedCandidates = candidates.filter((candidate) =>
+        suggestedIdSet.has(Number(candidate.candidateId))
+      );
+      setSelected(new Set(suggestedCandidates.map((candidate) => candidate.candidateId)));
+      setOverrides((prev) => {
+        const next = { ...prev };
+        const typeData = getTypeData(locale);
+        for (const c of suggestedCandidates) {
+          if (next[c.candidateId]) continue;
+          const probe = c.topType != null ? typeData[c.topType]?.challenge || '' : '';
+          next[c.candidateId] = {
+            recommendation: normalizeRecommendation(c.recommendation, 'discuss'),
+            why: '',
+            watchOut: '',
+            interviewProbe: String(probe).slice(0, STRUCTURED_FIELD_MAX_CHARS),
+          };
+        }
+        return next;
+      });
+      if (data.rationaleHtml) {
+        setNote((prev) => (htmlToPlainText(prev).length ? prev : String(data.rationaleHtml)));
+      }
+      showOk(t(locale, 'panel.report.suggestShortlistAiDone', { n: suggestedIds.length }));
+    } catch (e) {
+      void showError(e?.message || t(locale, 'panel.report.aiFailed'));
+    } finally {
+      setAiBusy('');
+    }
+  };
+
   const recommendationLabel = (rec) => {
     const key =
       rec === 'advance'
@@ -677,6 +753,17 @@ export function VacancyClientReportBlock({
             </button>
             <button type="button" onClick={clearSelected} style={btnGhost()} disabled={!selected.size}>
               {t(locale, 'panel.report.clearSelection')}
+            </button>
+            <button
+              type="button"
+              onClick={suggestShortlistWithAi}
+              style={btnGhost()}
+              disabled={loading || !candidates.length || aiBusy === 'shortlist'}
+              title={t(locale, 'panel.report.suggestShortlistAi')}
+            >
+              {aiBusy === 'shortlist'
+                ? t(locale, 'panel.report.aiWorking')
+                : t(locale, 'panel.report.suggestShortlistAi')}
             </button>
             <select
               value={String(expiresInDays)}
