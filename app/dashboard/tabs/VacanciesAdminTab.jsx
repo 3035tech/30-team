@@ -19,6 +19,7 @@ import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '..
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
+import { useAppFeedback } from '../../_components/AppFeedback';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 
 function formatVacancySalaryRange(locale, min, max) {
@@ -149,6 +150,7 @@ function inviteStatusLabel(locale, status) {
 }
 
 function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
+  const { confirm } = useAppFeedback();
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState('');
@@ -190,12 +192,13 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   };
 
   const removeInvite = async (inv) => {
-    const ok = window.confirm(
-      t(locale, 'recruiting.inviteDeleteConfirm', {
+    const ok = await confirm({
+      message: t(locale, 'recruiting.inviteDeleteConfirm', {
         name: inv.candidateName || '—',
         email: inv.candidateEmail || '—',
-      })
-    );
+      }),
+      danger: true,
+    });
     if (!ok) return;
     setBusy(`del:${inv.id}`);
     setErr('');
@@ -1060,6 +1063,7 @@ function toDatetimeLocalValue(d) {
 }
 
 export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
+  const { confirm } = useAppFeedback();
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
@@ -1389,9 +1393,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const archiveVacancy = async (vacancyId, title) => {
-    const ok = window.confirm(
-      t(locale, 'recruiting.archiveConfirm', { title })
-    );
+    const ok = await confirm({
+      message: t(locale, 'recruiting.archiveConfirm', { title }),
+      danger: true,
+    });
     if (!ok) return;
     setLoading(true);
     setError('');
@@ -1684,14 +1689,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           fontFamily: 'monospace' }}
                       />
                     </label>
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px',
+                    maxWidth: '420px',
+                    marginBottom: '10px',
+                  }}>
                     <input
                       value={formatSalaryBr(editingVacancy.salaryMin)}
                       onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
                       placeholder={t(locale, 'recruiting.salaryMinPh')}
                       inputMode="numeric"
                       aria-label={t(locale, 'recruiting.salaryMinPh')}
-                      style={{ flex: '1 1 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                      style={{ width: '100%', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                        fontFamily: 'monospace', boxSizing: 'border-box' }}
                     />
                     <input
                       value={formatSalaryBr(editingVacancy.salaryMax)}
@@ -1699,8 +1713,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       placeholder={t(locale, 'recruiting.salaryMaxPh')}
                       inputMode="numeric"
                       aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                      style={{ flex: '1 1 140px', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
-                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                      style={{ width: '100%', background: 'rgba(255,255,255,.8)', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.text, fontSize: '13px',
+                        fontFamily: 'monospace', boxSizing: 'border-box' }}
                     />
                   </div>
                   <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
@@ -1875,15 +1890,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
         {showCreate ? (
           <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
-            <span style={{ ...S.label, marginBottom: '10px', display: 'block' }}>{t(locale, 'recruiting.createVacancy')}</span>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {isAdmin && (
+            <span style={{ ...S.label, marginBottom: '12px', display: 'block' }}>{t(locale, 'recruiting.createVacancy')}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {isAdmin ? (
                 <select
                   value={companyId}
                   onChange={(e) => setCompanyId(e.target.value)}
-                  style={{ flex: '1 1 240px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                  aria-label={t(locale, 'dashboard.allCompanies')}
+                  style={{ width: '100%', maxWidth: '420px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
                     borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace' }}
+                    cursor: 'pointer', fontFamily: 'monospace', boxSizing: 'border-box' }}
                 >
                   {companies.length === 0 ? (
                     <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
@@ -1891,74 +1907,120 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
                   ))}
                 </select>
-              )}
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={t(locale, 'recruiting.createTitlePh')}
-                style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-              />
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder={t(locale, 'recruiting.createSlugPh')}
-                style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-              />
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-                  cursor: 'pointer', fontFamily: 'monospace' }}
-              >
-                <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-              </select>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                {t(locale, 'recruiting.positionsLabel')}
+              ) : null}
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '10px',
+              }}>
                 <input
-                  type="number"
-                  min="1"
-                  value={positionsCount}
-                  onChange={(e) => setPositionsCount(e.target.value)}
-                  aria-label={t(locale, 'recruiting.positionsLabel')}
-                  style={{ width: '60px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t(locale, 'recruiting.createTitlePh')}
+                  aria-label={t(locale, 'recruiting.createTitlePh')}
+                  style={{ width: '100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px',
+                    fontFamily: 'monospace', boxSizing: 'border-box' }}
                 />
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                {t(locale, 'recruiting.targetDateLabel')}
                 <input
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                  aria-label={t(locale, 'recruiting.targetDateLabel')}
-                  style={{ background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder={t(locale, 'recruiting.createSlugPh')}
+                  aria-label={t(locale, 'recruiting.createSlugPh')}
+                  style={{ width: '100%', maxWidth: '320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px',
+                    fontFamily: 'monospace', boxSizing: 'border-box' }}
                 />
-              </label>
-              <input
-                value={formatSalaryBr(salaryMin)}
-                onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
-                placeholder={t(locale, 'recruiting.salaryMinPh')}
-                inputMode="numeric"
-                style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-              />
-              <input
-                value={formatSalaryBr(salaryMax)}
-                onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
-                placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                inputMode="numeric"
-                style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-              />
-              <div style={{ flex: '1 1 100%' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '10px',
+                alignItems: 'end',
+              }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+                  fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                  {t(locale, 'recruiting.sortStatus')}
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+                      cursor: 'pointer', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                  >
+                    <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                    <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
+                  </select>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+                  fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                  {t(locale, 'recruiting.positionsLabel')}
+                  <input
+                    type="number"
+                    min="1"
+                    value={positionsCount}
+                    onChange={(e) => setPositionsCount(e.target.value)}
+                    aria-label={t(locale, 'recruiting.positionsLabel')}
+                    style={{ width: '100%', minWidth: '72px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px',
+                      fontFamily: 'monospace', boxSizing: 'border-box' }}
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+                  fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                  {t(locale, 'recruiting.targetDateLabel')}
+                  <input
+                    type="date"
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
+                    aria-label={t(locale, 'recruiting.targetDateLabel')}
+                    style={{ width: '100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px',
+                      fontFamily: 'monospace', boxSizing: 'border-box' }}
+                  />
+                </label>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px',
+                maxWidth: '420px',
+              }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+                  fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                  {t(locale, 'recruiting.salaryMinPh')}
+                  <input
+                    value={formatSalaryBr(salaryMin)}
+                    onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
+                    placeholder={t(locale, 'recruiting.salaryMinPh')}
+                    inputMode="numeric"
+                    aria-label={t(locale, 'recruiting.salaryMinPh')}
+                    style={{ width: '100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px',
+                      fontFamily: 'monospace', boxSizing: 'border-box' }}
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px',
+                  fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                  {t(locale, 'recruiting.salaryMaxPh')}
+                  <input
+                    value={formatSalaryBr(salaryMax)}
+                    onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
+                    placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                    inputMode="numeric"
+                    aria-label={t(locale, 'recruiting.salaryMaxPh')}
+                    style={{ width: '100%', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px',
+                      fontFamily: 'monospace', boxSizing: 'border-box' }}
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', color: C.faint, fontFamily: 'monospace', marginBottom: '6px' }}>
                   {t(locale, 'recruiting.vacancyDescriptionLabel')}
                 </label>
                 <RichTextEditor
@@ -1969,28 +2031,31 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   locale={locale}
                 />
               </div>
-              <button
-                type="button"
-                onClick={createVacancy}
-                disabled={loading || !title.trim() || (isAdmin && !companyId)}
-                style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-                  cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1,
-                  display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                {loading ? <span className="spinner" /> : null}
-                {t(locale, 'panel.admin.create')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                disabled={loading}
-                style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                  borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-                  cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-              >
-                {t(locale, 'recruiting.createVacancyCancel')}
-              </button>
+
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={createVacancy}
+                  disabled={loading || !title.trim() || (isAdmin && !companyId)}
+                  style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                    borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1,
+                    display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  {loading ? <span className="spinner" /> : null}
+                  {t(locale, 'panel.admin.create')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(false)}
+                  disabled={loading}
+                  style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                >
+                  {t(locale, 'recruiting.createVacancyCancel')}
+                </button>
+              </div>
             </div>
           </div>
         ) : null}

@@ -5,26 +5,39 @@ import { C, FONTS } from '../../lib/theme';
 
 /**
  * Official 30Team mark (person + petals).
- * @param {{ size?: number, withWordmark?: boolean, wordmark?: string, style?: object }} props
+ * Pass `href` or `onClick` to make the mark a home / nav control.
+ * @param {{
+ *   size?: number,
+ *   withWordmark?: boolean,
+ *   wordmark?: string,
+ *   style?: object,
+ *   href?: string,
+ *   onClick?: Function,
+ *   title?: string,
+ *   'aria-label'?: string,
+ * }} props
  */
-export function BrandMark({ size = 32, withWordmark = false, wordmark = '30Team', style }) {
+export function BrandMark({
+  size = 32,
+  withWordmark = false,
+  wordmark = '30Team',
+  style,
+  href,
+  onClick,
+  title,
+  'aria-label': ariaLabel,
+}) {
   const src = brandMarkSrc(size);
   const radius = Math.max(6, Math.round(size * 0.22));
+  const interactive = Boolean(href || onClick);
 
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: withWordmark ? Math.max(8, Math.round(size * 0.28)) : 0,
-        ...style,
-      }}
-    >
+  const inner = (
+    <>
       <img
         src={src}
         width={size}
         height={size}
-        alt={wordmark}
+        alt={interactive ? '' : wordmark}
         style={{
           display: 'block',
           width: size,
@@ -47,6 +60,57 @@ export function BrandMark({ size = 32, withWordmark = false, wordmark = '30Team'
           {wordmark}
         </span>
       ) : null}
-    </span>
+    </>
   );
+
+  const layoutStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: withWordmark ? Math.max(8, Math.round(size * 0.28)) : 0,
+    ...style,
+  };
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        onClick={onClick}
+        title={title}
+        aria-label={ariaLabel || wordmark}
+        style={{
+          ...layoutStyle,
+          textDecoration: 'none',
+          color: 'inherit',
+          cursor: 'pointer',
+        }}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={title}
+        aria-label={ariaLabel || wordmark}
+        style={{
+          ...layoutStyle,
+          margin: 0,
+          padding: 0,
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          font: 'inherit',
+          color: 'inherit',
+        }}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return <span style={layoutStyle}>{inner}</span>;
 }

@@ -5,6 +5,7 @@ import { errorMessage, t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
+import { useAppFeedback } from '../_components/AppFeedback';
 
 const REPORT_EXPIRY_DAYS = [7, 14, 30];
 const DEFAULT_REPORT_EXPIRY_DAYS = 14;
@@ -15,6 +16,7 @@ const INTERVIEW_PLUS = new Set(['interview', 'approved', 'hired']);
  * Generate / list / revoke public client report links for a vacancy.
  */
 export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl = '' }) {
+  const { confirm } = useAppFeedback();
   const [open, setOpen] = useState(false);
   const [candidates, setCandidates] = useState([]);
   const [selected, setSelected] = useState(() => new Set());
@@ -117,7 +119,11 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
   };
 
   const revoke = async (reportId) => {
-    if (!window.confirm(t(locale, 'panel.report.revokeConfirm'))) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.report.revokeConfirm'),
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     setErr('');
     try {

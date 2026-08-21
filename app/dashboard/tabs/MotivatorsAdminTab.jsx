@@ -6,6 +6,7 @@ import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { S, Bar } from '../dashboard-shared';
 import { SystemNoticeModal } from '../SystemNoticeModal';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -143,6 +144,7 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
 }
 
 function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
+  const { confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
@@ -162,7 +164,11 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   useEffect(() => { load(); }, [load]);
 
   const cancel = async (id) => {
-    if (!confirm(t(locale, 'panel.motivatorsAdmin.invites.cancelConfirm'))) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.motivatorsAdmin.invites.cancelConfirm'),
+      danger: true,
+    });
+    if (!ok) return;
     await fetch(`/api/admin/ae/invites/${id}`, { method: 'DELETE' });
     load();
   };
@@ -246,6 +252,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
 }
 
 function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) {
+  const { confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -307,7 +314,11 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
     : false;
 
   const removeAttempt = async (id) => {
-    if (!confirm(t(locale, 'panel.motivatorsAdmin.results.deleteConfirm'))) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.motivatorsAdmin.results.deleteConfirm'),
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/ae/attempts/${id}`, { method: 'DELETE' });
@@ -551,6 +562,7 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
 }
 
 function ConfigPanel({ locale }) {
+  const { confirm } = useAppFeedback();
   const [questions, setQuestions] = useState([]);
   const [dims, setDims] = useState([]);
   const [definitions, setDefinitions] = useState([]);
@@ -576,7 +588,8 @@ function ConfigPanel({ locale }) {
     const msg = def.attemptsCount > 0
       ? t(locale, 'panel.motivatorsAdmin.config.deleteConfirmWithAttempts', { name: def.name, count: def.attemptsCount })
       : t(locale, 'panel.motivatorsAdmin.config.deleteConfirmNoAttempts', { name: def.name });
-    if (!confirm(msg)) return;
+    const ok = await confirm({ message: msg, danger: true });
+    if (!ok) return;
     setDeleteBusy(def.id);
     try {
       const res = await fetch(`/api/admin/ae/definitions/${def.id}`, { method: 'DELETE' });

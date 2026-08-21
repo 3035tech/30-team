@@ -12,6 +12,7 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
+import { useAppFeedback } from '../../_components/AppFeedback';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
@@ -168,6 +169,7 @@ export function TeamTab({
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
   const { requestPipelineExtras } = usePipelineExtras();
+  const { confirm, notice } = useAppFeedback();
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -239,7 +241,11 @@ export function TeamTab({
   const deleteCandidate = async (candidateId, name) => {
     const id = String(candidateId || '').trim();
     if (!id) return;
-    const ok = window.confirm(t(locale, 'panel.team.confirmDeletePerson', { name }));
+    const ok = await confirm({
+      message: t(locale, 'panel.team.confirmDeletePerson', { name }),
+      danger: true,
+      confirmLabel: t(locale, 'panel.common.confirmAction'),
+    });
     if (!ok) return;
     setDeleting(true);
     try {
@@ -248,14 +254,17 @@ export function TeamTab({
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.deletePersonError'));
       router.refresh();
     } catch (e) {
-      window.alert(e?.message || t(locale, 'panel.team.deletePersonError'));
+      await notice({ message: e?.message || t(locale, 'panel.team.deletePersonError'), tone: 'error' });
     } finally {
       setDeleting(false);
     }
   };
 
   const deleteAssessment = async (assessmentId) => {
-    const ok = window.confirm(t(locale, 'recruiting.allowRetake') + t(locale, 'panel.team.allowRetakeConfirmSuffix'));
+    const ok = await confirm({
+      message: t(locale, 'recruiting.allowRetake') + t(locale, 'panel.team.allowRetakeConfirmSuffix'),
+      danger: true,
+    });
     if (!ok) return;
     setDeleting(true);
     try {
@@ -265,7 +274,7 @@ export function TeamTab({
       router.refresh();
       if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
     } catch (e) {
-      window.alert(e?.message || t(locale, 'panel.common.error'));
+      await notice({ message: e?.message || t(locale, 'panel.common.error'), tone: 'error' });
     } finally {
       setDeleting(false);
     }
@@ -286,7 +295,7 @@ export function TeamTab({
       router.refresh();
       if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
     } catch (e) {
-      window.alert(e?.message || t(locale, 'panel.common.error'));
+      await notice({ message: e?.message || t(locale, 'panel.common.error'), tone: 'error' });
     } finally {
       setStageBusy(null);
     }

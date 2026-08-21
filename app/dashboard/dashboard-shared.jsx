@@ -153,4 +153,75 @@ function getKanbanStages(locale = 'pt-BR') {
 /** @deprecated use getKanbanStages(locale) */
 const KANBAN_STAGES = getKanbanStages('pt-BR');
 
-export { Bar, CompatBadge, KANBAN_STAGES, getKanbanStages, S, SortableTh, TypeBadge, clientSortNextDir };
+/** Sidebar section + label key for dashboard breadcrumb / page chrome. */
+const DASHBOARD_TAB_NAV = {
+  overview: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.overview' },
+  team: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.team' },
+  compatibility: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compatibility' },
+  compare: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compare' },
+  group: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.group' },
+  leadership: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.leadership' },
+  vacancies: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.vacancies' },
+  motivators: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.motivators' },
+  companies: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.companies' },
+  users: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.users' },
+  help: { sectionKey: 'dashboard.sectionHelp', labelKey: 'dashboard.help' },
+  profile: { sectionKey: null, labelKey: 'dashboard.profile' },
+};
+
+function getDashboardTabNav(tab) {
+  return DASHBOARD_TAB_NAV[tab] || DASHBOARD_TAB_NAV.overview;
+}
+
+function DashboardBreadcrumb({ locale, tab, onHome }) {
+  const nav = getDashboardTabNav(tab);
+  const sectionLabel = nav.sectionKey ? t(locale, nav.sectionKey) : null;
+  const screenLabel = t(locale, nav.labelKey);
+  const sep = (
+    <span aria-hidden style={{ color: C.faint, margin: '0 6px', fontWeight: 400 }}>
+      /
+    </span>
+  );
+  const crumbBtn = {
+    margin: 0,
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    font: 'inherit',
+    color: 'rgba(124,58,237,.55)',
+    letterSpacing: '2.5px',
+    textTransform: 'uppercase',
+    fontFamily: FONTS.mono,
+    fontSize: '11px',
+  };
+
+  return (
+    <nav aria-label={t(locale, 'dashboard.breadcrumbAria')} style={{ ...S.label, marginBottom: 0 }}>
+      <button type="button" onClick={onHome} style={crumbBtn} title={t(locale, 'dashboard.homeAria')}>
+        {t(locale, 'dashboard.panel')}
+      </button>
+      {sectionLabel ? (
+        <>
+          {sep}
+          <span style={{ color: 'rgba(124,58,237,.45)' }}>{sectionLabel}</span>
+        </>
+      ) : null}
+      {sep}
+      <span style={{ color: C.purpleDeep }} aria-current="page">{screenLabel}</span>
+    </nav>
+  );
+}
+
+export {
+  Bar,
+  CompatBadge,
+  DashboardBreadcrumb,
+  getDashboardTabNav,
+  KANBAN_STAGES,
+  getKanbanStages,
+  S,
+  SortableTh,
+  TypeBadge,
+  clientSortNextDir,
+};

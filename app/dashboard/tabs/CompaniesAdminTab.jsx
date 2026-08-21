@@ -6,8 +6,10 @@ import { C } from '../../../lib/theme';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 export function CompaniesAdminTab({ navigateDashboard, locale }) {
+  const { confirm, promptForm } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
@@ -101,9 +103,10 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   };
 
   const deleteCompany = async (companyId, companyName) => {
-    const ok = window.confirm(
-      t(locale, 'panel.admin.archiveCompanyConfirm', { name: companyName })
-    );
+    const ok = await confirm({
+      message: t(locale, 'panel.admin.archiveCompanyConfirm', { name: companyName }),
+      danger: true,
+    });
     if (!ok) return;
     setLoading(true);
     setError('');
@@ -123,13 +126,22 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   };
 
   const editCompany = async (c) => {
-    const nextName = window.prompt(t(locale, 'panel.admin.editCompanyName'), c?.name ?? '');
-    if (nextName == null) return;
-    const nextSlug = window.prompt(t(locale, 'panel.admin.editCompanySlug'), c?.slug ?? '');
-    if (nextSlug == null) return;
-    const nextActiveRaw = window.prompt(t(locale, 'panel.admin.editCompanyActive'), String(Boolean(c?.active)));
-    if (nextActiveRaw == null) return;
-    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
+    const values = await promptForm({
+      title: t(locale, 'panel.admin.editCompanyName'),
+      fields: [
+        { key: 'name', label: t(locale, 'panel.admin.editCompanyName'), defaultValue: c?.name ?? '' },
+        { key: 'slug', label: t(locale, 'panel.admin.editCompanySlug'), defaultValue: c?.slug ?? '' },
+        {
+          key: 'active',
+          label: t(locale, 'panel.admin.editCompanyActive'),
+          defaultValue: String(Boolean(c?.active)),
+        },
+      ],
+    });
+    if (!values) return;
+    const nextName = values.name;
+    const nextSlug = values.slug;
+    const nextActive = String(values.active || '').trim().toLowerCase() !== 'false';
 
     setLoading(true);
     setError('');

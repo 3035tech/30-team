@@ -24,7 +24,7 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Cores/status via `lib/theme.js` (`C`) — roxo da marca não é cor de pipeline
 - SQL parametrizado; `query` vs `queryRead`
 - Perfil: linguagem “tende a”; hipóteses ≠ diagnóstico
-- **Reutilizar antes de criar** — buscar em `app/_components` / `lib/` / `dashboard-shared`; só criar o novo se nada servir (ver `.cursor/rules/reuse-before-create.mdc`)
+- **Reutilizar antes de criar** — em **cada nova tela**, avaliar reaproveitar componentes (`app/_components`, `dashboard-shared`, outras tabs). **Antes de função nova**, grep em `lib/` / call sites; reutilizar ou extrair util compartilhado. Só criar do zero se nada servir (ver `.cursor/rules/reuse-before-create.mdc` e `AGENTS.md` § Reaproveitamento)
 - **UI/UX** — atuar como especialista de usabilidade (ver `.cursor/rules/ui-ux.mdc` e `AGENTS.md` § UI/UX): lista antes de formulário, progressive disclosure, feedback de estados, consistência com tokens existentes
 - **DBA / performance** — validar cada query e a volumetria da transação (ver `.cursor/rules/dba-performance.mdc` e `AGENTS.md` § DBA e performance): tenant, índices, paginação/caps, sem N+1; desenhar para escalar sem refactor grande
 
@@ -35,4 +35,5 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Commit sem pedido explícito; não commitar `.env`
 - Carregar dados de todas as abas do dashboard em todo request
 - Apagar `ae_questions` com tentativas existentes (desativar/sync em vez de DELETE)
-- Duplicar componentes/helpers que já existem (ex.: segundo editor rico)
+- Duplicar componentes **ou** funções/helpers que já existem (ex.: segundo editor rico; segundo `requireAdmin`)
+- Usar `window.confirm` / `window.alert` / `window.prompt` — usar `useAppFeedback`

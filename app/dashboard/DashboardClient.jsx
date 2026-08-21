@@ -19,18 +19,16 @@ import {
   parseTeamSort,
 } from '../../lib/assessment-filters';
 
-import { S } from './dashboard-shared';
+import { DashboardBreadcrumb, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { TeamTab } from './tabs/TeamTab';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
+import { AppFeedbackProvider } from '../_components/AppFeedback';
+import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 
 function TabLoadingFallback() {
-  return (
-    <div style={{ color: C.muted, padding: '24px', fontFamily: FONTS.serif }}>
-      …
-    </div>
-  );
+  return <AppLoading variant="panel" />;
 }
 
 const CompareTabLoader = dynamic(
@@ -572,6 +570,7 @@ export default function DashboardClient({
   );
 
   return (
+    <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
     <div style={{
       minHeight: '100vh',
@@ -619,7 +618,16 @@ export default function DashboardClient({
             gap: '8px',
           }}>
             <div style={{ minWidth: 0, textAlign: navCollapsed ? 'center' : 'left' }}>
-              <BrandMark size={28} withWordmark={!navCollapsed} />
+              <BrandMark
+                size={28}
+                withWordmark={!navCollapsed}
+                onClick={() => {
+                  navigateToTab('overview');
+                  setSidebarOpen(false);
+                }}
+                title={t(locale, 'dashboard.homeAria')}
+                aria-label={t(locale, 'dashboard.homeAria')}
+              />
               {!navCollapsed ? (
                 <span style={{ ...S.label, marginTop: '10px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
               ) : null}
@@ -766,9 +774,12 @@ export default function DashboardClient({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
             flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <BrandMark size={22} />
-                <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'dashboard.dashboard')}</span>
+              <div style={{ marginBottom: '6px' }}>
+                <DashboardBreadcrumb
+                  locale={locale}
+                  tab={tab}
+                  onHome={() => navigateToTab('overview')}
+                />
               </div>
               <h2 style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
                 background: GRADIENT.title,
@@ -1132,5 +1143,6 @@ export default function DashboardClient({
       </div>
     </div>
     </PipelineExtrasProvider>
+    </AppFeedbackProvider>
   );
 }

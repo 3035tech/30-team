@@ -6,8 +6,10 @@ import { C } from '../../../lib/theme';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 export function UsersAdminTab({ navigateDashboard, locale }) {
+  const { promptForm } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
@@ -176,20 +178,36 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   };
 
   const editUser = async (u) => {
-    const nextEmail = window.prompt(t(locale, 'panel.admin.editUserEmail'), u?.email ?? '');
-    if (nextEmail == null) return;
-    const nextRole = window.prompt(t(locale, 'panel.admin.editUserRole'), u?.role ?? 'hr');
-    if (nextRole == null) return;
-    const nextCompanyIdRaw =
-      nextRole.trim() === 'admin'
-        ? ''
-        : window.prompt(t(locale, 'panel.admin.editUserCompanyId'), u?.companyId != null ? String(u.companyId) : '');
-    if (nextCompanyIdRaw == null) return;
-    const nextActiveRaw = window.prompt(t(locale, 'panel.admin.editUserActive'), String(Boolean(u?.active)));
-    if (nextActiveRaw == null) return;
-    const nextActive = String(nextActiveRaw).trim().toLowerCase() !== 'false';
-    const nextPassword = window.prompt(t(locale, 'panel.admin.editUserPassword'), '');
-    if (nextPassword == null) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.admin.editUserEmail'),
+      fields: [
+        { key: 'email', label: t(locale, 'panel.admin.editUserEmail'), defaultValue: u?.email ?? '' },
+        { key: 'role', label: t(locale, 'panel.admin.editUserRole'), defaultValue: u?.role ?? 'hr' },
+        {
+          key: 'companyId',
+          label: t(locale, 'panel.admin.editUserCompanyId'),
+          defaultValue: u?.companyId != null ? String(u.companyId) : '',
+        },
+        {
+          key: 'active',
+          label: t(locale, 'panel.admin.editUserActive'),
+          defaultValue: String(Boolean(u?.active)),
+        },
+        {
+          key: 'password',
+          label: t(locale, 'panel.admin.editUserPassword'),
+          defaultValue: '',
+          type: 'password',
+        },
+      ],
+    });
+    if (!values) return;
+
+    const nextEmail = values.email;
+    const nextRole = values.role;
+    const nextCompanyIdRaw = values.companyId;
+    const nextActive = String(values.active || '').trim().toLowerCase() !== 'false';
+    const nextPassword = values.password;
 
     const payload = {
       email: String(nextEmail).trim(),
@@ -197,11 +215,11 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       active: nextActive,
     };
     if (payload.role !== 'admin') {
-      payload.companyId = String(nextCompanyIdRaw).trim()
+      payload.companyId = String(nextCompanyIdRaw || '').trim()
         ? parseInt(String(nextCompanyIdRaw).trim(), 10)
         : null;
     } else payload.companyId = null;
-    if (String(nextPassword).trim()) payload.password = String(nextPassword).trim();
+    if (String(nextPassword || '').trim()) payload.password = String(nextPassword).trim();
 
     setLoading(true);
     setError('');

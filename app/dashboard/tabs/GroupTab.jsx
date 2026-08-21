@@ -252,23 +252,11 @@ export function GroupTab({
                 const lc = { synergy:C.synergy, tension:C.tension, neutral:C.neutral }[compat.level];
                 const already = groupIds.includes(String(person.assessmentId));
                 return (
-                  <div key={person.assessmentId} style={{ position:'relative',
+                  <div key={person.assessmentId} style={{
                     background:'rgba(26,22,37,.03)', border:`1px solid ${lc}30`,
                     borderRadius:'12px', padding:'12px 14px' }}>
-                    <button
-                      onClick={()=>dismissSuggestion(person.assessmentId)}
-                      title={t(locale, 'panel.group.removeFromList')}
-                      aria-label={t(locale, 'panel.group.removeFromList')}
-                      style={{ position:'absolute', top:'10px', right:'10px',
-                        width:'28px', height:'28px', display:'inline-flex', alignItems:'center', justifyContent:'center',
-                        background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
-                        borderRadius:'10px', color:C.muted, fontSize:'16px',
-                        cursor:'pointer', fontFamily:'monospace', lineHeight:1 }}
-                    >
-                      ×
-                    </button>
                     <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
-                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap', minWidth:0, flex:'1 1 180px' }}>
                         <TypeBadge type={person.topType} locale={locale}/>
                         <span style={{ color:C.text, fontSize:'13px' }}>{person.name}</span>
                         <CompatBadge level={compat.level} locale={locale}/>
@@ -280,8 +268,9 @@ export function GroupTab({
                           </span>
                         )}
                       </div>
-                      <div style={{ display:'flex', gap:'8px' }}>
+                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexShrink:0 }}>
                         <button
+                          type="button"
                           disabled={already}
                           onClick={()=>addToGroup(person.assessmentId)}
                           style={{ background:already?'rgba(26,22,37,.04)':`${lc}18`,
@@ -290,6 +279,20 @@ export function GroupTab({
                             cursor:already?'not-allowed':'pointer', fontFamily:'monospace' }}
                         >
                           {already ? t(locale, 'panel.group.inGroup') : t(locale, 'panel.group.add')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={()=>dismissSuggestion(person.assessmentId)}
+                          title={t(locale, 'panel.group.removeFromList')}
+                          aria-label={t(locale, 'panel.group.removeFromList')}
+                          style={{
+                            width:'36px', height:'36px', display:'inline-flex', alignItems:'center', justifyContent:'center',
+                            background:'rgba(26,22,37,.06)', border:`1px solid ${C.border}`,
+                            borderRadius:'10px', color:C.muted, fontSize:'16px',
+                            cursor:'pointer', fontFamily:'monospace', lineHeight:1, flexShrink:0,
+                          }}
+                        >
+                          ×
                         </button>
                       </div>
                     </div>

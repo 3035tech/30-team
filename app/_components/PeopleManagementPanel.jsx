@@ -7,6 +7,7 @@ import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
+import { useAppFeedback } from './AppFeedback';
 
 function todayIso() {
   const d = new Date();
@@ -45,6 +46,7 @@ export function PeopleManagementPanel({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgError, setMsgError] = useState(false);
+  const { confirm, notice } = useAppFeedback();
 
   if (!management && !people) {
     return null;
@@ -84,7 +86,10 @@ export function PeopleManagementPanel({
 
   const remove = async (ooId) => {
     if (!candidateId || !ooId) return;
-    const ok = window.confirm(t(locale, 'panel.team.oneOnOneDeleteConfirm'));
+    const ok = await confirm({
+      message: t(locale, 'panel.team.oneOnOneDeleteConfirm'),
+      danger: true,
+    });
     if (!ok) return;
     setBusy(true);
     try {
@@ -96,7 +101,7 @@ export function PeopleManagementPanel({
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       if (onRefresh) await onRefresh();
     } catch (e) {
-      window.alert(e?.message || t(locale, 'panel.common.error'));
+      await notice({ message: e?.message || t(locale, 'panel.common.error'), tone: 'error' });
     } finally {
       setBusy(false);
     }

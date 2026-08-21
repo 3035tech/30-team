@@ -74,14 +74,33 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) em v
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
 | Nomes de arquivo/export em inglês | Pastas novas fora de `app/` / `lib/` / `migrations/` |
-| **Reutilizar** componente/helper existente (`app/_components`, `lib/`, `dashboard-shared`) | Criar duplicata; só criar o novo se a busca no repo não achar equivalente |
+| **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
 | **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
 
 **Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
 
-Antes de implementar feature de UI: **grep** por nomes óbvios (`RichText`, `TypeBadge`, `sanitize`, etc.) e ler usos existentes. Estender o que já existe > copiar > criar do zero.
+## Reaproveitamento (obrigatório)
+
+Em **cada nova tela** e **antes de qualquer função nova**, o agente deve privilegiar reuso. Detalhe operacional: `.cursor/rules/reuse-before-create.mdc`.
+
+### Telas / componentes
+1. Avaliar se a UI já existe (ou quase) em `app/_components`, `dashboard-shared` ou outra tab/fluxo.
+2. Grep por nomes óbvios; ler usos existentes.
+3. Estender (props, i18n) > copiar > criar do zero.
+4. Só criar componente novo se nada servir — justificar no resumo.
+5. Feedback de UI: `useAppFeedback` (`confirm` / `notice` / `promptForm` / `toast`), `AppLoading` — **nunca** `window.confirm`, `alert` ou `prompt`.
+
+### Funções / métodos
+1. Grep em `lib/`, `lib/ae/`, `lib/people/` e call sites próximos.
+2. Reutilizar ou estender o helper existente.
+3. Se a lógica for (ou for ficar) compartilhada → extrair para `lib/` (domínio) em vez de duplicar em rotas/tabs.
+4. APIs finas; regras e SQL reutilizáveis fora do `route.js`.
+
+Ordem: **reusar → estender → extrair util → criar novo**.
+
+Antes de implementar feature de UI: **grep** (`RichText`, `TypeBadge`, `sanitize`, filtros, etc.) e ler usos existentes.
 
 ## UI/UX (obrigatório em mudanças de interface)
 
@@ -172,7 +191,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não commitar `.env`, senhas, `node_modules`
 - Não commitar salvo pedido explícito do usuário
 - Não refatorar fora do escopo do pedido
-- Não duplicar componentes ou helpers que já existem no repo (reutilizar / estender primeiro)
+- Não duplicar componentes **nem** funções/helpers que já existem (reutilizar / estender / extrair para `lib/` primeiro; ver § Reaproveitamento)
 
 ## Arquivos por tipo de tarefa
 
@@ -189,6 +208,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
+| Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` |
 | Cores / marca | `lib/theme.js`, `lib/brand.js` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |

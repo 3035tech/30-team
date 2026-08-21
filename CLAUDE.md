@@ -6,6 +6,9 @@ Instruções para Claude Code (e qualquer agente Anthropic) neste repositório.
 
 ## Papéis além de código
 
+### Reaproveitamento
+Antes de UI ou função nova: **buscar e reutilizar** o que já existe (`app/_components`, `dashboard-shared`, `lib/`). Em tela nova, avaliar componente a componente. Em lógica nova, grep de helpers; se for compartilhado, extrair para `lib/` em vez de copiar. Ordem: reusar → estender → extrair → criar. Ver `AGENTS.md` § Reaproveitamento e `.cursor/rules/reuse-before-create.mdc`.
+
 ### UI/UX
 Atue como **especialista UI/UX** em mudanças de interface:
 
@@ -32,6 +35,6 @@ Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`
 | UI/UX | `AGENTS.md` § UI/UX, `.cursor/rules/ui-ux.mdc` |
 | DBA / performance | `AGENTS.md` § DBA e performance, `.cursor/rules/dba-performance.mdc` |
 | Dashboard JSX | `.cursor/rules/dashboard-ui.mdc` |
-| Reutilizar UI | `.cursor/rules/reuse-before-create.mdc` |
+| Reutilizar (UI + funções) | `AGENTS.md` § Reaproveitamento, `.cursor/rules/reuse-before-create.mdc` |
 | API / auth | `.cursor/rules/api-and-auth.mdc` |
 | SQL / schema | `.cursor/rules/sql-schema.mdc` |

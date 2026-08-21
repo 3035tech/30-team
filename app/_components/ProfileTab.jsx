@@ -97,7 +97,15 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   };
 
   return (
-    <div style={{ ...S.card, maxWidth: '560px' }}>
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+      }}
+    >
+    <div style={{ ...S.card, maxWidth: '560px', width: '100%', boxSizing: 'border-box' }}>
       <span style={S.label}>{t(locale, 'dashboard.profileTitle')}</span>
       <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px', lineHeight: 1.55 }}>
         {t(locale, 'dashboard.profileIntro')}
@@ -209,6 +217,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }

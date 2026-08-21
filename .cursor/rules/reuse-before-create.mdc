@@ -1,16 +1,54 @@
 ---
-description: Sempre reutilizar componentes/helpers existentes antes de criar novos
+description: Reutilizar componentes e funções existentes antes de criar novos (telas e libs)
 alwaysApply: true
 ---
 
 # Reutilizar antes de criar
 
-Antes de implementar UI ou helper novo:
+Regra obrigatória em **toda** feature: tela nova, aba, modal, API helper ou utilitário.
 
-1. **Buscar no repo** (grep/`app/_components`, `lib/`, `dashboard-shared`) se já existe algo equivalente.
-2. **Preferir reutilizar** e estender (props, i18n, sanitização) em vez de duplicar.
-3. **Só criar componente/arquivo novo** se nada servir — e documentar no PR/resumo por quê.
-4. Notas / texto livre com marcação → `RichTextEditor` + `RichTextView` + `lib/sanitize-html.js` (não outro editor).
-5. Cores, labels, pipeline, filtros → tokens/`lib/` existentes; não copiar entre tabs.
+## Componentes / UI
 
-Exemplo: pedido de “negrito nas notas” → localizar `RichTextEditor` e plugar nos campos que ainda usam `<textarea>`, não reinventar toolbar.
+Para **cada nova tela** (ou pedaço grande de UI):
+
+1. **Avaliar reaproveitamento** — o que já existe em `app/_components/`, `app/dashboard/dashboard-shared.jsx`, tabs do dashboard, fluxos públicos (`AssessmentFlow`, etc.)?
+2. **Buscar no repo** (grep por nome óbvio: `RichText`, `TypeBadge`, `SortableTh`, `ProfileTab`, drawer, empty state…).
+3. **Preferir** plugar / estender props / i18n / sanitização em vez de copiar JSX.
+4. **Só criar componente novo** se a busca não achar equivalente — e dizer no resumo/PR por quê.
+5. Casos canônicos:
+   - Notas / HTML → `RichTextEditor` + `RichTextView` + `lib/sanitize-html.js`
+   - Cores / tipografia → `C` / `FONTS` (`lib/theme.js`)
+   - Pipeline / badges / cards → `dashboard-shared` e padrões das tabs existentes
+   - Confirm / aviso / toast / loading → `useAppFeedback` (`AppFeedbackProvider`), `ConfirmDialog`, `SystemNoticeModal`, `AppLoading` — **nunca** `window.confirm` / `alert` / `prompt`
+   - Não inventar segundo design system
+
+## Funções / helpers / métodos
+
+Antes de **criar qualquer função nova**:
+
+1. **Grep** em `lib/`, `lib/ae/`, `lib/people/`, rotas e tabs por nome ou comportamento (filtros, formatters, auth, paginação, upsert, notify…).
+2. **Reutilizar** o existente; se faltar um detalhe, **estender** o helper (parâmetro opcional) em vez de duplicar.
+3. Se a lógica for útil em **mais de um lugar** (ou claramente vai ser): extrair para `lib/` (módulo de domínio) ou util compartilhado — **não** deixar cópia em duas tabs/rotas.
+4. Rotas `app/api/**` devem ficar finas: regra de negócio e SQL reutilizável em `lib/`.
+5. Auth/scope: `requireManagerRole` / `getManagerScope` — não copiar check de role.
+
+## Ordem de preferência
+
+1. Reusar como está  
+2. Estender (props / opts / export)  
+3. Extrair util compartilhado em `lib/` a partir de código duplicado  
+4. Criar arquivo/componente novo (último recurso)
+
+## Anti-padrões
+
+- Nova tela “do zero” sem grep nos componentes existentes
+- Copiar bloco de uma tab para outra (estilo, filtro, fetch, empty state)
+- Nova função `formatX` / `buildWhere` / `requireAdmin` quando já existe em `lib/`
+- Utils soltos na raiz ou em pastas fora de `app/` / `lib/` / `migrations/`
+
+## Checklist rápido
+
+- [ ] Grep de componente equivalente feito?
+- [ ] Grep de função/helper equivalente feito?
+- [ ] Se 2+ call sites: está (ou vai para) `lib/` / `_components` / `dashboard-shared`?
+- [ ] Documentei no resumo se criei algo novo *por que* o existente não serviu?
