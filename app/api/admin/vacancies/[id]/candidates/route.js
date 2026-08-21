@@ -42,7 +42,7 @@ async function loadVacancyForActor(request, vacancyId, payload) {
   return { vacancy: exists.rows[0], isAdmin };
 }
 
-/** Lista candidatos pré-cadastrados na vaga + status do último convite eneagrama. */
+/** Lista candidatos pré-cadastrados na vaga + status eneagrama e Motivadores. */
 export async function GET(request, { params }) {
   try {
     const cookieStore = cookies();
@@ -80,7 +80,13 @@ export async function GET(request, { params }) {
          inv.completed_at AS "inviteCompletedAt",
          ass.id AS "assessmentId",
          ass.pipeline_stage AS "pipelineStage",
-         ass.top_type AS "topType"
+         ass.top_type AS "topType",
+         mot_inv.id AS "motivatorsInviteId",
+         mot_inv.status AS "motivatorsInviteStatus",
+         mot_inv.sent_at AS "motivatorsInviteSentAt",
+         mot_inv.completed_at AS "motivatorsInviteCompletedAt",
+         mot_att.id AS "motivatorsAttemptId",
+         mot_att.completed_at AS "motivatorsCompletedAt"
        FROM vacancy_candidates vc
        JOIN candidates c ON c.id = vc.candidate_id
        LEFT JOIN LATERAL (
@@ -102,6 +108,33 @@ export async function GET(request, { params }) {
          ORDER BY a.created_at DESC
          LIMIT 1
        ) ass ON TRUE
+       LEFT JOIN LATERAL (
+         SELECT ai.id, ai.status, ai.sent_at, ai.completed_at
+         FROM ae_invites ai
+         JOIN ae_definitions d ON d.id = ai.definition_id AND LOWER(d.slug) = 'motivators'
+         WHERE ai.company_id = c.company_id
+           AND (
+             ai.candidate_id = vc.candidate_id
+             OR (c.email IS NOT NULL AND LOWER(ai.candidate_email) = LOWER(c.email))
+           )
+           AND ai.status <> 'cancelled'
+         ORDER BY
+           CASE ai.status WHEN 'completed' THEN 0 ELSE 1 END,
+           ai.completed_at DESC NULLS LAST,
+           ai.sent_at DESC NULLS LAST,
+           ai.id DESC
+         LIMIT 1
+       ) mot_inv ON TRUE
+       LEFT JOIN LATERAL (
+         SELECT a.id, a.completed_at
+         FROM ae_attempts a
+         JOIN ae_definitions d ON d.id = a.definition_id AND LOWER(d.slug) = 'motivators'
+         WHERE a.company_id = c.company_id
+           AND a.candidate_id = vc.candidate_id
+           AND a.status = 'completed'
+         ORDER BY a.completed_at DESC NULLS LAST, a.id DESC
+         LIMIT 1
+       ) mot_att ON TRUE
        WHERE vc.vacancy_id = $1
        ORDER BY vc.created_at DESC`,
       [vacancyId]

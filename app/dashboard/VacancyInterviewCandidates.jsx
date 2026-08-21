@@ -33,6 +33,15 @@ function inviteStatusLabel(locale, status) {
   return t(locale, 'recruiting.noInviteYet');
 }
 
+function motivatorsStatusLabel(locale, status) {
+  const s = String(status || '');
+  if (s === 'opened') return t(locale, 'recruiting.motivatorsInviteOpened');
+  if (s === 'completed') return t(locale, 'recruiting.motivatorsInviteCompleted');
+  if (s === 'cancelled') return t(locale, 'recruiting.motivatorsInviteCancelled');
+  if (s === 'sent') return t(locale, 'recruiting.motivatorsInviteSent');
+  return t(locale, 'recruiting.motivatorsNoInviteYet');
+}
+
 function availabilityLabel(locale, code) {
   const map = {
     immediate: 'recruiting.availabilityImmediate',
@@ -205,6 +214,12 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   };
 
   const alreadyCompleted = Boolean(row.assessmentId) || row.inviteStatus === 'completed';
+  const motivatorsDone =
+    Boolean(row.motivatorsAttemptId) || row.motivatorsInviteStatus === 'completed';
+  const motivatorsStatus =
+    motivatorsDone && row.motivatorsInviteStatus !== 'completed'
+      ? 'completed'
+      : row.motivatorsInviteStatus;
   const anyInviteBusy = inviteBusy || motivatorsBusy;
   const locBits = [row.city, row.state].filter(Boolean).join(' / ');
 
@@ -247,8 +262,23 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 border: `1px solid ${C.border}`,
                 color: C.muted,
               }}
+              title={t(locale, 'recruiting.enneagramBadgeTitle')}
             >
-              {inviteStatusLabel(locale, row.inviteStatus)}
+              {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
+            </span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                padding: '2px 8px',
+                borderRadius: '8px',
+                border: `1px solid ${motivatorsDone ? `${C.synergy}55` : C.border}`,
+                color: motivatorsDone ? C.synergy : C.muted,
+                background: motivatorsDone ? `${C.synergy}12` : 'transparent',
+              }}
+              title={t(locale, 'recruiting.motivatorsBadgeTitle')}
+            >
+              {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
             </span>
             {row.topType != null && (
               <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.purpleLight }}>
@@ -320,20 +350,22 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           <button
             type="button"
             onClick={sendMotivators}
-            disabled={anyInviteBusy || !row.email}
+            disabled={anyInviteBusy || !row.email || motivatorsDone}
             title={
-              !row.email
-                ? t(locale, 'recruiting.motivatorsNeedEmail')
-                : t(locale, 'recruiting.sendMotivatorsTitle')
+              motivatorsDone
+                ? t(locale, 'recruiting.motivatorsAlreadyDone')
+                : !row.email
+                  ? t(locale, 'recruiting.motivatorsNeedEmail')
+                  : t(locale, 'recruiting.sendMotivatorsTitle')
             }
             style={{
-              background: `${C.purple}14`,
-              border: `1px solid ${C.purple}44`,
+              background: motivatorsDone ? 'transparent' : `${C.purple}14`,
+              border: `1px solid ${motivatorsDone ? C.border : `${C.purple}44`}`,
               borderRadius: '10px',
               padding: '8px 10px',
-              color: C.purpleDeep,
+              color: motivatorsDone ? C.faint : C.purpleDeep,
               fontSize: '12px',
-              cursor: anyInviteBusy || !row.email ? 'default' : 'pointer',
+              cursor: anyInviteBusy || !row.email || motivatorsDone ? 'default' : 'pointer',
               fontFamily: 'monospace',
               opacity: motivatorsBusy || !row.email ? 0.6 : 1,
               minHeight: '40px',
@@ -341,7 +373,9 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           >
             {motivatorsBusy
               ? t(locale, 'recruiting.inviteSending')
-              : t(locale, 'recruiting.sendMotivators')}
+              : motivatorsDone
+                ? t(locale, 'recruiting.motivatorsDone')
+                : t(locale, 'recruiting.sendMotivators')}
           </button>
         </div>
       </div>

@@ -72,6 +72,20 @@ export async function POST(request, { params }) {
       return apiError(request, 'VACANCY_CLOSED', 400);
     }
 
+    const already = await query(
+      `SELECT a.id
+       FROM ae_attempts a
+       JOIN ae_definitions d ON d.id = a.definition_id AND LOWER(d.slug) = 'motivators'
+       WHERE a.company_id = $1
+         AND a.candidate_id = $2
+         AND a.status = 'completed'
+       LIMIT 1`,
+      [row.companyId, candidateId]
+    );
+    if (already.rowCount > 0) {
+      return apiError(request, 'MOTIVATORS_ALREADY_ANSWERED', 409);
+    }
+
     const base = publicAppUrl(request);
     if (!base) {
       return apiError(request, 'APP_URL_MISSING', 500);
