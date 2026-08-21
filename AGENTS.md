@@ -76,8 +76,11 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 | Nomes de arquivo/export em inglês | Pastas novas fora de `app/` / `lib/` / `migrations/` |
 | **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
 | **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
+| Imports `lib/` com `../` contados pela profundidade do `route.js` (ver `.cursor/rules/api-and-auth.mdc` §11) | Copiar `../../../lib` de outra rota sem conferir pastas → `Module not found` no Docker build |
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
+
+**API Routes → `lib/`:** pastas entre `app/` e o `route.js` + 1 = quantidade de `../`. Ex.: `app/api/health/status/route.js` → `../../../../lib/…`. Detalhe: `.cursor/rules/api-and-auth.mdc`.
 
 **Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
 

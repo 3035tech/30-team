@@ -16,3 +16,14 @@ alwaysApply: false
 8. Mutações sensíveis (user, company, hire/reject, purge): `audit({ actorUserId, action, ... })`.
 9. Cron: exigir `CRON_SECRET`. Não vazar stack traces para o cliente.
 10. Performance: validar volumetria da query (paginação/LIMIT/caps, sem N+1) — `.cursor/rules/dba-performance.mdc` / `AGENTS.md` § DBA e performance.
+11. **Imports relativos para `lib/` (obrigatório — erro comum de CI)**  
+    Contar pastas **entre `app/` e o `route.js`**, depois somar **1** (sair de `app/`):
+    | Arquivo | `../` até `lib/` |
+    |---------|------------------|
+    | `app/api/health/route.js` | `../../../lib/…` (3) |
+    | `app/api/health/status/route.js` | `../../../../lib/…` (4) |
+    | `app/api/admin/ae/status/route.js` | `../../../../../lib/…` (5) |
+    | `app/api/admin/vacancies/[id]/assist-ai/route.js` | `../../../../../../lib/…` (6) |
+    - **Não** copiar o `../` de outra rota sem conferir a profundidade.
+    - Preferir copiar o import de um `route.js` **irmão** (mesmo nível de pastas).
+    - Antes de entregar rota nova: `npm run build` (ou pelo menos abrir o path mental até a raiz). `Module not found: Can't resolve '../../../lib/…'` = `../` a menos.
