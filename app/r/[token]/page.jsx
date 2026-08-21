@@ -10,7 +10,9 @@ import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../../lib/theme';
 import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { RichTextView } from '../../_components/RichTextView';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
+import { motivatorDimensionLabel } from '../../../lib/ae/motivators-dimensions';
 import { recommendationFromStage } from '../../../lib/vacancy-report-shared';
+import { formatSalaryBr } from '../../../lib/br-masks';
 
 function ScoreBars({ scores, locale }) {
   const entries = [];
@@ -63,30 +65,53 @@ function recommendationLabel(locale, rec) {
   return t(locale, 'panel.report.recBank');
 }
 
-function CandidateCard({ c, locale, vacancyTitle }) {
+function availabilityLabel(locale, value) {
+  const map = {
+    immediate: 'recruiting.availabilityImmediate',
+    '15_days': 'recruiting.availability15',
+    '30_days': 'recruiting.availability30',
+    '60_days': 'recruiting.availability60',
+    other: 'recruiting.availabilityOther',
+  };
+  return map[value] ? t(locale, map[value]) : value || '';
+}
+
+function profileBits(c, locale) {
+  const bits = [];
+  const loc = [c.city, c.state].filter(Boolean).join(' / ');
+  if (loc) bits.push(loc);
+  if (c.availability) bits.push(availabilityLabel(locale, c.availability));
+  if (c.salaryExpectation) {
+    bits.push(formatSalaryBr(c.salaryExpectation) || String(c.salaryExpectation));
+  }
+  return bits;
+}
+
+function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
   const [openBars, setOpenBars] = useState(false);
   const typeData = getTypeData(locale);
   const d = c.topType != null ? typeData[c.topType] : null;
-  const aligned = formatTypeList(c.fitAlignedTypes, locale);
-  const gaps = formatTypeList(c.fitGapTypes, locale);
+  const aligned = hasRubric ? formatTypeList(c.fitAlignedTypes, locale) : '';
+  const gaps = hasRubric ? formatTypeList(c.fitGapTypes, locale) : '';
   const rec = c.recommendation || recommendationFromStage(c.pipelineStage);
+  const meta = profileBits(c, locale);
+  const why = c.why || c.consultantNote;
+  const motivators = Array.isArray(c.motivatorsTop) ? c.motivatorsTop : [];
   const roleReading =
     c.topType != null && vacancyTitle
-      ? aligned
+      ? hasRubric && aligned
         ? t(locale, 'panel.report.roleReadingAligned', {
             vacancy: vacancyTitle,
             type: c.topType,
             typeName: typeShortLabel(c.topType, locale),
             types: aligned,
-            score:
-              c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
+            score: c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
           })
         : t(locale, 'panel.report.roleReading', {
             vacancy: vacancyTitle,
             type: c.topType,
             typeName: typeShortLabel(c.topType, locale),
-            score:
-              c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
+            score: c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
           })
       : null;
 
@@ -114,26 +139,61 @@ function CandidateCard({ c, locale, vacancyTitle }) {
         title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
       >
         {c.topType != null ? typeFullName(c.topType, locale) : '—'}
-        {c.vacancyFitScore010 != null
+        {hasRubric && c.vacancyFitScore010 != null
           ? ` · ${t(locale, 'panel.report.fitLabel', { score: Number(c.vacancyFitScore010).toFixed(1) })}`
           : ''}
       </p>
-      {c.consultantNote ? (
-        <p
-          style={{
-            margin: '10px 0 0',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            background: `${C.purple}0a`,
-            border: `1px solid ${C.purple}22`,
-            fontSize: '13px',
-            color: C.text,
-            lineHeight: 1.5,
-          }}
-        >
-          {c.consultantNote}
-        </p>
+      {meta.length ? (
+        <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>{meta.join(' · ')}</p>
       ) : null}
+
+      {(why || c.watchOut || c.interviewProbe) ? (
+        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {why ? (
+            <div>
+              <div style={miniLabel()}>{t(locale, 'panel.report.fieldWhy')}</div>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{why}</p>
+            </div>
+          ) : null}
+          {c.watchOut ? (
+            <div>
+              <div style={miniLabel()}>{t(locale, 'panel.report.fieldWatch')}</div>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{c.watchOut}</p>
+            </div>
+          ) : null}
+          {c.interviewProbe ? (
+            <div>
+              <div style={miniLabel()}>{t(locale, 'panel.report.fieldProbe')}</div>
+              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{c.interviewProbe}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {motivators.length ? (
+        <div style={{ marginTop: '12px' }}>
+          <div style={miniLabel()}>{t(locale, 'panel.report.motivatorsTitle')}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+            {motivators.map((m) => (
+              <span
+                key={m.key}
+                style={{
+                  fontSize: '11px',
+                  fontFamily: FONTS.mono,
+                  padding: '4px 8px',
+                  borderRadius: '999px',
+                  border: `1px solid ${C.border}`,
+                  color: C.muted,
+                }}
+              >
+                {motivatorDimensionLabel(m.key, locale)}
+                {m.score != null ? ` ${m.score}` : ''}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {roleReading ? (
         <p style={{ margin: '10px 0 0', fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{roleReading}</p>
       ) : null}
@@ -174,6 +234,17 @@ function CandidateCard({ c, locale, vacancyTitle }) {
       ) : null}
     </article>
   );
+}
+
+function miniLabel() {
+  return {
+    margin: '0 0 2px',
+    fontSize: '10px',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    fontFamily: FONTS.mono,
+    color: C.faint,
+  };
 }
 
 function ReportInner() {
@@ -232,6 +303,7 @@ function ReportInner() {
   const rubricSummary = snap.rubricSummary || null;
 
   const compareLine = useMemo(() => {
+    if (!rubricSummary?.hasRubric) return '';
     const ranked = candidates
       .filter((c) => c.vacancyFitScore010 != null)
       .slice()
@@ -256,7 +328,7 @@ function ReportInner() {
       c: last.name,
       cFit: Number(last.vacancyFitScore010).toFixed(1),
     });
-  }, [candidates, locale]);
+  }, [candidates, locale, rubricSummary?.hasRubric]);
 
   if (state.loading) {
     return (
@@ -319,6 +391,22 @@ function ReportInner() {
           {expiresAt ? ` · ${t(locale, 'panel.report.expiresAt', { date: expiresAt.toLocaleString(locale) })}` : ''}
         </p>
       </header>
+
+      {!(rubricSummary?.hasRubric) ? (
+        <section
+          style={{
+            marginBottom: '20px',
+            padding: '14px 16px',
+            borderRadius: '12px',
+            border: '1px solid rgba(220,38,38,.28)',
+            background: 'rgba(220,38,38,.05)',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.55 }}>
+            {t(locale, 'panel.report.noRubricBanner')}
+          </p>
+        </section>
+      ) : null}
 
       {(rubricSummary?.hasRubric && rubricTypesLabel) ||
       vacancy.description ||
@@ -417,7 +505,9 @@ function ReportInner() {
               <tr style={{ textAlign: 'left', color: C.muted, fontFamily: FONTS.mono, fontSize: '11px' }}>
                 <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colName')}</th>
                 <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colRec')}</th>
-                <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colFit')}</th>
+                {rubricSummary?.hasRubric ? (
+                  <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colFit')}</th>
+                ) : null}
                 <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colType')}</th>
               </tr>
             </thead>
@@ -430,9 +520,11 @@ function ReportInner() {
                     <td style={{ padding: '10px 14px', color: C.muted, fontFamily: FONTS.mono }}>
                       {recommendationLabel(locale, rec)}
                     </td>
-                    <td style={{ padding: '10px 14px', fontFamily: FONTS.mono, fontWeight: 600 }}>
-                      {c.vacancyFitScore010 != null ? `${Number(c.vacancyFitScore010).toFixed(1)}/10` : '—'}
-                    </td>
+                    {rubricSummary?.hasRubric ? (
+                      <td style={{ padding: '10px 14px', fontFamily: FONTS.mono, fontWeight: 600 }}>
+                        {c.vacancyFitScore010 != null ? `${Number(c.vacancyFitScore010).toFixed(1)}/10` : '—'}
+                      </td>
+                    ) : null}
                     <td
                       style={{
                         padding: '10px 14px',
@@ -462,6 +554,7 @@ function ReportInner() {
               c={c}
               locale={locale}
               vacancyTitle={vacancy.title || state.data.title || ''}
+              hasRubric={Boolean(rubricSummary?.hasRubric)}
             />
           ))}
         </div>

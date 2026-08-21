@@ -115,6 +115,7 @@ export async function GET(request) {
        v.description,
        v.salary_min AS "salaryMin",
        v.salary_max AS "salaryMax",
+       v.client_report_show_salary AS "clientReportShowSalary",
        v.created_at AS "createdAt",
        vl.token AS "activeToken",
        vl.expires_at AS "activeTokenExpiresAt"
@@ -185,12 +186,13 @@ export async function POST(request) {
   const ins = await query(
     `INSERT INTO vacancies (
        company_id, title, slug, status, positions_count, target_date,
-       description, salary_min, salary_max
+       description, salary_min, salary_max, client_report_show_salary
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
+               client_report_show_salary AS "clientReportShowSalary",
                created_at AS "createdAt"`,
     [
       companyId,
@@ -202,6 +204,7 @@ export async function POST(request) {
       details.description,
       details.salaryMin,
       details.salaryMax,
+      details.clientReportShowSalary === true,
     ]
   );
 

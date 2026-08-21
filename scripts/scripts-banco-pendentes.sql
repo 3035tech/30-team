@@ -248,3 +248,11 @@ CREATE INDEX IF NOT EXISTS idx_user_capability_overrides_user
 CREATE INDEX IF NOT EXISTS idx_manager_notifications_created_at
   ON manager_notifications (created_at ASC);
 
+-- 028 — pretensão no relatório do cliente (flag por vaga)
+ALTER TABLE vacancies
+  ADD COLUMN IF NOT EXISTS client_report_show_salary BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMENT ON COLUMN vacancies.client_report_show_salary IS
+  'Se TRUE, o relatório público /r inclui pretensão salarial do candidato. FALSE = omitir (padrão).';
+
+

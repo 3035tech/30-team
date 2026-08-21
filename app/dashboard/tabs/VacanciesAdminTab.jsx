@@ -1097,6 +1097,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [description, setDescription] = useState('');
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
+  const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
   const [companyId, setCompanyId] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
@@ -1248,6 +1249,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         description,
         salaryMin: stripSalary(salaryMin),
         salaryMax: stripSalary(salaryMax),
+        clientReportShowSalary,
       };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
@@ -1258,7 +1260,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
-      setDescription(''); setSalaryMin(''); setSalaryMax('');
+      setDescription(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
       setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
@@ -1355,12 +1357,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       description: v.description ?? '',
       salaryMin: salaryToCentsDigits(v.salaryMin),
       salaryMax: salaryToCentsDigits(v.salaryMax),
+      clientReportShowSalary: Boolean(v.clientReportShowSalary),
     });
   };
 
   const saveVacancyEdit = async () => {
     if (!editingVacancy) return;
-    const { id, title, slug, status, positionsCount, targetDate, description, salaryMin, salaryMax } = editingVacancy;
+    const {
+      id,
+      title,
+      slug,
+      status,
+      positionsCount,
+      targetDate,
+      description,
+      salaryMin,
+      salaryMax,
+      clientReportShowSalary,
+    } = editingVacancy;
     if (!title.trim()) { setError(t(locale, 'recruiting.titleRequired')); return; }
     setLoading(true);
     setError('');
@@ -1378,6 +1392,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           description,
           salaryMin: stripSalary(salaryMin),
           salaryMax: stripSalary(salaryMax),
+          clientReportShowSalary: Boolean(clientReportShowSalary),
         }),
       });
       const data = await res.json();
@@ -1584,6 +1599,30 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </label>
           </div>
 
+          <label
+            style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start',
+              fontSize: '12px',
+              color: C.muted,
+              lineHeight: 1.45,
+              maxWidth: '520px',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={clientReportShowSalary}
+              onChange={(e) => setClientReportShowSalary(e.target.checked)}
+              style={{ marginTop: '2px', accentColor: C.purple }}
+            />
+            <span>
+              <strong style={{ color: C.text }}>{t(locale, 'recruiting.clientReportShowSalary')}</strong>
+              <br />
+              {t(locale, 'recruiting.clientReportShowSalaryHelp')}
+            </span>
+          </label>
+
           <div>
             <label style={{ display: 'block', fontSize: '11px', color: C.faint, fontFamily: 'monospace', marginBottom: '6px' }}>
               {t(locale, 'recruiting.vacancyDescriptionLabel')}
@@ -1715,6 +1754,31 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   fontFamily: 'monospace', boxSizing: 'border-box' }}
               />
             </div>
+            <label
+              style={{
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start',
+                fontSize: '12px',
+                color: C.muted,
+                lineHeight: 1.45,
+                maxWidth: '520px',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(editingVacancy.clientReportShowSalary)}
+                onChange={(e) =>
+                  setEditingVacancy((cur) => ({ ...cur, clientReportShowSalary: e.target.checked }))
+                }
+                style={{ marginTop: '2px', accentColor: C.purple }}
+              />
+              <span>
+                <strong style={{ color: C.text }}>{t(locale, 'recruiting.clientReportShowSalary')}</strong>
+                <br />
+                {t(locale, 'recruiting.clientReportShowSalaryHelp')}
+              </span>
+            </label>
             <div>
               <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
                 {t(locale, 'recruiting.vacancyDescriptionLabel')}
@@ -1937,7 +2001,21 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               ) : null}
 
               {detailSection === 'report' ? (
-                <VacancyClientReportBlock vacancyId={v.id} locale={locale} appUrl={appUrl} />
+                <VacancyClientReportBlock
+                  vacancyId={v.id}
+                  locale={locale}
+                  appUrl={appUrl}
+                  clientReportShowSalary={Boolean(v.clientReportShowSalary)}
+                  onClientReportShowSalaryChange={(next) => {
+                    setVacancies((list) =>
+                      list.map((row) =>
+                        Number(row.id) === Number(v.id)
+                          ? { ...row, clientReportShowSalary: next }
+                          : row
+                      )
+                    );
+                  }}
+                />
               ) : null}
 
               {detailSection === 'config' ? (

@@ -33,6 +33,7 @@ async function getVacancyOr404(vacancyId) {
        v.description,
        v.salary_min AS "salaryMin",
        v.salary_max AS "salaryMax",
+       v.client_report_show_salary AS "clientReportShowSalary",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -143,18 +144,34 @@ export async function PATCH(request, { params }) {
   const nextDescription = details.description !== undefined ? details.description : (current.description ?? null);
   const nextSalaryMin = details.salaryMin !== undefined ? details.salaryMin : (current.salaryMin ?? null);
   const nextSalaryMax = details.salaryMax !== undefined ? details.salaryMax : (current.salaryMax ?? null);
+  const nextShowSalary =
+    details.clientReportShowSalary !== undefined
+      ? details.clientReportShowSalary
+      : Boolean(current.clientReportShowSalary);
   if (!nextTitle) return apiError(request, 'TITLE_REQUIRED', 400);
 
   const up = await query(
     `UPDATE vacancies
      SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6,
-         description = $7, salary_min = $8, salary_max = $9
+         description = $7, salary_min = $8, salary_max = $9, client_report_show_salary = $10
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
+               client_report_show_salary AS "clientReportShowSalary",
                created_at AS "createdAt"`,
-    [id, nextTitle, nextSlug, nextStatus, nextPositions, nextTargetDate, nextDescription, nextSalaryMin, nextSalaryMax]
+    [
+      id,
+      nextTitle,
+      nextSlug,
+      nextStatus,
+      nextPositions,
+      nextTargetDate,
+      nextDescription,
+      nextSalaryMin,
+      nextSalaryMax,
+      nextShowSalary,
+    ]
   );
 
   if (body.vacancyFitWeights != null || body.vacancyRubricNotes !== undefined) {

@@ -8,10 +8,11 @@ import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { htmlToPlainText } from '../../lib/sanitize-html';
+import { getTypeData } from '../../lib/i18n-data';
 import {
-  CONSULTANT_NOTE_MAX_CHARS,
   REPORT_NOTE_MIN_CHARS,
   REPORT_RECOMMENDATIONS,
+  STRUCTURED_FIELD_MAX_CHARS,
   normalizeRecommendation,
 } from '../../lib/vacancy-report-shared';
 
@@ -33,13 +34,21 @@ const NOTE_TEMPLATE_EN = `<p><strong>Who to advance:</strong> …</p>
 /**
  * Generate / list / revoke public client report links for a vacancy.
  */
-export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl = '' }) {
+export function VacancyClientReportBlock({
+  vacancyId,
+  locale = 'pt-BR',
+  appUrl = '',
+  clientReportShowSalary: clientReportShowSalaryProp = false,
+  onClientReportShowSalaryChange,
+}) {
   const { confirm } = useAppFeedback();
   const [open, setOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [candidates, setCandidates] = useState([]);
   const [vacancyMeta, setVacancyMeta] = useState(null);
   const [rubricMeta, setRubricMeta] = useState(null);
+  const [showSalary, setShowSalary] = useState(Boolean(clientReportShowSalaryProp));
+  const [salaryBusy, setSalaryBusy] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
   const [overrides, setOverrides] = useState({});
   const [stageFilter, setStageFilter] = useState('shortlist');
@@ -76,6 +85,9 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
       setCandidates(Array.isArray(data.candidates) ? data.candidates : []);
       setVacancyMeta(data.vacancy || null);
       setRubricMeta(data.rubricSummary || null);
+      if (typeof data.vacancy?.clientReportShowSalary === 'boolean') {
+        setShowSalary(Boolean(data.vacancy.clientReportShowSalary));
+      }
     } catch (e) {
       setErr(e?.message || t(locale, 'panel.common.error'));
       setCandidates([]);
@@ -87,10 +99,41 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
   }, [vacancyId, locale]);
 
   useEffect(() => {
+    setShowSalary(Boolean(clientReportShowSalaryProp));
+  }, [clientReportShowSalaryProp, vacancyId]);
+
+  useEffect(() => {
     if (!open) return;
     loadCandidates();
     loadReports();
   }, [open, loadCandidates, loadReports]);
+
+  const persistShowSalary = async (next) => {
+    const prev = showSalary;
+    setShowSalary(next);
+    setSalaryBusy(true);
+    setErr('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientReportShowSalary: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
+      }
+      setVacancyMeta((cur) => (cur ? { ...cur, clientReportShowSalary: next } : cur));
+      onClientReportShowSalaryChange?.(next);
+      setMsg(t(locale, 'panel.report.showSalarySaved'));
+      setTimeout(() => setMsg(''), 2500);
+    } catch (e) {
+      setShowSalary(prev);
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setSalaryBusy(false);
+    }
+  };
 
   const visible = useMemo(() => {
     if (stageFilter === 'interview_plus') {
@@ -110,11 +153,15 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
   const ensureOverride = (c) => {
     setOverrides((prev) => {
       if (prev[c.candidateId]) return prev;
+      const typeData = getTypeData(locale);
+      const probe = c.topType != null ? typeData[c.topType]?.challenge || '' : '';
       return {
         ...prev,
         [c.candidateId]: {
           recommendation: normalizeRecommendation(c.recommendation, 'bank'),
-          note: '',
+          why: '',
+          watchOut: '',
+          interviewProbe: String(probe).slice(0, STRUCTURED_FIELD_MAX_CHARS),
         },
       };
     });
@@ -137,11 +184,15 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
     setSelected(new Set(visible.map((c) => c.candidateId)));
     setOverrides((prev) => {
       const next = { ...prev };
+      const typeData = getTypeData(locale);
       for (const c of visible) {
         if (!next[c.candidateId]) {
+          const probe = c.topType != null ? typeData[c.topType]?.challenge || '' : '';
           next[c.candidateId] = {
             recommendation: normalizeRecommendation(c.recommendation, 'bank'),
-            note: '',
+            why: '',
+            watchOut: '',
+            interviewProbe: String(probe).slice(0, STRUCTURED_FIELD_MAX_CHARS),
           };
         }
       }
@@ -155,18 +206,21 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
     setOverrides((prev) => ({
       ...prev,
       [id]: {
+        ...(prev[id] || {}),
         recommendation: normalizeRecommendation(recommendation, 'bank'),
-        note: prev[id]?.note || '',
       },
     }));
   };
 
-  const setPersonNote = (id, text) => {
+  const setStructured = (id, field, text) => {
     setOverrides((prev) => ({
       ...prev,
       [id]: {
         recommendation: normalizeRecommendation(prev[id]?.recommendation, 'bank'),
-        note: String(text || '').slice(0, CONSULTANT_NOTE_MAX_CHARS),
+        why: prev[id]?.why || '',
+        watchOut: prev[id]?.watchOut || '',
+        interviewProbe: prev[id]?.interviewProbe || '',
+        [field]: String(text || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
       },
     }));
   };
@@ -214,7 +268,9 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
       const ov = overrides[c.candidateId] || {};
       candidateOverrides[String(c.candidateId)] = {
         recommendation: normalizeRecommendation(ov.recommendation, c.recommendation),
-        note: ov.note || '',
+        why: ov.why || '',
+        watchOut: ov.watchOut || '',
+        interviewProbe: ov.interviewProbe || '',
       };
     }
 
@@ -387,10 +443,15 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                 <ol style={{ margin: 0, paddingLeft: '18px' }}>
                   <li>
                     {t(locale, 'panel.report.previewSeeks')}
-                    {rubricTypesLabel ? `: ${rubricTypesLabel}` : ` — ${t(locale, 'panel.report.previewNoRubric')}`}
+                    {rubricMeta?.hasRubric && rubricTypesLabel
+                      ? `: ${rubricTypesLabel}`
+                      : ` — ${t(locale, 'panel.report.previewNoRubric')}`}
                     {vacancyMeta?.hasDescription ? ` · ${t(locale, 'panel.report.previewHasDesc')}` : ''}
                     {rubricMeta?.hasNotes ? ` · ${t(locale, 'panel.report.previewHasRubricNotes')}` : ''}
                   </li>
+                  {!rubricMeta?.hasRubric ? (
+                    <li style={{ color: C.danger || C.tension }}>{t(locale, 'panel.report.previewNoRubricWarn')}</li>
+                  ) : null}
                   <li>
                     {t(locale, 'panel.report.previewNote')}
                     {noteOk
@@ -403,11 +464,41 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                       ? `: ${selectedPeople.map((c) => `${c.name} (${recommendationLabel(effectiveRec(c))})`).join('; ')}`
                       : ''}
                   </li>
+                  <li>
+                    {showSalary
+                      ? t(locale, 'panel.report.previewSalaryOn')
+                      : t(locale, 'panel.report.previewSalaryOff')}
+                  </li>
                   <li>{t(locale, 'panel.report.previewReadings')}</li>
                 </ol>
               </div>
             ) : null}
           </div>
+
+          <label
+            style={{
+              marginTop: '12px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start',
+              fontSize: '12px',
+              color: C.muted,
+              lineHeight: 1.45,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showSalary}
+              disabled={salaryBusy || busy}
+              onChange={(e) => persistShowSalary(e.target.checked)}
+              style={{ marginTop: '2px', accentColor: C.purple }}
+            />
+            <span>
+              <strong style={{ color: C.text }}>{t(locale, 'panel.report.showSalaryLabel')}</strong>
+              <br />
+              {t(locale, 'panel.report.showSalaryHelp')}
+            </span>
+          </label>
 
           <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
             <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={S.select}>
@@ -499,26 +590,38 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                         </td>
                         <td style={{ padding: '8px 10px', color: C.text }}>
                           <div>{c.name}</div>
+                          {c.hasMotivators ? (
+                            <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px', fontFamily: 'monospace' }}>
+                              {t(locale, 'panel.report.hasMotivatorsBadge')}
+                            </div>
+                          ) : null}
                           {isOn ? (
-                            <input
-                              type="text"
-                              value={overrides[c.candidateId]?.note || ''}
-                              onChange={(e) => setPersonNote(c.candidateId, e.target.value)}
-                              placeholder={t(locale, 'panel.report.personNotePh')}
-                              maxLength={CONSULTANT_NOTE_MAX_CHARS}
-                              style={{
-                                marginTop: '6px',
-                                width: '100%',
-                                boxSizing: 'border-box',
-                                background: C.inputBg,
-                                border: `1px solid ${C.border}`,
-                                borderRadius: '8px',
-                                padding: '6px 8px',
-                                fontSize: '11px',
-                                color: C.text,
-                                fontFamily: 'inherit',
-                              }}
-                            />
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <input
+                                type="text"
+                                value={overrides[c.candidateId]?.why || ''}
+                                onChange={(e) => setStructured(c.candidateId, 'why', e.target.value)}
+                                placeholder={t(locale, 'panel.report.fieldWhyPh')}
+                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                style={fieldInputStyle()}
+                              />
+                              <input
+                                type="text"
+                                value={overrides[c.candidateId]?.watchOut || ''}
+                                onChange={(e) => setStructured(c.candidateId, 'watchOut', e.target.value)}
+                                placeholder={t(locale, 'panel.report.fieldWatchPh')}
+                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                style={fieldInputStyle()}
+                              />
+                              <input
+                                type="text"
+                                value={overrides[c.candidateId]?.interviewProbe || ''}
+                                onChange={(e) => setStructured(c.candidateId, 'interviewProbe', e.target.value)}
+                                placeholder={t(locale, 'panel.report.fieldProbePh')}
+                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                style={fieldInputStyle()}
+                              />
+                            </div>
                           ) : null}
                         </td>
                         <td style={{ padding: '8px 10px' }}>
@@ -648,6 +751,20 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
       ) : null}
     </div>
   );
+}
+
+function fieldInputStyle() {
+  return {
+    width: '100%',
+    boxSizing: 'border-box',
+    background: C.inputBg,
+    border: `1px solid ${C.border}`,
+    borderRadius: '8px',
+    padding: '6px 8px',
+    fontSize: '11px',
+    color: C.text,
+    fontFamily: 'inherit',
+  };
 }
 
 function btnGhost() {

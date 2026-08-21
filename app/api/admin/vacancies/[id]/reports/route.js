@@ -47,6 +47,7 @@ export async function GET(request, { params }) {
           companyName: source.vacancy.companyName,
           positionsCount: source.vacancy.positionsCount,
           hasDescription: Boolean(source.vacancy.description && String(source.vacancy.description).trim()),
+          clientReportShowSalary: Boolean(source.vacancy.clientReportShowSalary),
         },
         rubricSummary: {
           hasRubric: Object.keys(source.rubricWeights || {}).length > 0,
@@ -63,6 +64,11 @@ export async function GET(request, { params }) {
           recommendation: p.recommendation,
           vacancyFitScore010: p.vacancyFitScore010,
           vacancyFitLabel: p.vacancyFitLabel,
+          city: p.city,
+          state: p.state,
+          salaryExpectation: p.salaryExpectation,
+          availability: p.availability,
+          hasMotivators: Array.isArray(p.motivatorsTop) && p.motivatorsTop.length > 0,
           excludedFromClient: p.recommendation === 'exclude',
         })),
       });
