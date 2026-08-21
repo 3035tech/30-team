@@ -9,6 +9,7 @@ import { BrCitySelect } from '../_components/BrCitySelect';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
 import { S } from './dashboard-shared';
+import { useAppFeedback } from '../_components/AppFeedback';
 
 const inputStyle = {
   flex: '1 1 180px',
@@ -55,6 +56,7 @@ function sourceLabel(locale, code) {
 }
 
 function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
+  const { notice, toast } = useAppFeedback();
   const [notes, setNotes] = useState(row.interviewNotes || '');
   const [phone, setPhone] = useState(stripPhone(row.phone) || '');
   const [linkedinUrl, setLinkedinUrl] = useState(row.linkedinUrl || '');
@@ -67,9 +69,15 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   const [profileBusy, setProfileBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
   const [motivatorsBusy, setMotivatorsBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const [ok, setOk] = useState('');
   const [expanded, setExpanded] = useState(false);
+
+  const showError = async (message) => {
+    await notice({
+      title: t(locale, 'panel.common.errorTitle'),
+      message: String(message || t(locale, 'panel.common.error')),
+      tone: 'error',
+    });
+  };
 
   useEffect(() => {
     setNotes(row.interviewNotes || '');
@@ -84,8 +92,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   const saveNotes = async () => {
     setBusy(true);
-    setErr('');
-    setOk('');
     try {
       const res = await fetch(
         `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(row.candidateId)}`,
@@ -97,11 +103,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      setOk(t(locale, 'recruiting.notesSaved'));
+      toast(t(locale, 'recruiting.notesSaved'), 'ok');
       onChanged?.();
-      setTimeout(() => setOk(''), 3000);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -109,8 +114,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   const summarizeNotesWithAi = async () => {
     setBusy(true);
-    setErr('');
-    setOk('');
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
         method: 'POST',
@@ -129,10 +132,9 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
         );
       }
       if (data.summaryHtml) setNotes(String(data.summaryHtml));
-      setOk(t(locale, 'recruiting.notesSummarizedAi'));
-      setTimeout(() => setOk(''), 3500);
+      toast(t(locale, 'recruiting.notesSummarizedAi'), 'ok');
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -140,8 +142,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   const saveProfile = async () => {
     setProfileBusy(true);
-    setErr('');
-    setOk('');
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(row.candidateId)}`, {
         method: 'PATCH',
@@ -158,11 +158,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      setOk(t(locale, 'recruiting.profileSaved'));
+      toast(t(locale, 'recruiting.profileSaved'), 'ok');
       onChanged?.();
-      setTimeout(() => setOk(''), 3000);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setProfileBusy(false);
     }
@@ -170,8 +169,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   const sendChallenge = async () => {
     setInviteBusy(true);
-    setErr('');
-    setOk('');
     try {
       const res = await fetch(
         `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(row.candidateId)}/invite`,
@@ -179,12 +176,11 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      setOk(t(locale, 'recruiting.challengeSentTo', { email: data.sentTo || row.email }));
+      toast(t(locale, 'recruiting.challengeSentTo', { email: data.sentTo || row.email }), 'ok');
       onChanged?.();
       onPipelineChange?.();
-      setTimeout(() => setOk(''), 5000);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setInviteBusy(false);
     }
@@ -192,8 +188,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   const sendMotivators = async () => {
     setMotivatorsBusy(true);
-    setErr('');
-    setOk('');
     try {
       const res = await fetch(
         `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(row.candidateId)}/motivators-invite`,
@@ -201,11 +195,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      setOk(t(locale, 'recruiting.motivatorsSentTo', { email: data.sentTo || row.email }));
+      toast(t(locale, 'recruiting.motivatorsSentTo', { email: data.sentTo || row.email }), 'ok');
       onChanged?.();
-      setTimeout(() => setOk(''), 5000);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setMotivatorsBusy(false);
     }
@@ -352,17 +345,6 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           </button>
         </div>
       </div>
-
-      {err ? (
-        <p style={{ marginTop: '10px', marginBottom: 0, color: C.tension, fontSize: '11px', fontFamily: 'monospace' }}>
-          {err}
-        </p>
-      ) : null}
-      {ok ? (
-        <p style={{ marginTop: '10px', marginBottom: 0, color: C.synergy, fontSize: '11px', fontFamily: 'monospace' }}>
-          {ok}
-        </p>
-      ) : null}
 
       {expanded && (
         <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>

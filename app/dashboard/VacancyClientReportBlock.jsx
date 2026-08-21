@@ -41,7 +41,7 @@ export function VacancyClientReportBlock({
   clientReportShowSalary: clientReportShowSalaryProp = false,
   onClientReportShowSalaryChange,
 }) {
-  const { confirm } = useAppFeedback();
+  const { confirm, notice, toast } = useAppFeedback();
   const [open, setOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [candidates, setCandidates] = useState([]);
@@ -58,12 +58,22 @@ export function VacancyClientReportBlock({
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState('');
-  const [err, setErr] = useState('');
-  const [msg, setMsg] = useState('');
   const [lastUrl, setLastUrl] = useState('');
   const [editingReportId, setEditingReportId] = useState(null);
   const [editNoteDraft, setEditNoteDraft] = useState('');
   const [editBusy, setEditBusy] = useState(false);
+
+  const showError = async (message) => {
+    await notice({
+      title: t(locale, 'panel.common.errorTitle'),
+      message: String(message || t(locale, 'panel.common.error')),
+      tone: 'error',
+    });
+  };
+
+  const showOk = (message) => {
+    toast(String(message), 'ok');
+  };
 
   const notePlainLen = htmlToPlainText(note).length;
   const noteOk = notePlainLen >= REPORT_NOTE_MIN_CHARS;
@@ -75,13 +85,12 @@ export function VacancyClientReportBlock({
       if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
       setReports(Array.isArray(data.reports) ? data.reports : []);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     }
   }, [vacancyId, locale]);
 
   const loadCandidates = useCallback(async () => {
     setLoading(true);
-    setErr('');
     try {
       const res = await fetch(`/api/admin/vacancies/${vacancyId}/reports?candidates=1`);
       const data = await res.json().catch(() => ({}));
@@ -93,7 +102,7 @@ export function VacancyClientReportBlock({
         setShowSalary(Boolean(data.vacancy.clientReportShowSalary));
       }
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
       setCandidates([]);
       setVacancyMeta(null);
       setRubricMeta(null);
@@ -116,7 +125,6 @@ export function VacancyClientReportBlock({
     const prev = showSalary;
     setShowSalary(next);
     setSalaryBusy(true);
-    setErr('');
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
         method: 'PATCH',
@@ -129,11 +137,10 @@ export function VacancyClientReportBlock({
       }
       setVacancyMeta((cur) => (cur ? { ...cur, clientReportShowSalary: next } : cur));
       onClientReportShowSalaryChange?.(next);
-      setMsg(t(locale, 'panel.report.showSalarySaved'));
-      setTimeout(() => setMsg(''), 2500);
+      showOk(t(locale, 'panel.report.showSalarySaved'));
     } catch (e) {
       setShowSalary(prev);
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setSalaryBusy(false);
     }
@@ -238,7 +245,7 @@ export function VacancyClientReportBlock({
   const generateNoteFromShortlist = () => {
     const people = selectedPeople.filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude');
     if (!people.length) {
-      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
       return;
     }
     const vacTitle = vacancyMeta?.title || '';
@@ -273,9 +280,7 @@ export function VacancyClientReportBlock({
 <p><strong>Próximo passo sugerido:</strong> Agendar entrevistas técnicas com o time do cliente para quem está em Avançar; manter Conversar para segunda passagem se houver capacidade.</p>`;
 
     setNote(html);
-    setErr('');
-    setMsg(t(locale, 'panel.report.generateNoteDone'));
-    setTimeout(() => setMsg(''), 2500);
+    showOk(t(locale, 'panel.report.generateNoteDone'));
   };
 
   const peoplePayloadForAi = () =>
@@ -300,12 +305,10 @@ export function VacancyClientReportBlock({
   const generateNoteWithAi = async () => {
     const candidates = peoplePayloadForAi();
     if (!candidates.length) {
-      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
       return;
     }
     setAiBusy('note');
-    setErr('');
-    setMsg('');
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
         method: 'POST',
@@ -319,10 +322,9 @@ export function VacancyClientReportBlock({
         );
       }
       if (data.executiveNote) setNote(String(data.executiveNote));
-      setMsg(t(locale, 'panel.report.generateNoteAiDone'));
-      setTimeout(() => setMsg(''), 3500);
+      showOk(t(locale, 'panel.report.generateNoteAiDone'));
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.report.aiFailed'));
+      void showError(e?.message || t(locale, 'panel.report.aiFailed'));
     } finally {
       setAiBusy('');
     }
@@ -331,12 +333,10 @@ export function VacancyClientReportBlock({
   const fillFieldsWithAi = async () => {
     const candidates = peoplePayloadForAi();
     if (!candidates.length) {
-      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
       return;
     }
     setAiBusy('fields');
-    setErr('');
-    setMsg('');
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
         method: 'POST',
@@ -366,10 +366,9 @@ export function VacancyClientReportBlock({
         }
         return next;
       });
-      setMsg(t(locale, 'panel.report.fillFieldsAiDone'));
-      setTimeout(() => setMsg(''), 3500);
+      showOk(t(locale, 'panel.report.fillFieldsAiDone'));
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.report.aiFailed'));
+      void showError(e?.message || t(locale, 'panel.report.aiFailed'));
     } finally {
       setAiBusy('');
     }
@@ -392,12 +391,12 @@ export function VacancyClientReportBlock({
 
   const generate = async () => {
     if (!noteOk) {
-      setErr(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
+      void showError(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
       return;
     }
     const excluded = selectedPeople.filter((c) => c.excludedFromClient || c.recommendation === 'exclude');
     if (excluded.length && excluded.length === selectedPeople.length) {
-      setErr(t(locale, 'panel.report.onlyExcludedSelected'));
+      void showError(t(locale, 'panel.report.onlyExcludedSelected'));
       return;
     }
     if (excluded.length) {
@@ -420,8 +419,6 @@ export function VacancyClientReportBlock({
     }
 
     setBusy(true);
-    setErr('');
-    setMsg('');
     try {
       const res = await fetch(`/api/admin/vacancies/${vacancyId}/reports`, {
         method: 'POST',
@@ -437,16 +434,16 @@ export function VacancyClientReportBlock({
       if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
       const url = data.url || (appUrl ? `${appUrl}/r/${data.token}` : `/r/${data.token}`);
       setLastUrl(url);
-      setMsg(t(locale, 'panel.report.generated'));
+      showOk(t(locale, 'panel.report.generated'));
       await loadReports();
       try {
         await navigator.clipboard.writeText(url);
-        setMsg(t(locale, 'panel.report.generatedCopied'));
+        showOk(t(locale, 'panel.report.generatedCopied'));
       } catch {
         /* ignore */
       }
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -459,17 +456,16 @@ export function VacancyClientReportBlock({
     });
     if (!ok) return;
     setBusy(true);
-    setErr('');
     try {
       const res = await fetch(`/api/admin/vacancies/${vacancyId}/reports/${reportId}/revoke`, {
         method: 'POST',
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
-      setMsg(t(locale, 'panel.report.revoked'));
+      showOk(t(locale, 'panel.report.revoked'));
       await loadReports();
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
     }
@@ -478,7 +474,6 @@ export function VacancyClientReportBlock({
   const startEditReport = (r) => {
     setEditingReportId(r.id);
     setEditNoteDraft(r.executiveNote || '');
-    setErr('');
   };
 
   const cancelEditReport = () => {
@@ -489,11 +484,10 @@ export function VacancyClientReportBlock({
   const saveReportNote = async (reportId) => {
     const plain = htmlToPlainText(editNoteDraft);
     if (plain.length < REPORT_NOTE_MIN_CHARS) {
-      setErr(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
+      void showError(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
       return;
     }
     setEditBusy(true);
-    setErr('');
     try {
       const res = await fetch(`/api/admin/vacancies/${vacancyId}/reports/${reportId}`, {
         method: 'PATCH',
@@ -502,13 +496,12 @@ export function VacancyClientReportBlock({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
-      setMsg(t(locale, 'panel.report.noteUpdated'));
+      showOk(t(locale, 'panel.report.noteUpdated'));
       setEditingReportId(null);
       setEditNoteDraft('');
       await loadReports();
-      setTimeout(() => setMsg(''), 2500);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setEditBusy(false);
     }
@@ -517,9 +510,9 @@ export function VacancyClientReportBlock({
   const copyUrl = async (url) => {
     try {
       await navigator.clipboard.writeText(url);
-      setMsg(t(locale, 'panel.common.copied'));
+      showOk(t(locale, 'panel.common.copied'));
     } catch {
-      setErr(t(locale, 'panel.common.copyFailed'));
+      void showError(t(locale, 'panel.common.copyFailed'));
     }
   };
 
@@ -562,17 +555,6 @@ export function VacancyClientReportBlock({
           <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
             {t(locale, 'panel.report.intro')}
           </p>
-
-          {err ? (
-            <p style={{ marginTop: '10px', color: C.danger || C.tension, fontSize: '12px', fontFamily: 'monospace' }}>
-              {err}
-            </p>
-          ) : null}
-          {msg ? (
-            <p style={{ marginTop: '10px', color: C.success || C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>
-              {msg}
-            </p>
-          ) : null}
 
           {lastUrl ? (
             <div

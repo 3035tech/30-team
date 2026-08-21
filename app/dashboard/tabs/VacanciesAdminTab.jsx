@@ -314,10 +314,9 @@ function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
 }
 
 function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDescription = '', onSaved }) {
+  const { notice, toast } = useAppFeedback();
   const [weights, setWeights] = useState(() => Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, ''])));
   const [notes, setNotes] = useState('');
-  const [msg, setMsg] = useState('');
-  const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
   const [aiOpen, setAiOpen] = useState(false);
   const [jobDesc, setJobDesc] = useState(() =>
@@ -329,6 +328,14 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
   );
   const [aiPaste, setAiPaste] = useState('');
   const [aiBusy, setAiBusy] = useState('');
+
+  const showError = async (message) => {
+    await notice({
+      title: t(locale, 'panel.common.errorTitle'),
+      message: String(message || t(locale, 'panel.common.error')),
+      tone: 'error',
+    });
+  };
 
   useEffect(() => {
     setJobDesc(
@@ -367,13 +374,19 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
           );
         }
       } catch (e) {
-        if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
+        if (!cancelled) {
+          void notice({
+            title: t(locale, 'panel.common.errorTitle'),
+            message: e?.message || t(locale, 'panel.common.error'),
+            tone: 'error',
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [vacancyId, locale]);
+  }, [vacancyId, locale, notice]);
 
   const applyParsedWeights = (parsed) => {
     const next = {};
@@ -389,16 +402,13 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
         if (cur.includes(parsed.notes.slice(0, 40))) return cur;
         return `${cur}\n\n${parsed.notes}`;
       });
-      setMsg(t(locale, 'recruiting.rubricAiAppliedWithNotes'));
+      toast(t(locale, 'recruiting.rubricAiAppliedWithNotes'), 'ok');
     } else {
-      setMsg(t(locale, 'recruiting.rubricAiApplied'));
+      toast(t(locale, 'recruiting.rubricAiApplied'), 'ok');
     }
-    setTimeout(() => setMsg(''), 5000);
   };
 
   const save = async () => {
-    setErr('');
-    setMsg('');
     const wObj = {};
     for (let typeNum = 1; typeNum <= 9; typeNum++) {
       const raw = String(weights[typeNum] ?? '').trim();
@@ -414,17 +424,14 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      setMsg(t(locale, 'recruiting.rubricSaved'));
+      toast(t(locale, 'recruiting.rubricSaved'), 'ok');
       onSaved?.();
-      setTimeout(() => setMsg(''), 3000);
     } catch (e) {
-      setErr(e?.message || t(locale, 'panel.common.error'));
+      await showError(e?.message || t(locale, 'panel.common.error'));
     }
   };
 
   const suggestContext = async () => {
-    setErr('');
-    setMsg('');
     setAiBusy('context');
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/rubric-ai`, {
@@ -441,20 +448,17 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
         );
       }
       if (data.context) setJobDesc(String(data.context));
-      setMsg(t(locale, 'recruiting.rubricAiContextDone'));
-      setTimeout(() => setMsg(''), 4000);
+      toast(t(locale, 'recruiting.rubricAiContextDone'), 'ok');
     } catch (e) {
-      setErr(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
+      await showError(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
     } finally {
       setAiBusy('');
     }
   };
 
   const suggestWeights = async () => {
-    setErr('');
-    setMsg('');
     if (!isRubricContextFilledEnough(jobDesc)) {
-      setErr(t(locale, 'recruiting.rubricAiNeedContext'));
+      await showError(t(locale, 'recruiting.rubricAiNeedContext'));
       return;
     }
     setAiBusy('weights');
@@ -481,33 +485,30 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
         });
       }
     } catch (e) {
-      setErr(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
+      await showError(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
     } finally {
       setAiBusy('');
     }
   };
 
   const copyPrompt = async () => {
-    setErr('');
     if (!isRubricContextFilledEnough(jobDesc)) {
-      setErr(t(locale, 'recruiting.rubricAiNeedContext'));
+      await showError(t(locale, 'recruiting.rubricAiNeedContext'));
       return;
     }
     const prompt = buildRubricWeightsPrompt({ locale, context: jobDesc });
     try {
       await navigator.clipboard.writeText(prompt);
-      setMsg(t(locale, 'recruiting.rubricAiCopied'));
-      setTimeout(() => setMsg(''), 3000);
+      toast(t(locale, 'recruiting.rubricAiCopied'), 'ok');
     } catch {
-      setErr(t(locale, 'recruiting.rubricAiCopyFailed'));
+      await showError(t(locale, 'recruiting.rubricAiCopyFailed'));
     }
   };
 
-  const applyAiWeights = () => {
-    setErr('');
+  const applyAiWeights = async () => {
     const parsed = parseRubricWeightsFromAiText(aiPaste, locale);
     if (!parsed.ok) {
-      setErr(t(locale, 'recruiting.rubricAiParseError'));
+      await showError(t(locale, 'recruiting.rubricAiParseError'));
       return;
     }
     applyParsedWeights(parsed);
@@ -533,8 +534,6 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
         {t(locale, 'recruiting.rubricWeightHint')}
       </p>
       {loading ? <p style={{ fontSize: '11px', color: C.faint }}>…</p> : null}
-      {err ? <p style={{ fontSize: '11px', color: C.tension }}>{err}</p> : null}
-      {msg ? <p style={{ fontSize: '11px', color: C.synergy }}>{msg}</p> : null}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
           <label key={typeNum} style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1154,7 +1153,7 @@ function toDatetimeLocalValue(d) {
 }
 
 export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
-  const { confirm } = useAppFeedback();
+  const { confirm, notice, toast } = useAppFeedback();
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
@@ -1726,7 +1725,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 disabled={descAiBusy || !title.trim()}
                 onClick={async () => {
                   setDescAiBusy(true);
-                  setErr('');
                   try {
                     const res = await fetch('/api/admin/vacancies/assist-ai', {
                       method: 'POST',
@@ -1749,10 +1747,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       );
                     }
                     if (data.description) setDescription(String(data.description));
-                    setMsg(t(locale, 'recruiting.descAiDone'));
-                    setTimeout(() => setMsg(''), 3000);
+                    toast(t(locale, 'recruiting.descAiDone'), 'ok');
                   } catch (e) {
-                    setErr(e?.message || t(locale, 'recruiting.descAiFailed'));
+                    await notice({
+                      title: t(locale, 'panel.common.errorTitle'),
+                      message: e?.message || t(locale, 'recruiting.descAiFailed'),
+                      tone: 'error',
+                    });
                   } finally {
                     setDescAiBusy(false);
                   }
@@ -1934,7 +1935,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   disabled={descAiBusy || !(editingVacancy?.title || '').trim()}
                   onClick={async () => {
                     setDescAiBusy(true);
-                    setErr('');
                     try {
                       const res = await fetch(
                         `/api/admin/vacancies/${encodeURIComponent(editingVacancy.id)}/assist-ai`,
@@ -1963,10 +1963,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       if (data.description) {
                         setEditingVacancy((cur) => ({ ...cur, description: String(data.description) }));
                       }
-                      setMsg(t(locale, 'recruiting.descAiDone'));
-                      setTimeout(() => setMsg(''), 3000);
+                      toast(t(locale, 'recruiting.descAiDone'), 'ok');
                     } catch (e) {
-                      setErr(e?.message || t(locale, 'recruiting.descAiFailed'));
+                      await notice({
+                        title: t(locale, 'panel.common.errorTitle'),
+                        message: e?.message || t(locale, 'recruiting.descAiFailed'),
+                        tone: 'error',
+                      });
                     } finally {
                       setDescAiBusy(false);
                     }
