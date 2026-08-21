@@ -57,6 +57,7 @@ export function VacancyClientReportBlock({
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState('');
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [lastUrl, setLastUrl] = useState('');
@@ -275,6 +276,103 @@ export function VacancyClientReportBlock({
     setErr('');
     setMsg(t(locale, 'panel.report.generateNoteDone'));
     setTimeout(() => setMsg(''), 2500);
+  };
+
+  const peoplePayloadForAi = () =>
+    selectedPeople
+      .filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude')
+      .map((c) => {
+        const ov = overrides[c.candidateId] || {};
+        return {
+          candidateId: c.candidateId,
+          name: c.name,
+          topType: c.topType,
+          vacancyFitScore010: c.vacancyFitScore010,
+          recommendation: effectiveRec(c),
+          why: ov.why || '',
+          watchOut: ov.watchOut || '',
+          interviewProbe: ov.interviewProbe || '',
+          interviewNotes: c.interviewNotes || '',
+          motivatorsTop: c.motivatorsTop || [],
+        };
+      });
+
+  const generateNoteWithAi = async () => {
+    const candidates = peoplePayloadForAi();
+    if (!candidates.length) {
+      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      return;
+    }
+    setAiBusy('note');
+    setErr('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'executiveNote', candidates, locale }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+        );
+      }
+      if (data.executiveNote) setNote(String(data.executiveNote));
+      setMsg(t(locale, 'panel.report.generateNoteAiDone'));
+      setTimeout(() => setMsg(''), 3500);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.report.aiFailed'));
+    } finally {
+      setAiBusy('');
+    }
+  };
+
+  const fillFieldsWithAi = async () => {
+    const candidates = peoplePayloadForAi();
+    if (!candidates.length) {
+      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      return;
+    }
+    setAiBusy('fields');
+    setErr('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'candidateFields', candidates, locale }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+        );
+      }
+      const fields = data.fields || {};
+      setOverrides((prev) => {
+        const next = { ...prev };
+        for (const [id, row] of Object.entries(fields)) {
+          const person = selectedPeople.find((c) => String(c.candidateId) === String(id));
+          next[id] = {
+            recommendation: normalizeRecommendation(
+              prev[id]?.recommendation,
+              person?.recommendation || 'bank'
+            ),
+            why: String(row.why || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+            watchOut: String(row.watchOut || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+            interviewProbe: String(row.interviewProbe || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+          };
+        }
+        return next;
+      });
+      setMsg(t(locale, 'panel.report.fillFieldsAiDone'));
+      setTimeout(() => setMsg(''), 3500);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.report.aiFailed'));
+    } finally {
+      setAiBusy('');
+    }
   };
 
   const recommendationLabel = (rec) => {
@@ -625,6 +723,28 @@ export function VacancyClientReportBlock({
                 title={t(locale, 'panel.report.generateNote')}
               >
                 {t(locale, 'panel.report.generateNote')}
+              </button>
+              <button
+                type="button"
+                onClick={generateNoteWithAi}
+                style={btnGhost()}
+                disabled={!selectedPeople.length || aiBusy === 'note'}
+                title={t(locale, 'panel.report.generateNoteAi')}
+              >
+                {aiBusy === 'note'
+                  ? t(locale, 'panel.report.aiWorking')
+                  : t(locale, 'panel.report.generateNoteAi')}
+              </button>
+              <button
+                type="button"
+                onClick={fillFieldsWithAi}
+                style={btnGhost()}
+                disabled={!selectedPeople.length || aiBusy === 'fields'}
+                title={t(locale, 'panel.report.fillFieldsAi')}
+              >
+                {aiBusy === 'fields'
+                  ? t(locale, 'panel.report.aiWorking')
+                  : t(locale, 'panel.report.fillFieldsAi')}
               </button>
               <span
                 style={{

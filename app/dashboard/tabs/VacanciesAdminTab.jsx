@@ -1187,6 +1187,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [positionsCount, setPositionsCount] = useState('1');
   const [targetDate, setTargetDate] = useState('');
   const [description, setDescription] = useState('');
+  const [descAiBusy, setDescAiBusy] = useState(false);
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
@@ -1719,6 +1720,58 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <label style={{ display: 'block', fontSize: '11px', color: C.faint, fontFamily: 'monospace', marginBottom: '6px' }}>
               {t(locale, 'recruiting.vacancyDescriptionLabel')}
             </label>
+            <div style={{ marginBottom: '8px' }}>
+              <button
+                type="button"
+                disabled={descAiBusy || !title.trim()}
+                onClick={async () => {
+                  setDescAiBusy(true);
+                  setErr('');
+                  try {
+                    const res = await fetch('/api/admin/vacancies/assist-ai', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'vacancyDescription',
+                        title,
+                        salaryMin,
+                        salaryMax,
+                        description,
+                        locale,
+                      }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      throw new Error(
+                        data?.errorCode
+                          ? t(locale, `errors.${data.errorCode}`)
+                          : data?.error || t(locale, 'recruiting.descAiFailed')
+                      );
+                    }
+                    if (data.description) setDescription(String(data.description));
+                    setMsg(t(locale, 'recruiting.descAiDone'));
+                    setTimeout(() => setMsg(''), 3000);
+                  } catch (e) {
+                    setErr(e?.message || t(locale, 'recruiting.descAiFailed'));
+                  } finally {
+                    setDescAiBusy(false);
+                  }
+                }}
+                style={{
+                  fontSize: '11px',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${C.purple}55`,
+                  background: `${C.purple}18`,
+                  color: C.purple,
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                  opacity: descAiBusy || !title.trim() ? 0.55 : 1,
+                }}
+              >
+                {descAiBusy ? t(locale, 'recruiting.descAiWorking') : t(locale, 'recruiting.descAiSuggest')}
+              </button>
+            </div>
             <RichTextEditor
               value={description}
               onChange={setDescription}
@@ -1875,6 +1928,64 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
                 {t(locale, 'recruiting.vacancyDescriptionLabel')}
               </label>
+              <div style={{ marginBottom: '8px' }}>
+                <button
+                  type="button"
+                  disabled={descAiBusy || !(editingVacancy?.title || '').trim()}
+                  onClick={async () => {
+                    setDescAiBusy(true);
+                    setErr('');
+                    try {
+                      const res = await fetch(
+                        `/api/admin/vacancies/${encodeURIComponent(editingVacancy.id)}/assist-ai`,
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'vacancyDescription',
+                            title: editingVacancy.title,
+                            employmentType: editingVacancy.employmentType,
+                            salaryMin: editingVacancy.salaryMin,
+                            salaryMax: editingVacancy.salaryMax,
+                            description: editingVacancy.description,
+                            locale,
+                          }),
+                        }
+                      );
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(
+                          data?.errorCode
+                            ? t(locale, `errors.${data.errorCode}`)
+                            : data?.error || t(locale, 'recruiting.descAiFailed')
+                        );
+                      }
+                      if (data.description) {
+                        setEditingVacancy((cur) => ({ ...cur, description: String(data.description) }));
+                      }
+                      setMsg(t(locale, 'recruiting.descAiDone'));
+                      setTimeout(() => setMsg(''), 3000);
+                    } catch (e) {
+                      setErr(e?.message || t(locale, 'recruiting.descAiFailed'));
+                    } finally {
+                      setDescAiBusy(false);
+                    }
+                  }}
+                  style={{
+                    fontSize: '11px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${C.purple}55`,
+                    background: `${C.purple}18`,
+                    color: C.purple,
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                    opacity: descAiBusy || !(editingVacancy?.title || '').trim() ? 0.55 : 1,
+                  }}
+                >
+                  {descAiBusy ? t(locale, 'recruiting.descAiWorking') : t(locale, 'recruiting.descAiSuggest')}
+                </button>
+              </div>
               <RichTextEditor
                 value={editingVacancy.description}
                 onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}

@@ -107,6 +107,37 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     }
   };
 
+  const summarizeNotesWithAi = async () => {
+    setBusy(true);
+    setErr('');
+    setOk('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'summarizeNotes',
+          notesHtml: notes,
+          candidateName: row.fullName || row.name || '',
+          locale,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.common.error')
+        );
+      }
+      if (data.summaryHtml) setNotes(String(data.summaryHtml));
+      setOk(t(locale, 'recruiting.notesSummarizedAi'));
+      setTimeout(() => setOk(''), 3500);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveProfile = async () => {
     setProfileBusy(true);
     setErr('');
@@ -419,6 +450,24 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           </span>
           <RichTextEditor value={notes} onChange={setNotes} locale={locale} />
           <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={summarizeNotesWithAi}
+              disabled={busy}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${C.purple}55`,
+                borderRadius: '10px',
+                padding: '8px 14px',
+                color: C.purple,
+                fontSize: '12px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              {t(locale, 'recruiting.summarizeNotesAi')}
+            </button>
             <button
               type="button"
               onClick={saveNotes}
