@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME, hashPassword } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { apiError } from '../../../../../lib/api-error';
-import { CAP, defaultAssignableModulesForRole, requireCapability } from '../../../../../lib/permissions';
+import { CAP, ASSIGNABLE_MODULE_CAPS, defaultAssignableModulesForRole, requireCapability } from '../../../../../lib/permissions';
 import {
   loadUserCapabilityOverrides,
   replaceUserModuleCapabilities,
@@ -91,7 +91,9 @@ export async function PATCH(request, { params }) {
     const overrides = await loadUserCapabilityOverrides(userId);
     customized = overrides.length > 0;
     modules = customized
-      ? overrides.filter((o) => o.granted).map((o) => o.capability)
+      ? overrides
+          .filter((o) => o.granted && ASSIGNABLE_MODULE_CAPS.includes(o.capability))
+          .map((o) => o.capability)
       : defaultAssignableModulesForRole(nextRole);
   }
 

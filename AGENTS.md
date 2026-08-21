@@ -209,6 +209,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` |
+| Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
+| Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |

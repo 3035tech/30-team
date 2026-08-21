@@ -24,9 +24,6 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-
   const toggleCompanySort = (col) => {
     if (!navigateDashboard) return;
     const nextDir = clientSortNextDir(col, listSort.sort, listSort.dir);
@@ -66,20 +63,41 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     loadCompanies();
   }, [spKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const createCompany = async () => {
-    if (!name.trim()) return;
+  const openCreateCompany = async () => {
+    const values = await promptForm({
+      title: t(locale, 'panel.admin.createCompanyTitle'),
+      confirmLabel: t(locale, 'panel.admin.create'),
+      fields: [
+        {
+          key: 'name',
+          label: t(locale, 'panel.admin.editCompanyName'),
+          placeholder: t(locale, 'panel.admin.companiesNamePlaceholder'),
+          defaultValue: '',
+        },
+        {
+          key: 'slug',
+          label: t(locale, 'panel.admin.editCompanySlug'),
+          placeholder: t(locale, 'panel.admin.slugPlaceholder'),
+          defaultValue: '',
+        },
+      ],
+    });
+    if (!values) return;
+    const nextName = String(values.name || '').trim();
+    if (!nextName) return;
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/admin/companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), slug: slug.trim() || undefined }),
+        body: JSON.stringify({ name: nextName, slug: String(values.slug || '').trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
-      setName(''); setSlug('');
+      setMsg(t(locale, 'panel.admin.companyCreated'));
       await loadCompanies();
+      setTimeout(() => setMsg(''), 1600);
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -127,21 +145,23 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
 
   const editCompany = async (c) => {
     const values = await promptForm({
-      title: t(locale, 'panel.admin.editCompanyName'),
+      title: t(locale, 'panel.admin.editCompanyTitle'),
+      confirmLabel: t(locale, 'panel.common.save'),
       fields: [
         { key: 'name', label: t(locale, 'panel.admin.editCompanyName'), defaultValue: c?.name ?? '' },
         { key: 'slug', label: t(locale, 'panel.admin.editCompanySlug'), defaultValue: c?.slug ?? '' },
         {
           key: 'active',
+          type: 'boolean',
           label: t(locale, 'panel.admin.editCompanyActive'),
-          defaultValue: String(Boolean(c?.active)),
+          defaultValue: Boolean(c?.active),
         },
       ],
     });
     if (!values) return;
-    const nextName = values.name;
-    const nextSlug = values.slug;
-    const nextActive = String(values.active || '').trim().toLowerCase() !== 'false';
+    const nextName = String(values.name || '').trim();
+    const nextSlug = String(values.slug || '').trim();
+    const nextActive = values.active === true || values.active === 'true';
 
     setLoading(true);
     setError('');
@@ -150,7 +170,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(c.id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: String(nextName).trim(), slug: String(nextSlug).trim(), active: nextActive }),
+        body: JSON.stringify({ name: nextName, slug: nextSlug, active: nextActive }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));
@@ -199,47 +219,31 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'panel.admin.companiesNew')}</span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t(locale, 'panel.admin.companiesNamePlaceholder')}
-            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <input
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder={t(locale, 'panel.admin.slugPlaceholder')}
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <button
-            type="button"
-            onClick={createCompany}
-            disabled={loading || !name.trim()}
-            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-          >
-            {t(locale, 'panel.admin.create')}
-          </button>
-          <button
-            type="button"
-            onClick={loadCompanies}
-            disabled={loading}
-            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-          >
-            {t(locale, 'panel.admin.refresh')}
-          </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.admin.companiesList')}</span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openCreateCompany}
+              disabled={loading}
+              style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+            >
+              {t(locale, 'panel.admin.newCompanyBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={loadCompanies}
+              disabled={loading}
+              style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+            >
+              {t(locale, 'panel.admin.refresh')}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'panel.admin.companiesList')}</span>
         {companiesTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
             {t(locale, 'panel.admin.noCompaniesYet')}

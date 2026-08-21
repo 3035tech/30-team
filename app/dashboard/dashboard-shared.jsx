@@ -2,7 +2,7 @@
 
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
-import { typeFullName, typeShortLabel } from '../../lib/type-en';
+import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, FONTS, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 
 const S = {
@@ -28,13 +28,33 @@ const Bar = ({ value, max, color, h=6 }) => (
   </div>
 );
 
+/** Inline T1–T9 reference with localized hint (hover / aria). */
+const TypeRef = ({ type, locale = 'pt-BR', children, style }) => {
+  const tip = typeHintTooltip(type, locale);
+  return (
+    <span
+      title={tip}
+      aria-label={tip}
+      style={{
+        cursor: 'help',
+        borderBottom: `1px dotted ${C.faint}`,
+        ...style,
+      }}
+    >
+      {children != null ? children : `T${type}`}
+    </span>
+  );
+};
+
 const TypeBadge = ({ type, locale = 'pt-BR' }) => {
   const d = TYPE_DATA[type];
   const short = typeShortLabel(type, locale);
-  const name = typeFullName(type, locale);
+  const tip = typeHintTooltip(type, locale);
   if (!d) {
     return (
       <span
+        title={tip}
+        aria-label={tip}
         style={{
           padding: '3px 10px',
           fontSize: '11px',
@@ -46,6 +66,7 @@ const TypeBadge = ({ type, locale = 'pt-BR' }) => {
           border: `1px solid ${C.border}`,
           color: C.muted,
           fontFamily: 'monospace',
+          cursor: 'help',
         }}
       >
         T{type}
@@ -54,11 +75,22 @@ const TypeBadge = ({ type, locale = 'pt-BR' }) => {
   }
   return (
     <span
-      title={name ? `${name} (T${type})` : `T${type}`}
-      style={{ padding:'3px 10px', fontSize:'12px', borderRadius:'20px',
-      display:'inline-flex', alignItems:'center', gap:'4px',
-      background:`${d.color}18`, border:`1px solid ${d.color}44`,
-      color:d.color, fontFamily:'monospace' }}>
+      title={tip}
+      aria-label={tip}
+      style={{
+        padding: '3px 10px',
+        fontSize: '12px',
+        borderRadius: '20px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        background: `${d.color}18`,
+        border: `1px solid ${d.color}44`,
+        color: d.color,
+        fontFamily: 'monospace',
+        cursor: 'help',
+      }}
+    >
       {d.emoji} {short}
     </span>
   );
@@ -223,5 +255,6 @@ export {
   S,
   SortableTh,
   TypeBadge,
+  TypeRef,
   clientSortNextDir,
 };

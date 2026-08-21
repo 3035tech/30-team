@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCompat } from '../../lib/data';
 import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
+import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, GRADIENT } from '../../lib/theme';
@@ -486,8 +487,12 @@ export default function DashboardClient({
       onRemove: () => { setVacancy('all'); setPipeline('all'); pushFilters({ vacancy: 'all', pipeline: 'all' }); } });
   }
   if (enneagram !== 'all') {
-    activeChips.push({ key: 'enneagram', label: `T${enneagram}`,
-      onRemove: () => { setEnneagram('all'); pushFilters({ enneagram: 'all' }); } });
+    activeChips.push({
+      key: 'enneagram',
+      label: `T${enneagram}`,
+      title: typeHintTooltip(Number(enneagram), locale),
+      onRemove: () => { setEnneagram('all'); pushFilters({ enneagram: 'all' }); },
+    });
   }
   if (pipeline !== 'all') {
     activeChips.push({ key: 'pipeline', label: _pipelineChipLabels[pipeline] || pipeline,
@@ -911,7 +916,9 @@ export default function DashboardClient({
             <select value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} style={S.select}>
               <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
-                <option key={t} value={String(t)}>T{t} · {typeData[t].short}</option>
+                <option key={t} value={String(t)} title={typeHintTooltip(t, locale)}>
+                  T{t} · {typeData[t].short}
+                </option>
               ))}
             </select>
             <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} style={S.select}>
@@ -953,7 +960,7 @@ export default function DashboardClient({
           {showsCohortChrome && activeChips.length > 0 && (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
               {activeChips.map((chip) => (
-                <span key={chip.key} style={S.filterChip}>
+                <span key={chip.key} style={S.filterChip} title={chip.title}>
                   {chip.label}
                   <button
                     type="button"

@@ -47,31 +47,61 @@ function statusBadge(locale, status) {
 }
 
 function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
+  const { promptForm } = useAppFeedback();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
-  useEffect(() => {
-    if (companyId && companyId !== 'all') {
-      setCompany(String(companyId));
-      return;
-    }
-    if (isAdmin && companies.length === 1) {
-      setCompany(String(companies[0].id));
-    }
-  }, [companyId, isAdmin, companies]);
+  const defaultCompanyId = (() => {
+    if (companyId && companyId !== 'all') return String(companyId);
+    if (isAdmin && companies.length === 1) return String(companies[0].id);
+    return '';
+  })();
 
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const companyOk = !isAdmin || (company !== '' && Number.isFinite(Number(company)));
-  const canSend = name.trim().length > 1 && emailOk && companyOk && !busy;
-
-  const send = async () => {
+  const openInvite = async () => {
     setErr('');
     setMsg('');
-    if (!name.trim()) {
+    const fields = [
+      {
+        key: 'name',
+        label: t(locale, 'panel.motivatorsAdmin.invite.namePh'),
+        placeholder: t(locale, 'panel.motivatorsAdmin.invite.namePh'),
+        defaultValue: '',
+      },
+      {
+        key: 'email',
+        label: t(locale, 'panel.motivatorsAdmin.invite.emailPh'),
+        placeholder: t(locale, 'panel.motivatorsAdmin.invite.emailPh'),
+        defaultValue: '',
+      },
+    ];
+    if (isAdmin) {
+      fields.unshift({
+        key: 'companyId',
+        type: 'select',
+        label: t(locale, 'panel.motivatorsAdmin.invite.companyPh'),
+        options: [
+          { value: '', label: t(locale, 'panel.motivatorsAdmin.invite.companyPh') },
+          ...companies.map((c) => ({ value: String(c.id), label: c.name })),
+        ],
+        defaultValue: defaultCompanyId,
+      });
+    }
+
+    const values = await promptForm({
+      title: t(locale, 'panel.motivatorsAdmin.invite.newInvite'),
+      confirmLabel: t(locale, 'panel.motivatorsAdmin.invite.send'),
+      fields,
+    });
+    if (!values) return;
+
+    const name = String(values.name || '').trim();
+    const email = String(values.email || '').trim().toLowerCase();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const company = isAdmin ? String(values.companyId || '') : '';
+    const companyOk = !isAdmin || (company !== '' && Number.isFinite(Number(company)));
+
+    if (!name) {
       setErr(t(locale, 'panel.motivatorsAdmin.invite.needName'));
       return;
     }
@@ -83,9 +113,10 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
       setErr(t(locale, 'panel.motivatorsAdmin.invite.needCompany'));
       return;
     }
+
     setBusy(true);
     try {
-      const body = { candidateName: name.trim(), candidateEmail: email.trim().toLowerCase() };
+      const body = { candidateName: name, candidateEmail: email };
       if (isAdmin) body.companyId = Number(company);
       const res = await fetch('/api/admin/ae/invites', {
         method: 'POST',
@@ -95,8 +126,6 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.invite.sendError'));
       setMsg(t(locale, 'panel.motivatorsAdmin.invite.sendOk', { email: data.sentTo }));
-      setName('');
-      setEmail('');
       onSent?.();
       setTimeout(() => setMsg(''), 8000);
     } catch (e) {
@@ -108,33 +137,26 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
 
   return (
     <div style={{ ...S.card, marginBottom: '20px' }}>
-      <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-        {isAdmin ? (
-          <select value={company} onChange={(e) => setCompany(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, minWidth: '160px' }}>
-            <option value="">{t(locale, 'panel.motivatorsAdmin.invite.companyPh')}</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        ) : null}
-        <input placeholder={t(locale, 'panel.motivatorsAdmin.invite.namePh')} value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '1 1 140px' }} />
-        <input placeholder={t(locale, 'panel.motivatorsAdmin.invite.emailPh')} value={email} onChange={(e) => setEmail(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, flex: '2 1 200px' }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
         <button
           type="button"
-          onClick={send}
-          disabled={!canSend}
+          onClick={openInvite}
+          disabled={busy}
           style={{
             padding: '8px 16px',
             borderRadius: '8px',
             border: 'none',
             background: C.purple,
             color: '#fff',
-            cursor: canSend ? 'pointer' : 'not-allowed',
-            opacity: canSend ? 1 : 0.5,
+            cursor: busy ? 'not-allowed' : 'pointer',
+            opacity: busy ? 0.5 : 1,
+            minHeight: '40px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
           }}
         >
-          {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.send')}
+          {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')}
         </button>
       </div>
       {err ? <p style={{ color: C.tension, fontSize: '12px', marginTop: '8px' }}>{err}</p> : null}

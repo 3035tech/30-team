@@ -4,7 +4,7 @@ import { COOKIE_NAME, hashPassword } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { PAGE_SIZE_OPTIONS, sqlUsersOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
-import { CAP, defaultAssignableModulesForRole, requireCapability } from '../../../../lib/permissions';
+import { CAP, ASSIGNABLE_MODULE_CAPS, defaultAssignableModulesForRole, requireCapability } from '../../../../lib/permissions';
 import {
   replaceUserModuleCapabilities,
   verifySessionWithCapabilities,
@@ -83,7 +83,9 @@ export async function GET(request) {
     const overrides = overrideByUser.get(row.id) || [];
     const customized = overrides.length > 0;
     const modules = customized
-      ? overrides.filter((o) => o.granted).map((o) => o.capability)
+      ? overrides
+          .filter((o) => o.granted && ASSIGNABLE_MODULE_CAPS.includes(o.capability))
+          .map((o) => o.capability)
       : defaultAssignableModulesForRole(row.role);
     return {
       ...row,

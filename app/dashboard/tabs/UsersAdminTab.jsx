@@ -16,6 +16,24 @@ function moduleOptions(locale) {
   }));
 }
 
+function roleSelectOptions() {
+  return [
+    { value: 'hr', label: 'hr' },
+    { value: 'direction', label: 'direction' },
+    { value: 'admin', label: 'admin' },
+  ];
+}
+
+function companySelectOptions(locale, companyOptions) {
+  if (!companyOptions.length) {
+    return [{ value: '', label: t(locale, 'panel.admin.noCompanyOption') }];
+  }
+  return companyOptions.map((c) => ({
+    value: String(c.id),
+    label: `${c.name} (#${c.id})`,
+  }));
+}
+
 export function UsersAdminTab({ navigateDashboard, locale }) {
   const { promptForm } = useAppFeedback();
   const urlParams = useSearchParams();
@@ -33,10 +51,6 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   const [usersTotalPages, setUsersTotalPages] = useState(1);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserRole, setNewUserRole] = useState('hr');
-  const [newUserCompanyId, setNewUserCompanyId] = useState('');
 
   const toggleUserSort = (col) => {
     if (!navigateDashboard) return;
@@ -52,10 +66,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         const dc = await rc.json();
         if (!rc.ok) throw new Error(dc?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
         const list = Array.isArray(dc) ? dc : [];
-        if (!cancelled) {
-          setCompanyOptions(list);
-          setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
-        }
+        if (!cancelled) setCompanyOptions(list);
       } catch (e) {
         if (!cancelled) setError(e?.message || t(locale, 'panel.common.error'));
       }
@@ -130,15 +141,71 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       const rc = await fetch('/api/admin/companies?forSelect=1');
       const dc = await rc.json();
       if (!rc.ok) throw new Error(dc?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
-      const list = Array.isArray(dc) ? dc : [];
-      setCompanyOptions(list);
-      setNewUserCompanyId((prev) => (prev && list.some((c) => String(c.id) === prev) ? prev : (list[0] ? String(list[0].id) : '')));
+      setCompanyOptions(Array.isArray(dc) ? dc : []);
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     }
   };
 
-  const createUser = async () => {
+  const openCreateUser = async () => {
+    const defaultCompanyId = companyOptions[0] ? String(companyOptions[0].id) : '';
+    const values = await promptForm({
+      title: t(locale, 'panel.admin.createUserTitle'),
+      message: t(locale, 'panel.admin.userModulesHint'),
+      confirmLabel: t(locale, 'panel.admin.createUserBtn'),
+      fields: [
+        {
+          key: 'email',
+          label: t(locale, 'panel.admin.editUserEmail'),
+          placeholder: t(locale, 'panel.admin.emailPh'),
+          defaultValue: '',
+        },
+        {
+          key: 'password',
+          type: 'password',
+          label: t(locale, 'panel.admin.passwordPh'),
+          placeholder: t(locale, 'panel.admin.passwordPh'),
+          defaultValue: '',
+        },
+        {
+          key: 'role',
+          type: 'select',
+          label: t(locale, 'panel.admin.editUserRole'),
+          options: roleSelectOptions(),
+          defaultValue: 'hr',
+        },
+        {
+          key: 'companyId',
+          type: 'select',
+          label: t(locale, 'panel.admin.editUserCompanyId'),
+          options: companySelectOptions(locale, companyOptions),
+          defaultValue: defaultCompanyId,
+          showWhen: (v) => v.role !== 'admin',
+        },
+        {
+          key: 'modules',
+          type: 'checkboxGroup',
+          label: t(locale, 'panel.admin.userModulesLabel'),
+          options: moduleOptions(locale),
+          defaultValue: [],
+        },
+      ],
+    });
+    if (!values) return;
+
+    const email = String(values.email || '').trim();
+    const password = String(values.password || '');
+    const role = String(values.role || '').trim();
+    if (!email || !password) return;
+
+    const body = {
+      email,
+      password,
+      role,
+      companyId: role === 'admin' ? null : (values.companyId ? parseInt(String(values.companyId), 10) : null),
+    };
+    if (Array.isArray(values.modules)) body.modules = values.modules;
+
     setLoading(true);
     setError('');
     setMsg('');
@@ -146,17 +213,10 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: newUserEmail.trim(),
-          password: newUserPassword,
-          role: newUserRole,
-          companyId: newUserRole === 'admin' ? null : (newUserCompanyId ? parseInt(newUserCompanyId, 10) : null),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createUserFailed'));
-      setNewUserEmail('');
-      setNewUserPassword('');
       setMsg(t(locale, 'panel.admin.userCreated'));
       await loadUsersOnly();
       setTimeout(() => setMsg(''), 1600);
@@ -191,16 +251,26 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       message: t(locale, 'panel.admin.userModulesHint'),
       fields: [
         { key: 'email', label: t(locale, 'panel.admin.editUserEmail'), defaultValue: u?.email ?? '' },
-        { key: 'role', label: t(locale, 'panel.admin.editUserRole'), defaultValue: u?.role ?? 'hr' },
+        {
+          key: 'role',
+          type: 'select',
+          label: t(locale, 'panel.admin.editUserRole'),
+          options: roleSelectOptions(),
+          defaultValue: u?.role ?? 'hr',
+        },
         {
           key: 'companyId',
+          type: 'select',
           label: t(locale, 'panel.admin.editUserCompanyId'),
-          defaultValue: u?.companyId != null ? String(u.companyId) : '',
+          options: companySelectOptions(locale, companyOptions),
+          defaultValue: u?.companyId != null ? String(u.companyId) : (companyOptions[0] ? String(companyOptions[0].id) : ''),
+          showWhen: (v) => v.role !== 'admin',
         },
         {
           key: 'active',
+          type: 'boolean',
           label: t(locale, 'panel.admin.editUserActive'),
-          defaultValue: String(Boolean(u?.active)),
+          defaultValue: Boolean(u?.active),
         },
         {
           key: 'password',
@@ -222,7 +292,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     const nextEmail = values.email;
     const nextRole = values.role;
     const nextCompanyIdRaw = values.companyId;
-    const nextActive = String(values.active || '').trim().toLowerCase() !== 'false';
+    const nextActive = values.active === true;
     const nextPassword = values.password;
 
     const payload = {
@@ -283,76 +353,34 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'panel.admin.usersNew')}</span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-          <input
-            value={newUserEmail}
-            onChange={(e) => setNewUserEmail(e.target.value)}
-            placeholder={t(locale, 'panel.admin.emailPh')}
-            style={{ flex: '1 1 260px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <input
-            value={newUserPassword}
-            onChange={(e) => setNewUserPassword(e.target.value)}
-            placeholder={t(locale, 'panel.admin.passwordPh')}
-            type="password"
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <select
-            value={newUserRole}
-            onChange={(e) => setNewUserRole(e.target.value)}
-            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace' }}
-          >
-            <option value="hr">hr</option>
-            <option value="direction">direction</option>
-            <option value="admin">admin</option>
-          </select>
-          <select
-            value={newUserCompanyId}
-            onChange={(e) => setNewUserCompanyId(e.target.value)}
-            disabled={newUserRole === 'admin'}
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: newUserRole === 'admin' ? 0.6 : 1 }}
-          >
-            {companyOptions.length === 0 ? (
-              <option value="">{t(locale, 'panel.admin.noCompanyOption')}</option>
-            ) : companyOptions.map((c) => (
-              <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={createUser}
-            disabled={loading || !newUserEmail.trim() || !newUserPassword.trim()}
-            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !newUserEmail.trim() || !newUserPassword.trim()) ? 0.6 : 1 }}
-          >
-            {t(locale, 'panel.admin.createUserBtn')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              refreshCompanyOptions();
-              loadUsersOnly();
-            }}
-            disabled={loading}
-            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-          >
-            {t(locale, 'panel.admin.refresh')}
-          </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.admin.usersList')}</span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openCreateUser}
+              disabled={loading}
+              style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+            >
+              {t(locale, 'panel.admin.newUserBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                refreshCompanyOptions();
+                loadUsersOnly();
+              }}
+              disabled={loading}
+              style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+            >
+              {t(locale, 'panel.admin.refresh')}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'panel.admin.usersList')}</span>
         {usersTotal === 0 ? (
           <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
             {t(locale, 'panel.admin.noUsersYet')}

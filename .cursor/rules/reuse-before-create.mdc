@@ -19,8 +19,10 @@ Para **cada nova tela** (ou pedaço grande de UI):
    - Notas / HTML → `RichTextEditor` + `RichTextView` + `lib/sanitize-html.js`
    - Cores / tipografia → `C` / `FONTS` (`lib/theme.js`)
    - Pipeline / badges / cards → `dashboard-shared` e padrões das tabs existentes
-   - Confirm / aviso / toast / loading → `useAppFeedback` (`AppFeedbackProvider`), `ConfirmDialog`, `SystemNoticeModal`, `AppLoading` — **nunca** `window.confirm` / `alert` / `prompt`
-   - Não inventar segundo design system
+ - Confirm / aviso / toast / loading → `useAppFeedback` (`AppFeedbackProvider`), `ConfirmDialog`, `SystemNoticeModal`, `AppLoading` — **nunca** `window.confirm` / `alert` / `prompt`
+ - Cadastro simples (criar/editar) → `promptForm` / `PromptFormDialog` (select, boolean, checkboxGroup)
+ - Cadastro rico (ex. vagas) → `AdminRichFormDrawer`, não forçar no promptForm
+ - Não inventar segundo design system
 
 ## Funções / helpers / métodos
 

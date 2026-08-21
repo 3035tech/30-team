@@ -2,7 +2,7 @@
 
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
-import { typeFullName, typeShortLabel } from '../../../lib/type-en';
+import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
@@ -447,13 +447,17 @@ export function OverviewTab({
                     width: `${Math.max(3, (e.n / mixTotal) * 100)}%`,
                     background: TYPE_DATA[e.type]?.color || C.purple,
                   }}
-                  title={`T${e.type}: ${e.n}`}
+                  title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
                 />
               ))}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center' }}>
               {mixEntries.slice(0, 5).map((e) => (
-                <span key={e.type} style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                <span
+                  key={e.type}
+                  title={typeHintTooltip(e.type, locale)}
+                  style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', cursor: 'help' }}
+                >
                   <span style={{ color: TYPE_DATA[e.type]?.color }}>T{e.type}</span>
                   {' · '}
                   {typeShortLabel(e.type, locale)} ({e.n})

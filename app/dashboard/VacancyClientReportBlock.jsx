@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
+import { typeHintTooltip } from '../../lib/type-en';
 import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
@@ -315,7 +316,7 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                       <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>
                         {c.vacancyFitScore010 != null ? c.vacancyFitScore010.toFixed(1) : '—'}
                       </td>
-                      <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace' }} title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}>
                         {c.topType != null ? `T${c.topType}` : '—'}
                       </td>
                     </tr>

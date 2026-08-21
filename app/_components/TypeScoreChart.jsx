@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { getTypeData } from '../../lib/i18n-data';
 import { rankEnneagramScores } from '../../lib/enneagram-cross';
 import { t } from '../../lib/i18n';
-import { typeShortLabel } from '../../lib/type-en';
+import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, FONTS } from '../../lib/theme';
 
 function MiniBar({ value, max, color, h = 6 }) {
@@ -44,13 +44,15 @@ export function TypeScoreChart({ scores, locale, highlightTypes }) {
           const highlight = cluster && cluster.size > 1 ? cluster.has(type) : ranked[0]?.type === type;
           const expanded = openType === type;
           const short = typeShortLabel(type, locale);
+          const tip = typeHintTooltip(type, locale);
           return (
             <button
               key={type}
               type="button"
               onClick={() => setOpenType(expanded ? null : type)}
               aria-expanded={expanded}
-              title={t(locale, 'candidate.scoreChartToggle')}
+              title={tip}
+              aria-label={tip}
               style={{
                 display: 'block',
                 width: '100%',

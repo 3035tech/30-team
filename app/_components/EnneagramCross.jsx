@@ -2,7 +2,7 @@
 
 import { buildEnneagramCross } from '../../lib/enneagram-cross';
 import { t } from '../../lib/i18n';
-import { typeShortLabel } from '../../lib/type-en';
+import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, FONTS } from '../../lib/theme';
 
 function levelColor(level) {
@@ -30,9 +30,11 @@ const labelStyle = {
 function TypeChip({ type, locale, typeData }) {
   const d = typeData[type];
   if (!d) return null;
+  const tip = typeHintTooltip(type, locale);
   return (
     <span
-      title={`${d.name} (T${type})`}
+      title={tip}
+      aria-label={tip}
       style={{
         padding: '3px 10px',
         fontSize: '12px',
@@ -44,6 +46,7 @@ function TypeChip({ type, locale, typeData }) {
         border: `1px solid ${d.color}44`,
         color: d.color,
         fontFamily: 'monospace',
+        cursor: 'help',
       }}
     >
       {d.emoji} {typeShortLabel(type, locale)}

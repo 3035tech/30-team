@@ -199,6 +199,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '8px',
+                        cursor: 'help',
                       }}
                     >
                       <span style={{ width: '22px', textAlign: 'center', flexShrink: 0 }}>{d.emoji}</span>

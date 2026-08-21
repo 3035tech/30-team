@@ -6,11 +6,11 @@ import { TYPE_DATA } from '../../../lib/data';
 import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../../lib/theme';
-import { typeFullName, typeShortLabel } from '../../../lib/type-en';
+import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { RichTextView } from '../../_components/RichTextView';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 
-function ScoreBars({ scores }) {
+function ScoreBars({ scores, locale }) {
   const entries = [];
   for (let i = 1; i <= 9; i += 1) {
     const v = Number(scores?.[i] ?? scores?.[String(i)] ?? 0) || 0;
@@ -20,8 +20,8 @@ function ScoreBars({ scores }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {entries.map((e) => (
-        <div key={e.t} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ width: '28px', fontSize: '10px', fontFamily: FONTS.mono, color: C.muted }}>
+        <div key={e.t} style={{ display: 'flex', alignItems: 'center', gap: '8px' }} title={typeHintTooltip(e.t, locale)}>
+          <span style={{ width: '28px', fontSize: '10px', fontFamily: FONTS.mono, color: C.muted, cursor: 'help' }}>
             T{e.t}
           </span>
           <div style={{ flex: 1, height: '6px', background: 'rgba(26,22,37,.08)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -206,7 +206,10 @@ function ReportInner() {
                   <td style={{ padding: '10px 14px', fontFamily: FONTS.mono, fontWeight: 600 }}>
                     {c.vacancyFitScore010 != null ? `${Number(c.vacancyFitScore010).toFixed(1)}/10` : '—'}
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: FONTS.mono }}>
+                  <td
+                    style={{ padding: '10px 14px', fontFamily: FONTS.mono, cursor: c.topType != null ? 'help' : undefined }}
+                    title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
+                  >
                     {c.topType != null
                       ? `T${c.topType} · ${typeShortLabel(c.topType, locale)}`
                       : '—'}
@@ -234,14 +237,23 @@ function ReportInner() {
               }}
             >
               <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontFamily: FONTS.serif, color: C.text }}>{c.name}</h3>
-              <p style={{ margin: '0 0 10px', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>
+              <p
+                style={{
+                  margin: '0 0 10px',
+                  fontSize: '12px',
+                  color: C.muted,
+                  fontFamily: FONTS.mono,
+                  cursor: c.topType != null ? 'help' : undefined,
+                }}
+                title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
+              >
                 {c.topType != null ? typeFullName(c.topType, locale) : '—'}
                 {c.areaLabel ? ` · ${c.areaLabel}` : ''}
                 {c.vacancyFitScore010 != null
                   ? ` · ${t(locale, 'panel.report.fitLabel', { score: Number(c.vacancyFitScore010).toFixed(1) })}`
                   : ''}
               </p>
-              <ScoreBars scores={c.scores} />
+              <ScoreBars scores={c.scores} locale={locale} />
             </article>
           ))}
         </div>

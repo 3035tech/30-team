@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { personListName, personSortKey } from '../../../lib/person-name';
-import { typeShortLabel } from '../../../lib/type-en';
+import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { C } from '../../../lib/theme';
 import { S, TypeBadge } from '../dashboard-shared';
 
@@ -430,7 +430,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                     <th
                       key={typeNum}
                       onClick={() => toggleSort(typeNum)}
-                      title={TYPE_DATA[typeNum]?.name}
+                      title={typeHintTooltip(typeNum, locale)}
                       style={{
                         padding: '8px 4px',
                         color: TYPE_DATA[typeNum].color,

@@ -9,6 +9,7 @@ import { S } from '../dashboard-shared';
 
 const SECTIONS = [
   'welcome',
+  'navigation',
   'links',
   'flow',
   'enneagram',
@@ -16,8 +17,10 @@ const SECTIONS = [
   'candidates',
   'pipeline',
   'team',
+  'people',
   'report',
   'motivators',
+  'access',
   'tips',
 ];
 
@@ -201,17 +204,20 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   };
 
   const stepCounts = {
-    welcome: 3,
+    welcome: 4,
+    navigation: 6,
     links: 8,
     flow: 0,
-    enneagram: 6,
-    vacancies: 5,
+    enneagram: 7,
+    vacancies: 6,
     candidates: 5,
     pipeline: 6,
-    team: 5,
+    team: 6,
+    people: 6,
     report: 5,
     motivators: 7,
-    tips: 6,
+    access: 6,
+    tips: 8,
   };
 
   return (
@@ -222,6 +228,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
           {t(locale, 'panel.help.intro')}
         </p>
         <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <LinkBtn label={t(locale, 'panel.help.linkOverview')} onClick={() => go('overview')} />
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />

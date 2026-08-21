@@ -14,7 +14,13 @@ import {
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
- * fields: [{ key, label, defaultValue?, type?: 'text'|'password'|'checkboxGroup', options?: [{value,label}] }]
+ * fields: [{
+ *   key, label, defaultValue?,
+ *   type?: 'text'|'password'|'textarea'|'select'|'boolean'|'checkboxGroup',
+ *   options?: [{value,label}],
+ *   showWhen?: (values) => boolean,
+ *   placeholder?: string,
+ * }]
  */
 export function PromptFormDialog({
   open,
@@ -40,6 +46,8 @@ export function PromptFormDialog({
     for (const f of fields) {
       if (f.type === 'checkboxGroup') {
         init[f.key] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
+      } else if (f.type === 'boolean') {
+        init[f.key] = f.defaultValue === true || f.defaultValue === 'true' || f.defaultValue === true;
       } else {
         init[f.key] = f.defaultValue != null ? String(f.defaultValue) : '';
       }
@@ -75,6 +83,132 @@ export function PromptFormDialog({
     });
   };
 
+  const setField = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
+
+  const visibleFields = fields.filter((f) => {
+    if (typeof f.showWhen !== 'function') return true;
+    try {
+      return Boolean(f.showWhen(values));
+    } catch {
+      return true;
+    }
+  });
+
+  const renderControl = (f) => {
+    if (f.type === 'checkboxGroup') {
+      return (
+        <div
+          role="group"
+          aria-label={f.label}
+          style={{
+            marginTop: '8px',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '8px 12px',
+            maxHeight: '220px',
+            overflowY: 'auto',
+            padding: '10px 12px',
+            borderRadius: '10px',
+            border: `1px solid ${C.border}`,
+            background: 'rgba(26,22,37,.03)',
+          }}
+        >
+          {(f.options || []).map((opt) => {
+            const checked = Array.isArray(values[f.key]) && values[f.key].includes(opt.value);
+            return (
+              <label
+                key={opt.value}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: C.text,
+                  cursor: 'pointer',
+                  fontFamily: 'Georgia, serif',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleCheck(f.key, opt.value)}
+                  style={{ width: '16px', height: '16px', accentColor: C.purple }}
+                />
+                {opt.label}
+              </label>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (f.type === 'select') {
+      return (
+        <select
+          value={values[f.key] ?? ''}
+          onChange={(e) => setField(f.key, e.target.value)}
+          disabled={Boolean(f.disabled)}
+          style={{ ...dialogFieldStyle, cursor: f.disabled ? 'default' : 'pointer', opacity: f.disabled ? 0.6 : 1 }}
+        >
+          {(f.options || []).map((opt) => (
+            <option key={String(opt.value)} value={String(opt.value)}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (f.type === 'boolean') {
+      const checked = values[f.key] === true || values[f.key] === 'true';
+      return (
+        <label
+          style={{
+            marginTop: '8px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: C.text,
+            fontFamily: 'Georgia, serif',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => setField(f.key, e.target.checked)}
+            style={{ width: '18px', height: '18px', accentColor: C.purple }}
+          />
+          {checked ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}
+        </label>
+      );
+    }
+
+    if (f.type === 'textarea') {
+      return (
+        <textarea
+          value={values[f.key] ?? ''}
+          onChange={(e) => setField(f.key, e.target.value)}
+          placeholder={f.placeholder || ''}
+          rows={f.rows || 4}
+          style={{ ...dialogFieldStyle, resize: 'vertical', minHeight: '88px', fontFamily: 'Georgia, serif' }}
+        />
+      );
+    }
+
+    return (
+      <input
+        type={f.type === 'password' ? 'password' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'}
+        value={values[f.key] ?? ''}
+        onChange={(e) => setField(f.key, e.target.value)}
+        placeholder={f.placeholder || ''}
+        style={dialogFieldStyle}
+        autoComplete={f.type === 'password' ? 'new-password' : 'off'}
+      />
+    );
+  };
+
   return createPortal(
     <div
       style={dialogOverlayStyle}
@@ -87,7 +221,7 @@ export function PromptFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="prompt-form-title"
-        style={{ ...dialogCardStyle, maxWidth: '520px' }}
+        style={{ ...dialogCardStyle, maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >
         <span
@@ -118,62 +252,11 @@ export function PromptFormDialog({
           <p style={{ margin: '12px 0 0', fontSize: '14px', color: C.muted, lineHeight: 1.55 }}>{message}</p>
         ) : null}
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {fields.map((f) => (
-            <label key={f.key} style={{ display: 'block' }}>
+          {visibleFields.map((f) => (
+            <div key={f.key} style={{ display: 'block' }}>
               <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
-              {f.type === 'checkboxGroup' ? (
-                <div
-                  role="group"
-                  aria-label={f.label}
-                  style={{
-                    marginTop: '8px',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '8px 12px',
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    border: `1px solid ${C.border}`,
-                    background: 'rgba(26,22,37,.03)',
-                  }}
-                >
-                  {(f.options || []).map((opt) => {
-                    const checked = Array.isArray(values[f.key]) && values[f.key].includes(opt.value);
-                    return (
-                      <label
-                        key={opt.value}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          fontSize: '13px',
-                          color: C.text,
-                          cursor: 'pointer',
-                          fontFamily: 'Georgia, serif',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleCheck(f.key, opt.value)}
-                          style={{ width: '16px', height: '16px', accentColor: C.purple }}
-                        />
-                        {opt.label}
-                      </label>
-                    );
-                  })}
-                </div>
-              ) : (
-                <input
-                  type={f.type === 'password' ? 'password' : 'text'}
-                  value={values[f.key] ?? ''}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  style={dialogFieldStyle}
-                  autoComplete={f.type === 'password' ? 'new-password' : 'off'}
-                />
-              )}
-            </label>
+              {renderControl(f)}
+            </div>
           ))}
         </div>
         <div style={{ marginTop: '22px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -183,7 +266,6 @@ export function PromptFormDialog({
           <button
             type="button"
             onClick={() => onSubmit?.(values)}
-            autoFocus
             style={dialogBtnPrimary(C.purple)}
           >
             {confirmLabel || t(locale, 'panel.common.save')}
