@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
-import { drawLocalizedQuestions, getScaleLabels, getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
+import { drawLocalizedQuestions, getScaleLabels, localizeAreaLabel } from '../../lib/i18n-data';
 import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
@@ -12,8 +12,6 @@ import { BrStateSelect } from './BrStateSelect';
 import { BrCitySelect } from './BrCitySelect';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
-import { EnneagramCross } from './EnneagramCross';
-import { TypeScoreChart } from './TypeScoreChart';
 
 const S = {
   app: {
@@ -722,16 +720,13 @@ function TestScreen({ name, onComplete, locale }) {
   );
 }
 
-function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null, retryBusy = false, locale }) {
-  const { name, scores, topType } = result;
-  const typeData = getTypeData(locale);
-  const d = typeData[topType];
-
+function ThankYouScreen({ saveError = null, onRetrySave = null, retryBusy = false, onDone, locale }) {
   return (
-    <div className="cand-flow" style={{ ...S.app, justifyContent: 'flex-start', paddingTop: '40px' }}>
+    <div className="cand-flow" style={S.app}>
       <div style={S.glow} />
-      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px' }}>
-        <span style={S.label}>{t(locale, 'candidate.resultFor', { name: name.split(' ')[0] })}</span>
+      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
+        <span style={S.label}>{t(locale, 'candidate.thankYouLabel')}</span>
+        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{t(locale, 'candidate.thankYouTitle')}</h1>
         {saveError ? (
           <div
             style={{
@@ -743,6 +738,7 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
               fontSize: '13px',
               color: '#b91c1c',
               lineHeight: 1.5,
+              textAlign: 'left',
             }}
           >
             {t(locale, 'candidate.saveErrorPrefix')} {saveError}
@@ -766,26 +762,14 @@ function ResultScreen({ result, onRestart, saveError = null, onRetrySave = null,
               </div>
             ) : null}
           </div>
+        ) : (
+          <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{t(locale, 'candidate.thankYouBody')}</p>
+        )}
+        {!saveError ? (
+          <button type="button" style={S.btn()} onClick={onDone}>
+            {t(locale, 'candidate.thankYouDone')}
+          </button>
         ) : null}
-        <div style={{ marginBottom: '28px' }}>
-          <div style={{ fontSize: '42px', marginBottom: '4px' }}>{d.emoji}</div>
-          <div style={{ fontSize: '13px', color: C.muted, fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
-            {t(locale, 'candidate.type', { type: topType })}
-          </div>
-          <h2 style={{ fontSize: 'clamp(28px,5vw,42px)', fontWeight: 'normal', color: d.color, marginBottom: '16px' }}>{d.name}</h2>
-          <p style={{ ...S.p, marginBottom: 0 }}>{d.desc}</p>
-        </div>
-
-        <EnneagramCross scores={scores} locale={locale} />
-
-        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '22px', marginBottom: '22px' }}>
-          <span style={S.label}>{t(locale, 'candidate.profileByType')}</span>
-          <TypeScoreChart scores={scores} locale={locale} />
-        </div>
-
-        <button style={{ ...S.btn(), fontSize: '13px' }} onClick={onRestart}>
-          {t(locale, 'common.backHome')}
-        </button>
       </div>
     </div>
   );
@@ -803,7 +787,7 @@ export default function AssessmentFlow({
   const [locale, setLocale] = useLocale(initialLocale);
   const [screen, setScreen] = useState('home'); // home | test | result
   const [candidate, setCandidate] = useState(null); // { name, email, areaKey, consent }
-  const [result, setResult] = useState(null);
+  const [completedOk, setCompletedOk] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [retryPayload, setRetryPayload] = useState(null);
   const [retryBusy, setRetryBusy] = useState(false);
@@ -811,6 +795,7 @@ export default function AssessmentFlow({
   const handleStart = async (c) => {
     setSaveError(null);
     setRetryPayload(null);
+    setCompletedOk(false);
     if (vacancyToken) {
       try {
         const params = new URLSearchParams({ token: vacancyToken, email: c.email });
@@ -848,6 +833,7 @@ export default function AssessmentFlow({
     setRetryBusy(false);
     setSaveError(errMsg);
     setRetryPayload(errMsg ? retryPayload : null);
+    setCompletedOk(!errMsg);
   }, [retryPayload, locale]);
 
   const handleComplete = async (data) => {
@@ -856,7 +842,7 @@ export default function AssessmentFlow({
       console.error(computed.error);
       setSaveError(computed.error);
       setRetryPayload(null);
-      setResult(null);
+      setCompletedOk(false);
       setScreen('result');
       return;
     }
@@ -887,13 +873,13 @@ export default function AssessmentFlow({
     }
     setSaveError(errMsg);
     setRetryPayload(errMsg ? payload : null);
-    setResult({ name: candidate?.name || data.name || '', scores: computed.scores, topType: computed.topType });
+    setCompletedOk(!errMsg);
     setScreen('result');
   };
 
   if (screen === 'test') return <TestScreen name={candidate?.name || ''} onComplete={handleComplete} locale={locale} />;
   if (screen === 'result') {
-    if (!result) {
+    if (!completedOk && !retryPayload) {
       return (
         <div className="cand-flow" style={S.app}>
           <div style={S.glow} />
@@ -906,6 +892,7 @@ export default function AssessmentFlow({
               onClick={() => {
                 setSaveError(null);
                 setRetryPayload(null);
+                setCompletedOk(false);
                 setScreen('home');
               }}
             >
@@ -916,15 +903,15 @@ export default function AssessmentFlow({
       );
     }
     return (
-      <ResultScreen
-        result={result}
+      <ThankYouScreen
         saveError={saveError}
         retryBusy={retryBusy}
         onRetrySave={retryPayload ? retrySave : null}
         locale={locale}
-        onRestart={() => {
+        onDone={() => {
           setSaveError(null);
           setRetryPayload(null);
+          setCompletedOk(false);
           setScreen('home');
         }}
       />
