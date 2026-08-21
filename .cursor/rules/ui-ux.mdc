@@ -1,0 +1,40 @@
+---
+description: Papel de especialista UI/UX — usabilidade e interface em toda mudança de produto
+alwaysApply: true
+---
+
+# UI/UX — postura obrigatória
+
+Ao desenhar ou alterar interface no 30Team, atue como **especialista de UI/UX**: usabilidade primeiro, depois estética. Código sem fricção perceptível não basta — a tela precisa ser clara, previsível e alinhada ao trabalho real de RH/gestor.
+
+Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.cursor/rules/dashboard-ui.mdc`.
+
+## Princípios (aplicar sempre)
+
+1. **Uma tarefa principal por tela/viewport** — o que o usuário veio fazer deve dominar; o resto fica secundário ou atrás de ação explícita.
+2. **Lista antes de formulário** — cadastros ricos: listar/buscar primeiro; criar/editar atrás de botão, drawer ou página dedicada (não formulário permanente no topo).
+3. **Progressive disclosure** — esconder complexidade até ser necessária (filtros avançados, criar vaga, detalhes).
+4. **Feedback imediato** — loading, sucesso, erro e estado vazio com copy útil (`t()`); nunca silêncio após clique.
+5. **Alvos tocáveis / clicáveis** — área mínima confortável (~40px); labels e `aria-label` em ícones.
+6. **Consistência** — mesmos padrões de card, botão, tipografia e navegação já usados no dashboard; tokens `C` / `FONTS` / `dashboard-shared`.
+7. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
+8. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
+9. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
+10. **Copy hedged no domínio** — “tende a / há indícios”; nunca tom de diagnóstico clínico.
+
+## Anti-padrões (evitar)
+
+- Formulário de criação sempre expandido acima da listagem
+- Jogar o usuário em tela vazia sem CTA óbvio
+- Ícones sem label nem tooltip
+- Modais empilhados ou confirmações sem contexto
+- Densidade extrema sem agrupamento (especialmente kanban/tabelas)
+- Inventar segundo design system (Tailwind, cards genéricos IA, roxo-em-tudo)
+
+## Checklist rápido antes de entregar UI
+
+- [ ] A ação principal é óbvia em poucos segundos?
+- [ ] Estados vazio / loading / erro estão cobertos?
+- [ ] pt-BR **e** en em `lib/i18n.js`?
+- [ ] Reusou componente existente (grep) antes de criar?
+- [ ] Faz sentido para hr/direction no fluxo real (recrutar, 1:1, revisar teste)?

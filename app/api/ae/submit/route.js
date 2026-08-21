@@ -8,6 +8,7 @@ import { AE_SCORING_ENGINE_VERSION } from '../../../../lib/ae/ae-id';
 import { bootstrapMotivators } from '../../../../lib/ae/bootstrap-motivators';
 import { formatScoringFailure, summarizeScoringInput } from '../../../../lib/ae/scoring-diagnostics';
 import { apiError } from '../../../../lib/api-error';
+import { notifyCompanyManagers, NOTIF } from '../../../../lib/manager-notifications';
 
 /**
  * POST /api/ae/submit
@@ -32,8 +33,10 @@ export async function POST(request) {
 
     const att = await query(
       `SELECT a.id, a.status, a.definition_id AS "definitionId", a.invite_id AS "inviteId",
-              a.question_ids AS "questionIds", a.company_id AS "companyId"
+              a.question_ids AS "questionIds", a.company_id AS "companyId",
+              a.candidate_id AS "candidateId", c.full_name AS "candidateName"
        FROM ae_attempts a
+       LEFT JOIN candidates c ON c.id = a.candidate_id
        WHERE a.id = $1
        LIMIT 1`,
       [attemptId]
@@ -95,6 +98,18 @@ export async function POST(request) {
         [attempt.inviteId]
       );
     }
+
+    await notifyCompanyManagers(query, {
+      companyId: attempt.companyId,
+      type: NOTIF.MOTIVATORS_COMPLETED,
+      entityType: 'candidate',
+      entityId: attempt.candidateId,
+      payload: {
+        candidateId: attempt.candidateId,
+        attemptId,
+        candidateName: attempt.candidateName || null,
+      },
+    });
 
     return NextResponse.json({
       ok: true,

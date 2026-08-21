@@ -31,6 +31,8 @@ import { UsersAdminTab } from './tabs/UsersAdminTab';
 import { VacanciesAdminTab } from './tabs/VacanciesAdminTab';
 import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
 import { HelpTab } from './tabs/HelpTab';
+import { ProfileTab } from '../_components/ProfileTab';
+import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
@@ -648,7 +650,8 @@ export default function DashboardClient({
           maxWidth: '1600px',
         }}>
 
-          <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 0 }}>
             <input
               type="search"
               value={search}
@@ -684,6 +687,21 @@ export default function DashboardClient({
                 {t(locale, 'common.clearSearch')}
               </button>
             )}
+          </div>
+          <DashboardTopBarMenus
+            locale={locale}
+            auth={auth}
+            navigateToTab={navigateToTab}
+            onLogout={logout}
+            onNavigateHref={(href) => {
+              try {
+                const u = new URL(href, typeof window !== 'undefined' ? window.location.origin : 'http://local');
+                router.push(`${u.pathname}${u.search}`);
+              } catch {
+                router.push(href);
+              }
+            }}
+          />
           </div>
 
           {/* Title row */}
@@ -915,6 +933,7 @@ export default function DashboardClient({
                     isAdmin={isAdmin}
                     search={selectedSearch}
                     listTotal={listTotal}
+                    focusCandidateId={urlParams.get('candidate')}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });
@@ -1009,6 +1028,13 @@ export default function DashboardClient({
               {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
+              {tab === 'profile' && (
+                <ProfileTab
+                  locale={locale}
+                  onLocaleChange={setLocale}
+                  onProfileSaved={() => {}}
+                />
+              )}
               {tab === 'group' && (
                 <GroupTab
                   results={interactionPeople}

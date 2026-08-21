@@ -138,6 +138,7 @@ export function TeamTab({
   search = '',
   onSearch,
   listTotal = 0,
+  focusCandidateId = null,
 }) {
   const [open, setOpen] = useState(null);
   const [searchDraft, setSearchDraft] = useState(search || '');
@@ -173,6 +174,30 @@ export function TeamTab({
   useEffect(() => {
     setSearchDraft(search || '');
   }, [search]);
+
+  useEffect(() => {
+    if (!focusCandidateId) return;
+    const cid = String(focusCandidateId);
+    const match = (results || []).find((r) => String(r.candidateId) === cid);
+    if (match) {
+      setOpen(String(match.assessmentId));
+      loadDetail(cid);
+      return;
+    }
+    loadDetail(cid);
+  }, [focusCandidateId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!focusCandidateId || !detail?.candidate) return;
+    if (String(detail.candidate.id) !== String(focusCandidateId)) return;
+    const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
+    if (match) {
+      setOpen(String(match.assessmentId));
+      return;
+    }
+    const aid = detail.assessments?.[0]?.id;
+    if (aid) setOpen(String(aid));
+  }, [detail, focusCandidateId, results]);
 
   const commitSearch = () => {
     const trimmed = searchDraft.trim();
@@ -679,6 +704,35 @@ export function TeamTab({
       {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
         <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
           {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
+        </div>
+      ) : null}
+      {focusCandidateId
+        && detail?.candidate
+        && String(detail.candidate.id) === String(focusCandidateId)
+        && !(results || []).some((r) => String(r.candidateId) === String(focusCandidateId)) ? (
+        <div style={{ ...S.card, marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+            {titleCasePersonName(detail.candidate.fullName || detail.candidate.email || '')}
+          </div>
+          <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.muted }}>
+            {t(locale, 'dashboard.notifOpenOutsideFilters')}
+          </p>
+          {detail.assessments?.[0]?.scores ? (
+            <TypeScoreChart
+              scores={detail.assessments[0].scores}
+              locale={locale}
+              highlightTypes={new Set([detail.assessments[0].topType].filter(Boolean))}
+            />
+          ) : null}
+          <PeopleManagementPanel
+            locale={locale}
+            candidateId={detail.candidate.id}
+            people={detail.people}
+            onRefresh={() => loadDetail(detail.candidate.id)}
+          />
+          {detail.timeline?.length ? (
+            <CandidateTimeline events={detail.timeline} locale={locale} currentStage={detail.assessments?.[0]?.pipelineStage} />
+          ) : null}
         </div>
       ) : null}
       {viewMode === 'list' && filtered.map((r) => {

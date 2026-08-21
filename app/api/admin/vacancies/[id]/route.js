@@ -5,6 +5,7 @@ import { query, queryRead } from '../../../../../lib/db';
 import { sanitizeInterviewNotesHtml } from '../../../../../lib/sanitize-html';
 import { apiError } from '../../../../../lib/api-error';
 import { parseVacancyDetailsFromBody } from '../../../../../lib/vacancy-details';
+import { notifyCompanyManagers, NOTIF } from '../../../../../lib/manager-notifications';
 
 function requireRole(payload) {
   const role = payload?.role;
@@ -200,6 +201,23 @@ export async function PATCH(request, { params }) {
           vacancyRubricUpdatedAt: rub.rows[0].vacancyRubricUpdatedAt ?? null,
         }
       : { vacancyFitWeights: {}, vacancyRubricNotes: null, vacancyRubricUpdatedAt: null };
+
+  const closedNow =
+    String(current.status || '') !== 'closed'
+    && String(up.rows[0]?.status || '') === 'closed';
+  if (closedNow) {
+    await notifyCompanyManagers(query, {
+      companyId: up.rows[0].companyId,
+      type: NOTIF.VACANCY_CLOSED,
+      entityType: 'vacancy',
+      entityId: up.rows[0].id,
+      dedupeKey: `vacancy_closed:${up.rows[0].id}:${new Date().toISOString().slice(0, 10)}`,
+      payload: {
+        vacancyId: up.rows[0].id,
+        vacancyTitle: up.rows[0].title,
+      },
+    });
+  }
 
   return NextResponse.json({
     ...(await attachActiveToken({ ...up.rows[0], companyName: current.companyName })),

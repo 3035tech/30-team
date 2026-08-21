@@ -73,6 +73,29 @@ export default async function DashboardPage({ searchParams }) {
   const locale = normalizeLocale(payload?.locale);
   if (!isAdmin && !companyId) redirect('/login');
 
+  let authUser = {
+    userId: payload?.userId ?? null,
+    role: payload?.role || null,
+    companyId: payload?.companyId ?? null,
+    locale,
+    email: null,
+    displayName: null,
+  };
+  try {
+    if (payload?.userId) {
+      const u = await queryRead(
+        `SELECT email, display_name AS "displayName"
+         FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
+        [payload.userId]
+      );
+      if (u.rowCount) {
+        authUser = { ...authUser, email: u.rows[0].email, displayName: u.rows[0].displayName };
+      }
+    }
+  } catch {
+    /* display_name column may be missing before migration 023 */
+  }
+
   const canManage = ['admin', 'hr', 'direction'].includes(payload?.role || '');
   const activeTab = parseDashboardTab(searchParams, { canVacancies: canManage, isAdmin });
   const needTeam = activeTab === 'team';
@@ -533,7 +556,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         areaRubric={areaRubric}
         analytics={analytics}
         overviewMetrics={overviewMetrics}
-        auth={{ role: payload?.role || null, companyId: payload?.companyId ?? null, locale }}
+        auth={authUser}
         initialLocale={locale}
       />
     </Suspense>

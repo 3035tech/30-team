@@ -75,12 +75,72 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) em v
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
 | Nomes de arquivo/export em inglês | Pastas novas fora de `app/` / `lib/` / `migrations/` |
 | **Reutilizar** componente/helper existente (`app/_components`, `lib/`, `dashboard-shared`) | Criar duplicata; só criar o novo se a busca no repo não achar equivalente |
+| **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
 
 **Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
 
 Antes de implementar feature de UI: **grep** por nomes óbvios (`RichText`, `TypeBadge`, `sanitize`, etc.) e ler usos existentes. Estender o que já existe > copiar > criar do zero.
+
+## UI/UX (obrigatório em mudanças de interface)
+
+O agente atua como **especialista de usabilidade e interface**. Objetivo: gestores (hr/direction/admin) e fluxos públicos (`/t`, `/v`, assessment) claros, previsíveis e sem atrito.
+
+### Princípios
+1. **Uma tarefa principal** por tela ou primeiro viewport — o resto é secundário ou progressive disclosure.
+2. **Lista antes de formulário** — entidades ricas (vagas, usuários, etc.): ver/buscar primeiro; criar/editar atrás de botão, drawer ou rota dedicada.
+3. **Feedback** — loading, sucesso, erro e empty state com copy útil (i18n); nunca clique sem resposta.
+4. **Consistência** — `C` / `FONTS` / `dashboard-shared`; mesmos botões, cards e densidade das tabs já existentes.
+5. **Acessibilidade básica** — alvos ~40px, `aria-label`/`title` em ícones, contraste, foco; sidebar colapsada = ícone + tooltip.
+6. **Responsive** — mobile: drawer; desktop: collapse de menu ok; não quebrar assessment público.
+7. **Copy de perfil** — hedging (“tende a”); nunca diagnóstico clínico.
+
+### Anti-padrões
+- Formulário de criação permanente no topo da listagem
+- Ícones sem texto nem tooltip; CTAs competindo sem hierarquia
+- Segundo design system (Tailwind, cards “genéricos de IA”, roxo em status de pipeline)
+- Densidade sem agrupamento; modais empilhados sem contexto
+
+### Checklist ao entregar UI
+- Ação principal óbvia em poucos segundos?
+- Empty / loading / erro cobertos?
+- Chaves **pt-BR e en** em `lib/i18n.js`?
+- Grep de componente existente feito?
+- Faz sentido no fluxo real de RH (recrutar, 1:1, revisar teste)?
+
+Regras Cursor/Claude: `.cursor/rules/ui-ux.mdc` (alwaysApply), `CLAUDE.md`.
+
+## DBA e performance (obrigatório em SQL, APIs, crons e listagens)
+
+O agente atua também como **DBA** e **engenheiro de performance**. Objetivo: a aplicação escalar (mais empresas, candidatos e gestores concorrentes) **sem precisar de refactor grande** no futuro. Validar **cada query** e a **volumetria** de cada transação/hot path.
+
+### Em toda query / transação
+1. **Tenant** — filtrar por `company_id` (ou join equivalente); hr/direction nunca veem cross-tenant.
+2. **Parametrizado** — `$1`, `$2`; nunca interpolar input no SQL.
+3. **`query` vs `queryRead`** — escrita/consistência no primário; leituras tolerantes a lag na réplica (`POSTGRES_READ_HOST`).
+4. **Volumetria** — estimar pior caso (empresa grande, lista sem filtro, cron). Usar paginação, `LIMIT`, caps (ex. `COMPAT_PEOPLE_CAP`).
+5. **Índices** — filtro/`ORDER BY`/`JOIN` novo e frequente → índice alinhado (ver `migrations/006_performance_indexes.sql`) ou justificar o existente.
+6. **N+1** — proibido em hot path; preferir join, `IN`, batch insert; fan-out de notificação = O(gestores da empresa) com dedupe, não O(sistema inteiro).
+7. **Transação curta** — sem e-mail/HTTP/LLM dentro de `BEGIN…COMMIT` sem necessidade.
+8. **Pool** — `PG_POOL_MAX` / `lib/db.js`; não abrir `Client` ad-hoc em request quente.
+9. **Dashboard SSR** — só a aba ativa; não carregar compat + overview + ranking juntos.
+
+### Checklist ao entregar SQL/API
+- Escopo por `company_id` (ou admin explícito)?
+- Resultado limitado (página / LIMIT / cap)?
+- Risco de seq scan em tabela quente considerado?
+- Cron/batch com `LIMIT` + idempotência/dedupe?
+- Submit do candidato não multiplica custo sem teto (gestores da empresa, dedupe)?
+
+### Anti-padrões
+- Listagem admin sem paginação; compat sem cap
+- `SELECT *` desnecessário em tabelas largas
+- Agregar/contar tabela inteira no hot path do dashboard
+- Migration de feature sem índice para o filtro que ela introduz
+- `DELETE` físico em massa sem pedido
+
+Regras Cursor/Claude: `.cursor/rules/dba-performance.mdc` (alwaysApply), `.cursor/rules/sql-schema.mdc`.
 
 ## i18n
 
@@ -98,7 +158,7 @@ Antes de implementar feature de UI: **grep** por nomes óbvios (`RichText`, `Typ
 | `scripts/scripts-banco-pendentes.sql` | Bundle idempotente para pgAdmin |
 | `init.sql` na raiz | Stub Docker — **manter vazio** |
 
-Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotente). Não deixar `.sql` solto na raiz. Ver `migrations/README.md`.
+Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotente). Não deixar `.sql` solto na raiz. Ver `migrations/README.md`. Em toda mudança de query/API, aplicar a seção **DBA e performance** acima.
 
 **Motivadores — banco de perguntas:** itens situacionais (o respondente não vê nomes de dimensões; pesos só no servidor). Publicar banco novo com sync/desativar chaves antigas (`lib/ae/sync-question-bank.js` / `scripts/seed-motivators-questions-v3.sql`) — **não** `DELETE` de `ae_questions` se houver tentativas (preserva `question_ids` / scores). Seed: `npm run db:seed-motivators` ou o SQL v3 no pgAdmin.
 
@@ -124,6 +184,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
 | Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v3.sql` |
 | People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
+| Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js`, `migrations/023`+`024`, cron `app/api/cron/vacancy-deadline-notifications` |
 | Timeline do candidato | `app/_components/CandidateTimeline.jsx`, `lib/hire.js` (`buildCandidateTimeline`) |
 | Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
@@ -136,5 +197,6 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 ## Referências
 
 - README: setup Docker / local
-- `.cursor/rules/`: atalhos Cursor por área
+- `CLAUDE.md`: entrada para Claude Code (aponta para este arquivo)
+- `.cursor/rules/`: atalhos Cursor por área (`ui-ux.mdc`, `dba-performance.mdc` alwaysApply)
 - `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`

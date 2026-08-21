@@ -7,6 +7,7 @@ import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 import { apiError } from '../../../lib/api-error';
 import { upsertCandidate } from '../../../lib/ae/candidate-upsert';
 import { normalizeCandidateProfile } from '../../../lib/candidate-profile';
+import { notifyCompanyManagers, NOTIF } from '../../../lib/manager-notifications';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -183,6 +184,20 @@ export async function POST(request) {
         [resolvedInviteId]
       );
     }
+
+    await notifyCompanyManagers(query, {
+      companyId,
+      type: NOTIF.ENNEAGRAM_COMPLETED,
+      entityType: 'candidate',
+      entityId: candidateId,
+      payload: {
+        candidateId,
+        assessmentId: assessment.rows[0].id,
+        candidateName: safeName,
+        topType,
+        vacancyId: resolvedVacancyId,
+      },
+    });
 
     // Legado: `results` usa UNIQUE global em LOWER(name) — colide entre empresas/candidatos.
     // Mantido só se LEGACY_RESULTS_WRITE=true (scripts/dashboards antigos).

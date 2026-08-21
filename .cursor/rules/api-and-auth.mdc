@@ -15,3 +15,4 @@ alwaysApply: false
 7. SQL só com placeholders `$1`. Soft delete: `deleted = FALSE`.
 8. Mutações sensíveis (user, company, hire/reject, purge): `audit({ actorUserId, action, ... })`.
 9. Cron: exigir `CRON_SECRET`. Não vazar stack traces para o cliente.
+10. Performance: validar volumetria da query (paginação/LIMIT/caps, sem N+1) — `.cursor/rules/dba-performance.mdc` / `AGENTS.md` § DBA e performance.

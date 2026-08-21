@@ -245,7 +245,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   );
 }
 
-function ResultsList({ locale, isAdmin, companyFilter }) {
+function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -261,6 +261,13 @@ function ResultsList({ locale, isAdmin, companyFilter }) {
   }, [isAdmin, companyFilter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!focusAttemptId) return;
+    const id = Number(focusAttemptId);
+    if (!Number.isFinite(id)) return;
+    setSelected(id);
+  }, [focusAttemptId]);
 
   useEffect(() => {
     if (!selected) { setDetail(null); return; }
@@ -673,6 +680,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
   const router = useRouter();
   const view = searchParams.get('motivatorsView') || 'invites';
   const companyFilter = searchParams.get('company') || 'all';
+  const focusAttemptId = searchParams.get('attempt') || null;
   const [refreshKey, setRefreshKey] = useState(0);
   const [moduleStatus, setModuleStatus] = useState(null);
   const [setupBusy, setSetupBusy] = useState(false);
@@ -776,7 +784,14 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
           <InvitesList locale={locale} refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
         </>
       ) : null}
-      {view === 'results' ? <ResultsList locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
+      {view === 'results' ? (
+        <ResultsList
+          locale={locale}
+          isAdmin={isAdmin}
+          companyFilter={companyFilter}
+          focusAttemptId={focusAttemptId}
+        />
+      ) : null}
       {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
       {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
     </div>

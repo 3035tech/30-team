@@ -8,6 +8,8 @@
 -- 020 — posições e data-alvo da vaga
 -- 021 — relatório público por vaga (link temporário)
 -- 022 — registro de 1:1 (People)
+-- 023 — notificações in-app + display_name
+-- 024 — tipos genéricos de notificação + dedupe por time RH
 
 ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS phone TEXT,
@@ -170,3 +172,47 @@ CREATE INDEX IF NOT EXISTS idx_one_on_ones_candidate_date
 
 CREATE INDEX IF NOT EXISTS idx_one_on_ones_company_date
   ON one_on_ones (company_id, meeting_date DESC);
+
+-- 023 — notificações de gestores + display_name
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS display_name TEXT;
+
+CREATE TABLE IF NOT EXISTS manager_notifications (
+  id                  BIGSERIAL PRIMARY KEY,
+  company_id          BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  recipient_user_id   BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type                TEXT NOT NULL
+    CHECK (type IN ('enneagram_completed', 'motivators_completed')),
+  payload             JSONB NOT NULL DEFAULT '{}'::jsonb,
+  read_at             TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_manager_notifications_recipient_created
+  ON manager_notifications (recipient_user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_manager_notifications_recipient_unread
+  ON manager_notifications (recipient_user_id, created_at DESC)
+  WHERE read_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_manager_notifications_company_created
+  ON manager_notifications (company_id, created_at DESC);
+
+-- 024 — notificações genéricas + dedupe (time RH)
+ALTER TABLE manager_notifications
+  DROP CONSTRAINT IF EXISTS manager_notifications_type_check;
+
+ALTER TABLE manager_notifications
+  ADD COLUMN IF NOT EXISTS entity_type TEXT,
+  ADD COLUMN IF NOT EXISTS entity_id BIGINT,
+  ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_manager_notifications_dedupe
+  ON manager_notifications (recipient_user_id, dedupe_key)
+  WHERE dedupe_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_manager_notifications_entity
+  ON manager_notifications (company_id, entity_type, entity_id)
+  WHERE entity_type IS NOT NULL;
+
+

@@ -25,6 +25,8 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - SQL parametrizado; `query` vs `queryRead`
 - Perfil: linguagem “tende a”; hipóteses ≠ diagnóstico
 - **Reutilizar antes de criar** — buscar em `app/_components` / `lib/` / `dashboard-shared`; só criar o novo se nada servir (ver `.cursor/rules/reuse-before-create.mdc`)
+- **UI/UX** — atuar como especialista de usabilidade (ver `.cursor/rules/ui-ux.mdc` e `AGENTS.md` § UI/UX): lista antes de formulário, progressive disclosure, feedback de estados, consistência com tokens existentes
+- **DBA / performance** — validar cada query e a volumetria da transação (ver `.cursor/rules/dba-performance.mdc` e `AGENTS.md` § DBA e performance): tenant, índices, paginação/caps, sem N+1; desenhar para escalar sem refactor grande
 
 ## Proibido
 - Conta de candidato (acesso é por token `/t` `/v` `/r`)
