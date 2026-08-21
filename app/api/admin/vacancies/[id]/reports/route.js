@@ -41,14 +41,29 @@ export async function GET(request, { params }) {
       if (!source) return apiError(request, 'NOT_FOUND', 404);
       return NextResponse.json({
         vacancyId: Number(vacancyId),
-        vacancy: source.vacancy,
+        vacancy: {
+          id: source.vacancy.id,
+          title: source.vacancy.title,
+          companyName: source.vacancy.companyName,
+          positionsCount: source.vacancy.positionsCount,
+          hasDescription: Boolean(source.vacancy.description && String(source.vacancy.description).trim()),
+        },
+        rubricSummary: {
+          hasRubric: Object.keys(source.rubricWeights || {}).length > 0,
+          weightedTypes: Object.keys(source.rubricWeights || {})
+            .map((k) => ({ type: Number(k), weight: source.rubricWeights[k] }))
+            .sort((a, b) => b.weight - a.weight || a.type - b.type),
+          hasNotes: Boolean(source.rubricNotes),
+        },
         candidates: source.people.map((p) => ({
           candidateId: p.candidateId,
           name: p.name,
           topType: p.topType,
           pipelineStage: p.pipelineStage,
+          recommendation: p.recommendation,
           vacancyFitScore010: p.vacancyFitScore010,
           vacancyFitLabel: p.vacancyFitLabel,
+          excludedFromClient: p.recommendation === 'exclude',
         })),
       });
     }
@@ -86,6 +101,8 @@ export async function POST(request, { params }) {
     const candidateIds = Array.isArray(body.candidateIds) ? body.candidateIds : [];
     const expiresInDays = body.expiresInDays;
     const executiveNote = body.executiveNote;
+    const candidateOverrides =
+      body.candidateOverrides && typeof body.candidateOverrides === 'object' ? body.candidateOverrides : {};
 
     const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
     if (!source) return apiError(request, 'NOT_FOUND', 404);
@@ -97,6 +114,7 @@ export async function POST(request, { params }) {
       candidateIds,
       expiresInDays,
       executiveNote,
+      candidateOverrides,
       isAdmin,
       sessionCompanyId: companyId,
     });
@@ -116,6 +134,7 @@ export async function POST(request, { params }) {
     );
   } catch (e) {
     if (e?.code === 'NO_CANDIDATES') return apiError(request, 'INCOMPLETE_DATA', 400);
+    if (e?.code === 'NOTE_TOO_SHORT') return apiError(request, 'REPORT_NOTE_TOO_SHORT', 400);
     if (e?.code === 'NOT_FOUND') return apiError(request, 'NOT_FOUND', 404);
     console.error('[vacancy-reports POST]', e);
     return apiError(request, 'INTERNAL', 500);

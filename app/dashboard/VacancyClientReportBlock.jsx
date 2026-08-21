@@ -2,16 +2,33 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
-import { typeHintTooltip } from '../../lib/type-en';
+import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { useAppFeedback } from '../_components/AppFeedback';
+import { htmlToPlainText } from '../../lib/sanitize-html';
+import {
+  CONSULTANT_NOTE_MAX_CHARS,
+  REPORT_NOTE_MIN_CHARS,
+  REPORT_RECOMMENDATIONS,
+  normalizeRecommendation,
+} from '../../lib/vacancy-report-shared';
 
 const REPORT_EXPIRY_DAYS = [7, 14, 30];
 const DEFAULT_REPORT_EXPIRY_DAYS = 14;
 
 const INTERVIEW_PLUS = new Set(['interview', 'approved', 'hired']);
+
+const NOTE_TEMPLATE_PT = `<p><strong>Quem avançar:</strong> …</p>
+<p><strong>Por quê (fit / contexto da vaga):</strong> …</p>
+<p><strong>Alertas / pontos a explorar na entrevista:</strong> …</p>
+<p><strong>Próximo passo sugerido:</strong> …</p>`;
+
+const NOTE_TEMPLATE_EN = `<p><strong>Who to advance:</strong> …</p>
+<p><strong>Why (fit / role context):</strong> …</p>
+<p><strong>Watch-outs / interview probes:</strong> …</p>
+<p><strong>Suggested next step:</strong> …</p>`;
 
 /**
  * Generate / list / revoke public client report links for a vacancy.
@@ -19,9 +36,13 @@ const INTERVIEW_PLUS = new Set(['interview', 'approved', 'hired']);
 export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl = '' }) {
   const { confirm } = useAppFeedback();
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [candidates, setCandidates] = useState([]);
+  const [vacancyMeta, setVacancyMeta] = useState(null);
+  const [rubricMeta, setRubricMeta] = useState(null);
   const [selected, setSelected] = useState(() => new Set());
-  const [stageFilter, setStageFilter] = useState('all');
+  const [overrides, setOverrides] = useState({});
+  const [stageFilter, setStageFilter] = useState('shortlist');
   const [expiresInDays, setExpiresInDays] = useState(DEFAULT_REPORT_EXPIRY_DAYS);
   const [note, setNote] = useState('');
   const [reports, setReports] = useState([]);
@@ -30,6 +51,9 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [lastUrl, setLastUrl] = useState('');
+
+  const notePlainLen = htmlToPlainText(note).length;
+  const noteOk = notePlainLen >= REPORT_NOTE_MIN_CHARS;
 
   const loadReports = useCallback(async () => {
     try {
@@ -50,9 +74,13 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
       setCandidates(Array.isArray(data.candidates) ? data.candidates : []);
+      setVacancyMeta(data.vacancy || null);
+      setRubricMeta(data.rubricSummary || null);
     } catch (e) {
       setErr(e?.message || t(locale, 'panel.common.error'));
       setCandidates([]);
+      setVacancyMeta(null);
+      setRubricMeta(null);
     } finally {
       setLoading(false);
     }
@@ -68,25 +96,128 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
     if (stageFilter === 'interview_plus') {
       return candidates.filter((c) => INTERVIEW_PLUS.has(c.pipelineStage));
     }
+    if (stageFilter === 'shortlist') {
+      return candidates.filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude');
+    }
     return candidates;
   }, [candidates, stageFilter]);
 
-  const toggle = (id) => {
+  const selectedPeople = useMemo(
+    () => candidates.filter((c) => selected.has(c.candidateId)),
+    [candidates, selected]
+  );
+
+  const ensureOverride = (c) => {
+    setOverrides((prev) => {
+      if (prev[c.candidateId]) return prev;
+      return {
+        ...prev,
+        [c.candidateId]: {
+          recommendation: normalizeRecommendation(c.recommendation, 'bank'),
+          note: '',
+        },
+      };
+    });
+  };
+
+  const toggle = (c) => {
+    const id = c.candidateId;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else {
+        next.add(id);
+        ensureOverride(c);
+      }
       return next;
     });
   };
 
   const selectVisible = () => {
     setSelected(new Set(visible.map((c) => c.candidateId)));
+    setOverrides((prev) => {
+      const next = { ...prev };
+      for (const c of visible) {
+        if (!next[c.candidateId]) {
+          next[c.candidateId] = {
+            recommendation: normalizeRecommendation(c.recommendation, 'bank'),
+            note: '',
+          };
+        }
+      }
+      return next;
+    });
   };
 
   const clearSelected = () => setSelected(new Set());
 
+  const setRec = (id, recommendation) => {
+    setOverrides((prev) => ({
+      ...prev,
+      [id]: {
+        recommendation: normalizeRecommendation(recommendation, 'bank'),
+        note: prev[id]?.note || '',
+      },
+    }));
+  };
+
+  const setPersonNote = (id, text) => {
+    setOverrides((prev) => ({
+      ...prev,
+      [id]: {
+        recommendation: normalizeRecommendation(prev[id]?.recommendation, 'bank'),
+        note: String(text || '').slice(0, CONSULTANT_NOTE_MAX_CHARS),
+      },
+    }));
+  };
+
+  const applyNoteTemplate = () => {
+    const tpl = locale === 'en' ? NOTE_TEMPLATE_EN : NOTE_TEMPLATE_PT;
+    setNote((prev) => (htmlToPlainText(prev).length ? prev : tpl));
+  };
+
+  const recommendationLabel = (rec) => {
+    const key =
+      rec === 'advance'
+        ? 'panel.report.recAdvance'
+        : rec === 'discuss'
+          ? 'panel.report.recDiscuss'
+          : rec === 'exclude'
+            ? 'panel.report.recExclude'
+            : 'panel.report.recBank';
+    return t(locale, key);
+  };
+
+  const effectiveRec = (c) =>
+    normalizeRecommendation(overrides[c.candidateId]?.recommendation, c.recommendation || 'bank');
+
   const generate = async () => {
+    if (!noteOk) {
+      setErr(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
+      return;
+    }
+    const excluded = selectedPeople.filter((c) => c.excludedFromClient || c.recommendation === 'exclude');
+    if (excluded.length && excluded.length === selectedPeople.length) {
+      setErr(t(locale, 'panel.report.onlyExcludedSelected'));
+      return;
+    }
+    if (excluded.length) {
+      const ok = await confirm({
+        message: t(locale, 'panel.report.stripExcludedConfirm', { n: excluded.length }),
+      });
+      if (!ok) return;
+    }
+
+    const candidateOverrides = {};
+    for (const c of selectedPeople) {
+      if (c.excludedFromClient || c.recommendation === 'exclude') continue;
+      const ov = overrides[c.candidateId] || {};
+      candidateOverrides[String(c.candidateId)] = {
+        recommendation: normalizeRecommendation(ov.recommendation, c.recommendation),
+        note: ov.note || '',
+      };
+    }
+
     setBusy(true);
     setErr('');
     setMsg('');
@@ -98,6 +229,7 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
           candidateIds: [...selected],
           expiresInDays,
           executiveNote: note,
+          candidateOverrides,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -151,19 +283,11 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
     }
   };
 
-  const stageLabel = (stage) => {
-    const map = {
-      new: 'recruiting.pipelineNew',
-      test_completed: 'recruiting.pipelineTestCompleted',
-      screening: 'recruiting.pipelineScreening',
-      interview: 'recruiting.pipelineInterview',
-      approved: 'recruiting.pipelineApproved',
-      hired: 'recruiting.pipelineHired',
-      rejected: 'recruiting.pipelineRejected',
-      archived: 'recruiting.pipelineArchived',
-    };
-    return map[stage] ? t(locale, map[stage]) : stage || '—';
-  };
+  const canGenerate = selected.size > 0 && noteOk && !busy;
+
+  const rubricTypesLabel = (rubricMeta?.weightedTypes || [])
+    .map((w) => `T${w.type} · ${typeShortLabel(w.type, locale)}`)
+    .join(', ');
 
   return (
     <div>
@@ -225,38 +349,76 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
               }}
             >
               <code style={{ fontSize: '11px', color: C.purple, wordBreak: 'break-all', flex: 1 }}>{lastUrl}</code>
-              <button
-                type="button"
-                onClick={() => copyUrl(lastUrl)}
-                style={{
-                  background: `${C.purple}18`,
-                  border: `1px solid ${C.purple}55`,
-                  borderRadius: '8px',
-                  padding: '6px 10px',
-                  color: C.purple,
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                }}
-              >
+              <button type="button" onClick={() => copyUrl(lastUrl)} style={btnPurple()}>
                 {t(locale, 'panel.report.copyLink')}
               </button>
             </div>
           ) : null}
 
-          <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              style={S.select}
+          <div
+            style={{
+              marginTop: '14px',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: `1px solid ${C.border}`,
+              background: 'rgba(26,22,37,.02)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewOpen((v) => !v)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: '11px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: C.muted,
+              }}
             >
-              <option value="all">{t(locale, 'panel.report.filterAllTested')}</option>
+              {previewOpen ? t(locale, 'panel.report.previewHide') : t(locale, 'panel.report.previewShow')}
+            </button>
+            {previewOpen ? (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: C.text, lineHeight: 1.55 }}>
+                <p style={{ margin: '0 0 8px', color: C.muted }}>{t(locale, 'panel.report.previewHint')}</p>
+                <ol style={{ margin: 0, paddingLeft: '18px' }}>
+                  <li>
+                    {t(locale, 'panel.report.previewSeeks')}
+                    {rubricTypesLabel ? `: ${rubricTypesLabel}` : ` — ${t(locale, 'panel.report.previewNoRubric')}`}
+                    {vacancyMeta?.hasDescription ? ` · ${t(locale, 'panel.report.previewHasDesc')}` : ''}
+                    {rubricMeta?.hasNotes ? ` · ${t(locale, 'panel.report.previewHasRubricNotes')}` : ''}
+                  </li>
+                  <li>
+                    {t(locale, 'panel.report.previewNote')}
+                    {noteOk
+                      ? ` ✓ (${notePlainLen} ${t(locale, 'panel.report.chars')})`
+                      : ` — ${t(locale, 'panel.report.previewNoteMissing')}`}
+                  </li>
+                  <li>
+                    {t(locale, 'panel.report.previewShortlist', { n: selectedPeople.length })}
+                    {selectedPeople.length
+                      ? `: ${selectedPeople.map((c) => `${c.name} (${recommendationLabel(effectiveRec(c))})`).join('; ')}`
+                      : ''}
+                  </li>
+                  <li>{t(locale, 'panel.report.previewReadings')}</li>
+                </ol>
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={S.select}>
+              <option value="shortlist">{t(locale, 'panel.report.filterShortlist')}</option>
               <option value="interview_plus">{t(locale, 'panel.report.filterInterviewPlus')}</option>
+              <option value="all">{t(locale, 'panel.report.filterAllTested')}</option>
             </select>
-            <button type="button" onClick={selectVisible} style={btnGhost(locale)} disabled={loading || !visible.length}>
+            <button type="button" onClick={selectVisible} style={btnGhost()} disabled={loading || !visible.length}>
               {t(locale, 'panel.report.selectVisible')}
             </button>
-            <button type="button" onClick={clearSelected} style={btnGhost(locale)} disabled={!selected.size}>
+            <button type="button" onClick={clearSelected} style={btnGhost()} disabled={!selected.size}>
               {t(locale, 'panel.report.clearSelection')}
             </button>
             <select
@@ -272,17 +434,40 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
             </select>
           </div>
 
-          <div style={{ marginTop: '10px' }}>
+          <div style={{ marginTop: '12px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.noteRequiredLabel')}</span>
+              <button type="button" onClick={applyNoteTemplate} style={btnGhost()}>
+                {t(locale, 'panel.report.noteTemplate')}
+              </button>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontFamily: 'monospace',
+                  color: noteOk ? C.muted : C.danger || C.tension,
+                }}
+              >
+                {t(locale, 'panel.report.noteCharCount', { n: notePlainLen, min: REPORT_NOTE_MIN_CHARS })}
+              </span>
+            </div>
             <RichTextEditor
               value={note}
               onChange={setNote}
               placeholder={t(locale, 'panel.report.notePlaceholder')}
-              minHeight={90}
+              minHeight={110}
               locale={locale}
             />
           </div>
 
-          <div style={{ marginTop: '12px', maxHeight: '240px', overflow: 'auto', border: `1px solid ${C.border}`, borderRadius: '10px' }}>
+          <div
+            style={{
+              marginTop: '12px',
+              maxHeight: '360px',
+              overflow: 'auto',
+              border: `1px solid ${C.border}`,
+              borderRadius: '10px',
+            }}
+          >
             {loading ? (
               <p style={{ padding: '12px', fontSize: '12px', color: C.muted }}>{t(locale, 'panel.common.loading')}</p>
             ) : visible.length === 0 ? (
@@ -293,34 +478,78 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                   <tr style={{ textAlign: 'left', color: C.muted, fontFamily: 'monospace' }}>
                     <th style={{ padding: '8px 10px', width: '36px' }} />
                     <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colName')}</th>
-                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colStage')}</th>
+                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colRec')}</th>
                     <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colFit')}</th>
                     <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colType')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visible.map((c) => (
-                    <tr key={c.candidateId} style={{ borderTop: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '8px 10px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selected.has(c.candidateId)}
-                          onChange={() => toggle(c.candidateId)}
-                          style={{ accentColor: C.purple }}
-                        />
-                      </td>
-                      <td style={{ padding: '8px 10px', color: C.text }}>{c.name}</td>
-                      <td style={{ padding: '8px 10px', color: C.muted, fontFamily: 'monospace' }}>
-                        {stageLabel(c.pipelineStage)}
-                      </td>
-                      <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>
-                        {c.vacancyFitScore010 != null ? c.vacancyFitScore010.toFixed(1) : '—'}
-                      </td>
-                      <td style={{ padding: '8px 10px', fontFamily: 'monospace' }} title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}>
-                        {c.topType != null ? `T${c.topType}` : '—'}
-                      </td>
-                    </tr>
-                  ))}
+                  {visible.map((c) => {
+                    const isOn = selected.has(c.candidateId);
+                    const rec = effectiveRec(c);
+                    return (
+                      <tr key={c.candidateId} style={{ borderTop: `1px solid ${C.border}`, verticalAlign: 'top' }}>
+                        <td style={{ padding: '8px 10px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isOn}
+                            onChange={() => toggle(c)}
+                            style={{ accentColor: C.purple }}
+                          />
+                        </td>
+                        <td style={{ padding: '8px 10px', color: C.text }}>
+                          <div>{c.name}</div>
+                          {isOn ? (
+                            <input
+                              type="text"
+                              value={overrides[c.candidateId]?.note || ''}
+                              onChange={(e) => setPersonNote(c.candidateId, e.target.value)}
+                              placeholder={t(locale, 'panel.report.personNotePh')}
+                              maxLength={CONSULTANT_NOTE_MAX_CHARS}
+                              style={{
+                                marginTop: '6px',
+                                width: '100%',
+                                boxSizing: 'border-box',
+                                background: C.inputBg,
+                                border: `1px solid ${C.border}`,
+                                borderRadius: '8px',
+                                padding: '6px 8px',
+                                fontSize: '11px',
+                                color: C.text,
+                                fontFamily: 'inherit',
+                              }}
+                            />
+                          ) : null}
+                        </td>
+                        <td style={{ padding: '8px 10px' }}>
+                          {isOn ? (
+                            <select
+                              value={rec}
+                              onChange={(e) => setRec(c.candidateId, e.target.value)}
+                              style={{ ...S.select, fontSize: '11px', padding: '4px 6px' }}
+                            >
+                              {REPORT_RECOMMENDATIONS.map((r) => (
+                                <option key={r} value={r}>
+                                  {recommendationLabel(r)}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span style={{ color: C.muted, fontFamily: 'monospace' }}>{recommendationLabel(rec)}</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>
+                          {c.vacancyFitScore010 != null ? c.vacancyFitScore010.toFixed(1) : '—'}
+                        </td>
+                        <td
+                          style={{ padding: '8px 10px', fontFamily: 'monospace' }}
+                          title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
+                        >
+                          {c.topType != null ? `T${c.topType}` : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -330,22 +559,25 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
             <button
               type="button"
               onClick={generate}
-              disabled={busy || selected.size === 0}
+              disabled={!canGenerate}
               style={{
-                background: selected.size ? `${C.purple}18` : 'transparent',
-                border: `1px solid ${selected.size ? `${C.purple}55` : C.border}`,
+                background: canGenerate ? `${C.purple}18` : 'transparent',
+                border: `1px solid ${canGenerate ? `${C.purple}55` : C.border}`,
                 borderRadius: '10px',
                 padding: '10px 14px',
-                color: selected.size ? C.purple : C.faint,
+                color: canGenerate ? C.purple : C.faint,
                 fontSize: '12px',
-                cursor: selected.size && !busy ? 'pointer' : 'default',
+                cursor: canGenerate ? 'pointer' : 'default',
                 fontFamily: 'monospace',
               }}
             >
-              {busy
-                ? t(locale, 'panel.common.loading')
-                : t(locale, 'panel.report.generate', { n: selected.size })}
+              {busy ? t(locale, 'panel.common.loading') : t(locale, 'panel.report.generate', { n: selected.size })}
             </button>
+            {!noteOk && selected.size > 0 ? (
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: C.muted, lineHeight: 1.45 }}>
+                {t(locale, 'panel.report.noteGateHint', { n: REPORT_NOTE_MIN_CHARS })}
+              </p>
+            ) : null}
           </div>
 
           <div style={{ marginTop: '20px' }}>
@@ -376,7 +608,12 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                             ? t(locale, 'panel.report.historyItem', { n: r.candidateCount })
                             : r.title}
                           {' · '}
-                          <span style={{ color: r.isLive ? (C.success || C.synergy) : C.faint, fontFamily: 'monospace' }}>
+                          <span
+                            style={{
+                              color: r.isLive ? C.success || C.synergy : C.faint,
+                              fontFamily: 'monospace',
+                            }}
+                          >
                             {r.isLive ? t(locale, 'panel.report.statusLive') : t(locale, 'panel.report.statusDead')}
                           </span>
                         </div>
@@ -385,14 +622,14 @@ export function VacancyClientReportBlock({ vacancyId, locale = 'pt-BR', appUrl =
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => copyUrl(url)} style={btnGhost(locale)} disabled={!r.isLive}>
+                        <button type="button" onClick={() => copyUrl(url)} style={btnGhost()} disabled={!r.isLive}>
                           {t(locale, 'panel.report.copyLink')}
                         </button>
                         <button
                           type="button"
                           onClick={() => revoke(r.id)}
                           style={{
-                            ...btnGhost(locale),
+                            ...btnGhost(),
                             color: C.danger || C.tension,
                             borderColor: 'rgba(220,38,38,.35)',
                           }}
@@ -420,6 +657,19 @@ function btnGhost() {
     borderRadius: '8px',
     padding: '6px 10px',
     color: C.muted,
+    fontSize: '11px',
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+  };
+}
+
+function btnPurple() {
+  return {
+    background: `${C.purple}18`,
+    border: `1px solid ${C.purple}55`,
+    borderRadius: '8px',
+    padding: '6px 10px',
+    color: C.purple,
     fontSize: '11px',
     cursor: 'pointer',
     fontFamily: 'monospace',
