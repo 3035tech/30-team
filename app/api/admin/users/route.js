@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME, hashPassword } from '../../../../lib/auth';
+import { COOKIE_NAME, hashPassword } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { PAGE_SIZE_OPTIONS, sqlUsersOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, defaultAssignableModulesForRole, requireCapability } from '../../../../lib/permissions';
+import {
+  replaceUserModuleCapabilities,
+  verifySessionWithCapabilities,
+} from '../../../../lib/user-capabilities';
+import { audit } from '../../../../lib/audit';
 
 const USER_SORT_KEYS = new Set(['id', 'email', 'role', 'companyName', 'active', 'createdAt']);
 
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const url = new URL(request.url);
   const pageRaw = parseInt(url.searchParams.get('page') || '1', 10);
@@ -54,8 +56,44 @@ export async function GET(request) {
      LIMIT $1 OFFSET $2`,
     [pageSize, offset]
   );
+
+  const rows = r.rows;
+  const ids = rows.map((row) => row.id);
+  let overrideByUser = new Map();
+  if (ids.length) {
+    try {
+      const ov = await query(
+        `SELECT user_id AS "userId", capability, granted
+         FROM user_capability_overrides
+         WHERE user_id = ANY($1::bigint[])`,
+        [ids]
+      );
+      overrideByUser = new Map();
+      for (const o of ov.rows) {
+        const list = overrideByUser.get(o.userId) || [];
+        list.push({ capability: String(o.capability), granted: o.granted !== false });
+        overrideByUser.set(o.userId, list);
+      }
+    } catch (err) {
+      if (err?.code !== '42P01') throw err;
+    }
+  }
+
+  const items = rows.map((row) => {
+    const overrides = overrideByUser.get(row.id) || [];
+    const customized = overrides.length > 0;
+    const modules = customized
+      ? overrides.filter((o) => o.granted).map((o) => o.capability)
+      : defaultAssignableModulesForRole(row.role);
+    return {
+      ...row,
+      capabilitiesCustomized: customized,
+      modules,
+    };
+  });
+
   return NextResponse.json({
-    items: r.rows,
+    items,
     total,
     page: effectivePage,
     pageSize,
@@ -66,8 +104,8 @@ export async function GET(request) {
 export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || '').trim().toLowerCase();
@@ -91,6 +129,23 @@ export async function POST(request) {
      RETURNING id, email, role, active, company_id AS "companyId", created_at AS "createdAt"`,
     [email, hash, role, companyId]
   );
-  return NextResponse.json(ins.rows[0], { status: 201 });
-}
+  const created = ins.rows[0];
 
+  let modules = defaultAssignableModulesForRole(role);
+  let customized = false;
+  if (Array.isArray(body.modules)) {
+    const saved = await replaceUserModuleCapabilities(created.id, role, body.modules);
+    modules = saved.modules;
+    customized = saved.customized;
+  }
+
+  await audit({
+    actorUserId: payload?.userId,
+    action: 'user.create',
+    targetType: 'user',
+    targetId: created.id,
+    meta: { email, role },
+  });
+
+  return NextResponse.json({ ...created, modules, capabilitiesCustomized: customized }, { status: 201 });
+}

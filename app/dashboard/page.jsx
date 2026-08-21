@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
 import { query, queryRead } from '../../lib/db';
 import { normalizeLocale, t } from '../../lib/i18n';
+import { isAdminRole, isManagerRole } from '../../lib/permissions';
+import { attachCapabilityOverrides } from '../../lib/user-capabilities';
 import DashboardClient from './DashboardClient';
 import {
   parseDashboardPagination,
@@ -82,10 +84,10 @@ const EMPTY_TYPE_COUNT = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) 
 export default async function DashboardPage({ searchParams }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  const allowed = payload?.role === 'admin' || payload?.role === 'direction' || payload?.role === 'hr';
-  if (!allowed) redirect('/login');
-  const isAdmin = payload?.role === 'admin';
+  const rawPayload = token ? verifyToken(token) : null;
+  const payload = await attachCapabilityOverrides(rawPayload);
+  if (!isManagerRole(payload)) redirect('/login');
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   const locale = normalizeLocale(payload?.locale);
   if (!isAdmin && !companyId) redirect('/login');
@@ -97,6 +99,10 @@ export default async function DashboardPage({ searchParams }) {
     locale,
     email: null,
     displayName: null,
+    capabilitiesCustomized: Boolean(payload?.capabilitiesCustomized),
+    capabilityOverrides: Array.isArray(payload?.capabilityOverrides)
+      ? payload.capabilityOverrides
+      : [],
   };
   try {
     if (payload?.userId) {
@@ -106,15 +112,18 @@ export default async function DashboardPage({ searchParams }) {
         [payload.userId]
       );
       if (u.rowCount) {
-        authUser = { ...authUser, email: u.rows[0].email, displayName: u.rows[0].displayName };
+        authUser = {
+          ...authUser,
+          email: u.rows[0].email,
+          displayName: u.rows[0].displayName,
+        };
       }
     }
   } catch {
     /* display_name column may be missing before migration 023 */
   }
 
-  const canManage = ['admin', 'hr', 'direction'].includes(payload?.role || '');
-  const activeTab = parseDashboardTab(searchParams, { canVacancies: canManage, isAdmin });
+  const activeTab = parseDashboardTab(searchParams, payload);
   const needCohortChrome = COHORT_TABS.has(activeTab);
   const needTeam = activeTab === 'team';
   const needCompatPairs = activeTab === 'compatibility';

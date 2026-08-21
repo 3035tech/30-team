@@ -19,6 +19,8 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 ## Obrigatório
 - Isolar por `company_id` (admin é a única role cross-tenant)
 - Pessoa = `candidates` (`company_id` + e-mail); Eneagrama, Motivadores e 1:1 no mesmo `candidate_id`
+- Acesso a módulos/abas: `lib/permissions.js` (`can` / `CAP`) — defaults por role; não só esconder no menu
+- Links `/t` `/v` `/assessment` por token: **fora** do ACL de gestor; não invalidar ao mudar permissões
 - Scoring no servidor (`lib/assessment-score.js`, `lib/ae/scoring.js`)
 - Copy via `t(locale, 'key')` em `lib/i18n.js` (pt-BR **e** en)
 - Cores/status via `lib/theme.js` (`C`) — roxo da marca não é cor de pipeline

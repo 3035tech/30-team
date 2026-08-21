@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME, hashPassword } from '../../../../../lib/auth';
+import { COOKIE_NAME, hashPassword } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { apiError } from '../../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, defaultAssignableModulesForRole, requireCapability } from '../../../../../lib/permissions';
+import {
+  loadUserCapabilityOverrides,
+  replaceUserModuleCapabilities,
+  verifySessionWithCapabilities,
+} from '../../../../../lib/user-capabilities';
+import { audit } from '../../../../../lib/audit';
 
 export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.userId;
   const userId = id ? parseInt(String(id), 10) : NaN;
@@ -70,20 +73,49 @@ export async function PATCH(request, { params }) {
     [userId, nextEmail, nextRole, nextActive, nextRole === 'admin' ? null : nextCompanyId, nextHash]
   );
 
-  return NextResponse.json(up.rows[0]);
+  let modules;
+  let customized;
+  if (Object.prototype.hasOwnProperty.call(body, 'modules')) {
+    if (body.modules == null) {
+      const saved = await replaceUserModuleCapabilities(userId, nextRole, null);
+      modules = saved.modules;
+      customized = saved.customized;
+    } else if (Array.isArray(body.modules)) {
+      const saved = await replaceUserModuleCapabilities(userId, nextRole, body.modules);
+      modules = saved.modules;
+      customized = saved.customized;
+    } else {
+      return apiError(request, 'INVALID_MODULES', 400);
+    }
+  } else {
+    const overrides = await loadUserCapabilityOverrides(userId);
+    customized = overrides.length > 0;
+    modules = customized
+      ? overrides.filter((o) => o.granted).map((o) => o.capability)
+      : defaultAssignableModulesForRole(nextRole);
+  }
+
+  await audit({
+    actorUserId: payload?.userId,
+    action: 'user.update',
+    targetType: 'user',
+    targetId: userId,
+    meta: { modulesUpdated: Object.prototype.hasOwnProperty.call(body, 'modules') },
+  });
+
+  return NextResponse.json({ ...up.rows[0], modules, capabilitiesCustomized: customized });
 }
 
 export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const id = params?.userId;
   const userId = id ? parseInt(String(id), 10) : NaN;
   if (!Number.isFinite(userId)) return apiError(request, 'INVALID_USER', 400);
 
-  // Evita deletar a própria conta por engano.
   if (payload?.userId && Number(payload.userId) === userId) {
     return apiError(request, 'CANNOT_DELETE_SELF', 400);
   }
@@ -93,5 +125,15 @@ export async function DELETE(request, { params }) {
     [userId]
   );
   if (del.rowCount === 0) return apiError(request, 'USER_NOT_FOUND', 404);
+
+  await query(`DELETE FROM user_capability_overrides WHERE user_id = $1`, [userId]).catch(() => {});
+
+  await audit({
+    actorUserId: payload?.userId,
+    action: 'user.deactivate',
+    targetType: 'user',
+    targetId: userId,
+  });
+
   return NextResponse.json({ ok: true });
 }

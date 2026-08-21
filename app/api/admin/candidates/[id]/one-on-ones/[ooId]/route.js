@@ -2,11 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../../../lib/db';
 import { apiError } from '../../../../../../../lib/api-error';
 import { audit } from '../../../../../../../lib/audit';
-import {
-  getManagerScope,
-  getSessionPayload,
-  requireManagerRole,
-} from '../../../../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../../lib/ae/require-admin';
 import { deleteOneOnOne, updateOneOnOne } from '../../../../../../../lib/people/one-on-ones';
 
 async function assertOwned(oneOnOneId, scope) {
@@ -25,8 +21,8 @@ async function assertOwned(oneOnOneId, scope) {
 /** PATCH /api/admin/candidates/[id]/one-on-ones/[ooId] */
 export async function PATCH(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
@@ -72,8 +68,8 @@ export async function PATCH(request, { params }) {
 /** DELETE /api/admin/candidates/[id]/one-on-ones/[ooId] */
 export async function DELETE(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 

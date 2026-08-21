@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
+import { CAP, isAdminRole, requireCapability } from '../../../../lib/permissions';
 import { parseVacancyDetailsFromBody } from '../../../../lib/vacancy-details';
 
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
 
 const VACANCY_PAGE_SIZES = new Set([10, 20, 30, 40, 50]);
 
@@ -44,10 +42,10 @@ async function ensureActiveLink(vacancyId) {
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const isAdmin = payload?.role === 'admin';
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
@@ -147,10 +145,10 @@ export async function GET(request) {
 export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const isAdmin = payload?.role === 'admin';
+  const isAdmin = isAdminRole(payload);
   const sessionCompanyId = payload?.companyId ?? null;
   if (!isAdmin && !sessionCompanyId) return apiError(request, 'UNAUTHORIZED', 401);
 

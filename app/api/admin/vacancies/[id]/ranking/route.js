@@ -1,23 +1,21 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { queryRead } from '../../../../../../lib/db';
 import { computeAreaScore010 } from '../../../../../../lib/area-fit';
 import { apiError } from '../../../../../../lib/api-error';
+import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
 
 export async function GET(request, { params }) {
   try {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
-    const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const payload = await verifySessionWithCapabilities(session);
+    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
 
-    const isAdmin = payload?.role === 'admin';
+    const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
     if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 

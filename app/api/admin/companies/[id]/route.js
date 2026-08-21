@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, requireCapability } from '../../../../../lib/permissions';
 
 function slugify(input) {
   return String(input || '')
@@ -21,8 +19,8 @@ function slugify(input) {
 export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const raw = params?.id;
   const companyId = raw ? parseInt(String(raw), 10) : NaN;
@@ -68,8 +66,8 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const raw = params?.id;
   const companyId = raw ? parseInt(String(raw), 10) : NaN;

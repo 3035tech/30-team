@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
-import { getSessionPayload, requireAdminRole } from '../../../../../../lib/ae/require-admin';
+import { CAP, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import { apiError } from '../../../../../../lib/api-error';
 
 /** DELETE /api/admin/ae/definitions/[id] — remove assessment e dados relacionados (CASCADE) */
 export async function DELETE(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireAdminRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_CONFIG)) {
       return apiError(request, 'ADMIN_ONLY', 401);
     }
 

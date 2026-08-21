@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
-import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import { buildHrInsights } from '../../../../../../lib/ae/hr-insights';
 import { buildDimensionRanking, maybeRescoreAndPersist } from '../../../../../../lib/ae/rescore-attempt';
 import { apiError } from '../../../../../../lib/api-error';
@@ -8,8 +8,8 @@ import { apiError } from '../../../../../../lib/api-error';
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
 export async function GET(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
@@ -101,8 +101,8 @@ export async function GET(request, { params }) {
 /** POST /api/admin/ae/attempts/[id] — recalcula pontuação a partir das respostas salvas */
 export async function POST(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);
@@ -145,8 +145,8 @@ export async function POST(request, { params }) {
 /** DELETE /api/admin/ae/attempts/[id] — remove resultado e libera novo envio do convite */
 export async function DELETE(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);

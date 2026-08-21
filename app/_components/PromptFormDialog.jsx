@@ -14,7 +14,7 @@ import {
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
- * fields: [{ key, label, defaultValue?, type?: 'text'|'password' }]
+ * fields: [{ key, label, defaultValue?, type?: 'text'|'password'|'checkboxGroup', options?: [{value,label}] }]
  */
 export function PromptFormDialog({
   open,
@@ -38,7 +38,11 @@ export function PromptFormDialog({
     if (!open) return;
     const init = {};
     for (const f of fields) {
-      init[f.key] = f.defaultValue != null ? String(f.defaultValue) : '';
+      if (f.type === 'checkboxGroup') {
+        init[f.key] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
+      } else {
+        init[f.key] = f.defaultValue != null ? String(f.defaultValue) : '';
+      }
     }
     setValues(init);
     // Reset only when opening; callers pass a fresh fields array per open.
@@ -63,6 +67,14 @@ export function PromptFormDialog({
 
   const heading = title || t(locale, 'panel.common.editTitle');
 
+  const toggleCheck = (key, value) => {
+    setValues((prev) => {
+      const cur = Array.isArray(prev[key]) ? prev[key] : [];
+      const next = cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value];
+      return { ...prev, [key]: next };
+    });
+  };
+
   return createPortal(
     <div
       style={dialogOverlayStyle}
@@ -75,7 +87,7 @@ export function PromptFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="prompt-form-title"
-        style={{ ...dialogCardStyle, maxWidth: '460px' }}
+        style={{ ...dialogCardStyle, maxWidth: '520px' }}
         onClick={(e) => e.stopPropagation()}
       >
         <span
@@ -109,13 +121,58 @@ export function PromptFormDialog({
           {fields.map((f) => (
             <label key={f.key} style={{ display: 'block' }}>
               <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
-              <input
-                type={f.type === 'password' ? 'password' : 'text'}
-                value={values[f.key] ?? ''}
-                onChange={(e) => setValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                style={dialogFieldStyle}
-                autoComplete={f.type === 'password' ? 'new-password' : 'off'}
-              />
+              {f.type === 'checkboxGroup' ? (
+                <div
+                  role="group"
+                  aria-label={f.label}
+                  style={{
+                    marginTop: '8px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px 12px',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: `1px solid ${C.border}`,
+                    background: 'rgba(26,22,37,.03)',
+                  }}
+                >
+                  {(f.options || []).map((opt) => {
+                    const checked = Array.isArray(values[f.key]) && values[f.key].includes(opt.value);
+                    return (
+                      <label
+                        key={opt.value}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '13px',
+                          color: C.text,
+                          cursor: 'pointer',
+                          fontFamily: 'Georgia, serif',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCheck(f.key, opt.value)}
+                          style={{ width: '16px', height: '16px', accentColor: C.purple }}
+                        />
+                        {opt.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <input
+                  type={f.type === 'password' ? 'password' : 'text'}
+                  value={values[f.key] ?? ''}
+                  onChange={(e) => setValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                  style={dialogFieldStyle}
+                  autoComplete={f.type === 'password' ? 'new-password' : 'off'}
+                />
+              )}
             </label>
           ))}
         </div>

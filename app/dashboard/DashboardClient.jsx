@@ -8,6 +8,7 @@ import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { C, FONTS, GRADIENT } from '../../lib/theme';
+import { CAP, can, canSeeManagementSection, isAdminRole } from '../../lib/permissions';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 
@@ -278,10 +279,14 @@ export default function DashboardClient({
     router.push('/');
   };
 
-  const isAdmin = (auth?.role || '') === 'admin';
-  const canManage = ['admin', 'hr', 'direction'].includes(auth?.role || '');
-  const tab = parseDashboardTab(urlParams, { canVacancies: canManage, isAdmin });
+  const isAdmin = isAdminRole(sessionAuth);
+  const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
+  const showVacancies = can(sessionAuth, CAP.VACANCIES_VIEW);
+  const showMotivators = can(sessionAuth, CAP.MOTIVATORS_VIEW);
+  const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
+  const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
+  const showManagement = canSeeManagementSection(sessionAuth);
 
   useEffect(() => {
     setArea(selectedArea);
@@ -657,25 +662,39 @@ export default function DashboardClient({
           </div>
           <nav style={{ flex: 1 }}>
             {sectionLabel(t(locale, 'dashboard.sectionAnalysis'))}
-            <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
-            <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
-            <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
-            <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
-            <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
-            <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
-            {(canManage || isAdmin) && (
+            {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+              <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
+            ) : null}
+            {can(sessionAuth, CAP.TEAM_VIEW) ? (
+              <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+            ) : null}
+            {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
+              <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
+            ) : null}
+            {can(sessionAuth, CAP.COMPARE_VIEW) ? (
+              <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
+            ) : null}
+            {can(sessionAuth, CAP.GROUP_VIEW) ? (
+              <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
+            ) : null}
+            {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
+              <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
+            ) : null}
+            {showManagement ? (
               <>
                 <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
                 {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
-                {canManage ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-                {canManage ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
-                {isAdmin ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
-                {isAdmin ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
+                {showVacancies ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
+                {showMotivators ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
+                {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
+                {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
               </>
-            )}
+            ) : null}
             <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
             {sectionLabel(t(locale, 'dashboard.sectionHelp'))}
-            <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
+            {can(sessionAuth, CAP.HELP_VIEW) ? (
+              <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
+            ) : null}
           </nav>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: navCollapsed ? 'center' : 'stretch' }}>
             <button
@@ -1101,14 +1120,14 @@ export default function DashboardClient({
                   }}
                 />
               )}
-              {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'motivators' && canManage && (
+              {tab === 'vacancies' && showVacancies && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'motivators' && showMotivators && (
                 <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
               )}
-              {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'help' && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
-              {tab === 'profile' && (
+              {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
+              {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (
                 <ProfileTab
                   locale={locale}
                   onLocaleChange={setLocale}

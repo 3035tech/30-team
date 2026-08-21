@@ -11,6 +11,7 @@
 -- 023 — notificações in-app + display_name
 -- 024 — tipos genéricos de notificação + dedupe por time RH
 -- 025 — índice unique e-mail candidatos + índices fan-out / prazo vaga
+-- 026 — overrides de capability por usuário (visões do painel)
 
 ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS phone TEXT,
@@ -230,4 +231,16 @@ CREATE INDEX IF NOT EXISTS idx_vacancies_open_target_date
 CREATE INDEX IF NOT EXISTS idx_users_company_active_managers
   ON users (company_id)
   WHERE deleted = FALSE AND active = TRUE AND role IN ('hr', 'direction', 'admin');
+
+-- 026 — overrides de capability por usuário (módulos do painel)
+CREATE TABLE IF NOT EXISTS user_capability_overrides (
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  capability TEXT NOT NULL,
+  granted    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, capability)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_capability_overrides_user
+  ON user_capability_overrides (user_id);
 

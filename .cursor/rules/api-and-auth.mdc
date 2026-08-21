@@ -7,9 +7,9 @@ alwaysApply: false
 # API e auth
 
 1. Erros: `return apiError(request, 'UNAUTHORIZED', 401)` — nunca `{ error: '...' }` solto.
-2. Sessão gestor: cookie `team30_session`; reusar `verifyToken` + `getManagerScope` / `requireManagerRole`.
+2. Sessão gestor: cookie `team30_session`; reusar `verifyToken` + `getManagerScope`. Visão de módulo: `can` / `CAP` / `requireCapability` em `lib/permissions.js` (APIs em `app/api/admin/**` já checam capability — VIEW vs MANAGE em vagas).
 3. Não-admin: filtrar `company_id` em **todo** SELECT/UPDATE. Sem `company_id` → 401.
-4. `/api/admin/*` já passa pelo middleware; ainda assim validar role e escopo na rota.
+4. `/api/admin/*` já passa pelo middleware; ainda assim validar **capability** + escopo de tenant na rota (`isAdminRole` / `getManagerScope`).
 5. Endpoints públicos (`/api/results`, `/api/public/*`, `/api/ae/*`) autenticam por **token de link/convite**, não JWT de gestor.
 6. Escrita: `query`. Leitura que pode ir à réplica: `queryRead`.
 7. SQL só com placeholders `$1`. Soft delete: `deleted = FALSE`.

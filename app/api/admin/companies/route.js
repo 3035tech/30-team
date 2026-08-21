@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, requireCapability } from '../../../../lib/permissions';
 
 function slugify(input) {
   return String(input || '')
@@ -39,8 +37,8 @@ const COMPANY_SORT_KEYS = new Set(['id', 'name', 'slug', 'active', 'createdAt'])
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const url = new URL(request.url);
   if (url.searchParams.get('forSelect') === '1') {
@@ -97,8 +95,8 @@ export async function GET(request) {
 export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
   const name = String(body.name || '').trim();

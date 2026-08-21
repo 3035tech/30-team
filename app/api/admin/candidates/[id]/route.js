@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
@@ -9,18 +10,14 @@ import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
 import { buildCandidatePeopleBrief } from '../../../../../lib/people/candidate-people-brief';
 import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/sanitize-html';
-
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
+import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 
 export async function GET(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
-  const isAdmin = payload?.role === 'admin';
+  const payload = await verifySessionWithCapabilities(token);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
@@ -130,9 +127,9 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
-  const isAdmin = payload?.role === 'admin';
+  const payload = await verifySessionWithCapabilities(token);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 
@@ -226,9 +223,9 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
-  const isAdmin = payload?.role === 'admin';
+  const payload = await verifySessionWithCapabilities(token);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 

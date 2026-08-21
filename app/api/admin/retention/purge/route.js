@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, requireCapability } from '../../../../../lib/permissions';
 
 export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const { searchParams } = new URL(request.url);
   const body = await request.json().catch(() => ({}));

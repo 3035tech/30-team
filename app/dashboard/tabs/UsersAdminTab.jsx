@@ -5,8 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
+import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+
+function moduleOptions(locale) {
+  return ASSIGNABLE_MODULE_CAPS.map((cap) => ({
+    value: cap,
+    label: t(locale, ASSIGNABLE_MODULE_I18N[cap] || cap),
+  }));
+}
 
 export function UsersAdminTab({ navigateDashboard, locale }) {
   const { promptForm } = useAppFeedback();
@@ -179,7 +187,8 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
 
   const editUser = async (u) => {
     const values = await promptForm({
-      title: t(locale, 'panel.admin.editUserEmail'),
+      title: t(locale, 'panel.admin.editUserTitle'),
+      message: t(locale, 'panel.admin.userModulesHint'),
       fields: [
         { key: 'email', label: t(locale, 'panel.admin.editUserEmail'), defaultValue: u?.email ?? '' },
         { key: 'role', label: t(locale, 'panel.admin.editUserRole'), defaultValue: u?.role ?? 'hr' },
@@ -199,6 +208,13 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           defaultValue: '',
           type: 'password',
         },
+        {
+          key: 'modules',
+          type: 'checkboxGroup',
+          label: t(locale, 'panel.admin.userModulesLabel'),
+          options: moduleOptions(locale),
+          defaultValue: Array.isArray(u?.modules) ? u.modules : [],
+        },
       ],
     });
     if (!values) return;
@@ -213,6 +229,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       email: String(nextEmail).trim(),
       role: String(nextRole).trim(),
       active: nextActive,
+      modules: Array.isArray(values.modules) ? values.modules : [],
     };
     if (payload.role !== 'admin') {
       payload.companyId = String(nextCompanyIdRaw || '').trim()
@@ -368,6 +385,23 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           color: C.muted, fontFamily: 'monospace' }}>
                           {u.role}
                         </span>
+                        {u.capabilitiesCustomized ? (
+                          <span
+                            title={t(locale, 'panel.admin.userModulesHint')}
+                            style={{
+                              marginLeft: '6px',
+                              padding: '2px 8px',
+                              fontSize: '10px',
+                              borderRadius: '20px',
+                              background: `${C.purple}12`,
+                              border: `1px solid ${C.purple}40`,
+                              color: C.purpleDeep,
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            {t(locale, 'panel.admin.userModulesCustom')}
+                          </span>
+                        ) : null}
                       </td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{companyLabel}</td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>

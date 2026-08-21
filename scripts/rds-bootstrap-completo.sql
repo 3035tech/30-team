@@ -143,6 +143,17 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users (LOWER(email));
 
+CREATE TABLE IF NOT EXISTS user_capability_overrides (
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  capability TEXT NOT NULL,
+  granted    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, capability)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_capability_overrides_user
+  ON user_capability_overrides (user_id);
+
 CREATE TABLE IF NOT EXISTS audit_log (
   id             BIGSERIAL PRIMARY KEY,
   actor_user_id  BIGINT REFERENCES users(id) ON DELETE SET NULL,

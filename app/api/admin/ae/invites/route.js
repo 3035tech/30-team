@@ -1,12 +1,7 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import {
-  getManagerScope,
-  getSessionPayload,
-  publicAppUrl,
-  requireManagerRole,
-} from '../../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, getSessionPayload, publicAppUrl, requireCapability } from '../../../../../lib/ae/require-admin';
 import { enqueueTransactionalMail } from '../../../../../lib/mail';
 import { buildMotivatorsInviteMail } from '../../../../../lib/motivators-invite-mail';
 import { bootstrapMotivators } from '../../../../../lib/ae/bootstrap-motivators';
@@ -59,8 +54,8 @@ async function resolveDefinitionAndCompany(definitionSlug, targetCompanyId) {
 /** GET /api/admin/ae/invites — lista convites */
 export async function GET(request) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
@@ -130,8 +125,8 @@ export async function GET(request) {
 /** POST /api/admin/ae/invites — cria convite */
 export async function POST(request) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);

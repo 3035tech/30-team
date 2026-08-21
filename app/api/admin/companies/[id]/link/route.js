@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import crypto from 'node:crypto';
 import { apiError } from '../../../../../../lib/api-error';
-
-function requireAdmin(payload) {
-  return payload?.role === 'admin';
-}
+import { CAP, requireCapability } from '../../../../../../lib/permissions';
 
 export async function POST(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireAdmin(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
   const companyId = params?.id;
   if (!companyId) return apiError(request, 'INVALID_COMPANY', 400);

@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import { upsertCandidatePreInterview } from '../../../../../../lib/ae/candidate-upsert';
 import { normalizeCandidateProfile } from '../../../../../../lib/candidate-profile';
 import { sanitizeInterviewNotesHtml } from '../../../../../../lib/sanitize-html';
 import { apiError } from '../../../../../../lib/api-error';
+import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function loadVacancyForActor(request, vacancyId, payload) {
-  const isAdmin = payload?.role === 'admin';
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
 
@@ -48,9 +46,9 @@ async function loadVacancyForActor(request, vacancyId, payload) {
 export async function GET(request, { params }) {
   try {
     const cookieStore = cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
-    const payload = token ? verifyToken(token) : null;
-    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = await verifySessionWithCapabilities(token);
+    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
@@ -120,9 +118,9 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const cookieStore = cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
-    const payload = token ? verifyToken(token) : null;
-    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = await verifySessionWithCapabilities(token);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);

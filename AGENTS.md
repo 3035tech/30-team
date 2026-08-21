@@ -52,7 +52,7 @@ migrations/                                        → schema canônico
 | `/api/cron/*` | `CRON_SECRET` |
 | Erros de API | `apiError(request, 'CODE', status)` em `lib/api-error.js` |
 
-Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) em vez de copiar o check. Ações sensíveis: `audit()` em `lib/audit.js`.
+Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, para visões/módulos, `can` / `CAP` / `requireCapability` em `lib/permissions.js`. Overrides por usuário: tabela `user_capability_overrides` + `lib/user-capabilities.js` (whitelist de módulos; vazio = default da role). **Links públicos de assessment** (`/t`, `/v`, token AE, `vacancy_links`) autenticam por token — não por CAP; revogar capability do gestor não invalida convites já emitidos. Ações sensíveis: `audit()` em `lib/audit.js`.
 
 ## Domínio (não inventar)
 
@@ -219,4 +219,5 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - README: setup Docker / local
 - `CLAUDE.md`: entrada para Claude Code (aponta para este arquivo)
 - `.cursor/rules/`: atalhos Cursor por área (`ui-ux.mdc`, `dba-performance.mdc` alwaysApply)
+- `.cursor/skills/dev-test-validate/`: pipeline Dev → Test → Validate com `max_rounds` (sem loop infinito)
 - `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`

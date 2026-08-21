@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
-import {
-  getManagerScope,
-  getSessionPayload,
-  requireManagerRole,
-} from '../../../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import { apiError } from '../../../../../../lib/api-error';
 
 async function loadInvite(id, { isAdmin, companyId }) {
@@ -30,8 +26,8 @@ async function loadInvite(id, { isAdmin, companyId }) {
 /** DELETE /api/admin/ae/invites/[id] */
 export async function DELETE(request, { params }) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const scope = getManagerScope(payload);

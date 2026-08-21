@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { COOKIE_NAME } from './lib/auth';
 import { verifyTokenEdge } from './lib/auth-edge';
+import { isManagerRole } from './lib/permissions';
 
 /** Cabeçalhos opcionais em runtime (produção HTTPS). Ver .env.example. */
 function withSecurityHeaders(response) {
@@ -26,9 +27,7 @@ export async function middleware(request) {
     const token = request.cookies.get(COOKIE_NAME)?.value;
     const payload = token ? await verifyTokenEdge(token) : null;
 
-    const role = payload?.role;
-    const allowed = role === 'admin' || role === 'direction' || role === 'hr';
-    if (!allowed) {
+    if (!isManagerRole(payload)) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return withSecurityHeaders(NextResponse.redirect(loginUrl));

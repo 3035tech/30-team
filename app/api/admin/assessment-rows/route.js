@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../lib/auth';
 import { queryRead } from '../../../../lib/db';
 import {
   assessmentListWhereParts,
@@ -10,11 +11,7 @@ import {
   sqlWhere,
 } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
-
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
+import { canAccessAnalysisData, isAdminRole } from '../../../../lib/permissions';
 
 const BASE_JOIN = `
 FROM assessments ass
@@ -29,10 +26,10 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
-  if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  const payload = await verifySessionWithCapabilities(token);
+  if (!canAccessAnalysisData(payload)) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const isAdmin = payload?.role === 'admin';
+  const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
   if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 

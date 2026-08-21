@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '../../../../../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { query, queryRead } from '../../../../../../../../lib/db';
 import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacancy-link';
 import { enqueueTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
-
-function requireRole(payload) {
-  const role = payload?.role;
-  return role === 'admin' || role === 'direction' || role === 'hr';
-}
+import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
 
 function publicAppUrl(request) {
   const env = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
@@ -26,10 +23,10 @@ export async function POST(request, { params }) {
   try {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
-    const payload = session ? verifyToken(session) : null;
-    if (!requireRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const payload = await verifySessionWithCapabilities(session);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
 
-    const isAdmin = payload?.role === 'admin';
+    const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
     if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
 

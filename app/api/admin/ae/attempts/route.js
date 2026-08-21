@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
 import { apiError } from '../../../../../lib/api-error';
 
 /** GET /api/admin/ae/attempts — resultados / tentativas */
 export async function GET(request) {
   try {
-    const payload = getSessionPayload();
-    if (!requireManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
