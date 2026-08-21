@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
-import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../../lib/permissions';
+import { purgeExpiredAssessmentsAndOrphans } from '../../../../../lib/retention';
 
 export async function POST(request) {
   const cookieStore = cookies();
@@ -23,35 +23,23 @@ export async function POST(request) {
     return apiError(request, 'INVALID_RETENTION_DAYS', 400);
   }
 
-  const cutoff = await query(`SELECT NOW() - ($1::text || ' days')::interval AS cutoff`, [String(days)]);
-  const cutoffTs = cutoff.rows[0].cutoff;
-
-  const delAssess = await query(
-    `DELETE FROM assessments WHERE created_at < $1 RETURNING id`,
-    [cutoffTs]
-  );
-
-  const delCandidates = await query(
-    `DELETE FROM candidates c
-     WHERE NOT EXISTS (SELECT 1 FROM assessments a WHERE a.candidate_id = c.id)
-     RETURNING id`,
-    []
-  );
+  let result;
+  try {
+    result = await purgeExpiredAssessmentsAndOrphans({ days });
+  } catch (err) {
+    if (String(err?.message || '') === 'INVALID_RETENTION_DAYS') {
+      return apiError(request, 'INVALID_RETENTION_DAYS', 400);
+    }
+    throw err;
+  }
 
   await audit({
     actorUserId: payload.userId || null,
     action: 'retention.purge',
     targetType: 'retention',
     targetId: String(days),
-    metadata: { days, cutoff: cutoffTs, deletedAssessments: delAssess.rowCount, deletedCandidates: delCandidates.rowCount },
+    metadata: result,
   });
 
-  return NextResponse.json({
-    ok: true,
-    days,
-    cutoff: cutoffTs,
-    deletedAssessments: delAssess.rowCount,
-    deletedCandidates: delCandidates.rowCount,
-  });
+  return NextResponse.json({ ok: true, ...result });
 }
-

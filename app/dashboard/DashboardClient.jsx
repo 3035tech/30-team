@@ -25,12 +25,75 @@ import { DashboardBreadcrumb, getDashboardTabNav, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { TeamTab } from './tabs/TeamTab';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
-import { AppFeedbackProvider } from '../_components/AppFeedback';
+import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
+}
+
+function ExportCsvButton({ href, locale }) {
+  const fb = useAppFeedbackOptional();
+  const [busy, setBusy] = useState(false);
+
+  const onExport = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(href);
+      if (!res.ok) throw new Error('export_failed');
+      const truncated = res.headers.get('X-Export-Truncated') === '1';
+      const maxRows = parseInt(res.headers.get('X-Export-Max-Rows') || '', 10);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `candidatos_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      if (truncated) {
+        fb?.toast?.(
+          t(locale, 'dashboard.exportTruncated', {
+            n: Number.isFinite(maxRows) ? maxRows : 10000,
+          }),
+          'info'
+        );
+      }
+    } catch {
+      fb?.toast?.(t(locale, 'dashboard.exportFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onExport}
+      disabled={busy}
+      style={{
+        background: `${C.purple}12`,
+        border: `1px solid ${C.purple}44`,
+        borderRadius: '10px',
+        padding: '10px 16px',
+        color: C.purple,
+        fontSize: '13px',
+        fontFamily: FONTS.serif,
+        cursor: busy ? 'wait' : 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        whiteSpace: 'nowrap',
+        opacity: busy ? 0.7 : 1,
+        minHeight: '40px',
+      }}
+    >
+      ↓ {t(locale, 'dashboard.exportCsv')}
+    </button>
+  );
 }
 
 const CompareTabLoader = dynamic(
@@ -901,16 +964,7 @@ export default function DashboardClient({
                 </button>
               ) : null}
               {showsCohortChrome ? (
-              <a
-                href={exportUrl}
-                style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
-                  borderRadius: '10px', padding: '10px 16px', color: C.purple,
-                  fontSize: '13px', fontFamily: FONTS.serif, textDecoration: 'none',
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  whiteSpace: 'nowrap' }}
-              >
-                ↓ {t(locale, 'dashboard.exportCsv')}
-              </a>
+              <ExportCsvButton href={exportUrl} locale={locale} />
               ) : null}
             </div>
           </div>

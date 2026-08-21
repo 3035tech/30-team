@@ -244,3 +244,7 @@ CREATE TABLE IF NOT EXISTS user_capability_overrides (
 CREATE INDEX IF NOT EXISTS idx_user_capability_overrides_user
   ON user_capability_overrides (user_id);
 
+-- 027 — retenção de notificações in-app
+CREATE INDEX IF NOT EXISTS idx_manager_notifications_created_at
+  ON manager_notifications (created_at ASC);
+
