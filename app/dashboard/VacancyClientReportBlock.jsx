@@ -60,6 +60,9 @@ export function VacancyClientReportBlock({
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [lastUrl, setLastUrl] = useState('');
+  const [editingReportId, setEditingReportId] = useState(null);
+  const [editNoteDraft, setEditNoteDraft] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const notePlainLen = htmlToPlainText(note).length;
   const noteOk = notePlainLen >= REPORT_NOTE_MIN_CHARS;
@@ -327,6 +330,45 @@ export function VacancyClientReportBlock({
       setErr(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const startEditReport = (r) => {
+    setEditingReportId(r.id);
+    setEditNoteDraft(r.executiveNote || '');
+    setErr('');
+  };
+
+  const cancelEditReport = () => {
+    setEditingReportId(null);
+    setEditNoteDraft('');
+  };
+
+  const saveReportNote = async (reportId) => {
+    const plain = htmlToPlainText(editNoteDraft);
+    if (plain.length < REPORT_NOTE_MIN_CHARS) {
+      setErr(t(locale, 'panel.report.noteTooShort', { n: REPORT_NOTE_MIN_CHARS }));
+      return;
+    }
+    setEditBusy(true);
+    setErr('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${vacancyId}/reports/${reportId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ executiveNote: editNoteDraft }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.errorCode ? errorMessage(locale, data.errorCode, data.error) : data?.error);
+      setMsg(t(locale, 'panel.report.noteUpdated'));
+      setEditingReportId(null);
+      setEditNoteDraft('');
+      await loadReports();
+      setTimeout(() => setMsg(''), 2500);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setEditBusy(false);
     }
   };
 
@@ -692,55 +734,97 @@ export function VacancyClientReportBlock({
                 {reports.map((r) => {
                   const url = r.url || (appUrl ? `${appUrl}/r/${r.token}` : `/r/${r.token}`);
                   const exp = r.expiresAt ? new Date(r.expiresAt) : null;
+                  const isEditing = Number(editingReportId) === Number(r.id);
                   return (
                     <li
                       key={r.id}
                       style={{
                         padding: '10px 0',
                         borderTop: `1px solid ${C.border}`,
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '8px',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
                       }}
                     >
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '12px', color: C.text }}>
-                          {r.candidateCount != null
-                            ? t(locale, 'panel.report.historyItem', { n: r.candidateCount })
-                            : r.title}
-                          {' · '}
-                          <span
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '12px', color: C.text }}>
+                            {r.candidateCount != null
+                              ? t(locale, 'panel.report.historyItem', { n: r.candidateCount })
+                              : r.title}
+                            {' · '}
+                            <span
+                              style={{
+                                color: r.isLive ? C.success || C.synergy : C.faint,
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {r.isLive ? t(locale, 'panel.report.statusLive') : t(locale, 'panel.report.statusDead')}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '2px' }}>
+                            {exp ? t(locale, 'panel.report.expiresAt', { date: exp.toLocaleString(locale) }) : ''}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <button type="button" onClick={() => copyUrl(url)} style={btnGhost()} disabled={!r.isLive}>
+                            {t(locale, 'panel.report.copyLink')}
+                          </button>
+                          {r.isLive ? (
+                            <button
+                              type="button"
+                              onClick={() => (isEditing ? cancelEditReport() : startEditReport(r))}
+                              style={btnGhost()}
+                              disabled={busy || editBusy}
+                            >
+                              {isEditing ? t(locale, 'panel.report.editNoteCancel') : t(locale, 'panel.report.editNote')}
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => revoke(r.id)}
                             style={{
-                              color: r.isLive ? C.success || C.synergy : C.faint,
-                              fontFamily: 'monospace',
+                              ...btnGhost(),
+                              color: C.danger || C.tension,
+                              borderColor: 'rgba(220,38,38,.35)',
                             }}
+                            disabled={busy || !r.active}
                           >
-                            {r.isLive ? t(locale, 'panel.report.statusLive') : t(locale, 'panel.report.statusDead')}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '2px' }}>
-                          {exp ? t(locale, 'panel.report.expiresAt', { date: exp.toLocaleString(locale) }) : ''}
+                            {t(locale, 'panel.report.revoke')}
+                          </button>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => copyUrl(url)} style={btnGhost()} disabled={!r.isLive}>
-                          {t(locale, 'panel.report.copyLink')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => revoke(r.id)}
-                          style={{
-                            ...btnGhost(),
-                            color: C.danger || C.tension,
-                            borderColor: 'rgba(220,38,38,.35)',
-                          }}
-                          disabled={busy || !r.active}
-                        >
-                          {t(locale, 'panel.report.revoke')}
-                        </button>
-                      </div>
+                      {isEditing ? (
+                        <div style={{ marginTop: '10px' }}>
+                          <p style={{ margin: '0 0 6px', fontSize: '11px', color: C.muted }}>
+                            {t(locale, 'panel.report.editNoteHint')}
+                          </p>
+                          <RichTextEditor
+                            value={editNoteDraft}
+                            onChange={setEditNoteDraft}
+                            minHeight={90}
+                            locale={locale}
+                          />
+                          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => saveReportNote(r.id)}
+                              disabled={editBusy}
+                              style={btnPurple()}
+                            >
+                              {editBusy ? t(locale, 'panel.common.loading') : t(locale, 'panel.report.saveNote')}
+                            </button>
+                            <button type="button" onClick={cancelEditReport} style={btnGhost()} disabled={editBusy}>
+                              {t(locale, 'panel.report.editNoteCancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </li>
                   );
                 })}

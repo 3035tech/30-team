@@ -179,16 +179,30 @@ export function PeopleManagementPanel({
             {t(locale, 'panel.team.peopleHypotheses')}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {hypotheses.map((h) => (
+            {[...hypotheses].sort((a, b) => Number(b.source === 'cross') - Number(a.source === 'cross')).map((h) => (
               <div
                 key={h.id}
                 style={{
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: `1px solid ${C.border}`,
-                  background: 'rgba(255,255,255,.45)',
+                  border: `1px solid ${h.source === 'cross' ? `${C.purple}55` : C.border}`,
+                  background: h.source === 'cross' ? `${C.purple}0a` : 'rgba(255,255,255,.45)',
                 }}
               >
+                {h.source === 'cross' ? (
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontFamily: 'monospace',
+                      color: C.purple,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {t(locale, 'panel.team.peopleCrossBadge')}
+                  </div>
+                ) : null}
                 <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '4px' }}>
                   {h.title}
                 </div>

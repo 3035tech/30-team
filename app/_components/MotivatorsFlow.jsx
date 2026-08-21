@@ -210,7 +210,9 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
               {t(locale, 'motivators.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
             </div>
             <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
-              {t(locale, 'motivators.inviteIdentityNote')}
+              {inviteInfo?.hasHrProfile
+                ? t(locale, 'motivators.inviteIdentityNoteWithProfile')
+                : t(locale, 'motivators.inviteIdentityNote')}
             </div>
             <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
               {t(locale, 'motivators.inviteIdentityEmail', { email: effectiveEmail })}

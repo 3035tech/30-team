@@ -14,12 +14,18 @@ export async function GET(request) {
 
     const res = await queryRead(
       `SELECT i.id, i.candidate_name AS "candidateName", i.candidate_email AS "candidateEmail",
+              i.candidate_id AS "candidateId", i.company_id AS "companyId",
               i.status, i.expires_at AS "expiresAt",
               d.slug AS "definitionSlug", d.name AS "definitionName",
-              c.name AS "companyName"
+              c.name AS "companyName",
+              cand.phone AS "candPhone",
+              cand.linkedin_url AS "candLinkedin",
+              cand.city AS "candCity",
+              cand.state AS "candState"
        FROM ae_invites i
        JOIN ae_definitions d ON d.id = i.definition_id
        JOIN companies c ON c.id = i.company_id
+       LEFT JOIN candidates cand ON cand.id = i.candidate_id
        WHERE i.token = $1 AND c.deleted = FALSE AND d.active = TRUE
        LIMIT 1`,
       [token]
@@ -48,6 +54,35 @@ export async function GET(request) {
       );
     }
 
+    let phone = row.candPhone || null;
+    let linkedinUrl = row.candLinkedin || null;
+    let city = row.candCity || null;
+    let state = row.candState || null;
+
+    if (!row.candidateId && row.candidateEmail && row.companyId) {
+      const byEmail = await queryRead(
+        `SELECT phone, linkedin_url AS "linkedinUrl", city, state
+         FROM candidates
+         WHERE company_id = $1
+           AND LOWER(TRIM(email)) = LOWER(TRIM($2))
+         LIMIT 1`,
+        [row.companyId, row.candidateEmail]
+      );
+      if (byEmail.rowCount > 0) {
+        phone = byEmail.rows[0].phone || phone;
+        linkedinUrl = byEmail.rows[0].linkedinUrl || linkedinUrl;
+        city = byEmail.rows[0].city || city;
+        state = byEmail.rows[0].state || state;
+      }
+    }
+
+    const hasHrProfile = Boolean(
+      (phone && String(phone).trim()) ||
+        (linkedinUrl && String(linkedinUrl).trim()) ||
+        (city && String(city).trim()) ||
+        (state && String(state).trim())
+    );
+
     return NextResponse.json({
       ok: true,
       inviteId: row.id,
@@ -58,6 +93,7 @@ export async function GET(request) {
       definitionName: row.definitionName,
       companyName: row.companyName,
       expiresAt: row.expiresAt,
+      hasHrProfile,
     });
   } catch (err) {
     console.error('GET /api/public/ae-invite', err);

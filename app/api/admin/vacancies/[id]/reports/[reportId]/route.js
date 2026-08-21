@@ -1,0 +1,51 @@
+import { NextResponse } from 'next/server';
+import { verifySessionWithCapabilities } from '../../../../../../../../lib/user-capabilities';
+import { cookies } from 'next/headers';
+import { COOKIE_NAME } from '../../../../../../../../lib/auth';
+import { updateReportShareMeta } from '../../../../../../../../lib/vacancy-report';
+import { apiError } from '../../../../../../../../lib/api-error';
+import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
+
+/** PATCH — atualiza título e/ou parecer de um relatório ainda ativo (snapshot permanece congelado). */
+export async function PATCH(request, { params }) {
+  try {
+    const cookieStore = cookies();
+    const session = cookieStore.get(COOKIE_NAME)?.value;
+    const payload = await verifySessionWithCapabilities(session);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const isAdmin = isAdminRole(payload);
+    const companyId = payload?.companyId ?? null;
+    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const vacancyId = params?.id;
+    const reportId = params?.reportId;
+    if (!vacancyId || !reportId) return apiError(request, 'INCOMPLETE_DATA', 400);
+
+    const body = await request.json().catch(() => ({}));
+    if (body.title === undefined && body.executiveNote === undefined) {
+      return apiError(request, 'INCOMPLETE_DATA', 400);
+    }
+
+    let updated;
+    try {
+      updated = await updateReportShareMeta(vacancyId, reportId, {
+        isAdmin,
+        companyId,
+        title: body.title,
+        executiveNote: body.executiveNote,
+      });
+    } catch (e) {
+      if (e?.code === 'REPORT_NOTE_TOO_SHORT') {
+        return apiError(request, 'REPORT_NOTE_TOO_SHORT', 400);
+      }
+      throw e;
+    }
+
+    if (!updated) return apiError(request, 'NOT_FOUND', 404);
+    return NextResponse.json({ ok: true, report: updated });
+  } catch (e) {
+    console.error('[vacancy-report PATCH]', e);
+    return apiError(request, 'INTERNAL', 500);
+  }
+}

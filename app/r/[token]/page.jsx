@@ -13,6 +13,7 @@ import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { motivatorDimensionLabel } from '../../../lib/ae/motivators-dimensions';
 import { recommendationFromStage } from '../../../lib/vacancy-report-shared';
 import { formatSalaryBr } from '../../../lib/br-masks';
+import { BrandPulseLoading, PublicFunnyError } from '../../_components/PublicStatusScreens';
 
 function ScoreBars({ scores, locale }) {
   const entries = [];
@@ -107,12 +108,18 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
             types: aligned,
             score: c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
           })
-        : t(locale, 'panel.report.roleReading', {
-            vacancy: vacancyTitle,
-            type: c.topType,
-            typeName: typeShortLabel(c.topType, locale),
-            score: c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
-          })
+        : hasRubric
+          ? t(locale, 'panel.report.roleReading', {
+              vacancy: vacancyTitle,
+              type: c.topType,
+              typeName: typeShortLabel(c.topType, locale),
+              score: c.vacancyFitScore010 != null ? Number(c.vacancyFitScore010).toFixed(1) : '—',
+            })
+          : t(locale, 'panel.report.roleReadingNoFit', {
+              vacancy: vacancyTitle,
+              type: c.topType,
+              typeName: typeShortLabel(c.topType, locale),
+            })
       : null;
 
   return (
@@ -333,7 +340,7 @@ function ReportInner() {
   if (state.loading) {
     return (
       <Shell>
-        <p style={{ color: C.muted }}>{t(locale, 'panel.report.publicLoading')}</p>
+        <BrandPulseLoading locale={locale} label={t(locale, 'panel.report.publicLoading')} fullPage />
       </Shell>
     );
   }
@@ -341,10 +348,14 @@ function ReportInner() {
   if (state.error || !state.data) {
     return (
       <Shell>
-        <h1 style={{ fontFamily: FONTS.serif, fontSize: '22px', color: C.text, margin: '0 0 8px' }}>
-          {t(locale, 'panel.report.publicUnavailable')}
-        </h1>
-        <p style={{ color: C.muted, margin: 0 }}>{state.error}</p>
+        <PublicFunnyError
+          locale={locale}
+          title={t(locale, 'panel.report.publicUnavailable')}
+          message={state.error || t(locale, 'panel.report.funnyErrorBody')}
+          onRetry={() => {
+            if (typeof window !== 'undefined') window.location.reload();
+          }}
+        />
       </Shell>
     );
   }
@@ -390,6 +401,25 @@ function ReportInner() {
           {generatedAt ? t(locale, 'panel.report.generatedAt', { date: generatedAt.toLocaleString(locale) }) : ''}
           {expiresAt ? ` · ${t(locale, 'panel.report.expiresAt', { date: expiresAt.toLocaleString(locale) })}` : ''}
         </p>
+        <button
+          type="button"
+          className="r-no-print"
+          onClick={() => window.print()}
+          style={{
+            marginTop: '14px',
+            background: 'transparent',
+            border: `1px solid ${C.border}`,
+            borderRadius: '10px',
+            padding: '8px 12px',
+            color: C.muted,
+            fontSize: '12px',
+            cursor: 'pointer',
+            fontFamily: FONTS.mono,
+            minHeight: '40px',
+          }}
+        >
+          {t(locale, 'panel.report.printPdf')}
+        </button>
       </header>
 
       {!(rubricSummary?.hasRubric) ? (
@@ -492,8 +522,10 @@ function ReportInner() {
       ) : null}
 
       {compareLine ? (
-        <p style={{ margin: '0 0 20px', fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{compareLine}</p>
+        <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{compareLine}</p>
       ) : null}
+
+      {rubricSummary?.hasRubric ? <FitCompareChart candidates={candidates} locale={locale} /> : null}
 
       <section style={{ marginBottom: '28px' }}>
         <h2 style={{ fontFamily: FONTS.serif, fontSize: '18px', color: C.text, margin: '0 0 12px' }}>
@@ -569,6 +601,87 @@ function ReportInner() {
   );
 }
 
+function FitCompareChart({ candidates, locale }) {
+  const ranked = (Array.isArray(candidates) ? candidates : [])
+    .filter((c) => c.vacancyFitScore010 != null)
+    .slice()
+    .sort((a, b) => Number(b.vacancyFitScore010) - Number(a.vacancyFitScore010))
+    .slice(0, 6);
+  if (ranked.length < 2) return null;
+  const max = Math.max(...ranked.map((c) => Number(c.vacancyFitScore010) || 0), 1);
+  return (
+    <section
+      style={{
+        marginBottom: '20px',
+        padding: '14px 16px',
+        borderRadius: '12px',
+        border: `1px solid ${C.border}`,
+        background: 'rgba(26,22,37,.02)',
+      }}
+    >
+      <p
+        style={{
+          margin: '0 0 12px',
+          fontSize: '11px',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: C.sectionLabel,
+          fontFamily: FONTS.mono,
+        }}
+      >
+        {t(locale, 'panel.report.fitCompareTitle')}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {ranked.map((c, i) => {
+          const score = Number(c.vacancyFitScore010) || 0;
+          const pct = Math.round((score / 10) * 100);
+          return (
+            <div key={`${c.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span
+                style={{
+                  width: '120px',
+                  flexShrink: 0,
+                  fontSize: '12px',
+                  color: C.text,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={c.name}
+              >
+                {c.name}
+              </span>
+              <div
+                style={{
+                  flex: 1,
+                  height: '10px',
+                  background: 'rgba(26,22,37,.08)',
+                  borderRadius: '5px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.min(100, Math.round((score / max) * 100))}%`,
+                    height: '100%',
+                    background: i === 0 ? C.synergy || '#16a34a' : C.purple,
+                    borderRadius: '5px',
+                    minWidth: score > 0 ? '4px' : 0,
+                  }}
+                />
+              </div>
+              <span style={{ width: '52px', textAlign: 'right', fontFamily: FONTS.mono, fontSize: '12px', color: C.muted }}>
+                {score.toFixed(1)}
+                <span style={{ color: C.faint, fontSize: '10px' }}> ({pct}%)</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function Shell({ children }) {
   return (
     <div
@@ -579,6 +692,13 @@ function Shell({ children }) {
         fontFamily: FONTS.serif,
       }}
     >
+      <style>{`
+        @media print {
+          .r-no-print { display: none !important; }
+          body { background: #fff !important; }
+          [style*="position: fixed"] { display: none !important; }
+        }
+      `}</style>
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', background: RADIAL_GLOW_SINGLE }} />
       <main style={{ position: 'relative', maxWidth: '880px', margin: '0 auto', padding: '40px 20px 64px' }}>
         {children}
@@ -592,7 +712,7 @@ export default function VacancyReportPage() {
     <Suspense
       fallback={
         <Shell>
-          <p style={{ color: C.muted }}>…</p>
+          <BrandPulseLoading locale="pt-BR" label="…" fullPage />
         </Shell>
       }
     >

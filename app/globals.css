@@ -265,3 +265,41 @@ textarea:focus-visible {
 .kanban-scroll::-webkit-scrollbar-track { background: rgba(26,22,37,.05); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb { background: rgba(26,22,37,.2); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb:hover { background: rgba(26,22,37,.35); }
+
+/* Branded public loading (logo pulse — no GIF dependency) */
+@keyframes brand-pulse-scale {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.88; }
+}
+@keyframes brand-pulse-ring {
+  0% { transform: scale(0.92); opacity: 0.55; }
+  70% { transform: scale(1.18); opacity: 0; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+.brand-pulse-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(137, 48, 184, 0.35);
+  animation: brand-pulse-ring 1.6s ease-out infinite;
+}
+.brand-pulse-mark {
+  animation: brand-pulse-scale 1.4s ease-in-out infinite;
+  border-radius: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-pulse-mark,
+  .brand-pulse-ring::before {
+    animation: none;
+  }
+}
+
