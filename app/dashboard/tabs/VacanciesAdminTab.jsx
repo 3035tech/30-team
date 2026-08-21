@@ -328,6 +328,7 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
     })
   );
   const [aiPaste, setAiPaste] = useState('');
+  const [aiBusy, setAiBusy] = useState('');
 
   useEffect(() => {
     setJobDesc(
@@ -374,6 +375,27 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
     return () => { cancelled = true; };
   }, [vacancyId, locale]);
 
+  const applyParsedWeights = (parsed) => {
+    const next = {};
+    for (let n = 1; n <= 9; n++) {
+      const v = parsed.weights[String(n)];
+      next[n] = v != null && Number(v) > 0 ? String(v) : '';
+    }
+    setWeights(next);
+    if (parsed.notes) {
+      setNotes((prev) => {
+        const cur = String(prev || '').trim();
+        if (!cur) return parsed.notes;
+        if (cur.includes(parsed.notes.slice(0, 40))) return cur;
+        return `${cur}\n\n${parsed.notes}`;
+      });
+      setMsg(t(locale, 'recruiting.rubricAiAppliedWithNotes'));
+    } else {
+      setMsg(t(locale, 'recruiting.rubricAiApplied'));
+    }
+    setTimeout(() => setMsg(''), 5000);
+  };
+
   const save = async () => {
     setErr('');
     setMsg('');
@@ -400,6 +422,71 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
     }
   };
 
+  const suggestContext = async () => {
+    setErr('');
+    setMsg('');
+    setAiBusy('context');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/rubric-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'suggestContext', locale }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            (data?.errorCode ? t(locale, `errors.${data.errorCode}`) : null) ||
+            t(locale, 'recruiting.rubricAiSuggestFailed')
+        );
+      }
+      if (data.context) setJobDesc(String(data.context));
+      setMsg(t(locale, 'recruiting.rubricAiContextDone'));
+      setTimeout(() => setMsg(''), 4000);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
+    } finally {
+      setAiBusy('');
+    }
+  };
+
+  const suggestWeights = async () => {
+    setErr('');
+    setMsg('');
+    if (!isRubricContextFilledEnough(jobDesc)) {
+      setErr(t(locale, 'recruiting.rubricAiNeedContext'));
+      return;
+    }
+    setAiBusy('weights');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/rubric-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'suggestWeights', context: jobDesc, locale }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data?.raw) setAiPaste(String(data.raw));
+        throw new Error(
+          data?.error ||
+            (data?.errorCode ? t(locale, `errors.${data.errorCode}`) : null) ||
+            t(locale, 'recruiting.rubricAiSuggestFailed')
+        );
+      }
+      if (data.raw) setAiPaste(String(data.raw));
+      if (data.weights) {
+        applyParsedWeights({
+          weights: data.weights,
+          notes: data.notes || '',
+        });
+      }
+    } catch (e) {
+      setErr(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
+    } finally {
+      setAiBusy('');
+    }
+  };
+
   const copyPrompt = async () => {
     setErr('');
     if (!isRubricContextFilledEnough(jobDesc)) {
@@ -423,24 +510,7 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
       setErr(t(locale, 'recruiting.rubricAiParseError'));
       return;
     }
-    const next = {};
-    for (let n = 1; n <= 9; n++) {
-      const v = parsed.weights[String(n)];
-      next[n] = v != null && Number(v) > 0 ? String(v) : '';
-    }
-    setWeights(next);
-    if (parsed.notes) {
-      setNotes((prev) => {
-        const cur = String(prev || '').trim();
-        if (!cur) return parsed.notes;
-        if (cur.includes(parsed.notes.slice(0, 40))) return cur;
-        return `${cur}\n\n${parsed.notes}`;
-      });
-      setMsg(t(locale, 'recruiting.rubricAiAppliedWithNotes'));
-    } else {
-      setMsg(t(locale, 'recruiting.rubricAiApplied'));
-    }
-    setTimeout(() => setMsg(''), 5000);
+    applyParsedWeights(parsed);
   };
 
   const btnSm = {
@@ -555,9 +625,31 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
                 resize: 'vertical',
               }}
             />
-            <button type="button" onClick={copyPrompt} style={{ ...btnSm, marginBottom: '12px' }}>
-              {t(locale, 'recruiting.rubricAiCopyPrompt')}
-            </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={suggestContext}
+                disabled={Boolean(aiBusy)}
+                style={{ ...btnSm, opacity: aiBusy ? 0.6 : 1 }}
+              >
+                {aiBusy === 'context'
+                  ? t(locale, 'recruiting.rubricAiWorking')
+                  : t(locale, 'recruiting.rubricAiSuggestContext')}
+              </button>
+              <button
+                type="button"
+                onClick={suggestWeights}
+                disabled={Boolean(aiBusy)}
+                style={{ ...btnSm, opacity: aiBusy ? 0.6 : 1 }}
+              >
+                {aiBusy === 'weights'
+                  ? t(locale, 'recruiting.rubricAiWorking')
+                  : t(locale, 'recruiting.rubricAiSuggestWeights')}
+              </button>
+              <button type="button" onClick={copyPrompt} disabled={Boolean(aiBusy)} style={btnSm}>
+                {t(locale, 'recruiting.rubricAiCopyPrompt')}
+              </button>
+            </div>
             <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
               {t(locale, 'recruiting.rubricAiPasteLabel')}
             </label>

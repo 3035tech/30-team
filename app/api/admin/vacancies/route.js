@@ -116,6 +116,7 @@ export async function GET(request) {
        v.salary_min AS "salaryMin",
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
+       v.employment_type AS "employmentType",
        v.created_at AS "createdAt",
        vl.token AS "activeToken",
        vl.expires_at AS "activeTokenExpiresAt"
@@ -177,6 +178,7 @@ export async function POST(request) {
     details = parseVacancyDetailsFromBody(body, { forCreate: true });
   } catch (e) {
     if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
+    if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, 'INVALID_EMPLOYMENT_TYPE', 400);
     throw e;
   }
 
@@ -186,13 +188,14 @@ export async function POST(request) {
   const ins = await query(
     `INSERT INTO vacancies (
        company_id, title, slug, status, positions_count, target_date,
-       description, salary_min, salary_max, client_report_show_salary
+       description, salary_min, salary_max, client_report_show_salary, employment_type
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
+               employment_type AS "employmentType",
                created_at AS "createdAt"`,
     [
       companyId,
@@ -205,6 +208,7 @@ export async function POST(request) {
       details.salaryMin,
       details.salaryMax,
       details.clientReportShowSalary === true,
+      details.employmentType ?? null,
     ]
   );
 

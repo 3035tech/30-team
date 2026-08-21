@@ -356,6 +356,27 @@ export default function DashboardClient({
   const showManagement = canSeeManagementSection(sessionAuth);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const orig = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const res = await orig(...args);
+      try {
+        const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+        if (res.status === 401 && String(url).includes('/api/admin')) {
+          const next = `${window.location.pathname}${window.location.search || ''}`;
+          window.location.assign(`/login?redirect=${encodeURIComponent(next)}`);
+        }
+      } catch {
+        /* ignore */
+      }
+      return res;
+    };
+    return () => {
+      window.fetch = orig;
+    };
+  }, []);
+
+  useEffect(() => {
     setArea(selectedArea);
   }, [selectedArea]);
   useEffect(() => {
@@ -801,12 +822,14 @@ export default function DashboardClient({
             {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
               <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
             ) : null}
+            {showMotivators ? (
+              <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
+            ) : null}
             {showManagement ? (
               <>
                 <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
                 {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
                 {showVacancies ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-                {showMotivators ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
                 {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
                 {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
               </>

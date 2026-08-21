@@ -34,6 +34,7 @@ async function getVacancyOr404(vacancyId) {
        v.salary_min AS "salaryMin",
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
+       v.employment_type AS "employmentType",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -123,6 +124,7 @@ export async function PATCH(request, { params }) {
     details = parseVacancyDetailsFromBody(body, { forCreate: false });
   } catch (e) {
     if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
+    if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, 'INVALID_EMPLOYMENT_TYPE', 400);
     throw e;
   }
 
@@ -148,17 +150,21 @@ export async function PATCH(request, { params }) {
     details.clientReportShowSalary !== undefined
       ? details.clientReportShowSalary
       : Boolean(current.clientReportShowSalary);
+  const nextEmploymentType =
+    details.employmentType !== undefined ? details.employmentType : (current.employmentType ?? null);
   if (!nextTitle) return apiError(request, 'TITLE_REQUIRED', 400);
 
   const up = await query(
     `UPDATE vacancies
      SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6,
-         description = $7, salary_min = $8, salary_max = $9, client_report_show_salary = $10
+         description = $7, salary_min = $8, salary_max = $9, client_report_show_salary = $10,
+         employment_type = $11
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
+               employment_type AS "employmentType",
                created_at AS "createdAt"`,
     [
       id,
@@ -171,6 +177,7 @@ export async function PATCH(request, { params }) {
       nextSalaryMin,
       nextSalaryMax,
       nextShowSalary,
+      nextEmploymentType,
     ]
   );
 

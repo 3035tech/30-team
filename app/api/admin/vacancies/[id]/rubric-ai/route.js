@@ -1,0 +1,112 @@
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { COOKIE_NAME } from '../../../../../../lib/auth';
+import {
+  CAP,
+  getManagerScope,
+  requireCapability,
+  verifySessionWithCapabilities,
+} from '../../../../../../lib/ae/require-admin';
+import { apiError } from '../../../../../../lib/api-error';
+import { queryRead } from '../../../../../../lib/db';
+import { isRubricContextFilledEnough } from '../../../../../../lib/rubric-prompt';
+import {
+  isRubricAiConfigured,
+  suggestRubricContextFromVacancy,
+  suggestRubricWeightsFromContext,
+} from '../../../../../../lib/rubric-ai';
+import { normalizeLocale } from '../../../../../../lib/i18n';
+import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit';
+
+async function loadVacancyScoped(vacancyId, { isAdmin, companyId }) {
+  const r = await queryRead(
+    `SELECT
+       v.id,
+       v.company_id AS "companyId",
+       v.title,
+       v.description,
+       v.salary_min AS "salaryMin",
+       v.salary_max AS "salaryMax",
+       v.target_date AS "targetDate",
+       v.employment_type AS "employmentType",
+       v.status
+     FROM vacancies v
+     WHERE v.id = $1 AND v.deleted = FALSE
+       ${!isAdmin ? 'AND v.company_id = $2' : ''}
+     LIMIT 1`,
+    !isAdmin ? [vacancyId, companyId] : [vacancyId]
+  );
+  return r.rows[0] || null;
+}
+
+/**
+ * POST /api/admin/vacancies/[id]/rubric-ai
+ * body: { action: 'suggestContext' | 'suggestWeights', context?: string, locale?: string }
+ */
+export async function POST(request, { params }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const payload = await verifySessionWithCapabilities(token);
+  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
+    return apiError(request, 'UNAUTHORIZED', 401);
+  }
+
+  const scope = getManagerScope(payload);
+  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+  if (!isRubricAiConfigured()) {
+    return apiError(request, 'RUBRIC_AI_NOT_CONFIGURED', 503);
+  }
+
+  const ip = clientIpFromRequest(request);
+  const rl = checkRateLimit(`rubric-ai:${payload.userId || ip}`, 20, 15 * 60 * 1000);
+  if (!rl.ok) {
+    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+  }
+
+  const vacancyId = params?.id;
+  if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+
+  const vacancy = await loadVacancyScoped(vacancyId, scope);
+  if (!vacancy) return apiError(request, 'NOT_FOUND', 404);
+
+  const body = await request.json().catch(() => ({}));
+  const action = String(body.action || '').trim();
+  const locale = normalizeLocale(body.locale || payload?.locale || 'pt-BR');
+
+  try {
+    if (action === 'suggestContext') {
+      const out = await suggestRubricContextFromVacancy(vacancy, locale);
+      return NextResponse.json({ ok: true, action, context: out.context, model: out.model });
+    }
+
+    if (action === 'suggestWeights') {
+      const context = String(body.context || '').trim();
+      if (!isRubricContextFilledEnough(context)) {
+        return apiError(request, 'RUBRIC_AI_NEED_CONTEXT', 400);
+      }
+      const out = await suggestRubricWeightsFromContext(context, locale);
+      return NextResponse.json({
+        ok: true,
+        action,
+        raw: out.raw,
+        weights: out.weights,
+        notes: out.notes || null,
+        model: out.model,
+      });
+    }
+
+    return apiError(request, 'INVALID_ACTION', 400);
+  } catch (e) {
+    const code = e?.code || 'RUBRIC_AI_FAILED';
+    if (code === 'RUBRIC_AI_PARSE') {
+      return NextResponse.json(
+        { error: 'RUBRIC_AI_PARSE', errorCode: 'RUBRIC_AI_PARSE', raw: e.raw || null },
+        { status: 422 }
+      );
+    }
+    const status =
+      code === 'RUBRIC_AI_AUTH' ? 502 : code === 'RUBRIC_AI_NOT_CONFIGURED' ? 503 : 502;
+    return apiError(request, code, status);
+  }
+}
