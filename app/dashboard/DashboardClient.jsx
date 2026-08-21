@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCompat } from '../../lib/data';
@@ -446,14 +446,33 @@ export default function DashboardClient({
   }, [groupBaseId, groupIds, dismissedIds]);
 
   const listTotal = compatMetrics.total ?? 0;
+  /**
+   * Bolinha em Equipe: heurística local (não é a notificação do sino).
+   * Qualquer role com empresa; super admin (admin sem company_id) não usa.
+   */
+  const teamBadgeScopeRef = useRef(null);
   useEffect(() => {
+    const homeCompanyId = sessionAuth?.companyId;
+    const isSuperAdmin = isAdmin && (homeCompanyId == null || homeCompanyId === '');
+    if (isSuperAdmin) {
+      setNewCandidates(false);
+      teamBadgeScopeRef.current = null;
+      return;
+    }
+    const scope = `u:${sessionAuth?.userId != null ? sessionAuth.userId : 'me'}:c:${homeCompanyId}`;
     try {
-      const prev = parseInt(localStorage.getItem('30team_lastTotal') || '0', 10);
-      if (listTotal > prev) setNewCandidates(true);
-      localStorage.setItem('30team_lastTotal', String(listTotal));
-    } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      const key = `30team_lastTotal:${scope}`;
+      if (teamBadgeScopeRef.current !== scope) {
+        const prev = parseInt(localStorage.getItem(key) || '0', 10);
+        if (prev > 0 && listTotal > prev) setNewCandidates(true);
+        else setNewCandidates(false);
+        localStorage.setItem(key, String(listTotal));
+        teamBadgeScopeRef.current = scope;
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [isAdmin, sessionAuth?.userId, sessionAuth?.companyId, listTotal]);
 
   const {
     snapshot,

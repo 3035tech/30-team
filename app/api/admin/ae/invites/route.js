@@ -1,55 +1,9 @@
-import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, publicAppUrl, requireCapability } from '../../../../../lib/ae/require-admin';
-import { enqueueTransactionalMail } from '../../../../../lib/mail';
-import { buildMotivatorsInviteMail } from '../../../../../lib/motivators-invite-mail';
-import { bootstrapMotivators } from '../../../../../lib/ae/bootstrap-motivators';
-
+import { createAndQueueMotivatorsInvite, isValidInviteEmail } from '../../../../../lib/ae/create-motivators-invite';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../lib/api-error';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const INVITE_TTL_DAYS = 30;
-
-async function resolveDefinitionAndCompany(definitionSlug, targetCompanyId) {
-  const companyRes = await query(
-    `SELECT id, name AS "companyName" FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
-    [targetCompanyId]
-  );
-  if (companyRes.rowCount === 0) {
-    return { errorCode: 'COMPANY_NOT_FOUND_OR_INACTIVE', status: 404 };
-  }
-
-  let defRes = await query(
-    `SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER($1) AND active = TRUE LIMIT 1`,
-    [definitionSlug]
-  );
-
-  if (defRes.rowCount === 0) {
-    try {
-      await bootstrapMotivators(query);
-      defRes = await query(
-        `SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER($1) AND active = TRUE LIMIT 1`,
-        [definitionSlug]
-      );
-    } catch (bootstrapErr) {
-      if (bootstrapErr?.code === '42P01') {
-        return { errorCode: 'MOTIVATORS_SCHEMA_MISSING', status: 503 };
-      }
-      throw bootstrapErr;
-    }
-  }
-
-  if (defRes.rowCount === 0) {
-    return { errorCode: 'MOTIVATORS_NOT_CONFIGURED', status: 503 };
-  }
-
-  return {
-    definitionId: defRes.rows[0].id,
-    companyName: companyRes.rows[0].companyName,
-  };
-}
 
 /** GET /api/admin/ae/invites — lista convites */
 export async function GET(request) {
@@ -149,16 +103,11 @@ export async function POST(request) {
     if (!candidateName || candidateName.length > 200) {
       return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
     }
-    if (!candidateEmail || !EMAIL_RE.test(candidateEmail)) {
+    if (!isValidInviteEmail(candidateEmail)) {
       return apiError(request, 'INVALID_EMAIL', 400);
     }
     if (!Number.isFinite(targetCompanyId)) {
       return apiError(request, 'INVALID_COMPANY', 400);
-    }
-
-    const resolved = await resolveDefinitionAndCompany(definitionSlug, targetCompanyId);
-    if (resolved.errorCode) {
-      return apiError(request, resolved.errorCode, resolved.status || 404);
     }
 
     const base = publicAppUrl(request);
@@ -166,40 +115,28 @@ export async function POST(request) {
       return apiError(request, 'APP_URL_MISSING', 500);
     }
 
-    const inviteToken = crypto.randomBytes(24).toString('hex');
-    const createdBy = Number.isFinite(Number(payload?.userId)) ? Number(payload.userId) : null;
-    const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
-
-    const ins = await query(
-      `INSERT INTO ae_invites (
-         definition_id, company_id, candidate_name, candidate_email, token,
-         status, expires_at, created_by_user_id
-       ) VALUES ($1, $2, $3, $4, $5, 'sent', $6, $7)
-       RETURNING id`,
-      [resolved.definitionId, targetCompanyId, candidateName, candidateEmail, inviteToken, expiresAt, createdBy]
-    );
-    const inviteId = ins.rows[0].id;
-    const assessmentUrl = `${base}/assessment/motivators/${inviteToken}`;
-
-    const locale = localeFromRequest(request);
-    const { subject, text, html } = buildMotivatorsInviteMail({
-      candidateFullName: candidateName,
-      companyName: resolved.companyName,
-      assessmentUrl,
-      locale,
+    const result = await createAndQueueMotivatorsInvite(query, {
+      companyId: targetCompanyId,
+      candidateName,
+      candidateEmail,
+      candidateId: body.candidateId != null ? Number(body.candidateId) : null,
+      createdByUserId: payload?.userId,
+      definitionSlug,
+      locale: localeFromRequest(request),
+      appBaseUrl: base,
     });
 
-    try {
-      enqueueTransactionalMail({ to: candidateEmail, subject, text, html });
-    } catch (e) {
-      await query(`DELETE FROM ae_invites WHERE id = $1`, [inviteId]).catch(() => {});
-      if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
-      }
-      return apiError(request, 'MAIL_FAILED', 502);
+    if (!result.ok) {
+      return apiError(request, result.errorCode, result.status || 400);
     }
 
-    return NextResponse.json({ ok: true, inviteId, sentTo: candidateEmail, assessmentUrl, queued: true });
+    return NextResponse.json({
+      ok: true,
+      inviteId: result.inviteId,
+      sentTo: result.sentTo,
+      assessmentUrl: result.assessmentUrl,
+      queued: true,
+    });
   } catch (err) {
     console.error('POST /api/admin/ae/invites', err);
     return apiError(request, 'INTERNAL', 500);

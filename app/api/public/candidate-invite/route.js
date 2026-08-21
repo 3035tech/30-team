@@ -4,7 +4,7 @@ import { apiError } from '../../../../lib/api-error';
 
 export const dynamic = 'force-dynamic';
 
-/** GET /api/public/candidate-invite?token=&vacancyToken= — identity for Enneagram email invites. */
+/** GET /api/public/candidate-invite?token=&vacancyToken= — identity + HR profile for Enneagram email invites. */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,18 +15,25 @@ export async function GET(request) {
     const res = await queryRead(
       `SELECT
          ci.id,
+         ci.company_id AS "companyId",
+         ci.candidate_id AS "candidateId",
          ci.candidate_name AS "candidateName",
          ci.candidate_email AS "candidateEmail",
          ci.status,
          ci.vacancy_id AS "vacancyId",
          v.title AS "vacancyTitle",
-         c.name AS "companyName"
+         co.name AS "companyName",
+         cand.phone,
+         cand.linkedin_url AS "linkedinUrl",
+         cand.city,
+         cand.state
        FROM candidate_invites ci
        JOIN vacancies v ON v.id = ci.vacancy_id
-       JOIN companies c ON c.id = ci.company_id
+       JOIN companies co ON co.id = ci.company_id
+       LEFT JOIN candidates cand ON cand.id = ci.candidate_id
        WHERE ci.token = $1
          AND v.deleted = FALSE
-         AND c.deleted = FALSE
+         AND co.deleted = FALSE
        LIMIT 1`,
       [token]
     );
@@ -55,6 +62,29 @@ export async function GET(request) {
       }
     }
 
+    let phone = row.phone || null;
+    let linkedinUrl = row.linkedinUrl || null;
+    let city = row.city || null;
+    let state = row.state || null;
+
+    // Fallback when invite has no candidate_id: same company + email
+    if (!row.candidateId && row.candidateEmail && row.companyId) {
+      const byEmail = await queryRead(
+        `SELECT phone, linkedin_url AS "linkedinUrl", city, state
+         FROM candidates
+         WHERE company_id = $1
+           AND LOWER(TRIM(email)) = LOWER(TRIM($2))
+         LIMIT 1`,
+        [row.companyId, row.candidateEmail]
+      );
+      if (byEmail.rowCount > 0) {
+        phone = byEmail.rows[0].phone || null;
+        linkedinUrl = byEmail.rows[0].linkedinUrl || null;
+        city = byEmail.rows[0].city || null;
+        state = byEmail.rows[0].state || null;
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       inviteId: row.id,
@@ -63,6 +93,10 @@ export async function GET(request) {
       status: row.status,
       vacancyTitle: row.vacancyTitle,
       companyName: row.companyName,
+      phone: phone || '',
+      linkedinUrl: linkedinUrl || '',
+      city: city || '',
+      state: state || '',
     });
   } catch (e) {
     console.error('GET /api/public/candidate-invite', e);

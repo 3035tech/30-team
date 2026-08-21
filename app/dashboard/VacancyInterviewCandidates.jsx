@@ -66,6 +66,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   const [busy, setBusy] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [motivatorsBusy, setMotivatorsBusy] = useState(false);
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
   const [expanded, setExpanded] = useState(false);
@@ -158,7 +159,29 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     }
   };
 
+  const sendMotivators = async () => {
+    setMotivatorsBusy(true);
+    setErr('');
+    setOk('');
+    try {
+      const res = await fetch(
+        `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(row.candidateId)}/motivators-invite`,
+        { method: 'POST' }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setOk(t(locale, 'recruiting.motivatorsSentTo', { email: data.sentTo || row.email }));
+      onChanged?.();
+      setTimeout(() => setOk(''), 5000);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setMotivatorsBusy(false);
+    }
+  };
+
   const alreadyCompleted = Boolean(row.assessmentId) || row.inviteStatus === 'completed';
+  const anyInviteBusy = inviteBusy || motivatorsBusy;
   const locBits = [row.city, row.state].filter(Boolean).join(' / ');
 
   return (
@@ -245,7 +268,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           <button
             type="button"
             onClick={sendChallenge}
-            disabled={inviteBusy || alreadyCompleted}
+            disabled={anyInviteBusy || alreadyCompleted}
             title={
               alreadyCompleted
                 ? t(locale, 'recruiting.testAlreadyDone')
@@ -258,9 +281,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               padding: '8px 10px',
               color: alreadyCompleted ? C.faint : C.synergy,
               fontSize: '12px',
-              cursor: alreadyCompleted ? 'default' : 'pointer',
+              cursor: alreadyCompleted || anyInviteBusy ? 'default' : 'pointer',
               fontFamily: 'monospace',
               opacity: inviteBusy ? 0.6 : 1,
+              minHeight: '40px',
             }}
           >
             {inviteBusy
@@ -268,6 +292,32 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               : alreadyCompleted
                 ? t(locale, 'recruiting.testDone')
                 : t(locale, 'recruiting.sendEnneagram')}
+          </button>
+          <button
+            type="button"
+            onClick={sendMotivators}
+            disabled={anyInviteBusy || !row.email}
+            title={
+              !row.email
+                ? t(locale, 'recruiting.motivatorsNeedEmail')
+                : t(locale, 'recruiting.sendMotivatorsTitle')
+            }
+            style={{
+              background: `${C.purple}14`,
+              border: `1px solid ${C.purple}44`,
+              borderRadius: '10px',
+              padding: '8px 10px',
+              color: C.purpleDeep,
+              fontSize: '12px',
+              cursor: anyInviteBusy || !row.email ? 'default' : 'pointer',
+              fontFamily: 'monospace',
+              opacity: motivatorsBusy || !row.email ? 0.6 : 1,
+              minHeight: '40px',
+            }}
+          >
+            {motivatorsBusy
+              ? t(locale, 'recruiting.inviteSending')
+              : t(locale, 'recruiting.sendMotivators')}
           </button>
         </div>
       </div>

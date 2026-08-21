@@ -162,10 +162,22 @@ function HomeScreen({
         const data = await res.json().catch(() => ({}));
         if (!cancelled) {
           if (res.ok && data?.candidateName && data?.candidateEmail) {
+            const nextPhone = stripPhone(data.phone) || '';
+            const nextLinkedin = String(data.linkedinUrl || '').trim();
+            const nextCity = String(data.city || '').trim();
+            const nextState = String(data.state || '').trim();
             setInviteIdentity({
               candidateName: String(data.candidateName),
               candidateEmail: String(data.candidateEmail),
+              phone: nextPhone,
+              linkedinUrl: nextLinkedin,
+              city: nextCity,
+              state: nextState,
             });
+            if (nextPhone) setPhone(nextPhone);
+            if (nextLinkedin) setLinkedinUrl(nextLinkedin);
+            if (nextState) setStateUf(nextState);
+            if (nextCity) setCity(nextCity);
           } else {
             setInviteIdentity(null);
           }
@@ -193,6 +205,15 @@ function HomeScreen({
   );
   const effectiveName = identityLocked ? String(inviteIdentity.candidateName) : name;
   const effectiveEmail = identityLocked ? String(inviteIdentity.candidateEmail).trim() : email.trim();
+  const phoneFromHr = Boolean(identityLocked && inviteIdentity?.phone);
+  const linkedinFromHr = Boolean(identityLocked && inviteIdentity?.linkedinUrl);
+  const locationFromHr = Boolean(identityLocked && inviteIdentity?.state && inviteIdentity?.city);
+  const hrProfileBits = [];
+  if (phoneFromHr) hrProfileBits.push(formatPhoneBr(inviteIdentity.phone));
+  if (linkedinFromHr) hrProfileBits.push(t(locale, 'candidate.linkedinShort'));
+  if (locationFromHr) {
+    hrProfileBits.push([inviteIdentity.city, inviteIdentity.state].filter(Boolean).join(' / '));
+  }
 
   const emailOk = !requireCandidateEmail || EMAIL_RE.test(effectiveEmail);
   const ready = effectiveName.trim().length > 1 && !!areaKey && consent && emailOk;
@@ -310,11 +331,18 @@ function HomeScreen({
               {t(locale, 'candidate.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
             </div>
             <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
-              {t(locale, 'candidate.inviteIdentityNote')}
+              {hrProfileBits.length > 0
+                ? t(locale, 'candidate.inviteIdentityNoteWithProfile')
+                : t(locale, 'candidate.inviteIdentityNote')}
             </div>
             <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
               {t(locale, 'candidate.inviteIdentityEmail', { email: effectiveEmail })}
             </div>
+            {hrProfileBits.length > 0 ? (
+              <div style={{ marginTop: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', lineHeight: 1.55 }}>
+                {hrProfileBits.join(' · ')}
+              </div>
+            ) : null}
           </div>
         ) : (
           <>
@@ -380,43 +408,53 @@ function HomeScreen({
           </>
         ) : null}
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.phone')}</label>
-        <input
-          style={S.input}
-          placeholder={t(locale, 'candidate.phonePlaceholder')}
-          value={formatPhoneBr(phone)}
-          onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
-          inputMode="tel"
-          autoComplete="tel"
-        />
-
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.linkedin')}</label>
-        <input
-          style={S.input}
-          placeholder={t(locale, 'candidate.linkedinPlaceholder')}
-          value={linkedinUrl}
-          onChange={(e) => setLinkedinUrl(e.target.value)}
-          autoComplete="url"
-        />
-
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 120px' }}>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
-            <BrStateSelect
-              value={stateUf}
-              onChange={(uf) => {
-                setStateUf(uf);
-                setCity('');
-              }}
-              locale={locale}
+        {!phoneFromHr ? (
+          <>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.phone')}</label>
+            <input
               style={S.input}
+              placeholder={t(locale, 'candidate.phonePlaceholder')}
+              value={formatPhoneBr(phone)}
+              onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+              inputMode="tel"
+              autoComplete="tel"
             />
+          </>
+        ) : null}
+
+        {!linkedinFromHr ? (
+          <>
+            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.linkedin')}</label>
+            <input
+              style={S.input}
+              placeholder={t(locale, 'candidate.linkedinPlaceholder')}
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              autoComplete="url"
+            />
+          </>
+        ) : null}
+
+        {!locationFromHr ? (
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 120px' }}>
+              <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
+              <BrStateSelect
+                value={stateUf}
+                onChange={(uf) => {
+                  setStateUf(uf);
+                  setCity('');
+                }}
+                locale={locale}
+                style={S.input}
+              />
+            </div>
+            <div style={{ flex: '2 1 180px' }}>
+              <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.city')}</label>
+              <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} style={S.input} />
+            </div>
           </div>
-          <div style={{ flex: '2 1 180px' }}>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.city')}</label>
-            <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} style={S.input} />
-          </div>
-        </div>
+        ) : null}
 
         <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '12px', color: C.muted, lineHeight: 1.5, marginBottom: '16px' }}>
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: '2px' }} />
