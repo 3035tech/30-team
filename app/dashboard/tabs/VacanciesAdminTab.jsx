@@ -1094,6 +1094,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [companyId, setCompanyId] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
 
   const appUrl =
     (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
@@ -1253,6 +1254,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
       setDescription(''); setSalaryMin(''); setSalaryMax('');
+      setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
       setTimeout(() => setMsg(''), 3000);
@@ -1841,129 +1843,158 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       </div>
 
       <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'recruiting.createVacancy')}</span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-          {isAdmin && (
-            <select
-              value={companyId}
-              onChange={(e) => setCompanyId(e.target.value)}
-              style={{ flex: '1 1 240px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <span style={S.label}>{t(locale, 'recruiting.registeredVacancies')}</span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={loadVacancies}
+              disabled={loading}
+              style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1,
+                display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              {loading ? <span className="spinner" /> : null}
+              {t(locale, 'recruiting.refresh')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreate((v) => !v)}
+              aria-expanded={showCreate}
+              style={{ background: showCreate ? 'transparent' : `${C.purple}18`,
+                border: `1px solid ${showCreate ? C.border : `${C.purple}55`}`,
+                borderRadius: '10px', padding: '10px 14px',
+                color: showCreate ? C.muted : C.purple, fontSize: '12px',
                 cursor: 'pointer', fontFamily: 'monospace' }}
             >
-              {companies.length === 0 ? (
-                <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
-              ) : companies.map((c) => (
-                <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-              ))}
-            </select>
-          )}
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t(locale, 'recruiting.createTitlePh')}
-            style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <input
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder={t(locale, 'recruiting.createSlugPh')}
-            style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace' }}
-          >
-            <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-            <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-          </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-            fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            {t(locale, 'recruiting.positionsLabel')}
-            <input
-              type="number"
-              min="1"
-              value={positionsCount}
-              onChange={(e) => setPositionsCount(e.target.value)}
-              aria-label={t(locale, 'recruiting.positionsLabel')}
-              style={{ width: '60px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-            />
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-            fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            {t(locale, 'recruiting.targetDateLabel')}
-            <input
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              aria-label={t(locale, 'recruiting.targetDateLabel')}
-              style={{ background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-            />
-          </label>
-          <input
-            value={formatSalaryBr(salaryMin)}
-            onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
-            placeholder={t(locale, 'recruiting.salaryMinPh')}
-            inputMode="numeric"
-            style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <input
-            value={formatSalaryBr(salaryMax)}
-            onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
-            placeholder={t(locale, 'recruiting.salaryMaxPh')}
-            inputMode="numeric"
-            style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
-          />
-          <div style={{ flex: '1 1 100%' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
-              {t(locale, 'recruiting.vacancyDescriptionLabel')}
-            </label>
-            <RichTextEditor
-              value={description}
-              onChange={setDescription}
-              placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-              minHeight={120}
-              locale={locale}
-            />
+              {showCreate ? t(locale, 'recruiting.createVacancyCancel') : t(locale, 'recruiting.createVacancyOpen')}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={createVacancy}
-            disabled={loading || !title.trim() || (isAdmin && !companyId)}
-            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-              borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1,
-              display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            {loading ? <span className="spinner" /> : null}
-            {t(locale, 'panel.admin.create')}
-          </button>
-          <button
-            type="button"
-            onClick={loadVacancies}
-            disabled={loading}
-            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-              borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1,
-              display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            {loading ? <span className="spinner" /> : null}
-            {t(locale, 'recruiting.refresh')}
-          </button>
         </div>
-      </div>
 
-      <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'recruiting.registeredVacancies')}</span>
+        {showCreate ? (
+          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${C.border}` }}>
+            <span style={{ ...S.label, marginBottom: '10px', display: 'block' }}>{t(locale, 'recruiting.createVacancy')}</span>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {isAdmin && (
+                <select
+                  value={companyId}
+                  onChange={(e) => setCompanyId(e.target.value)}
+                  style={{ flex: '1 1 240px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace' }}
+                >
+                  {companies.length === 0 ? (
+                    <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
+                  ) : companies.map((c) => (
+                    <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
+                  ))}
+                </select>
+              )}
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t(locale, 'recruiting.createTitlePh')}
+                style={{ flex: '2 1 320px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+              />
+              <input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder={t(locale, 'recruiting.createSlugPh')}
+                style={{ flex: '1 1 220px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+              />
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={{ flex: '0 0 160px', background: 'rgba(26,22,37,.03)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.muted, fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'monospace' }}
+              >
+                <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
+              </select>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                {t(locale, 'recruiting.positionsLabel')}
+                <input
+                  type="number"
+                  min="1"
+                  value={positionsCount}
+                  onChange={(e) => setPositionsCount(e.target.value)}
+                  aria-label={t(locale, 'recruiting.positionsLabel')}
+                  style={{ width: '60px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '10px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+                />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                {t(locale, 'recruiting.targetDateLabel')}
+                <input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  aria-label={t(locale, 'recruiting.targetDateLabel')}
+                  style={{ background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '9px 8px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+                />
+              </label>
+              <input
+                value={formatSalaryBr(salaryMin)}
+                onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
+                placeholder={t(locale, 'recruiting.salaryMinPh')}
+                inputMode="numeric"
+                style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+              />
+              <input
+                value={formatSalaryBr(salaryMax)}
+                onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
+                placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                inputMode="numeric"
+                style={{ flex: '1 1 140px', background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 12px', color: C.text, fontSize: '12px', fontFamily: 'monospace' }}
+              />
+              <div style={{ flex: '1 1 100%' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
+                  {t(locale, 'recruiting.vacancyDescriptionLabel')}
+                </label>
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+                  minHeight={120}
+                  locale={locale}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={createVacancy}
+                disabled={loading || !title.trim() || (isAdmin && !companyId)}
+                style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                  borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !title.trim() || (isAdmin && !companyId)) ? 0.6 : 1,
+                  display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                {loading ? <span className="spinner" /> : null}
+                {t(locale, 'panel.admin.create')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                disabled={loading}
+                style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                  borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+              >
+                {t(locale, 'recruiting.createVacancyCancel')}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {vacFilterFromUrl !== 'all' ? (
           <div style={{ marginTop: '10px', padding: '10px 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.03)' }}>
             <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>

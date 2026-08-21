@@ -33,6 +33,138 @@ import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
 import { HelpTab } from './tabs/HelpTab';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 
+const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
+
+function NavIcon({ name }) {
+  const props = {
+    width: 18,
+    height: 18,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.75,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+    style: { flexShrink: 0 },
+  };
+  switch (name) {
+    case 'overview':
+      return (
+        <svg {...props}>
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+      );
+    case 'team':
+      return (
+        <svg {...props}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="3" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a3 3 0 0 1 0 5.75" />
+        </svg>
+      );
+    case 'compatibility':
+      return (
+        <svg {...props}>
+          <circle cx="8" cy="8" r="3" />
+          <circle cx="16" cy="16" r="3" />
+          <path d="M10.5 10.5 13.5 13.5" />
+        </svg>
+      );
+    case 'compare':
+      return (
+        <svg {...props}>
+          <path d="M8 6h13" />
+          <path d="M8 12h13" />
+          <path d="M8 18h13" />
+          <path d="M3 6h.01" />
+          <path d="M3 12h.01" />
+          <path d="M3 18h.01" />
+        </svg>
+      );
+    case 'group':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="8" r="3" />
+          <circle cx="6.5" cy="16" r="2.5" />
+          <circle cx="17.5" cy="16" r="2.5" />
+        </svg>
+      );
+    case 'leadership':
+      return (
+        <svg {...props}>
+          <path d="M12 3 14.5 9.5 21 10.5 16 15.2 17.5 21.5 12 18.2 6.5 21.5 8 15.2 3 10.5 9.5 9.5Z" />
+        </svg>
+      );
+    case 'vacancies':
+      return (
+        <svg {...props}>
+          <rect x="3" y="7" width="18" height="13" rx="2" />
+          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+      );
+    case 'motivators':
+      return (
+        <svg {...props}>
+          <path d="M12 3c2.5 3.5 6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 3.5-6.5 6-10Z" />
+        </svg>
+      );
+    case 'companies':
+      return (
+        <svg {...props}>
+          <path d="M4 21V6a2 2 0 0 1 2-2h7v17" />
+          <path d="M13 10h5a2 2 0 0 1 2 2v9" />
+          <path d="M8 8h1" />
+          <path d="M8 12h1" />
+          <path d="M8 16h1" />
+          <path d="M16 14h1" />
+          <path d="M16 18h1" />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg {...props}>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="3" />
+        </svg>
+      );
+    case 'help':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5" />
+          <path d="M12 17h.01" />
+        </svg>
+      );
+    case 'logout':
+      return (
+        <svg {...props}>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <path d="M16 17l5-5-5-5" />
+          <path d="M21 12H9" />
+        </svg>
+      );
+    case 'collapse':
+      return (
+        <svg {...props}>
+          <path d="M15 18 9 12l6-6" />
+        </svg>
+      );
+    case 'expand':
+      return (
+        <svg {...props}>
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 export default function DashboardClient({
   results,
   areas = [],
@@ -76,6 +208,8 @@ export default function DashboardClient({
   const [dateTo, setDateTo] = useState(selectedDateTo || '');
   const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
@@ -112,6 +246,37 @@ export default function DashboardClient({
   useEffect(() => { setDateFrom(selectedDateFrom || ''); }, [selectedDateFrom]);
   useEffect(() => { setDateTo(selectedDateTo || ''); }, [selectedDateTo]);
   useEffect(() => { setSearch(selectedSearch || ''); }, [selectedSearch]);
+
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia('(min-width: 769px)');
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    if (mq.addEventListener) mq.addEventListener('change', apply);
+    else mq.addListener(apply);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', apply);
+      else mq.removeListener(apply);
+    };
+  }, []);
+
+  const navCollapsed = sidebarCollapsed && isDesktop;
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -297,14 +462,17 @@ export default function DashboardClient({
     dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
   }${selectedSearch ? `&search=${encodeURIComponent(selectedSearch)}` : ''}`;
 
-  const NavLink = ({ id, label, badge }) => (
+  const NavLink = ({ id, label, badge, icon }) => (
     <button
       type="button"
       onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
+      title={navCollapsed ? label : undefined}
+      aria-label={label}
+      aria-current={tab === id ? 'page' : undefined}
       style={{
         width: '100%',
         textAlign: 'left',
-        padding: '11px 12px',
+        padding: navCollapsed ? '11px 0' : '11px 12px',
         marginBottom: '4px',
         borderRadius: '10px',
         border: 'none',
@@ -314,19 +482,33 @@ export default function DashboardClient({
         cursor: 'pointer',
         fontFamily: 'monospace',
         letterSpacing: '0.5px',
-        borderLeft: tab === id ? `3px solid ${C.purple}` : '3px solid transparent',
-        paddingLeft: tab === id ? '9px' : '11px',
+        borderLeft: navCollapsed ? 'none' : (tab === id ? `3px solid ${C.purple}` : '3px solid transparent'),
+        paddingLeft: navCollapsed ? '0' : (tab === id ? '9px' : '11px'),
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
+        justifyContent: navCollapsed ? 'center' : 'flex-start',
+        gap: '10px',
+        position: 'relative',
       }}
     >
-      {label}
-      {badge && (
-        <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
-          background: C.purple, flexShrink: 0 }} />
-      )}
+      <NavIcon name={icon} />
+      {!navCollapsed ? <span style={{ flex: 1, minWidth: 0 }}>{label}</span> : null}
+      {badge ? (
+        <span style={{
+          display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
+          background: C.purple, flexShrink: 0,
+          ...(navCollapsed ? { position: 'absolute', top: '8px', right: '10px' } : {}),
+        }} />
+      ) : null}
     </button>
+  );
+
+  const sectionLabel = (text) => (
+    navCollapsed ? (
+      <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 4px 8px' }} aria-hidden />
+    ) : (
+      <span style={S.sidebarSection}>{text}</span>
+    )
   );
 
   return (
@@ -354,55 +536,108 @@ export default function DashboardClient({
         onClick={() => setSidebarOpen(false)}
       />
       <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-        <aside className={`db-sidebar${sidebarOpen ? ' db-sidebar-open' : ''}`} style={{
-          width: '226px',
-          flexShrink: 0,
-          borderRight: `1px solid ${C.border}`,
-          padding: '24px 14px 32px 18px',
-          background: 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(14px)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}>
-          <div style={{ marginBottom: '12px' }}>
-            <BrandMark size={28} withWordmark />
-            <span style={{ ...S.label, marginTop: '10px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
+        <aside
+          className={`db-sidebar${sidebarOpen ? ' db-sidebar-open' : ''}${navCollapsed ? ' db-sidebar-collapsed' : ''}`}
+          style={{
+            width: navCollapsed ? '72px' : '226px',
+            flexShrink: 0,
+            borderRight: `1px solid ${C.border}`,
+            padding: navCollapsed ? '20px 10px 24px' : '24px 14px 32px 18px',
+            background: 'rgba(255,255,255,0.88)',
+            backdropFilter: 'blur(14px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          <div style={{
+            marginBottom: '8px',
+            display: 'flex',
+            flexDirection: navCollapsed ? 'column' : 'row',
+            alignItems: navCollapsed ? 'center' : 'flex-start',
+            justifyContent: navCollapsed ? 'center' : 'space-between',
+            gap: '8px',
+          }}>
+            <div style={{ minWidth: 0, textAlign: navCollapsed ? 'center' : 'left' }}>
+              <BrandMark size={28} withWordmark={!navCollapsed} />
+              {!navCollapsed ? (
+                <span style={{ ...S.label, marginTop: '10px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="db-sidebar-collapse-toggle"
+              onClick={toggleSidebarCollapsed}
+              aria-label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+              title={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                flexShrink: 0,
+                borderRadius: '8px',
+                border: `1px solid ${C.border}`,
+                background: 'transparent',
+                color: C.muted,
+                cursor: 'pointer',
+                marginTop: navCollapsed ? 0 : '2px',
+              }}
+            >
+              <NavIcon name={navCollapsed ? 'expand' : 'collapse'} />
+            </button>
           </div>
           <nav style={{ flex: 1 }}>
-            <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionAnalysis')}</span>
-            <NavLink id="overview" label={t(locale, 'dashboard.overview')} />
-            <NavLink id="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
-            <NavLink id="compatibility" label={t(locale, 'dashboard.compatibility')} />
-            <NavLink id="compare" label={t(locale, 'dashboard.compare')} />
-            <NavLink id="group" label={t(locale, 'dashboard.group')} />
-            <NavLink id="leadership" label={t(locale, 'dashboard.leadership')} />
+            {sectionLabel(t(locale, 'dashboard.sectionAnalysis'))}
+            <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
+            <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+            <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
+            <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
+            <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
+            <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
             {(canManage || isAdmin) && (
               <>
                 <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
-                <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionManagement')}</span>
-                {canManage ? <NavLink id="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-                {canManage ? <NavLink id="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
-                {isAdmin ? <NavLink id="companies" label={t(locale, 'dashboard.companies')} /> : null}
-                {isAdmin ? <NavLink id="users" label={t(locale, 'dashboard.users')} /> : null}
+                {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
+                {canManage ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
+                {canManage ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
+                {isAdmin ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
+                {isAdmin ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
               </>
             )}
             <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
-            <span style={S.sidebarSection}>{t(locale, 'dashboard.sectionHelp')}</span>
-            <NavLink id="help" label={t(locale, 'dashboard.help')} />
+            {sectionLabel(t(locale, 'dashboard.sectionHelp'))}
+            <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
           </nav>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: navCollapsed ? 'center' : 'stretch' }}>
             <button
               type="button"
               onClick={logout}
-              style={{ background: 'transparent', border: `1px solid rgba(220,38,38,.25)`,
-                borderRadius: '10px', padding: '9px 12px', color: 'rgba(220,38,38,.6)',
-                fontSize: '11px', cursor: 'pointer', fontFamily: 'monospace',
-                textAlign: 'left', width: '100%' }}
+              title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
+              aria-label={t(locale, 'dashboard.logout')}
+              style={{
+                background: 'transparent',
+                border: `1px solid rgba(220,38,38,.25)`,
+                borderRadius: '10px',
+                padding: navCollapsed ? '9px' : '9px 12px',
+                color: 'rgba(220,38,38,.6)',
+                fontSize: '11px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                textAlign: 'left',
+                width: navCollapsed ? '40px' : '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: navCollapsed ? 'center' : 'flex-start',
+                gap: '8px',
+              }}
             >
-              {t(locale, 'dashboard.logout')}
+              <NavIcon name="logout" />
+              {!navCollapsed ? <span>{t(locale, 'dashboard.logout')}</span> : null}
             </button>
-            <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
+            {!navCollapsed ? (
+              <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
+            ) : null}
           </div>
         </aside>
 

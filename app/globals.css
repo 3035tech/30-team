@@ -42,10 +42,13 @@ textarea:focus-visible {
   display: none;
 }
 .db-sidebar {
-  transition: transform 0.25s ease;
+  transition: width 0.2s ease, padding 0.2s ease, transform 0.25s ease;
 }
 .db-overlay {
   display: none;
+}
+.db-sidebar-collapse-toggle {
+  display: flex;
 }
 
 @media (max-width: 768px) {
@@ -76,9 +79,14 @@ textarea:focus-visible {
     transform: translateX(-100%);
     box-shadow: 4px 0 20px rgba(0,0,0,.12);
     overflow-y: auto;
+    width: 226px !important;
+    padding: 24px 14px 32px 18px !important;
   }
   .db-sidebar.db-sidebar-open {
     transform: translateX(0);
+  }
+  .db-sidebar-collapse-toggle {
+    display: none !important;
   }
   .db-overlay {
     position: fixed;
