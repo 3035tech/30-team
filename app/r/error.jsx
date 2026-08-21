@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useLocale } from '../../../lib/useLocale';
-import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../../lib/theme';
-import { PublicFunnyError } from '../../_components/PublicStatusScreens';
+import { useLocale } from '../../lib/useLocale';
+import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../lib/theme';
+import { PublicFunnyError } from '../_components/PublicStatusScreens';
 
 /**
  * Route-level error UI for /r — funny “broken but fixing” screen.

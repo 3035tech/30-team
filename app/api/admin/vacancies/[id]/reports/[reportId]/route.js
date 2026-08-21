@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { verifySessionWithCapabilities } from '../../../../../../../../lib/user-capabilities';
+import { verifySessionWithCapabilities } from '../../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
-import { COOKIE_NAME } from '../../../../../../../../lib/auth';
-import { updateReportShareMeta } from '../../../../../../../../lib/vacancy-report';
-import { apiError } from '../../../../../../../../lib/api-error';
-import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
+import { COOKIE_NAME } from '../../../../../../../lib/auth';
+import { updateReportShareMeta } from '../../../../../../../lib/vacancy-report';
+import { apiError } from '../../../../../../../lib/api-error';
+import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
 
 /** PATCH — atualiza título e/ou parecer de um relatório ainda ativo (snapshot permanece congelado). */
 export async function PATCH(request, { params }) {
