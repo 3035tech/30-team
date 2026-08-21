@@ -46,18 +46,19 @@ const TypeRef = ({ type, locale = 'pt-BR', children, style }) => {
   );
 };
 
-const TypeBadge = ({ type, locale = 'pt-BR' }) => {
+const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
   const d = TYPE_DATA[type];
   const short = typeShortLabel(type, locale);
   const tip = typeHintTooltip(type, locale);
+  const label = compact ? `T${type}` : short;
   if (!d) {
     return (
       <span
         title={tip}
         aria-label={tip}
         style={{
-          padding: '3px 10px',
-          fontSize: '11px',
+          padding: compact ? '2px 7px' : '3px 10px',
+          fontSize: compact ? '10px' : '11px',
           borderRadius: '20px',
           display: 'inline-flex',
           alignItems: 'center',
@@ -67,6 +68,7 @@ const TypeBadge = ({ type, locale = 'pt-BR' }) => {
           color: C.muted,
           fontFamily: 'monospace',
           cursor: 'help',
+          flexShrink: 0,
         }}
       >
         T{type}
@@ -78,20 +80,31 @@ const TypeBadge = ({ type, locale = 'pt-BR' }) => {
       title={tip}
       aria-label={tip}
       style={{
-        padding: '3px 10px',
-        fontSize: '12px',
+        padding: compact ? '2px 7px' : '3px 10px',
+        fontSize: compact ? '10px' : '12px',
         borderRadius: '20px',
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: compact ? '3px' : '4px',
         background: `${d.color}18`,
         border: `1px solid ${d.color}44`,
         color: d.color,
         fontFamily: 'monospace',
         cursor: 'help',
+        flexShrink: 0,
+        letterSpacing: compact ? '0.02em' : undefined,
       }}
     >
-      {d.emoji} {short}
+      {compact ? (
+        <>
+          <span aria-hidden style={{ fontSize: '11px', lineHeight: 1 }}>{d.emoji}</span>
+          {label}
+        </>
+      ) : (
+        <>
+          {d.emoji} {label}
+        </>
+      )}
     </span>
   );
 };

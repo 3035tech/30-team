@@ -329,17 +329,17 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
 
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px 10px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '8px',
             marginBottom: '18px',
-            maxHeight: '148px',
+            maxHeight: '200px',
             overflowY: 'auto',
             padding: '2px 0',
           }}
         >
           {resultsByName.length === 0 ? (
-            <span style={{ fontSize: '13px', color: C.faint, fontStyle: 'italic' }}>
+            <span style={{ fontSize: '13px', color: C.faint, fontStyle: 'italic', gridColumn: '1 / -1' }}>
               {(search || '').trim()
                 ? t(locale, 'panel.compare.searchEmpty')
                 : t(locale, 'panel.compare.noneSelected')}
@@ -354,17 +354,17 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                   key={id}
                   title={r.name}
                   style={{
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                     cursor: 'pointer',
-                    padding: '6px 10px',
+                    padding: '8px 10px',
                     borderRadius: '10px',
                     border: `1px solid ${on ? `${C.purple}40` : C.border}`,
                     background: on ? `${C.purple}10` : 'rgba(26,22,37,.03)',
-                    fontSize: '12px',
+                    fontSize: '13px',
                     color: C.text,
-                    maxWidth: '220px',
+                    minWidth: 0,
                   }}
                 >
                   <input
@@ -373,10 +373,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                     onChange={() => toggleId(id)}
                     style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}
                   />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {displayName}
                   </span>
-                  <TypeBadge type={r.topType} locale={locale} />
+                  <TypeBadge type={r.topType} locale={locale} compact />
                 </label>
               );
             })
@@ -444,11 +453,8 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                     >
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                         <span style={{ fontSize: '14px' }}>{TYPE_DATA[typeNum].emoji}</span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.5px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.5px' }}>
                           T{typeNum}
-                        </span>
-                        <span style={{ fontSize: '9px', color: C.faint, maxWidth: '56px', lineHeight: 1.2 }}>
-                          {typeShortLabel(typeNum, locale)}
                         </span>
                         <span style={{ color: C.faint, fontSize: '10px', minHeight: '12px' }}>{sortMark(typeNum)}</span>
                       </span>
@@ -466,18 +472,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                         style={{
                           padding: '10px 12px',
                           color: C.text,
-                          maxWidth: '200px',
+                          minWidth: '180px',
+                          maxWidth: '280px',
                           position: 'sticky',
                           left: 0,
                           background: C.card,
                           zIndex: 1,
                         }}
                       >
-                        <span title={r.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span title={r.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0, width: '100%' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
                             {personListName(r.name)}
                           </span>
-                          <TypeBadge type={r.topType} locale={locale} />
+                          <TypeBadge type={r.topType} locale={locale} compact />
                         </span>
                       </td>
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => {
@@ -487,7 +494,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                         return (
                           <td key={typeNum} style={{ padding: '6px', textAlign: 'center' }}>
                             <div
-                              title={`T${typeNum}: ${s}`}
+                              title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
                               style={{
                                 width: '32px',
                                 height: '32px',
