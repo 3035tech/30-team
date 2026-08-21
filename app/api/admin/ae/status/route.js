@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../../../lib/db';
-import { getMotivatorsStatus } from '../../../../../../lib/ae/bootstrap-motivators';
-import { CAP, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
-import { AE_SCORING_ENGINE_VERSION } from '../../../../../../lib/ae/ae-id';
-import { apiError } from '../../../../../../lib/api-error';
+import { query } from '../../../../../lib/db';
+import { getMotivatorsStatus } from '../../../../../lib/ae/bootstrap-motivators';
+import { CAP, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
+import { AE_SCORING_ENGINE_VERSION } from '../../../../../lib/ae/ae-id';
+import { apiError } from '../../../../../lib/api-error';
 
 /** GET /api/admin/ae/status — diagnóstico do módulo Motivadores */
 export async function GET(request) {
