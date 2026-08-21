@@ -124,8 +124,11 @@ export function DashboardTopBarMenus({
   const [items, setItems] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [displayLabel, setDisplayLabel] = useState(auth?.email || auth?.displayName || '');
+  const [displayLabel, setDisplayLabel] = useState(
+    () => auth?.displayName || auth?.email || ''
+  );
   const wrapRef = useRef(null);
+  const pollTimerRef = useRef(null);
 
   const loadNotifs = useCallback(async () => {
     try {
@@ -139,28 +142,49 @@ export function DashboardTopBarMenus({
     }
   }, []);
 
-  useEffect(() => {
-    loadNotifs();
-    const id = setInterval(loadNotifs, 60000);
-    return () => clearInterval(id);
-  }, [loadNotifs]);
+  const clearPoll = useCallback(() => {
+    if (pollTimerRef.current != null) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  const startPoll = useCallback(() => {
+    clearPoll();
+    // Visible tab: refresh often so new inbox rows appear without full page reload.
+    pollTimerRef.current = setInterval(loadNotifs, 15000);
+  }, [clearPoll, loadNotifs]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/me');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-        const u = data.user || {};
-        setDisplayLabel(u.displayName || u.email || '');
-      } catch {
-        /* ignore */
+    loadNotifs();
+    const syncPolling = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        clearPoll();
+        return;
       }
-    })();
-    return () => { cancelled = true; };
-  }, [auth?.email, auth?.displayName]);
+      loadNotifs();
+      startPoll();
+    };
+    syncPolling();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncPolling();
+      else clearPoll();
+    };
+    const onFocus = () => {
+      loadNotifs();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearPoll();
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadNotifs, startPoll, clearPoll]);
+
+  useEffect(() => {
+    setDisplayLabel(auth?.displayName || auth?.email || '');
+  }, [auth?.displayName, auth?.email]);
 
   useEffect(() => {
     const onDoc = (e) => {

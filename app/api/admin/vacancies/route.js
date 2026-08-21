@@ -117,28 +117,26 @@ export async function GET(request) {
        v.description,
        v.salary_min AS "salaryMin",
        v.salary_max AS "salaryMax",
-       v.created_at AS "createdAt"
+       v.created_at AS "createdAt",
+       vl.token AS "activeToken",
+       vl.expires_at AS "activeTokenExpiresAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
+     LEFT JOIN LATERAL (
+       SELECT token, expires_at
+       FROM vacancy_links
+       WHERE vacancy_id = v.id AND active = TRUE
+       ORDER BY expires_at DESC NULLS LAST
+       LIMIT 1
+     ) vl ON TRUE
      ${where}
      ${vacancyOrderClause}
      LIMIT $${limI} OFFSET $${offI}`,
     listParams
   );
 
-  const out = [];
-  for (const v of r.rows) {
-    const t = await queryRead(
-      `SELECT token, expires_at AS "expiresAt"
-       FROM vacancy_links
-       WHERE vacancy_id = $1 AND active = TRUE
-       LIMIT 1`,
-      [v.id]
-    );
-    out.push({ ...v, activeToken: t.rows?.[0]?.token || null, activeTokenExpiresAt: t.rows?.[0]?.expiresAt || null });
-  }
   return NextResponse.json({
-    items: out,
+    items: r.rows,
     total,
     page: effectivePage,
     pageSize,

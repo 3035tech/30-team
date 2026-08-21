@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../../lib/db';
+import { queryRead } from '../../../../../lib/db';
 import { getManagerScope, getSessionPayload, requireManagerRole } from '../../../../../lib/ae/require-admin';
 import { apiError } from '../../../../../lib/api-error';
 
-/** GET /api/admin/ae/analytics — dashboard RH */
+/** Cap completed attempts scanned for analytics (admin all-companies worst case). */
+const AE_ANALYTICS_ATTEMPT_CAP = 20000;
+
+/** GET /api/admin/ae/analytics — dashboard RH (agregações no SQL). */
 export async function GET(request) {
   try {
     const payload = getSessionPayload();
@@ -35,55 +38,106 @@ export async function GET(request) {
     }
 
     const whereSql = `WHERE ${where.join(' AND ')}`;
+    const fromSql = `
+      FROM ae_attempts a
+      LEFT JOIN areas ar ON ar.id = a.area_id
+      ${whereSql}
+    `;
 
-    const attemptsRes = await query(
-      `SELECT a.dimension_scores AS "dimensionScores", a.ranking, ar.key AS "areaKey", ar.label AS "areaLabel"
-       FROM ae_attempts a
-       LEFT JOIN areas ar ON ar.id = a.area_id
-       ${whereSql}`,
-      params
-    );
+    const sampleParams = [...params, AE_ANALYTICS_ATTEMPT_CAP];
+    const limIx = sampleParams.length;
 
-    const dimensionTotals = {};
-    const dimensionCounts = {};
-    const topFirst = {};
+    // Sample of completed attempts (bounded) used by dimension / ranking aggregates.
+    const sampleCte = `
+      WITH sample AS (
+        SELECT a.dimension_scores, a.ranking, ar.label AS area_label
+        ${fromSql}
+        ORDER BY a.created_at DESC
+        LIMIT $${limIx}
+      )
+    `;
+
+    const [totalRes, distRes, topRes, areaRes, invitesRes] = await Promise.all([
+      queryRead(`SELECT COUNT(*)::int AS n ${fromSql}`, params),
+      queryRead(
+        `${sampleCte}
+         SELECT kv.key AS key,
+                ROUND(AVG((kv.value)::numeric))::int AS average,
+                COUNT(*)::int AS count
+         FROM sample s
+         CROSS JOIN LATERAL jsonb_each_text(s.dimension_scores) AS kv(key, value)
+         WHERE s.dimension_scores IS NOT NULL
+           AND jsonb_typeof(s.dimension_scores) = 'object'
+           AND (kv.value)~'^-?[0-9]+(\\.[0-9]+)?$'
+         GROUP BY kv.key
+         ORDER BY average DESC`,
+        sampleParams
+      ),
+      queryRead(
+        `${sampleCte}
+         SELECT s.ranking->>0 AS key,
+                COUNT(*)::int AS count
+         FROM sample s
+         WHERE s.ranking IS NOT NULL
+           AND jsonb_typeof(s.ranking) = 'array'
+           AND s.ranking->>0 IS NOT NULL
+           AND length(trim(s.ranking->>0)) > 0
+         GROUP BY 1
+         ORDER BY count DESC`,
+        sampleParams
+      ),
+      queryRead(
+        `${sampleCte}
+         SELECT COALESCE(NULLIF(trim(s.area_label), ''), 'Sem área') AS area,
+                s.ranking->>0 AS top,
+                COUNT(*)::int AS count
+         FROM sample s
+         GROUP BY 1, 2`,
+        sampleParams
+      ),
+      queryRead(
+        `SELECT status, COUNT(*)::int AS count
+         FROM ae_invites i
+         ${
+           !isAdmin
+             ? 'WHERE i.company_id = $1'
+             : companyFilter && companyFilter !== 'all'
+               ? 'WHERE i.company_id = $1'
+               : ''
+         }
+         GROUP BY status`,
+        !isAdmin
+          ? [companyId]
+          : companyFilter && companyFilter !== 'all'
+            ? [Number(companyFilter)]
+            : []
+      ),
+    ]);
+
+    const totalAttempts = totalRes.rows[0]?.n ?? 0;
+    const sampleSize = Math.min(totalAttempts, AE_ANALYTICS_ATTEMPT_CAP);
+
+    const distribution = distRes.rows.map((r) => ({
+      key: r.key,
+      average: r.average,
+      count: r.count,
+    }));
+
+    const topMotivators = topRes.rows.map((r) => ({
+      key: r.key,
+      count: r.count,
+      pct: sampleSize ? Math.round((r.count / sampleSize) * 100) : 0,
+    }));
+
     const byArea = {};
-
-    for (const row of attemptsRes.rows) {
-      const scores = row.dimensionScores || {};
-      for (const [dim, score] of Object.entries(scores)) {
-        dimensionTotals[dim] = (dimensionTotals[dim] || 0) + score;
-        dimensionCounts[dim] = (dimensionCounts[dim] || 0) + 1;
-      }
-      const top = Array.isArray(row.ranking) ? row.ranking[0] : null;
-      if (top) topFirst[top] = (topFirst[top] || 0) + 1;
-
-      const area = row.areaLabel || 'Sem área';
+    for (const row of areaRes.rows) {
+      const area = row.area || 'Sem área';
       if (!byArea[area]) byArea[area] = { count: 0, tops: {} };
-      byArea[area].count += 1;
-      if (top) byArea[area].tops[top] = (byArea[area].tops[top] || 0) + 1;
+      byArea[area].count += row.count;
+      if (row.top) {
+        byArea[area].tops[row.top] = (byArea[area].tops[row.top] || 0) + row.count;
+      }
     }
-
-    const totalAttempts = attemptsRes.rowCount;
-    const distribution = Object.keys(dimensionTotals)
-      .map((key) => ({
-        key,
-        average: Math.round(dimensionTotals[key] / dimensionCounts[key]),
-        count: dimensionCounts[key],
-      }))
-      .sort((a, b) => b.average - a.average);
-
-    const topMotivators = Object.entries(topFirst)
-      .map(([key, count]) => ({ key, count, pct: totalAttempts ? Math.round((count / totalAttempts) * 100) : 0 }))
-      .sort((a, b) => b.count - a.count);
-
-    const invitesRes = await query(
-      `SELECT status, COUNT(*)::int AS count
-       FROM ae_invites i
-       ${!isAdmin ? 'WHERE i.company_id = $1' : companyFilter && companyFilter !== 'all' ? 'WHERE i.company_id = $1' : ''}
-       GROUP BY status`,
-      !isAdmin ? [companyId] : companyFilter && companyFilter !== 'all' ? [Number(companyFilter)] : []
-    );
 
     return NextResponse.json({
       totalAttempts,
@@ -91,6 +145,8 @@ export async function GET(request) {
       topMotivators,
       byArea,
       inviteStats: invitesRes.rows,
+      sampled: totalAttempts > AE_ANALYTICS_ATTEMPT_CAP,
+      sampleSize,
     });
   } catch (err) {
     console.error('GET /api/admin/ae/analytics', err);

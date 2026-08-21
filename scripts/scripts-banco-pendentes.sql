@@ -10,6 +10,7 @@
 -- 022 — registro de 1:1 (People)
 -- 023 — notificações in-app + display_name
 -- 024 — tipos genéricos de notificação + dedupe por time RH
+-- 025 — índice unique e-mail candidatos + índices fan-out / prazo vaga
 
 ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS phone TEXT,
@@ -215,4 +216,18 @@ CREATE INDEX IF NOT EXISTS idx_manager_notifications_entity
   ON manager_notifications (company_id, entity_type, entity_id)
   WHERE entity_type IS NOT NULL;
 
+-- 025 — unique e-mail candidatos + índices fan-out / prazo
+UPDATE candidates SET email = NULL WHERE email = '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_candidates_company_email_lower_unique
+  ON candidates (company_id, LOWER(email))
+  WHERE email IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_open_target_date
+  ON vacancies (target_date)
+  WHERE deleted = FALSE AND status = 'open' AND target_date IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_company_active_managers
+  ON users (company_id)
+  WHERE deleted = FALSE AND active = TRUE AND role IN ('hr', 'direction', 'admin');
 

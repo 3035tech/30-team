@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCompat } from '../../lib/data';
 import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
@@ -20,22 +21,73 @@ import {
 
 import { S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
-import { CompareTabLoader } from './tabs/CompareTabLoader';
-import { CompatTab } from './tabs/CompatTab';
-import { CompaniesAdminTab } from './tabs/CompaniesAdminTab';
-import { GroupTab } from './tabs/GroupTab';
-import { LeadershipTab } from './tabs/LeadershipTab';
-import { OverviewTab } from './tabs/OverviewTab';
 import { TeamTab } from './tabs/TeamTab';
-import { UsersAdminTab } from './tabs/UsersAdminTab';
-import { VacanciesAdminTab } from './tabs/VacanciesAdminTab';
-import MotivatorsAdminTab from './tabs/MotivatorsAdminTab';
-import { HelpTab } from './tabs/HelpTab';
-import { ProfileTab } from '../_components/ProfileTab';
-import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
+import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
+
+function TabLoadingFallback() {
+  return (
+    <div style={{ color: C.muted, padding: '24px', fontFamily: FONTS.serif }}>
+      …
+    </div>
+  );
+}
+
+const CompareTabLoader = dynamic(
+  () => import('./tabs/CompareTabLoader').then((m) => ({ default: m.CompareTabLoader })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const CompatTab = dynamic(
+  () => import('./tabs/CompatTab').then((m) => ({ default: m.CompatTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const CompaniesAdminTab = dynamic(
+  () => import('./tabs/CompaniesAdminTab').then((m) => ({ default: m.CompaniesAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const GroupTab = dynamic(
+  () => import('./tabs/GroupTab').then((m) => ({ default: m.GroupTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const LeadershipTab = dynamic(
+  () => import('./tabs/LeadershipTab').then((m) => ({ default: m.LeadershipTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const OverviewTab = dynamic(
+  () => import('./tabs/OverviewTab').then((m) => ({ default: m.OverviewTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const UsersAdminTab = dynamic(
+  () => import('./tabs/UsersAdminTab').then((m) => ({ default: m.UsersAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const VacanciesAdminTab = dynamic(
+  () => import('./tabs/VacanciesAdminTab').then((m) => ({ default: m.VacanciesAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const MotivatorsAdminTab = dynamic(() => import('./tabs/MotivatorsAdminTab'), {
+  loading: () => <TabLoadingFallback />,
+});
+const HelpTab = dynamic(
+  () => import('./tabs/HelpTab').then((m) => ({ default: m.HelpTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const ProfileTab = dynamic(
+  () => import('../_components/ProfileTab').then((m) => ({ default: m.ProfileTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
+
+/** Tabs that use the shared assessment filter chrome (area/vacancy/hist). */
+const COHORT_TABS = new Set([
+  'overview',
+  'team',
+  'compatibility',
+  'compare',
+  'group',
+  'leadership',
+]);
 
 function NavIcon({ name }) {
   const props = {
@@ -217,6 +269,11 @@ export default function DashboardClient({
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
   const typeData = getTypeData(locale);
+  const [sessionAuth, setSessionAuth] = useState(auth);
+
+  useEffect(() => {
+    setSessionAuth(auth);
+  }, [auth]);
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -226,6 +283,7 @@ export default function DashboardClient({
   const isAdmin = (auth?.role || '') === 'admin';
   const canManage = ['admin', 'hr', 'direction'].includes(auth?.role || '');
   const tab = parseDashboardTab(urlParams, { canVacancies: canManage, isAdmin });
+  const showsCohortChrome = COHORT_TABS.has(tab);
 
   useEffect(() => {
     setArea(selectedArea);
@@ -690,7 +748,7 @@ export default function DashboardClient({
           </div>
           <DashboardTopBarMenus
             locale={locale}
-            auth={auth}
+            auth={sessionAuth}
             navigateToTab={navigateToTab}
             onLogout={logout}
             onNavigateHref={(href) => {
@@ -718,14 +776,28 @@ export default function DashboardClient({
                 {t(locale, 'dashboard.title')}
               </h2>
               <span style={{ fontSize: '13px', color: C.muted }}>
-                {listTotal} {listTotal === 1 ? t(locale, 'dashboard.assessmentSingular') : t(locale, 'dashboard.assessmentPlural')}
-                {pagination.total > 0 && tab === 'team' ? (
-                  <span style={{ color: C.faint }}>
-                    {' '}· {t(locale, 'dashboard.pageInfo', { page: pagination.page, totalPages: pagination.totalPages, pageSize: pagination.pageSize })}
-                  </span>
+                {showsCohortChrome ? (
+                  <>
+                    {listTotal}{' '}
+                    {listTotal === 1
+                      ? t(locale, 'dashboard.assessmentSingular')
+                      : t(locale, 'dashboard.assessmentPlural')}
+                    {pagination.total > 0 && tab === 'team' ? (
+                      <span style={{ color: C.faint }}>
+                        {' '}
+                        ·{' '}
+                        {t(locale, 'dashboard.pageInfo', {
+                          page: pagination.page,
+                          totalPages: pagination.totalPages,
+                          pageSize: pagination.pageSize,
+                        })}
+                      </span>
+                    ) : null}
+                  </>
                 ) : null}
               </span>
             </div>
+            {showsCohortChrome ? (
             <a
               href={exportUrl}
               style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
@@ -736,9 +808,11 @@ export default function DashboardClient({
             >
               ↓ {t(locale, 'dashboard.exportCsv')}
             </a>
+            ) : null}
           </div>
 
-          {/* Filter row */}
+          {/* Filter row — assessment cohort tabs only */}
+          {showsCohortChrome ? (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
             {isAdmin && companies.length > 0 ? (
               <select
@@ -841,9 +915,12 @@ export default function DashboardClient({
               />
             </div>
           </div>
+          ) : (
+            <div style={{ marginBottom: '12px' }} />
+          )}
 
           {/* Active filter chips */}
-          {activeChips.length > 0 && (
+          {showsCohortChrome && activeChips.length > 0 && (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
               {activeChips.map((chip) => (
                 <span key={chip.key} style={S.filterChip}>
@@ -871,13 +948,7 @@ export default function DashboardClient({
             </div>
           )}
 
-          {compatMetrics.total === 0
-            && tab !== 'companies'
-            && tab !== 'users'
-            && tab !== 'vacancies'
-            && tab !== 'motivators'
-            && tab !== 'help'
-            && tab !== 'overview' ? (
+          {showsCohortChrome && compatMetrics.total === 0 && tab !== 'overview' ? (
             <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
               <p style={{ color: C.muted, fontStyle: 'italic' }}>
@@ -1021,9 +1092,7 @@ export default function DashboardClient({
               )}
               {tab === 'vacancies' && canManage && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'motivators' && canManage && (
-                <Suspense fallback={<div style={{ color: C.muted, padding: '24px' }}>{t(locale, 'common.loading')}</div>}>
-                  <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
-                </Suspense>
+                <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
               )}
               {tab === 'companies' && isAdmin && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && isAdmin && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
@@ -1032,7 +1101,15 @@ export default function DashboardClient({
                 <ProfileTab
                   locale={locale}
                   onLocaleChange={setLocale}
-                  onProfileSaved={() => {}}
+                  onProfileSaved={(user) => {
+                    if (!user) return;
+                    setSessionAuth((prev) => ({
+                      ...(prev || {}),
+                      displayName: user.displayName != null ? user.displayName : prev?.displayName,
+                      email: user.email || prev?.email,
+                      locale: user.locale || prev?.locale,
+                    }));
+                  }}
                 />
               )}
               {tab === 'group' && (

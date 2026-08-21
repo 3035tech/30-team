@@ -23,9 +23,26 @@ import {
   buildLeadershipPotentialsByCompany,
   globalTopTypeCounts,
   rubricAlignmentShare,
+  LEADERSHIP_SCORES_SAMPLE_CAP,
+  LEADERSHIP_POTENTIALS_SCAN_CAP,
 } from '../../lib/leadership-analytics';
 import { buildOverviewMetrics } from '../../lib/overview-metrics';
 import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles';
+
+/** Max rows in the vacancy filter dropdown (cohort tabs only). */
+const VACANCIES_FILTER_CAP = 200;
+
+/** Cap when recomputing area_stats from raw scores on a request. */
+const AREA_STATS_SCORES_CAP = 5000;
+
+const COHORT_TABS = new Set([
+  'overview',
+  'team',
+  'compatibility',
+  'compare',
+  'group',
+  'leadership',
+]);
 
 function computeStatsFromScores(rows) {
   const sums = {};
@@ -98,10 +115,16 @@ export default async function DashboardPage({ searchParams }) {
 
   const canManage = ['admin', 'hr', 'direction'].includes(payload?.role || '');
   const activeTab = parseDashboardTab(searchParams, { canVacancies: canManage, isAdmin });
+  const needCohortChrome = COHORT_TABS.has(activeTab);
   const needTeam = activeTab === 'team';
-  const needCompat = activeTab === 'compatibility' || activeTab === 'compare' || activeTab === 'group';
+  const needCompatPairs = activeTab === 'compatibility';
+  const needGroupPeople = activeTab === 'group';
   const needOverview = activeTab === 'overview';
   const needLeadership = activeTab === 'leadership';
+  const needVacanciesFilter = needCohortChrome;
+  const needAreaCounts = needCohortChrome;
+  const needListMetrics = needCohortChrome;
+  const needCompaniesFilter = isAdmin && (needCohortChrome || activeTab === 'motivators');
 
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
@@ -137,12 +160,15 @@ export default async function DashboardPage({ searchParams }) {
   let overviewMetrics = null;
 
   try {
-    const a = await queryRead(`SELECT key, label FROM areas ORDER BY label ASC`);
+    const areasPromise = queryRead(`SELECT key, label FROM areas ORDER BY label ASC`);
+    const companiesPromise = needCompaniesFilter
+      ? queryRead(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`)
+      : Promise.resolve(null);
+
+    const [a, cos] = await Promise.all([areasPromise, companiesPromise]);
     areas = a.rows;
 
-    // Admin may filter by ?company=ID; other roles always use the session company.
-    if (isAdmin) {
-      const cos = await queryRead(`SELECT id, name FROM companies WHERE deleted = FALSE ORDER BY name ASC`);
+    if (cos) {
       companiesForFilter = cos.rows;
       if (rawCompany !== 'all') {
         const cid = parseInt(rawCompany, 10);
@@ -150,65 +176,99 @@ export default async function DashboardPage({ searchParams }) {
           scopeCompanyFilter = cid;
         }
       }
+    } else if (isAdmin && rawCompany !== 'all') {
+      // Cohort tabs with company in URL but companies list skipped — still honor scope.
+      const cid = parseInt(rawCompany, 10);
+      if (Number.isFinite(cid)) scopeCompanyFilter = cid;
     }
 
-    const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
-    const vParams = [];
-    if (!isAdmin) {
-      vParams.push(companyId);
-      vWhereParts.push(`v.company_id = $${vParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      vParams.push(scopeCompanyFilter);
-      vWhereParts.push(`v.company_id = $${vParams.length}`);
-    }
-    const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
-    const v = await queryRead(
-      `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
-       FROM vacancies v
-       JOIN companies c ON c.id = v.company_id
-       ${vWhere}
-       ORDER BY v.created_at DESC`,
-      vParams
-    );
-    vacancies = v.rows;
+    if (needVacanciesFilter) {
+      const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
+      const vParams = [];
+      if (!isAdmin) {
+        vParams.push(companyId);
+        vWhereParts.push(`v.company_id = $${vParams.length}`);
+      } else if (scopeCompanyFilter != null) {
+        vParams.push(scopeCompanyFilter);
+        vWhereParts.push(`v.company_id = $${vParams.length}`);
+      }
+      const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
+      vParams.push(VACANCIES_FILTER_CAP);
+      const v = await queryRead(
+        `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
+         FROM vacancies v
+         JOIN companies c ON c.id = v.company_id
+         ${vWhere}
+         ORDER BY (v.status = 'open') DESC, v.created_at DESC
+         LIMIT $${vParams.length}`,
+        vParams
+      );
+      vacancies = v.rows;
 
-    if (needTeam) {
-      const vacIdsForRubrics = vacancies.map((x) => x.id).filter((id) => id != null);
-      if (vacIdsForRubrics.length > 0) {
-        const vr = await queryRead(
-          `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
-           FROM vacancy_rubrics WHERE vacancy_id = ANY($1::bigint[])`,
-          [vacIdsForRubrics]
-        );
-        vacancyRubricByVacancyId = Object.fromEntries(
-          vr.rows.map((row) => [
-            String(row.vacancyId),
-            row.weights && typeof row.weights === 'object' ? row.weights : {},
-          ])
-        );
+      // Keep the currently selected vacancy visible even if outside the cap window.
+      if (selectedVacancy !== 'all') {
+        const selId = parseInt(selectedVacancy, 10);
+        if (Number.isFinite(selId) && !vacancies.some((x) => Number(x.id) === selId)) {
+          const oneParams = [selId];
+          let oneExtra = '';
+          if (!isAdmin) {
+            oneParams.push(companyId);
+            oneExtra = ` AND v.company_id = $2`;
+          } else if (scopeCompanyFilter != null) {
+            oneParams.push(scopeCompanyFilter);
+            oneExtra = ` AND v.company_id = $2`;
+          }
+          const one = await queryRead(
+            `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
+             FROM vacancies v
+             JOIN companies c ON c.id = v.company_id AND c.deleted = FALSE
+             WHERE v.deleted = FALSE AND v.id = $1${oneExtra}
+             LIMIT 1`,
+            oneParams
+          );
+          if (one.rowCount) vacancies = [...vacancies, ...one.rows];
+        }
       }
     }
 
-    const countWhereParts = [];
-    const cParams = [];
-    if (!isAdmin) {
-      cParams.push(companyId);
-      countWhereParts.push(`ass.company_id = $${cParams.length}`);
-    } else if (scopeCompanyFilter != null) {
-      cParams.push(scopeCompanyFilter);
-      countWhereParts.push(`ass.company_id = $${cParams.length}`);
+    if (needTeam && selectedVacancy !== 'all') {
+      const selId = parseInt(selectedVacancy, 10);
+      if (Number.isFinite(selId) && vacancyRubricByVacancyId[String(selId)] == null) {
+        const vrOne = await queryRead(
+          `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
+           FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
+          [selId]
+        );
+        if (vrOne.rowCount) {
+          const row = vrOne.rows[0];
+          vacancyRubricByVacancyId[String(row.vacancyId)] =
+            row.weights && typeof row.weights === 'object' ? row.weights : {};
+        }
+      }
     }
-    const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
-    const c = await queryRead(
-      `SELECT ar.key, ar.label, COUNT(*)::int AS count
-       FROM assessments ass
-       JOIN areas ar ON ar.id = ass.area_id
-       ${cWhere}
-       GROUP BY ar.key, ar.label
-       ORDER BY ar.label ASC`,
-      cParams
-    );
-    counts = c.rows;
+
+    if (needAreaCounts) {
+      const countWhereParts = [];
+      const cParams = [];
+      if (!isAdmin) {
+        cParams.push(companyId);
+        countWhereParts.push(`ass.company_id = $${cParams.length}`);
+      } else if (scopeCompanyFilter != null) {
+        cParams.push(scopeCompanyFilter);
+        countWhereParts.push(`ass.company_id = $${cParams.length}`);
+      }
+      const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
+      const c = await queryRead(
+        `SELECT ar.key, ar.label, COUNT(*)::int AS count
+         FROM assessments ass
+         JOIN areas ar ON ar.id = ass.area_id
+         ${cWhere}
+         GROUP BY ar.key, ar.label
+         ORDER BY ar.label ASC`,
+        cParams
+      );
+      counts = c.rows;
+    }
 
     const { page, pageSize, enneagram: enneParsed } = parseDashboardPagination(searchParams);
     enneagram = enneParsed;
@@ -223,8 +283,8 @@ export default async function DashboardPage({ searchParams }) {
       if (areaId) {
         if (isAdmin && scopeCompanyFilter != null) {
           const raw = await queryRead(
-            `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2`,
-            [scopeCompanyFilter, areaId]
+            `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2 LIMIT $3`,
+            [scopeCompanyFilter, areaId, AREA_STATS_SCORES_CAP]
           );
           areaStats = computeStatsFromScores(raw.rows);
         } else {
@@ -239,9 +299,17 @@ export default async function DashboardPage({ searchParams }) {
               n: statsRow.rows[0].n,
             };
           } else {
-            const rawWhere = isAdmin ? `WHERE area_id = $1` : `WHERE company_id = $1 AND area_id = $2`;
-            const rawParams = isAdmin ? [areaId] : [companyId, areaId];
-            const raw = await queryRead(`SELECT scores FROM assessments ${rawWhere}`, rawParams);
+            const rawWhere = isAdmin
+              ? `WHERE area_id = $1`
+              : `WHERE company_id = $1 AND area_id = $2`;
+            const rawParams = isAdmin
+              ? [areaId, AREA_STATS_SCORES_CAP]
+              : [companyId, areaId, AREA_STATS_SCORES_CAP];
+            const limIx = rawParams.length;
+            const raw = await queryRead(
+              `SELECT scores FROM assessments ${rawWhere} LIMIT $${limIx}`,
+              rawParams
+            );
             areaStats = computeStatsFromScores(raw.rows);
             await query(
               `INSERT INTO area_stats (area_id, type_means, type_stds, n, computed_at)
@@ -278,240 +346,286 @@ export default async function DashboardPage({ searchParams }) {
       rubricByAreaKey = Object.fromEntries(rubAll.rows.map((x) => [x.areaKey, x.weights || {}]));
     }
 
-    const BASE_JOIN_LIST = `
+    if (needListMetrics || needTeam || needCompatPairs || needGroupPeople || needOverview || needLeadership) {
+      const BASE_JOIN_LIST = `
 FROM assessments ass
 JOIN candidates c ON c.id = ass.candidate_id
 JOIN areas ar ON ar.id = ass.area_id
 LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 `;
 
-    // Same filter scope without candidates join — for Leadership aggregations.
-    const ANALYTICS_ASSESSMENT_JOIN = `
+      const ANALYTICS_ASSESSMENT_JOIN = `
 FROM assessments ass
 JOIN areas ar ON ar.id = ass.area_id
 LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 `;
 
-    const { whereParts, params } = assessmentListWhereParts({
-      isAdmin,
-      companyId,
-      scopeCompanyFilter,
-      selectedArea,
-      selectedVacancy,
-      enneagram,
-      pipelineStage: selectedPipeline,
-      dateFrom: selectedDateFrom,
-      dateTo: selectedDateTo,
-      rosterScope: selectedRoster,
-    });
-    const assessmentWhere = sqlWhere(whereParts);
-
-    const extWhereParts = nameSearch
-      ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
-      : whereParts;
-    const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
-    const candidateWhere = sqlWhere(extWhereParts);
-
-    const cntRes = await queryRead(
-      `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
-      extParams
-    );
-    const listTotal = cntRes.rows[0]?.n ?? 0;
-    const totalPagesSafe = Math.max(1, Math.ceil(listTotal / pageSize));
-    const effectivePage = listTotal === 0 ? 1 : Math.min(page, totalPagesSafe);
-    pagination = {
-      page: effectivePage,
-      pageSize,
-      total: listTotal,
-      totalPages: totalPagesSafe,
-    };
-
-    const typeCountAgg = { ...EMPTY_TYPE_COUNT };
-    const histRes = await queryRead(
-      `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
-       ${BASE_JOIN_LIST}
-       ${candidateWhere}
-       GROUP BY ass.top_type`,
-      extParams
-    );
-    for (const row of histRes.rows) {
-      const tt = row.topType;
-      if (typeof tt === 'number' && tt >= 1 && tt <= 9) typeCountAgg[tt] = row.n;
-    }
-
-    compatMetrics = {
-      ...compatMetrics,
-      typeCount: typeCountAgg,
-      total: listTotal,
-    };
-
-    if (needCompat) {
-      const lightParams = [...extParams, COMPAT_PEOPLE_CAP];
-      const lightRes = await queryRead(
-        `SELECT ass.id AS "assessmentId",
-                c.id AS "candidateId",
-                c.full_name AS name,
-                ass.top_type AS "topType",
-                ar.label AS "areaLabel"
-         ${BASE_JOIN_LIST}
-         ${candidateWhere}
-         ${teamOrderSql}
-         LIMIT $${lightParams.length}`,
-        lightParams
-      );
-      const bundles = buildCompatBundles(lightRes.rows, locale, { peopleCap: COMPAT_PEOPLE_CAP });
-      // Cap is applied in SQL; flag when the filtered total exceeds the cohort size.
-      const capped = listTotal > COMPAT_PEOPLE_CAP;
-      compatMetrics = {
-        pairs: bundles.pairs,
-        tensions: bundles.tensions,
-        synergies: bundles.synergies,
-        typeCount: typeCountAgg,
-        total: listTotal,
-        capped,
-        peopleCap: COMPAT_PEOPLE_CAP,
-      };
-      interactionPeople = bundles.people;
-    }
-
-    if (needOverview) {
-      overviewMetrics = await buildOverviewMetrics({
+      const { whereParts, params } = assessmentListWhereParts({
         isAdmin,
         companyId,
         scopeCompanyFilter,
         selectedArea,
         selectedVacancy,
         enneagram,
+        pipelineStage: selectedPipeline,
         dateFrom: selectedDateFrom,
         dateTo: selectedDateTo,
-        nameSearch,
-        typeCount: typeCountAgg,
         rosterScope: selectedRoster,
       });
-    }
+      const assessmentWhere = sqlWhere(whereParts);
 
-    if (needTeam) {
-      const enrichCtx = { selectedArea, areaStats, areaRubric, rubricByAreaKey, vacancyRubricByVacancyId };
-      const pageParams = [...extParams];
-      pageParams.push(pageSize);
-      const limIx = pageParams.length;
-      pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
-      const offIx = pageParams.length;
-      const pageRes = await queryRead(
-        `SELECT
-           ass.id AS "assessmentId",
-           c.id AS "candidateId",
-           c.full_name AS name,
-           ar.key AS "areaKey",
-           ar.label AS "areaLabel",
-           ass.vacancy_id AS "vacancyId",
-           v.title AS "vacancyTitle",
-           ass.top_type AS "topType",
-           ass.scores,
-           ass.created_at AS "createdAt",
-           ass.pipeline_stage AS "pipelineStage",
-           ass.invite_id AS "inviteId"
-         ${BASE_JOIN_LIST}
-         ${candidateWhere}
-         ${teamOrderSql}
-         LIMIT $${limIx} OFFSET $${offIx}`,
-        pageParams
-      );
-      results = pageRes.rows.map((r) => enrichAssessmentDashboardRow(r, enrichCtx));
-    }
+      const extWhereParts = nameSearch
+        ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
+        : whereParts;
+      const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
+      const candidateWhere = sqlWhere(extWhereParts);
 
-    if (needLeadership) {
-      const [distAgg, monthlyAgg, totalsAgg, scoresAll] = await Promise.all([
-        queryRead(
-          `SELECT ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType", COUNT(*)::int AS cnt
-           ${ANALYTICS_ASSESSMENT_JOIN}
-           ${assessmentWhere}
-           GROUP BY ar.key, ar.label, ass.top_type
-           ORDER BY ar.label, ass.top_type`,
-          params
-        ),
-        queryRead(
-          `SELECT to_char(date_trunc('month', ass.created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
-           ${ANALYTICS_ASSESSMENT_JOIN}
-           ${assessmentWhere}
-           GROUP BY 1
-           ORDER BY 1`,
-          params
-        ),
-        queryRead(
-          `SELECT
-             COUNT(*)::int AS assessments,
-             COUNT(DISTINCT ass.candidate_id)::int AS candidates,
-             COUNT(DISTINCT ass.area_id)::int AS areas_active
-           ${ANALYTICS_ASSESSMENT_JOIN}
-           ${assessmentWhere}`,
-          params
-        ),
-        // Only on Leadership tab — powers avgFit010 per area.
-        queryRead(
-          `SELECT ar.key AS "areaKey", ass.scores
-           ${ANALYTICS_ASSESSMENT_JOIN}
-           ${assessmentWhere}`,
-          params
-        ),
-      ]);
+      let listTotal = 0;
+      let typeCountAgg = { ...EMPTY_TYPE_COUNT };
 
-      const scoresRowsByKey = {};
-      for (const row of scoresAll.rows) {
-        const k = row.areaKey;
-        if (!scoresRowsByKey[k]) scoresRowsByKey[k] = [];
-        scoresRowsByKey[k].push({ scores: row.scores });
+      if (needListMetrics) {
+        const [cntRes, histRes] = await Promise.all([
+          queryRead(
+            `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
+            extParams
+          ),
+          queryRead(
+            `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
+             ${BASE_JOIN_LIST}
+             ${candidateWhere}
+             GROUP BY ass.top_type`,
+            extParams
+          ),
+        ]);
+        listTotal = cntRes.rows[0]?.n ?? 0;
+        for (const row of histRes.rows) {
+          const tt = row.topType;
+          if (typeof tt === 'number' && tt >= 1 && tt <= 9) typeCountAgg[tt] = row.n;
+        }
+        const totalPagesSafe = Math.max(1, Math.ceil(listTotal / pageSize));
+        const effectivePage = listTotal === 0 ? 1 : Math.min(page, totalPagesSafe);
+        pagination = {
+          page: effectivePage,
+          pageSize,
+          total: listTotal,
+          totalPages: totalPagesSafe,
+        };
+        compatMetrics = {
+          ...compatMetrics,
+          typeCount: typeCountAgg,
+          total: listTotal,
+        };
       }
 
-      const areaSummaries = buildAreaSummaries(
-        distAgg.rows,
-        areas,
-        scoresRowsByKey,
-        rubricByAreaKey
-      ).map((s) => ({
-        ...s,
-        rubricAlignPct: rubricAlignmentShare(s.topTypeCounts, rubricByAreaKey[s.areaKey] || {}),
-      }));
-      const gCounts = globalTopTypeCounts(distAgg.rows);
-      const gTotal = Object.values(gCounts).reduce((a, b) => a + b, 0);
-      const tRow = totalsAgg.rows[0] || {};
-
-      let leadershipPotentials = [];
-      try {
-        const latestCand = await queryRead(
-          `SELECT DISTINCT ON (ass.candidate_id, ass.company_id)
-             ass.company_id AS "companyId",
-             co.name AS "companyName",
-             ass.candidate_id AS "candidateId",
-             cand.full_name AS name,
-             ass.scores,
-             ass.top_type AS "topType"
-           FROM assessments ass
-           JOIN candidates cand ON cand.id = ass.candidate_id
-           JOIN companies co ON co.id = ass.company_id AND co.deleted = FALSE
-           JOIN areas ar ON ar.id = ass.area_id
-           LEFT JOIN vacancies v ON v.id = ass.vacancy_id
-           ${assessmentWhere}
-           ORDER BY ass.candidate_id, ass.company_id, ass.created_at DESC`,
-          params
+      if (needCompatPairs || needGroupPeople) {
+        const lightParams = [...extParams, COMPAT_PEOPLE_CAP];
+        const lightRes = await queryRead(
+          `SELECT ass.id AS "assessmentId",
+                  c.id AS "candidateId",
+                  c.full_name AS name,
+                  ass.top_type AS "topType",
+                  ar.label AS "areaLabel"
+           ${BASE_JOIN_LIST}
+           ${candidateWhere}
+           ${teamOrderSql}
+           LIMIT $${lightParams.length}`,
+          lightParams
         );
-        leadershipPotentials = buildLeadershipPotentialsByCompany(latestCand.rows, { topPerCompany: 6 });
-      } catch (le) {
-        console.error('Failed to build leadership potentials by company:', le);
+        const bundles = buildCompatBundles(lightRes.rows, locale, {
+          peopleCap: COMPAT_PEOPLE_CAP,
+          includePairs: needCompatPairs,
+        });
+        const capped = listTotal > COMPAT_PEOPLE_CAP;
+        if (needCompatPairs) {
+          compatMetrics = {
+            pairs: bundles.pairs,
+            tensions: bundles.tensions,
+            synergies: bundles.synergies,
+            typeCount: typeCountAgg,
+            total: listTotal,
+            capped,
+            peopleCap: COMPAT_PEOPLE_CAP,
+          };
+        }
+        interactionPeople = bundles.people;
       }
 
-      analytics = {
-        kpis: {
-          assessments: tRow.assessments ?? 0,
-          candidates: tRow.candidates ?? 0,
-          areasActive: tRow.areas_active ?? 0,
-        },
-        monthlyTrend: monthlyAgg.rows.map((r) => ({ period: r.period, cnt: r.cnt })),
-        globalTopTypeCounts: gCounts,
-        globalTotal: gTotal,
-        areaSummaries,
-        leadershipPotentials,
-      };
+      if (needOverview) {
+        overviewMetrics = await buildOverviewMetrics({
+          isAdmin,
+          companyId,
+          scopeCompanyFilter,
+          selectedArea,
+          selectedVacancy,
+          enneagram,
+          dateFrom: selectedDateFrom,
+          dateTo: selectedDateTo,
+          nameSearch,
+          typeCount: typeCountAgg,
+          rosterScope: selectedRoster,
+        });
+      }
+
+      if (needTeam) {
+        const effectivePage = pagination.page;
+        const pageParams = [...extParams];
+        pageParams.push(pageSize);
+        const limIx = pageParams.length;
+        pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
+        const offIx = pageParams.length;
+        const pageRes = await queryRead(
+          `SELECT
+             ass.id AS "assessmentId",
+             c.id AS "candidateId",
+             c.full_name AS name,
+             ar.key AS "areaKey",
+             ar.label AS "areaLabel",
+             ass.vacancy_id AS "vacancyId",
+             v.title AS "vacancyTitle",
+             ass.top_type AS "topType",
+             ass.scores,
+             ass.created_at AS "createdAt",
+             ass.pipeline_stage AS "pipelineStage",
+             ass.invite_id AS "inviteId"
+           ${BASE_JOIN_LIST}
+           ${candidateWhere}
+           ${teamOrderSql}
+           LIMIT $${limIx} OFFSET $${offIx}`,
+          pageParams
+        );
+
+        const pageVacIds = [
+          ...new Set(
+            pageRes.rows
+              .map((r) => r.vacancyId)
+              .filter((id) => id != null)
+              .map((id) => Number(id))
+              .filter((id) => Number.isFinite(id))
+          ),
+        ];
+        if (pageVacIds.length > 0) {
+          const vr = await queryRead(
+            `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
+             FROM vacancy_rubrics WHERE vacancy_id = ANY($1::bigint[])`,
+            [pageVacIds]
+          );
+          for (const row of vr.rows) {
+            vacancyRubricByVacancyId[String(row.vacancyId)] =
+              row.weights && typeof row.weights === 'object' ? row.weights : {};
+          }
+        }
+
+        const enrichCtx = {
+          selectedArea,
+          areaStats,
+          areaRubric,
+          rubricByAreaKey,
+          vacancyRubricByVacancyId,
+        };
+        results = pageRes.rows.map((r) => enrichAssessmentDashboardRow(r, enrichCtx));
+      }
+
+      if (needLeadership) {
+        const scoresParams = [...params, LEADERSHIP_SCORES_SAMPLE_CAP];
+        const [distAgg, monthlyAgg, totalsAgg, scoresAll] = await Promise.all([
+          queryRead(
+            `SELECT ar.key AS "areaKey", ar.label AS "areaLabel", ass.top_type AS "topType", COUNT(*)::int AS cnt
+             ${ANALYTICS_ASSESSMENT_JOIN}
+             ${assessmentWhere}
+             GROUP BY ar.key, ar.label, ass.top_type
+             ORDER BY ar.label, ass.top_type`,
+            params
+          ),
+          queryRead(
+            `SELECT to_char(date_trunc('month', ass.created_at), 'YYYY-MM') AS period, COUNT(*)::int AS cnt
+             ${ANALYTICS_ASSESSMENT_JOIN}
+             ${assessmentWhere}
+             GROUP BY 1
+             ORDER BY 1`,
+            params
+          ),
+          queryRead(
+            `SELECT
+               COUNT(*)::int AS assessments,
+               COUNT(DISTINCT ass.candidate_id)::int AS candidates,
+               COUNT(DISTINCT ass.area_id)::int AS areas_active
+             ${ANALYTICS_ASSESSMENT_JOIN}
+             ${assessmentWhere}`,
+            params
+          ),
+          queryRead(
+            `SELECT ar.key AS "areaKey", ass.scores
+             ${ANALYTICS_ASSESSMENT_JOIN}
+             ${assessmentWhere}
+             ORDER BY ass.created_at DESC
+             LIMIT $${scoresParams.length}`,
+            scoresParams
+          ),
+        ]);
+
+        const scoresRowsByKey = {};
+        for (const row of scoresAll.rows) {
+          const k = row.areaKey;
+          if (!scoresRowsByKey[k]) scoresRowsByKey[k] = [];
+          scoresRowsByKey[k].push({ scores: row.scores });
+        }
+
+        const areaSummaries = buildAreaSummaries(
+          distAgg.rows,
+          areas,
+          scoresRowsByKey,
+          rubricByAreaKey
+        ).map((s) => ({
+          ...s,
+          rubricAlignPct: rubricAlignmentShare(s.topTypeCounts, rubricByAreaKey[s.areaKey] || {}),
+        }));
+        const gCounts = globalTopTypeCounts(distAgg.rows);
+        const gTotal = Object.values(gCounts).reduce((a, b) => a + b, 0);
+        const tRow = totalsAgg.rows[0] || {};
+
+        let leadershipPotentials = [];
+        try {
+          const potParams = [...params, LEADERSHIP_POTENTIALS_SCAN_CAP];
+          const latestCand = await queryRead(
+            `SELECT * FROM (
+               SELECT DISTINCT ON (ass.candidate_id, ass.company_id)
+                 ass.company_id AS "companyId",
+                 co.name AS "companyName",
+                 ass.candidate_id AS "candidateId",
+                 cand.full_name AS name,
+                 ass.scores,
+                 ass.top_type AS "topType"
+               FROM assessments ass
+               JOIN candidates cand ON cand.id = ass.candidate_id
+               JOIN companies co ON co.id = ass.company_id AND co.deleted = FALSE
+               JOIN areas ar ON ar.id = ass.area_id
+               LEFT JOIN vacancies v ON v.id = ass.vacancy_id
+               ${assessmentWhere}
+               ORDER BY ass.candidate_id, ass.company_id, ass.created_at DESC
+             ) latest
+             LIMIT $${potParams.length}`,
+            potParams
+          );
+          leadershipPotentials = buildLeadershipPotentialsByCompany(latestCand.rows, {
+            topPerCompany: 6,
+          });
+        } catch (le) {
+          console.error('Failed to build leadership potentials by company:', le);
+        }
+
+        analytics = {
+          kpis: {
+            assessments: tRow.assessments ?? 0,
+            candidates: tRow.candidates ?? 0,
+            areasActive: tRow.areas_active ?? 0,
+          },
+          monthlyTrend: monthlyAgg.rows.map((r) => ({ period: r.period, cnt: r.cnt })),
+          globalTopTypeCounts: gCounts,
+          globalTotal: gTotal,
+          areaSummaries,
+          leadershipPotentials,
+        };
+      }
     }
   } catch (e) {
     console.error('Failed to fetch results:', e);

@@ -98,35 +98,26 @@ export async function GET(request, { params }) {
     return base;
   });
 
-  await audit({
-    actorUserId: payload.userId || null,
-    action: 'candidate.export_json',
-    targetType: 'candidate',
-    targetId: id,
-  });
+  const { searchParams } = new URL(request.url);
+  const loc = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
 
-  let timeline = [];
-  try {
-    timeline = await buildCandidateTimeline(id);
-  } catch (e) {
-    console.error('candidate timeline:', e);
-  }
-
-  let people = null;
-  try {
-    const { searchParams } = new URL(request.url);
-    const loc = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
-    people = await buildCandidatePeopleBrief(query, {
+  const [timeline, people] = await Promise.all([
+    buildCandidateTimeline(id).catch((e) => {
+      console.error('candidate timeline:', e);
+      return [];
+    }),
+    buildCandidatePeopleBrief(query, {
       candidateId: id,
       companyId: c.rows[0].companyId,
       isAdmin,
       locale: loc,
       scores: assessmentsWithHistory[0]?.scores || null,
       topType: assessmentsWithHistory[0]?.topType ?? null,
-    });
-  } catch (e) {
-    console.error('candidate people brief:', e);
-  }
+    }).catch((e) => {
+      console.error('candidate people brief:', e);
+      return null;
+    }),
+  ]);
 
   return NextResponse.json({
     candidate: c.rows[0],
