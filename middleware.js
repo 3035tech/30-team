@@ -28,6 +28,12 @@ export async function middleware(request) {
     const payload = token ? await verifyTokenEdge(token) : null;
 
     if (!isManagerRole(payload)) {
+      // APIs: 401 JSON (fetch não deve seguir redirect HTML e “sumir” dados no SPA)
+      if (pathname.startsWith('/api/')) {
+        return withSecurityHeaders(
+          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: 'UNAUTHORIZED' }, { status: 401 })
+        );
+      }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return withSecurityHeaders(NextResponse.redirect(loginUrl));
