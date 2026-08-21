@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { getKanbanStages, S, TypeBadge } from '../dashboard-shared';
+import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
@@ -13,6 +13,7 @@ import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
@@ -29,7 +30,7 @@ function nearbyCluster(scores) {
 function NearbyTypeBadges({ scores, topType, locale }) {
   const extras = nearbyCluster(scores).filter((item) => item.type !== topType);
   if (extras.length === 0) return null;
-  return extras.map((item) => <TypeBadge key={item.type} type={item.type} locale={locale} />);
+  return extras.map((item) => <TypeBadge key={item.type} type={item.type} locale={locale} compact />);
 }
 
 const PIPELINE_OPTIONS = [
@@ -142,6 +143,7 @@ export function TeamTab({
   focusCandidateId = null,
 }) {
   const [open, setOpen] = useState(null);
+  const [personTab, setPersonTab] = useState('style');
   const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -183,6 +185,7 @@ export function TeamTab({
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
+      setPersonTab('style');
       loadDetail(cid);
       return;
     }
@@ -195,10 +198,14 @@ export function TeamTab({
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
+      setPersonTab('style');
       return;
     }
     const aid = detail.assessments?.[0]?.id;
-    if (aid) setOpen(String(aid));
+    if (aid) {
+      setOpen(String(aid));
+      setPersonTab('style');
+    }
   }, [detail, focusCandidateId, results]);
 
   const commitSearch = () => {
@@ -424,6 +431,26 @@ export function TeamTab({
     });
   };
 
+  let openRow = (results || []).find((row) => String(row.assessmentId) === String(open)) || null;
+  if (!openRow && open && detail?.candidate) {
+    const a = (detail.assessments || []).find((x) => String(x.id) === String(open))
+      || detail.assessments?.[0]
+      || null;
+    if (a) {
+      openRow = {
+        assessmentId: a.id,
+        candidateId: detail.candidate.id,
+        name: detail.candidate.fullName || detail.candidate.email || '',
+        scores: a.scores,
+        topType: a.topType,
+        pipelineStage: a.pipelineStage,
+      };
+    }
+  }
+  const openCluster = openRow?.scores
+    ? new Set(nearbyCluster(openRow.scores).map((item) => item.type))
+    : new Set();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div style={{ position: 'relative' }}>
@@ -594,8 +621,14 @@ export function TeamTab({
                             e.dataTransfer.effectAllowed = 'move';
                           }}
                           onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
+                          onClick={() => {
+                            if (draggingId) return;
+                            setOpen(rid);
+                            setPersonTab('style');
+                            if (r.candidateId) loadDetail(r.candidateId);
+                          }}
                           style={{ background: 'rgba(255,255,255,.92)',
-                            border: `1px solid ${C.border}`, borderRadius: '10px',
+                            border: `1px solid ${open === rid ? `${d.color}55` : C.border}`, borderRadius: '10px',
                             padding: '11px 13px', boxShadow: '0 1px 6px rgba(0,0,0,.05)',
                             opacity: isDragging ? 0.4 : 1, cursor: 'grab',
                             transition: 'opacity 0.15s', userSelect: 'none',
@@ -610,7 +643,7 @@ export function TeamTab({
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '7px' }}>
-                            <TypeBadge type={r.topType} locale={locale} />
+                            <TypeBadge type={r.topType} locale={locale} compact />
                             <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                             {r.areaLabel && (
                               <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
@@ -719,35 +752,16 @@ export function TeamTab({
         && detail?.candidate
         && String(detail.candidate.id) === String(focusCandidateId)
         && !(results || []).some((r) => String(r.candidateId) === String(focusCandidateId)) ? (
-        <div style={{ ...S.card, marginBottom: '16px' }}>
-          <div style={{ fontSize: '16px', marginBottom: '8px' }}>
-            {titleCasePersonName(detail.candidate.fullName || detail.candidate.email || '')}
-          </div>
-          <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.muted }}>
+        <div style={{ ...S.card, marginBottom: '16px', padding: '14px 18px' }}>
+          <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>
             {t(locale, 'dashboard.notifOpenOutsideFilters')}
           </p>
-          {detail.assessments?.[0]?.scores ? (
-            <TypeScoreChart
-              scores={detail.assessments[0].scores}
-              locale={locale}
-              highlightTypes={new Set([detail.assessments[0].topType].filter(Boolean))}
-            />
-          ) : null}
-          <PeopleManagementPanel
-            locale={locale}
-            candidateId={detail.candidate.id}
-            people={detail.people}
-            onRefresh={() => loadDetail(detail.candidate.id)}
-          />
-          {detail.timeline?.length ? (
-            <CandidateTimeline events={detail.timeline} locale={locale} currentStage={detail.assessments?.[0]?.pipelineStage} />
-          ) : null}
         </div>
       ) : null}
       {viewMode === 'list' && filtered.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
-        const isOpen = open === id;
+        const isSelected = open === id;
         const clusterTypes = new Set(nearbyCluster(r.scores).map((item) => item.type));
         const showVacancyFit = r.vacancyFitScore010 != null && r.vacancyFitScore010 !== undefined;
         const created = r.createdAt != null ? new Date(r.createdAt) : null;
@@ -763,17 +777,13 @@ export function TeamTab({
               padding: 0,
               overflow: 'hidden',
               cursor: 'pointer',
-              border: isOpen ? `1px solid ${d.color}44` : `1px solid ${C.border}`,
+              border: isSelected ? `1px solid ${d.color}44` : `1px solid ${C.border}`,
             }}
             onClick={() => {
-              const next = isOpen ? null : id;
-              setOpen(next);
-              if (next && r.candidateId) {
-                loadDetail(r.candidateId);
-              } else {
-                setDetail(null);
-                setDetailErr('');
-              }
+              setOpen(id);
+              setPersonTab('style');
+              if (r.candidateId) loadDetail(r.candidateId);
+              else { setDetail(null); setDetailErr(''); }
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 24px' }}>
@@ -812,7 +822,7 @@ export function TeamTab({
                   </div>
                 ) : null}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <TypeBadge type={r.topType} locale={locale} />
+                  <TypeBadge type={r.topType} locale={locale} compact />
                   <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
                     <span
@@ -916,39 +926,73 @@ export function TeamTab({
                     {t(locale, 'panel.team.deletePerson')}
                   </button>
                 ) : null}
-                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{isOpen ? '▲' : '▼'}</span>
+                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{t(locale, 'panel.team.openDetail')} →</span>
               </div>
             </div>
-            {isOpen && (
-              <div style={{ borderTop: `1px solid ${C.border}`, padding: '20px 24px' }} onClick={(e) => e.stopPropagation()}>
-                <EnneagramCross scores={r.scores} locale={locale} />
+          </div>
+        );
+      })}
+
+      <AdminRichFormDrawer
+        open={Boolean(open && openRow)}
+        title={openRow ? titleCasePersonName(openRow.name) : t(locale, 'panel.team.personDetailTitle')}
+        locale={locale}
+        onClose={() => { setOpen(null); setDetail(null); setDetailErr(''); setPersonTab('style'); }}
+        maxWidth="920px"
+      >
+        {openRow ? (
+          <div>
+            <PanelSubNav
+              ariaLabel={t(locale, 'panel.team.personTabsAria')}
+              active={personTab}
+              onChange={setPersonTab}
+              tabs={[
+                { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
+                { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
+                { id: 'history', label: t(locale, 'panel.team.personTabHistory') },
+                { id: 'profile', label: t(locale, 'panel.team.personTabProfile') },
+              ]}
+            />
+            {personTab === 'style' ? (
+              <div>
+                <EnneagramCross scores={openRow.scores} locale={locale} />
 
                 <div style={{ marginBottom: '16px' }}>
                   <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
-                  {clusterTypes.size > 1 ? (
+                  {openCluster.size > 1 ? (
                     <p style={{ margin: '0 0 8px', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
                       {t(locale, 'panel.team.scoresClusterHint')}
                     </p>
                   ) : null}
-                  <TypeScoreChart scores={r.scores} locale={locale} highlightTypes={clusterTypes} />
+                  <TypeScoreChart scores={openRow.scores} locale={locale} highlightTypes={openCluster} />
                 </div>
-
-                {!detailLoading && detail?.candidate?.id === r.candidateId ? (
+              </div>
+            ) : null}
+            {personTab === 'people' ? (
+              <div>
+                {detailLoading ? (
+                  <p style={{ margin: 0, fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>…</p>
+                ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
                   <PeopleManagementPanel
                     locale={locale}
                     candidateId={detail.candidate.id}
                     people={detail.people}
                     onRefresh={() => loadDetail(detail.candidate.id)}
                   />
-                ) : null}
-
-                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>—</p>
+                )}
+              </div>
+            ) : null}
+            {personTab === 'history' ? (
+              <div>
+<div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <span style={{ ...S.label, marginBottom: '8px', display: 'block', textAlign: 'center' }}>{t(locale, 'recruiting.timelineTitle')}</span>
                   <CandidateTimeline
                     locale={locale}
                     loading={detailLoading}
                     events={detail?.timeline || []}
-                    currentStage={getEffectiveStage(r)}
+                    currentStage={getEffectiveStage(openRow)}
                   />
                 </div>
 
@@ -1073,8 +1117,11 @@ export function TeamTab({
                     <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>—</p>
                   )}
                 </div>
-
-                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
+              </div>
+            ) : null}
+            {personTab === 'profile' ? (
+              <div>
+<div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
                   border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                     <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'recruiting.candidateProfile')}</span>
@@ -1315,10 +1362,11 @@ export function TeamTab({
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
-        );
-      })}
+        ) : null}
+      </AdminRichFormDrawer>
+
     </div>
   );
 }

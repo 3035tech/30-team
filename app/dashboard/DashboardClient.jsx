@@ -21,7 +21,7 @@ import {
   parseTeamSort,
 } from '../../lib/assessment-filters';
 
-import { DashboardBreadcrumb, S } from './dashboard-shared';
+import { DashboardBreadcrumb, getDashboardTabNav, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { TeamTab } from './tabs/TeamTab';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
@@ -263,6 +263,7 @@ export default function DashboardClient({
   const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
@@ -283,6 +284,8 @@ export default function DashboardClient({
   const isAdmin = isAdminRole(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
+  /** Global search duplicates TeamTab; Leadership is chart-first — hide there. */
+  const showGlobalSearch = showsCohortChrome && tab !== 'team' && tab !== 'leadership';
   const showVacancies = can(sessionAuth, CAP.VACANCIES_VIEW);
   const showMotivators = can(sessionAuth, CAP.MOTIVATORS_VIEW);
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
@@ -538,6 +541,16 @@ export default function DashboardClient({
       onRemove: () => { setSearch(''); pushFilters({ search: null }); } });
   }
 
+  /**
+   * Leadership task is reading charts, not filtering people — stay collapsed by default.
+   * Other tabs auto-expand advanced filters only when non-essential chips exist
+   * (roster/vacancy stay in the always-visible essentials row).
+   */
+  const advancedChipCount = activeChips.filter((c) =>
+    ['company', 'area', 'enneagram', 'pipeline', 'dateFrom', 'dateTo', 'search'].includes(c.key)
+  ).length;
+  const filtersExpanded = filtersOpen ?? (tab === 'leadership' ? false : advancedChipCount > 0);
+
   const exportUrl = `/api/admin/export?area=${encodeURIComponent(area)}${
     isAdmin && company !== 'all' ? `&company=${encodeURIComponent(company)}` : ''
   }${vacancy && vacancy !== 'all' ? `&vacancy=${encodeURIComponent(vacancy)}` : ''}${
@@ -762,6 +775,7 @@ export default function DashboardClient({
         }}>
 
           <div className="db-top-row" style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {showGlobalSearch ? (
           <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 0 }}>
             <input
               type="search"
@@ -799,6 +813,9 @@ export default function DashboardClient({
               </button>
             )}
           </div>
+          ) : (
+            <div style={{ flex: '1 1 120px', minWidth: 0 }} aria-hidden />
+          )}
           <DashboardTopBarMenus
             locale={locale}
             auth={sessionAuth}
@@ -832,7 +849,7 @@ export default function DashboardClient({
                 background: GRADIENT.title,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
               >
-                {t(locale, 'dashboard.title')}
+                {t(locale, getDashboardTabNav(tab).labelKey)}
               </h2>
               <span style={{ fontSize: '13px', color: C.muted }}>
                 {showsCohortChrome ? (
@@ -856,48 +873,57 @@ export default function DashboardClient({
                 ) : null}
               </span>
             </div>
-            {showsCohortChrome ? (
-            <a
-              href={exportUrl}
-              style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
-                borderRadius: '10px', padding: '10px 16px', color: C.purple,
-                fontSize: '13px', fontFamily: FONTS.serif, textDecoration: 'none',
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
-            >
-              ↓ {t(locale, 'dashboard.exportCsv')}
-            </a>
-            ) : null}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', alignSelf: 'flex-end' }}>
+              {showsCohortChrome ? (
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(!filtersExpanded)}
+                  aria-expanded={filtersExpanded}
+                  aria-label={t(locale, 'dashboard.filtersToggleAria')}
+                  style={{
+                    background: filtersExpanded ? `${C.purple}12` : 'transparent',
+                    border: `1px solid ${filtersExpanded ? `${C.purple}44` : C.border}`,
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    color: filtersExpanded ? C.purple : C.muted,
+                    fontSize: '13px',
+                    fontFamily: FONTS.mono,
+                    cursor: 'pointer',
+                    minHeight: '40px',
+                  }}
+                >
+                  {filtersExpanded
+                    ? t(locale, 'dashboard.hideFilters')
+                    : t(locale, 'dashboard.showFilters')}
+                  {!filtersExpanded && advancedChipCount > 0
+                    ? ` · ${advancedChipCount}`
+                    : ''}
+                </button>
+              ) : null}
+              {showsCohortChrome ? (
+              <a
+                href={exportUrl}
+                style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
+                  borderRadius: '10px', padding: '10px 16px', color: C.purple,
+                  fontSize: '13px', fontFamily: FONTS.serif, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  whiteSpace: 'nowrap' }}
+              >
+                ↓ {t(locale, 'dashboard.exportCsv')}
+              </a>
+              ) : null}
+            </div>
           </div>
 
-          {/* Filter row — assessment cohort tabs only */}
+          {/* Filter row — essentials always on; advanced behind disclosure */}
           {showsCohortChrome ? (
-          <div className="db-filters" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
-            {isAdmin && companies.length > 0 ? (
-              <select
-                value={company}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCompany(v);
-                  setPipeline('all');
-                  pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
-                }}
-                style={S.select}
-              >
-                <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
-                {companies.map((co) => (
-                  <option key={co.id} value={String(co.id)}>{co.name}</option>
-                ))}
-              </select>
-            ) : null}
-            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} style={S.select}>
-              <option value="all">{t(locale, 'dashboard.allAreas')}</option>
-              {areas.map((a) => (
-                <option key={a.key} value={a.key}>
-                  {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
-                </option>
-              ))}
-            </select>
+          <>
+          <div
+            className="db-filters"
+            role="group"
+            aria-label={t(locale, 'dashboard.filtersEssentialsAria')}
+            style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: filtersExpanded ? '8px' : '10px' }}
+          >
             <select
               value={roster}
               onChange={(e) => {
@@ -934,6 +960,40 @@ export default function DashboardClient({
               {vacancies.map((v) => (
                 <option key={v.id} value={String(v.id)}>
                   {v.title} {v.status === 'closed' ? t(locale, 'dashboard.closed') : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {filtersExpanded ? (
+          <div
+            className="db-filters"
+            role="group"
+            aria-label={t(locale, 'dashboard.filtersAdvancedAria')}
+            style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}
+          >
+            {isAdmin && companies.length > 0 ? (
+              <select
+                value={company}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCompany(v);
+                  setPipeline('all');
+                  pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
+                }}
+                style={S.select}
+              >
+                <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
+                {companies.map((co) => (
+                  <option key={co.id} value={String(co.id)}>{co.name}</option>
+                ))}
+              </select>
+            ) : null}
+            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} style={S.select}>
+              <option value="all">{t(locale, 'dashboard.allAreas')}</option>
+              {areas.map((a) => (
+                <option key={a.key} value={a.key}>
+                  {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
                 </option>
               ))}
             </select>
@@ -976,12 +1036,10 @@ export default function DashboardClient({
               />
             </div>
           </div>
-          ) : (
-            <div style={{ marginBottom: '12px' }} />
-          )}
+          ) : null}
 
-          {/* Active filter chips */}
-          {showsCohortChrome && activeChips.length > 0 && (
+          {/* Active filter chips — always visible when set */}
+          {activeChips.length > 0 ? (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
               {activeChips.map((chip) => (
                 <span key={chip.key} style={S.filterChip} title={chip.title}>
@@ -1007,6 +1065,12 @@ export default function DashboardClient({
                 {t(locale, 'common.clearAll')}
               </button>
             </div>
+          ) : (
+            <div style={{ marginBottom: '16px' }} />
+          )}
+          </>
+          ) : (
+            <div style={{ marginBottom: '12px' }} />
           )}
 
           {showsCohortChrome && compatMetrics.total === 0 && tab !== 'overview' ? (

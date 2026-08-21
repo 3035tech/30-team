@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { typeShortLabel, typeTitleTooltip } from '../../../lib/type-en';
 import { C } from '../../../lib/theme';
-import { Bar, S, TypeBadge } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 
 const BAND_KEYS = {
   standout: 'bandStandout',
@@ -18,7 +19,26 @@ function bandLabel(locale, band) {
   return k ? t(locale, `panel.leadership.${k}`) : band || t(locale, 'panel.common.notApplicable');
 }
 
+/** Top band people across companies for the summary strip (cap keeps viewport light). */
+function summaryPeople(leadershipPotentials, cap = 8) {
+  const flat = [];
+  for (const co of leadershipPotentials || []) {
+    for (const p of co.people || []) {
+      flat.push({ ...p, companyName: co.companyName, companyId: co.companyId });
+    }
+  }
+  const rank = { standout: 0, strong: 1, moderate: 2, explore: 3 };
+  flat.sort((a, b) => {
+    const ba = rank[a.leadershipBand] ?? 9;
+    const bb = rank[b.leadershipBand] ?? 9;
+    if (ba !== bb) return ba - bb;
+    return (b.leadership010 || 0) - (a.leadership010 || 0);
+  });
+  return flat.slice(0, cap);
+}
+
 export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
+  const [viewMode, setViewMode] = useState('summary');
   const hasData = analytics && analytics.kpis && analytics.kpis.assessments > 0;
   if (!hasData) {
     return (
@@ -35,6 +55,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
   const maxMonthly = Math.max(...monthlyTrend.map((m) => m.cnt), 1);
   const maxG = Math.max(...Object.values(gCounts), 1);
   const gTot = globalTotal || 1;
+  const topPeople = summaryPeople(leadershipPotentials);
 
   const Kpi = ({ icon, value, label, hint }) => (
     <div style={{ ...S.card, padding: '22px' }}>
@@ -65,9 +86,18 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ ...S.card, padding: '22px 28px' }}>
         <span style={S.label}>{t(locale, 'panel.leadership.title')}</span>
-        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: '14px' }}>
           {t(locale, 'panel.leadership.intro')}
         </p>
+        <PanelSubNav
+          ariaLabel={t(locale, 'panel.leadership.viewModeAria')}
+          active={viewMode}
+          onChange={setViewMode}
+          tabs={[
+            { id: 'summary', label: t(locale, 'panel.leadership.viewSummary') },
+            { id: 'detail', label: t(locale, 'panel.leadership.viewDetail') },
+          ]}
+        />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
@@ -76,220 +106,302 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
         <Kpi icon="🏢" value={kpis.areasActive} label={t(locale, 'panel.leadership.kpiAreas')} hint={t(locale, 'panel.leadership.kpiAreasHint')} />
       </div>
 
-      {leadershipPotentials.length > 0 ? (
-        <div style={{ ...S.card }}>
-          <span style={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
-          <p style={{ fontSize: '12px', color: C.faint, marginTop: '8px', marginBottom: '18px', lineHeight: 1.65 }}>
-            {t(locale, 'panel.leadership.potentialsIntro')}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {leadershipPotentials.map((co) => (
-              <div
-                key={String(co.companyId)}
-                style={{
-                  background: 'rgba(26,22,37,.03)',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: '12px',
-                  padding: '16px 18px',
-                }}
-              >
-                <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontFamily: 'monospace' }}>
-                  {co.companyName}
-                  <span style={{ color: C.faint, marginLeft: '8px' }}>#{co.companyId}</span>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '420px' }}>
-                    <thead>
-                      <tr>
-                        {tableHeaders.map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              textAlign: 'left',
-                              padding: '8px 10px',
-                              color: C.muted,
-                              fontWeight: 'normal',
-                              fontFamily: 'monospace',
-                              borderBottom: `1px solid ${C.border}`,
-                            }}
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {co.people.map((p) => (
-                        <tr key={`${co.companyId}-${p.candidateId}`} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
-                          <td style={{ padding: '10px', color: C.text, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.name}
-                          </td>
-                          <td style={{ padding: '10px' }}>
-                            <TypeBadge type={p.topType} locale={locale} />
-                          </td>
-                          <td
-                            style={{ padding: '10px', color: C.purpleLight, fontFamily: 'monospace' }}
-                            title={t(locale, 'panel.leadership.scoreTitleHint')}
-                          >
-                            {p.leadership010}/10
-                          </td>
-                          <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>
-                            {bandLabel(locale, p.leadershipBand)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div style={{ ...S.card }}>
-        <span style={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
-        <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '16px' }}>
-          {t(locale, 'panel.leadership.monthlyHint')}
-        </p>
-        {monthlyTrend.length === 0 ? (
-          <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>{t(locale, 'panel.leadership.noTimeSeries')}</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {monthlyTrend.map((m) => (
-              <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
-                <div style={{ flex: 1 }}>
-                  <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
-                </div>
-                <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-        <div style={{ ...S.card }}>
-          <span style={S.label}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
-          <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px' }}>
-            {t(locale, 'panel.leadership.globalDistHint')}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9]
-              .filter((ty) => (gCounts[ty] || 0) > 0)
-              .sort((a, b) => (gCounts[b] || 0) - (gCounts[a] || 0))
-              .map((ty) => {
-                const d = TYPE_DATA[ty];
-                const c = gCounts[ty] || 0;
-                const label = typeShortLabel(ty, locale);
-                return (
-                  <div key={ty} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      title={typeTitleTooltip(ty, locale)}
-                      style={{
-                        width: '160px',
-                        fontSize: '12px',
-                        color: d.color,
-                        flexShrink: 0,
-                        fontFamily: 'monospace',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        cursor: 'help',
-                      }}
-                    >
-                      <span style={{ width: '22px', textAlign: 'center', flexShrink: 0 }}>{d.emoji}</span>
-                      <span style={{ minWidth: 0 }}>{label}</span>
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <Bar value={c} max={maxG} color={d.color} h={8} />
-                    </div>
-                    <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', width: '28px', textAlign: 'right' }}>{c}</span>
-                    <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', width: '40px', textAlign: 'right' }}>
-                      {Math.round((c / gTot) * 100)}%
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-
-        <div style={{ ...S.card }}>
-          <span style={S.label}>{t(locale, 'panel.leadership.diversityTitle')}</span>
-          <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px', lineHeight: 1.55 }}>
-            {t(locale, 'panel.leadership.diversityHint')}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {areaSummaries.map((row) => (
-              <div key={row.areaKey} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ flex: '0 0 38%', fontSize: '12px', color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {row.areaLabel}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <Bar value={row.diversity01} max={1} color={C.synergy} h={8} />
-                </div>
-                <span style={{ width: '44px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                  {Math.round(row.diversity01 * 100)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ ...S.card, overflow: 'hidden' }}>
-        <span style={S.label}>{t(locale, 'panel.leadership.execTableTitle')}</span>
-        <div style={{ overflowX: 'auto', marginTop: '14px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
-            <thead>
-              <tr>
-                {execHeaders.map((h) => (
-                  <th
-                    key={h}
+      {viewMode === 'summary' ? (
+        <>
+          {topPeople.length > 0 ? (
+            <div style={{ ...S.card }}>
+              <span style={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
+              <p style={{ fontSize: '12px', color: C.faint, marginTop: '8px', marginBottom: '14px', lineHeight: 1.65 }}>
+                {t(locale, 'panel.leadership.potentialsIntro')}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {topPeople.map((p) => (
+                  <div
+                    key={`${p.companyId}-${p.candidateId}`}
                     style={{
-                      textAlign: 'left',
-                      padding: '8px 12px',
-                      color: C.muted,
-                      fontWeight: 'normal',
-                      fontFamily: 'monospace',
-                      borderBottom: `1px solid ${C.border}`,
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: `1px solid ${C.border}`,
+                      background: 'rgba(26,22,37,.02)',
                     }}
                   >
-                    {h}
-                  </th>
+                    <span style={{ fontSize: '13px', color: C.text, flex: '1 1 140px' }}>{p.name}</span>
+                    <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{p.companyName}</span>
+                    <TypeBadge type={p.topType} locale={locale} compact />
+                    <span style={{ fontSize: '12px', color: C.purpleLight, fontFamily: 'monospace' }}>
+                      {p.leadership010}/10
+                    </span>
+                    <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                      {bandLabel(locale, p.leadershipBand)}
+                    </span>
+                  </div>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {areaSummaries.map((row) => (
-                <tr key={row.areaKey} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
-                  <td style={{ padding: '10px 12px', color: C.text }}>{row.areaLabel}</td>
-                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>{row.n}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    {row.dominantType ? <TypeBadge type={row.dominantType} locale={locale} /> : <span style={{ color: C.faint }}>—</span>}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
-                    {Math.round(row.diversity01 * 100)}%
-                  </td>
-                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
-                    {row.avgFit010 != null ? `${row.avgFit010}/10` : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
-                    {row.rubricAlignPct != null ? `${row.rubricAlignPct}%` : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p style={{ fontSize: '11px', color: C.faint, marginTop: '14px', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 0 }}>
-          {t(locale, 'panel.leadership.execFootnote')}
-        </p>
-      </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewMode('detail')}
+                style={{
+                  marginTop: '14px',
+                  background: 'transparent',
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  color: C.muted,
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  cursor: 'pointer',
+                  minHeight: '40px',
+                }}
+              >
+                {t(locale, 'panel.leadership.showMoreDetail')} →
+              </button>
+            </div>
+          ) : null}
+
+          <div style={{ ...S.card }}>
+            <span style={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
+            <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '16px' }}>
+              {t(locale, 'panel.leadership.monthlyHint')}
+            </p>
+            {monthlyTrend.length === 0 ? (
+              <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>{t(locale, 'panel.leadership.noTimeSeries')}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {monthlyTrend.slice(-6).map((m) => (
+                  <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
+                    <div style={{ flex: 1 }}>
+                      <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
+                    </div>
+                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {leadershipPotentials.length > 0 ? (
+            <div style={{ ...S.card }}>
+              <span style={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
+              <p style={{ fontSize: '12px', color: C.faint, marginTop: '8px', marginBottom: '18px', lineHeight: 1.65 }}>
+                {t(locale, 'panel.leadership.potentialsIntro')}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {leadershipPotentials.map((co) => (
+                  <div
+                    key={String(co.companyId)}
+                    style={{
+                      background: 'rgba(26,22,37,.03)',
+                      border: `1px solid ${C.border}`,
+                      borderRadius: '12px',
+                      padding: '16px 18px',
+                    }}
+                  >
+                    <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontFamily: 'monospace' }}>
+                      {co.companyName}
+                      <span style={{ color: C.faint, marginLeft: '8px' }}>#{co.companyId}</span>
+                    </div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '420px' }}>
+                        <thead>
+                          <tr>
+                            {tableHeaders.map((h) => (
+                              <th
+                                key={h}
+                                style={{
+                                  textAlign: 'left',
+                                  padding: '8px 10px',
+                                  color: C.muted,
+                                  fontWeight: 'normal',
+                                  fontFamily: 'monospace',
+                                  borderBottom: `1px solid ${C.border}`,
+                                }}
+                              >
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {co.people.map((p) => (
+                            <tr key={`${co.companyId}-${p.candidateId}`} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                              <td style={{ padding: '10px', color: C.text, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {p.name}
+                              </td>
+                              <td style={{ padding: '10px' }}>
+                                <TypeBadge type={p.topType} locale={locale} compact />
+                              </td>
+                              <td
+                                style={{ padding: '10px', color: C.purpleLight, fontFamily: 'monospace' }}
+                                title={t(locale, 'panel.leadership.scoreTitleHint')}
+                              >
+                                {p.leadership010}/10
+                              </td>
+                              <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>
+                                {bandLabel(locale, p.leadershipBand)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div style={{ ...S.card }}>
+            <span style={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
+            <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '16px' }}>
+              {t(locale, 'panel.leadership.monthlyHint')}
+            </p>
+            {monthlyTrend.length === 0 ? (
+              <p style={{ color: C.muted, fontStyle: 'italic', fontSize: '13px' }}>{t(locale, 'panel.leadership.noTimeSeries')}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {monthlyTrend.map((m) => (
+                  <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
+                    <div style={{ flex: 1 }}>
+                      <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
+                    </div>
+                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ ...S.card }}>
+              <span style={S.label}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
+              <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px' }}>
+                {t(locale, 'panel.leadership.globalDistHint')}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9]
+                  .filter((ty) => (gCounts[ty] || 0) > 0)
+                  .sort((a, b) => (gCounts[b] || 0) - (gCounts[a] || 0))
+                  .map((ty) => {
+                    const d = TYPE_DATA[ty];
+                    const c = gCounts[ty] || 0;
+                    const label = typeShortLabel(ty, locale);
+                    return (
+                      <div key={ty} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span
+                          title={typeTitleTooltip(ty, locale)}
+                          style={{
+                            width: '160px',
+                            fontSize: '12px',
+                            color: d.color,
+                            flexShrink: 0,
+                            fontFamily: 'monospace',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'help',
+                          }}
+                        >
+                          <span style={{ width: '22px', textAlign: 'center', flexShrink: 0 }}>{d.emoji}</span>
+                          <span style={{ minWidth: 0 }}>{label}</span>
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <Bar value={c} max={maxG} color={d.color} h={8} />
+                        </div>
+                        <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', width: '28px', textAlign: 'right' }}>{c}</span>
+                        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', width: '40px', textAlign: 'right' }}>
+                          {Math.round((c / gTot) * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div style={{ ...S.card }}>
+              <span style={S.label}>{t(locale, 'panel.leadership.diversityTitle')}</span>
+              <p style={{ fontSize: '11px', color: C.faint, marginTop: '6px', marginBottom: '14px', lineHeight: 1.55 }}>
+                {t(locale, 'panel.leadership.diversityHint')}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {areaSummaries.map((row) => (
+                  <div key={row.areaKey} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ flex: '0 0 38%', fontSize: '12px', color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {row.areaLabel}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <Bar value={row.diversity01} max={1} color={C.synergy} h={8} />
+                    </div>
+                    <span style={{ width: '44px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                      {Math.round(row.diversity01 * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...S.card, overflow: 'hidden' }}>
+            <span style={S.label}>{t(locale, 'panel.leadership.execTableTitle')}</span>
+            <div style={{ overflowX: 'auto', marginTop: '14px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
+                <thead>
+                  <tr>
+                    {execHeaders.map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: 'left',
+                          padding: '8px 12px',
+                          color: C.muted,
+                          fontWeight: 'normal',
+                          fontFamily: 'monospace',
+                          borderBottom: `1px solid ${C.border}`,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {areaSummaries.map((row) => (
+                    <tr key={row.areaKey} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
+                      <td style={{ padding: '10px 12px', color: C.text }}>{row.areaLabel}</td>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>{row.n}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        {row.dominantType ? <TypeBadge type={row.dominantType} locale={locale} compact /> : <span style={{ color: C.faint }}>—</span>}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                        {Math.round(row.diversity01 * 100)}%
+                      </td>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                        {row.avgFit010 != null ? `${row.avgFit010}/10` : '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                        {row.rubricAlignPct != null ? `${row.rubricAlignPct}%` : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ fontSize: '11px', color: C.faint, marginTop: '14px', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 0 }}>
+              {t(locale, 'panel.leadership.execFootnote')}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -36,7 +36,7 @@ function PersonCard({ person, locale }) {
             {personListName(person.name)}
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
-            <TypeBadge type={person.topType} locale={locale} />
+            <TypeBadge type={person.topType} locale={locale} compact />
             {person.areaLabel ? (
               <span
                 style={{
@@ -62,42 +62,66 @@ function PersonCard({ person, locale }) {
   );
 }
 
-function Glossary({ locale }) {
+function Glossary({ locale, open, onToggle }) {
   const items = [
     { level: 'tension', color: C.tension, titleKey: 'panel.compat.glossTensionTitle', bodyKey: 'panel.compat.glossTensionBody' },
     { level: 'synergy', color: C.synergy, titleKey: 'panel.compat.glossSynergyTitle', bodyKey: 'panel.compat.glossSynergyBody' },
     { level: 'neutral', color: C.neutral, titleKey: 'panel.compat.glossNeutralTitle', bodyKey: 'panel.compat.glossNeutralBody' },
   ];
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '10px',
-        marginBottom: '16px',
-      }}
-    >
-      {items.map((item) => (
+    <div style={{ marginBottom: '16px' }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        style={{
+          background: 'transparent',
+          border: `1px solid ${C.border}`,
+          borderRadius: '10px',
+          padding: '8px 12px',
+          color: C.muted,
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          cursor: 'pointer',
+          minHeight: '40px',
+          marginBottom: open ? '10px' : 0,
+        }}
+      >
+        {open ? t(locale, 'panel.compat.glossaryHide') : t(locale, 'panel.compat.glossaryShow')}
+        {' '}
+        {open ? '▲' : '▼'}
+      </button>
+      {open ? (
         <div
-          key={item.level}
           style={{
-            padding: '12px 14px',
-            borderRadius: '12px',
-            border: `1px solid ${item.color}35`,
-            background: `${item.color}0a`,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '10px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <CompatBadge level={item.level} locale={locale} />
-            <span style={{ fontSize: '12px', color: item.color, fontFamily: 'monospace' }}>
-              {t(locale, item.titleKey)}
-            </span>
-          </div>
-          <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
-            {t(locale, item.bodyKey)}
-          </p>
+          {items.map((item) => (
+            <div
+              key={item.level}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                border: `1px solid ${item.color}35`,
+                background: `${item.color}0a`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <CompatBadge level={item.level} locale={locale} />
+                <span style={{ fontSize: '12px', color: item.color, fontFamily: 'monospace' }}>
+                  {t(locale, item.titleKey)}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+                {t(locale, item.bodyKey)}
+              </p>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : null}
     </div>
   );
 }
@@ -113,34 +137,12 @@ export function CompatTab({
 }) {
   const [section, setSection] = useState('tensions');
   const [adviceOpen, setAdviceOpen] = useState(false);
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   const goSection = (id) => {
     setSection(id);
     if (onCompatPagination) onCompatPagination({ page: 1, pageSize: compatPageSize });
   };
-
-  const SecBtn = ({ id, label, count, color }) => (
-    <button
-      type="button"
-      onClick={() => goSection(id)}
-      style={{
-        padding: '8px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        background: section === id ? `${color}20` : 'rgba(26,22,37,.04)',
-        border: `1px solid ${section === id ? color : C.border}`,
-        borderRadius: '10px',
-        color: section === id ? color : C.muted,
-        fontSize: '12px',
-        cursor: 'pointer',
-        fontFamily: 'monospace',
-      }}
-    >
-      {label}{' '}
-      <span style={{ background: `${color}30`, padding: '1px 7px', borderRadius: '10px', fontSize: '11px' }}>{count}</span>
-    </button>
-  );
 
   const summaryCards = [
     {
@@ -208,7 +210,11 @@ export function CompatTab({
         </p>
       </div>
 
-      <Glossary locale={locale} />
+      <Glossary locale={locale} open={glossaryOpen} onToggle={() => setGlossaryOpen((v) => !v)} />
+
+      <p style={{ margin: '0 0 10px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
+        {t(locale, 'panel.compat.filterByCardsHint')}
+      </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
         {summaryCards.map((x) => {
@@ -282,8 +288,8 @@ export function CompatTab({
                 <span style={{ fontSize: '13px', color: C.text }}>
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
-                <TypeBadge type={pair.a.topType} locale={locale} />
-                <TypeBadge type={pair.b.topType} locale={locale} />
+                <TypeBadge type={pair.a.topType} locale={locale} compact />
+                <TypeBadge type={pair.b.topType} locale={locale} compact />
                 <span style={{ fontSize: '12px', color: C.muted, flex: '1 1 160px' }}>{pair.compat.title}</span>
                 <span style={{ fontSize: '12px', color: C.tension, fontFamily: 'monospace' }}>
                   {t(locale, 'panel.compat.topRiskNext')}
@@ -328,20 +334,14 @@ export function CompatTab({
                 <span style={{ fontSize: '13px', color: C.text }}>
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
-                <TypeBadge type={pair.a.topType} locale={locale} />
-                <TypeBadge type={pair.b.topType} locale={locale} />
+                <TypeBadge type={pair.a.topType} locale={locale} compact />
+                <TypeBadge type={pair.b.topType} locale={locale} compact />
                 <span style={{ fontSize: '12px', color: C.muted, flex: '1 1 160px' }}>{pair.compat.title}</span>
               </div>
             ))}
           </div>
         </div>
       ) : null}
-
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <SecBtn id="tensions" label={t(locale, 'panel.compat.tabTensions')} count={tensions.length} color={C.tension} />
-        <SecBtn id="synergies" label={t(locale, 'panel.compat.tabSynergies')} count={synergies.length} color={C.synergy} />
-        <SecBtn id="all" label={t(locale, 'panel.compat.tabAll')} count={pairs.length} color={C.purpleLight} />
-      </div>
 
       {playbook ? (
         <div

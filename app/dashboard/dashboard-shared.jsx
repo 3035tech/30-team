@@ -258,6 +258,49 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
   );
 }
 
+function PanelSubNav({ tabs, active, onChange, ariaLabel }) {
+  return (
+    <div
+      role="tablist"
+      aria-label={ariaLabel || undefined}
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '6px',
+        marginBottom: '14px',
+        paddingBottom: '12px',
+        borderBottom: `1px solid ${C.border}`,
+      }}
+    >
+      {tabs.map((tab) => {
+        const on = active === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => onChange(tab.id)}
+            style={{
+              background: on ? `${C.purple}14` : 'transparent',
+              border: `1px solid ${on ? `${C.purple}44` : C.border}`,
+              borderRadius: '999px',
+              padding: '8px 14px',
+              color: on ? C.purpleDeep : C.muted,
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontFamily: FONTS.mono,
+              minHeight: '40px',
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export {
   Bar,
   CompatBadge,
@@ -265,6 +308,7 @@ export {
   getDashboardTabNav,
   KANBAN_STAGES,
   getKanbanStages,
+  PanelSubNav,
   S,
   SortableTh,
   TypeBadge,

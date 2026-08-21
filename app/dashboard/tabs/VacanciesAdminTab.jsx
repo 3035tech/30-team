@@ -10,7 +10,7 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, getKanbanStages, S, TypeBadge } from '../dashboard-shared';
+import { clientSortNextDir, getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
@@ -770,7 +770,7 @@ function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       ) : null}
                     </td>
                     <td style={{ padding: '10px' }}>
-                      {r.topType != null ? <TypeBadge type={r.topType} locale={locale} /> : t(locale, 'panel.common.notApplicable')}
+                      {r.topType != null ? <TypeBadge type={r.topType} locale={locale} compact /> : t(locale, 'panel.common.notApplicable')}
                     </td>
                     <td style={{ padding: '10px' }}>
                       <span style={{ fontFamily: 'monospace', fontWeight: 700, color: scoreColor(r.vacancyFitScore010) }}>
@@ -1075,6 +1075,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [editingVacancy, setEditingVacancy] = useState(null);
   const [detailVacancy, setDetailVacancy] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailSection, setDetailSection] = useState('pipeline');
 
   const vacancyDetailId = String(urlParams.get('vacancyDetail') || '').trim();
   const isDetailView = Boolean(vacancyDetailId);
@@ -1208,6 +1209,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setDetailVacancy(null);
       return;
     }
+    setDetailSection('pipeline');
     loadVacancyDetail(vacancyDetailId);
   }, [vacancyDetailId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1788,7 +1790,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
         {v ? (
           <>
-            {/* 1–4. Informações e ações da vaga + rubrica */}
             <div style={{ ...S.card }}>
               <span style={{ ...S.label, marginBottom: '14px', display: 'block' }}>{t(locale, 'recruiting.vacancyInfoTitle')}</span>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
@@ -1844,19 +1845,19 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       </span>
                     ) : null}
                   </div>
-                  {v.description ? <VacancyDescriptionHtml html={v.description} /> : null}
                 </div>
               </div>
 
               <div style={{ marginTop: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id), vacancyDetail: '' })}
-                  style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
-                    borderRadius: '10px', padding: '8px 10px', color: C.purpleLight, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace' }}
+                  onClick={() => token && copy(link)}
+                  disabled={loading || !token}
+                  style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
+                    borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
                 >
-                  {t(locale, 'recruiting.viewCandidates')}
+                  {t(locale, 'recruiting.copyLink')}
                 </button>
                 <button
                   type="button"
@@ -1870,148 +1871,180 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </button>
                 <button
                   type="button"
-                  onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
-                  disabled={loading}
+                  onClick={() => setDetailSection('config')}
                   style={{ background: 'transparent', border: `1px solid ${C.border}`,
                     borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                    cursor: 'pointer', fontFamily: 'monospace' }}
                 >
-                  {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => rotateLink(v.id)}
-                  disabled={loading}
-                  style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                >
-                  {t(locale, 'recruiting.rotateLink')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => token && copy(link)}
-                  disabled={loading || !token}
-                  style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                    borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
-                >
-                  {t(locale, 'recruiting.copyLink')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!token) return;
-                    setLinkExpiryEdit((cur) =>
-                      cur?.vacancyId === v.id
-                        ? null
-                        : {
-                            vacancyId: v.id,
-                            value: v.activeTokenExpiresAt
-                              ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
-                              : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-                          }
-                    );
-                  }}
-                  disabled={loading || !token}
-                  style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                    borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
-                >
-                  {t(locale, 'recruiting.editLinkExpiry')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => archiveVacancy(v.id, v.title)}
-                  disabled={loading}
-                  style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                    borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
-                    cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                >
-                  {t(locale, 'recruiting.archiveVacancy')}
+                  {t(locale, 'recruiting.moreActions')}
                 </button>
               </div>
 
-              <div style={{ marginTop: '12px' }}>
-                <VacancyClientReportBlock vacancyId={v.id} locale={locale} appUrl={appUrl} />
+              <div style={{ marginTop: '18px' }}>
+                <PanelSubNav
+                  ariaLabel={t(locale, 'recruiting.detailTabsAria')}
+                  active={detailSection}
+                  onChange={setDetailSection}
+                  tabs={[
+                    { id: 'pipeline', label: t(locale, 'recruiting.detailTabPipeline') },
+                    { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
+                    { id: 'fit', label: t(locale, 'recruiting.detailTabFit') },
+                    { id: 'report', label: t(locale, 'recruiting.detailTabReport') },
+                    { id: 'config', label: t(locale, 'recruiting.detailTabConfig') },
+                  ]}
+                />
               </div>
 
-              {linkExpiryEdit?.vacancyId === v.id && (
-                <div style={{
-                  marginTop: '12px', padding: '12px', borderRadius: '10px',
-                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.04)',
-                  display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
-                }}>
-                  <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-                    {t(locale, 'panel.admin.expiringOn')}
-                  </span>
-                  <input
-                    type="datetime-local"
-                    value={linkExpiryEdit.value}
-                    onChange={(e) =>
-                      setLinkExpiryEdit((cur) =>
-                        cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
-                      )
-                    }
-                    disabled={loading}
-                    aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
-                    style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
-                      border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
-                      color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+              {detailSection === 'pipeline' ? (
+                <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
+              ) : null}
+
+              {detailSection === 'candidates' ? (
+                <div>
+                  <VacancyInterviewCandidates
+                    vacancyId={v.id}
+                    locale={locale}
+                    onPipelineChange={() => {
+                      setInvitesRefresh((x) => x + 1);
+                      setPipelineRefresh((x) => x + 1);
+                    }}
                   />
-                  <button type="button" onClick={saveLinkExpiry} disabled={loading}
-                    style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
-                      borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
-                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                    {t(locale, 'panel.admin.save')}
-                  </button>
-                  <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
-                    style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
-                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
-                    {t(locale, 'panel.admin.cancel')}
-                  </button>
+                  <VacancyInviteByEmail
+                    vacancyId={v.id}
+                    locale={locale}
+                    onSent={() => {
+                      setInvitesRefresh((x) => x + 1);
+                      setPipelineRefresh((x) => x + 1);
+                    }}
+                  />
+                  <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
                 </div>
-              )}
+              ) : null}
 
-              <VacancyRubricEditor
-                vacancyId={v.id}
-                locale={locale}
-                vacancyTitle={v.title || ''}
-                vacancyDescription={v.description || ''}
-                onSaved={() => setPipelineRefresh((x) => x + 1)}
-              />
-            </div>
+              {detailSection === 'fit' ? (
+                <div>
+                  <VacancyRubricEditor
+                    vacancyId={v.id}
+                    locale={locale}
+                    vacancyTitle={v.title || ''}
+                    vacancyDescription={v.description || ''}
+                    onSaved={() => setPipelineRefresh((x) => x + 1)}
+                  />
+                  <div style={{ marginTop: '16px' }}>
+                    <VacancyFitRankingBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
+                  </div>
+                </div>
+              ) : null}
 
-            {/* Ranking por rubrica (independente do pipeline) */}
-            <div style={{ ...S.card }}>
-              <VacancyFitRankingBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
-            </div>
+              {detailSection === 'report' ? (
+                <VacancyClientReportBlock vacancyId={v.id} locale={locale} appUrl={appUrl} />
+              ) : null}
 
-            {/* 5–6. Candidatos da entrevista + convites */}
-            <div style={{ ...S.card }}>
-              <VacancyInterviewCandidates
-                vacancyId={v.id}
-                locale={locale}
-                onPipelineChange={() => {
-                  setInvitesRefresh((x) => x + 1);
-                  setPipelineRefresh((x) => x + 1);
-                }}
-              />
-              <VacancyInviteByEmail
-                vacancyId={v.id}
-                locale={locale}
-                onSent={() => {
-                  setInvitesRefresh((x) => x + 1);
-                  setPipelineRefresh((x) => x + 1);
-                }}
-              />
-              <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
-            </div>
-
-            {/* 7. Kanban no final */}
-            <div style={{ ...S.card }}>
-              <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
+              {detailSection === 'config' ? (
+                <div>
+                  {v.description ? <VacancyDescriptionHtml html={v.description} /> : null}
+                  <div style={{ marginTop: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id), vacancyDetail: '' })}
+                      style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}44`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.purpleLight, fontSize: '12px',
+                        cursor: 'pointer', fontFamily: 'monospace' }}
+                    >
+                      {t(locale, 'recruiting.viewCandidates')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
+                      disabled={loading}
+                      style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                        cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                    >
+                      {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rotateLink(v.id)}
+                      disabled={loading}
+                      style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                        cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                    >
+                      {t(locale, 'recruiting.rotateLink')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!token) return;
+                        setLinkExpiryEdit((cur) =>
+                          cur?.vacancyId === v.id
+                            ? null
+                            : {
+                                vacancyId: v.id,
+                                value: v.activeTokenExpiresAt
+                                  ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
+                                  : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                              }
+                        );
+                      }}
+                      disabled={loading || !token}
+                      style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                        borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                        cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                    >
+                      {t(locale, 'recruiting.editLinkExpiry')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => archiveVacancy(v.id, v.title)}
+                      disabled={loading}
+                      style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
+                        borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '12px',
+                        cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                    >
+                      {t(locale, 'recruiting.archiveVacancy')}
+                    </button>
+                  </div>
+                  {linkExpiryEdit?.vacancyId === v.id && (
+                    <div style={{
+                      marginTop: '12px', padding: '12px', borderRadius: '10px',
+                      border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.04)',
+                      display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                        {t(locale, 'panel.admin.expiringOn')}
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={linkExpiryEdit.value}
+                        onChange={(e) =>
+                          setLinkExpiryEdit((cur) =>
+                            cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
+                          )
+                        }
+                        disabled={loading}
+                        aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
+                        style={{ flex: '1 1 200px', minWidth: '180px', background: 'rgba(26,22,37,.04)',
+                          border: `1px solid ${C.border}`, borderRadius: '10px', padding: '8px 10px',
+                          color: C.text, fontSize: '13px', fontFamily: 'monospace' }}
+                      />
+                      <button type="button" onClick={saveLinkExpiry} disabled={loading}
+                        style={{ background: `${C.synergy}18`, border: `1px solid ${C.synergy}55`,
+                          borderRadius: '10px', padding: '8px 12px', color: C.synergy, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
+                        {t(locale, 'panel.admin.save')}
+                      </button>
+                      <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading}
+                        style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                          borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
+                          cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}>
+                        {t(locale, 'panel.admin.cancel')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </>
         ) : null}

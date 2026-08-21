@@ -70,7 +70,7 @@ export function GroupTab({
         )}
         <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
           <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap', minWidth:0 }}>
-            <TypeBadge type={person.topType} locale={locale}/>
+            <TypeBadge type={person.topType} locale={locale} compact />
             <span style={{ color:C.text, fontSize:'13px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
               {person.name}
             </span>
@@ -257,7 +257,7 @@ export function GroupTab({
                     borderRadius:'12px', padding:'12px 14px' }}>
                     <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', flexWrap:'wrap', alignItems:'center' }}>
                       <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap', minWidth:0, flex:'1 1 180px' }}>
-                        <TypeBadge type={person.topType} locale={locale}/>
+                        <TypeBadge type={person.topType} locale={locale} compact />
                         <span style={{ color:C.text, fontSize:'13px' }}>{person.name}</span>
                         <CompatBadge level={compat.level} locale={locale}/>
                         {compat.level==='tension' && (
@@ -339,9 +339,9 @@ export function GroupTab({
                       <div key={idx} style={{ padding:'10px 12px', background:'rgba(232,71,71,.06)',
                         border:'1px solid rgba(232,71,71,.2)', borderRadius:'10px' }}>
                         <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
-                          <TypeBadge type={p.a.topType} locale={locale}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.a.name.split(' ')[0]}</span>
+                          <TypeBadge type={p.a.topType} locale={locale} compact /><span style={{ color:C.muted, fontSize:'12px' }}>{p.a.name.split(' ')[0]}</span>
                           <span style={{ color:C.faint }}>×</span>
-                          <TypeBadge type={p.b.topType} locale={locale}/><span style={{ color:C.muted, fontSize:'12px' }}>{p.b.name.split(' ')[0]}</span>
+                          <TypeBadge type={p.b.topType} locale={locale} compact /><span style={{ color:C.muted, fontSize:'12px' }}>{p.b.name.split(' ')[0]}</span>
                         </div>
                         <div style={{ marginTop:'6px', fontSize:'12px', color:C.muted, lineHeight:1.55 }}>
                           {p.compat.desc}

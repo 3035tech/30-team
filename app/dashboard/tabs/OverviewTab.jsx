@@ -166,58 +166,6 @@ export function OverviewTab({
         )}
       </div>
 
-      <div>
-        <span style={{ ...S.label, marginBottom: '10px', display: 'block' }}>
-          {t(locale, 'panel.overview.funnelTitle')}
-        </span>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '10px',
-          }}
-        >
-          {OVERVIEW_FUNNEL_STAGES.filter((s) => s !== 'archived' || (data.funnel.archived || 0) > 0).map((stage) => (
-            <StatTile
-              key={stage}
-              value={data.funnel[stage] || 0}
-              label={t(locale, FUNNEL_LABEL_KEYS[stage])}
-              color={FUNNEL_COLORS[stage]}
-              onClick={() => go({ tab: 'team', pipeline: stage })}
-            />
-          ))}
-        </div>
-        {funnelActive.length > 0 ? (
-          <div style={{ marginTop: '12px' }}>
-            <div
-              style={{
-                display: 'flex',
-                height: '10px',
-                borderRadius: '999px',
-                overflow: 'hidden',
-                border: `1px solid ${C.border}`,
-                background: 'rgba(26,22,37,.04)',
-              }}
-              title={t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
-            >
-              {funnelActive.map((stage) => (
-                <div
-                  key={stage}
-                  style={{
-                    width: `${Math.max(2, ((data.funnel[stage] || 0) / funnelSum) * 100)}%`,
-                    background: FUNNEL_COLORS[stage],
-                  }}
-                  title={`${t(locale, FUNNEL_LABEL_KEYS[stage])}: ${data.funnel[stage]}`}
-                />
-              ))}
-            </div>
-            <p style={{ margin: '8px 0 0', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-              {t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
-            </p>
-          </div>
-        ) : null}
-      </div>
-
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           <span style={S.label}>{t(locale, 'panel.overview.attentionTitle')}</span>
@@ -275,6 +223,58 @@ export function OverviewTab({
             })}
           </div>
         )}
+      </div>
+
+      <div>
+        <span style={{ ...S.label, marginBottom: '10px', display: 'block' }}>
+          {t(locale, 'panel.overview.funnelTitle')}
+        </span>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '10px',
+          }}
+        >
+          {OVERVIEW_FUNNEL_STAGES.filter((s) => s !== 'archived' || (data.funnel.archived || 0) > 0).map((stage) => (
+            <StatTile
+              key={stage}
+              value={data.funnel[stage] || 0}
+              label={t(locale, FUNNEL_LABEL_KEYS[stage])}
+              color={FUNNEL_COLORS[stage]}
+              onClick={() => go({ tab: 'team', pipeline: stage })}
+            />
+          ))}
+        </div>
+        {funnelActive.length > 0 ? (
+          <div style={{ marginTop: '12px' }}>
+            <div
+              style={{
+                display: 'flex',
+                height: '10px',
+                borderRadius: '999px',
+                overflow: 'hidden',
+                border: `1px solid ${C.border}`,
+                background: 'rgba(26,22,37,.04)',
+              }}
+              title={t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
+            >
+              {funnelActive.map((stage) => (
+                <div
+                  key={stage}
+                  style={{
+                    width: `${Math.max(2, ((data.funnel[stage] || 0) / funnelSum) * 100)}%`,
+                    background: FUNNEL_COLORS[stage],
+                  }}
+                  title={`${t(locale, FUNNEL_LABEL_KEYS[stage])}: ${data.funnel[stage]}`}
+                />
+              ))}
+            </div>
+            <p style={{ margin: '8px 0 0', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+              {t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
