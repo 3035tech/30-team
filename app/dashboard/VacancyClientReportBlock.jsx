@@ -233,6 +233,50 @@ export function VacancyClientReportBlock({
     setNote((prev) => (htmlToPlainText(prev).length ? prev : tpl));
   };
 
+  /** Preenche o parecer com a shortlist selecionada (passa o mínimo de 80 chars). */
+  const generateNoteFromShortlist = () => {
+    const people = selectedPeople.filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude');
+    if (!people.length) {
+      setErr(t(locale, 'panel.report.generateNoteNeedSelection'));
+      return;
+    }
+    const vacTitle = vacancyMeta?.title || '';
+    const byRec = (rec) =>
+      people.filter((c) => effectiveRec(c) === rec).map((c) => {
+        const ov = overrides[c.candidateId] || {};
+        const fit =
+          c.vacancyFitScore010 != null ? ` (fit ${Number(c.vacancyFitScore010).toFixed(1)}/10)` : '';
+        const why = ov.why ? ` — ${ov.why}` : '';
+        return `${c.name}${c.topType != null ? ` T${c.topType}` : ''}${fit}${why}`;
+      });
+
+    const advance = byRec('advance');
+    const discuss = byRec('discuss');
+    const bank = byRec('bank');
+    const alerts = people
+      .map((c) => {
+        const w = overrides[c.candidateId]?.watchOut || '';
+        return w ? `${c.name}: ${w}` : null;
+      })
+      .filter(Boolean);
+
+    const en = locale === 'en';
+    const html = en
+      ? `<p><strong>Who to advance:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Discuss further: ${discuss.join('; ')}` : ''}.</p>
+<p><strong>Why (fit / role context):</strong> Shortlist for ${vacTitle || 'this role'} ranked by rubric alignment and interview notes. ${bank.length ? `Hold for now: ${bank.join('; ')}.` : ''}</p>
+<p><strong>Watch-outs / interview probes:</strong> ${alerts.length ? alerts.join(' · ') : 'Validate technical depth and delivery cadence in the client interview.'}</p>
+<p><strong>Suggested next step:</strong> Schedule technical interviews with the client team for those marked Advance; keep Discuss for a second pass if capacity allows.</p>`
+      : `<p><strong>Quem avançar:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Conversar antes: ${discuss.join('; ')}` : ''}.</p>
+<p><strong>Por quê (fit / contexto da vaga):</strong> Shortlist para ${vacTitle || 'esta vaga'} com base na rubrica T1–T9 e nas notas de triagem. ${bank.length ? `Banco por ora: ${bank.join('; ')}.` : ''}</p>
+<p><strong>Alertas / pontos a explorar na entrevista:</strong> ${alerts.length ? alerts.join(' · ') : 'Validar profundidade técnica e ritmo de entrega na entrevista com o time do cliente.'}</p>
+<p><strong>Próximo passo sugerido:</strong> Agendar entrevistas técnicas com o time do cliente para quem está em Avançar; manter Conversar para segunda passagem se houver capacidade.</p>`;
+
+    setNote(html);
+    setErr('');
+    setMsg(t(locale, 'panel.report.generateNoteDone'));
+    setTimeout(() => setMsg(''), 2500);
+  };
+
   const recommendationLabel = (rec) => {
     const key =
       rec === 'advance'
@@ -572,6 +616,15 @@ export function VacancyClientReportBlock({
               <span style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.noteRequiredLabel')}</span>
               <button type="button" onClick={applyNoteTemplate} style={btnGhost()}>
                 {t(locale, 'panel.report.noteTemplate')}
+              </button>
+              <button
+                type="button"
+                onClick={generateNoteFromShortlist}
+                style={btnGhost()}
+                disabled={!selectedPeople.length}
+                title={t(locale, 'panel.report.generateNote')}
+              >
+                {t(locale, 'panel.report.generateNote')}
               </button>
               <span
                 style={{
