@@ -53,6 +53,7 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
+      className="app-dialog-overlay"
       style={dialogOverlayStyle}
       role="presentation"
       onClick={(e) => {

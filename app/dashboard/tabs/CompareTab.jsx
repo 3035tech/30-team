@@ -400,7 +400,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto' }} className="db-table-scroll">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr>

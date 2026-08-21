@@ -330,6 +330,24 @@ export default function DashboardClient({
     };
   }, []);
 
+  useEffect(() => {
+    if (!sidebarOpen || isDesktop) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [sidebarOpen, isDesktop]);
+
+  useEffect(() => {
+    if (isDesktop) setSidebarOpen(false);
+  }, [isDesktop]);
+
   const navCollapsed = sidebarCollapsed && isDesktop;
 
   const toggleSidebarCollapsed = () => {
@@ -597,6 +615,8 @@ export default function DashboardClient({
         className="db-hamburger"
         onClick={() => setSidebarOpen(true)}
         aria-label={t(locale, 'common.openMenu')}
+        aria-expanded={sidebarOpen}
+        aria-controls="dashboard-sidebar"
       >
         ☰
       </button>
@@ -606,6 +626,7 @@ export default function DashboardClient({
       />
       <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
         <aside
+          id="dashboard-sidebar"
           className={`db-sidebar${sidebarOpen ? ' db-sidebar-open' : ''}${navCollapsed ? ' db-sidebar-collapsed' : ''}`}
           style={{
             width: navCollapsed ? '72px' : '226px',
@@ -740,7 +761,7 @@ export default function DashboardClient({
           maxWidth: '1600px',
         }}>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div className="db-top-row" style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 0 }}>
             <input
               type="search"
@@ -805,9 +826,12 @@ export default function DashboardClient({
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              <h2 style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
+              <h2
+                className="db-page-title"
+                style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
                 background: GRADIENT.title,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              >
                 {t(locale, 'dashboard.title')}
               </h2>
               <span style={{ fontSize: '13px', color: C.muted }}>
@@ -848,7 +872,7 @@ export default function DashboardClient({
 
           {/* Filter row — assessment cohort tabs only */}
           {showsCohortChrome ? (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
+          <div className="db-filters" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
             {isAdmin && companies.length > 0 ? (
               <select
                 value={company}

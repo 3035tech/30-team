@@ -49,6 +49,7 @@ export function SystemNoticeModal({
 
   return createPortal(
     <div
+      className="app-dialog-overlay"
       style={dialogOverlayStyle}
       role="presentation"
       onClick={(e) => {

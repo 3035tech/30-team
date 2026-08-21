@@ -55,8 +55,8 @@ textarea:focus-visible {
   .db-hamburger {
     display: flex;
     position: fixed;
-    top: 14px;
-    left: 14px;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
     z-index: 110;
     align-items: center;
     justify-content: center;
@@ -79,8 +79,10 @@ textarea:focus-visible {
     transform: translateX(-100%);
     box-shadow: 4px 0 20px rgba(0,0,0,.12);
     overflow-y: auto;
-    width: 226px !important;
+    -webkit-overflow-scrolling: touch;
+    width: min(280px, 86vw) !important;
     padding: 24px 14px 32px 18px !important;
+    padding-top: max(24px, env(safe-area-inset-top, 0px)) !important;
   }
   .db-sidebar.db-sidebar-open {
     transform: translateX(0);
@@ -98,7 +100,76 @@ textarea:focus-visible {
     display: block;
   }
   .db-main {
-    padding-top: 64px !important;
+    padding: 56px 14px 40px !important;
+    padding-bottom: max(40px, env(safe-area-inset-bottom, 0px)) !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .db-page-title {
+    font-size: 24px !important;
+    line-height: 1.25 !important;
+  }
+  .db-top-row {
+    gap: 10px !important;
+  }
+  .db-filters {
+    gap: 8px !important;
+  }
+  .db-filters select {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .db-profile-label {
+    display: none !important;
+  }
+  .db-profile-btn {
+    width: 42px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+  /* Notification / profile menus: prefer viewport edges on narrow screens */
+  .db-dropdown-panel {
+    position: fixed !important;
+    top: max(56px, calc(env(safe-area-inset-top, 0px) + 52px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  .app-dialog-overlay {
+    padding: 12px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    align-items: flex-end !important;
+  }
+  .admin-rich-drawer-panel {
+    margin: 0 !important;
+    width: 100% !important;
+    max-height: min(96vh, 100dvh) !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  .prompt-form-card {
+    max-height: min(90vh, 100dvh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .prompt-checkbox-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .db-table-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+}
+
+@media (max-width: 480px) {
+  .db-filters select {
+    flex: 1 1 100%;
+  }
+  .db-main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 }
 
@@ -187,8 +258,10 @@ textarea:focus-visible {
 }
 
 /* Kanban horizontal scroll */
+.kanban-scroll {
+  -webkit-overflow-scrolling: touch;
+}
 .kanban-scroll::-webkit-scrollbar { height: 6px; }
 .kanban-scroll::-webkit-scrollbar-track { background: rgba(26,22,37,.05); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb { background: rgba(26,22,37,.2); border-radius: 3px; }
 .kanban-scroll::-webkit-scrollbar-thumb:hover { background: rgba(26,22,37,.35); }
-

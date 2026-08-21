@@ -386,7 +386,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             {t(locale, 'panel.admin.noUsersYet')}
           </p>
         ) : (
-          <div style={{ marginTop: '10px', overflowX: 'auto' }}>
+          <div style={{ marginTop: '10px', overflowX: 'auto' }} className="db-table-scroll">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
               <thead>
                 <tr style={{ background: 'rgba(26,22,37,.02)' }}>

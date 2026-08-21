@@ -100,6 +100,7 @@ export function PromptFormDialog({
         <div
           role="group"
           aria-label={f.label}
+          className="prompt-checkbox-grid"
           style={{
             marginTop: '8px',
             display: 'grid',
@@ -211,6 +212,7 @@ export function PromptFormDialog({
 
   return createPortal(
     <div
+      className="app-dialog-overlay"
       style={dialogOverlayStyle}
       role="presentation"
       onClick={(e) => {
@@ -221,6 +223,7 @@ export function PromptFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="prompt-form-title"
+        className="prompt-form-card"
         style={{ ...dialogCardStyle, maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >

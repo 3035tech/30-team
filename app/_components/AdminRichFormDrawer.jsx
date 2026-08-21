@@ -47,6 +47,7 @@ export function AdminRichFormDrawer({
 
   return createPortal(
     <div
+      className="app-dialog-overlay"
       style={dialogOverlayStyle}
       role="presentation"
       onClick={(e) => {
@@ -57,6 +58,7 @@ export function AdminRichFormDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="rich-form-drawer-title"
+        className="admin-rich-drawer-panel"
         style={{
           width: 'min(100%, ' + maxWidth + ')',
           maxHeight: '92vh',

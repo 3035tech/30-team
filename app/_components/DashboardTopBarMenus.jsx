@@ -298,7 +298,7 @@ export function DashboardTopBarMenus({
           ) : null}
         </button>
         {notifOpen ? (
-          <div style={dropdown} role="menu">
+          <div style={dropdown} className="db-dropdown-panel" role="menu">
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '12px 14px', borderBottom: `1px solid ${C.border}`,
@@ -368,6 +368,7 @@ export function DashboardTopBarMenus({
       <div style={{ position: 'relative' }}>
         <button
           type="button"
+          className="db-profile-btn"
           onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
           aria-expanded={profileOpen}
           aria-label={t(locale, 'dashboard.profileMenuAria')}
@@ -394,12 +395,12 @@ export function DashboardTopBarMenus({
           }}>
             {(displayLabel || '?').slice(0, 1).toUpperCase()}
           </span>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span className="db-profile-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayLabel || t(locale, 'dashboard.profile')}
           </span>
         </button>
         {profileOpen ? (
-          <div style={{ ...dropdown, width: '220px' }} role="menu">
+          <div style={{ ...dropdown, width: '220px' }} className="db-dropdown-panel" role="menu">
             <button
               type="button"
               onClick={() => { setProfileOpen(false); navigateToTab('profile'); }}
