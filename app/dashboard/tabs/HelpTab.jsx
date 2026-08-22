@@ -210,7 +210,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     links: 9,
     flow: 0,
     enneagram: 7,
-    vacancies: 8,
+    vacancies: 9,
     publicVacancy: 9,
     candidates: 5,
     pipeline: 6,

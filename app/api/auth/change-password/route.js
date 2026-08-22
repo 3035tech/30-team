@@ -2,17 +2,20 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import {
   COOKIE_NAME,
+  MAX_AGE,
   hashPassword,
   verifyPassword,
-  verifyToken,
+  signToken,
+  sessionCookieOptions,
 } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
+import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../../lib/session';
 
 export async function POST(request) {
   const token = cookies().get(COOKIE_NAME)?.value;
-  const session = verifyToken(token);
+  const session = await verifySessionWithCapabilities(token);
   if (!session?.userId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
@@ -41,6 +44,9 @@ export async function POST(request) {
     [passwordHash, session.userId]
   );
 
+  const newSv = await bumpSessionVersion(session.userId);
+  const sv = newSv != null ? newSv : session.sv;
+
   await audit({
     actorUserId: session.userId,
     action: 'auth.password_change',
@@ -48,5 +54,17 @@ export async function POST(request) {
     targetId: session.userId,
   });
 
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set(
+    COOKIE_NAME,
+    signToken({
+      userId: session.userId,
+      role: session.role,
+      companyId: session.companyId ?? null,
+      locale: session.locale || 'pt-BR',
+      sv,
+    }),
+    sessionCookieOptions({ maxAge: MAX_AGE })
+  );
+  return response;
 }

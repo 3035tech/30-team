@@ -18,7 +18,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 |--------|---------|
 | Frontend | React + Next.js App Router |
 | Backend | API Routes + Server Components |
-| Auth | Tabela `users` + JWT em cookie httpOnly |
+| Auth | Tabela `users` + JWT em cookie httpOnly (`session_version` revoga sessões) |
 | Roles | `admin`, `direction`, `hr` |
 | Config | `process.env` (Compose / K8s / Vercel / etc.) |
 
@@ -134,10 +134,12 @@ npm run dev
 ### Gestor no dashboard
 
 ```
-1. /login → JWT em cookie httpOnly
-2. /dashboard → Server Component lê o Postgres (dados por aba)
-3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
-4. Em Vagas: link /v/… (teste) e, se habilitado, página /j/{slug}-{id} (divulgação/SEO)
+1. /login → JWT em cookie httpOnly (claim `sv` = `users.session_version`)
+2. Logout / troca de senha / desativação incrementam `session_version` e invalidam JWTs antigos
+3. APIs admin e SSR do painel revalidam usuário live (active, role, company) a cada request
+4. /dashboard → Server Component lê o Postgres (dados por aba)
+5. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
+6. Em Vagas: link /v/… (teste) e, se habilitado, página /j/{slug}-{id} (divulgação/SEO)
 ```
 
 ---

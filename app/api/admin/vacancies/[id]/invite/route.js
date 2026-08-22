@@ -10,17 +10,9 @@ import { buildCandidateChallengeInviteMail } from '../../../../../../lib/candida
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
+import { publicAppUrl } from '../../../../../../lib/ae/require-admin';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function publicAppUrl(request) {
-  const env = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
-  if (env) return env.replace(/\/$/, '');
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  const proto = (request.headers.get('x-forwarded-proto') || 'https').split(',')[0]?.trim() || 'https';
-  if (host) return `${proto}://${host}`.replace(/\/$/, '');
-  return '';
-}
 
 export async function POST(request, { params }) {
   try {
@@ -98,8 +90,8 @@ export async function POST(request, { params }) {
 
     const ins = await query(
       `INSERT INTO candidate_invites (
-         vacancy_id, company_id, candidate_name, candidate_email, token, status, created_by_user_id
-       ) VALUES ($1, $2, $3, $4, $5, 'sent', $6)
+         vacancy_id, company_id, candidate_name, candidate_email, token, status, created_by_user_id, expires_at
+       ) VALUES ($1, $2, $3, $4, $5, 'sent', $6, NOW() + INTERVAL '30 days')
        RETURNING id`,
       [row.id, row.companyId, candidateName, candidateEmail, inviteToken, createdBySql]
     );

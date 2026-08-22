@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME } from '../../../../lib/auth';
+import { cookies } from 'next/headers';
+import { COOKIE_NAME, sessionCookieOptions, verifyToken } from '../../../../lib/auth';
+import { bumpSessionVersion } from '../../../../lib/session';
 
 export async function POST() {
+  const token = cookies().get(COOKIE_NAME)?.value;
+  const payload = token ? verifyToken(token) : null;
+  if (payload?.userId) {
+    try {
+      await bumpSessionVersion(payload.userId);
+    } catch {
+      /* migration ausente ou user sumiu — ainda limpa cookie */
+    }
+  }
+
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete(COOKIE_NAME);
+  response.cookies.set(COOKIE_NAME, '', sessionCookieOptions({ maxAge: 0 }));
   return response;
 }

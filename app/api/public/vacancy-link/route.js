@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import { resolveVacancyLinkByToken } from '../../../../lib/public-vacancy-link';
 import { apiError, localeFromRequest } from '../../../../lib/api-error';
 import { t } from '../../../../lib/i18n';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export async function GET(request) {
+  const ip = clientIpFromRequest(request);
+  const rl = checkRateLimit(`public-vacancy-link:${ip}`, 60, 60 * 1000);
+  if (!rl.ok) {
+    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+  }
+
   const { searchParams } = new URL(request.url);
   const token = String(searchParams.get('token') || '').trim();
   const email = searchParams.get('email');
@@ -25,5 +32,6 @@ export async function GET(request) {
     return apiError(request, result.errorCode, status);
   }
 
-  return NextResponse.json(result.vacancy);
+  const { vacancyId: _v, companyId: _c, ...publicVacancy } = result.vacancy;
+  return NextResponse.json(publicVacancy);
 }

@@ -1,24 +1,20 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { COOKIE_NAME, MAX_AGE, hashPassword, signToken, verifyPassword, verifyToken } from '../../../lib/auth';
+import { COOKIE_NAME, MAX_AGE, hashPassword, signToken, verifyPassword, sessionCookieOptions } from '../../../lib/auth';
 import { query } from '../../../lib/db';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../lib/i18n';
 import { apiError } from '../../../lib/api-error';
+import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../lib/session';
 
-function requireSession(request) {
+async function requireSession(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
+  const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
   return { payload };
 }
 
 function setSessionCookies(response, payload, locale) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const secureCookie =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.NODE_ENV === 'production' && appUrl.startsWith('https://'));
-
   response.cookies.set(
     COOKIE_NAME,
     signToken({
@@ -26,18 +22,13 @@ function setSessionCookies(response, payload, locale) {
       role: payload.role,
       companyId: payload.companyId ?? null,
       locale,
+      sv: payload.sv,
     }),
-    {
-      httpOnly: true,
-      secure: secureCookie,
-      sameSite: 'lax',
-      maxAge: MAX_AGE,
-      path: '/',
-    }
+    sessionCookieOptions({ maxAge: MAX_AGE })
   );
   response.cookies.set(LOCALE_COOKIE, locale, {
     httpOnly: false,
-    secure: secureCookie,
+    secure: sessionCookieOptions().secure,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 365,
     path: '/',
@@ -46,7 +37,7 @@ function setSessionCookies(response, payload, locale) {
 
 /** GET /api/me — perfil do usuário logado */
 export async function GET(request) {
-  const { payload, error } = requireSession(request);
+  const { payload, error } = await requireSession(request);
   if (error) return error;
 
   const res = await query(
@@ -55,7 +46,7 @@ export async function GET(request) {
             c.name AS "companyName"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id AND c.deleted = FALSE
-     WHERE u.id = $1 AND u.deleted = FALSE
+     WHERE u.id = $1 AND u.deleted = FALSE AND u.active = TRUE
      LIMIT 1`,
     [payload.userId]
   );
@@ -69,7 +60,7 @@ export async function GET(request) {
  * Não altera role / company_id / active.
  */
 export async function PATCH(request) {
-  const { payload, error } = requireSession(request);
+  const { payload, error } = await requireSession(request);
   if (error) return error;
 
   const body = await request.json().catch(() => ({}));
@@ -121,7 +112,7 @@ export async function PATCH(request) {
     params.push(await hashPassword(newPassword));
   }
 
-    if (!sets.length) return apiError(request, 'NOTHING_TO_UPDATE', 400);
+  if (!sets.length) return apiError(request, 'NOTHING_TO_UPDATE', 400);
 
   params.push(payload.userId);
   await query(
@@ -129,18 +120,24 @@ export async function PATCH(request) {
     params
   );
 
+  let nextSv = payload.sv;
+  if (body.newPassword != null && String(body.newPassword).length > 0) {
+    const bumped = await bumpSessionVersion(payload.userId);
+    if (bumped != null) nextSv = bumped;
+  }
+
   const refreshed = await query(
     `SELECT u.id, u.email, u.role, u.locale, u.display_name AS "displayName",
             u.company_id AS "companyId", u.last_login_at AS "lastLoginAt",
             c.name AS "companyName"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id AND c.deleted = FALSE
-     WHERE u.id = $1 AND u.deleted = FALSE
+     WHERE u.id = $1 AND u.deleted = FALSE AND u.active = TRUE
      LIMIT 1`,
     [payload.userId]
   );
 
   const response = NextResponse.json({ ok: true, user: refreshed.rows[0] });
-  setSessionCookies(response, payload, nextLocale);
+  setSessionCookies(response, { ...payload, role: refreshed.rows[0].role, companyId: refreshed.rows[0].companyId, sv: nextSv }, nextLocale);
   return response;
 }

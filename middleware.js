@@ -12,13 +12,23 @@ import {
   searchHasAttribution,
 } from './lib/job-attribution';
 
-/** Cabeçalhos opcionais em runtime (produção HTTPS). Ver .env.example. */
+/** Cabeçalhos de segurança (baseline + HSTS/CSP opcionais via env). */
 function withSecurityHeaders(response) {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
   const csp = process.env.CSP_REPORT_ONLY?.trim();
   if (csp) {
     response.headers.set('Content-Security-Policy-Report-Only', csp);
   }
-  if (process.env.ENABLE_HSTS === 'true') {
+
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+  const hstsOn =
+    process.env.ENABLE_HSTS === 'true' ||
+    (process.env.NODE_ENV === 'production' && appUrl.startsWith('https://'));
+  if (hstsOn) {
     const maxAge = process.env.HSTS_MAX_AGE?.trim() || '31536000';
     const preload = process.env.HSTS_PRELOAD === 'true' ? '; preload' : '';
     response.headers.set(

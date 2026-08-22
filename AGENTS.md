@@ -247,7 +247,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Retenção LGPD | `lib/retention.js`, `POST /api/admin/retention/purge` (lotes) |
 | Links públicos | `lib/public-company-link.js`, `lib/public-vacancy-link.js`, `app/t`, `app/v` |
 | Timeline do candidato | `app/_components/CandidateTimeline.jsx`, `lib/hire.js` (`buildCandidateTimeline`) |
-| Auth | `lib/auth.js`, `lib/auth-edge.js`, `middleware.js` |
+| Auth | `lib/auth.js`, `lib/auth-edge.js`, `lib/session.js` (`session_version`), `middleware.js` |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` |

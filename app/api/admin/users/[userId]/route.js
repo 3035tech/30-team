@@ -9,6 +9,7 @@ import {
   replaceUserModuleCapabilities,
   verifySessionWithCapabilities,
 } from '../../../../../lib/user-capabilities';
+import { bumpSessionVersion } from '../../../../../lib/session';
 import { audit } from '../../../../../lib/audit';
 
 export async function PATCH(request, { params }) {
@@ -73,6 +74,16 @@ export async function PATCH(request, { params }) {
     [userId, nextEmail, nextRole, nextActive, nextRole === 'admin' ? null : nextCompanyId, nextHash]
   );
 
+  const prev = current.rows[0];
+  const sensitiveChange =
+    nextHash != null ||
+    nextRole !== prev.role ||
+    nextActive !== prev.active ||
+    (nextRole === 'admin' ? null : nextCompanyId) !== prev.companyId;
+  if (sensitiveChange) {
+    await bumpSessionVersion(userId).catch(() => {});
+  }
+
   let modules;
   let customized;
   if (Object.prototype.hasOwnProperty.call(body, 'modules')) {
@@ -128,6 +139,7 @@ export async function DELETE(request, { params }) {
   );
   if (del.rowCount === 0) return apiError(request, 'USER_NOT_FOUND', 404);
 
+  await bumpSessionVersion(userId).catch(() => {});
   await query(`DELETE FROM user_capability_overrides WHERE user_id = $1`, [userId]).catch(() => {});
 
   await audit({

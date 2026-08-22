@@ -514,7 +514,12 @@ export default function MotivatorsFlow({
       const res = await fetch('/api/ae/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attemptId: session.attemptId, answers, locale }),
+        body: JSON.stringify({
+          attemptId: session.attemptId,
+          inviteToken,
+          answers,
+          locale,
+        }),
       });
       resData = await res.json().catch(() => ({}));
       if (!res.ok) errMsg = resData.error || t(locale, 'motivators.saveFailed');

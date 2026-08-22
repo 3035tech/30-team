@@ -7,15 +7,7 @@ import { createAndQueueMotivatorsInvite } from '../../../../../../../../lib/ae/c
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
-
-function publicAppUrl(request) {
-  const env = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
-  if (env) return env.replace(/\/$/, '');
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  const proto = (request.headers.get('x-forwarded-proto') || 'https').split(',')[0]?.trim() || 'https';
-  if (host) return `${proto}://${host}`.replace(/\/$/, '');
-  return '';
-}
+import { publicAppUrl } from '../../../../../../../../lib/ae/require-admin';
 
 /**
  * POST — envia convite de Motivadores para candidato já pré-cadastrado na vaga.

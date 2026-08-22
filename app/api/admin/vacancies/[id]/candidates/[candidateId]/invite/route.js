@@ -10,15 +10,7 @@ import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/c
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
 import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
-
-function publicAppUrl(request) {
-  const env = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
-  if (env) return env.replace(/\/$/, '');
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  const proto = (request.headers.get('x-forwarded-proto') || 'https').split(',')[0]?.trim() || 'https';
-  if (host) return `${proto}://${host}`.replace(/\/$/, '');
-  return '';
-}
+import { publicAppUrl } from '../../../../../../../../lib/ae/require-admin';
 
 /** Envia desafio de eneagrama para candidato já pré-cadastrado na vaga. */
 export async function POST(request, { params }) {
@@ -91,8 +83,8 @@ export async function POST(request, { params }) {
 
     const ins = await query(
       `INSERT INTO candidate_invites (
-         vacancy_id, company_id, candidate_id, candidate_name, candidate_email, token, status, created_by_user_id
-       ) VALUES ($1, $2, $3, $4, $5, $6, 'sent', $7)
+         vacancy_id, company_id, candidate_id, candidate_name, candidate_email, token, status, created_by_user_id, expires_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, 'sent', $7, NOW() + INTERVAL '30 days')
        RETURNING id`,
       [row.vacancyId, row.companyId, candidateId, candidateName, candidateEmail, inviteToken, createdBySql]
     );

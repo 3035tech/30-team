@@ -42,7 +42,10 @@ export async function POST(request) {
      LIMIT 1`,
     [vacancyId]
   );
-  if (vac.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (vac.rowCount === 0) {
+    // Não revelar existência de vacancyId (anti-enumeração).
+    return NextResponse.json({ ok: true, skipped: true });
+  }
 
   const attr = decodeAttributionCookie(request.cookies.get(JOB_ATTR_COOKIE)?.value);
   const result = await recordJobFunnelEvent({

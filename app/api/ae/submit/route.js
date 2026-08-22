@@ -24,10 +24,11 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => ({}));
     const attemptId = Number(body.attemptId);
+    const inviteToken = String(body.inviteToken || '').trim();
     const answers = body.answers;
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
-    if (!Number.isFinite(attemptId) || !Array.isArray(answers)) {
+    if (!Number.isFinite(attemptId) || !Array.isArray(answers) || !inviteToken) {
       return apiError(request, 'INVALID_DATA', 400);
     }
 
@@ -36,10 +37,13 @@ export async function POST(request) {
               a.question_ids AS "questionIds", a.company_id AS "companyId",
               a.candidate_id AS "candidateId", c.full_name AS "candidateName"
        FROM ae_attempts a
+       JOIN ae_invites i ON i.id = a.invite_id
        LEFT JOIN candidates c ON c.id = a.candidate_id
        WHERE a.id = $1
+         AND i.token = $2
+         AND i.company_id = a.company_id
        LIMIT 1`,
-      [attemptId]
+      [attemptId, inviteToken]
     );
     if (att.rowCount === 0) {
       return apiError(request, 'SESSION_NOT_FOUND', 404);

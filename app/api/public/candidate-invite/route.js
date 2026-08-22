@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-/** GET /api/public/candidate-invite?token=&vacancyToken= — identity + HR profile for Enneagram email invites. */
+/** GET /api/public/candidate-invite?token=&vacancyToken= — identity for Enneagram email invites. */
 export async function GET(request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = checkRateLimit(`public-candidate-invite:${ip}`, 60, 60 * 1000);
+    if (!rl.ok) {
+      return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    }
+
     const { searchParams } = new URL(request.url);
     const token = String(searchParams.get('token') || '').trim();
     const vacancyToken = String(searchParams.get('vacancyToken') || '').trim();
@@ -20,6 +27,7 @@ export async function GET(request) {
          ci.candidate_name AS "candidateName",
          ci.candidate_email AS "candidateEmail",
          ci.status,
+         ci.expires_at AS "expiresAt",
          ci.vacancy_id AS "vacancyId",
          v.title AS "vacancyTitle",
          co.name AS "companyName",
@@ -43,7 +51,11 @@ export async function GET(request) {
     const row = res.rows[0];
     if (row.status === 'cancelled') return apiError(request, 'INVITE_CANCELLED', 403);
     if (row.status === 'completed') return apiError(request, 'INVITE_COMPLETED', 409);
+    if (row.expiresAt && new Date(row.expiresAt) < new Date()) {
+      return apiError(request, 'INVITE_EXPIRED', 403);
+    }
 
+    let vacancyTokenOk = false;
     if (vacancyToken) {
       const vac = await queryRead(
         `SELECT v.id
@@ -60,6 +72,28 @@ export async function GET(request) {
       if (Number(vac.rows[0].id) !== Number(row.vacancyId)) {
         return apiError(request, 'INVITE_VACANCY_MISMATCH', 400);
       }
+      vacancyTokenOk = true;
+    }
+
+    const base = {
+      ok: true,
+      inviteId: row.id,
+      candidateName: row.candidateName,
+      candidateEmail: row.candidateEmail,
+      status: row.status,
+      vacancyTitle: row.vacancyTitle,
+      companyName: row.companyName,
+    };
+
+    // Perfil ampliado só com vacancyToken válido (reduz PII se o link vazar sozinho).
+    if (!vacancyTokenOk) {
+      return NextResponse.json({
+        ...base,
+        phone: '',
+        linkedinUrl: '',
+        city: '',
+        state: '',
+      });
     }
 
     let phone = row.phone || null;
@@ -67,7 +101,6 @@ export async function GET(request) {
     let city = row.city || null;
     let state = row.state || null;
 
-    // Fallback when invite has no candidate_id: same company + email
     if (!row.candidateId && row.candidateEmail && row.companyId) {
       const byEmail = await queryRead(
         `SELECT phone, linkedin_url AS "linkedinUrl", city, state
@@ -86,13 +119,7 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      ok: true,
-      inviteId: row.id,
-      candidateName: row.candidateName,
-      candidateEmail: row.candidateEmail,
-      status: row.status,
-      vacancyTitle: row.vacancyTitle,
-      companyName: row.companyName,
+      ...base,
       phone: phone || '',
       linkedinUrl: linkedinUrl || '',
       city: city || '',

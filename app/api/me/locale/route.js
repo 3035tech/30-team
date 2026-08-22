@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { COOKIE_NAME, MAX_AGE, signToken, verifyToken } from '../../../../lib/auth';
+import { COOKIE_NAME, MAX_AGE, signToken, sessionCookieOptions } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
 import { apiError } from '../../../../lib/api-error';
+import { verifySessionWithCapabilities } from '../../../../lib/session';
 
 export async function PATCH(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
+  const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return apiError(request, 'UNAUTHORIZED', 401);
 
   const body = await request.json().catch(() => ({}));
@@ -17,25 +18,22 @@ export async function PATCH(request) {
   await query(`UPDATE users SET locale = $2 WHERE id = $1 AND deleted = FALSE`, [payload.userId, locale]);
 
   const response = NextResponse.json({ ok: true, locale });
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const secureCookie =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.NODE_ENV === 'production' && appUrl.startsWith('https://'));
+  const opts = sessionCookieOptions({ maxAge: MAX_AGE });
 
   response.cookies.set(
     COOKIE_NAME,
-    signToken({ userId: payload.userId, role: payload.role, companyId: payload.companyId ?? null, locale }),
-    {
-      httpOnly: true,
-      secure: secureCookie,
-      sameSite: 'lax',
-      maxAge: MAX_AGE,
-      path: '/',
-    }
+    signToken({
+      userId: payload.userId,
+      role: payload.role,
+      companyId: payload.companyId ?? null,
+      locale,
+      sv: payload.sv,
+    }),
+    opts
   );
   response.cookies.set(LOCALE_COOKIE, locale, {
     httpOnly: false,
-    secure: secureCookie,
+    secure: opts.secure,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 365,
     path: '/',
