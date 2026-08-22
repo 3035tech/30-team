@@ -18,7 +18,8 @@ export async function seed(client) {
   await client.query(
     `UPDATE companies
      SET website = $2,
-         about_html = $3
+         about_html = $3,
+         public_profile_enabled = TRUE
      WHERE id = $1 AND deleted = FALSE`,
     [
       companyId,

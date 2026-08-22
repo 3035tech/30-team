@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
 import { t } from '../../../lib/i18n';
+import { publicCompanyPath } from '../../../lib/public-job-url';
 import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -93,6 +94,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
           defaultValue: '',
         },
+        {
+          key: 'publicProfileEnabled',
+          type: 'boolean',
+          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
+          defaultValue: false,
+        },
       ],
     });
     if (!values) return;
@@ -109,6 +116,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           slug: String(values.slug || '').trim() || undefined,
           website: String(values.website || '').trim() || null,
           aboutHtml: String(values.aboutHtml || '').trim() || null,
+          publicProfileEnabled: values.publicProfileEnabled === true || values.publicProfileEnabled === 'true',
         }),
       });
       const data = await res.json();
@@ -182,6 +190,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           defaultValue: c?.aboutHtml ?? '',
         },
         {
+          key: 'publicProfileEnabled',
+          type: 'boolean',
+          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
+          defaultValue: Boolean(c?.publicProfileEnabled),
+        },
+        {
           key: 'active',
           type: 'boolean',
           label: t(locale, 'panel.admin.editCompanyActive'),
@@ -193,6 +207,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     const nextName = String(values.name || '').trim();
     const nextSlug = String(values.slug || '').trim();
     const nextActive = values.active === true || values.active === 'true';
+    const nextPublicProfile =
+      values.publicProfileEnabled === true || values.publicProfileEnabled === 'true';
 
     setLoading(true);
     setError('');
@@ -207,6 +223,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           active: nextActive,
           website: String(values.website || '').trim() || null,
           aboutHtml: String(values.aboutHtml || '').trim() || null,
+          publicProfileEnabled: nextPublicProfile,
         }),
       });
       const data = await res.json();
@@ -302,6 +319,9 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                 {companies.map((c) => {
                   const token = c.activeToken || '';
                   const link = token ? `${appUrl}/t/${token}` : '';
+                  const careersPath = c.slug ? publicCompanyPath(c.slug) : '';
+                  const careersUrl = careersPath && appUrl ? `${appUrl}${careersPath}` : careersPath;
+                  const publicOn = Boolean(c.publicProfileEnabled);
                   const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
                   const createdAt = c.createdAt ? new Date(c.createdAt) : null;
                   return (
@@ -321,6 +341,15 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                               {t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}
                             </div>
                           ) : null}
+                          {publicOn && careersUrl ? (
+                            <div style={{ marginTop: '6px', fontSize: '10px', color: C.faint }}>
+                              {t(locale, 'panel.admin.companyPublicPageLabel')}: {careersUrl}
+                            </div>
+                          ) : (
+                            <div style={{ marginTop: '6px', fontSize: '10px', color: C.faint }}>
+                              {t(locale, 'panel.admin.companyPublicPageOff')}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                           <button
@@ -353,6 +382,18 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           >
                             {t(locale, 'panel.admin.copyLink')}
                           </button>
+                          {publicOn && careersUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => copy(careersUrl)}
+                              disabled={loading}
+                              style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                                borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                            >
+                              {t(locale, 'panel.admin.copyPublicPage')}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => deleteCompany(c.id, c.name)}

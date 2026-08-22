@@ -71,13 +71,14 @@ export async function GET(request) {
        c.active,
        c.website,
        c.about_html AS "aboutHtml",
+       c.public_profile_enabled AS "publicProfileEnabled",
        c.created_at AS "createdAt",
        lk.token AS "activeToken",
        lk.expires_at AS "activeTokenExpiresAt"
      FROM companies c
      LEFT JOIN company_links lk ON lk.company_id = c.id AND lk.active = TRUE
      WHERE c.deleted = FALSE
-     ${orderSql}
+    ${orderSql}
      LIMIT $1 OFFSET $2`,
     [pageSize, offset]
   );
@@ -111,10 +112,11 @@ export async function POST(request) {
   }
 
   const ins = await query(
-    `INSERT INTO companies (name, slug, active, website, about_html)
-     VALUES ($1, $2, TRUE, $3, $4)
-     RETURNING id, name, slug, active, website, about_html AS "aboutHtml", created_at AS "createdAt"`,
-    [name, slug, profile.website, profile.aboutHtml]
+    `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled)
+     VALUES ($1, $2, TRUE, $3, $4, $5)
+     RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
+               public_profile_enabled AS "publicProfileEnabled", created_at AS "createdAt"`,
+    [name, slug, profile.website, profile.aboutHtml, profile.publicProfileEnabled === true]
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);

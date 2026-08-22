@@ -15,7 +15,8 @@ import {
   publicVacancyClosedReason,
   publicVacancyShowsClosedExperience,
 } from '../../lib/public-vacancy-lifecycle';
-import { useEffect, useRef } from 'react';
+import { publicCompanyPath } from '../../lib/public-job-url';
+import { useEffect, useRef, useState } from 'react';
 
 function trackJobFunnel(eventType, vacancyId) {
   const id = Number(vacancyId);
@@ -440,8 +441,75 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   );
 }
 
-/** Listagem /j */
-export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
+/** Listagem /j — busca + filtro tipo + paginação (GET). */
+export function PublicVacanciesIndexView({
+  locale = 'pt-BR',
+  items = [],
+  total = 0,
+  page = 1,
+  pageSize = 12,
+  filters = {},
+}) {
+  const q = String(filters.q || '');
+  const employmentType = String(filters.employmentType || '');
+  const totalPages = Math.max(1, Math.ceil(Number(total) / Math.max(1, pageSize)));
+  const hasFilters = Boolean(q || employmentType);
+  const emptyMsg = hasFilters
+    ? t(locale, 'publicVacancy.indexEmptyFiltered')
+    : t(locale, 'publicVacancy.indexEmpty');
+
+  function hrefForPage(p) {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (employmentType) params.set('employmentType', employmentType);
+    if (p > 1) params.set('page', String(p));
+    const qs = params.toString();
+    return qs ? `/j?${qs}` : '/j';
+  }
+
+  const inputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: `1px solid ${C.border}`,
+    background: C.bg,
+    color: C.text,
+    fontFamily: FONTS.serif,
+    fontSize: '15px',
+  };
+
+  const [alertName, setAlertName] = useState('');
+  const [alertEmail, setAlertEmail] = useState('');
+  const [alertStatus, setAlertStatus] = useState(''); // '' | 'loading' | 'ok' | 'err'
+
+  async function submitJobAlert(e) {
+    e.preventDefault();
+    if (alertStatus === 'loading') return;
+    setAlertStatus('loading');
+    try {
+      const res = await fetch('/api/public/job-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: alertEmail,
+          name: alertName || null,
+          filters: {
+            q: q || undefined,
+            employmentType: employmentType || undefined,
+          },
+        }),
+        credentials: 'same-origin',
+      });
+      if (!res.ok) throw new Error('fail');
+      setAlertStatus('ok');
+      setAlertEmail('');
+      setAlertName('');
+    } catch {
+      setAlertStatus('err');
+    }
+  }
+
   return (
     <div style={shell}>
       <div style={glow} aria-hidden />
@@ -465,9 +533,354 @@ export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
           </p>
         </header>
 
+        <form
+          method="get"
+          action="/j"
+          style={{
+            ...card,
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          <label style={{ display: 'block' }}>
+            <span
+              style={{
+                display: 'block',
+                marginBottom: '6px',
+                fontSize: '12px',
+                fontFamily: FONTS.mono,
+                color: C.muted,
+              }}
+            >
+              {t(locale, 'publicVacancy.indexSearchLabel')}
+            </span>
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder={t(locale, 'publicVacancy.indexSearchPlaceholder')}
+              style={inputStyle}
+              autoComplete="off"
+            />
+          </label>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              alignItems: 'flex-end',
+            }}
+          >
+            <label style={{ flex: '1 1 180px', minWidth: 0 }}>
+              <span
+                style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '12px',
+                  fontFamily: FONTS.mono,
+                  color: C.muted,
+                }}
+              >
+                {t(locale, 'publicVacancy.indexEmploymentLabel')}
+              </span>
+              <select name="employmentType" defaultValue={employmentType} style={inputStyle}>
+                <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
+                <option value="clt">{t(locale, 'recruiting.employmentType_clt')}</option>
+                <option value="pj">{t(locale, 'recruiting.employmentType_pj')}</option>
+                <option value="internship">{t(locale, 'recruiting.employmentType_internship')}</option>
+                <option value="cooperative">{t(locale, 'recruiting.employmentType_cooperative')}</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              style={{
+                flex: '0 0 auto',
+                minHeight: '44px',
+                padding: '0 20px',
+                borderRadius: '10px',
+                border: 'none',
+                background: C.purple,
+                color: '#fff',
+                fontFamily: FONTS.serif,
+                fontSize: '15px',
+                cursor: 'pointer',
+              }}
+            >
+              {t(locale, 'publicVacancy.indexSearchSubmit')}
+            </button>
+            {hasFilters ? (
+              <Link
+                href="/j"
+                style={{
+                  flex: '0 0 auto',
+                  minHeight: '44px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '0 14px',
+                  color: C.muted,
+                  fontSize: '14px',
+                }}
+              >
+                {t(locale, 'publicVacancy.indexClearFilters')}
+              </Link>
+            ) : null}
+          </div>
+        </form>
+
         <main style={card}>
+          {total > 0 ? (
+            <p
+              style={{
+                margin: '0 0 14px',
+                fontSize: '12px',
+                fontFamily: FONTS.mono,
+                color: C.muted,
+              }}
+            >
+              {t(locale, 'publicVacancy.indexResultCount', { count: String(total) })}
+            </p>
+          ) : null}
           {!items.length ? (
-            <p style={{ margin: 0, color: C.muted }}>{t(locale, 'publicVacancy.indexEmpty')}</p>
+            <p style={{ margin: 0, color: C.muted }}>{emptyMsg}</p>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {items.map((item) => (
+                <li key={item.vacancyId}>
+                  <div
+                    style={{
+                      border: `1px solid ${C.border}`,
+                      borderRadius: '12px',
+                      padding: '16px 18px',
+                    }}
+                  >
+                    <Link
+                      href={item.path}
+                      style={{
+                        display: 'block',
+                        textDecoration: 'none',
+                        color: C.text,
+                        fontSize: '17px',
+                      }}
+                    >
+                      {item.title}
+                    </Link>
+                    {(() => {
+                      const empKey = employmentTypeLabelKey(item.employmentType);
+                      const empLabel = empKey ? t(locale, empKey) : null;
+                      if (!item.companyName && !empLabel) return null;
+                      return (
+                        <div
+                          style={{
+                            marginTop: '6px',
+                            fontSize: '12px',
+                            fontFamily: FONTS.mono,
+                            color: C.muted,
+                          }}
+                        >
+                          {item.companyName && item.companySlug ? (
+                            <Link
+                              href={publicCompanyPath(item.companySlug)}
+                              style={{ color: C.muted }}
+                            >
+                              {item.companyName}
+                            </Link>
+                          ) : item.companyName ? (
+                            <span>{item.companyName}</span>
+                          ) : null}
+                          {item.companyName && empLabel ? ' · ' : null}
+                          {empLabel}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {totalPages > 1 ? (
+            <nav
+              aria-label={t(locale, 'publicVacancy.indexPagination')}
+              style={{
+                marginTop: '20px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              {page > 1 ? (
+                <Link href={hrefForPage(page - 1)} style={{ color: C.purple, minHeight: '40px', display: 'inline-flex', alignItems: 'center' }}>
+                  {t(locale, 'publicVacancy.indexPrev')}
+                </Link>
+              ) : (
+                <span style={{ color: C.faint }}>{t(locale, 'publicVacancy.indexPrev')}</span>
+              )}
+              <span style={{ fontSize: '12px', fontFamily: FONTS.mono, color: C.muted }}>
+                {t(locale, 'publicVacancy.indexPageOf', { page: String(page), pages: String(totalPages) })}
+              </span>
+              {page < totalPages ? (
+                <Link href={hrefForPage(page + 1)} style={{ color: C.purple, minHeight: '40px', display: 'inline-flex', alignItems: 'center' }}>
+                  {t(locale, 'publicVacancy.indexNext')}
+                </Link>
+              ) : (
+                <span style={{ color: C.faint }}>{t(locale, 'publicVacancy.indexNext')}</span>
+              )}
+            </nav>
+          ) : null}
+        </main>
+
+        <section style={{ ...card, marginTop: '16px' }}>
+          <h2 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600 }}>
+            {t(locale, 'publicVacancy.alertTitle')}
+          </h2>
+          <p style={{ margin: '0 0 14px', color: C.muted, fontSize: '14px', lineHeight: 1.55 }}>
+            {t(locale, 'publicVacancy.alertIntro')}
+          </p>
+          {alertStatus === 'ok' ? (
+            <p style={{ margin: 0, color: C.synergy, fontSize: '14px' }}>
+              {t(locale, 'publicVacancy.alertSuccess')}
+            </p>
+          ) : (
+            <form
+              onSubmit={submitJobAlert}
+              style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+            >
+              <label style={{ display: 'block' }}>
+                <span
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '12px',
+                    fontFamily: FONTS.mono,
+                    color: C.muted,
+                  }}
+                >
+                  {t(locale, 'publicVacancy.alertNameLabel')}
+                </span>
+                <input
+                  type="text"
+                  name="name"
+                  value={alertName}
+                  onChange={(ev) => setAlertName(ev.target.value)}
+                  placeholder={t(locale, 'publicVacancy.alertNamePlaceholder')}
+                  style={inputStyle}
+                  autoComplete="name"
+                />
+              </label>
+              <label style={{ display: 'block' }}>
+                <span
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '12px',
+                    fontFamily: FONTS.mono,
+                    color: C.muted,
+                  }}
+                >
+                  {t(locale, 'publicVacancy.alertEmailLabel')}
+                </span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={alertEmail}
+                  onChange={(ev) => setAlertEmail(ev.target.value)}
+                  placeholder={t(locale, 'publicVacancy.alertEmailPlaceholder')}
+                  style={inputStyle}
+                  autoComplete="email"
+                />
+              </label>
+              {alertStatus === 'err' ? (
+                <p style={{ margin: 0, color: C.tension, fontSize: '13px' }}>
+                  {t(locale, 'publicVacancy.alertError')}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={alertStatus === 'loading'}
+                style={{
+                  alignSelf: 'flex-start',
+                  minHeight: '44px',
+                  padding: '0 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: C.purple,
+                  color: '#fff',
+                  fontFamily: FONTS.serif,
+                  fontSize: '15px',
+                  cursor: alertStatus === 'loading' ? 'default' : 'pointer',
+                  opacity: alertStatus === 'loading' ? 0.7 : 1,
+                }}
+              >
+                {alertStatus === 'loading'
+                  ? t(locale, 'publicVacancy.alertSubmitting')
+                  : t(locale, 'publicVacancy.alertSubmit')}
+              </button>
+            </form>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/** Página pública `/c/{slug}` (perfil da empresa). */
+export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], total = 0 }) {
+  const name = company?.name || t(locale, 'publicVacancy.companyFallback');
+  const website = String(company?.website || '').trim();
+  const aboutHtml = company?.aboutHtml || '';
+
+  return (
+    <div style={shell}>
+      <div style={glow} aria-hidden />
+      <div style={wrap}>
+        <header style={{ marginBottom: '24px' }}>
+          <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+          <p style={{ margin: '0 0 8px', fontSize: '12px', fontFamily: FONTS.mono }}>
+            <Link href="/j" style={{ color: C.muted }}>
+              {t(locale, 'publicVacancy.browseOpenCta')}
+            </Link>
+          </p>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 'clamp(28px, 5vw, 40px)',
+              fontWeight: 'normal',
+              background: GRADIENT.title,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {name}
+          </h1>
+          {website ? (
+            <p style={{ margin: '10px 0 0', fontSize: '14px' }}>
+              <a href={website} target="_blank" rel="noopener noreferrer" style={{ color: C.purple }}>
+                {t(locale, 'publicVacancy.companySite')}
+              </a>
+            </p>
+          ) : null}
+        </header>
+
+        {!isRichTextEmpty(aboutHtml) ? (
+          <section style={{ ...card, marginBottom: '16px' }}>
+            <h2 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 600 }}>
+              {t(locale, 'publicVacancy.aboutCompany', { name })}
+            </h2>
+            <RichTextView html={aboutHtml} />
+          </section>
+        ) : null}
+
+        <main style={card}>
+          <h2 style={{ margin: '0 0 14px', fontSize: '16px', fontWeight: 600 }}>
+            {t(locale, 'publicVacancy.companyOpenRoles')}
+          </h2>
+          {!items.length ? (
+            <p style={{ margin: 0, color: C.muted }}>{t(locale, 'publicVacancy.companyNoOpenRoles')}</p>
           ) : (
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {items.map((item) => (
@@ -486,10 +899,7 @@ export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
                     <span style={{ fontSize: '17px', display: 'block' }}>{item.title}</span>
                     {(() => {
                       const empKey = employmentTypeLabelKey(item.employmentType);
-                      const meta = [item.companyName, empKey ? t(locale, empKey) : null]
-                        .filter(Boolean)
-                        .join(' · ');
-                      if (!meta) return null;
+                      if (!empKey) return null;
                       return (
                         <span
                           style={{
@@ -500,7 +910,7 @@ export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
                             color: C.muted,
                           }}
                         >
-                          {meta}
+                          {t(locale, empKey)}
                         </span>
                       );
                     })()}
@@ -509,6 +919,13 @@ export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
               ))}
             </ul>
           )}
+          {total > items.length ? (
+            <p style={{ margin: '14px 0 0', fontSize: '12px', color: C.muted }}>
+              <Link href="/j" style={{ color: C.purple }}>
+                {t(locale, 'publicVacancy.seeAllOpen')}
+              </Link>
+            </p>
+          ) : null}
         </main>
       </div>
     </div>

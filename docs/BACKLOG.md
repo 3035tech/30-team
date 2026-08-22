@@ -60,7 +60,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 | Copiar links no **dashboard** | `VacanciesAdminTab` |
 | Company `website` / `about_html` | sem logo de empresa no DB |
 
-**Gaps principais:** tracking/analytics; referral; filtros/agregadores; `/empresas`; job alerts; SEO score; logo / local / modalidade (campos ainda inexistentes).
+**Gaps principais:** agregadores (B-119 — adiar até campos remoto/cidade); logo / local / modalidade (campos ainda inexistentes).
 
 **Regras de implementação do epic:**
 
@@ -99,7 +99,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 **Entregue:** cookie UTM/`ref` (`team30_job_attr`) → `assessments.attr_*` + `candidates.source` grosso; `job_funnel_events` (view/apply/pipeline); `GET /api/admin/vacancies/[id]/analytics`. Migration `032`.
 
 #### B-115b — (opcional) UI analytics no detalhe da vaga
-Painel no detalhe/config da vaga consumindo a API de analytics. Só quando priorizar UX no painel.
+**Entregue:** aba “Funil” no detalhe da vaga (números + top sources via `GET …/analytics`).
 
 ---
 
@@ -111,12 +111,8 @@ Painel no detalhe/config da vaga consumindo a API de analytics. Só quando prior
 
 ### Fase 6 — Crescimento orgânico
 
-#### B-118 — `/vagas` com busca, filtros e paginação
-**Instruções:**
-- Evoluir `app/vagas/page.jsx` + `listOpenPublicVacancies`.
-- Busca textual; filtros quando dados existirem (cidade/UF/remoto/employment_type/área); ordenação por data; paginação real (não só cap 48 cego — pageSize + page).
-- SEO: title/description próprios; **sem** JobPosting na listagem.
-- Critério: querystring de filtros funciona; empty state i18n.
+#### B-118 — `/j` com busca, filtros e paginação
+**Entregue:** índice `/j` com `?q=`, `employmentType`, `page`/`pageSize`; `listOpenPublicVacancies` paged; empty filtrado i18n.
 
 #### B-119 — Páginas agregadoras SEO (com guarda de qualidade)
 **Instruções:**
@@ -125,35 +121,18 @@ Painel no detalhe/config da vaga consumindo a API de analytics. Só quando prior
 - Começar com 1–2 agregadores seguros (ex. remoto se campo existir; senão adiar até haver dado).
 - Critério: agregador sem massa suficiente → 404 ou redirect para `/vagas`, nunca página vazia indexável.
 
-#### B-120 — Página pública da empresa `/empresas/{companySlug}`
-**Instruções:**
-- Nova rota pública: nome, about, website, vagas abertas públicas da empresa.
-- SEO próprio; lista reusa `listOpenPublicVacancies({ companyId })`.
-- Não confundir com `/t/{token}` (assessment interno).
-- Critério: company sem vagas públicas ainda mostra perfil + empty; soft-deleted → 404.
-
----
-
-### Fase 7 — Retenção
+#### B-120 — Página pública da empresa `/c/{companySlug}`
+**Entregue:** canônica neutra `app/c/[companySlug]` + `resolvePublicCompanyBySlug` (exige `public_profile_enabled`); legado `/empresas/{slug}` → 308; opt-in no cadastro Empresas; link no índice `/j` quando perfil ligado.
 
 #### B-121 — Job Alerts (base)
-**Instruções:**
-- Tabela `job_alerts`: email, name opcional, filtros JSON (áreas, remote, etc.), active, unsubscribe_token, created_at.
-- `POST` público cadastro (validar email, dedupe); link unsubscribe.
-- Interface `JobAlertNotificationService` + no-op ou enqueue mail se SMTP existir; disparo “onde” = após publish público (gancho B-110).
-- **Não** exige envio real na primeira entrega se SMTP off — documentar.
-- Critério: cadastro + unsubscribe idempotentes; sem vazar lista de e-mails.
+**Entregue:** tabela `job_alerts` (035); `POST /api/public/job-alerts` + unsubscribe API; formulário no rodapé de `/j`; página `/a/unsubscribe?token=`. Disparo SMTP = no-op até gancho de publish (documentado).
 
 ---
 
 ### Fase 8 — Otimização
 
 #### B-122 — JobSeoScoreService (determinístico)
-**Instruções:**
-- `lib/job-seo-score.js`: score 0–100 + checks (TITLE_CLEAR, DESCRIPTION_LENGTH, SALARY_PRESENT, EMPLOYMENT_TYPE, COMPANY_ABOUT, PUBLIC_FLAGS, etc.).
-- Sem IA. API admin opcional `GET/POST` score no drawer de vaga.
-- Critério: testes vaga completa vs incompleta.
-
+**Entregue:** `lib/job-seo-score.js` + checklist no drawer de vaga (`VacancyPublicFlagsFields`); teste DTOV offline.
 #### B-123 — Abstração futura de IA para conteúdo de vaga
 **Instruções:**
 - **Não** criar código morto. Só documentar em `docs/job-seo-and-distribution.md` que `lib/vacancy-assist-ai.js` já cobre draft/improve description; futuros `generateMetaDescription` / `suggestSkills` estendem esse módulo.

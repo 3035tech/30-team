@@ -24,7 +24,8 @@ export async function PATCH(request, { params }) {
   if (!Number.isFinite(companyId)) return apiError(request, 'INVALID_COMPANY', 400);
 
   const current = await query(
-    `SELECT id, name, slug, active, website, about_html AS "aboutHtml"
+    `SELECT id, name, slug, active, website, about_html AS "aboutHtml",
+            public_profile_enabled AS "publicProfileEnabled"
      FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [companyId]
   );
@@ -53,13 +54,19 @@ export async function PATCH(request, { params }) {
     profile.website !== undefined ? profile.website : current.rows[0].website ?? null;
   const nextAbout =
     profile.aboutHtml !== undefined ? profile.aboutHtml : current.rows[0].aboutHtml ?? null;
+  const nextPublicProfile =
+    profile.publicProfileEnabled !== undefined
+      ? profile.publicProfileEnabled
+      : Boolean(current.rows[0].publicProfileEnabled);
 
   const up = await query(
     `UPDATE companies
-     SET name = $2, slug = $3, active = $4, website = $5, about_html = $6
+     SET name = $2, slug = $3, active = $4, website = $5, about_html = $6,
+         public_profile_enabled = $7
      WHERE id = $1 AND deleted = FALSE
-     RETURNING id, name, slug, active, website, about_html AS "aboutHtml", created_at AS "createdAt"`,
-    [companyId, nextName, nextSlug, nextActive, nextWebsite, nextAbout]
+     RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
+               public_profile_enabled AS "publicProfileEnabled", created_at AS "createdAt"`,
+    [companyId, nextName, nextSlug, nextActive, nextWebsite, nextAbout, nextPublicProfile]
   );
 
   await audit({

@@ -33,7 +33,10 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
 │   ├── j/                       ← Índice + página SEO `/j/{slug}-{id}`
+│   ├── c/[companySlug]/         ← Perfil público da empresa (opt-in)
+│   ├── a/unsubscribe/           ← Cancelar alerta de vagas
 │   ├── vagas/                   ← Legado → redirect 308 para `/j/…`
+│   ├── empresas/                ← Legado → redirect 308 para `/c/…`
 │   ├── vaga/[company]/[slug]/   ← Legado → redirect para `/j/{slug}-{id}`
 │   ├── r/[token]/               ← Relatório cliente (shortlist)
 │   ├── assessment/              ← Fluxos de avaliação (eneagrama / AE)
@@ -150,7 +153,8 @@ npm run dev
 - Legado `/vaga/{companySlug}/{vacancySlug}` redireciona (308) para a canônica — bookmarks antigos continuam válidos; se o slug mudar, o id na URL corrige com redirect.
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
-- Perfil da empresa (admin → Empresas): `website` e texto “sobre” usados na página quando permitido.
+- Perfil da empresa (admin → Empresas): `website`, texto “sobre” e flag **página pública de carreiras** (`public_profile_enabled`). Canônica: `/c/{slug}` (neutra pt/en); legado `/empresas/{slug}` → 308. Sem opt-in → 404.
+- Índice `/j`: busca, filtro de contrato, paginação; rodapé com **alerta de vagas** (`POST /api/public/job-alerts`). Cancelar: `/a/unsubscribe?token=…`. Envio SMTP de alertas ainda não dispara automaticamente (cadastro + unsubscribe prontos).
 - Conteúdo exibido quando existir: título, empresa, tipo de contrato, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
 - Sem campos no schema hoje (omitidos de propósito): localização, modalidade remoto/híbrido, logo empresa, senioridade, skills/benefícios separados.
 - Encerrada ou `target_date` passado: agradecimento + relacionadas + `/j`; sem JobPosting / noindex / sem CTA de apply.
@@ -159,7 +163,7 @@ npm run dev
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
 - Referral (indicação): tabela `referral_codes`; APIs `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, analytics `GET /api/admin/referral-codes/analytics`. Link público: `/j/{slug}-{id}?ref=CODIGO`.
 
-Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral).
+Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`).
 
 ---
 

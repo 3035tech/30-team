@@ -1,0 +1,23 @@
+import { NextResponse } from 'next/server';
+import { apiError } from '../../../../lib/api-error';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
+import { upsertJobAlert } from '../../../../lib/job-alerts';
+
+export async function POST(request) {
+  const ip = clientIpFromRequest(request);
+  const rl = checkRateLimit(`job-alert:${ip}`, 10, 60 * 60 * 1000);
+  if (!rl.ok) {
+    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const result = await upsertJobAlert({
+    email: body.email,
+    name: body.name,
+    filters: body.filters,
+  });
+  if (!result.ok) return apiError(request, result.errorCode || 'INVALID_DATA', 400);
+
+  // Copy genérica — não confirma se o e-mail existe na lista (anti-enumeração).
+  return NextResponse.json({ ok: true });
+}

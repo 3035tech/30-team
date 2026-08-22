@@ -392,3 +392,33 @@ CREATE INDEX IF NOT EXISTS idx_candidate_invites_expires
   ON candidate_invites (expires_at)
   WHERE status IN ('sent', 'opened');
 
+-- 035 — job alerts (avisos de novas vagas por e-mail)
+CREATE TABLE IF NOT EXISTS job_alerts (
+  id                  BIGSERIAL PRIMARY KEY,
+  email               TEXT NOT NULL,
+  name                TEXT,
+  filters             JSONB NOT NULL DEFAULT '{}'::jsonb,
+  active              BOOLEAN NOT NULL DEFAULT TRUE,
+  unsubscribe_token   TEXT NOT NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  unsubscribed_at     TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_alerts_email_lower
+  ON job_alerts (LOWER(email));
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_alerts_unsubscribe_token
+  ON job_alerts (unsubscribe_token);
+
+CREATE INDEX IF NOT EXISTS idx_job_alerts_active_created
+  ON job_alerts (active, created_at DESC)
+  WHERE active = TRUE;
+
+-- 036 — perfil público da empresa (opt-in; URL neutra /c/{slug})
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS public_profile_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_companies_public_profile_slug
+  ON companies (LOWER(slug))
+  WHERE deleted = FALSE AND active = TRUE AND public_profile_enabled = TRUE;
+

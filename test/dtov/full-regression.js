@@ -683,6 +683,42 @@ async function runSqlSuite(client) {
     return `DTOVREF views=${row.views} hires=${row.hires}`;
   });
 
+  await check('lib', 'job-seo-score', async () => {
+    const { computeJobSeoScore } = await import('../../lib/job-seo-score.js');
+    const weak = computeJobSeoScore({ title: 'Dev', publicPageEnabled: false });
+    const strong = computeJobSeoScore({
+      title: 'Engenheiro Fullstack Plataforma',
+      description: `${'x'.repeat(300)}`,
+      employmentType: 'clt',
+      salaryMin: '5000',
+      salaryMax: '8000',
+      publicPageEnabled: true,
+      publicAllowIndex: true,
+      publicShowCompanyInfo: true,
+      companyWebsite: 'https://example.com',
+      companyAboutHtml: '<p>Sobre a empresa com texto longo suficiente aqui.</p>',
+    });
+    if (weak.score >= strong.score) throw new Error('strong should score higher');
+    if (strong.score < 80) throw new Error(`expected high score got ${strong.score}`);
+    return `weak=${weak.score} strong=${strong.score}`;
+  });
+
+  await check('lib', 'public-jobs-index-paged', async () => {
+    const { listOpenPublicVacancies } = await import('../../lib/public-vacancy-posting.js');
+    const page1 = await listOpenPublicVacancies({ page: 1, pageSize: 1, includeTotal: true });
+    if (!page1 || !Array.isArray(page1.items)) throw new Error('expected paged shape');
+    if (typeof page1.total !== 'number' || page1.total < 1) throw new Error('expected total>=1');
+    if (page1.items.length !== 1) throw new Error('pageSize 1');
+    const filtered = await listOpenPublicVacancies({
+      q: 'Engenheiro',
+      page: 1,
+      pageSize: 12,
+      includeTotal: true,
+    });
+    if (!filtered.total) throw new Error('search should find demo fullstack role');
+    return `total=${page1.total} search=${filtered.total}`;
+  });
+
   await check('sql', 'resolve-public-vacancy-closed', async () => {
     const { resolvePublicVacancyPosting, listOpenPublicVacancies } = await import(
       '../../lib/public-vacancy-posting.js'

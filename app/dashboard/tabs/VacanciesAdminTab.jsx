@@ -25,7 +25,7 @@ import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, Spinner } from '../../_components/AppLoading';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import {
@@ -34,6 +34,7 @@ import {
 } from '../../../lib/vacancy-description-template';
 import { publicVacancyPath } from '../../../lib/public-job-url';
 import { formatPublicVacancyDate } from '../../../lib/public-vacancy-lifecycle';
+import { computeJobSeoScore } from '../../../lib/job-seo-score';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -103,7 +104,20 @@ function VacancyPublicFlagCheckbox({ locale, checked, onChange, labelKey, helpKe
   );
 }
 
-function VacancyPublicFlagsFields({ locale, values, onChange }) {
+function VacancyPublicFlagsFields({ locale, values, onChange, seoContext = null }) {
+  const score = computeJobSeoScore({
+    title: seoContext?.title,
+    description: seoContext?.description,
+    employmentType: seoContext?.employmentType,
+    salaryMin: seoContext?.salaryMin,
+    salaryMax: seoContext?.salaryMax,
+    publicPageEnabled: values.publicPageEnabled,
+    publicAllowIndex: values.publicAllowIndex,
+    publicShowCompanyInfo: values.publicShowCompanyInfo,
+    companyWebsite: seoContext?.companyWebsite,
+    companyAboutHtml: seoContext?.companyAboutHtml,
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       <VacancyPublicFlagCheckbox
@@ -134,6 +148,29 @@ function VacancyPublicFlagsFields({ locale, values, onChange }) {
         labelKey="recruiting.publicShowSalary"
         helpKey="recruiting.publicShowSalaryHelp"
       />
+      <div
+        style={{
+          marginTop: '4px',
+          padding: '12px',
+          borderRadius: '10px',
+          border: `1px solid ${C.border}`,
+          background: `${C.purple}08`,
+        }}
+      >
+        <div style={{ fontSize: '12px', fontFamily: 'monospace', color: C.text, marginBottom: '8px' }}>
+          {t(locale, 'recruiting.seoScoreTitle', {
+            score: String(score.score),
+            max: String(score.maxScore),
+          })}
+        </div>
+        <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '11px', color: C.muted, lineHeight: 1.55 }}>
+          {score.checks.map((c) => (
+            <li key={c.id} style={{ color: c.ok ? C.success : C.muted }}>
+              {c.ok ? '✓' : '○'} {t(locale, `recruiting.seoCheck_${c.id}`)}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -1116,6 +1153,148 @@ function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
   );
 }
 
+function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr('');
+      try {
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/analytics`);
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || t(locale, 'panel.common.error'));
+        if (!cancelled) setData(json);
+      } catch (e) {
+        if (!cancelled) {
+          setErr(e?.message || t(locale, 'panel.common.error'));
+          setData(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [vacancyId, locale]);
+
+  const steps = [
+    { key: 'views', label: t(locale, 'recruiting.analyticsViews') },
+    { key: 'applyStarts', label: t(locale, 'recruiting.analyticsApplyStarts') },
+    { key: 'applications', label: t(locale, 'recruiting.analyticsApplications') },
+    { key: 'interviews', label: t(locale, 'recruiting.analyticsInterviews') },
+    { key: 'hires', label: t(locale, 'recruiting.analyticsHires') },
+  ];
+
+  if (loading) {
+    return (
+      <div style={{ ...S.card, padding: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Spinner size={18} />
+        <span style={{ color: C.muted, fontSize: '13px' }}>{t(locale, 'common.loading')}</span>
+      </div>
+    );
+  }
+  if (err) {
+    return (
+      <div style={{ ...S.card, padding: '16px', color: C.danger, fontSize: '13px' }}>{err}</div>
+    );
+  }
+
+  const views = Number(data?.views) || 0;
+  const empty = views === 0 && !(Number(data?.applications) || 0);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ ...S.card, padding: '16px 18px' }}>
+        <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontWeight: 600 }}>
+          {t(locale, 'recruiting.analyticsFunnelTitle')}
+        </div>
+        {empty ? (
+          <p style={{ margin: 0, color: C.muted, fontSize: '13px', lineHeight: 1.55 }}>
+            {t(locale, 'recruiting.analyticsEmpty')}
+            {publicPagePath ? (
+              <>
+                {' '}
+                <a href={publicPagePath} target="_blank" rel="noopener noreferrer" style={{ color: C.purple }}>
+                  {t(locale, 'recruiting.analyticsOpenPublic')}
+                </a>
+              </>
+            ) : null}
+          </p>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+              gap: '10px',
+            }}
+          >
+            {steps.map((s) => (
+              <div
+                key={s.key}
+                style={{
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '10px',
+                  padding: '12px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '22px', color: C.text, fontFamily: 'monospace' }}>
+                  {Number(data?.[s.key]) || 0}
+                </div>
+                <div style={{ marginTop: '4px', fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {data?.conversionRate != null && !empty ? (
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+            {t(locale, 'recruiting.analyticsConversion', {
+              rate: String(Math.round(Number(data.conversionRate) * 1000) / 10),
+            })}
+          </p>
+        ) : null}
+      </div>
+
+      {!empty && Array.isArray(data?.sources) && data.sources.length > 0 ? (
+        <div style={{ ...S.card, padding: '16px 18px' }}>
+          <div style={{ fontSize: '13px', color: C.text, marginBottom: '10px', fontWeight: 600 }}>
+            {t(locale, 'recruiting.analyticsSourcesTitle')}
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'monospace' }}>
+              <thead>
+                <tr style={{ color: C.muted, textAlign: 'left' }}>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsColSource')}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsViews')}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsApplications')}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsHires')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.sources.slice(0, 8).map((row) => (
+                  <tr key={row.source} style={{ borderTop: `1px solid ${C.border}` }}>
+                    <td style={{ padding: '8px', color: C.text }}>{row.source}</td>
+                    <td style={{ padding: '8px', color: C.muted }}>{row.views}</td>
+                    <td style={{ padding: '8px', color: C.muted }}>{row.applications}</td>
+                    <td style={{ padding: '8px', color: C.muted }}>{row.hires}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1996,6 +2175,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               publicShowCompanyInfo,
               publicShowSalary,
             }}
+            seoContext={{
+              title,
+              description,
+              employmentType,
+              salaryMin,
+              salaryMax,
+            }}
             onChange={(patch) => {
               if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
               if (patch.publicAllowIndex != null) setPublicAllowIndex(patch.publicAllowIndex);
@@ -2192,6 +2378,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 publicAllowIndex: editingVacancy.publicAllowIndex,
                 publicShowCompanyInfo: editingVacancy.publicShowCompanyInfo,
                 publicShowSalary: editingVacancy.publicShowSalary,
+              }}
+              seoContext={{
+                title: editingVacancy.title,
+                description: editingVacancy.description,
+                employmentType: editingVacancy.employmentType,
+                salaryMin: editingVacancy.salaryMin,
+                salaryMax: editingVacancy.salaryMax,
               }}
               onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
             />
@@ -2453,6 +2646,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     { id: 'pipeline', label: t(locale, 'recruiting.detailTabPipeline') },
                     { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
                     { id: 'fit', label: t(locale, 'recruiting.detailTabFit') },
+                    { id: 'analytics', label: t(locale, 'recruiting.detailTabAnalytics') },
                     { id: 'report', label: t(locale, 'recruiting.detailTabReport') },
                     { id: 'config', label: t(locale, 'recruiting.detailTabConfig') },
                   ]}
@@ -2461,6 +2655,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
               {detailSection === 'pipeline' ? (
                 <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
+              ) : null}
+
+              {detailSection === 'analytics' ? (
+                <VacancyFunnelAnalyticsBlock
+                  vacancyId={v.id}
+                  locale={locale}
+                  publicPagePath={
+                    v.publicPageEnabled && v.slug
+                      ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
+                      : ''
+                  }
+                />
               ) : null}
 
               {detailSection === 'candidates' ? (
