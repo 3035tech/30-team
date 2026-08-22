@@ -14,6 +14,8 @@ Depois de **qualquer** implementação de produto (feature, bug fix, migration, 
 - Detalhe: `AGENTS.md` § Pós-implementação — documentação e Ajuda.
 
 ### 2. Pipeline Dev → Test → Validate
+Rodar **sempre e de imediato** após a implementação (sem esperar o usuário lembrar ou pedir). Não dar a feature como pronta antes do Test.
+
 1. Ler e seguir [`.cursor/skills/dev-test-validate/SKILL.md`](./.cursor/skills/dev-test-validate/SKILL.md) (`max_rounds` = 3; nunca loop infinito).
 2. Espelho Claude Code: [`.claude/skills/dev-test-validate/SKILL.md`](./.claude/skills/dev-test-validate/SKILL.md).
 3. DTOV quando a mudança toca SQL/API/dados (`npm run dtov:reset` … `dtov:down`).

@@ -104,12 +104,35 @@ async function runOfflineLibs() {
     return 'no admin leak';
   });
   await check('lib', 'sanitize-html', async () => {
-    const { sanitizeInterviewNotesHtml, htmlToPlainText } = await import('../../lib/sanitize-html.js');
+    const {
+      sanitizeInterviewNotesHtml,
+      htmlToPlainText,
+      normalizeAiRichTextHtml,
+    } = await import('../../lib/sanitize-html.js');
     const dirty = '<p>oi</p><script>alert(1)</script>';
     const clean = sanitizeInterviewNotesHtml(dirty);
     if (/<script/i.test(clean)) throw new Error('script survived');
     if (!htmlToPlainText(clean).includes('oi')) throw new Error('text lost');
+
+    const fromMd = normalizeAiRichTextHtml('```html\n## Sobre a vaga\n**Texto** com *marca*\n```');
+    if (!fromMd || /```|\*\*|<strong|<em/i.test(fromMd)) {
+      throw new Error(`markup leaked: ${fromMd}`);
+    }
+    if (!/<h2>/i.test(fromMd) || !htmlToPlainText(fromMd).includes('Sobre a vaga')) {
+      throw new Error(`structure lost: ${fromMd}`);
+    }
     return 'sanitized';
+  });
+
+  await check('lib', 'vacancy-public-allow-index-default', async () => {
+    const { parseVacancyDetailsFromBody } = await import('../../lib/vacancy-details.js');
+    const created = parseVacancyDetailsFromBody({}, { forCreate: true });
+    if (created.publicAllowIndex !== true) {
+      throw new Error(`expected publicAllowIndex true on create, got ${created.publicAllowIndex}`);
+    }
+    const off = parseVacancyDetailsFromBody({ publicAllowIndex: false }, { forCreate: true });
+    if (off.publicAllowIndex !== false) throw new Error('explicit false ignored');
+    return 'default on';
   });
 
   await check('lib', 'br-masks-salary', async () => {

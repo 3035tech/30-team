@@ -2206,11 +2206,32 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     const token = v?.activeToken || null;
     const link = token ? `${appUrl}/v/${token}` : '';
     const publicPagePath =
-      v?.publicPageEnabled && v?.companySlug && v?.slug
+      v?.companySlug && v?.slug
         ? `/vaga/${encodeURIComponent(v.companySlug)}/${encodeURIComponent(v.slug)}`
         : '';
     const publicPageLink = publicPagePath ? `${appUrl}${publicPagePath}` : '';
     const exp = v?.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
+    const linkRowStyle = {
+      marginTop: '10px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+      minWidth: 0,
+    };
+    const linkLabelStyle = {
+      fontSize: '11px',
+      color: C.faint,
+      fontFamily: 'monospace',
+      letterSpacing: '0.02em',
+    };
+    const linkAnchorStyle = {
+      fontSize: '12px',
+      color: C.purple,
+      fontFamily: 'monospace',
+      wordBreak: 'break-all',
+      textDecoration: 'underline',
+      textUnderlineOffset: '2px',
+    };
 
     return (
       <>
@@ -2286,23 +2307,45 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     )}
                   </div>
                   {token ? (
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                      {link}
+                    <div style={linkRowStyle}>
+                      <span style={linkLabelStyle}>{t(locale, 'recruiting.enneagramLinkLabel')}</span>
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={linkAnchorStyle}
+                      >
+                        {link}
+                      </a>
+                      {exp ? (
+                        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                          {t(locale, 'recruiting.expiresAt', {
+                            when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                          })}
+                        </span>
+                      ) : null}
                     </div>
                   ) : (
                     <div style={{ marginTop: '8px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
                       {t(locale, 'recruiting.noActiveLink')}
                     </div>
                   )}
-                  {token && exp ? (
-                    <div style={{ marginTop: '4px', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                      {t(locale, 'recruiting.expiresAt', { when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') })}
-                    </div>
-                  ) : null}
                   {publicPageLink ? (
-                    <div style={{ marginTop: '10px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                      <span style={{ color: C.faint }}>{t(locale, 'recruiting.copyPublicPageLink')}: </span>
-                      {publicPageLink}
+                    <div style={linkRowStyle}>
+                      <span style={linkLabelStyle}>{t(locale, 'recruiting.publicPageLinkLabel')}</span>
+                      <a
+                        href={publicPageLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={linkAnchorStyle}
+                      >
+                        {publicPageLink}
+                      </a>
+                      {!v.publicPageEnabled ? (
+                        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+                          {t(locale, 'recruiting.publicPageLinkDisabledHint')}
+                        </span>
+                      ) : null}
                     </div>
                   ) : null}
                   <div style={{ marginTop: '8px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -2343,18 +2386,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 >
                   {t(locale, 'recruiting.copyLink')}
                 </button>
-                {publicPageLink ? (
-                  <button
-                    type="button"
-                    onClick={() => copy(publicPageLink)}
-                    disabled={loading}
-                    style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
-                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
-                  >
-                    {t(locale, 'recruiting.copyPublicPageLink')}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => publicPageLink && copy(publicPageLink)}
+                  disabled={loading || !publicPageLink}
+                  style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                    borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                    cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !publicPageLink) ? 0.6 : 1 }}
+                >
+                  {t(locale, 'recruiting.copyPublicPageLink')}
+                </button>
                 <button
                   type="button"
                   onClick={() => editVacancy(v)}

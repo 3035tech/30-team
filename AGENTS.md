@@ -182,7 +182,7 @@ Não considerar a feature “pronta” só com código: falta doc + Ajuda = entr
 
 ## Pós-implementação — Dev → Test → Validate (obrigatório)
 
-Após **toda** implementação de produto (feature, bugfix, migration, API, UI com comportamento), o agente **deve** rodar o pipeline bounded **Dev → Test → Validate** antes de considerar a tarefa entregue.
+Após **toda** implementação de produto (feature, bugfix, migration, API, UI com comportamento), o agente **deve** — **sempre, sem o usuário pedir de novo** — rodar o pipeline bounded **Dev → Test → Validate** antes de considerar a tarefa entregue. Não adiar nem perguntar se quer que eu rode. Código sem pipeline = entrega incompleta.
 
 | | |
 |--|--|
