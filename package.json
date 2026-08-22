@@ -23,7 +23,11 @@
     "dtov:migrate": "node scripts/dtov/harness.js migrate",
     "dtov:seed": "node scripts/dtov/harness.js seed",
     "dtov:smoke": "node scripts/dtov/harness.js smoke",
-    "dtov:status": "node scripts/dtov/harness.js status"
+    "dtov:status": "node scripts/dtov/harness.js status",
+    "dtov:full": "node scripts/dtov/harness.js reset && DTOV=1 node scripts/dtov/full-regression.js",
+    "test:full": "node scripts/dtov/full-regression.js",
+    "test:full:offline": "node scripts/dtov/full-regression.js --offline",
+    "test:full:dtov": "DTOV=1 node scripts/dtov/full-regression.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

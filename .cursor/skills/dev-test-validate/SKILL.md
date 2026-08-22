@@ -3,9 +3,11 @@ name: dev-test-validate
 description: >-
   Orchestrates a bounded Dev → Test → (fix) → Final validation loop after
   feature or bugfix work, with an ephemeral local Postgres (DTOV) seeded for
-  integration proofs. Use when the user asks for "dev-test-validate",
-  "pipeline de testes", "roda o pipeline", "validate after changes", or a
-  develop/test/fix cycle with a hard round limit (never infinite).
+  integration proofs. Also supports optional full regression (`dtov:full` /
+  `test:full`) when the user asks for a broad bug hunt across the demo tenant.
+  Use when the user asks for "dev-test-validate", "pipeline de testes",
+  "roda o pipeline", "validate after changes", "teste geral", "regressão",
+  or a develop/test/fix cycle with a hard round limit (never infinite).
 ---
 
 # Dev → Test → Validate (bounded)
@@ -142,6 +144,19 @@ Always attempt `dtov:down` on stop (except `DTOV_KEEP=1`).
 - Final: ok | issues (bullets)
 - Next (only if failed/blocked): …
 ```
+
+## Full regression (optional — bug hunt)
+
+When the user asks for **teste geral**, **regressão completa**, **full regression**, or “caça bug passado”:
+
+```bash
+npm run dtov:full          # reset DTOV + suíte ampla
+# ou, DB já seedado:
+DTOV=1 npm run test:full
+npm run test:full:offline  # só libs, sem Postgres
+```
+
+This is **not** the default focused Test gate. It runs SQL integrity across the demo tenant (users, pipeline, AE, 1:1, /vaga, tokens) plus offline lib checks. Still not a browser E2E of every screen.
 
 ## Anti-patterns
 

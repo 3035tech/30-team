@@ -315,9 +315,15 @@ async function main() {
   fail(`unknown command: ${cmd}`);
 }
 
-main().catch((e) => {
-  if (!process.exitCode) process.exitCode = 1;
-  if (e?.message && !String(e.message).startsWith('POSTGRES_')) {
-    process.stderr.write(`[dtov] ${e.message}\n`);
-  }
-});
+const isMain =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isMain) {
+  main().catch((e) => {
+    if (!process.exitCode) process.exitCode = 1;
+    if (e?.message && !String(e.message).startsWith('POSTGRES_')) {
+      process.stderr.write(`[dtov] ${e.message}\n`);
+    }
+  });
+}

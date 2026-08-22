@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { LOCALE_COOKIE, normalizeLocale, t } from '../../../../lib/i18n';
 import {
@@ -6,11 +7,13 @@ import {
   listOpenPublicVacancies,
   postingMetaDescription,
   publicVacancyAbsoluteUrl,
-  resolvePublicVacancyPosting,
+  resolvePublicVacancyPosting as resolvePublicVacancyPostingRaw,
   serializeJsonLdForScript,
 } from '../../../../lib/public-vacancy-posting';
 import { PublicVacancyPostingView } from '../../../_components/PublicVacancyPosting';
-export async function generateMetadata({ params }) {
+
+/** Dedupa generateMetadata + page no mesmo request RSC. */
+const resolvePublicVacancyPosting = cache(resolvePublicVacancyPostingRaw);export async function generateMetadata({ params }) {
   const companySlug = typeof params?.companySlug === 'string' ? params.companySlug : '';
   const vacancySlug = typeof params?.vacancySlug === 'string' ? params.vacancySlug : '';
   const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);

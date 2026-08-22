@@ -24,6 +24,16 @@ npm run dtov:status
 
 Seed com subset: `node scripts/dtov/harness.js seed --only=public-vacancy-page` (baseline já precisa existir).
 
+## Regressão ampla (caça bugs)
+
+```bash
+npm run dtov:full           # reset + full-regression.js
+DTOV=1 npm run test:full    # só a suíte no DTOV já seedado
+npm run test:full:offline   # libs sem banco
+```
+
+Script: `scripts/dtov/full-regression.js` — SQL no tenant demo + smokes de lib (ACL, sanitize, JobPosting, scoring).
+
 ## Catálogo de fixtures
 
 `scripts/dtov/fixtures/catalog.json` lista módulos:
