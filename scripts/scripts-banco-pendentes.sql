@@ -464,3 +464,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_users_password_setup_token
   ON users (password_setup_token)
   WHERE password_setup_token IS NOT NULL;
 
+-- 039 — logo da empresa (URL + key S3; arquivo fora do Postgres)
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS logo_key TEXT;
+
+COMMENT ON COLUMN companies.logo_url IS
+  'URL pública https do logo (CDN/S3). Usado em /c, /j e JobPosting.hiringOrganization.logo.';
+COMMENT ON COLUMN companies.logo_key IS
+  'Object key no bucket S3 (companies/{id}/logo/…). NULL se sem logo.';
+

@@ -25,7 +25,8 @@ export async function PATCH(request, { params }) {
 
   const current = await query(
     `SELECT id, name, slug, active, website, about_html AS "aboutHtml",
-            public_profile_enabled AS "publicProfileEnabled"
+            public_profile_enabled AS "publicProfileEnabled",
+            logo_url AS "logoUrl"
      FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [companyId]
   );
@@ -65,7 +66,8 @@ export async function PATCH(request, { params }) {
          public_profile_enabled = $7
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
-               public_profile_enabled AS "publicProfileEnabled", created_at AS "createdAt"`,
+               public_profile_enabled AS "publicProfileEnabled",
+               logo_url AS "logoUrl", created_at AS "createdAt"`,
     [companyId, nextName, nextSlug, nextActive, nextWebsite, nextAbout, nextPublicProfile]
   );
 

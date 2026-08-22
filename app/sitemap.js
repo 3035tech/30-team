@@ -1,11 +1,12 @@
 import { listSitemapPublicEntries } from '../lib/public-vacancy-posting';
+import { listSitemapAggregatorEntries } from '../lib/public-job-aggregators';
 
 function appBaseUrl() {
   return String(process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
 }
 
 /**
- * Sitemap: / + /j + vagas públicas indexáveis.
+ * Sitemap: / + /j + agregadores (remoto/cidade com massa) + vagas públicas indexáveis.
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
 export default async function sitemap() {
@@ -27,6 +28,20 @@ export default async function sitemap() {
       priority: 0.8,
     },
   ];
+
+  try {
+    const aggregators = await listSitemapAggregatorEntries({ limit: 200 });
+    for (const agg of aggregators) {
+      entries.push({
+        url: agg.url.startsWith('http') ? agg.url : `${base}${agg.path}`,
+        lastModified: agg.lastModified || now,
+        changeFrequency: 'daily',
+        priority: 0.65,
+      });
+    }
+  } catch (err) {
+    console.error('[sitemap] failed to list aggregators', err?.message || err);
+  }
 
   try {
     const jobs = await listSitemapPublicEntries({ limit: 5000 });

@@ -184,6 +184,60 @@ async function runOfflineLibs() {
     return 'invite helpers ok';
   });
 
+  await check('lib', 'company-logo-validate', async () => {
+    const {
+      assertValidCompanyLogoFile,
+      companyLogoObjectKey,
+      isCompanyLogoStorageConfigured,
+      COMPANY_LOGO_MAX_BYTES,
+    } = await import('../../lib/company-logo.js');
+    if (isCompanyLogoStorageConfigured()) throw new Error('expected storage off in offline/DTOV default');
+    const ok = assertValidCompanyLogoFile({
+      mimeType: 'image/png',
+      size: 100,
+      buffer: Buffer.alloc(100),
+    });
+    if (ok.ext !== 'png') throw new Error('ext');
+    try {
+      assertValidCompanyLogoFile({ mimeType: 'image/svg+xml', size: 10 });
+      throw new Error('svg should fail');
+    } catch (e) {
+      if (e?.code !== 'INVALID_LOGO_TYPE') throw e;
+    }
+    try {
+      assertValidCompanyLogoFile({ mimeType: 'image/png', size: COMPANY_LOGO_MAX_BYTES + 1 });
+      throw new Error('size should fail');
+    } catch (e) {
+      if (e?.code !== 'INVALID_LOGO_SIZE') throw e;
+    }
+    const key = companyLogoObjectKey(42, 'webp');
+    if (!key.includes('companies/42/logo/') || !key.endsWith('.webp')) throw new Error(key);
+    const prevPrefix = process.env.S3_KEY_PREFIX;
+    process.env.S3_KEY_PREFIX = 'image/logo';
+    const keyed = companyLogoObjectKey(7, 'png');
+    if (!keyed.startsWith('image/logo/companies/7/logo/') || !keyed.endsWith('.png')) {
+      if (prevPrefix == null) delete process.env.S3_KEY_PREFIX;
+      else process.env.S3_KEY_PREFIX = prevPrefix;
+      throw new Error(keyed);
+    }
+    if (prevPrefix == null) delete process.env.S3_KEY_PREFIX;
+    else process.env.S3_KEY_PREFIX = prevPrefix;
+    const { buildJobPostingJsonLd } = await import('../../lib/public-vacancy-posting.js');
+    const ld = buildJobPostingJsonLd({
+      status: 'open',
+      publicAllowIndex: true,
+      title: 'Dev',
+      vacancyId: 9,
+      showCompany: true,
+      company: { name: 'Acme', logoUrl: 'https://cdn.example/logo.png' },
+      createdAt: new Date('2026-01-01'),
+    });
+    if (ld?.hiringOrganization?.logo !== 'https://cdn.example/logo.png') {
+      throw new Error('jsonld logo missing');
+    }
+    return 'logo helpers ok';
+  });
+
   await check('lib', 'job-posting-jsonld-guards', async () => {
     const { buildJobPostingJsonLd, serializeJsonLdForScript } = await import(
       '../../lib/public-vacancy-posting.js'
@@ -401,6 +455,109 @@ async function runOfflineLibs() {
     const off = await publishJob('https://app.example/j/dev-9');
     if (!off.skipped) throw new Error('disabled should skip');
     return `mock events=${log.length}`;
+  });
+
+  await check('lib', 'smtp-mock-capture', async () => {
+    const prev = {
+      SMTP_MOCK: process.env.SMTP_MOCK,
+      SMTP_HOST: process.env.SMTP_HOST,
+      MAIL_FROM: process.env.MAIL_FROM,
+      DTOV: process.env.DTOV,
+    };
+    process.env.SMTP_MOCK = '1';
+    delete process.env.SMTP_HOST;
+    delete process.env.MAIL_FROM;
+    delete process.env.DTOV;
+    const {
+      __resetMailMockLog,
+      __getMailMockLog,
+      isMailConfigured,
+      isSmtpMock,
+      sendTransactionalMail,
+      verifySmtpConnection,
+    } = await import('../../lib/mail.js');
+    __resetMailMockLog();
+    if (!isSmtpMock()) throw new Error('expected smtp mock');
+    if (!isMailConfigured()) throw new Error('mock should count as configured');
+    const verify = await verifySmtpConnection();
+    if (!verify.ok || !verify.mocked) throw new Error('verify mock');
+    await sendTransactionalMail({
+      to: 'cand@example.com',
+      subject: 'DTOV invite',
+      text: 'Hello from mock SMTP',
+    });
+    const log = __getMailMockLog();
+    if (log.length !== 1) throw new Error(`expected 1 send, got ${log.length}`);
+    if (log[0].to !== 'cand@example.com' || log[0].subject !== 'DTOV invite') {
+      throw new Error(`bad mock payload ${JSON.stringify(log[0])}`);
+    }
+    for (const [k, v] of Object.entries(prev)) {
+      if (v == null) delete process.env[k];
+      else process.env[k] = v;
+    }
+    return 'smtp mock ok';
+  });
+
+  await check('lib', 'openai-mock-assistants', async () => {
+    const prev = {
+      OPENAI_MOCK: process.env.OPENAI_MOCK,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      DTOV: process.env.DTOV,
+    };
+    process.env.OPENAI_MOCK = '1';
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.DTOV;
+    const {
+      __resetOpenAiMockLog,
+      __getOpenAiMockLog,
+      buildOpenAiMockCompletion,
+      extractJsonObject,
+      isOpenAiConfigured,
+      isOpenAiMock,
+      openAiChatCompletion,
+    } = await import('../../lib/openai-chat.js');
+    __resetOpenAiMockLog();
+    if (!isOpenAiMock()) throw new Error('expected openai mock');
+    if (!isOpenAiConfigured()) throw new Error('mock should count as configured');
+
+    const weightsRaw = await openAiChatCompletion({
+      messages: [
+        { role: 'system', content: 'Return JSON weights for T1–T9.' },
+        { role: 'user', content: 'Suggest rubric weights JSON for this vacancy context.' },
+      ],
+    });
+    const weightsObj = JSON.parse(extractJsonObject(weightsRaw));
+    if (Number(weightsObj['5']) !== 3) throw new Error(`bad weight stub ${weightsRaw.slice(0, 80)}`);
+
+    const htmlRaw = await openAiChatCompletion({
+      messages: [
+        { role: 'system', content: 'Write an executive HTML note with hedging.' },
+        { role: 'user', content: 'Return ONLY the HTML note for the shortlist.' },
+      ],
+    });
+    if (!htmlRaw.includes('<p>') || htmlRaw.length < 80) throw new Error('html stub short');
+
+    const shortlistStub = buildOpenAiMockCompletion({
+      messages: [
+        {
+          role: 'system',
+          content: 'Return ONLY valid JSON: {"candidateIds":[1,2],"rationaleHtml":"<p>...</p>"}',
+        },
+        { role: 'user', content: 'Candidates: [{"candidateId": 11, "name": "Ana"}]' },
+      ],
+    });
+    const shortlist = JSON.parse(extractJsonObject(shortlistStub));
+    if (!Array.isArray(shortlist.candidateIds) || !shortlist.candidateIds.includes(11)) {
+      throw new Error(`shortlist stub ${shortlistStub}`);
+    }
+
+    const log = __getOpenAiMockLog();
+    if (log.length < 2) throw new Error(`expected mock calls, got ${log.length}`);
+    for (const [k, v] of Object.entries(prev)) {
+      if (v == null) delete process.env[k];
+      else process.env[k] = v;
+    }
+    return `openai mock calls=${log.length}`;
   });
 
   await check('lib', 'public-vacancy-lifecycle-meta', async () => {
@@ -817,6 +974,67 @@ async function runSqlSuite(client) {
     });
     if (!filtered.total) throw new Error('search should find demo fullstack role');
     return `total=${page1.total} search=${filtered.total}`;
+  });
+
+  await check('lib', 'public-job-aggregators', async () => {
+    const prev = process.env.PUBLIC_JOB_AGGREGATOR_MIN_COUNT;
+    process.env.PUBLIC_JOB_AGGREGATOR_MIN_COUNT = '1';
+    const {
+      citySlugFromName,
+      aggregatorMinCount,
+      resolveRemoteAggregator,
+      resolveCityAggregator,
+    } = await import('../../lib/public-job-aggregators.js');
+    const { listOpenPublicVacancies } = await import('../../lib/public-vacancy-posting.js');
+
+    if (citySlugFromName('São Paulo') !== 'sao-paulo') {
+      throw new Error(`slug ${citySlugFromName('São Paulo')}`);
+    }
+    if (aggregatorMinCount() !== 1) throw new Error(`min=${aggregatorMinCount()}`);
+
+    await client.query(
+      `UPDATE vacancies
+       SET workplace_modality = 'remote',
+           workplace_city = 'São Paulo',
+           workplace_state = 'SP'
+       WHERE deleted = FALSE
+         AND public_page_enabled = TRUE
+         AND public_allow_index = TRUE
+         AND status = 'open'
+         AND (target_date IS NULL OR target_date >= CURRENT_DATE)`
+    );
+
+    const remoteListed = await listOpenPublicVacancies({
+      workplaceModality: 'remote',
+      page: 1,
+      pageSize: 5,
+      includeTotal: true,
+    });
+    if (!remoteListed.total) throw new Error('workplaceModality filter empty');
+
+    const cityListed = await listOpenPublicVacancies({
+      workplaceCity: 'São Paulo',
+      page: 1,
+      pageSize: 5,
+      includeTotal: true,
+    });
+    if (!cityListed.total) throw new Error('workplaceCity filter empty');
+
+    const remote = await resolveRemoteAggregator();
+    if (!remote.ok) throw new Error('remote aggregator should pass with min=1');
+
+    const city = await resolveCityAggregator('sao-paulo');
+    if (!city.ok) throw new Error('city aggregator should pass with min=1');
+    if (city.slug !== 'sao-paulo') throw new Error(`city slug=${city.slug}`);
+
+    process.env.PUBLIC_JOB_AGGREGATOR_MIN_COUNT = '9999';
+    const blocked = await resolveRemoteAggregator();
+    if (blocked.ok) throw new Error('threshold must block empty-mass aggregators');
+
+    if (prev == null) delete process.env.PUBLIC_JOB_AGGREGATOR_MIN_COUNT;
+    else process.env.PUBLIC_JOB_AGGREGATOR_MIN_COUNT = prev;
+
+    return `remote=${remoteListed.total} city=${cityListed.total}`;
   });
 
   await check('sql', 'resolve-public-vacancy-closed', async () => {

@@ -32,7 +32,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── page.jsx                 ← Landing / teste (client)
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
-│   ├── j/                       ← Índice + página SEO `/j/{slug}-{id}`
+│   ├── j/                       ← Índice + `/j/remoto` + `/j/cidade/{slug}` + página SEO `/j/{slug}-{id}`
 │   ├── c/[companySlug]/         ← Perfil público da empresa (opt-in)
 │   ├── a/unsubscribe/           ← Cancelar alerta de vagas
 │   ├── vagas/                   ← Legado → redirect 308 para `/j/…`
@@ -153,17 +153,19 @@ npm run dev
 - Legado `/vaga/{companySlug}/{vacancySlug}` redireciona (308) para a canônica — bookmarks antigos continuam válidos; se o slug mudar, o id na URL corrige com redirect.
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
-- Perfil da empresa (admin → Empresas): `website`, texto “sobre” e flag **página pública de carreiras** (`public_profile_enabled`). Canônica: `/c/{slug}` (neutra pt/en); legado `/empresas/{slug}` → 308. Sem opt-in → 404.
+- Perfil da empresa (admin → Empresas): `website`, texto “sobre”, flag **página pública de carreiras** (`public_profile_enabled`) e **logo** (upload S3 → `logo_url` / `logo_key`). Canônica: `/c/{slug}` (neutra pt/en); legado `/empresas/{slug}` → 308. Sem opt-in → 404.
 - Índice `/j`: busca, filtro de contrato, paginação; rodapé com **alerta de vagas** (`POST /api/public/job-alerts`). Cancelar: `/a/unsubscribe?token=…`. Ao publicar página pública (create ou ligar flag), dispara e-mail aos alertas ativos que casam com filtros — exige SMTP; sem SMTP é no-op e não bloqueia o save.
-- Conteúdo exibido quando existir: título, empresa, tipo de contrato, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
-- Sem campos no schema hoje (omitidos de propósito): localização, modalidade remoto/híbrido, logo empresa, senioridade, skills/benefícios separados.
+- Agregadores SEO (automáticos): `/j/remoto` e `/j/cidade/{slug}` só se houver ≥ `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` vagas indexáveis (default **3**); sem massa → 404. Preencher modalidade/cidade no drawer. Sem JobPosting nestas listas.
+- Conteúdo exibido quando existir: título, empresa (logo se houver), tipo de contrato, modalidade/cidade, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
+- Sem campos no schema hoje (omitidos de propósito): senioridade, skills/benefícios separados.
 - Encerrada ou `target_date` passado: agradecimento + relacionadas + `/j`; sem JobPosting / noindex / sem CTA de apply.
-- SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok).
+- SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok; inclui agregadores que passam o limiar).
 - Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
 - Referral (indicação): tabela `referral_codes`; APIs admin + **aba Indicação** no detalhe da vaga (criar, copiar `/j/…?ref=`, desativar, métricas). Analytics: `GET /api/admin/referral-codes/analytics`.
+- Logo empresa: `S3_BUCKET` + chaves AWS (ver `.env.example`). Sem S3 o upload fica desligado; páginas públicas usam `logo_url` quando existir (incl. `hiringOrganization.logo` no JSON-LD).
 
-Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`).
+Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`; `037` workplace; `039` logo).
 
 Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**.
 
@@ -196,11 +198,14 @@ Principais (lista completa em `.env.example`):
 | `COOKIE_SECURE` | Força Secure (`true`/`false`) |
 | `SMTP_HOST` + `MAIL_FROM` | E-mail (convites **e** job alerts ao publicar `/j`; sem SMTP = alerts no-op) |
 | `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | Detalhe SMTP |
+| `SMTP_MOCK` | `1` = captura envios em memória (sem SMTP). `DTOV=1` sem SMTP também mocka |
 | `OPENAI_API_KEY` | IA (rubrica, descrição de vaga, parecer `/r`) — opcional |
 | `OPENAI_RUBRIC_MODEL` | Modelo (default `gpt-4o-mini`) |
+| `OPENAI_MOCK` | `1` = stub determinístico (sem API). `DTOV=1` também força mock |
 | `GOOGLE_INDEXING_ENABLED` | `true` liga push Google Indexing (default off) |
 | `GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON` | JSON inline ou path da service account |
 | `GOOGLE_INDEXING_MOCK` | `1` = não chama Google (DTOV já mocka com `DTOV=1`) |
+| `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` | Mínimo de vagas para publicar `/j/remoto` e `/j/cidade/…` (default `3`) |
 | `RETENTION_DAYS` | Retenção / LGPD |
 | `CRON_SECRET` | Crons (lembretes, prazos, retenção de notificações) |
 

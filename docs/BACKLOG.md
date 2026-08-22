@@ -17,128 +17,15 @@ Não usar para bugs pontuais. Aqui só **produto / capacidade nova**.
 
 ---
 
-## Aberto — qualidade / testes (sessão anterior)
+## Aberto — qualidade / testes
 
-### B-001 — E2E Playwright: preenchimento completo do assessment
-Rodar no Chromium `/t` ou `/v` até submeter e ver resultado (não só shell). Smoke atual só abre a tela.
-
-### B-002 — E2E Playwright: drag-and-drop do kanban de vaga
-Arrastar candidato entre colunas no detalhe da vaga (gestor logado).
-
-### B-003 — Provas SMTP / OpenAI (real ou mock)
-DTOV com Mailhog/mock SMTP e stub OpenAI para assistentes; smoke atual não chama externo de verdade.
-
-### B-004 — HTTP smoke People / 1:1 sempre cobertos
-Garantir GET candidato + one-on-ones mesmo se a 1ª vaga da lista não tiver candidatos.
-
-### B-005 — Migrar `scripts/test-*.js` para `test/`
-Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `test/`.
+_(vazio — B-001–B-006 entregues)_
 
 ---
 
-## Aberto — Epic B-100: SEO, indexação, distribuição e analytics de vagas públicas
+## Aberto — Epic B-100 (SEO / distribuição pública)
 
-**Objetivo:** transformar cada vaga publicada em página pública otimizada (Google Search / Google Jobs / share / campanhas / referral) e criar base para medir canais → candidatos → contratações.
-
-**Estado atual (já existe — reutilizar, não duplicar):**
-
-| Já tem | Onde |
-|--------|------|
-| Página pública `/j/{slug}-{id}` (+ redirect legado `/vaga/...`) | `app/vagas/[jobKey]`, `app/vaga/...`, `lib/public-vacancy-posting.js` |
-| Índice `/vagas` (lista simples, cap 48) | `app/vagas/page.jsx` |
-| Meta title `{Título} | {Empresa}`, description, robots, OG + Twitter | `postingDocumentTitle` / `generateMetadata` |
-| JSON-LD JobPosting (open + index + prazo ok; sem TELECOMMUTE inventado) | `buildJobPostingJsonLd` |
-| Encerrada / `target_date` passado: UX fechada, noindex, sem apply/JSON-LD | `publicVacancyShowsClosedExperience` |
-| `robots.txt` + `sitemap.xml` (vagas indexáveis) | `app/robots.js`, `app/sitemap.js` |
-| Google Indexing API (opt-in via env) | `lib/job-indexing.js` + ganchos vacancies API |
-| Share in-page (WhatsApp / LinkedIn / copiar + UTM) | `PublicVacancyShareBar`, `lib/job-share-copy.js` |
-| Flags: página, index, empresa, salário | migration `030`/`031`, drawer de vaga |
-| Assessment `/v/{token}` (noindex) | separado da página SEO |
-| Copiar links no **dashboard** | `VacanciesAdminTab` |
-| Company `website` / `about_html` | sem logo de empresa no DB |
-| Local / modalidade da vaga | migration `037`: `workplace_modality`, `workplace_city`, `workplace_state` (+ IBGE autocomplete no drawer) |
-
-**Gaps principais:** agregadores (B-119 — campos de local/modalidade já existem; falta massa + rotas); logo de empresa (ainda inexistente).
-
-**Regras de implementação do epic:**
-
-1. Stack: Next.js 14 JSX (sem TS), Postgres, rotas finas + `lib/` gordo, i18n pt-BR+en, tokens `C`/`FONTS`.
-2. Status de vaga no 30Team hoje: `open` \| `closed` (+ soft `deleted`). **Não** inventar DRAFT/PAUSED/EXPIRED como enum paralelo — mapear: open≈published; closed≈closed; expiração via `target_date` se existir; draft = página pública desligada.
-3. Candidatura pública = CTA → `/v/{token}` (assessment), não inventar segundo fluxo de apply.
-4. Multi-tenant: sempre `company_id`; analytics admin com `CAP` / `requireCapability`.
-5. Sem credenciais no repo; falha Google Indexing **não** bloqueia publicar vaga.
-6. Migrations novas numeradas (`032+`); espelhar em `scripts-banco-pendentes` / bootstrap quando schema mudar.
-7. Docs finais: `docs/job-seo-and-distribution.md` + Guia (`panel.help.*`) + README env.
-8. Testes: DTOV + libs offline + HTTP/browser conforme o item.
-9. Ordem: implementar **sub-itens na ordem B-101 → B-131** (fases 1–8 do spec).
-
----
-
-### Fase 1 — SEO e Google
-
-**Entregue nesta fase:** URL canônica (B-101), conteúdo estruturado disponível no schema (B-102), title/description/canonical (B-103), ciclo encerrada/prazo (B-106).
-
----
-
-### Fase 2 — Indexação Google
-
-**Entregue:** `lib/job-indexing.js` (URL_UPDATED / URL_DELETED) + ganchos fire-and-forget em create/update/close/delete de vagas. Env `GOOGLE_INDEXING_ENABLED` (default off) + `GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON`. Mock em DTOV.
-
----
-
-### Fase 3 — Distribuição / share
-
-**Entregue:** share in-page (WhatsApp / LinkedIn / copiar) + `lib/job-share-copy.js` com UTM. Sem item aberto nesta fase.
-
----
-
-### Fase 4 — Analytics e atribuição
-
-**Entregue:** cookie UTM/`ref` (`team30_job_attr`) → `assessments.attr_*` + `candidates.source` grosso; `job_funnel_events` (view/apply/pipeline); `GET /api/admin/vacancies/[id]/analytics`. Migration `032`.
-
-#### B-115b — (opcional) UI analytics no detalhe da vaga
-**Entregue:** aba “Funil” no detalhe da vaga (números + top sources via `GET …/analytics`).
-
----
-
-### Fase 5 — Referral
-
-**Entregue:** `referral_codes` + APIs admin + analytics por código; `?ref=` via cookie/assessment (Fase 4). Migration `033`. **UI:** aba Indicação no detalhe da vaga (criar/copiar/desativar + métricas).
-
----
-
-### Fase 6 — Crescimento orgânico
-
-#### B-118 — `/j` com busca, filtros e paginação
-**Entregue:** índice `/j` com `?q=`, `employmentType`, `page`/`pageSize`; `listOpenPublicVacancies` paged; empty filtrado i18n.
-
-#### B-119 — Páginas agregadoras SEO (com guarda de qualidade)
-
-**Status:** aberto (schema de local/modalidade em `037` — falta massa pública + rotas `/j/remoto`, `/j/{cidade}` etc.)
-**Instruções:**
-- Rotas tipo `/vagas/remoto`, `/vagas/{cidade}`, etc. **somente** se count ≥ limiar configurável (ex. 3 vagas) — **proibir** milhares de combinações vazias.
-- Cada página: title, description, canonical, H1, intro curta, lista, paginação; sem JobPosting.
-- Começar com 1–2 agregadores seguros (ex. remoto se campo existir; senão adiar até haver dado).
-- Critério: agregador sem massa suficiente → 404 ou redirect para `/vagas`, nunca página vazia indexável.
-
-#### B-120 — Página pública da empresa `/c/{companySlug}`
-**Entregue:** canônica neutra `app/c/[companySlug]` + `resolvePublicCompanyBySlug` (exige `public_profile_enabled`); legado `/empresas/{slug}` → 308; opt-in no cadastro Empresas; link no índice `/j` quando perfil ligado.
-
-#### B-121 — Job Alerts (base)
-**Entregue:** tabela `job_alerts` (035); `POST /api/public/job-alerts` + unsubscribe; formulário no rodapé de `/j`; `/a/unsubscribe?token=`. **Disparo SMTP:** `scheduleJobAlertDispatch` no create/update de vaga (só transição para página pública aberta; SMTP off = no-op).
-
----
-
-### Fase 8 — Otimização
-
-#### B-122 — JobSeoScoreService (determinístico)
-**Entregue:** `lib/job-seo-score.js` + checklist no drawer de vaga (`VacancyPublicFlagsFields`); teste DTOV offline.
-
----
-
-### Transversal (fazer junto das fases)
-
-Docs do epic (**B-123**, **B-124**, **B-125**, **B-127**) e suite (**B-126**): entregues — `docs/job-seo-and-distribution.md`, README/`.env.example`, Guia, checklist LGPD; provas em `test/dtov/full-regression.js` + HTTP/browser (`test/README.md`).
+_(entregue — ver `docs/job-seo-and-distribution.md`. Inclui agregadores B-119 e logo empresa via S3.)_
 
 ---
 
@@ -157,6 +44,6 @@ _(vazio)_
 
 ## Notas
 
-- Itens **B-001–B-005**: gaps de teste restantes (E2E assessment/kanban, SMTP/OpenAI mock, People HTTP, migrar `scripts/test-*`). **B-006** a11y login entregue.
-- Epic **B-100**: resto aberto **B-119** (agregadores — schema local/modalidade em `037`; falta massa + rotas). Docs + **B-126** fechados. Gap restante de schema: logo de empresa.
-- Ao concluir o epic inteiro: apagar a seção B-100 e filhos; manter só o que restar em Aberto.
+- Qualidade/testes **B-001–B-006** entregues.
+- Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
+- **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).

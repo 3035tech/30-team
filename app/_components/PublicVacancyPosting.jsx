@@ -188,6 +188,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const companyName = posting?.showCompany ? posting.company?.name : null;
   const companyWebsite = posting?.showCompany ? posting.company?.website : null;
   const companyAbout = posting?.showCompany ? posting.company?.aboutHtml : '';
+  const companyLogoUrl = posting?.showCompany ? posting.company?.logoUrl : null;
   const hasDesc = !isRichTextEmpty(posting?.description);
   const publishedLabel = formatPublicVacancyDate(posting?.createdAt, locale);
   const targetLabel = formatPublicVacancyDate(posting?.targetDate, locale);
@@ -407,10 +408,45 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                       name: companyName || t(locale, 'publicVacancy.companyFallback'),
                     })}
                   </h2>
+                  {companyLogoUrl ? (
+                    <img
+                      src={companyLogoUrl}
+                      alt=""
+                      width={72}
+                      height={72}
+                      style={{
+                        display: 'block',
+                        marginBottom: '12px',
+                        objectFit: 'contain',
+                        borderRadius: '10px',
+                        background: C.bg,
+                      }}
+                    />
+                  ) : null}
                   <RichTextView
                     html={companyAbout}
                     style={{ fontSize: '14px', lineHeight: 1.65, color: C.muted }}
                   />
+                </section>
+              ) : companyLogoUrl && companyName ? (
+                <section
+                  style={{
+                    marginTop: '28px',
+                    paddingTop: '22px',
+                    borderTop: `1px solid ${C.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <img
+                    src={companyLogoUrl}
+                    alt=""
+                    width={48}
+                    height={48}
+                    style={{ objectFit: 'contain', borderRadius: '8px' }}
+                  />
+                  <span style={{ fontSize: '15px', color: C.text }}>{companyName}</span>
                 </section>
               ) : null}
 
@@ -452,7 +488,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   );
 }
 
-/** Listagem /j — busca + filtro tipo + paginação (GET). */
+/** Listagem /j — busca + filtro tipo + paginação (GET). Também agregadores SEO. */
 export function PublicVacanciesIndexView({
   locale = 'pt-BR',
   items = [],
@@ -460,6 +496,11 @@ export function PublicVacanciesIndexView({
   page = 1,
   pageSize = 12,
   filters = {},
+  title = null,
+  intro = null,
+  basePath = '/j',
+  showSearchForm = true,
+  showJobAlert = true,
 }) {
   const q = String(filters.q || '');
   const employmentType = String(filters.employmentType || '');
@@ -468,14 +509,19 @@ export function PublicVacanciesIndexView({
   const emptyMsg = hasFilters
     ? t(locale, 'publicVacancy.indexEmptyFiltered')
     : t(locale, 'publicVacancy.indexEmpty');
+  const heading = title || t(locale, 'publicVacancy.indexTitle');
+  const lead = intro || t(locale, 'publicVacancy.indexIntro');
+  const listBase = String(basePath || '/j').replace(/\/$/, '') || '/j';
 
   function hrefForPage(p) {
     const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (employmentType) params.set('employmentType', employmentType);
+    if (showSearchForm) {
+      if (q) params.set('q', q);
+      if (employmentType) params.set('employmentType', employmentType);
+    }
     if (p > 1) params.set('page', String(p));
     const qs = params.toString();
-    return qs ? `/j?${qs}` : '/j';
+    return qs ? `${listBase}?${qs}` : listBase;
   }
 
   const inputStyle = {
@@ -527,6 +573,13 @@ export function PublicVacanciesIndexView({
       <div style={wrap}>
         <header style={{ marginBottom: '24px' }}>
           <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+          {listBase !== '/j' ? (
+            <p style={{ margin: '0 0 8px', fontSize: '12px', fontFamily: FONTS.mono }}>
+              <Link href="/j" style={{ color: C.muted }}>
+                {t(locale, 'publicVacancy.browseOpenCta')}
+              </Link>
+            </p>
+          ) : null}
           <h1
             style={{
               margin: 0,
@@ -537,13 +590,14 @@ export function PublicVacanciesIndexView({
               WebkitTextFillColor: 'transparent',
             }}
           >
-            {t(locale, 'publicVacancy.indexTitle')}
+            {heading}
           </h1>
           <p style={{ margin: '10px 0 0', color: C.muted, fontSize: '15px', lineHeight: 1.6 }}>
-            {t(locale, 'publicVacancy.indexIntro')}
+            {lead}
           </p>
         </header>
 
+        {showSearchForm ? (
         <form
           method="get"
           action="/j"
@@ -639,6 +693,7 @@ export function PublicVacanciesIndexView({
             ) : null}
           </div>
         </form>
+        ) : null}
 
         <main style={card}>
           {total > 0 ? (
@@ -744,6 +799,7 @@ export function PublicVacanciesIndexView({
           ) : null}
         </main>
 
+        {showJobAlert ? (
         <section style={{ ...card, marginTop: '16px' }}>
           <h2 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600 }}>
             {t(locale, 'publicVacancy.alertTitle')}
@@ -834,6 +890,7 @@ export function PublicVacanciesIndexView({
             </form>
           )}
         </section>
+        ) : null}
       </div>
     </div>
   );
@@ -844,13 +901,24 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
   const name = company?.name || t(locale, 'publicVacancy.companyFallback');
   const website = String(company?.website || '').trim();
   const aboutHtml = company?.aboutHtml || '';
+  const logoUrl = String(company?.logoUrl || '').trim();
 
   return (
     <div style={shell}>
       <div style={glow} aria-hidden />
       <div style={wrap}>
         <header style={{ marginBottom: '24px' }}>
-          <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              width={56}
+              height={56}
+              style={{ marginBottom: '12px', objectFit: 'contain', borderRadius: '10px' }}
+            />
+          ) : (
+            <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+          )}
           <p style={{ margin: '0 0 8px', fontSize: '12px', fontFamily: FONTS.mono }}>
             <Link href="/j" style={{ color: C.muted }}>
               {t(locale, 'publicVacancy.browseOpenCta')}

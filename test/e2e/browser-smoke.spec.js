@@ -4,13 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { TOK, HR, PUBLIC } from './fixtures.js';
-
-async function fillLogin(page, { email, password }) {
-  await page.getByLabel(/e-?mail/i).fill(email);
-  await page.getByLabel(/senha|password/i).fill(password);
-  await page.getByRole('button', { name: /entrar|sign in/i }).click();
-}
+import { TOK, HR, PUBLIC, fillLogin } from './fixtures.js';
 
 test.describe('public pages', () => {
   test('home and login render', async ({ page }) => {

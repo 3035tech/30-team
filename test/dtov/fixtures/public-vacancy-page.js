@@ -28,17 +28,41 @@ export async function seed(client) {
     ]
   );
 
-  // Vaga aberta: página pública + indexação + empresa + salário
+  // Vaga aberta: página pública + indexação + empresa + salário + local (agregadores B-119)
   await client.query(
     `UPDATE vacancies
      SET employment_type = COALESCE(employment_type, 'clt'),
          public_page_enabled = TRUE,
          public_allow_index = TRUE,
          public_show_company_info = TRUE,
-         public_show_salary = TRUE
+         public_show_salary = TRUE,
+         workplace_modality = COALESCE(workplace_modality, 'remote'),
+         workplace_city = COALESCE(NULLIF(btrim(workplace_city), ''), 'São Paulo'),
+         workplace_state = COALESCE(NULLIF(btrim(workplace_state), ''), 'SP')
      WHERE company_id = $1
        AND slug = 'engenheiro-fullstack-plataforma'
        AND deleted = FALSE`,
+    [companyId]
+  );
+
+  // Massa mínima para agregadores: outras vagas open+indexáveis da demo → remoto/SP
+  await client.query(
+    `UPDATE vacancies
+     SET workplace_modality = COALESCE(workplace_modality, 'remote'),
+         workplace_city = COALESCE(NULLIF(btrim(workplace_city), ''), 'São Paulo'),
+         workplace_state = COALESCE(NULLIF(btrim(workplace_state), ''), 'SP'),
+         public_page_enabled = TRUE,
+         public_allow_index = TRUE
+     WHERE company_id = $1
+       AND deleted = FALSE
+       AND status = 'open'
+       AND slug <> 'analista-dados-encerrada'
+       AND id IN (
+         SELECT id FROM vacancies
+         WHERE company_id = $1 AND deleted = FALSE AND status = 'open'
+         ORDER BY id
+         LIMIT 3
+       )`,
     [companyId]
   );
 

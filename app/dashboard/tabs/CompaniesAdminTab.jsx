@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { C } from '../../../lib/theme';
 import { t } from '../../../lib/i18n';
@@ -22,8 +22,11 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [companies, setCompanies] = useState([]);
   const [companiesTotal, setCompaniesTotal] = useState(0);
   const [companiesTotalPages, setCompaniesTotalPages] = useState(1);
+  const [logoStorageConfigured, setLogoStorageConfigured] = useState(false);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const logoInputRef = useRef(null);
+  const [logoTargetId, setLogoTargetId] = useState(null);
 
   const toggleCompanySort = (col) => {
     if (!navigateDashboard) return;
@@ -53,6 +56,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       setCompanies(Array.isArray(data.items) ? data.items : []);
       setCompaniesTotal(typeof data.total === 'number' ? data.total : 0);
       setCompaniesTotalPages(typeof data.totalPages === 'number' ? data.totalPages : 1);
+      setLogoStorageConfigured(Boolean(data.logoStorageConfigured));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -253,6 +257,70 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     }
   };
 
+  const pickCompanyLogo = (companyId) => {
+    if (!logoStorageConfigured) {
+      setError(t(locale, 'panel.admin.companyLogoStorageOff'));
+      return;
+    }
+    setLogoTargetId(companyId);
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+      logoInputRef.current.click();
+    }
+  };
+
+  const onLogoFileChange = async (e) => {
+    const file = e?.target?.files?.[0];
+    const companyId = logoTargetId;
+    setLogoTargetId(null);
+    if (!file || !companyId) return;
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/logo`, {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
+      setMsg(t(locale, 'panel.admin.companyLogoUploaded'));
+      await loadCompanies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (err) {
+      setError(err?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeCompanyLogo = async (companyId) => {
+    const ok = await confirm({
+      message: t(locale, 'panel.admin.companyLogoRemove'),
+      danger: true,
+    });
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/logo`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
+      setMsg(t(locale, 'panel.admin.companyLogoRemoved'));
+      await loadCompanies();
+      setTimeout(() => setMsg(''), 1600);
+    } catch (err) {
+      setError(err?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -268,6 +336,14 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        style={{ display: 'none' }}
+        aria-hidden
+        onChange={onLogoFileChange}
+      />
       {error ? (
         <div style={{ ...S.card, padding: '14px 18px' }}>
           <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
@@ -342,7 +418,20 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   return (
                     <tr key={c.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)', verticalAlign: 'top' }}>
                       <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{c.id}</td>
-                      <td style={{ padding: '12px', color: C.text }}>{c.name}</td>
+                      <td style={{ padding: '12px', color: C.text }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {c.logoUrl ? (
+                            <img
+                              src={c.logoUrl}
+                              alt=""
+                              width={28}
+                              height={28}
+                              style={{ objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }}
+                            />
+                          ) : null}
+                          <span>{c.name}</span>
+                        </div>
+                      </td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.slug}</td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
                       <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
@@ -377,6 +466,36 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           >
                             {t(locale, 'panel.admin.edit')}
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => pickCompanyLogo(c.id)}
+                            disabled={loading || !logoStorageConfigured}
+                            title={
+                              logoStorageConfigured
+                                ? t(locale, 'panel.admin.companyLogoHint')
+                                : t(locale, 'panel.admin.companyLogoStorageOff')
+                            }
+                            aria-label={t(locale, 'panel.admin.companyLogoUpload')}
+                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                              cursor: logoStorageConfigured && !loading ? 'pointer' : 'not-allowed',
+                              fontFamily: 'monospace',
+                              opacity: loading || !logoStorageConfigured ? 0.55 : 1 }}
+                          >
+                            {t(locale, 'panel.admin.companyLogoUpload')}
+                          </button>
+                          {c.logoUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => removeCompanyLogo(c.id)}
+                              disabled={loading}
+                              style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                                borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
+                                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                            >
+                              {t(locale, 'panel.admin.companyLogoRemove')}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => rotateLink(c.id)}

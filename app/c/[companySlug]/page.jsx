@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
   const base = String(process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
   const path = publicCompanyPath(resolved.company.slug);
   const url = base ? `${base}${path}` : path;
-  const ogImage = defaultPublicOgImageUrl();
+  const ogImage = resolved.company.logoUrl || defaultPublicOgImageUrl();
   return {
     metadataBase: base ? new URL(base) : undefined,
     title,
@@ -34,7 +34,9 @@ export async function generateMetadata({ params }) {
       title,
       description,
       siteName: '30Team',
-      images: ogImage ? [{ url: ogImage, width: 512, height: 512, alt: '30Team' }] : undefined,
+      images: ogImage
+        ? [{ url: ogImage, width: 512, height: 512, alt: name }]
+        : undefined,
     },
   };
 }

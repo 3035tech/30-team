@@ -8,6 +8,7 @@ import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessme
 import { apiError } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
 import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
+import { isCompanyLogoStorageConfigured } from '../../../../lib/company-logo';
 import { slugify as slugifyRaw } from '../../../../lib/slugify';
 
 function slugify(input) {
@@ -72,6 +73,7 @@ export async function GET(request) {
        c.website,
        c.about_html AS "aboutHtml",
        c.public_profile_enabled AS "publicProfileEnabled",
+       c.logo_url AS "logoUrl",
        c.created_at AS "createdAt",
        lk.token AS "activeToken",
        lk.expires_at AS "activeTokenExpiresAt"
@@ -89,6 +91,7 @@ export async function GET(request) {
     page: effectivePage,
     pageSize,
     totalPages,
+    logoStorageConfigured: isCompanyLogoStorageConfigured(),
   });
 }
 
@@ -115,7 +118,8 @@ export async function POST(request) {
     `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled)
      VALUES ($1, $2, TRUE, $3, $4, $5)
      RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
-               public_profile_enabled AS "publicProfileEnabled", created_at AS "createdAt"`,
+               public_profile_enabled AS "publicProfileEnabled",
+               logo_url AS "logoUrl", created_at AS "createdAt"`,
     [name, slug, profile.website, profile.aboutHtml, profile.publicProfileEnabled === true]
   );
 

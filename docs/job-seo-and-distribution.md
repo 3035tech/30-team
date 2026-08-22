@@ -12,6 +12,8 @@ Uso no painel (RH): Guia → seções **Vagas** e **Página pública da vaga**. 
 | URL | Público? | Função |
 |-----|----------|--------|
 | `/j` | Sim | Índice de vagas abertas indexáveis (busca, filtro, paginação) |
+| `/j/remoto` | Sim (se massa ≥ limiar) | Agregador de vagas `workplace_modality = remote` — sem JobPosting |
+| `/j/cidade/{slug}` | Sim (se massa ≥ limiar) | Agregador por cidade (`workplace_city` slugificado) — sem JobPosting |
 | `/j/{slug}-{id}` | Sim | Página SEO da vaga (canônica). `id` = `vacancies.id` |
 | `/c/{companySlug}` | Sim (opt-in) | Carreiras da empresa (`companies.public_profile_enabled`) |
 | `/a/unsubscribe?token=…` | Sim | Cancelar job alert |
@@ -38,7 +40,7 @@ Flags na vaga (drawer): página pública, permitir indexação, mostrar empresa,
 Local: `workplace_modality` (`onsite` \| `hybrid` \| `remote`), `workplace_state` (UF), `workplace_city` (município IBGE via `/api/public/br-cities` + autocomplete no drawer).  
 Salário no relatório cliente (`/r`) é flag **separada** (`client_report_show_salary`).
 
-Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/c/{slug}`).
+Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/c/{slug}`), `logo_url` / `logo_key` (arquivo no S3; migration `039`).
 
 Score de completude (determinístico): `lib/job-seo-score.js` → `computeJobSeoScore` (checklist no drawer).
 
@@ -46,10 +48,11 @@ Score de completude (determinístico): `lib/job-seo-score.js` → `computeJobSeo
 
 ## Conteúdo e SEO on-page
 
-- **Title / description / canonical / robots / OG+Twitter**: `generateMetadata` nas rotas `/j` e `/j/[jobKey]`.
-- **JSON-LD JobPosting**: `buildJobPostingJsonLd` — só se open + index + prazo ok; sem `TELECOMMUTE` inventado; sem dados de candidato.
+- **Title / description / canonical / robots / OG+Twitter**: `generateMetadata` nas rotas `/j`, `/j/remoto`, `/j/cidade/[slug]` e `/j/[jobKey]`.
+- **JSON-LD JobPosting**: `buildJobPostingJsonLd` — só na página da vaga, se open + index + prazo ok; sem `TELECOMMUTE` inventado; sem dados de candidato. **Agregadores não emitem JobPosting.**
 - **Encerrada**: agradecimento + vagas relacionadas + link `/j`; sem apply / JSON-LD.
-- **Sitemap / robots**: `app/sitemap.js`, `app/robots.js` — só URLs públicas indexáveis (vagas; empresa `/c` quando opt-in).
+- **Agregadores** (`lib/public-job-aggregators.js`): `/j/remoto` e `/j/cidade/{slug}` só se count ≥ `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` (default **3**); abaixo do limiar → **404** (nunca página vazia indexável). Filtros via `listOpenPublicVacancies` (`workplaceModality` / `workplaceCities`).
+- **Sitemap / robots**: `app/sitemap.js`, `app/robots.js` — `/j`, agregadores que passam o limiar (cap cidades), vagas indexáveis; empresa `/c` quando opt-in.
 
 Validar JobPosting: [Google Rich Results Test](https://search.google.com/test/rich-results) com a URL `/j/…` em staging/produção.
 
@@ -127,6 +130,7 @@ Fluxo sempre: sugerir → RH revisa → salvar. Linguagem hedged; sem diagnósti
 |------|------|
 | URL / slug | `lib/public-job-url.js` |
 | Resolve posting | `lib/public-vacancy-posting.js` |
+| Agregadores SEO | `lib/public-job-aggregators.js`, `app/j/remoto`, `app/j/cidade/[citySlug]` |
 | Lifecycle / closed UX | `lib/public-vacancy-lifecycle.js` |
 | JSON-LD / meta | posting helpers + `app/j/**` |
 | Indexing | `lib/job-indexing.js` |
@@ -134,7 +138,7 @@ Fluxo sempre: sugerir → RH revisa → salvar. Linguagem hedged; sem diagnósti
 | Alerts | `lib/job-alerts.js` |
 | Score | `lib/job-seo-score.js` |
 | Empresa pública | `lib/company-profile.js`, `app/c/[companySlug]` |
-| Migrations | `030`–`036` (ver `migrations/`) |
+| Migrations | `030`–`037` (ver `migrations/`) |
 
 ---
 
@@ -172,5 +176,5 @@ Complemento geral: [`docs/privacidade-lgpd-interno.md`](./privacidade-lgpd-inter
 
 ## Lacunas conhecidas (não inventar)
 
-- Agregadores SEO tipo `/j/remoto` ou por cidade (**B-119**): adiar até existir campo remoto/cidade no schema.
-- Logo de empresa, senioridade, skills/benefícios como entidades separadas: ainda sem colunas.
+- Senioridade, skills/benefícios como entidades separadas: ainda sem colunas.
+- Logo: schema + upload S3 prontos (`039`, `lib/company-logo.js`); precisa `S3_*` em produção.

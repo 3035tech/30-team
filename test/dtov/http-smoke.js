@@ -23,6 +23,11 @@ const HR = {
   password: process.env.DEMO_TODOS_PASSWORD || 'DemoTodosDados!2026',
 };
 
+/** Demo employee (seed Todos os Dados) — used for People/1:1 HTTP coverage. */
+const FIXTURE_PEOPLE = {
+  searchName: 'Elena Ferreira',
+};
+
 const ADMIN = {
   email: process.env.DTOV_ADMIN_EMAIL || 'admin@3035tech.com',
   password: process.env.DTOV_ADMIN_PASSWORD || 'TroqueEstaSenha123!',
@@ -408,11 +413,32 @@ export async function runHttpSmoke(baseUrl) {
     }
   }
 
+  let peopleCandidateId = null;
   {
-    const { res } = await req(base, '/api/admin/assessment-rows?page=1&pageSize=20', {
-      cookie: hrCookie,
-    });
-    await expectStatus('team', 'assessment-rows', res.status, [200]);
+    const q = encodeURIComponent(FIXTURE_PEOPLE.searchName);
+    const { res, data } = await req(
+      base,
+      `/api/admin/assessment-rows?page=1&pageSize=5&roster=internal&search=${q}`,
+      { cookie: hrCookie }
+    );
+    if (await expectStatus('team', 'assessment-rows', res.status, [200])) {
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      peopleCandidateId = rows[0]?.candidateId || rows[0]?.candidate_id || null;
+    }
+    if (!peopleCandidateId) {
+      const { res: rAll, data: dAll } = await req(
+        base,
+        '/api/admin/assessment-rows?page=1&pageSize=20&roster=all',
+        { cookie: hrCookie }
+      );
+      if (rAll.status === 200) {
+        const rows = Array.isArray(dAll?.rows) ? dAll.rows : [];
+        peopleCandidateId = rows[0]?.candidateId || rows[0]?.candidate_id || null;
+      }
+    }
+    if (!peopleCandidateId && candidateId) {
+      peopleCandidateId = candidateId;
+    }
   }
   {
     const { res } = await req(base, '/api/admin/export?limit=10', { cookie: hrCookie });
@@ -454,13 +480,19 @@ export async function runHttpSmoke(baseUrl) {
     await expectStatus('ae-public', 'questions', res.status, [200, 400, 401, 404, 410]);
   }
 
-  if (candidateId) {
-    const { res } = await req(base, `/api/admin/candidates/${candidateId}`, { cookie: hrCookie });
-    await expectStatus('people', 'candidate-get', res.status, [200, 404]);
-    const { res: r2 } = await req(base, `/api/admin/candidates/${candidateId}/one-on-ones`, {
+  // People / 1:1 — always against fixture candidate (not tied to first vacancy)
+  if (peopleCandidateId) {
+    ok('people', 'fixture-candidate', String(peopleCandidateId));
+    const { res } = await req(base, `/api/admin/candidates/${peopleCandidateId}`, {
       cookie: hrCookie,
     });
-    await expectStatus('people', 'one-on-ones', r2.status, [200, 404]);
+    await expectStatus('people', 'candidate-get', res.status, 200);
+    const { res: r2 } = await req(base, `/api/admin/candidates/${peopleCandidateId}/one-on-ones`, {
+      cookie: hrCookie,
+    });
+    await expectStatus('people', 'one-on-ones', r2.status, 200);
+  } else {
+    fail('people', 'fixture-candidate', 'no candidate in HR company (demo seed missing?)');
   }
 
   // Companies/users — usually admin-only; HR should get 401/403
@@ -483,10 +515,34 @@ export async function runHttpSmoke(baseUrl) {
   }
 
   if (adminCookie) {
-    const { res } = await req(base, '/api/admin/companies?page=1&pageSize=10', {
+    const { res, data: companiesBody } = await req(base, '/api/admin/companies?page=1&pageSize=10', {
       cookie: adminCookie,
     });
     await expectStatus('admin', 'companies', res.status, 200);
+    if (
+      !companiesBody ||
+      (companiesBody.logoStorageConfigured !== false && companiesBody.logoStorageConfigured !== true)
+    ) {
+      fail('admin', 'companies-logo-flag', 'missing logoStorageConfigured');
+    } else {
+      ok('admin', 'companies-logo-flag', String(companiesBody.logoStorageConfigured));
+    }
+    const firstCo = Array.isArray(companiesBody.items) ? companiesBody.items[0] : null;
+    if (firstCo?.id) {
+      const { res: logoGet } = await req(
+        base,
+        `/api/admin/companies/${firstCo.id}/logo`,
+        { cookie: adminCookie }
+      );
+      await expectStatus('admin', 'company-logo-get', logoGet.status, 200);
+      const { res: logoPost } = await req(base, `/api/admin/companies/${firstCo.id}/logo`, {
+        method: 'POST',
+        cookie: adminCookie,
+        body: {},
+      });
+      // Sem S3 → 503; com S3 + body JSON inválido → 400
+      await expectStatus('admin', 'company-logo-post', logoPost.status, [400, 503]);
+    }
     const { res: r2 } = await req(base, '/api/admin/users?page=1&pageSize=10', {
       cookie: adminCookie,
     });
