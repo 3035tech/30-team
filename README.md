@@ -30,20 +30,23 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 30Team/
 ├── app/
 │   ├── page.jsx                 ← Landing / teste (client)
-│   ├── t/[token]/               ← Entrada pública por empresa
-│   ├── v/[token]/               ← Entrada pública por vaga
+│   ├── t/[token]/               ← Entrada pública por empresa (assessment)
+│   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
+│   ├── vaga/[company]/[slug]/   ← Página pública SEO da vaga (JobPosting)
+│   ├── vagas/                   ← Índice de vagas públicas abertas
+│   ├── r/[token]/               ← Relatório cliente (shortlist)
 │   ├── assessment/              ← Fluxos de avaliação (eneagrama / AE)
 │   ├── login/                   ← Login do painel
-│   ├── dashboard/               ← Painel (SSR + tabs: overview, equipe, vagas…)
+│   ├── dashboard/               ← Painel (SSR + tabs; Guia = HelpTab)
 │   └── api/                     ← results, auth, admin, ae, public, cron…
 ├── lib/                         ← DB, auth, i18n, pipeline, métricas, scoring…
 ├── migrations/                  ← Schema versionado (fonte canônica)
-├── scripts/
-│   ├── migrate.js               ← npm run db:migrate
-│   ├── rds-bootstrap-completo.sql
-│   ├── scripts-banco-pendentes.sql
-│   └── seed-*.js / clear-data.js
+├── test/                        ← Provas (DTOV + Playwright) — ver test/README.md
+│   ├── dtov/                    ← Postgres efêmero, fixtures, SQL/HTTP smoke
+│   └── e2e/                     ← Browser (Chromium)
+├── scripts/                     ← migrate, seeds, ops (não harness de teste)
 ├── docs/                        ← Rubrica, LGPD
+├── playwright.config.js
 ├── init.sql                     ← Stub Docker only (vazio de propósito)
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
@@ -51,6 +54,8 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 ```
 
 **SQL:** na raiz só `init.sql` (montagem Docker). Schema e deltas ficam em `migrations/` e `scripts/`. Ver [`migrations/README.md`](migrations/README.md).
+
+**Provas / regressão:** [`test/README.md`](test/README.md) — `npm run dtov:full-app` (SQL + HTTP + browser).
 
 ---
 
@@ -119,10 +124,10 @@ npm run dev
 ### Candidato / colaborador
 
 ```
-1. Abre /t/<token> (empresa) ou /v/<token> (vaga)
-2. Informa dados → responde questões do eneagrama (54, sorteadas)
-3. POST /api/results → grava no Postgres
-4. Vê o resultado na tela
+1. Assessment: abre /t/<token> (empresa) ou /v/<token> (vaga) → responde o teste
+2. Página pública SEO (opcional): /vaga/<companySlug>/<vacancySlug> → lê a vaga → CTA para o /v/…
+3. Índice: /vagas lista vagas públicas abertas
+4. POST /api/results → grava no Postgres; vê o resultado na tela
 ```
 
 ### Gestor no dashboard
@@ -130,8 +135,21 @@ npm run dev
 ```
 1. /login → JWT em cookie httpOnly
 2. /dashboard → Server Component lê o Postgres (dados por aba)
-3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, etc.
+3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
+4. Em Vagas: link /v/… (teste) e, se habilitado, página /vaga/… (divulgação/SEO)
 ```
+
+---
+
+## Página pública da vaga (`/vaga`)
+
+- URL estável indexável: `/vaga/{companySlug}/{vacancySlug}` (JobPosting JSON-LD, meta).
+- O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
+- Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
+- Perfil da empresa (admin → Empresas): `website` e texto “sobre” usados na página quando permitido.
+- Vaga encerrada: agradecimento + CTA para `/vagas` e outras abertas da mesma empresa.
+
+Migration: `migrations/030_company_profile_public_vacancy_page.sql`.
 
 ---
 
@@ -199,6 +217,12 @@ server {
 # Dados de desenvolvimento
 npm run db:seed
 npm run db:clear
+
+# Provas (Postgres efêmero DTOV + HTTP + browser) — ver test/README.md
+npm run dtov:reset
+npm run dtov:full-app
+DTOV_SKIP_BROWSER=1 npm run dtov:full-app
+npm run dtov:down
 
 # Logs
 docker compose logs -f app

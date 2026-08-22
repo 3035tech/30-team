@@ -46,7 +46,7 @@ Antes de **criar qualquer função nova**:
 - Nova tela “do zero” sem grep nos componentes existentes
 - Copiar bloco de uma tab para outra (estilo, filtro, fetch, empty state)
 - Nova função `formatX` / `buildWhere` / `requireAdmin` quando já existe em `lib/`
-- Utils soltos na raiz ou em pastas fora de `app/` / `lib/` / `migrations/`
+- Utils soltos na raiz ou em pastas fora de `app/` / `lib/` / `migrations/` / `test/`
 
 ## Checklist rápido
 

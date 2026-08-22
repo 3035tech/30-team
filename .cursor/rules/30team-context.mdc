@@ -15,6 +15,8 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - `lib/` = regras (scoring, pipeline, i18n, mail, db)
 - `lib/ae/` = Motivadores (separado do T1–T9)
 - `migrations/` = schema canônico
+- `test/` = provas (DTOV + Playwright); ver `test/README.md`
+- `scripts/` = migrate, seeds, ops (não harness de teste)
 
 ## Obrigatório
 - Isolar por `company_id` (admin é a única role cross-tenant)
@@ -30,6 +32,7 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - **UI/UX** — atuar como especialista de usabilidade (ver `.cursor/rules/ui-ux.mdc` e `AGENTS.md` § UI/UX): lista antes de formulário, progressive disclosure, feedback de estados, consistência com tokens existentes
 - **DBA / performance** — validar cada query e a volumetria da transação (ver `.cursor/rules/dba-performance.mdc` e `AGENTS.md` § DBA e performance): tenant, índices, paginação/caps, sem N+1; desenhar para escalar sem refactor grande
 - **Imports em `app/api/**/route.js`** — contar `../` até `lib/` pela profundidade da pasta (não copiar de rota irmã de outro nível). Ver `.cursor/rules/api-and-auth.mdc` §11. Erro típico de CI: `Module not found: Can't resolve '../../../lib/…'`
+- **Pós-implementação** — após feature/fix de produto: (1) atualizar README/`docs`/`test/README` e o Guia do painel (`HelpTab` + `panel.help.*` pt-BR+en); (2) rodar Dev → Test → Validate. Ver `AGENTS.md` §§ documentação/Ajuda e DTOV.
 
 ## Proibido
 - Conta de candidato (acesso é por token `/t` `/v` `/r`)

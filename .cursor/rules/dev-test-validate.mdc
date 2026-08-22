@@ -1,0 +1,42 @@
+---
+description: >-
+  Após toda implementação (feature/fix): atualizar README/docs + Guia Ajuda,
+  e rodar Dev → Test → Validate (DTOV). Obrigatório no Cursor e no Claude.
+alwaysApply: true
+---
+
+# Pós-implementação — docs, Ajuda e DTOV
+
+Depois de **concluir** qualquer implementação de produto, o agente **deve**:
+
+1. Atualizar **documentação** (README / `docs/` / `test/README.md`) e o **Guia do painel** (`HelpTab` + `panel.help.*` em `lib/i18n.js`, **pt-BR e en**) quando houver uso novo para gestor ou setup/ops novo — ver `AGENTS.md` § documentação e Ajuda.
+2. Executar o pipeline bounded **Dev → Test → Validate** antes de considerar a tarefa entregue.
+
+## Quando obrigatório
+
+- Feature nova ou mudança de comportamento em `app/`, `lib/`, `migrations/`, APIs, seeds/fixtures
+- Bug fix que altera lógica ou SQL
+- Fluxos operacionais novos no sistema (mesmo “só admin”) — texto no Guia **ou** README conforme o público
+- Pedido de “implementar / fazer / corrigir” que gera diff de produto
+
+## Quando pode pular (dizer no resumo)
+
+- Só docs / copy de regra / comentário sem comportamento
+- Só pergunta / exploração read-only
+- Usuário pediu explicitamente para **não** rodar testes agora
+- Ambiente bloqueado (Docker/DTOV) — reportar `blocked`, não fingir pass
+
+## Como executar (testes)
+
+1. Ler e seguir [`.cursor/skills/dev-test-validate/SKILL.md`](../skills/dev-test-validate/SKILL.md) (`max_rounds` default **3**, nunca loop infinito).
+2. Gates: [`.cursor/skills/dev-test-validate/gates.md`](../skills/dev-test-validate/gates.md).
+3. Harness DTOV: `npm run dtov:reset` quando a mudança toca SQL/API/dados; ao fim `dtov:down` salvo `DTOV_KEEP=1`. Código de prova em `test/` (ver `test/README.md`).
+4. Prova mínima alinhada ao diff; regressão ampla / “tudo” → `npm run dtov:full-app`.
+5. Fechar com o bloco **Pipeline result** do skill.
+
+## Anti-padrões
+
+- Entregar feature sem Test/`pass` (ou `blocked` explícito)
+- Entregar feature de uso sem atualizar Guia e/ou README
+- Expandir escopo durante rounds de fix
+- Apontar DTOV para Postgres de dev/RDS

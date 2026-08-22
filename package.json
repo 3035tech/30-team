@@ -17,17 +17,21 @@
     "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",
     "db:seed-motivators-all": "node scripts/seed-motivators-questions.js && node scripts/seed-motivators-templates.js",
     "db:clear": "node scripts/clear-data.js",
-    "dtov:reset": "node scripts/dtov/harness.js reset",
-    "dtov:up": "node scripts/dtov/harness.js up",
-    "dtov:down": "node scripts/dtov/harness.js down",
-    "dtov:migrate": "node scripts/dtov/harness.js migrate",
-    "dtov:seed": "node scripts/dtov/harness.js seed",
-    "dtov:smoke": "node scripts/dtov/harness.js smoke",
-    "dtov:status": "node scripts/dtov/harness.js status",
-    "dtov:full": "node scripts/dtov/harness.js reset && DTOV=1 node scripts/dtov/full-regression.js",
-    "test:full": "node scripts/dtov/full-regression.js",
-    "test:full:offline": "node scripts/dtov/full-regression.js --offline",
-    "test:full:dtov": "DTOV=1 node scripts/dtov/full-regression.js"
+    "dtov:reset": "node test/dtov/harness.js reset",
+    "dtov:up": "node test/dtov/harness.js up",
+    "dtov:down": "node test/dtov/harness.js down",
+    "dtov:migrate": "node test/dtov/harness.js migrate",
+    "dtov:seed": "node test/dtov/harness.js seed",
+    "dtov:smoke": "node test/dtov/harness.js smoke",
+    "dtov:status": "node test/dtov/harness.js status",
+    "dtov:full": "node test/dtov/harness.js reset && DTOV=1 node test/dtov/full-regression.js",
+    "dtov:full-app": "node test/dtov/run-full-app.js",
+    "test:full": "node test/dtov/full-regression.js",
+    "test:full:offline": "node test/dtov/full-regression.js --offline",
+    "test:full:dtov": "DTOV=1 node test/dtov/full-regression.js",
+    "test:http": "node test/dtov/http-smoke.js",
+    "test:browser": "playwright test",
+    "test:browser:install": "playwright install chromium"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -40,6 +44,7 @@
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35"
   }

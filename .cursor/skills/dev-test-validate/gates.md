@@ -7,7 +7,7 @@ Use the **smallest** set that covers the change. Skip gates that cannot apply.
 1. `npm run dtov:reset` once per pipeline (or `dtov:status` green + already seeded this run).
 2. All DB commands must inherit DTOV env (`POSTGRES_HOST=127.0.0.1`, port `55432`, DB `enneagram_dtov`, `DTOV=1`).
 3. `npm run dtov:smoke` (or harness smoke) green before claiming integration pass.
-4. New feature without rows → add fixture under `scripts/dtov/fixtures/` + `catalog.json` (see [harness.md](harness.md)); Test `blocked` until mass exists.
+4. New feature without rows → add fixture under `test/dtov/fixtures/` + `catalog.json` (see [harness.md](harness.md)); Test `blocked` until mass exists.
 5. Tear down: `npm run dtov:down` at end unless `DTOV_KEEP=1`.
 6. Docker missing / compose fail → **`blocked`**, not fail-loop.
 
@@ -53,6 +53,8 @@ Use the **smallest** set that covers the change. Skip gates that cannot apply.
 - [ ] Public assessment links invariant held
 - [ ] Tenant isolation not weakened
 - [ ] i18n both locales if copy added
+- [ ] **README / `docs/` / `test/README.md`** updated for new setup, URLs, or ops
+- [ ] **Guia do painel** (`HelpTab` + `panel.help.*` pt-BR+en) updated for new manager-facing flows
 - [ ] Migrations/docs noted for operator if schema changed
 - [ ] DTOV catalog updated if new durable data shape was introduced
 - [ ] DTOV torn down (or user informed if kept)

@@ -441,22 +441,23 @@ async function main() {
 
   process.stdout.write('30Team full regression\n');
 
+  // DTOV env must be set BEFORE any import of lib/db.js (pool is created at load).
+  if (forceDtov) {
+    Object.assign(process.env, dtovEnv());
+    assertDtovTarget(process.env);
+    process.stdout.write(`DB target: DTOV ${DTOV_DEFAULTS.POSTGRES_HOST}:${DTOV_DEFAULTS.POSTGRES_PORT}\n`);
+  } else if (!offline) {
+    process.stdout.write(
+      `DB target: ${process.env.POSTGRES_HOST || 'localhost'}:${process.env.POSTGRES_PORT || '5432'} / ${process.env.POSTGRES_DB || 'enneagram'} (set DTOV=1 or --dtov for ephemeral)\n`
+    );
+  }
+
   await runOfflineLibs();
 
   if (offline) {
     const allOk = printSummary();
     process.exitCode = allOk ? 0 : 1;
     return;
-  }
-
-  if (forceDtov) {
-    Object.assign(process.env, dtovEnv());
-    assertDtovTarget(process.env);
-    process.stdout.write(`DB target: DTOV ${DTOV_DEFAULTS.POSTGRES_HOST}:${DTOV_DEFAULTS.POSTGRES_PORT}\n`);
-  } else {
-    process.stdout.write(
-      `DB target: ${process.env.POSTGRES_HOST || 'localhost'}:${process.env.POSTGRES_PORT || '5432'} / ${process.env.POSTGRES_DB || 'enneagram'} (set DTOV=1 or --dtov for ephemeral)\n`
-    );
   }
 
   const client = new Client(getPgBaseConfig());

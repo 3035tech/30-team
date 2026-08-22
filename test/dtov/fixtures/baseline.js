@@ -1,6 +1,6 @@
 /**
- * Baseline DTOV: reusa seeds oficiais do repo (áreas → motivadores → demo Todos os Dados).
- * Roda como subprocess com env DTOV (nunca o .env de prod sem override).
+ * Baseline DTOV: motivadores + demo "Todos os Dados".
+ * (Não usa seed-data.js — ele cria candidates sem company_id e quebra no schema atual.)
  */
 
 import { spawn } from 'node:child_process';
@@ -32,8 +32,6 @@ function runNode(scriptRel, env, extraEnv = {}) {
  */
 export async function seed(_client, ctx) {
   const env = ctx.env;
-  // areas + sample noise (idempotent enough on empty DB)
-  await runNode('scripts/seed-data.js', env);
   await runNode('scripts/seed-motivators-questions.js', env);
   await runNode('scripts/seed-motivators-templates.js', env);
   await runNode('scripts/seed-demo-todos-os-dados.js', env, {

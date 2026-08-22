@@ -1,16 +1,18 @@
 ---
 name: dev-test-validate
 description: >-
-  Orchestrates a bounded Dev → Test → (fix) → Final validation loop after
-  feature or bugfix work, with an ephemeral local Postgres (DTOV) seeded for
-  integration proofs. Also supports optional full regression (`dtov:full` /
-  `test:full`) when the user asks for a broad bug hunt across the demo tenant.
-  Use when the user asks for "dev-test-validate", "pipeline de testes",
-  "roda o pipeline", "validate after changes", "teste geral", "regressão",
-  or a develop/test/fix cycle with a hard round limit (never infinite).
+  REQUIRED after every product implementation (feature, bugfix, migration,
+  API, behavioral UI) in 30Team — bounded Dev → Test → (fix) → Final validation
+  with ephemeral Postgres (DTOV). Also use when the user asks for
+  "dev-test-validate", "pipeline de testes", "roda o pipeline",
+  "validate after changes", "teste geral", "regressão", or a develop/test/fix
+  cycle. Hard round limit (never infinite). Optional full regression via
+  dtov:full-app when the user asks for broad bug hunt ("tudo").
 ---
 
 # Dev → Test → Validate (bounded)
+
+**Mandatory after product implementations** (see `AGENTS.md` § Pós-implementação and `.cursor/rules/dev-test-validate.mdc`). Skip only for docs/read-only, explicit user opt-out, or environment `blocked`.
 
 Parent agent owns the loop. Subagents do one job each. **Never** run without a round cap.
 
@@ -31,7 +33,7 @@ Before the first **Test** round that needs data, boot the harness:
 npm run dtov:reset
 ```
 
-Details: [harness.md](harness.md) · compose: `docker-compose.dtov.yml` · fixtures: `scripts/dtov/fixtures/`.
+Details: [harness.md](harness.md) · compose: `test/dtov/docker-compose.dtov.yml` · fixtures: `test/dtov/fixtures/`.
 
 | Moment | Action |
 |--------|--------|
@@ -47,8 +49,8 @@ Details: [harness.md](harness.md) · compose: `docker-compose.dtov.yml` · fixtu
 If acceptance needs rows the catalog does not cover:
 
 1. Map schema + happy-path queries the Test will run.
-2. Add `scripts/dtov/fixtures/<feature>.js` with `export async function seed(client, ctx)`.
-3. Register in `scripts/dtov/fixtures/catalog.json` (`dependsOn`, `covers`, `smoke`).
+2. Add `test/dtov/fixtures/<feature>.js` with `export async function seed(client, ctx)`.
+3. Register in `test/dtov/fixtures/catalog.json` (`dependsOn`, `covers`, `smoke`).
 4. Prefer enriching **baseline** (demo Todos os Dados) over a second full tenant.
 5. Re-run `npm run dtov:reset` until fixture smokes pass, then continue product Test.
 
@@ -147,16 +149,15 @@ Always attempt `dtov:down` on stop (except `DTOV_KEEP=1`).
 
 ## Full regression (optional — bug hunt)
 
-When the user asks for **teste geral**, **regressão completa**, **full regression**, or “caça bug passado”:
+When the user asks for **teste geral**, **regressão completa**, **full regression**, **tudo**, or “caça bug passado”:
 
 ```bash
-npm run dtov:full          # reset DTOV + suíte ampla
-# ou, DB já seedado:
-DTOV=1 npm run test:full
-npm run test:full:offline  # só libs, sem Postgres
+npm run dtov:full-app   # preferido: SQL + HTTP em todas as superfícies
+# ou só dados/libs:
+npm run dtov:full
 ```
 
-This is **not** the default focused Test gate. It runs SQL integrity across the demo tenant (users, pipeline, AE, 1:1, /vaga, tokens) plus offline lib checks. Still not a browser E2E of every screen.
+This is **not** the default focused Test gate. It runs SQL integrity across the demo tenant (users, pipeline, AE, 1:1, /vaga, tokens) plus offline lib checks, HTTP smoke, and Playwright browser navigation (`test/e2e/`). Still not a full fill of every assessment form or kanban DnD edge case.
 
 ## Anti-patterns
 

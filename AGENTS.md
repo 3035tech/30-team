@@ -34,6 +34,8 @@ app/api                                            → rotas finas
 lib/                                               → regras de negócio
 lib/ae/                                            → Motivadores
 migrations/                                        → schema canônico
+test/                                              → provas (DTOV + Playwright); não é produto
+scripts/                                           → migrate, seeds, ops (não harness de teste)
 ```
 
 1. **Rotas finas, `lib/` gordo** — scoring, pipeline, hire, filtros, i18n e e-mail não vivem só no `route.js`.
@@ -73,7 +75,7 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 | Tokens `C` / `FONTS` em `lib/theme.js` | Hex solto; roxo da marca como cor de status |
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
-| Nomes de arquivo/export em inglês | Pastas novas fora de `app/` / `lib/` / `migrations/` |
+| Nomes de arquivo/export em inglês | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`) |
 | **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
 | **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
 | Imports `lib/` com `../` contados pela profundidade do `route.js` (ver `.cursor/rules/api-and-auth.mdc` §11) | Copiar `../../../lib` de outra rota sem conferir pastas → `Module not found` no Docker build |
@@ -164,6 +166,36 @@ O agente atua também como **DBA** e **engenheiro de performance**. Objetivo: a 
 
 Regras Cursor/Claude: `.cursor/rules/dba-performance.mdc` (alwaysApply), `.cursor/rules/sql-schema.mdc`.
 
+## Pós-implementação — documentação e Ajuda (obrigatório)
+
+Toda implementação de produto (feature, fluxo operacional novo no painel, mudança de uso para gestor/candidato) **deve** atualizar os materiais informativos **no mesmo PR/entrega**:
+
+| Superfície | O quê atualizar |
+|------------|-----------------|
+| **README** (raiz) e/ou `docs/` / `test/README.md` | Setup, arquitetura, comandos, URLs novas, ops (DTOV, migrate, etc.) |
+| **Guia do painel** (`HelpTab` + chaves `panel.help.*` em `lib/i18n.js`) | Explicação de **uso** para RH/direção/admin — **pt-BR e en** |
+| Skill / regras | Se mudar processo de IA (ex. DTOV), espelhar em `.cursor/skills` / `AGENTS.md` |
+
+**Regra prática:** se um gestor precisa *saber fazer* algo novo no 30Team, entra no Guia (Ajuda). Se um dev/ops precisa *rodar/configurar*, entra no README/`docs`/`test/README.md`. Features só de backend sem UI ainda pedem pelo menos uma linha no README quando mudam URL, env ou schema relevante.
+
+Não considerar a feature “pronta” só com código: falta doc + Ajuda = entrega incompleta (exceto docs-only / read-only / opt-out explícito do usuário).
+
+## Pós-implementação — Dev → Test → Validate (obrigatório)
+
+Após **toda** implementação de produto (feature, bugfix, migration, API, UI com comportamento), o agente **deve** rodar o pipeline bounded **Dev → Test → Validate** antes de considerar a tarefa entregue.
+
+| | |
+|--|--|
+| Skill (Cursor + Claude) | `.cursor/skills/dev-test-validate/SKILL.md` |
+| Regra always-on | `.cursor/rules/dev-test-validate.mdc` |
+| `max_rounds` | **3** (máx. 5 se o usuário pedir); nunca loop infinito |
+| DB de prova | DTOV (`npm run dtov:reset`) quando toca SQL/API/dados; `dtov:down` ao fim salvo `DTOV_KEEP=1` |
+| Regressão ampla | Só se o usuário pedir (“tudo”, “teste geral”): `npm run dtov:full-app` |
+
+**Pode pular** (declarar no resumo): só docs/copy de regra; exploração read-only; usuário pediu para não testar agora; ambiente `blocked` (Docker/DTOV) — reportar bloqueio, não fingir pass.
+
+Fechar a entrega com o bloco **Pipeline result** do skill (`done` | `failed` | `blocked`).
+
 ## i18n
 
 - Locales: `pt-BR` e `en` — **sempre os dois** em `lib/i18n.js` (`messages`).
@@ -195,6 +227,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não commitar salvo pedido explícito do usuário
 - Não refatorar fora do escopo do pedido
 - Não duplicar componentes **nem** funções/helpers que já existem (reutilizar / estender / extrair para `lib/` primeiro; ver § Reaproveitamento)
+- Não encerrar implementação de produto sem rodar Dev → Test → Validate (ou declarar skip/`blocked` válido; ver § Pós-implementação)
+- Não encerrar feature de uso sem atualizar README/`docs` e o Guia do painel (`panel.help.*` pt-BR+en) quando houver fluxo novo para gestor ou ops
 
 ## Arquivos por tipo de tarefa
 
@@ -219,13 +253,14 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
+| Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
-| Rubrica | `docs/rubrica-por-vaga.md`, `lib/rubric-prompt.js` |
+| Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js` |
 
 ## Referências
 
 - README: setup Docker / local
 - `CLAUDE.md`: entrada para Claude Code (aponta para este arquivo)
 - `.cursor/rules/`: atalhos Cursor por área (`ui-ux.mdc`, `dba-performance.mdc` alwaysApply)
-- `.cursor/skills/dev-test-validate/`: pipeline Dev → Test → Validate com `max_rounds` (sem loop infinito)
+- `.cursor/skills/dev-test-validate/` + `.cursor/rules/dev-test-validate.mdc`: **obrigatório** após implementação (Dev → Test → Validate, DTOV, `max_rounds`)
 - `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`

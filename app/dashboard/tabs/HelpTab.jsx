@@ -14,6 +14,7 @@ const SECTIONS = [
   'flow',
   'enneagram',
   'vacancies',
+  'publicVacancy',
   'candidates',
   'pipeline',
   'team',
@@ -206,18 +207,19 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   const stepCounts = {
     welcome: 4,
     navigation: 6,
-    links: 8,
+    links: 9,
     flow: 0,
     enneagram: 7,
-    vacancies: 6,
+    vacancies: 8,
+    publicVacancy: 7,
     candidates: 5,
     pipeline: 6,
     team: 6,
     people: 6,
     report: 5,
     motivators: 7,
-    access: 6,
-    tips: 8,
+    access: 7,
+    tips: 9,
   };
 
   return (

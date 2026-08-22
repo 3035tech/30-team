@@ -5,14 +5,14 @@
  * Nunca usa o .env de produção/dev sem override explícito destas vars.
  *
  * Uso:
- *   node scripts/dtov/harness.js reset   # down -v → up → migrate → seed
- *   node scripts/dtov/harness.js up
- *   node scripts/dtov/harness.js migrate
- *   node scripts/dtov/harness.js seed [--only=id1,id2]
- *   node scripts/dtov/harness.js smoke
- *   node scripts/dtov/harness.js down    # remove volume
- *   node scripts/dtov/harness.js env     # imprime exports
- *   node scripts/dtov/harness.js status
+ *   node test/dtov/harness.js reset   # down -v → up → migrate → seed
+ *   node test/dtov/harness.js up
+ *   node test/dtov/harness.js migrate
+ *   node test/dtov/harness.js seed [--only=id1,id2]
+ *   node test/dtov/harness.js smoke
+ *   node test/dtov/harness.js down    # remove volume
+ *   node test/dtov/harness.js env     # imprime exports
+ *   node test/dtov/harness.js status
  */
 
 import { spawn } from 'node:child_process';
@@ -27,7 +27,7 @@ const { Client } = require('pg');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
-const COMPOSE_FILE = path.join(ROOT, 'docker-compose.dtov.yml');
+const COMPOSE_FILE = path.join(__dirname, 'docker-compose.dtov.yml');
 const CATALOG_PATH = path.join(__dirname, 'fixtures', 'catalog.json');
 
 export const DTOV_DEFAULTS = Object.freeze({
@@ -157,9 +157,38 @@ async function cmdDown() {
   log('down ok');
 }
 
+async function cmdBootstrap() {
+  const env = dtovEnv();
+  assertDtovTarget(env);
+  const client = new Client({
+    host: env.POSTGRES_HOST,
+    port: parseInt(env.POSTGRES_PORT, 10),
+    database: env.POSTGRES_DB,
+    user: env.POSTGRES_USER,
+    password: env.POSTGRES_PASSWORD,
+    ssl: false,
+  });
+  await client.connect();
+  try {
+    const exists = await client.query(`SELECT to_regclass('public.companies') AS t`);
+    if (exists.rows[0]?.t) {
+      log('bootstrap skipped (schema already present)');
+      return;
+    }
+    const sqlPath = path.join(ROOT, 'scripts', 'rds-bootstrap-completo.sql');
+    log('applying rds-bootstrap-completo.sql (base schema)…');
+    const sql = await readFile(sqlPath, 'utf8');
+    await client.query(sql);
+    log('bootstrap ok');
+  } finally {
+    await client.end();
+  }
+}
+
 async function cmdMigrate() {
   const env = dtovEnv();
   assertDtovTarget(env);
+  await cmdBootstrap();
   log('migrating…');
   await run('node', [path.join(ROOT, 'scripts', 'migrate.js')], { env });
   log('migrate ok');
@@ -301,11 +330,12 @@ async function main() {
   const only = parseOnly(argv);
 
   if (cmd === 'help' || cmd === '-h' || cmd === '--help') {
-    process.stdout.write(`Usage: node scripts/dtov/harness.js <reset|up|down|migrate|seed|smoke|env|status> [--only=id]\n`);
+    process.stdout.write(`Usage: node test/dtov/harness.js <reset|up|down|bootstrap|migrate|seed|smoke|env|status> [--only=id]\n`);
     return;
   }
   if (cmd === 'up') return cmdUp();
   if (cmd === 'down') return cmdDown();
+  if (cmd === 'bootstrap') return cmdBootstrap();
   if (cmd === 'migrate') return cmdMigrate();
   if (cmd === 'seed') return cmdSeed(only);
   if (cmd === 'smoke') return cmdSmoke();
