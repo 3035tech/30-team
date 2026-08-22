@@ -294,3 +294,53 @@ CREATE INDEX IF NOT EXISTS idx_vacancies_public_open_created
 ALTER TABLE vacancies
   ALTER COLUMN public_allow_index SET DEFAULT TRUE;
 
+-- 032 — atribuição UTM + funil de vagas públicas
+ALTER TABLE assessments
+  ADD COLUMN IF NOT EXISTS attr_source TEXT,
+  ADD COLUMN IF NOT EXISTS attr_medium TEXT,
+  ADD COLUMN IF NOT EXISTS attr_campaign TEXT,
+  ADD COLUMN IF NOT EXISTS attr_content TEXT,
+  ADD COLUMN IF NOT EXISTS attr_term TEXT,
+  ADD COLUMN IF NOT EXISTS attr_ref TEXT,
+  ADD COLUMN IF NOT EXISTS attr_landing TEXT,
+  ADD COLUMN IF NOT EXISTS attr_session_id TEXT;
+
+CREATE TABLE IF NOT EXISTS job_funnel_events (
+  id BIGSERIAL PRIMARY KEY,
+  company_id BIGINT NOT NULL REFERENCES companies(id),
+  vacancy_id BIGINT NOT NULL REFERENCES vacancies(id),
+  candidate_id BIGINT REFERENCES candidates(id) ON DELETE SET NULL,
+  event_type TEXT NOT NULL,
+  session_id TEXT,
+  source TEXT,
+  medium TEXT,
+  campaign TEXT,
+  referral_code TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT job_funnel_events_type_check CHECK (
+    event_type IN (
+      'job_view',
+      'apply_start',
+      'apply_complete',
+      'screening',
+      'interview',
+      'hired',
+      'rejected'
+    )
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_vacancy_created
+  ON job_funnel_events (vacancy_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_company_type_created
+  ON job_funnel_events (company_id, event_type, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_source
+  ON job_funnel_events (vacancy_id, source)
+  WHERE source IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_session_view
+  ON job_funnel_events (vacancy_id, session_id, event_type)
+  WHERE event_type = 'job_view';
+

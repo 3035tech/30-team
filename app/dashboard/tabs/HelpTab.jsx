@@ -211,7 +211,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     flow: 0,
     enneagram: 7,
     vacancies: 8,
-    publicVacancy: 7,
+    publicVacancy: 8,
     candidates: 5,
     pipeline: 6,
     team: 6,

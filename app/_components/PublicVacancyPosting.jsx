@@ -15,6 +15,29 @@ import {
   publicVacancyClosedReason,
   publicVacancyShowsClosedExperience,
 } from '../../lib/public-vacancy-lifecycle';
+import { useEffect, useRef } from 'react';
+
+function trackJobFunnel(eventType, vacancyId) {
+  const id = Number(vacancyId);
+  if (!Number.isFinite(id) || id <= 0) return;
+  const body = JSON.stringify({ eventType, vacancyId: id });
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+      const blob = new Blob([body], { type: 'application/json' });
+      if (navigator.sendBeacon('/api/public/job-funnel', blob)) return;
+    }
+  } catch {
+    /* fall through */
+  }
+  fetch('/api/public/job-funnel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    credentials: 'same-origin',
+    keepalive: true,
+  }).catch(() => {});
+}
+
 const shell = {
   minHeight: '100vh',
   background: C.bg,
@@ -157,6 +180,17 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const hasDesc = !isRichTextEmpty(posting?.description);
   const publishedLabel = formatPublicVacancyDate(posting?.createdAt, locale);
   const targetLabel = formatPublicVacancyDate(posting?.targetDate, locale);
+  const viewedRef = useRef(false);
+
+  useEffect(() => {
+    if (closed || viewedRef.current || !posting?.vacancyId) return;
+    viewedRef.current = true;
+    trackJobFunnel('job_view', posting.vacancyId);
+  }, [closed, posting?.vacancyId]);
+
+  const onApplyClick = () => {
+    if (posting?.vacancyId) trackJobFunnel('apply_start', posting.vacancyId);
+  };
 
   return (
     <div style={shell}>
@@ -372,6 +406,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                 {canApply ? (
                   <a
                     href={posting.applyPath}
+                    onClick={onApplyClick}
                     style={{
                       display: 'inline-block',
                       background: GRADIENT.primaryBtn(C.purple, C.purpleDark),

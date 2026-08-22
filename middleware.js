@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { COOKIE_NAME } from './lib/auth';
 import { verifyTokenEdge } from './lib/auth-edge';
 import { isManagerRole } from './lib/permissions';
+import {
+  JOB_ATTR_COOKIE,
+  attributionCookieOptions,
+  decodeAttributionCookie,
+  encodeAttributionCookie,
+  mergeAttribution,
+  parseAttributionFromSearchParams,
+  searchHasAttribution,
+} from './lib/job-attribution';
 
 /** Cabeçalhos opcionais em runtime (produção HTTPS). Ver .env.example. */
 function withSecurityHeaders(response) {
@@ -20,6 +29,26 @@ function withSecurityHeaders(response) {
   return response;
 }
 
+function withJobAttributionCookie(request, response) {
+  try {
+    if (!searchHasAttribution(request.nextUrl.searchParams)) return response;
+    const existing = decodeAttributionCookie(request.cookies.get(JOB_ATTR_COOKIE)?.value);
+    const incoming = parseAttributionFromSearchParams(
+      request.nextUrl.searchParams,
+      request.nextUrl.pathname,
+      { sessionId: existing?.sessionId }
+    );
+    const merged = mergeAttribution(existing, incoming);
+    const encoded = encodeAttributionCookie(merged);
+    if (encoded) {
+      response.cookies.set(JOB_ATTR_COOKIE, encoded, attributionCookieOptions());
+    }
+  } catch {
+    /* ignore attribution failures */
+  }
+  return response;
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
@@ -28,23 +57,27 @@ export async function middleware(request) {
     const payload = token ? await verifyTokenEdge(token) : null;
 
     if (!isManagerRole(payload)) {
-      // APIs: 401 JSON (fetch não deve seguir redirect HTML e “sumir” dados no SPA)
       if (pathname.startsWith('/api/')) {
-        return withSecurityHeaders(
-          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: 'UNAUTHORIZED' }, { status: 401 })
+        return withJobAttributionCookie(
+          request,
+          withSecurityHeaders(
+            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: 'UNAUTHORIZED' }, { status: 401 })
+          )
         );
       }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return withSecurityHeaders(NextResponse.redirect(loginUrl));
+      return withJobAttributionCookie(
+        request,
+        withSecurityHeaders(NextResponse.redirect(loginUrl))
+      );
     }
   }
 
-  return withSecurityHeaders(NextResponse.next());
+  return withJobAttributionCookie(request, withSecurityHeaders(NextResponse.next()));
 }
 
 export const config = {
-  // Skip Next internals + static brand assets so favicon/icons always load.
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand/|site.webmanifest).*)',
   ],

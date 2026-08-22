@@ -35,7 +35,9 @@ Implementação técnica: exclusões em cascata onde houver `ON DELETE CASCADE`;
 
 ## Cookies, analytics e consentimento
 
-- Hoje o app não depende de cookies de terceiros na landing para funcionamento básico (sessão gestor é cookie HTTP-only da própria app).
+- Sessão do gestor: cookie HTTP-only da própria app (`team30_session`).
+- Atribuição de vagas públicas: cookie first-party httpOnly `team30_job_attr` (UTM/`ref`, session opaca, TTL ~7 dias). **Sem IP** e sem PII nos eventos `job_funnel_events`; detalhe fino em `assessments.attr_*`.
+- Hoje o app não depende de cookies de **terceiros** na landing para funcionamento básico.
 - **Se** forem adicionados analytics/marketing de terceiros na landing: avaliar banner de cookies, consentimento prévio onde exigido e atualização da política de privacidade pública.
 
 ## SEO / URLs sensíveis

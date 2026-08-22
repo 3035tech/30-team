@@ -101,7 +101,15 @@ CREATE TABLE IF NOT EXISTS assessments (
   source       TEXT NOT NULL DEFAULT 'public_form',
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   fill_duration_ms INTEGER CHECK (fill_duration_ms IS NULL OR fill_duration_ms >= 0),
-  copy_event_count INTEGER NOT NULL DEFAULT 0 CHECK (copy_event_count >= 0)
+  copy_event_count INTEGER NOT NULL DEFAULT 0 CHECK (copy_event_count >= 0),
+  attr_source TEXT,
+  attr_medium TEXT,
+  attr_campaign TEXT,
+  attr_content TEXT,
+  attr_term TEXT,
+  attr_ref TEXT,
+  attr_landing TEXT,
+  attr_session_id TEXT
 );
 
 CREATE OR REPLACE FUNCTION trg_assessments_company_matches_candidate()
@@ -415,6 +423,45 @@ CREATE INDEX IF NOT EXISTS idx_vacancies_public_open_created
     AND public_page_enabled = TRUE
     AND public_allow_index = TRUE
     AND status = 'open';
+
+CREATE TABLE IF NOT EXISTS job_funnel_events (
+  id BIGSERIAL PRIMARY KEY,
+  company_id BIGINT NOT NULL REFERENCES companies(id),
+  vacancy_id BIGINT NOT NULL REFERENCES vacancies(id),
+  candidate_id BIGINT REFERENCES candidates(id) ON DELETE SET NULL,
+  event_type TEXT NOT NULL,
+  session_id TEXT,
+  source TEXT,
+  medium TEXT,
+  campaign TEXT,
+  referral_code TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT job_funnel_events_type_check CHECK (
+    event_type IN (
+      'job_view',
+      'apply_start',
+      'apply_complete',
+      'screening',
+      'interview',
+      'hired',
+      'rejected'
+    )
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_vacancy_created
+  ON job_funnel_events (vacancy_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_company_type_created
+  ON job_funnel_events (company_id, event_type, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_source
+  ON job_funnel_events (vacancy_id, source)
+  WHERE source IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_job_funnel_session_view
+  ON job_funnel_events (vacancy_id, session_id, event_type)
+  WHERE event_type = 'job_view';
 
 DROP INDEX IF EXISTS idx_companies_slug_unique;
 CREATE UNIQUE INDEX idx_companies_slug_unique ON companies (LOWER(slug)) WHERE deleted = FALSE;

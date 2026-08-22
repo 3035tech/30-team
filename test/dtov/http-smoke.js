@@ -225,7 +225,40 @@ export async function runHttpSmoke(baseUrl) {
     if (res.status !== 200) fail('seo', 'sitemap', `status ${res.status}`);
     else if (!body.includes('/vagas') && !body.includes('urlset')) {
       fail('seo', 'sitemap', `unexpected body len=${body.length}`);
-    } else ok('seo', 'sitemap', `HTTP ${res.status} · ${body.length}b`);
+    }     else ok('seo', 'sitemap', `HTTP ${res.status} · ${body.length}b`);
+  }
+
+  // ── Job funnel + UTM attribution cookie ───────────────────────────────
+  let publicVacancyId = null;
+  if (canonicalOpenPath) {
+    const m = canonicalOpenPath.match(/-(\d+)$/);
+    if (m) publicVacancyId = Number(m[1]);
+  }
+  {
+    const pathWithUtm = `${canonicalOpenPath || '/vagas'}?utm_source=linkedin&utm_medium=social&utm_campaign=dtov`;
+    const { res, setCookie } = await req(base, pathWithUtm);
+    const joined = (setCookie || []).join('; ');
+    if (res.status !== 200 && res.status !== 308 && res.status !== 301) {
+      fail('funnel', 'utm-cookie-page', `status ${res.status}`);
+    } else if (!/team30_job_attr=/i.test(joined)) {
+      fail('funnel', 'utm-cookie-page', `missing team30_job_attr in Set-Cookie: ${joined.slice(0, 120)}`);
+    } else {
+      ok('funnel', 'utm-cookie-page', 'team30_job_attr set');
+    }
+  }
+  if (publicVacancyId) {
+    const { res, data } = await req(base, '/api/public/job-funnel', {
+      method: 'POST',
+      body: { eventType: 'job_view', vacancyId: publicVacancyId },
+    });
+    await expectStatus('funnel', 'job-view', res.status, 200, data?.skipped ? 'skipped' : 'recorded');
+    const { res: r2, data: d2 } = await req(base, '/api/public/job-funnel', {
+      method: 'POST',
+      body: { eventType: 'apply_start', vacancyId: publicVacancyId },
+    });
+    await expectStatus('funnel', 'apply-start', r2.status, 200, d2?.skipped ? 'skipped' : 'recorded');
+  } else {
+    fail('funnel', 'public-vacancy-id', 'could not parse id from canonical path');
   }
 
   // ── Auth HR ───────────────────────────────────────────────────────────
@@ -313,6 +346,17 @@ export async function runHttpSmoke(baseUrl) {
       cookie: hrCookie,
     });
     await expectStatus('vacancies', 'reports', r6.status, [200]);
+    const analyticsId = publicVacancyId || vacancyId;
+    const { res: r7, data: d7 } = await req(base, `/api/admin/vacancies/${analyticsId}/analytics`, {
+      cookie: hrCookie,
+    });
+    if (await expectStatus('vacancies', 'analytics', r7.status, 200)) {
+      if (typeof d7?.views !== 'number' || !Array.isArray(d7?.sources)) {
+        fail('vacancies', 'analytics-shape', JSON.stringify(d7).slice(0, 160));
+      } else {
+        ok('vacancies', 'analytics-shape', `views=${d7.views} apps=${d7.applications}`);
+      }
+    }
   }
 
   {

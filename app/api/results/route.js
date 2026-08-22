@@ -8,6 +8,13 @@ import { apiError } from '../../../lib/api-error';
 import { upsertCandidate } from '../../../lib/ae/candidate-upsert';
 import { normalizeCandidateProfile } from '../../../lib/candidate-profile';
 import { notifyCompanyManagers, NOTIF } from '../../../lib/manager-notifications';
+import {
+  JOB_ATTR_COOKIE,
+  attributionToAssessmentCols,
+  decodeAttributionCookie,
+  mapAttributionToCandidateSource,
+} from '../../../lib/job-attribution';
+import { scheduleJobFunnelEvent } from '../../../lib/job-funnel';
 
 function normalizeEmail(email) {
   const e = (email || '').trim();
@@ -131,6 +138,11 @@ export async function POST(request) {
 
     // Candidate upsert (prefer email; otherwise best-effort by name)
     const profile = normalizeCandidateProfile(body);
+    const attr = decodeAttributionCookie(cookies().get(JOB_ATTR_COOKIE)?.value);
+    const mappedSource = mapAttributionToCandidateSource(attr);
+    if (mappedSource && !profile.source) {
+      profile.source = mappedSource;
+    }
     const up = await upsertCandidate({
       companyId,
       fullName: safeName,
@@ -164,12 +176,40 @@ export async function POST(request) {
       }
     }
 
+    const attrCols = attributionToAssessmentCols(attr);
+
     const assessment = resolvedVacancyId
       ? await query(
-          `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, vacancy_id, invite_id, pipeline_stage, fill_duration_ms, copy_event_count)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'test_completed', $8, $9)
+          `INSERT INTO assessments (
+             candidate_id, company_id, area_id, top_type, scores, vacancy_id, invite_id,
+             pipeline_stage, fill_duration_ms, copy_event_count,
+             attr_source, attr_medium, attr_campaign, attr_content, attr_term,
+             attr_ref, attr_landing, attr_session_id
+           )
+           VALUES (
+             $1, $2, $3, $4, $5, $6, $7, 'test_completed', $8, $9,
+             $10, $11, $12, $13, $14, $15, $16, $17
+           )
            RETURNING id, created_at AS "createdAt"`,
-          [candidateId, companyId, areaId, topType, JSON.stringify(scores), resolvedVacancyId, resolvedInviteId, fillDurationMs, copyEventCount]
+          [
+            candidateId,
+            companyId,
+            areaId,
+            topType,
+            JSON.stringify(scores),
+            resolvedVacancyId,
+            resolvedInviteId,
+            fillDurationMs,
+            copyEventCount,
+            attrCols.attrSource,
+            attrCols.attrMedium,
+            attrCols.attrCampaign,
+            attrCols.attrContent,
+            attrCols.attrTerm,
+            attrCols.attrRef,
+            attrCols.attrLanding,
+            attrCols.attrSessionId,
+          ]
         )
       : await query(
           `INSERT INTO assessments (candidate_id, company_id, area_id, top_type, scores, fill_duration_ms, copy_event_count)
@@ -177,6 +217,20 @@ export async function POST(request) {
            RETURNING id, created_at AS "createdAt"`,
           [candidateId, companyId, areaId, topType, JSON.stringify(scores), fillDurationMs, copyEventCount]
         );
+
+    if (resolvedVacancyId) {
+      scheduleJobFunnelEvent({
+        companyId,
+        vacancyId: resolvedVacancyId,
+        eventType: 'apply_complete',
+        candidateId,
+        sessionId: attrCols.attrSessionId,
+        source: attrCols.attrSource,
+        medium: attrCols.attrMedium,
+        campaign: attrCols.attrCampaign,
+        referralCode: attrCols.attrRef,
+      });
+    }
 
     if (resolvedInviteId) {
       await query(

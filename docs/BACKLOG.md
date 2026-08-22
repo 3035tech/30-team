@@ -96,31 +96,10 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 
 ### Fase 4 — Analytics e atribuição
 
-#### B-113 — Persistência de origem (UTM + ref + landing)
-**Instruções:**
-- Aceitar query: `utm_source|medium|campaign|content|term`, `ref`.
-- Persistir em cookie httpOnly ou session curta (preferir cookie first-party, TTL curta, sem PII) para sobreviver navegação até `/v` submit.
-- Migration se necessário: tabela de atribuição ou colunas em vínculo candidatura/`vacancy_candidates`/`assessments` — **antes** de criar, grep `candidates.source` e convites.
-- LGPD: não logar IP cru; não analytics público com PII.
-- Critério: visitar `/vagas/...?utm_source=linkedin` e concluir assessment mantém source=linkedin no registro.
-
-#### B-114 — Eventos de funil (analytics)
-**Instruções:**
-- Tabela `job_funnel_events` (ou nome alinhado): event_type, job_id, company_id, candidate_id nullable, session_id, source/medium/campaign/referral_code, created_at.
-- Eventos mínimos: `job_view`, `apply_start` (clique CTA /v), `apply_complete` (submit assessment da vaga), e quando pipeline mudar: screened/interview/hired se já houver estágios (`lib/pipeline.js`).
-- `job_view`: API pública leve ou server action com rate limit; **não** floodar logs de app.
-- Índices: (job_id, created_at), (company_id, event_type, created_at), source.
-- Critério: view incrementa; apply_complete amarra candidate_id quando existir.
-
-#### B-115 — API admin analytics por vaga
-**Instruções:**
-- `GET /api/admin/vacancies/[id]/analytics` com `CAP.VACANCIES_VIEW` (ou manage).
-- Payload: views, applyStarts, applications, interviews, hires, conversionRate, sources[].
-- Tenant: hr/direction só própria empresa.
-- Critério: HTTP smoke DTOV com vaga demo; UI painel pode ser item futuro (B-115b opcional) — este item é **API + lib**.
+**Entregue:** cookie UTM/`ref` (`team30_job_attr`) → `assessments.attr_*` + `candidates.source` grosso; `job_funnel_events` (view/apply/pipeline); `GET /api/admin/vacancies/[id]/analytics`. Migration `032`.
 
 #### B-115b — (opcional) UI analytics no detalhe da vaga
-Painel no detalhe/config da vaga consumindo B-115. Só após B-115.
+Painel no detalhe/config da vaga consumindo a API de analytics. Só quando priorizar UX no painel.
 
 ---
 

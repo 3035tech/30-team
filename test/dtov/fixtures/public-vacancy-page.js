@@ -54,4 +54,24 @@ export async function seed(client) {
        AND deleted = FALSE`,
     [companyId]
   );
+
+  const openVac = await client.query(
+    `SELECT id FROM vacancies
+     WHERE company_id = $1 AND slug = 'engenheiro-fullstack-plataforma' AND deleted = FALSE
+     LIMIT 1`,
+    [companyId]
+  );
+  if (openVac.rowCount) {
+    const vacancyId = openVac.rows[0].id;
+    await client.query(
+      `INSERT INTO job_funnel_events (
+         company_id, vacancy_id, event_type, session_id, source, medium, campaign
+       ) VALUES
+         ($1, $2, 'job_view', 'dtov-session-a', 'linkedin', 'social', 'share-bar'),
+         ($1, $2, 'job_view', 'dtov-session-b', 'linkedin', 'social', 'share-bar'),
+         ($1, $2, 'apply_start', 'dtov-session-a', 'linkedin', 'social', 'share-bar'),
+         ($1, $2, 'apply_complete', 'dtov-session-a', 'linkedin', 'social', 'share-bar')`,
+      [companyId, vacancyId]
+    );
+  }
 }

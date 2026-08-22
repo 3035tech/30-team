@@ -216,6 +216,51 @@ async function runOfflineLibs() {
     return 'share ok';
   });
 
+  await check('lib', 'job-attribution-cookie-roundtrip', async () => {
+    const {
+      parseAttributionFromSearchParams,
+      encodeAttributionCookie,
+      decodeAttributionCookie,
+      mergeAttribution,
+      mapAttributionToCandidateSource,
+      searchHasAttribution,
+    } = await import('../../lib/job-attribution.js');
+    const params = new URLSearchParams(
+      'utm_source=linkedin&utm_medium=social&utm_campaign=share'
+    );
+    if (!searchHasAttribution(params)) throw new Error('searchHasAttribution');
+    const attr = parseAttributionFromSearchParams(params, '/vagas/dev-12');
+    if (!attr?.source || attr.source !== 'linkedin') {
+      throw new Error(`parse ${JSON.stringify(attr)}`);
+    }
+    const encoded = encodeAttributionCookie(attr);
+    const decoded = decodeAttributionCookie(encoded);
+    if (!decoded || decoded.source !== 'linkedin' || decoded.sessionId !== attr.sessionId) {
+      throw new Error(`roundtrip ${JSON.stringify(decoded)}`);
+    }
+    const merged = mergeAttribution(decoded, parseAttributionFromSearchParams(
+      new URLSearchParams('utm_source=google'),
+      '/vagas/other'
+    ));
+    if (merged.source !== 'linkedin') throw new Error('first-touch source must win');
+    if (mapAttributionToCandidateSource(decoded) !== 'linkedin') {
+      throw new Error('map linkedin');
+    }
+    if (mapAttributionToCandidateSource({ ref: 'X' }) !== 'referral') {
+      throw new Error('map referral');
+    }
+    return 'attr ok';
+  });
+
+  await check('lib', 'job-funnel-pipeline-map', async () => {
+    const { pipelineStageToFunnelEvent, FUNNEL_EVENT_TYPES } = await import('../../lib/job-funnel.js');
+    if (pipelineStageToFunnelEvent('interview') !== 'interview') throw new Error('interview');
+    if (pipelineStageToFunnelEvent('approved') !== 'screening') throw new Error('approved→screening');
+    if (pipelineStageToFunnelEvent('new') != null) throw new Error('new must be null');
+    if (!FUNNEL_EVENT_TYPES.has('apply_complete')) throw new Error('types');
+    return 'funnel map ok';
+  });
+
   await check('lib', 'public-job-key-canonical', async () => {
     const {
       parsePublicJobKey,
@@ -588,6 +633,29 @@ async function runSqlSuite(client) {
       }
     }
     return `${entries.length} entries`;
+  });
+
+  await check('sql', 'vacancy-funnel-analytics', async () => {
+    const { getVacancyFunnelAnalytics } = await import('../../lib/job-funnel.js');
+    const vac = await client.query(
+      `SELECT id FROM vacancies
+       WHERE company_id = $1 AND slug = 'engenheiro-fullstack-plataforma' AND deleted = FALSE
+       LIMIT 1`,
+      [companyId]
+    );
+    if (!vac.rowCount) throw new Error('missing open vacancy');
+    const stats = await getVacancyFunnelAnalytics({
+      vacancyId: vac.rows[0].id,
+      companyId,
+      isAdmin: false,
+    });
+    if (!stats.ok) throw new Error(stats.errorCode || 'analytics failed');
+    if (stats.views < 1) throw new Error(`expected seeded views, got ${stats.views}`);
+    if (stats.applications < 1) throw new Error(`expected seeded applications`);
+    if (!Array.isArray(stats.sources) || !stats.sources.length) {
+      throw new Error('expected sources breakdown');
+    }
+    return `views=${stats.views} apps=${stats.applications}`;
   });
 
   await check('sql', 'resolve-public-vacancy-closed', async () => {

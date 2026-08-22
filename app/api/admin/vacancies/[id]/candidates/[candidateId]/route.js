@@ -12,6 +12,7 @@ import {
   normalizeStartDate,
 } from '../../../../../../../lib/pipeline';
 import { markCandidateHired, maybeCloseVacancyIfFilled } from '../../../../../../../lib/hire';
+import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../../../lib/job-funnel';
 
 
 async function loadLink(request, vacancyId, candidateId, payload) {
@@ -137,6 +138,16 @@ export async function PATCH(request, { params }) {
           payload.userId || null,
         ]
       ).catch(() => {});
+
+      const funnelEvent = pipelineStageToFunnelEvent(stage);
+      if (funnelEvent && stage !== currentStage) {
+        scheduleJobFunnelEvent({
+          companyId: loaded.link.companyId,
+          vacancyId: Number(vacancyId),
+          eventType: funnelEvent,
+          candidateId: Number(candidateId),
+        });
+      }
     }
 
     if (stage === 'hired') {

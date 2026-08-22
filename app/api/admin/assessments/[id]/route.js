@@ -12,6 +12,7 @@ import {
 } from '../../../../../lib/pipeline';
 import { markCandidateHired, maybeCloseVacancyIfFilled } from '../../../../../lib/hire';
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
+import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../lib/job-funnel';
 
 export async function PATCH(request, { params }) {
   try {
@@ -45,7 +46,13 @@ export async function PATCH(request, { params }) {
 
     const own = await queryRead(
       `SELECT ass.id, ass.pipeline_stage AS "currentStage",
-              ass.candidate_id AS "candidateId", ass.vacancy_id AS "vacancyId"
+              ass.candidate_id AS "candidateId", ass.vacancy_id AS "vacancyId",
+              ass.company_id AS "companyId",
+              ass.attr_source AS "attrSource",
+              ass.attr_medium AS "attrMedium",
+              ass.attr_campaign AS "attrCampaign",
+              ass.attr_ref AS "attrRef",
+              ass.attr_session_id AS "attrSessionId"
        FROM assessments ass
        WHERE ass.id = $1 ${!isAdmin ? 'AND ass.company_id = $2' : ''}
        LIMIT 1`,
@@ -55,6 +62,21 @@ export async function PATCH(request, { params }) {
     const currentStage = own.rows[0]?.currentStage || null;
     const candidateId = own.rows[0]?.candidateId;
     const vacancyId = own.rows[0]?.vacancyId;
+    const assCompanyId = own.rows[0]?.companyId;
+    const funnelEvent = pipelineStageToFunnelEvent(stage);
+    if (funnelEvent && vacancyId && assCompanyId && stage !== currentStage) {
+      scheduleJobFunnelEvent({
+        companyId: assCompanyId,
+        vacancyId,
+        eventType: funnelEvent,
+        candidateId,
+        sessionId: own.rows[0]?.attrSessionId || null,
+        source: own.rows[0]?.attrSource || null,
+        medium: own.rows[0]?.attrMedium || null,
+        campaign: own.rows[0]?.attrCampaign || null,
+        referralCode: own.rows[0]?.attrRef || null,
+      });
+    }
 
     const up = await query(
       `UPDATE assessments SET

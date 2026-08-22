@@ -41,10 +41,11 @@
         "public-page-/vaga",
         "public-index-/vagas",
         "company-website-about",
-        "closed-vacancy-thank-you"
+        "closed-vacancy-thank-you",
+        "job-funnel-seed"
       ],
       "dependsOn": ["baseline"],
-      "whenNewFeature": "Schema 030 + /vaga + /vagas flags",
+      "whenNewFeature": "Schema 030–032 + /vaga + /vagas + job funnel",
       "smoke": [
         {
           "name": "open-indexed",
@@ -57,6 +58,10 @@
         {
           "name": "company-profile",
           "sql": "SELECT 1 FROM companies WHERE website IS NOT NULL AND about_html IS NOT NULL AND deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "job-funnel-events",
+          "sql": "SELECT 1 FROM job_funnel_events WHERE event_type = 'job_view' LIMIT 1"
         }
       ]
     }

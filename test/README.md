@@ -29,6 +29,8 @@ Config Playwright na raiz: `playwright.config.js` (`testDir: ./test/e2e`).
 | `test:browser` | Só Playwright (app já no ar) |
 | `DTOV_SKIP_BROWSER=1 …` | Pula Chromium no full-app |
 
+Provas relevantes à página pública / funil: fixture `public-vacancy-page` (seed + `job_funnel_events`), checks em `full-regression.js` (JobPosting, UTM share, attribution cookie, analytics SQL) e `http-smoke.js` (`/api/public/job-funnel`, `/api/admin/vacancies/:id/analytics`).
+
 ## Onde **não** colocar
 
 - Seeds de demo “reais” / migrate → continuam em `scripts/`
