@@ -205,21 +205,21 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   };
 
   const stepCounts = {
-    welcome: 4,
-    navigation: 6,
+    welcome: 5,
+    navigation: 7,
     links: 9,
     flow: 0,
     enneagram: 7,
-    vacancies: 9,
-    publicVacancy: 9,
+    vacancies: 12,
+    publicVacancy: 12,
     candidates: 5,
     pipeline: 6,
     team: 6,
     people: 6,
-    report: 5,
+    report: 8,
     motivators: 7,
-    access: 7,
-    tips: 9,
+    access: 8,
+    tips: 11,
   };
 
   return (

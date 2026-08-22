@@ -147,7 +147,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 Arquitetura, fluxos, JSON-LD, sitemap, Indexing API, envs, tracking, referral, analytics, score, como testar e validar JSON-LD (Google Rich Results).
 
 #### B-125 — Guia do painel + README
-Explicar para RH: página pública vs `/v`, flags, share, analytics (quando UI existir), referral. Env no README/`.env.example`.
+**Parcial:** Guia do painel atualizado (Funil, Indicação, score SEO, /j /c job alerts, parecer, shell). Falta fechar README/`.env.example` (Indexing, SMTP alerts) se ainda incompleto.
 
 #### B-126 — Suite de testes do epic
 Cobrir: slugify (acentos/especiais); JobPosting variantes; sitemap só ativas; UTM/referral persistence; SEO score; Indexing mock. Rodar `dtov:full-app` ao fechar cada fase relevante.
