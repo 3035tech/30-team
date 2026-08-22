@@ -8,18 +8,11 @@ import { parseVacanciesSort, sqlVacancyOrderBy } from '../../../../lib/assessmen
 import { apiError } from '../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../lib/permissions';
 import { parseVacancyDetailsFromBody } from '../../../../lib/vacancy-details';
+import { slugify } from '../../../../lib/slugify';
+import { scheduleVacancyIndexSync } from '../../../../lib/job-indexing';
 
 
 const VACANCY_PAGE_SIZES = new Set([10, 20, 30, 40, 50]);
-
-function slugify(input) {
-  return String(input || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-}
 
 async function ensureActiveLink(vacancyId) {
   const existing = await queryRead(
@@ -227,8 +220,21 @@ export async function POST(request) {
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);
+  const created = ins.rows[0];
+  scheduleVacancyIndexSync({
+    previous: null,
+    current: {
+      id: created.id,
+      slug: created.slug,
+      status: created.status,
+      publicPageEnabled: created.publicPageEnabled,
+      publicAllowIndex: created.publicAllowIndex,
+      targetDate: created.targetDate,
+    },
+    reason: 'vacancy_create',
+  });
   return NextResponse.json(
-    { ...ins.rows[0], companyName: c.rows[0].name, activeToken: linkToken },
+    { ...created, companyName: c.rows[0].name, activeToken: linkToken },
     { status: 201 }
   );
 }

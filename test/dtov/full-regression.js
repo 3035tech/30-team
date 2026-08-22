@@ -180,20 +180,141 @@ async function runOfflineLibs() {
       salaryMax: null,
       showCompany: false,
       company: { id: 1 },
-      pageUrl: 'http://localhost:3000/vaga/a/b',
+      pageUrl: 'http://localhost:3000/vagas/dev-1',
       createdAt: new Date('2026-01-15'),
-      targetDate: new Date('2026-08-01'),
+      targetDate: new Date('2026-12-01'),
     });
     if (!open || open['@type'] !== 'JobPosting') throw new Error('expected JobPosting');
     if (open.baseSalary?.value?.minValue !== 3500) {
       throw new Error(`salary wrong: ${JSON.stringify(open.baseSalary)}`);
     }
-    if (!String(open.validThrough || '').startsWith('2026-08-01')) {
+    if (!String(open.validThrough || '').startsWith('2026-12-01')) {
       throw new Error(`validThrough missing: ${open.validThrough}`);
     }
+    if (open.jobLocationType === 'TELECOMMUTE') {
+      throw new Error('must not invent TELECOMMUTE without remote field');
+    }
+    if (!open.applicantLocationRequirements) throw new Error('expected BR applicantLocationRequirements');
     const raw = serializeJsonLdForScript(open);
     if (raw.includes('</script>')) throw new Error('unescaped script closer');
     return 'jsonld ok';
+  });
+
+  await check('lib', 'job-share-utm', async () => {
+    const { buildJobShareCopy, withShareUtm } = await import('../../lib/job-share-copy.js');
+    const u = withShareUtm('https://app.example/vagas/dev-12', { source: 'whatsapp', medium: 'social' });
+    if (!u.includes('utm_source=whatsapp') || !u.includes('utm_medium=social')) {
+      throw new Error(`utm missing: ${u}`);
+    }
+    const pack = buildJobShareCopy(
+      { title: 'Dev', companyName: 'Acme', pageUrl: 'https://app.example/vagas/dev-12' },
+      'pt-BR'
+    );
+    if (!pack.whatsappShareHref.includes('wa.me')) throw new Error('whatsapp href');
+    if (!pack.linkedinShareHref.includes('linkedin.com')) throw new Error('linkedin href');
+    if (!pack.whatsappUrl.includes('utm_source=whatsapp')) throw new Error('wa utm');
+    return 'share ok';
+  });
+
+  await check('lib', 'public-job-key-canonical', async () => {
+    const {
+      parsePublicJobKey,
+      publicVacancyPath,
+      legacyPublicVacancyPath,
+    } = await import('../../lib/public-vacancy-posting.js');
+    const path = publicVacancyPath({ vacancySlug: 'dev-senior', vacancyId: 42 });
+    if (path !== '/vagas/dev-senior-42') throw new Error(`path ${path}`);
+    const parsed = parsePublicJobKey('dev-senior-42');
+    if (!parsed || parsed.id !== 42 || parsed.slug !== 'dev-senior') {
+      throw new Error(`parse ${JSON.stringify(parsed)}`);
+    }
+    if (parsePublicJobKey('42')?.id !== 42) throw new Error('id-only parse');
+    const legacy = legacyPublicVacancyPath('acme', 'dev-senior');
+    if (legacy !== '/vaga/acme/dev-senior') throw new Error(legacy);
+    return 'canonical ok';
+  });
+
+  await check('lib', 'job-indexing-mock-sync', async () => {
+    process.env.GOOGLE_INDEXING_ENABLED = 'true';
+    process.env.GOOGLE_INDEXING_MOCK = '1';
+    process.env.NEXT_PUBLIC_APP_URL = 'https://app.example';
+    const {
+      __resetJobIndexingMockLog,
+      __getJobIndexingMockLog,
+      isGoogleIndexingEnabled,
+      publishJob,
+      syncVacancyIndex,
+      vacancyShouldBeIndexed,
+    } = await import('../../lib/job-indexing.js');
+    __resetJobIndexingMockLog();
+    if (!isGoogleIndexingEnabled()) throw new Error('expected enabled');
+    if (!vacancyShouldBeIndexed({
+      status: 'open',
+      publicPageEnabled: true,
+      publicAllowIndex: true,
+      targetDate: '2099-01-01',
+    })) {
+      throw new Error('should index');
+    }
+    const pub = await publishJob('https://app.example/vagas/dev-9');
+    if (!pub.ok || !pub.mocked) throw new Error('publish mock');
+    const closed = await syncVacancyIndex({
+      previous: {
+        id: 9,
+        slug: 'dev',
+        status: 'open',
+        publicPageEnabled: true,
+        publicAllowIndex: true,
+      },
+      current: {
+        id: 9,
+        slug: 'dev',
+        status: 'closed',
+        publicPageEnabled: true,
+        publicAllowIndex: true,
+      },
+      reason: 'test_close',
+    });
+    if (!closed.ok) throw new Error('sync close');
+    const log = __getJobIndexingMockLog();
+    if (!log.some((e) => e.event === 'job_indexing_requested' && e.type === 'URL_UPDATED')) {
+      throw new Error('missing URL_UPDATED request');
+    }
+    if (!log.some((e) => e.event === 'job_closed')) throw new Error('missing job_closed');
+    if (!log.some((e) => e.event === 'job_indexing_requested' && e.type === 'URL_DELETED')) {
+      throw new Error('missing URL_DELETED request');
+    }
+    process.env.GOOGLE_INDEXING_ENABLED = 'false';
+    const off = await publishJob('https://app.example/vagas/dev-9');
+    if (!off.skipped) throw new Error('disabled should skip');
+    return `mock events=${log.length}`;
+  });
+
+  await check('lib', 'public-vacancy-lifecycle-meta', async () => {
+    const {
+      isVacancyTargetDatePast,
+      postingDocumentTitle,
+      publicVacancyShowsClosedExperience,
+      buildJobPostingJsonLd,
+    } = await import('../../lib/public-vacancy-posting.js');
+    const now = new Date('2026-08-22T12:00:00Z');
+    if (!isVacancyTargetDatePast('2026-08-01', now)) throw new Error('expected past');
+    if (isVacancyTargetDatePast('2026-08-30', now)) throw new Error('expected future');
+    const open = {
+      status: 'open',
+      title: 'Dev',
+      showCompany: true,
+      company: { name: 'Acme' },
+      publicAllowIndex: true,
+      vacancyId: 9,
+      createdAt: new Date('2026-01-01'),
+    };
+    const title = postingDocumentTitle(open, 'pt-BR');
+    if (title !== 'Dev | Acme') throw new Error(`title ${title}`);
+    const expired = { ...open, targetDate: '2026-08-01', publicAllowIndex: false };
+    if (!publicVacancyShowsClosedExperience(expired, now)) throw new Error('expired closed');
+    if (buildJobPostingJsonLd(expired, 'pt-BR') != null) throw new Error('no jsonld expired');
+    return 'lifecycle ok';
   });
 }
 
@@ -418,7 +539,55 @@ async function runSqlSuite(client) {
     const resolved = await resolvePublicVacancyPosting(company.rows[0].slug, vac.rows[0].slug);
     if (!resolved.ok) throw new Error(resolved.errorCode || 'resolve failed');
     if (resolved.posting.status !== 'open') throw new Error('expected open');
+    if (!String(resolved.canonicalPath || '').includes(`-${resolved.posting.vacancyId}`)) {
+      throw new Error(`canonical missing id: ${resolved.canonicalPath}`);
+    }
     return resolved.posting.title;
+  });
+
+  await check('sql', 'resolve-public-vacancy-by-id', async () => {
+    const { resolvePublicVacancyPostingById, publicVacancyPath } = await import(
+      '../../lib/public-vacancy-posting.js'
+    );
+    const vac = await client.query(
+      `SELECT id, slug FROM vacancies
+       WHERE company_id = $1 AND public_page_enabled AND status = 'open' AND deleted = FALSE
+       LIMIT 1`,
+      [companyId]
+    );
+    const row = vac.rows[0];
+    const wrongSlug = await resolvePublicVacancyPostingById(row.id, 'slug-antigo-errado');
+    if (!wrongSlug.ok || !wrongSlug.slugMismatch) throw new Error('expected slugMismatch');
+    const expectPath = publicVacancyPath({ vacancySlug: row.slug, vacancyId: row.id });
+    if (wrongSlug.canonicalPath !== expectPath) {
+      throw new Error(`canonical ${wrongSlug.canonicalPath} != ${expectPath}`);
+    }
+    const ok = await resolvePublicVacancyPostingById(row.id, row.slug);
+    if (!ok.ok || ok.slugMismatch) throw new Error('expected match');
+    return expectPath;
+  });
+
+  await check('sql', 'sitemap-public-entries', async () => {
+    const { listSitemapPublicEntries } = await import('../../lib/public-vacancy-posting.js');
+    const entries = await listSitemapPublicEntries({ limit: 100 });
+    if (!Array.isArray(entries) || !entries.length) {
+      throw new Error('expected ≥1 sitemap entry from public-vacancy-page seed');
+    }
+    const hit = entries.find((e) => String(e.path || '').includes('/vagas/') && /-\d+$/.test(e.path));
+    if (!hit) throw new Error('no /vagas/{slug}-{id} path in sitemap entries');
+    const closed = await client.query(
+      `SELECT v.slug FROM vacancies v
+       WHERE v.company_id = $1 AND v.status = 'closed' AND v.public_page_enabled AND v.deleted = FALSE
+       LIMIT 1`,
+      [companyId]
+    );
+    if (closed.rows[0]) {
+      const closedPath = closed.rows[0].slug;
+      if (entries.some((e) => String(e.path || '').includes(`/${closedPath}`))) {
+        throw new Error('closed vacancy must not appear in sitemap list');
+      }
+    }
+    return `${entries.length} entries`;
   });
 
   await check('sql', 'resolve-public-vacancy-closed', async () => {

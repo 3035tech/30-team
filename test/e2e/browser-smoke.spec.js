@@ -26,6 +26,7 @@ test.describe('public pages', () => {
 
   test('public vacancy open — title, description, apply CTA', async ({ page }) => {
     await page.goto(PUBLIC.vagaOpen);
+    await expect(page).toHaveURL(/\/vagas\/engenheiro-fullstack-plataforma-\d+/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: /descrição da vaga|job description/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /candidatar|apply|iniciar teste/i })).toBeVisible();
@@ -33,6 +34,7 @@ test.describe('public pages', () => {
 
   test('public vacancy closed — thanks + browse CTA', async ({ page }) => {
     await page.goto(PUBLIC.vagaClosed);
+    await expect(page).toHaveURL(/\/vagas\/analista-dados-encerrada-\d+/);
     await expect(page.getByRole('heading', { level: 1, name: /obrigado|thank/i })).toBeVisible();
     await expect(
       page.getByRole('link', { name: /vagas abertas|open vacancies|browse/i }).first()

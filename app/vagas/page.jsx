@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, normalizeLocale, t } from '../../lib/i18n';
-import { listOpenPublicVacancies } from '../../lib/public-vacancy-posting';
+import { defaultPublicOgImageUrl, listOpenPublicVacancies } from '../../lib/public-vacancy-posting';
 import { PublicVacanciesIndexView } from '../_components/PublicVacancyPosting';
 
 export async function generateMetadata() {
@@ -9,7 +9,9 @@ export async function generateMetadata() {
   const description = t(locale, 'publicVacancy.indexIntro');
   const base = String(process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
   const url = base ? `${base}/vagas` : '/vagas';
+  const ogImage = defaultPublicOgImageUrl();
   return {
+    metadataBase: base ? new URL(base) : undefined,
     title,
     description,
     alternates: { canonical: url },
@@ -25,6 +27,13 @@ export async function generateMetadata() {
       description,
       siteName: '30Team',
       locale: locale === 'en' ? 'en_US' : 'pt_BR',
+      images: ogImage ? [{ url: ogImage, width: 512, height: 512, alt: '30Team' }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
     },
   };
 }

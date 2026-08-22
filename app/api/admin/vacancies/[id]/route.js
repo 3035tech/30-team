@@ -8,16 +8,8 @@ import { apiError } from '../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../lib/permissions';
 import { parseVacancyDetailsFromBody } from '../../../../../lib/vacancy-details';
 import { notifyCompanyManagers, NOTIF } from '../../../../../lib/manager-notifications';
-
-
-function slugify(input) {
-  return String(input || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-}
+import { slugify } from '../../../../../lib/slugify';
+import { scheduleVacancyIndexSync } from '../../../../../lib/job-indexing';
 
 async function getVacancyOr404(vacancyId) {
   const v = await queryRead(
@@ -272,8 +264,29 @@ export async function PATCH(request, { params }) {
     });
   }
 
+  const updated = up.rows[0];
+  scheduleVacancyIndexSync({
+    previous: {
+      id: current.id,
+      slug: current.slug,
+      status: current.status,
+      publicPageEnabled: current.publicPageEnabled,
+      publicAllowIndex: current.publicAllowIndex,
+      targetDate: current.targetDate,
+    },
+    current: {
+      id: updated.id,
+      slug: updated.slug,
+      status: updated.status,
+      publicPageEnabled: updated.publicPageEnabled,
+      publicAllowIndex: updated.publicAllowIndex,
+      targetDate: updated.targetDate,
+    },
+    reason: closedNow ? 'vacancy_close' : 'vacancy_update',
+  });
+
   return NextResponse.json({
-    ...(await attachActiveToken({ ...up.rows[0], companyName: current.companyName })),
+    ...(await attachActiveToken({ ...updated, companyName: current.companyName })),
     ...rubric,
   });
 }
@@ -291,12 +304,10 @@ export async function DELETE(request, { params }) {
   const id = params?.id;
   if (!id) return apiError(request, 'INVALID_VACANCY', 400);
 
-  if (!isAdmin) {
-    const owned = await queryRead(
-      `SELECT id FROM vacancies WHERE id = $1 AND company_id = $2 AND deleted = FALSE LIMIT 1`,
-      [id, companyId]
-    );
-    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
+  const beforeDelete = await getVacancyOr404(id);
+  if (!beforeDelete) return apiError(request, 'NOT_FOUND', 404);
+  if (!isAdmin && String(beforeDelete.companyId) !== String(companyId)) {
+    return apiError(request, 'UNAUTHORIZED', 401);
   }
 
   await query(
@@ -305,6 +316,26 @@ export async function DELETE(request, { params }) {
   );
   const del = await query(`UPDATE vacancies SET deleted = TRUE WHERE id = $1 AND deleted = FALSE RETURNING id`, [id]);
   if (del.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+
+  scheduleVacancyIndexSync({
+    previous: {
+      id: beforeDelete.id,
+      slug: beforeDelete.slug,
+      status: beforeDelete.status,
+      publicPageEnabled: beforeDelete.publicPageEnabled,
+      publicAllowIndex: beforeDelete.publicAllowIndex,
+      targetDate: beforeDelete.targetDate,
+    },
+    current: {
+      id: beforeDelete.id,
+      slug: beforeDelete.slug,
+      status: 'closed',
+      publicPageEnabled: false,
+      publicAllowIndex: false,
+      targetDate: beforeDelete.targetDate,
+    },
+    reason: 'vacancy_delete',
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -32,8 +32,8 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── page.jsx                 ← Landing / teste (client)
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
-│   ├── vaga/[company]/[slug]/   ← Página pública SEO da vaga (JobPosting)
-│   ├── vagas/                   ← Índice de vagas públicas abertas
+│   ├── vagas/                   ← Índice + página SEO `/vagas/{slug}-{id}`
+│   ├── vaga/[company]/[slug]/   ← Legado → redirect para `/vagas/{slug}-{id}`
 │   ├── r/[token]/               ← Relatório cliente (shortlist)
 │   ├── assessment/              ← Fluxos de avaliação (eneagrama / AE)
 │   ├── login/                   ← Login do painel
@@ -125,7 +125,7 @@ npm run dev
 
 ```
 1. Assessment: abre /t/<token> (empresa) ou /v/<token> (vaga) → responde o teste
-2. Página pública SEO (opcional): /vaga/<companySlug>/<vacancySlug> → lê a vaga → CTA para o /v/…
+2. Página pública SEO (opcional): /vagas/<slug>-<id> → lê a vaga → CTA para o /v/…
 3. Índice: /vagas lista vagas públicas abertas
 4. POST /api/results → grava no Postgres; vê o resultado na tela
 ```
@@ -136,20 +136,25 @@ npm run dev
 1. /login → JWT em cookie httpOnly
 2. /dashboard → Server Component lê o Postgres (dados por aba)
 3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
-4. Em Vagas: link /v/… (teste) e, se habilitado, página /vaga/… (divulgação/SEO)
+4. Em Vagas: link /v/… (teste) e, se habilitado, página /vagas/{slug}-{id} (divulgação/SEO)
 ```
 
 ---
 
-## Página pública da vaga (`/vaga`)
+## Página pública da vaga (`/vagas/{slug}-{id}`)
 
-- URL estável indexável: `/vaga/{companySlug}/{vacancySlug}` (JobPosting JSON-LD, meta).
+- URL canônica indexável: `/vagas/{slug}-{id}` (id = `vacancies.id`; JobPosting JSON-LD, Open Graph / Twitter com imagem da marca).
+- Legado `/vaga/{companySlug}/{vacancySlug}` redireciona (308) para a canônica — bookmarks antigos continuam válidos; se o slug mudar, o id na URL corrige com redirect.
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
 - Perfil da empresa (admin → Empresas): `website` e texto “sobre” usados na página quando permitido.
-- Vaga encerrada: agradecimento + CTA para `/vagas` e outras abertas da mesma empresa.
+- Conteúdo exibido quando existir: título, empresa, tipo de contrato, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
+- Sem campos no schema hoje (omitidos de propósito): localização, modalidade remoto/híbrido, logo empresa, senioridade, skills/benefícios separados.
+- Encerrada ou `target_date` passado: agradecimento + relacionadas + `/vagas`; sem JobPosting / noindex / sem CTA de apply.
+- SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok).
+- Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 
-Migration: `migrations/030_company_profile_public_vacancy_page.sql`.
+Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável).
 
 ---
 

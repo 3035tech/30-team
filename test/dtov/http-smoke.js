@@ -156,14 +156,76 @@ export async function runHttpSmoke(baseUrl) {
     ['v-token', `/v/${TOK.vacancyOpen}`],
     ['r-token', `/r/${TOK.report}`],
     ['ae-assessment', `/assessment/motivators/${TOK.aeInvite}`],
-    ['vaga-open', '/vaga/todos-os-dados-demo/engenheiro-fullstack-plataforma'],
-    ['vaga-closed', '/vaga/todos-os-dados-demo/analista-dados-encerrada'],
     ['vagas-index', '/vagas'],
   ]) {
     const { res, text } = await req(base, path);
     const okHtml = res.status === 200 && String(text).length > 200;
     if (!okHtml) fail('public-page', name, `status ${res.status} len=${String(text).length}`);
     else ok('public-page', name, `HTTP ${res.status} · ${String(text).length}b`);
+  }
+
+  // Legacy /vaga → canônica /vagas/{slug}-{id}
+  let canonicalOpenPath = '';
+  let canonicalClosedPath = '';
+  {
+    const legacyOpen = '/vaga/todos-os-dados-demo/engenheiro-fullstack-plataforma';
+    const { res } = await req(base, legacyOpen);
+    const loc = res.headers.get('location') || '';
+    if (![301, 308].includes(res.status) || !/\/vagas\/engenheiro-fullstack-plataforma-\d+/.test(loc)) {
+      fail('seo', 'vaga-legacy-open-redirect', `status ${res.status} loc=${loc}`);
+    } else {
+      ok('seo', 'vaga-legacy-open-redirect', `HTTP ${res.status} → ${loc}`);
+      try {
+        canonicalOpenPath = new URL(loc, base).pathname;
+      } catch {
+        canonicalOpenPath = loc.startsWith('/') ? loc : `/${loc}`;
+      }
+    }
+  }
+  {
+    const legacyClosed = '/vaga/todos-os-dados-demo/analista-dados-encerrada';
+    const { res } = await req(base, legacyClosed);
+    const loc = res.headers.get('location') || '';
+    if (![301, 308].includes(res.status) || !/\/vagas\/analista-dados-encerrada-\d+/.test(loc)) {
+      fail('seo', 'vaga-legacy-closed-redirect', `status ${res.status} loc=${loc}`);
+    } else {
+      ok('seo', 'vaga-legacy-closed-redirect', `HTTP ${res.status} → ${loc}`);
+      try {
+        canonicalClosedPath = new URL(loc, base).pathname;
+      } catch {
+        canonicalClosedPath = loc.startsWith('/') ? loc : `/${loc}`;
+      }
+    }
+  }
+  if (canonicalOpenPath) {
+    const { res, text } = await req(base, canonicalOpenPath);
+    if (res.status !== 200 || String(text).length < 200) {
+      fail('public-page', 'vaga-open', `status ${res.status} len=${String(text).length}`);
+    } else ok('public-page', 'vaga-open', `HTTP ${res.status} · ${canonicalOpenPath}`);
+  }
+  if (canonicalClosedPath) {
+    const { res, text } = await req(base, canonicalClosedPath);
+    if (res.status !== 200 || String(text).length < 200) {
+      fail('public-page', 'vaga-closed', `status ${res.status} len=${String(text).length}`);
+    } else ok('public-page', 'vaga-closed', `HTTP ${res.status} · ${canonicalClosedPath}`);
+  }
+
+  // ── SEO: robots + sitemap ─────────────────────────────────────────────
+  {
+    const { res, text } = await req(base, '/robots.txt');
+    const body = String(text || '');
+    if (res.status !== 200) fail('seo', 'robots', `status ${res.status}`);
+    else if (!/sitemap/i.test(body)) fail('seo', 'robots', 'missing Sitemap line');
+    else if (!/Disallow:\s*\/dashboard/i.test(body)) fail('seo', 'robots', 'missing dashboard disallow');
+    else ok('seo', 'robots', `HTTP ${res.status}`);
+  }
+  {
+    const { res, text } = await req(base, '/sitemap.xml');
+    const body = String(text || '');
+    if (res.status !== 200) fail('seo', 'sitemap', `status ${res.status}`);
+    else if (!body.includes('/vagas') && !body.includes('urlset')) {
+      fail('seo', 'sitemap', `unexpected body len=${body.length}`);
+    } else ok('seo', 'sitemap', `HTTP ${res.status} · ${body.length}b`);
   }
 
   // ── Auth HR ───────────────────────────────────────────────────────────

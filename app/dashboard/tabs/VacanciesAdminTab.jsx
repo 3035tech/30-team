@@ -2206,8 +2206,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     const token = v?.activeToken || null;
     const link = token ? `${appUrl}/v/${token}` : '';
     const publicPagePath =
-      v?.companySlug && v?.slug
-        ? `/vaga/${encodeURIComponent(v.companySlug)}/${encodeURIComponent(v.slug)}`
+      v?.id && v?.slug
+        ? `/vagas/${encodeURIComponent(v.slug)}-${v.id}`
         : '';
     const publicPageLink = publicPagePath ? `${appUrl}${publicPagePath}` : '';
     const exp = v?.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;

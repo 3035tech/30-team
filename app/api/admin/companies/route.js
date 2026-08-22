@@ -8,14 +8,10 @@ import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessme
 import { apiError } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
 import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
+import { slugify as slugifyRaw } from '../../../../lib/slugify';
 
 function slugify(input) {
-  return String(input || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48);
+  return slugifyRaw(input, { maxLength: 48 });
 }
 
 async function ensureActiveLink(companyId) {

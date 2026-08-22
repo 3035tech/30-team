@@ -8,6 +8,13 @@ import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
 import { brandMarkSrc } from '../../lib/brand';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
 import { formatVacancySalaryRangeDisplay } from '../../lib/br-masks';
+import { PublicVacancyShareBar } from './PublicVacancyShareBar';
+import {
+  formatPublicVacancyDate,
+  publicVacancyCanApply,
+  publicVacancyClosedReason,
+  publicVacancyShowsClosedExperience,
+} from '../../lib/public-vacancy-lifecycle';
 const shell = {
   minHeight: '100vh',
   background: C.bg,
@@ -133,10 +140,12 @@ function RelatedVacanciesList({ locale, items, heading }) {
 }
 
 /**
- * Página pública da vaga — aberta (candidatar) ou fechada (agradecimento + outras).
+ * Página pública da vaga — aberta (candidatar) ou fechada/expirada (agradecimento + outras).
  */
 export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = [] }) {
-  const closed = String(posting?.status || '') !== 'open';
+  const closed = publicVacancyShowsClosedExperience(posting);
+  const closedReason = publicVacancyClosedReason(posting);
+  const canApply = publicVacancyCanApply(posting);
   const empKey = employmentTypeLabelKey(posting?.employmentType);
   const salary =
     posting?.showSalary && (posting.salaryMin || posting.salaryMax)
@@ -146,6 +155,8 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const companyWebsite = posting?.showCompany ? posting.company?.website : null;
   const companyAbout = posting?.showCompany ? posting.company?.aboutHtml : '';
   const hasDesc = !isRichTextEmpty(posting?.description);
+  const publishedLabel = formatPublicVacancyDate(posting?.createdAt, locale);
+  const targetLabel = formatPublicVacancyDate(posting?.targetDate, locale);
 
   return (
     <div style={shell}>
@@ -166,7 +177,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
           </span>
         </header>
 
-        <article style={card} itemScope itemType="https://schema.org/JobPosting">
+        <article style={card}>
           {closed ? (
             <>
               <p
@@ -179,7 +190,9 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                   color: C.warning,
                 }}
               >
-                {t(locale, 'publicVacancy.closedBadge')}
+                {closedReason === 'expired'
+                  ? t(locale, 'publicVacancy.expiredBadge')
+                  : t(locale, 'publicVacancy.closedBadge')}
               </p>
               <h1
                 style={{
@@ -195,9 +208,13 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                 {t(locale, 'publicVacancy.closedTitle')}
               </h1>
               <p style={{ margin: '0 0 8px', fontSize: '16px', color: C.muted, lineHeight: 1.65 }}>
-                {t(locale, 'publicVacancy.closedThanks', {
-                  title: posting?.title || t(locale, 'publicVacancy.thisRole'),
-                })}
+                {closedReason === 'expired'
+                  ? t(locale, 'publicVacancy.expiredThanks', {
+                      title: posting?.title || t(locale, 'publicVacancy.thisRole'),
+                    })
+                  : t(locale, 'publicVacancy.closedThanks', {
+                      title: posting?.title || t(locale, 'publicVacancy.thisRole'),
+                    })}
               </p>
               <p style={{ margin: '0 0 20px', fontSize: '15px', color: C.muted, lineHeight: 1.65 }}>
                 {t(locale, 'publicVacancy.closedMessage')}
@@ -211,7 +228,8 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                     color: C.faint,
                   }}
                 >
-                  {t(locale, 'publicVacancy.closedWas')}: <strong style={{ color: C.text }}>{posting.title}</strong>
+                  {t(locale, 'publicVacancy.closedWas')}:{' '}
+                  <strong style={{ color: C.text }}>{posting.title}</strong>
                   {companyName ? ` · ${companyName}` : ''}
                 </p>
               ) : null}
@@ -250,17 +268,13 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                       color: C.muted,
                       letterSpacing: '0.02em',
                     }}
-                    itemProp="hiringOrganization"
-                    itemScope
-                    itemType="https://schema.org/Organization"
                   >
-                    <span itemProp="name">{companyName}</span>
+                    <span>{companyName}</span>
                     {companyWebsite ? (
                       <>
                         {' · '}
                         <a
                           href={companyWebsite}
-                          itemProp="url"
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: C.purple }}
@@ -272,7 +286,6 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                   </p>
                 ) : null}
                 <h1
-                  itemProp="title"
                   style={{
                     margin: '0 0 14px',
                     fontSize: 'clamp(28px, 5vw, 40px)',
@@ -289,8 +302,17 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                   {empKey ? <MetaChip>{t(locale, empKey)}</MetaChip> : null}
                   {salary ? (
                     <MetaChip>
-                      <meta itemProp="salaryCurrency" content="BRL" />
                       {t(locale, 'publicVacancy.salaryLabel')}: {salary}
+                    </MetaChip>
+                  ) : null}
+                  {publishedLabel ? (
+                    <MetaChip>
+                      {t(locale, 'publicVacancy.publishedLabel')}: {publishedLabel}
+                    </MetaChip>
+                  ) : null}
+                  {targetLabel ? (
+                    <MetaChip>
+                      {t(locale, 'publicVacancy.targetDateLabel')}: {targetLabel}
                     </MetaChip>
                   ) : null}
                 </div>
@@ -301,16 +323,15 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                   <h2
                     id="public-desc-heading"
                     style={{
-                      position: 'absolute',
-                      width: 1,
-                      height: 1,
-                      overflow: 'hidden',
-                      clip: 'rect(0 0 0 0)',
+                      margin: '0 0 12px',
+                      fontSize: '18px',
+                      fontWeight: 'normal',
+                      fontFamily: FONTS.serif,
                     }}
                   >
                     {t(locale, 'publicVacancy.descriptionHeading')}
                   </h2>
-                  <div itemProp="description">
+                  <div>
                     <RichTextView
                       html={posting.description}
                       style={{ fontSize: '15px', lineHeight: 1.7, color: C.text }}
@@ -348,7 +369,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
               ) : null}
 
               <footer style={{ marginTop: '32px' }}>
-                {posting.applyPath ? (
+                {canApply ? (
                   <a
                     href={posting.applyPath}
                     style={{
@@ -369,6 +390,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                     {t(locale, 'publicVacancy.applyUnavailable')}
                   </p>
                 )}
+                <PublicVacancyShareBar locale={locale} posting={posting} />
                 <p style={{ margin: '16px 0 0', fontSize: '12px', fontFamily: FONTS.mono }}>
                   <Link href="/vagas" style={{ color: C.purple }}>
                     {t(locale, 'publicVacancy.seeAllOpen')}
@@ -427,19 +449,26 @@ export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
                     }}
                   >
                     <span style={{ fontSize: '17px', display: 'block' }}>{item.title}</span>
-                    {item.companyName ? (
-                      <span
-                        style={{
-                          display: 'block',
-                          marginTop: '6px',
-                          fontSize: '12px',
-                          fontFamily: FONTS.mono,
-                          color: C.muted,
-                        }}
-                      >
-                        {item.companyName}
-                      </span>
-                    ) : null}
+                    {(() => {
+                      const empKey = employmentTypeLabelKey(item.employmentType);
+                      const meta = [item.companyName, empKey ? t(locale, empKey) : null]
+                        .filter(Boolean)
+                        .join(' · ');
+                      if (!meta) return null;
+                      return (
+                        <span
+                          style={{
+                            display: 'block',
+                            marginTop: '6px',
+                            fontSize: '12px',
+                            fontFamily: FONTS.mono,
+                            color: C.muted,
+                          }}
+                        >
+                          {meta}
+                        </span>
+                      );
+                    })()}
                   </Link>
                 </li>
               ))}

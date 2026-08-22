@@ -58,3 +58,4 @@ Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`
 | API / auth | `.cursor/rules/api-and-auth.mdc` |
 | SQL / schema | `.cursor/rules/sql-schema.mdc` |
 | Pós-implementação (DTOV) | `AGENTS.md` § Pós-implementação, `test/README.md`, `.cursor/skills/dev-test-validate/`, `.claude/skills/dev-test-validate/` |
+| Backlog de ideias | [`docs/BACKLOG.md`](./docs/BACKLOG.md) — adicionar ao pedir; remover ao implementar |
