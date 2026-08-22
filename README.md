@@ -154,8 +154,9 @@ npm run dev
 - SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok).
 - Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
+- Referral (indicação): tabela `referral_codes`; APIs `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, analytics `GET /api/admin/referral-codes/analytics`. Link público: `/vagas/{slug}-{id}?ref=CODIGO`.
 
-Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil).
+Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral).
 
 ---
 

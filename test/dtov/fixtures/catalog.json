@@ -45,7 +45,7 @@
         "job-funnel-seed"
       ],
       "dependsOn": ["baseline"],
-      "whenNewFeature": "Schema 030–032 + /vaga + /vagas + job funnel",
+      "whenNewFeature": "Schema 030–033 + /vagas + funnel + referral",
       "smoke": [
         {
           "name": "open-indexed",
@@ -62,6 +62,10 @@
         {
           "name": "job-funnel-events",
           "sql": "SELECT 1 FROM job_funnel_events WHERE event_type = 'job_view' LIMIT 1"
+        },
+        {
+          "name": "referral-code",
+          "sql": "SELECT 1 FROM referral_codes WHERE UPPER(code) = 'DTOVREF' AND active = TRUE LIMIT 1"
         }
       ]
     }

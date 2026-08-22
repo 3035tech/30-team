@@ -105,18 +105,7 @@ Painel no detalhe/config da vaga consumindo a API de analytics. Só quando prior
 
 ### Fase 5 — Referral
 
-#### B-116 — Códigos referral `?ref=`
-**Instruções:**
-- Tabela `referral_codes`: company_id, vacancy_id nullable (null=empresa), code unique, owner_user_id / owner_candidate_id nullable, active, created_at.
-- Query `?ref=` na página pública → grava na atribuição (B-113) até candidatura.
-- Admin mínimo: criar/listar códigos (API); UI rica pode ser depois.
-- Critério: `?ref=ABC` persiste até apply_complete.
-
-#### B-117 — Analytics por referral
-**Instruções:**
-- Agregar cliques (job_view com referral), candidaturas, entrevistas, hires por código.
-- Endpoint admin por company/vacancy.
-- Critério: seed DTOV com um código e eventos fake → números batem.
+**Entregue:** `referral_codes` + APIs admin (criar/listar/desativar) + analytics por código (`job_funnel_events.referral_code`). `?ref=` já persistia via Fase 4 (cookie → assessment). Migration `033`. UI rica de códigos no painel = futuro.
 
 ---
 

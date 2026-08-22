@@ -7,6 +7,7 @@ import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { useAppFeedback } from '../_components/AppFeedback';
+import { AppLoading } from '../_components/AppLoading';
 import { htmlToPlainText } from '../../lib/sanitize-html';
 import { getTypeData } from '../../lib/i18n-data';
 import {
@@ -759,11 +760,14 @@ export function VacancyClientReportBlock({
               onClick={suggestShortlistWithAi}
               style={btnGhost()}
               disabled={loading || !candidates.length || aiBusy === 'shortlist'}
+              aria-busy={aiBusy === 'shortlist' || undefined}
               title={t(locale, 'panel.report.suggestShortlistAi')}
             >
-              {aiBusy === 'shortlist'
-                ? t(locale, 'panel.report.aiWorking')
-                : t(locale, 'panel.report.suggestShortlistAi')}
+              {aiBusy === 'shortlist' ? (
+                <AppLoading locale={locale} variant="button" label={t(locale, 'panel.report.aiWorking')} />
+              ) : (
+                t(locale, 'panel.report.suggestShortlistAi')
+              )}
             </button>
             <select
               value={String(expiresInDays)}
@@ -797,23 +801,29 @@ export function VacancyClientReportBlock({
                 type="button"
                 onClick={generateNoteWithAi}
                 style={btnGhost()}
-                disabled={!selectedPeople.length || aiBusy === 'note'}
+                disabled={!selectedPeople.length || Boolean(aiBusy)}
+                aria-busy={aiBusy === 'note' || undefined}
                 title={t(locale, 'panel.report.generateNoteAi')}
               >
-                {aiBusy === 'note'
-                  ? t(locale, 'panel.report.aiWorking')
-                  : t(locale, 'panel.report.generateNoteAi')}
+                {aiBusy === 'note' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'panel.report.aiWorking')} />
+                ) : (
+                  t(locale, 'panel.report.generateNoteAi')
+                )}
               </button>
               <button
                 type="button"
                 onClick={fillFieldsWithAi}
                 style={btnGhost()}
-                disabled={!selectedPeople.length || aiBusy === 'fields'}
+                disabled={!selectedPeople.length || Boolean(aiBusy)}
+                aria-busy={aiBusy === 'fields' || undefined}
                 title={t(locale, 'panel.report.fillFieldsAi')}
               >
-                {aiBusy === 'fields'
-                  ? t(locale, 'panel.report.aiWorking')
-                  : t(locale, 'panel.report.fillFieldsAi')}
+                {aiBusy === 'fields' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'panel.report.aiWorking')} />
+                ) : (
+                  t(locale, 'panel.report.fillFieldsAi')
+                )}
               </button>
               <span
                 style={{
@@ -831,6 +841,7 @@ export function VacancyClientReportBlock({
               placeholder={t(locale, 'panel.report.notePlaceholder')}
               minHeight={110}
               locale={locale}
+              disabled={Boolean(aiBusy)}
             />
           </div>
 

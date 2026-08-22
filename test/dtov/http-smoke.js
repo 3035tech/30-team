@@ -235,7 +235,7 @@ export async function runHttpSmoke(baseUrl) {
     if (m) publicVacancyId = Number(m[1]);
   }
   {
-    const pathWithUtm = `${canonicalOpenPath || '/vagas'}?utm_source=linkedin&utm_medium=social&utm_campaign=dtov`;
+    const pathWithUtm = `${canonicalOpenPath || '/vagas'}?utm_source=linkedin&utm_medium=social&utm_campaign=dtov&ref=DTOVREF`;
     const { res, setCookie } = await req(base, pathWithUtm);
     const joined = (setCookie || []).join('; ');
     if (res.status !== 200 && res.status !== 308 && res.status !== 301) {
@@ -356,6 +356,40 @@ export async function runHttpSmoke(baseUrl) {
       } else {
         ok('vacancies', 'analytics-shape', `views=${d7.views} apps=${d7.applications}`);
       }
+    }
+  }
+
+  {
+    const { res, data } = await req(base, '/api/admin/referral-codes', { cookie: hrCookie });
+    if (await expectStatus('referral', 'list', res.status, 200)) {
+      const items = data?.items || [];
+      const hit = items.find((i) => String(i.code || '').toUpperCase() === 'DTOVREF');
+      if (!hit) fail('referral', 'list-has-dtovref', `n=${items.length}`);
+      else ok('referral', 'list-has-dtovref', String(hit.id));
+    }
+    const { res: ra, data: da } = await req(base, '/api/admin/referral-codes/analytics', {
+      cookie: hrCookie,
+    });
+    if (await expectStatus('referral', 'analytics', ra.status, 200)) {
+      const row = (da?.items || []).find((i) => i.code === 'DTOVREF');
+      if (!row || row.applications < 1) {
+        fail('referral', 'analytics-dtovref', JSON.stringify(da).slice(0, 200));
+      } else {
+        ok('referral', 'analytics-dtovref', `apps=${row.applications} hires=${row.hires}`);
+      }
+    }
+    const { res: rc, data: dc } = await req(base, '/api/admin/referral-codes', {
+      method: 'POST',
+      cookie: hrCookie,
+      body: {
+        code: `T${Date.now().toString(36).toUpperCase().slice(-6)}`,
+        label: 'http-smoke temp',
+        vacancyId: publicVacancyId || vacancyId,
+      },
+    });
+    if (await expectStatus('referral', 'create', rc.status, 201)) {
+      if (!dc?.code || !dc?.id) fail('referral', 'create-shape', JSON.stringify(dc).slice(0, 120));
+      else ok('referral', 'create-shape', dc.code);
     }
   }
 

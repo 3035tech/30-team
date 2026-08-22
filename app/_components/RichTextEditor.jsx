@@ -73,6 +73,7 @@ export function RichTextEditor({
   placeholder,
   minHeight = 140,
   locale = 'pt-BR',
+  disabled = false,
   'aria-label': ariaLabel,
 }) {
   const ref = useRef(null);
@@ -89,20 +90,28 @@ export function RichTextEditor({
     }
   }, [value]);
 
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.contentEditable = disabled ? 'false' : 'true';
+  }, [disabled]);
+
   const pushHtml = () => {
+    if (disabled) return;
     const html = ref.current?.innerHTML || '';
     lastHtml.current = html;
     onChange?.(html);
   };
 
   const run = (cmd, arg = null) => {
+    if (disabled) return;
     ref.current?.focus();
     document.execCommand(cmd, false, arg);
     pushHtml();
   };
 
   const applyFontSize = (px) => {
-    if (!px) return;
+    if (disabled || !px) return;
     ref.current?.focus();
     document.execCommand('styleWithCSS', false, true);
     const sel = window.getSelection();
@@ -131,6 +140,7 @@ export function RichTextEditor({
   const emit = () => pushHtml();
 
   const onKeyDown = (e) => {
+    if (disabled) return;
     if (e.key === 'Tab') {
       e.preventDefault();
       run(e.shiftKey ? 'outdent' : 'indent');
@@ -140,7 +150,17 @@ export function RichTextEditor({
   const isEmpty = isRichTextEmpty(value);
 
   return (
-    <div style={{ border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden', background: 'rgba(255,255,255,.85)' }}>
+    <div
+      style={{
+        border: `1px solid ${C.border}`,
+        borderRadius: '10px',
+        overflow: 'hidden',
+        background: 'rgba(255,255,255,.85)',
+        opacity: disabled ? 0.72 : 1,
+        position: 'relative',
+      }}
+      aria-busy={disabled || undefined}
+    >
       <div
         style={{
           display: 'flex',
@@ -150,6 +170,7 @@ export function RichTextEditor({
           padding: '8px',
           borderBottom: `1px solid ${C.border}`,
           background: 'rgba(26,22,37,.04)',
+          pointerEvents: disabled ? 'none' : 'auto',
         }}
       >
         <ToolbarButton label="B" title={t(locale, 'editor.bold')} onClick={() => run('bold')} style={{ fontWeight: 700 }} />
@@ -211,9 +232,10 @@ export function RichTextEditor({
         ) : null}
         <div
           ref={ref}
-          contentEditable
+          contentEditable={!disabled}
           role="textbox"
           aria-multiline="true"
+          aria-disabled={disabled || undefined}
           aria-label={ariaLabel || ph}
           onInput={emit}
           onBlur={emit}
@@ -227,6 +249,7 @@ export function RichTextEditor({
             lineHeight: 1.55,
             color: C.text,
             fontFamily: 'Georgia, "Times New Roman", serif',
+            cursor: disabled ? 'wait' : 'text',
           }}
           suppressContentEditableWarning
         />

@@ -25,6 +25,7 @@ import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { AppLoading } from '../../_components/AppLoading';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import {
@@ -230,6 +231,7 @@ function VacancyDescriptionAssistBar({
               ? t(locale, 'recruiting.descAiCreateHelp')
               : t(locale, 'recruiting.descAiImproveHelp')
           }
+          aria-busy={busy || undefined}
           aria-label={
             busy
               ? t(locale, 'recruiting.descAiWorking')
@@ -239,16 +241,26 @@ function VacancyDescriptionAssistBar({
           }
           style={descAssistBtn({ primary: true, disabled: busy || !titleOk })}
         >
-          {busy
-            ? t(locale, 'recruiting.descAiWorking')
-            : sparse
-              ? t(locale, 'recruiting.descAiCreate')
-              : t(locale, 'recruiting.descAiImprove')}
+          {busy ? (
+            <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.descAiWorking')} />
+          ) : sparse ? (
+            t(locale, 'recruiting.descAiCreate')
+          ) : (
+            t(locale, 'recruiting.descAiImprove')
+          )}
         </button>
       </div>
-      <p style={{ margin: '6px 0 0', fontSize: '11px', color: C.faint, lineHeight: 1.4 }}>
-        {t(locale, 'recruiting.descAssistHint')}
-      </p>
+      {busy ? (
+        <AppLoading
+          locale={locale}
+          variant="block"
+          label={t(locale, 'recruiting.descAiWorkingHint')}
+        />
+      ) : (
+        <p style={{ margin: '6px 0 0', fontSize: '11px', color: C.faint, lineHeight: 1.4 }}>
+          {t(locale, 'recruiting.descAssistHint')}
+        </p>
+      )}
     </div>
   );
 }
@@ -833,21 +845,27 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
                 type="button"
                 onClick={suggestContext}
                 disabled={Boolean(aiBusy)}
+                aria-busy={aiBusy === 'context' || undefined}
                 style={{ ...btnSm, opacity: aiBusy ? 0.6 : 1 }}
               >
-                {aiBusy === 'context'
-                  ? t(locale, 'recruiting.rubricAiWorking')
-                  : t(locale, 'recruiting.rubricAiSuggestContext')}
+                {aiBusy === 'context' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.rubricAiWorking')} />
+                ) : (
+                  t(locale, 'recruiting.rubricAiSuggestContext')
+                )}
               </button>
               <button
                 type="button"
                 onClick={suggestWeights}
                 disabled={Boolean(aiBusy)}
+                aria-busy={aiBusy === 'weights' || undefined}
                 style={{ ...btnSm, opacity: aiBusy ? 0.6 : 1 }}
               >
-                {aiBusy === 'weights'
-                  ? t(locale, 'recruiting.rubricAiWorking')
-                  : t(locale, 'recruiting.rubricAiSuggestWeights')}
+                {aiBusy === 'weights' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.rubricAiWorking')} />
+                ) : (
+                  t(locale, 'recruiting.rubricAiSuggestWeights')
+                )}
               </button>
               <button type="button" onClick={copyPrompt} disabled={Boolean(aiBusy)} style={btnSm}>
                 {t(locale, 'recruiting.rubricAiCopyPrompt')}
@@ -2000,6 +2018,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
               minHeight={120}
               locale={locale}
+              disabled={descAiBusy}
             />
           </div>
         </div>
@@ -2193,6 +2212,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
                 minHeight={140}
                 locale={locale}
+                disabled={descAiBusy}
               />
             </div>
           </div>

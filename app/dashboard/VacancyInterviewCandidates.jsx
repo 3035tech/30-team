@@ -10,6 +10,7 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../lib/person-name';
 import { S } from './dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
+import { AppLoading } from '../_components/AppLoading';
 
 const inputStyle = {
   flex: '1 1 180px',
@@ -75,6 +76,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   const [availability, setAvailability] = useState(row.availability || '');
   const [source, setSource] = useState(row.source || '');
   const [busy, setBusy] = useState(false);
+  const [notesAiBusy, setNotesAiBusy] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
   const [motivatorsBusy, setMotivatorsBusy] = useState(false);
@@ -122,7 +124,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   };
 
   const summarizeNotesWithAi = async () => {
-    setBusy(true);
+    setNotesAiBusy(true);
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`, {
         method: 'POST',
@@ -145,7 +147,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     } catch (e) {
       void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
-      setBusy(false);
+      setNotesAiBusy(false);
     }
   };
 
@@ -464,12 +466,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           >
             {t(locale, 'recruiting.interviewNotesTitle')}
           </span>
-          <RichTextEditor value={notes} onChange={setNotes} locale={locale} />
+          <RichTextEditor value={notes} onChange={setNotes} locale={locale} disabled={busy || notesAiBusy} />
           <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
             <button
               type="button"
               onClick={summarizeNotesWithAi}
-              disabled={busy}
+              disabled={busy || notesAiBusy}
+              aria-busy={notesAiBusy || undefined}
               style={{
                 background: 'transparent',
                 border: `1px solid ${C.purple}55`,
@@ -477,17 +480,25 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 padding: '8px 14px',
                 color: C.purple,
                 fontSize: '12px',
-                cursor: 'pointer',
+                cursor: busy || notesAiBusy ? 'wait' : 'pointer',
                 fontFamily: 'monospace',
-                opacity: busy ? 0.6 : 1,
+                opacity: busy || notesAiBusy ? 0.6 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              {t(locale, 'recruiting.summarizeNotesAi')}
+              {notesAiBusy ? (
+                <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.summarizeNotesAiWorking')} />
+              ) : (
+                t(locale, 'recruiting.summarizeNotesAi')
+              )}
             </button>
             <button
               type="button"
               onClick={saveNotes}
-              disabled={busy}
+              disabled={busy || notesAiBusy}
+              aria-busy={busy || undefined}
               style={{
                 background: `${C.purple}18`,
                 border: `1px solid ${C.purple}55`,
@@ -495,12 +506,19 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 padding: '8px 14px',
                 color: C.purple,
                 fontSize: '12px',
-                cursor: 'pointer',
+                cursor: busy || notesAiBusy ? 'wait' : 'pointer',
                 fontFamily: 'monospace',
-                opacity: busy ? 0.6 : 1,
+                opacity: busy || notesAiBusy ? 0.6 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              {busy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveNotes')}
+              {busy ? (
+                <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.savingNotes')} />
+              ) : (
+                t(locale, 'recruiting.saveNotes')
+              )}
             </button>
           </div>
         </div>

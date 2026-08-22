@@ -64,13 +64,23 @@ export async function seed(client) {
   if (openVac.rowCount) {
     const vacancyId = openVac.rows[0].id;
     await client.query(
+      `INSERT INTO referral_codes (company_id, vacancy_id, code, label, active)
+       SELECT $1, $2, 'DTOVREF', 'DTOV demo referral', TRUE
+       WHERE NOT EXISTS (
+         SELECT 1 FROM referral_codes WHERE LOWER(code) = LOWER('DTOVREF')
+       )`,
+      [companyId, vacancyId]
+    );
+    await client.query(
       `INSERT INTO job_funnel_events (
-         company_id, vacancy_id, event_type, session_id, source, medium, campaign
+         company_id, vacancy_id, event_type, session_id, source, medium, campaign, referral_code
        ) VALUES
-         ($1, $2, 'job_view', 'dtov-session-a', 'linkedin', 'social', 'share-bar'),
-         ($1, $2, 'job_view', 'dtov-session-b', 'linkedin', 'social', 'share-bar'),
-         ($1, $2, 'apply_start', 'dtov-session-a', 'linkedin', 'social', 'share-bar'),
-         ($1, $2, 'apply_complete', 'dtov-session-a', 'linkedin', 'social', 'share-bar')`,
+         ($1, $2, 'job_view', 'dtov-session-a', 'referral', 'referral', 'dtov-ref', 'DTOVREF'),
+         ($1, $2, 'job_view', 'dtov-session-b', 'referral', 'referral', 'dtov-ref', 'DTOVREF'),
+         ($1, $2, 'apply_start', 'dtov-session-a', 'referral', 'referral', 'dtov-ref', 'DTOVREF'),
+         ($1, $2, 'apply_complete', 'dtov-session-a', 'referral', 'referral', 'dtov-ref', 'DTOVREF'),
+         ($1, $2, 'interview', 'dtov-session-a', 'referral', 'referral', 'dtov-ref', 'DTOVREF'),
+         ($1, $2, 'hired', 'dtov-session-a', 'referral', 'referral', 'dtov-ref', 'DTOVREF')`,
       [companyId, vacancyId]
     );
   }

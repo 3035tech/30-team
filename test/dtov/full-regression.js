@@ -261,6 +261,14 @@ async function runOfflineLibs() {
     return 'funnel map ok';
   });
 
+  await check('lib', 'referral-code-normalize', async () => {
+    const { normalizeReferralCode } = await import('../../lib/referral-codes.js');
+    if (normalizeReferralCode('ab-c') !== 'AB-C') throw new Error('normalize');
+    if (normalizeReferralCode('x') != null) throw new Error('too short');
+    if (normalizeReferralCode('@@@') != null) throw new Error('invalid chars');
+    return 'referral normalize ok';
+  });
+
   await check('lib', 'public-job-key-canonical', async () => {
     const {
       parsePublicJobKey,
@@ -656,6 +664,23 @@ async function runSqlSuite(client) {
       throw new Error('expected sources breakdown');
     }
     return `views=${stats.views} apps=${stats.applications}`;
+  });
+
+  await check('sql', 'referral-analytics', async () => {
+    const { getReferralAnalytics, findActiveReferralCode } = await import(
+      '../../lib/referral-codes.js'
+    );
+    const found = await findActiveReferralCode('dtovref', { companyId });
+    if (!found || found.code !== 'DTOVREF') throw new Error('missing DTOVREF code');
+    const stats = await getReferralAnalytics({ companyId, isAdmin: false });
+    if (!stats.ok) throw new Error(stats.errorCode || 'analytics failed');
+    const row = (stats.items || []).find((i) => i.code === 'DTOVREF');
+    if (!row) throw new Error('DTOVREF not in analytics');
+    if (row.views < 1 || row.applications < 1 || row.hires < 1) {
+      throw new Error(`unexpected counts ${JSON.stringify(row)}`);
+    }
+    if (!row.registered) throw new Error('expected registered meta');
+    return `DTOVREF views=${row.views} hires=${row.hires}`;
   });
 
   await check('sql', 'resolve-public-vacancy-closed', async () => {
