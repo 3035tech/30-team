@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
@@ -16,12 +16,20 @@ import {
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key, label, defaultValue?,
- *   type?: 'text'|'password'|'textarea'|'select'|'boolean'|'checkboxGroup',
+ *   type?: 'text'|'password'|'textarea'|'select'|'boolean'|'checkboxGroup'|'imageUpload',
  *   options?: [{value,label}],
  *   showWhen?: (values) => boolean,
  *   placeholder?: string,
  *   help?: string,
  *   rows?: number,
+ *   // imageUpload:
+ *   uploadUrl?: string,
+ *   storageConfigured?: boolean,
+ *   accept?: string,
+ *   uploadLabel?: string,
+ *   removeLabel?: string,
+ *   uploadingLabel?: string,
+ *   storageOffHelp?: string,
  * }]
  */
 export function PromptFormDialog({
@@ -37,6 +45,9 @@ export function PromptFormDialog({
 }) {
   const [mounted, setMounted] = useState(false);
   const [values, setValues] = useState({});
+  const [uploadBusyKey, setUploadBusyKey] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const blobUrlsRef = useRef([]);
 
   useEffect(() => {
     setMounted(true);
@@ -50,11 +61,19 @@ export function PromptFormDialog({
         init[f.key] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
       } else if (f.type === 'boolean') {
         init[f.key] = f.defaultValue === true || f.defaultValue === 'true' || f.defaultValue === true;
+      } else if (f.type === 'imageUpload') {
+        init[f.key] = {
+          url: f.defaultValue ? String(f.defaultValue) : '',
+          file: null,
+          removed: false,
+        };
       } else {
         init[f.key] = f.defaultValue != null ? String(f.defaultValue) : '';
       }
     }
     setValues(init);
+    setUploadBusyKey('');
+    setUploadError('');
     // Reset only when opening; callers pass a fresh fields array per open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -70,6 +89,14 @@ export function PromptFormDialog({
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
+      for (const u of blobUrlsRef.current) {
+        try {
+          URL.revokeObjectURL(u);
+        } catch {
+          /* ignore */
+        }
+      }
+      blobUrlsRef.current = [];
     };
   }, [open, onCancel]);
 
@@ -96,7 +123,137 @@ export function PromptFormDialog({
     }
   });
 
+  const onImageFile = async (f, file) => {
+    if (!file) return;
+    setUploadError('');
+    if (f.uploadUrl && f.storageConfigured !== false) {
+      setUploadBusyKey(f.key);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(f.uploadUrl, { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+        setField(f.key, { url: data.logoUrl || data.url || '', file: null, removed: false });
+      } catch (e) {
+        setUploadError(e?.message || t(locale, 'panel.common.error'));
+      } finally {
+        setUploadBusyKey('');
+      }
+      return;
+    }
+    const localUrl = URL.createObjectURL(file);
+    blobUrlsRef.current.push(localUrl);
+    setField(f.key, { url: localUrl, file, removed: false });
+  };
+
+  const onImageRemove = async (f) => {
+    setUploadError('');
+    if (f.uploadUrl && f.storageConfigured !== false) {
+      setUploadBusyKey(f.key);
+      try {
+        const res = await fetch(f.uploadUrl, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+        setField(f.key, { url: '', file: null, removed: true });
+      } catch (e) {
+        setUploadError(e?.message || t(locale, 'panel.common.error'));
+      } finally {
+        setUploadBusyKey('');
+      }
+      return;
+    }
+    setField(f.key, { url: '', file: null, removed: true });
+  };
+
   const renderControl = (f) => {
+    if (f.type === 'imageUpload') {
+      const cur = values[f.key] && typeof values[f.key] === 'object' ? values[f.key] : { url: '', file: null };
+      const preview = String(cur.url || '').trim();
+      const busy = uploadBusyKey === f.key;
+      const off = f.storageConfigured === false;
+      return (
+        <div style={{ marginTop: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '12px',
+                border: `1px solid ${C.border}`,
+                background: 'rgba(26,22,37,.03)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+            >
+              {preview ? (
+                <img src={preview} alt="" width={72} height={72} style={{ objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace' }}>—</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label
+                style={{
+                  ...dialogBtnGhost,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '40px',
+                  padding: '8px 12px',
+                  cursor: off || busy ? 'not-allowed' : 'pointer',
+                  opacity: off || busy ? 0.55 : 1,
+                  margin: 0,
+                }}
+              >
+                <input
+                  type="file"
+                  accept={f.accept || 'image/png,image/jpeg,image/webp'}
+                  disabled={off || busy}
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file) void onImageFile(f, file);
+                  }}
+                />
+                {busy
+                  ? f.uploadingLabel || t(locale, 'common.loading')
+                  : f.uploadLabel || t(locale, 'panel.admin.companyLogoChoose')}
+              </label>
+              {preview ? (
+                <button
+                  type="button"
+                  disabled={off || busy}
+                  onClick={() => void onImageRemove(f)}
+                  style={{
+                    ...dialogBtnGhost,
+                    minHeight: '40px',
+                    opacity: off || busy ? 0.55 : 1,
+                  }}
+                >
+                  {f.removeLabel || t(locale, 'panel.admin.companyLogoRemove')}
+                </button>
+              ) : null}
+            </div>
+          </div>
+          {off && f.storageOffHelp ? (
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>
+              {f.storageOffHelp}
+            </p>
+          ) : null}
+          {uploadError ? (
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.tension, lineHeight: 1.45 }}>
+              {uploadError}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
     if (f.type === 'checkboxGroup') {
       return (
         <div
@@ -264,7 +421,7 @@ export function PromptFormDialog({
                 <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
               ) : null}
               {renderControl(f)}
-              {f.help ? (
+              {f.help && f.type !== 'imageUpload' ? (
                 <p
                   style={{
                     margin: f.type === 'boolean' ? '6px 0 0 28px' : '6px 0 0',
@@ -276,17 +433,21 @@ export function PromptFormDialog({
                   {f.help}
                 </p>
               ) : null}
+              {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
+                <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>{f.help}</p>
+              ) : null}
             </div>
           ))}
         </div>
         <div style={{ marginTop: '22px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-          <button type="button" onClick={onCancel} style={dialogBtnGhost}>
+          <button type="button" onClick={onCancel} style={dialogBtnGhost} disabled={Boolean(uploadBusyKey)}>
             {cancelLabel || t(locale, 'panel.common.cancel')}
           </button>
           <button
             type="button"
             onClick={() => onSubmit?.(values)}
-            style={dialogBtnPrimary(C.purple)}
+            disabled={Boolean(uploadBusyKey)}
+            style={{ ...dialogBtnPrimary(C.purple), opacity: uploadBusyKey ? 0.6 : 1 }}
           >
             {confirmLabel || t(locale, 'panel.common.save')}
           </button>

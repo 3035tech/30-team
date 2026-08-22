@@ -177,4 +177,4 @@ Complemento geral: [`docs/privacidade-lgpd-interno.md`](./privacidade-lgpd-inter
 ## Lacunas conhecidas (não inventar)
 
 - Senioridade, skills/benefícios como entidades separadas: ainda sem colunas.
-- Logo: schema + upload S3 prontos (`039`, `lib/company-logo.js`); precisa `S3_*` em produção.
+- Logo: schema + upload S3 (`039`, `lib/company-logo.js`); no painel, campo no modal criar/editar empresa (preview imediato). Precisa `S3_*` em produção.

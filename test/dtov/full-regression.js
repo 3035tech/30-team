@@ -527,7 +527,8 @@ async function runOfflineLibs() {
       ],
     });
     const weightsObj = JSON.parse(extractJsonObject(weightsRaw));
-    if (Number(weightsObj['5']) !== 3) throw new Error(`bad weight stub ${weightsRaw.slice(0, 80)}`);
+    const w = weightsObj.weights || weightsObj;
+    if (Number(w['5']) !== 3) throw new Error(`bad weight stub ${weightsRaw.slice(0, 80)}`);
 
     const htmlRaw = await openAiChatCompletion({
       messages: [
