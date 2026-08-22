@@ -84,10 +84,11 @@ export function RichTextEditor({
     const el = ref.current;
     if (!el) return;
     const next = value || '';
-    if (next !== lastHtml.current && next !== el.innerHTML) {
-      el.innerHTML = next;
-      lastHtml.current = next;
-    }
+    // Sync from React value only when it changed vs last push.
+    // Do not compare to el.innerHTML (browser normalizes markup and can skip real updates).
+    if (next === lastHtml.current) return;
+    el.innerHTML = next;
+    lastHtml.current = next;
   }, [value]);
 
   useEffect(() => {

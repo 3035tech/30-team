@@ -59,10 +59,19 @@ export function VacancyClientReportBlock({
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState('');
+  const [noteActionBusy, setNoteActionBusy] = useState('');
+  const [noteEditorKey, setNoteEditorKey] = useState(0);
   const [lastUrl, setLastUrl] = useState('');
   const [editingReportId, setEditingReportId] = useState(null);
   const [editNoteDraft, setEditNoteDraft] = useState('');
   const [editBusy, setEditBusy] = useState(false);
+
+  const actionsLocked = Boolean(aiBusy) || Boolean(noteActionBusy);
+
+  const writeNote = (html) => {
+    setNote(html);
+    setNoteEditorKey((k) => k + 1);
+  };
 
   const showError = async (message) => {
     await notice({
@@ -214,6 +223,9 @@ export function VacancyClientReportBlock({
 
   const clearSelected = () => setSelected(new Set());
 
+  const effectiveRec = (c) =>
+    normalizeRecommendation(overrides[c.candidateId]?.recommendation, c.recommendation || 'bank');
+
   const setRec = (id, recommendation) => {
     setOverrides((prev) => ({
       ...prev,
@@ -237,51 +249,77 @@ export function VacancyClientReportBlock({
     }));
   };
 
-  const applyNoteTemplate = () => {
-    const tpl = locale === 'en' ? NOTE_TEMPLATE_EN : NOTE_TEMPLATE_PT;
-    setNote((prev) => (htmlToPlainText(prev).length ? prev : tpl));
+  const applyNoteTemplate = async () => {
+    if (actionsLocked) return;
+    if (htmlToPlainText(note).length) {
+      const ok = await confirm({
+        message: t(locale, 'panel.report.noteOverwriteConfirm'),
+      });
+      if (!ok) return;
+    }
+    setNoteActionBusy('template');
+    try {
+      writeNote(locale === 'en' ? NOTE_TEMPLATE_EN : NOTE_TEMPLATE_PT);
+      showOk(t(locale, 'panel.report.noteTemplateDone'));
+    } finally {
+      setNoteActionBusy('');
+    }
   };
 
   /** Preenche o parecer com a shortlist selecionada (passa o mínimo de 80 chars). */
-  const generateNoteFromShortlist = () => {
+  const generateNoteFromShortlist = async () => {
+    if (actionsLocked) return;
     const people = selectedPeople.filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude');
     if (!people.length) {
       void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
       return;
     }
-    const vacTitle = vacancyMeta?.title || '';
-    const byRec = (rec) =>
-      people.filter((c) => effectiveRec(c) === rec).map((c) => {
-        const ov = overrides[c.candidateId] || {};
-        const fit =
-          c.vacancyFitScore010 != null ? ` (fit ${Number(c.vacancyFitScore010).toFixed(1)}/10)` : '';
-        const why = ov.why ? ` — ${ov.why}` : '';
-        return `${c.name}${c.topType != null ? ` T${c.topType}` : ''}${fit}${why}`;
+    if (htmlToPlainText(note).length) {
+      const ok = await confirm({
+        message: t(locale, 'panel.report.noteOverwriteConfirm'),
       });
+      if (!ok) return;
+    }
+    setNoteActionBusy('shortlist');
+    try {
+      const vacTitle = vacancyMeta?.title || '';
+      const byRec = (rec) =>
+        people
+          .filter((c) => effectiveRec(c) === rec)
+          .map((c) => {
+            const ov = overrides[c.candidateId] || {};
+            const fit =
+              c.vacancyFitScore010 != null ? ` (fit ${Number(c.vacancyFitScore010).toFixed(1)}/10)` : '';
+            const why = ov.why ? ` — ${ov.why}` : '';
+            return `${c.name}${c.topType != null ? ` T${c.topType}` : ''}${fit}${why}`;
+          });
 
-    const advance = byRec('advance');
-    const discuss = byRec('discuss');
-    const bank = byRec('bank');
-    const alerts = people
-      .map((c) => {
-        const w = overrides[c.candidateId]?.watchOut || '';
-        return w ? `${c.name}: ${w}` : null;
-      })
-      .filter(Boolean);
+      const advance = byRec('advance');
+      const discuss = byRec('discuss');
+      const bank = byRec('bank');
+      const alerts = people
+        .map((c) => {
+          const w = overrides[c.candidateId]?.watchOut || '';
+          return w ? `${c.name}: ${w}` : null;
+        })
+        .filter(Boolean);
 
-    const en = locale === 'en';
-    const html = en
-      ? `<p><strong>Who to advance:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Discuss further: ${discuss.join('; ')}` : ''}.</p>
+      const en = locale === 'en';
+      const html = en
+        ? `<p><strong>Who to advance:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Discuss further: ${discuss.join('; ')}` : ''}.</p>
 <p><strong>Why (fit / role context):</strong> Shortlist for ${vacTitle || 'this role'} ranked by rubric alignment and interview notes. ${bank.length ? `Hold for now: ${bank.join('; ')}.` : ''}</p>
 <p><strong>Watch-outs / interview probes:</strong> ${alerts.length ? alerts.join(' · ') : 'Validate technical depth and delivery cadence in the client interview.'}</p>
 <p><strong>Suggested next step:</strong> Schedule technical interviews with the client team for those marked Advance; keep Discuss for a second pass if capacity allows.</p>`
-      : `<p><strong>Quem avançar:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Conversar antes: ${discuss.join('; ')}` : ''}.</p>
+        : `<p><strong>Quem avançar:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Conversar antes: ${discuss.join('; ')}` : ''}.</p>
 <p><strong>Por quê (fit / contexto da vaga):</strong> Shortlist para ${vacTitle || 'esta vaga'} com base na rubrica T1–T9 e nas notas de triagem. ${bank.length ? `Banco por ora: ${bank.join('; ')}.` : ''}</p>
 <p><strong>Alertas / pontos a explorar na entrevista:</strong> ${alerts.length ? alerts.join(' · ') : 'Validar profundidade técnica e ritmo de entrega na entrevista com o time do cliente.'}</p>
 <p><strong>Próximo passo sugerido:</strong> Agendar entrevistas técnicas com o time do cliente para quem está em Avançar; manter Conversar para segunda passagem se houver capacidade.</p>`;
 
-    setNote(html);
-    showOk(t(locale, 'panel.report.generateNoteDone'));
+      writeNote(html);
+      showOk(t(locale, 'panel.report.generateNoteDone'));
+    } finally {
+      setNoteActionBusy('');
+    }
   };
 
   const peoplePayloadForAi = () =>
@@ -304,10 +342,17 @@ export function VacancyClientReportBlock({
       });
 
   const generateNoteWithAi = async () => {
+    if (actionsLocked) return;
     const candidates = peoplePayloadForAi();
     if (!candidates.length) {
       void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
       return;
+    }
+    if (htmlToPlainText(note).length) {
+      const ok = await confirm({
+        message: t(locale, 'panel.report.noteOverwriteConfirm'),
+      });
+      if (!ok) return;
     }
     setAiBusy('note');
     try {
@@ -319,10 +364,12 @@ export function VacancyClientReportBlock({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(
-          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+          data?.errorCode
+            ? errorMessage(locale, data.errorCode, data.error)
+            : data?.error || t(locale, 'panel.report.aiFailed')
         );
       }
-      if (data.executiveNote) setNote(String(data.executiveNote));
+      if (data.executiveNote) writeNote(String(data.executiveNote));
       showOk(t(locale, 'panel.report.generateNoteAiDone'));
     } catch (e) {
       void showError(e?.message || t(locale, 'panel.report.aiFailed'));
@@ -332,6 +379,7 @@ export function VacancyClientReportBlock({
   };
 
   const fillFieldsWithAi = async () => {
+    if (actionsLocked) return;
     const candidates = peoplePayloadForAi();
     if (!candidates.length) {
       void showError(t(locale, 'panel.report.generateNoteNeedSelection'));
@@ -347,7 +395,9 @@ export function VacancyClientReportBlock({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(
-          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+          data?.errorCode
+            ? errorMessage(locale, data.errorCode, data.error)
+            : data?.error || t(locale, 'panel.report.aiFailed')
         );
       }
       const fields = data.fields || {};
@@ -376,6 +426,7 @@ export function VacancyClientReportBlock({
   };
 
   const suggestShortlistWithAi = async () => {
+    if (actionsLocked) return;
     const eligibleCandidates = candidates
       .filter((c) => !c.excludedFromClient && c.recommendation !== 'exclude')
       .slice(0, 12)
@@ -405,7 +456,9 @@ export function VacancyClientReportBlock({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(
-          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.report.aiFailed')
+          data?.errorCode
+            ? errorMessage(locale, data.errorCode, data.error)
+            : data?.error || t(locale, 'panel.report.aiFailed')
         );
       }
 
@@ -440,8 +493,8 @@ export function VacancyClientReportBlock({
         }
         return next;
       });
-      if (data.rationaleHtml) {
-        setNote((prev) => (htmlToPlainText(prev).length ? prev : String(data.rationaleHtml)));
+      if (data.rationaleHtml && !htmlToPlainText(note).length) {
+        writeNote(String(data.rationaleHtml));
       }
       showOk(t(locale, 'panel.report.suggestShortlistAiDone', { n: suggestedIds.length }));
     } catch (e) {
@@ -462,9 +515,6 @@ export function VacancyClientReportBlock({
             : 'panel.report.recBank';
     return t(locale, key);
   };
-
-  const effectiveRec = (c) =>
-    normalizeRecommendation(overrides[c.candidateId]?.recommendation, c.recommendation || 'bank');
 
   const generate = async () => {
     if (!noteOk) {
@@ -758,8 +808,8 @@ export function VacancyClientReportBlock({
             <button
               type="button"
               onClick={suggestShortlistWithAi}
-              style={btnGhost()}
-              disabled={loading || !candidates.length || aiBusy === 'shortlist'}
+              style={btnGhost({ busy: aiBusy === 'shortlist', locked: actionsLocked && aiBusy !== 'shortlist' })}
+              disabled={loading || actionsLocked}
               aria-busy={aiBusy === 'shortlist' || undefined}
               title={t(locale, 'panel.report.suggestShortlistAi')}
             >
@@ -785,23 +835,41 @@ export function VacancyClientReportBlock({
           <div style={{ marginTop: '12px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
               <span style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.noteRequiredLabel')}</span>
-              <button type="button" onClick={applyNoteTemplate} style={btnGhost()}>
-                {t(locale, 'panel.report.noteTemplate')}
+              <button
+                type="button"
+                onClick={applyNoteTemplate}
+                style={btnGhost({ busy: noteActionBusy === 'template', locked: actionsLocked && noteActionBusy !== 'template' })}
+                disabled={actionsLocked}
+                aria-busy={noteActionBusy === 'template' || undefined}
+              >
+                {noteActionBusy === 'template' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'panel.common.loading')} />
+                ) : (
+                  t(locale, 'panel.report.noteTemplate')
+                )}
               </button>
               <button
                 type="button"
                 onClick={generateNoteFromShortlist}
-                style={btnGhost()}
-                disabled={!selectedPeople.length}
+                style={btnGhost({
+                  busy: noteActionBusy === 'shortlist',
+                  locked: actionsLocked && noteActionBusy !== 'shortlist',
+                })}
+                disabled={actionsLocked}
+                aria-busy={noteActionBusy === 'shortlist' || undefined}
                 title={t(locale, 'panel.report.generateNote')}
               >
-                {t(locale, 'panel.report.generateNote')}
+                {noteActionBusy === 'shortlist' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'panel.common.loading')} />
+                ) : (
+                  t(locale, 'panel.report.generateNote')
+                )}
               </button>
               <button
                 type="button"
                 onClick={generateNoteWithAi}
-                style={btnGhost()}
-                disabled={!selectedPeople.length || Boolean(aiBusy)}
+                style={btnGhost({ busy: aiBusy === 'note', locked: actionsLocked && aiBusy !== 'note' })}
+                disabled={actionsLocked}
                 aria-busy={aiBusy === 'note' || undefined}
                 title={t(locale, 'panel.report.generateNoteAi')}
               >
@@ -814,8 +882,8 @@ export function VacancyClientReportBlock({
               <button
                 type="button"
                 onClick={fillFieldsWithAi}
-                style={btnGhost()}
-                disabled={!selectedPeople.length || Boolean(aiBusy)}
+                style={btnGhost({ busy: aiBusy === 'fields', locked: actionsLocked && aiBusy !== 'fields' })}
+                disabled={actionsLocked}
                 aria-busy={aiBusy === 'fields' || undefined}
                 title={t(locale, 'panel.report.fillFieldsAi')}
               >
@@ -835,13 +903,21 @@ export function VacancyClientReportBlock({
                 {t(locale, 'panel.report.noteCharCount', { n: notePlainLen, min: REPORT_NOTE_MIN_CHARS })}
               </span>
             </div>
+            {aiBusy ? (
+              <AppLoading
+                locale={locale}
+                variant="banner"
+                label={t(locale, 'panel.report.aiWorkingHint')}
+              />
+            ) : null}
             <RichTextEditor
+              key={`report-note-${noteEditorKey}`}
               value={note}
               onChange={setNote}
               placeholder={t(locale, 'panel.report.notePlaceholder')}
               minHeight={110}
               locale={locale}
-              disabled={Boolean(aiBusy)}
+              disabled={actionsLocked}
             />
           </div>
 
@@ -1104,7 +1180,8 @@ function fieldInputStyle() {
   };
 }
 
-function btnGhost() {
+function btnGhost({ busy = false, locked = false } = {}) {
+  const inactive = busy || locked;
   return {
     background: 'transparent',
     border: `1px solid ${C.border}`,
@@ -1112,8 +1189,12 @@ function btnGhost() {
     padding: '6px 10px',
     color: C.muted,
     fontSize: '11px',
-    cursor: 'pointer',
+    cursor: inactive ? 'wait' : 'pointer',
     fontFamily: 'monospace',
+    opacity: inactive ? 0.65 : 1,
+    minHeight: '32px',
+    display: 'inline-flex',
+    alignItems: 'center',
   };
 }
 
