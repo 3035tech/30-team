@@ -156,7 +156,7 @@ export async function runHttpSmoke(baseUrl) {
     ['v-token', `/v/${TOK.vacancyOpen}`],
     ['r-token', `/r/${TOK.report}`],
     ['ae-assessment', `/assessment/motivators/${TOK.aeInvite}`],
-    ['vagas-index', '/vagas'],
+    ['j-index', '/j'],
   ]) {
     const { res, text } = await req(base, path);
     const okHtml = res.status === 200 && String(text).length > 200;
@@ -164,14 +164,23 @@ export async function runHttpSmoke(baseUrl) {
     else ok('public-page', name, `HTTP ${res.status} · ${String(text).length}b`);
   }
 
-  // Legacy /vaga → canônica /vagas/{slug}-{id}
+  // Legacy /vagas → /j
+  {
+    const { res } = await req(base, '/vagas');
+    const loc = res.headers.get('location') || '';
+    if (![301, 308].includes(res.status) || !String(loc).includes('/j')) {
+      fail('seo', 'vagas-index-redirect', `status ${res.status} loc=${loc}`);
+    } else ok('seo', 'vagas-index-redirect', `HTTP ${res.status} → ${loc}`);
+  }
+
+  // Legacy /vaga → canônica /j/{slug}-{id}
   let canonicalOpenPath = '';
   let canonicalClosedPath = '';
   {
     const legacyOpen = '/vaga/todos-os-dados-demo/engenheiro-fullstack-plataforma';
     const { res } = await req(base, legacyOpen);
     const loc = res.headers.get('location') || '';
-    if (![301, 308].includes(res.status) || !/\/vagas\/engenheiro-fullstack-plataforma-\d+/.test(loc)) {
+    if (![301, 308].includes(res.status) || !/\/j\/engenheiro-fullstack-plataforma-\d+/.test(loc)) {
       fail('seo', 'vaga-legacy-open-redirect', `status ${res.status} loc=${loc}`);
     } else {
       ok('seo', 'vaga-legacy-open-redirect', `HTTP ${res.status} → ${loc}`);
@@ -186,7 +195,7 @@ export async function runHttpSmoke(baseUrl) {
     const legacyClosed = '/vaga/todos-os-dados-demo/analista-dados-encerrada';
     const { res } = await req(base, legacyClosed);
     const loc = res.headers.get('location') || '';
-    if (![301, 308].includes(res.status) || !/\/vagas\/analista-dados-encerrada-\d+/.test(loc)) {
+    if (![301, 308].includes(res.status) || !/\/j\/analista-dados-encerrada-\d+/.test(loc)) {
       fail('seo', 'vaga-legacy-closed-redirect', `status ${res.status} loc=${loc}`);
     } else {
       ok('seo', 'vaga-legacy-closed-redirect', `HTTP ${res.status} → ${loc}`);
@@ -223,9 +232,9 @@ export async function runHttpSmoke(baseUrl) {
     const { res, text } = await req(base, '/sitemap.xml');
     const body = String(text || '');
     if (res.status !== 200) fail('seo', 'sitemap', `status ${res.status}`);
-    else if (!body.includes('/vagas') && !body.includes('urlset')) {
+    else if (!body.includes('/j') && !body.includes('urlset')) {
       fail('seo', 'sitemap', `unexpected body len=${body.length}`);
-    }     else ok('seo', 'sitemap', `HTTP ${res.status} · ${body.length}b`);
+    } else ok('seo', 'sitemap', `HTTP ${res.status} · ${body.length}b`);
   }
 
   // ── Job funnel + UTM attribution cookie ───────────────────────────────
@@ -235,7 +244,7 @@ export async function runHttpSmoke(baseUrl) {
     if (m) publicVacancyId = Number(m[1]);
   }
   {
-    const pathWithUtm = `${canonicalOpenPath || '/vagas'}?utm_source=linkedin&utm_medium=social&utm_campaign=dtov&ref=DTOVREF`;
+    const pathWithUtm = `${canonicalOpenPath || '/j'}?utm_source=linkedin&utm_medium=social&utm_campaign=dtov&ref=DTOVREF`;
     const { res, setCookie } = await req(base, pathWithUtm);
     const joined = (setCookie || []).join('; ');
     if (res.status !== 200 && res.status !== 308 && res.status !== 301) {

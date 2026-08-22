@@ -180,7 +180,7 @@ async function runOfflineLibs() {
       salaryMax: null,
       showCompany: false,
       company: { id: 1 },
-      pageUrl: 'http://localhost:3000/vagas/dev-1',
+      pageUrl: 'http://localhost:3000/j/dev-1',
       createdAt: new Date('2026-01-15'),
       targetDate: new Date('2026-12-01'),
     });
@@ -202,12 +202,12 @@ async function runOfflineLibs() {
 
   await check('lib', 'job-share-utm', async () => {
     const { buildJobShareCopy, withShareUtm } = await import('../../lib/job-share-copy.js');
-    const u = withShareUtm('https://app.example/vagas/dev-12', { source: 'whatsapp', medium: 'social' });
+    const u = withShareUtm('https://app.example/j/dev-12', { source: 'whatsapp', medium: 'social' });
     if (!u.includes('utm_source=whatsapp') || !u.includes('utm_medium=social')) {
       throw new Error(`utm missing: ${u}`);
     }
     const pack = buildJobShareCopy(
-      { title: 'Dev', companyName: 'Acme', pageUrl: 'https://app.example/vagas/dev-12' },
+      { title: 'Dev', companyName: 'Acme', pageUrl: 'https://app.example/j/dev-12' },
       'pt-BR'
     );
     if (!pack.whatsappShareHref.includes('wa.me')) throw new Error('whatsapp href');
@@ -229,7 +229,7 @@ async function runOfflineLibs() {
       'utm_source=linkedin&utm_medium=social&utm_campaign=share'
     );
     if (!searchHasAttribution(params)) throw new Error('searchHasAttribution');
-    const attr = parseAttributionFromSearchParams(params, '/vagas/dev-12');
+    const attr = parseAttributionFromSearchParams(params, '/j/dev-12');
     if (!attr?.source || attr.source !== 'linkedin') {
       throw new Error(`parse ${JSON.stringify(attr)}`);
     }
@@ -240,7 +240,7 @@ async function runOfflineLibs() {
     }
     const merged = mergeAttribution(decoded, parseAttributionFromSearchParams(
       new URLSearchParams('utm_source=google'),
-      '/vagas/other'
+      '/j/other'
     ));
     if (merged.source !== 'linkedin') throw new Error('first-touch source must win');
     if (mapAttributionToCandidateSource(decoded) !== 'linkedin') {
@@ -276,7 +276,7 @@ async function runOfflineLibs() {
       legacyPublicVacancyPath,
     } = await import('../../lib/public-vacancy-posting.js');
     const path = publicVacancyPath({ vacancySlug: 'dev-senior', vacancyId: 42 });
-    if (path !== '/vagas/dev-senior-42') throw new Error(`path ${path}`);
+    if (path !== '/j/dev-senior-42') throw new Error(`path ${path}`);
     const parsed = parsePublicJobKey('dev-senior-42');
     if (!parsed || parsed.id !== 42 || parsed.slug !== 'dev-senior') {
       throw new Error(`parse ${JSON.stringify(parsed)}`);
@@ -309,7 +309,7 @@ async function runOfflineLibs() {
     })) {
       throw new Error('should index');
     }
-    const pub = await publishJob('https://app.example/vagas/dev-9');
+    const pub = await publishJob('https://app.example/j/dev-9');
     if (!pub.ok || !pub.mocked) throw new Error('publish mock');
     const closed = await syncVacancyIndex({
       previous: {
@@ -338,7 +338,7 @@ async function runOfflineLibs() {
       throw new Error('missing URL_DELETED request');
     }
     process.env.GOOGLE_INDEXING_ENABLED = 'false';
-    const off = await publishJob('https://app.example/vagas/dev-9');
+    const off = await publishJob('https://app.example/j/dev-9');
     if (!off.skipped) throw new Error('disabled should skip');
     return `mock events=${log.length}`;
   });
@@ -626,8 +626,8 @@ async function runSqlSuite(client) {
     if (!Array.isArray(entries) || !entries.length) {
       throw new Error('expected ≥1 sitemap entry from public-vacancy-page seed');
     }
-    const hit = entries.find((e) => String(e.path || '').includes('/vagas/') && /-\d+$/.test(e.path));
-    if (!hit) throw new Error('no /vagas/{slug}-{id} path in sitemap entries');
+    const hit = entries.find((e) => String(e.path || '').includes('/j/') && /-\d+$/.test(e.path));
+    if (!hit) throw new Error('no /j/{slug}-{id} path in sitemap entries');
     const closed = await client.query(
       `SELECT v.slug FROM vacancies v
        WHERE v.company_id = $1 AND v.status = 'closed' AND v.public_page_enabled AND v.deleted = FALSE

@@ -47,7 +47,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 
 | Já tem | Onde |
 |--------|------|
-| Página pública `/vagas/{slug}-{id}` (+ redirect legado `/vaga/...`) | `app/vagas/[jobKey]`, `app/vaga/...`, `lib/public-vacancy-posting.js` |
+| Página pública `/j/{slug}-{id}` (+ redirect legado `/vaga/...`) | `app/vagas/[jobKey]`, `app/vaga/...`, `lib/public-vacancy-posting.js` |
 | Índice `/vagas` (lista simples, cap 48) | `app/vagas/page.jsx` |
 | Meta title `{Título} | {Empresa}`, description, robots, OG + Twitter | `postingDocumentTitle` / `generateMetadata` |
 | JSON-LD JobPosting (open + index + prazo ok; sem TELECOMMUTE inventado) | `buildJobPostingJsonLd` |

@@ -32,8 +32,9 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── page.jsx                 ← Landing / teste (client)
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
-│   ├── vagas/                   ← Índice + página SEO `/vagas/{slug}-{id}`
-│   ├── vaga/[company]/[slug]/   ← Legado → redirect para `/vagas/{slug}-{id}`
+│   ├── j/                       ← Índice + página SEO `/j/{slug}-{id}`
+│   ├── vagas/                   ← Legado → redirect 308 para `/j/…`
+│   ├── vaga/[company]/[slug]/   ← Legado → redirect para `/j/{slug}-{id}`
 │   ├── r/[token]/               ← Relatório cliente (shortlist)
 │   ├── assessment/              ← Fluxos de avaliação (eneagrama / AE)
 │   ├── login/                   ← Login do painel
@@ -125,8 +126,8 @@ npm run dev
 
 ```
 1. Assessment: abre /t/<token> (empresa) ou /v/<token> (vaga) → responde o teste
-2. Página pública SEO (opcional): /vagas/<slug>-<id> → lê a vaga → CTA para o /v/…
-3. Índice: /vagas lista vagas públicas abertas
+2. Página pública SEO (opcional): /j/<slug>-<id> → lê a vaga → CTA para o /v/…
+3. Índice: /j lista vagas públicas abertas (/vagas redireciona)
 4. POST /api/results → grava no Postgres; vê o resultado na tela
 ```
 
@@ -136,25 +137,25 @@ npm run dev
 1. /login → JWT em cookie httpOnly
 2. /dashboard → Server Component lê o Postgres (dados por aba)
 3. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
-4. Em Vagas: link /v/… (teste) e, se habilitado, página /vagas/{slug}-{id} (divulgação/SEO)
+4. Em Vagas: link /v/… (teste) e, se habilitado, página /j/{slug}-{id} (divulgação/SEO)
 ```
 
 ---
 
-## Página pública da vaga (`/vagas/{slug}-{id}`)
+## Página pública da vaga (`/j/{slug}-{id}`)
 
-- URL canônica indexável: `/vagas/{slug}-{id}` (id = `vacancies.id`; JobPosting JSON-LD, Open Graph / Twitter com imagem da marca).
+- URL canônica indexável: `/j/{slug}-{id}` (id = `vacancies.id`; JobPosting JSON-LD, Open Graph / Twitter com imagem da marca).
 - Legado `/vaga/{companySlug}/{vacancySlug}` redireciona (308) para a canônica — bookmarks antigos continuam válidos; se o slug mudar, o id na URL corrige com redirect.
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
 - Perfil da empresa (admin → Empresas): `website` e texto “sobre” usados na página quando permitido.
 - Conteúdo exibido quando existir: título, empresa, tipo de contrato, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
 - Sem campos no schema hoje (omitidos de propósito): localização, modalidade remoto/híbrido, logo empresa, senioridade, skills/benefícios separados.
-- Encerrada ou `target_date` passado: agradecimento + relacionadas + `/vagas`; sem JobPosting / noindex / sem CTA de apply.
+- Encerrada ou `target_date` passado: agradecimento + relacionadas + `/j`; sem JobPosting / noindex / sem CTA de apply.
 - SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok).
 - Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
-- Referral (indicação): tabela `referral_codes`; APIs `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, analytics `GET /api/admin/referral-codes/analytics`. Link público: `/vagas/{slug}-{id}?ref=CODIGO`.
+- Referral (indicação): tabela `referral_codes`; APIs `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, analytics `GET /api/admin/referral-codes/analytics`. Link público: `/j/{slug}-{id}?ref=CODIGO`.
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral).
 

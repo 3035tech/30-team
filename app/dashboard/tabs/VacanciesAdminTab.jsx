@@ -32,6 +32,8 @@ import {
   buildVacancyDescriptionTemplate,
   isVacancyDescriptionSparse,
 } from '../../../lib/vacancy-description-template';
+import { publicVacancyPath } from '../../../lib/public-job-url';
+import { formatPublicVacancyDate } from '../../../lib/public-vacancy-lifecycle';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -2232,7 +2234,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     const link = token ? `${appUrl}/v/${token}` : '';
     const publicPagePath =
       v?.id && v?.slug
-        ? `/vagas/${encodeURIComponent(v.slug)}-${v.id}`
+        ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
         : '';
     const publicPageLink = publicPagePath ? `${appUrl}${publicPagePath}` : '';
     const exp = v?.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
@@ -2379,13 +2381,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                       </span>
                     )}
-                    {v.targetDate && (
+                    {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
                         {t(locale, 'recruiting.targetDate', {
-                          date: new Date(v.targetDate + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                          date: formatPublicVacancyDate(v.targetDate, locale),
                         })}
                       </span>
-                    )}
+                    ) : null}
                     {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
                         {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
@@ -2812,11 +2814,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                           </span>
                         )}
-                        {v.targetDate && (
+                        {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
                           <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
-                            {t(locale, 'recruiting.targetDate', { date: new Date(v.targetDate + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR') })}
+                            {t(locale, 'recruiting.targetDate', {
+                              date: formatPublicVacancyDate(v.targetDate, locale),
+                            })}
                           </span>
-                        )}
+                        ) : null}
                         {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
                           <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
                             {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}

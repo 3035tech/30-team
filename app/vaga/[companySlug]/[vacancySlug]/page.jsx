@@ -4,7 +4,7 @@ import {
   resolvePublicVacancyPosting as resolveLegacyRaw,
 } from '../../../../lib/public-vacancy-posting';
 
-/** Legado `/vaga/{company}/{slug}` → canônica `/vagas/{slug}-{id}` (308 permanente). */
+/** Legado `/vaga/{company}/{slug}` → canônica `/j/{slug}-{id}` (308 permanente). */
 const resolveLegacy = cache(resolveLegacyRaw);
 
 export async function generateMetadata() {

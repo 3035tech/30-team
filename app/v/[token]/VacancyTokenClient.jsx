@@ -72,7 +72,7 @@ function VacancyEntryInner({ token, initial }) {
           }}
         >
           <a
-            href="/vagas"
+            href="/j"
             style={{
               display: 'inline-block',
               marginBottom: '8px',

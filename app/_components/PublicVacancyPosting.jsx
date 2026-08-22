@@ -152,7 +152,7 @@ function RelatedVacanciesList({ locale, items, heading }) {
       </ul>
       <p style={{ margin: '16px 0 0' }}>
         <Link
-          href="/vagas"
+          href="/j"
           style={{ color: C.purple, fontSize: '14px', fontFamily: FONTS.mono }}
         >
           {t(locale, 'publicVacancy.seeAllOpen')}
@@ -269,7 +269,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
               ) : null}
               <p style={{ margin: '20px 0 0' }}>
                 <Link
-                  href="/vagas"
+                  href="/j"
                   style={{
                     display: 'inline-block',
                     background: GRADIENT.primaryBtn(C.purple, C.purpleDark),
@@ -427,7 +427,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                 )}
                 <PublicVacancyShareBar locale={locale} posting={posting} />
                 <p style={{ margin: '16px 0 0', fontSize: '12px', fontFamily: FONTS.mono }}>
-                  <Link href="/vagas" style={{ color: C.purple }}>
+                  <Link href="/j" style={{ color: C.purple }}>
                     {t(locale, 'publicVacancy.seeAllOpen')}
                   </Link>
                 </p>
@@ -440,7 +440,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   );
 }
 
-/** Listagem /vagas */
+/** Listagem /j */
 export function PublicVacanciesIndexView({ locale = 'pt-BR', items = [] }) {
   return (
     <div style={shell}>
