@@ -26,7 +26,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, Spinner } from '../../_components/AppLoading';
-import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
+import { buildRubricContextDraft, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
 import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
@@ -581,7 +581,7 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
   const [weights, setWeights] = useState(() => Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, ''])));
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
-  const [aiOpen, setAiOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(true);
   const [jobDesc, setJobDesc] = useState(() =>
     buildRubricContextDraft({
       locale,
@@ -589,7 +589,6 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
       descriptionPlain: htmlToPlainText(vacancyDescription),
     })
   );
-  const [aiPaste, setAiPaste] = useState('');
   const [aiBusy, setAiBusy] = useState('');
 
   const showError = async (message) => {
@@ -657,38 +656,39 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
       const v = parsed.weights[String(n)];
       next[n] = v != null && Number(v) > 0 ? String(v) : '';
     }
-    setWeights(next);
+    let nextNotes = notes;
     if (parsed.notes) {
-      setNotes((prev) => {
-        const cur = String(prev || '').trim();
-        if (!cur) return parsed.notes;
-        if (cur.includes(parsed.notes.slice(0, 40))) return cur;
-        return `${cur}\n\n${parsed.notes}`;
-      });
-      toast(t(locale, 'recruiting.rubricAiAppliedWithNotes'), 'ok');
-    } else {
-      toast(t(locale, 'recruiting.rubricAiApplied'), 'ok');
+      const cur = String(notes || '').trim();
+      if (!cur) nextNotes = parsed.notes;
+      else if (!cur.includes(parsed.notes.slice(0, 40))) nextNotes = `${cur}\n\n${parsed.notes}`;
     }
+    setWeights(next);
+    setNotes(nextNotes);
+    return { nextWeights: next, nextNotes };
   };
 
-  const save = async () => {
+  const persistRubric = async (weightsState, notesHtml, { toastKey = 'recruiting.rubricSaved' } = {}) => {
     const wObj = {};
     for (let typeNum = 1; typeNum <= 9; typeNum++) {
-      const raw = String(weights[typeNum] ?? '').trim();
+      const raw = String(weightsState[typeNum] ?? '').trim();
       if (!raw) continue;
       const n = parseFloat(raw);
       if (Number.isFinite(n) && n > 0) wObj[String(typeNum)] = n;
     }
+    const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vacancyFitWeights: wObj, vacancyRubricNotes: notesHtml }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+    toast(t(locale, toastKey), 'ok');
+    onSaved?.();
+  };
+
+  const save = async () => {
     try {
-      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vacancyFitWeights: wObj, vacancyRubricNotes: notes }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      toast(t(locale, 'recruiting.rubricSaved'), 'ok');
-      onSaved?.();
+      await persistRubric(weights, notes);
     } catch (e) {
       await showError(e?.message || t(locale, 'panel.common.error'));
     }
@@ -733,20 +733,24 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        if (data?.raw) setAiPaste(String(data.raw));
         throw new Error(
           data?.error ||
             (data?.errorCode ? t(locale, `errors.${data.errorCode}`) : null) ||
             t(locale, 'recruiting.rubricAiSuggestFailed')
         );
       }
-      if (data.raw) setAiPaste(String(data.raw));
-      if (data.weights) {
-        applyParsedWeights({
-          weights: data.weights,
-          notes: data.notes || '',
-        });
+      if (!data.weights) {
+        throw new Error(t(locale, 'recruiting.rubricAiParseError'));
       }
+      const { nextWeights, nextNotes } = applyParsedWeights({
+        weights: data.weights,
+        notes: data.notes || '',
+      });
+      await persistRubric(nextWeights, nextNotes, {
+        toastKey: data.notes
+          ? 'recruiting.rubricAiSavedWithNotes'
+          : 'recruiting.rubricAiSaved',
+      });
     } catch (e) {
       await showError(e?.message || t(locale, 'recruiting.rubricAiSuggestFailed'));
     } finally {
@@ -754,38 +758,22 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
     }
   };
 
-  const copyPrompt = async () => {
-    if (!isRubricContextFilledEnough(jobDesc)) {
-      await showError(t(locale, 'recruiting.rubricAiNeedContext'));
-      return;
-    }
-    const prompt = buildRubricWeightsPrompt({ locale, context: jobDesc });
-    try {
-      await navigator.clipboard.writeText(prompt);
-      toast(t(locale, 'recruiting.rubricAiCopied'), 'ok');
-    } catch {
-      await showError(t(locale, 'recruiting.rubricAiCopyFailed'));
-    }
-  };
-
-  const applyAiWeights = async () => {
-    const parsed = parseRubricWeightsFromAiText(aiPaste, locale);
-    if (!parsed.ok) {
-      await showError(t(locale, 'recruiting.rubricAiParseError'));
-      return;
-    }
-    applyParsedWeights(parsed);
-  };
-
   const btnSm = {
     fontSize: '11px',
-    padding: '6px 12px',
+    padding: '8px 12px',
     borderRadius: '8px',
     border: `1px solid ${C.purple}55`,
     background: `${C.purple}18`,
     color: C.purple,
     cursor: 'pointer',
     fontFamily: 'monospace',
+    minHeight: '40px',
+  };
+  const btnPrimary = {
+    ...btnSm,
+    background: C.purple,
+    border: `1px solid ${C.purple}`,
+    color: '#fff',
   };
 
   return (
@@ -851,20 +839,6 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
             <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.55, margin: '0 0 10px' }}>
               {t(locale, 'recruiting.rubricAiIntro')}
             </p>
-            <p
-              style={{
-                fontSize: '12px',
-                color: C.text,
-                lineHeight: 1.55,
-                margin: '0 0 10px',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                background: `${C.purple}0c`,
-                border: `1px solid ${C.purple}33`,
-              }}
-            >
-              {t(locale, 'recruiting.rubricAiFillSteps')}
-            </p>
             <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
               {t(locale, 'recruiting.rubricAiJobLabel')}
             </label>
@@ -887,7 +861,7 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
                 resize: 'vertical',
               }}
             />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={suggestContext}
@@ -906,7 +880,7 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
                 onClick={suggestWeights}
                 disabled={Boolean(aiBusy)}
                 aria-busy={aiBusy === 'weights' || undefined}
-                style={{ ...btnSm, opacity: aiBusy ? 0.6 : 1 }}
+                style={{ ...btnPrimary, opacity: aiBusy ? 0.6 : 1 }}
               >
                 {aiBusy === 'weights' ? (
                   <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.rubricAiWorking')} />
@@ -914,35 +888,10 @@ function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDesc
                   t(locale, 'recruiting.rubricAiSuggestWeights')
                 )}
               </button>
-              <button type="button" onClick={copyPrompt} disabled={Boolean(aiBusy)} style={btnSm}>
-                {t(locale, 'recruiting.rubricAiCopyPrompt')}
-              </button>
             </div>
-            <label style={{ fontSize: '11px', color: C.muted, display: 'block', marginBottom: '4px' }}>
-              {t(locale, 'recruiting.rubricAiPasteLabel')}
-            </label>
-            <textarea
-              value={aiPaste}
-              onChange={(e) => setAiPaste(e.target.value)}
-              placeholder={t(locale, 'recruiting.rubricAiPastePh')}
-              rows={6}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                fontSize: '12px',
-                fontFamily: 'monospace',
-                color: C.text,
-                background: C.card,
-                marginBottom: '8px',
-                resize: 'vertical',
-              }}
-            />
-            <button type="button" onClick={applyAiWeights} style={btnSm}>
-              {t(locale, 'recruiting.rubricAiApply')}
-            </button>
+            <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '10px 0 0' }}>
+              {t(locale, 'recruiting.rubricAiFillSteps')}
+            </p>
           </>
         ) : null}
       </div>
