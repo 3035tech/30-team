@@ -211,11 +211,11 @@ async function runOfflineLibs() {
       if (e?.code !== 'INVALID_LOGO_SIZE') throw e;
     }
     const key = companyLogoObjectKey(42, 'webp');
-    if (!key.includes('companies/42/logo/') || !key.endsWith('.webp')) throw new Error(key);
+    if (!/^companies\/42\/[0-9a-f-]+\.webp$/i.test(key)) throw new Error(key);
     const prevPrefix = process.env.S3_KEY_PREFIX;
     process.env.S3_KEY_PREFIX = 'image/logo';
     const keyed = companyLogoObjectKey(7, 'png');
-    if (!keyed.startsWith('image/logo/companies/7/logo/') || !keyed.endsWith('.png')) {
+    if (!/^image\/logo\/companies\/7\/[0-9a-f-]+\.png$/i.test(keyed)) {
       if (prevPrefix == null) delete process.env.S3_KEY_PREFIX;
       else process.env.S3_KEY_PREFIX = prevPrefix;
       throw new Error(keyed);
