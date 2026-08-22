@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
 import { apiError } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
+import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
 
 function slugify(input) {
   return String(input || '')
@@ -72,6 +73,8 @@ export async function GET(request) {
        c.name,
        c.slug,
        c.active,
+       c.website,
+       c.about_html AS "aboutHtml",
        c.created_at AS "createdAt",
        lk.token AS "activeToken",
        lk.expires_at AS "activeTokenExpiresAt"
@@ -103,11 +106,19 @@ export async function POST(request) {
   const slug = slugify(body.slug || name);
   if (!name || !slug) return apiError(request, 'NAME_REQUIRED', 400);
 
+  let profile;
+  try {
+    profile = parseCompanyProfileFromBody(body, { forCreate: true });
+  } catch (e) {
+    if (e?.code === 'INVALID_WEBSITE') return apiError(request, 'INVALID_WEBSITE', 400);
+    throw e;
+  }
+
   const ins = await query(
-    `INSERT INTO companies (name, slug, active)
-     VALUES ($1, $2, TRUE)
-     RETURNING id, name, slug, active, created_at AS "createdAt"`,
-    [name, slug]
+    `INSERT INTO companies (name, slug, active, website, about_html)
+     VALUES ($1, $2, TRUE, $3, $4)
+     RETURNING id, name, slug, active, website, about_html AS "aboutHtml", created_at AS "createdAt"`,
+    [name, slug, profile.website, profile.aboutHtml]
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);

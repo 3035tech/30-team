@@ -268,4 +268,25 @@ ALTER TABLE users
 COMMENT ON COLUMN users.must_change_password IS
   'TRUE após criação com senha temporária — obriga troca no próximo login.';
 
+-- 030 — perfil empresa + página pública indexável da vaga
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS website TEXT,
+  ADD COLUMN IF NOT EXISTS about_html TEXT;
+
+ALTER TABLE vacancies
+  ADD COLUMN IF NOT EXISTS public_page_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_allow_index BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_show_company_info BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_show_salary BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_company_slug_public
+  ON vacancies (company_id, LOWER(slug))
+  WHERE deleted = FALSE AND public_page_enabled = TRUE;
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_public_open_created
+  ON vacancies (created_at DESC)
+  WHERE deleted = FALSE
+    AND public_page_enabled = TRUE
+    AND public_allow_index = TRUE
+    AND status = 'open';
 

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "description": "Fixture catalog for DTOV ephemeral DB. Add a module when a new feature needs data the baseline does not cover.",
+  "fixtures": [
+    {
+      "id": "baseline",
+      "module": "baseline.js",
+      "enabled": true,
+      "covers": [
+        "companies",
+        "users-hr-direction",
+        "areas",
+        "assessments-t1t9",
+        "vacancies-pipeline",
+        "motivators-ae",
+        "one-on-ones",
+        "public-tokens-t-v-r",
+        "notifications"
+      ],
+      "dependsOn": [],
+      "smoke": [
+        {
+          "name": "company-demo",
+          "sql": "SELECT 1 FROM companies WHERE slug = 'todos-os-dados-demo' AND deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "vacancy-open",
+          "sql": "SELECT 1 FROM vacancies WHERE slug = 'engenheiro-fullstack-plataforma' AND status = 'open' AND deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "motivators-def",
+          "sql": "SELECT 1 FROM ae_definitions WHERE LOWER(slug) = 'motivators' AND active = TRUE LIMIT 1"
+        }
+      ]
+    },
+    {
+      "id": "public-vacancy-page",
+      "module": "public-vacancy-page.js",
+      "enabled": true,
+      "covers": [
+        "public-page-/vaga",
+        "public-index-/vagas",
+        "company-website-about",
+        "closed-vacancy-thank-you"
+      ],
+      "dependsOn": ["baseline"],
+      "whenNewFeature": "Schema 030 + /vaga + /vagas flags",
+      "smoke": [
+        {
+          "name": "open-indexed",
+          "sql": "SELECT 1 FROM vacancies WHERE public_page_enabled = TRUE AND public_allow_index = TRUE AND status = 'open' AND deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "closed-public",
+          "sql": "SELECT 1 FROM vacancies WHERE public_page_enabled = TRUE AND status = 'closed' AND deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "company-profile",
+          "sql": "SELECT 1 FROM companies WHERE website IS NOT NULL AND about_html IS NOT NULL AND deleted = FALSE LIMIT 1"
+        }
+      ]
+    }
+  ]
+}

@@ -162,8 +162,18 @@ export async function POST(request, { params }) {
         salaryMax: body.salaryMax != null ? body.salaryMax : vacancy.salaryMax,
         description: body.description != null ? body.description : vacancy.description,
       };
-      const out = await suggestVacancyDescriptionAi({ vacancy: draftVacancy, locale });
-      return NextResponse.json({ ok: true, action, description: out.description, model: out.model });
+      const out = await suggestVacancyDescriptionAi({
+        vacancy: draftVacancy,
+        locale,
+        mode: body.mode || 'auto',
+      });
+      return NextResponse.json({
+        ok: true,
+        action,
+        description: out.description,
+        mode: out.mode,
+        model: out.model,
+      });
     }
 
     return apiError(request, 'INVALID_ACTION', 400);

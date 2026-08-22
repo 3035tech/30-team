@@ -393,10 +393,28 @@ ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS salary_min TEXT;
 ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS salary_max TEXT;
 ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS client_report_show_salary BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS employment_type TEXT;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS public_page_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS public_allow_index BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS public_show_company_info BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS public_show_salary BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS website TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS about_html TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT NOT NULL DEFAULT 'pt-BR';
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_locale_check;
 ALTER TABLE users ADD CONSTRAINT users_locale_check CHECK (locale IN ('pt-BR', 'en'));
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_company_slug_public
+  ON vacancies (company_id, LOWER(slug))
+  WHERE deleted = FALSE AND public_page_enabled = TRUE;
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_public_open_created
+  ON vacancies (created_at DESC)
+  WHERE deleted = FALSE
+    AND public_page_enabled = TRUE
+    AND public_allow_index = TRUE
+    AND status = 'open';
 
 DROP INDEX IF EXISTS idx_companies_slug_unique;
 CREATE UNIQUE INDEX idx_companies_slug_unique ON companies (LOWER(slug)) WHERE deleted = FALSE;

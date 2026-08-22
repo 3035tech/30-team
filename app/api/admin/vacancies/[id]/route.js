@@ -25,6 +25,7 @@ async function getVacancyOr404(vacancyId) {
        v.id,
        v.company_id AS "companyId",
        c.name AS "companyName",
+       c.slug AS "companySlug",
        v.title,
        v.slug,
        v.status,
@@ -35,6 +36,10 @@ async function getVacancyOr404(vacancyId) {
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
        v.employment_type AS "employmentType",
+       v.public_page_enabled AS "publicPageEnabled",
+       v.public_allow_index AS "publicAllowIndex",
+       v.public_show_company_info AS "publicShowCompanyInfo",
+       v.public_show_salary AS "publicShowSalary",
        v.created_at AS "createdAt"
      FROM vacancies v
      JOIN companies c ON c.id = v.company_id
@@ -152,19 +157,41 @@ export async function PATCH(request, { params }) {
       : Boolean(current.clientReportShowSalary);
   const nextEmploymentType =
     details.employmentType !== undefined ? details.employmentType : (current.employmentType ?? null);
+  const nextPublicPageEnabled =
+    details.publicPageEnabled !== undefined
+      ? details.publicPageEnabled
+      : Boolean(current.publicPageEnabled);
+  const nextPublicAllowIndex =
+    details.publicAllowIndex !== undefined
+      ? details.publicAllowIndex
+      : Boolean(current.publicAllowIndex);
+  const nextPublicShowCompanyInfo =
+    details.publicShowCompanyInfo !== undefined
+      ? details.publicShowCompanyInfo
+      : Boolean(current.publicShowCompanyInfo);
+  const nextPublicShowSalary =
+    details.publicShowSalary !== undefined
+      ? details.publicShowSalary
+      : Boolean(current.publicShowSalary);
   if (!nextTitle) return apiError(request, 'TITLE_REQUIRED', 400);
 
   const up = await query(
     `UPDATE vacancies
      SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6,
          description = $7, salary_min = $8, salary_max = $9, client_report_show_salary = $10,
-         employment_type = $11
+         employment_type = $11,
+         public_page_enabled = $12, public_allow_index = $13,
+         public_show_company_info = $14, public_show_salary = $15
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
                employment_type AS "employmentType",
+               public_page_enabled AS "publicPageEnabled",
+               public_allow_index AS "publicAllowIndex",
+               public_show_company_info AS "publicShowCompanyInfo",
+               public_show_salary AS "publicShowSalary",
                created_at AS "createdAt"`,
     [
       id,
@@ -178,6 +205,10 @@ export async function PATCH(request, { params }) {
       nextSalaryMax,
       nextShowSalary,
       nextEmploymentType,
+      nextPublicPageEnabled,
+      nextPublicAllowIndex,
+      nextPublicShowCompanyInfo,
+      nextPublicShowSalary,
     ]
   );
 

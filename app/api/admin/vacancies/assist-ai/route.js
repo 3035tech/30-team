@@ -15,7 +15,7 @@ import { suggestVacancyDescriptionAi } from '../../../../../lib/vacancy-assist-a
 /**
  * POST /api/admin/vacancies/assist-ai
  * Sem vacancy id — rascunho de descrição no create.
- * body: { action: 'vacancyDescription', title, employmentType, salaryMin, salaryMax, description?, locale? }
+ * body: { action: 'vacancyDescription', title, employmentType, salaryMin, salaryMax, description?, mode?, locale? }
  */
 export async function POST(request) {
   const cookieStore = cookies();
@@ -57,8 +57,15 @@ export async function POST(request) {
         rubricNotes: body.rubricNotes || '',
       },
       locale,
+      mode: body.mode || 'auto',
     });
-    return NextResponse.json({ ok: true, action, description: out.description, model: out.model });
+    return NextResponse.json({
+      ok: true,
+      action,
+      description: out.description,
+      mode: out.mode,
+      model: out.model,
+    });
   } catch (e) {
     const code = e?.code || 'RUBRIC_AI_FAILED';
     if (code === 'ASSIST_AI_DESC_SHORT') {

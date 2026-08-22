@@ -43,7 +43,13 @@ function VacancyEntryInner({ token, initial }) {
   const v = initial.vacancy;
   const isClosed = String(v?.status || '') === 'closed';
   const notice = isClosed
-    ? { kind: 'warning', title: t(locale, 'publicPages.vacancyClosedTitle'), message: t(locale, 'publicPages.vacancyClosedMessage') }
+    ? {
+        kind: 'warning',
+        title: t(locale, 'publicVacancy.closedTitle'),
+        message: t(locale, 'publicVacancy.closedThanksAndBrowse', {
+          title: v?.title || t(locale, 'publicVacancy.thisRole'),
+        }),
+      }
     : {
         kind: 'info',
         title: t(locale, 'publicPages.vacancyTitle'),
@@ -53,14 +59,41 @@ function VacancyEntryInner({ token, initial }) {
       };
 
   return (
-    <AssessmentFlow
-      vacancyToken={tokenValue}
-      inviteToken={inviteToken}
-      notice={notice}
-      startDisabled={isClosed}
-      requireCandidateEmail={true}
-      initialLocale={locale}
-    />
+    <div>
+      {isClosed ? (
+        <div
+          style={{
+            maxWidth: '660px',
+            margin: '24px auto 0',
+            padding: '0 24px',
+            textAlign: 'center',
+            position: 'relative',
+            zIndex: 2,
+          }}
+        >
+          <a
+            href="/vagas"
+            style={{
+              display: 'inline-block',
+              marginBottom: '8px',
+              color: '#8930B8',
+              fontFamily: 'Georgia, serif',
+              fontSize: '15px',
+            }}
+          >
+            {t(locale, 'publicVacancy.browseOpenCta')}
+          </a>
+        </div>
+      ) : null}
+      <AssessmentFlow
+        vacancyToken={tokenValue}
+        inviteToken={inviteToken}
+        notice={notice}
+        startDisabled={isClosed}
+        requireCandidateEmail={true}
+        initialLocale={locale}
+      />
+    </div>
   );
 }
 

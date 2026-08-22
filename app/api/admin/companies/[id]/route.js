@@ -6,6 +6,7 @@ import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError } from '../../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../../lib/permissions';
+import { parseCompanyProfileFromBody } from '../../../../../lib/company-profile';
 
 function slugify(input) {
   return String(input || '')
@@ -27,7 +28,8 @@ export async function PATCH(request, { params }) {
   if (!Number.isFinite(companyId)) return apiError(request, 'INVALID_COMPANY', 400);
 
   const current = await query(
-    `SELECT id, name, slug, active FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
+    `SELECT id, name, slug, active, website, about_html AS "aboutHtml"
+     FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [companyId]
   );
   if (current.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
@@ -40,16 +42,28 @@ export async function PATCH(request, { params }) {
   if (name !== null && !name) return apiError(request, 'NAME_REQUIRED', 400);
   if (slug !== null && !slug) return apiError(request, 'INVALID_SLUG', 400);
 
+  let profile;
+  try {
+    profile = parseCompanyProfileFromBody(body, { forCreate: false });
+  } catch (e) {
+    if (e?.code === 'INVALID_WEBSITE') return apiError(request, 'INVALID_WEBSITE', 400);
+    throw e;
+  }
+
   const nextName = name !== null ? name : current.rows[0].name;
   const nextSlug = slug !== null ? slug : current.rows[0].slug;
   const nextActive = active !== null ? active : current.rows[0].active;
+  const nextWebsite =
+    profile.website !== undefined ? profile.website : current.rows[0].website ?? null;
+  const nextAbout =
+    profile.aboutHtml !== undefined ? profile.aboutHtml : current.rows[0].aboutHtml ?? null;
 
   const up = await query(
     `UPDATE companies
-     SET name = $2, slug = $3, active = $4
+     SET name = $2, slug = $3, active = $4, website = $5, about_html = $6
      WHERE id = $1 AND deleted = FALSE
-     RETURNING id, name, slug, active, created_at AS "createdAt"`,
-    [companyId, nextName, nextSlug, nextActive]
+     RETURNING id, name, slug, active, website, about_html AS "aboutHtml", created_at AS "createdAt"`,
+    [companyId, nextName, nextSlug, nextActive, nextWebsite, nextAbout]
   );
 
   await audit({

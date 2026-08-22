@@ -1,0 +1,25 @@
+# Postgres efêmero só para o pipeline /dev-test-validate.
+# Porta 55432 — não conflita com docker-compose.dev (5432).
+# Volume é destruído em `npm run dtov:down` / harness down (padrão).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: team30_dtov_postgres
+    restart: 'no'
+    environment:
+      POSTGRES_DB: enneagram_dtov
+      POSTGRES_USER: dtov
+      POSTGRES_PASSWORD: dtov_local_only
+    ports:
+      - '55432:5432'
+    volumes:
+      - dtov_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dtov -d enneagram_dtov']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  dtov_pg_data:

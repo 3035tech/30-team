@@ -16,7 +16,14 @@
     "db:seed-motivators": "node scripts/seed-motivators-questions.js",
     "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",
     "db:seed-motivators-all": "node scripts/seed-motivators-questions.js && node scripts/seed-motivators-templates.js",
-    "db:clear": "node scripts/clear-data.js"
+    "db:clear": "node scripts/clear-data.js",
+    "dtov:reset": "node scripts/dtov/harness.js reset",
+    "dtov:up": "node scripts/dtov/harness.js up",
+    "dtov:down": "node scripts/dtov/harness.js down",
+    "dtov:migrate": "node scripts/dtov/harness.js migrate",
+    "dtov:seed": "node scripts/dtov/harness.js seed",
+    "dtov:smoke": "node scripts/dtov/harness.js smoke",
+    "dtov:status": "node scripts/dtov/harness.js status"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

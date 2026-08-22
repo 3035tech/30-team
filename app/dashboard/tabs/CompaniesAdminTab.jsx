@@ -80,6 +80,19 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           placeholder: t(locale, 'panel.admin.slugPlaceholder'),
           defaultValue: '',
         },
+        {
+          key: 'website',
+          label: t(locale, 'panel.admin.editCompanyWebsite'),
+          placeholder: t(locale, 'panel.admin.editCompanyWebsitePh'),
+          defaultValue: '',
+        },
+        {
+          key: 'aboutHtml',
+          type: 'textarea',
+          label: t(locale, 'panel.admin.editCompanyAbout'),
+          placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
+          defaultValue: '',
+        },
       ],
     });
     if (!values) return;
@@ -91,7 +104,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       const res = await fetch('/api/admin/companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nextName, slug: String(values.slug || '').trim() || undefined }),
+        body: JSON.stringify({
+          name: nextName,
+          slug: String(values.slug || '').trim() || undefined,
+          website: String(values.website || '').trim() || null,
+          aboutHtml: String(values.aboutHtml || '').trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
@@ -151,6 +169,19 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         { key: 'name', label: t(locale, 'panel.admin.editCompanyName'), defaultValue: c?.name ?? '' },
         { key: 'slug', label: t(locale, 'panel.admin.editCompanySlug'), defaultValue: c?.slug ?? '' },
         {
+          key: 'website',
+          label: t(locale, 'panel.admin.editCompanyWebsite'),
+          placeholder: t(locale, 'panel.admin.editCompanyWebsitePh'),
+          defaultValue: c?.website ?? '',
+        },
+        {
+          key: 'aboutHtml',
+          type: 'textarea',
+          label: t(locale, 'panel.admin.editCompanyAbout'),
+          placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
+          defaultValue: c?.aboutHtml ?? '',
+        },
+        {
           key: 'active',
           type: 'boolean',
           label: t(locale, 'panel.admin.editCompanyActive'),
@@ -170,7 +201,13 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       const res = await fetch(`/api/admin/companies/${encodeURIComponent(c.id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nextName, slug: nextSlug, active: nextActive }),
+        body: JSON.stringify({
+          name: nextName,
+          slug: nextSlug,
+          active: nextActive,
+          website: String(values.website || '').trim() || null,
+          aboutHtml: String(values.aboutHtml || '').trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));

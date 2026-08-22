@@ -107,6 +107,7 @@ export async function GET(request) {
        v.id,
        v.company_id AS "companyId",
        c.name AS "companyName",
+       c.slug AS "companySlug",
        v.title,
        v.slug,
        v.status,
@@ -117,6 +118,10 @@ export async function GET(request) {
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
        v.employment_type AS "employmentType",
+       v.public_page_enabled AS "publicPageEnabled",
+       v.public_allow_index AS "publicAllowIndex",
+       v.public_show_company_info AS "publicShowCompanyInfo",
+       v.public_show_salary AS "publicShowSalary",
        v.created_at AS "createdAt",
        vl.token AS "activeToken",
        vl.expires_at AS "activeTokenExpiresAt"
@@ -188,14 +193,19 @@ export async function POST(request) {
   const ins = await query(
     `INSERT INTO vacancies (
        company_id, title, slug, status, positions_count, target_date,
-       description, salary_min, salary_max, client_report_show_salary, employment_type
+       description, salary_min, salary_max, client_report_show_salary, employment_type,
+       public_page_enabled, public_allow_index, public_show_company_info, public_show_salary
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
                employment_type AS "employmentType",
+               public_page_enabled AS "publicPageEnabled",
+               public_allow_index AS "publicAllowIndex",
+               public_show_company_info AS "publicShowCompanyInfo",
+               public_show_salary AS "publicShowSalary",
                created_at AS "createdAt"`,
     [
       companyId,
@@ -209,6 +219,10 @@ export async function POST(request) {
       details.salaryMax,
       details.clientReportShowSalary === true,
       details.employmentType ?? null,
+      details.publicPageEnabled === true,
+      details.publicAllowIndex === true,
+      details.publicShowCompanyInfo === true,
+      details.publicShowSalary === true,
     ]
   );
 

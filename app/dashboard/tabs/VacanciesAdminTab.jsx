@@ -27,6 +27,10 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
+import {
+  buildVacancyDescriptionTemplate,
+  isVacancyDescriptionSparse,
+} from '../../../lib/vacancy-description-template';
 
 function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -47,6 +51,205 @@ function VacancyDescriptionHtml({ html }) {
         lineHeight: 1.65,
       }}
     />
+  );
+}
+
+const descAssistBtn = (opts = {}) => ({
+  fontSize: '11px',
+  padding: '6px 12px',
+  borderRadius: '8px',
+  border: opts.primary ? `1px solid ${C.purple}55` : `1px solid ${C.border}`,
+  background: opts.primary ? `${C.purple}18` : C.card,
+  color: opts.primary ? C.purple : C.text,
+  cursor: opts.disabled ? 'default' : 'pointer',
+  fontFamily: 'monospace',
+  opacity: opts.disabled ? 0.55 : 1,
+  minHeight: '36px',
+});
+
+function VacancyPublicFlagCheckbox({ locale, checked, onChange, labelKey, helpKey }) {
+  return (
+    <label
+      style={{
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'flex-start',
+        fontSize: '12px',
+        color: C.muted,
+        lineHeight: 1.45,
+        maxWidth: '520px',
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={Boolean(checked)}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ marginTop: '2px', accentColor: C.purple }}
+      />
+      <span>
+        <strong style={{ color: C.text }}>{t(locale, labelKey)}</strong>
+        <br />
+        {t(locale, helpKey)}
+      </span>
+    </label>
+  );
+}
+
+function VacancyPublicFlagsFields({ locale, values, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <VacancyPublicFlagCheckbox
+        locale={locale}
+        checked={values.publicPageEnabled}
+        onChange={(v) => onChange({ publicPageEnabled: v })}
+        labelKey="recruiting.publicPageEnabled"
+        helpKey="recruiting.publicPageEnabledHelp"
+      />
+      <VacancyPublicFlagCheckbox
+        locale={locale}
+        checked={values.publicAllowIndex}
+        onChange={(v) => onChange({ publicAllowIndex: v })}
+        labelKey="recruiting.publicAllowIndex"
+        helpKey="recruiting.publicAllowIndexHelp"
+      />
+      <VacancyPublicFlagCheckbox
+        locale={locale}
+        checked={values.publicShowCompanyInfo}
+        onChange={(v) => onChange({ publicShowCompanyInfo: v })}
+        labelKey="recruiting.publicShowCompanyInfo"
+        helpKey="recruiting.publicShowCompanyInfoHelp"
+      />
+      <VacancyPublicFlagCheckbox
+        locale={locale}
+        checked={values.publicShowSalary}
+        onChange={(v) => onChange({ publicShowSalary: v })}
+        labelKey="recruiting.publicShowSalary"
+        helpKey="recruiting.publicShowSalaryHelp"
+      />
+    </div>
+  );
+}
+
+/**
+ * Template estruturado + IA (criar base se vazio / melhorar se já houver texto).
+ */
+function VacancyDescriptionAssistBar({
+  locale,
+  busy,
+  title,
+  descriptionHtml,
+  employmentType,
+  salaryMin,
+  salaryMax,
+  vacancyId = null,
+  onApplyDescription,
+  onBusyChange,
+}) {
+  const { toast, notice, confirm } = useAppFeedback();
+  const sparse = isVacancyDescriptionSparse(descriptionHtml);
+  const titleOk = Boolean(String(title || '').trim());
+
+  const insertTemplate = async () => {
+    const next = buildVacancyDescriptionTemplate(locale);
+    if (!sparse && htmlToPlainText(descriptionHtml || '').trim()) {
+      const ok = await confirm({
+        title: t(locale, 'recruiting.descTemplateOverwriteTitle'),
+        message: t(locale, 'recruiting.descTemplateOverwriteMsg'),
+        confirmLabel: t(locale, 'recruiting.descTemplateInsert'),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    onApplyDescription(next);
+    toast(t(locale, 'recruiting.descTemplateInserted'), 'ok');
+  };
+
+  const runAi = async () => {
+    if (!titleOk || busy) return;
+    onBusyChange(true);
+    try {
+      const url = vacancyId
+        ? `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/assist-ai`
+        : '/api/admin/vacancies/assist-ai';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'vacancyDescription',
+          title,
+          employmentType: employmentType || null,
+          salaryMin,
+          salaryMax,
+          description: descriptionHtml || '',
+          mode: 'auto',
+          locale,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode
+            ? t(locale, `errors.${data.errorCode}`)
+            : data?.error || t(locale, 'recruiting.descAiFailed')
+        );
+      }
+      if (data.description) onApplyDescription(String(data.description));
+      const doneKey =
+        data.mode === 'improve' ? 'recruiting.descAiImprovedDone' : 'recruiting.descAiCreatedDone';
+      toast(t(locale, doneKey), 'ok');
+    } catch (e) {
+      await notice({
+        title: t(locale, 'panel.common.errorTitle'),
+        message: e?.message || t(locale, 'recruiting.descAiFailed'),
+        tone: 'error',
+      });
+    } finally {
+      onBusyChange(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: '8px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={insertTemplate}
+          title={t(locale, 'recruiting.descTemplateHelp')}
+          aria-label={t(locale, 'recruiting.descTemplateInsert')}
+          style={descAssistBtn({ disabled: busy })}
+        >
+          {t(locale, 'recruiting.descTemplateInsert')}
+        </button>
+        <button
+          type="button"
+          disabled={busy || !titleOk}
+          onClick={runAi}
+          title={
+            sparse
+              ? t(locale, 'recruiting.descAiCreateHelp')
+              : t(locale, 'recruiting.descAiImproveHelp')
+          }
+          aria-label={
+            busy
+              ? t(locale, 'recruiting.descAiWorking')
+              : sparse
+                ? t(locale, 'recruiting.descAiCreate')
+                : t(locale, 'recruiting.descAiImprove')
+          }
+          style={descAssistBtn({ primary: true, disabled: busy || !titleOk })}
+        >
+          {busy
+            ? t(locale, 'recruiting.descAiWorking')
+            : sparse
+              ? t(locale, 'recruiting.descAiCreate')
+              : t(locale, 'recruiting.descAiImprove')}
+        </button>
+      </div>
+      <p style={{ margin: '6px 0 0', fontSize: '11px', color: C.faint, lineHeight: 1.4 }}>
+        {t(locale, 'recruiting.descAssistHint')}
+      </p>
+    </div>
   );
 }
 
@@ -1192,6 +1395,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [salaryMax, setSalaryMax] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
+  const [publicPageEnabled, setPublicPageEnabled] = useState(false);
+  const [publicAllowIndex, setPublicAllowIndex] = useState(false);
+  const [publicShowCompanyInfo, setPublicShowCompanyInfo] = useState(false);
+  const [publicShowSalary, setPublicShowSalary] = useState(false);
   const [companyId, setCompanyId] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
@@ -1345,6 +1552,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         salaryMin: stripSalary(salaryMin),
         salaryMax: stripSalary(salaryMax),
         clientReportShowSalary,
+        publicPageEnabled,
+        publicAllowIndex,
+        publicShowCompanyInfo,
+        publicShowSalary,
       };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
@@ -1356,6 +1567,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
       setDescription(''); setEmploymentType(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
+      setPublicPageEnabled(false); setPublicAllowIndex(false);
+      setPublicShowCompanyInfo(false); setPublicShowSalary(false);
       setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
@@ -1454,6 +1667,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       salaryMin: salaryToCentsDigits(v.salaryMin),
       salaryMax: salaryToCentsDigits(v.salaryMax),
       clientReportShowSalary: Boolean(v.clientReportShowSalary),
+      publicPageEnabled: Boolean(v.publicPageEnabled),
+      publicAllowIndex: Boolean(v.publicAllowIndex),
+      publicShowCompanyInfo: Boolean(v.publicShowCompanyInfo),
+      publicShowSalary: Boolean(v.publicShowSalary),
+      companySlug: v.companySlug || '',
     });
   };
 
@@ -1471,6 +1689,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       salaryMin,
       salaryMax,
       clientReportShowSalary,
+      publicPageEnabled,
+      publicAllowIndex,
+      publicShowCompanyInfo,
+      publicShowSalary,
     } = editingVacancy;
     if (!title.trim()) { setError(t(locale, 'recruiting.titleRequired')); return; }
     setLoading(true);
@@ -1491,6 +1713,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           salaryMin: stripSalary(salaryMin),
           salaryMax: stripSalary(salaryMax),
           clientReportShowSalary: Boolean(clientReportShowSalary),
+          publicPageEnabled: Boolean(publicPageEnabled),
+          publicAllowIndex: Boolean(publicAllowIndex),
+          publicShowCompanyInfo: Boolean(publicShowCompanyInfo),
+          publicShowSalary: Boolean(publicShowSalary),
         }),
       });
       const data = await res.json();
@@ -1737,64 +1963,37 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </span>
           </label>
 
+          <VacancyPublicFlagsFields
+            locale={locale}
+            values={{
+              publicPageEnabled,
+              publicAllowIndex,
+              publicShowCompanyInfo,
+              publicShowSalary,
+            }}
+            onChange={(patch) => {
+              if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
+              if (patch.publicAllowIndex != null) setPublicAllowIndex(patch.publicAllowIndex);
+              if (patch.publicShowCompanyInfo != null) setPublicShowCompanyInfo(patch.publicShowCompanyInfo);
+              if (patch.publicShowSalary != null) setPublicShowSalary(patch.publicShowSalary);
+            }}
+          />
+
           <div>
             <label style={{ display: 'block', fontSize: '11px', color: C.faint, fontFamily: 'monospace', marginBottom: '6px' }}>
               {t(locale, 'recruiting.vacancyDescriptionLabel')}
             </label>
-            <div style={{ marginBottom: '8px' }}>
-              <button
-                type="button"
-                disabled={descAiBusy || !title.trim()}
-                onClick={async () => {
-                  setDescAiBusy(true);
-                  try {
-                    const res = await fetch('/api/admin/vacancies/assist-ai', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        action: 'vacancyDescription',
-                        title,
-                        salaryMin,
-                        salaryMax,
-                        description,
-                        locale,
-                      }),
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok) {
-                      throw new Error(
-                        data?.errorCode
-                          ? t(locale, `errors.${data.errorCode}`)
-                          : data?.error || t(locale, 'recruiting.descAiFailed')
-                      );
-                    }
-                    if (data.description) setDescription(String(data.description));
-                    toast(t(locale, 'recruiting.descAiDone'), 'ok');
-                  } catch (e) {
-                    await notice({
-                      title: t(locale, 'panel.common.errorTitle'),
-                      message: e?.message || t(locale, 'recruiting.descAiFailed'),
-                      tone: 'error',
-                    });
-                  } finally {
-                    setDescAiBusy(false);
-                  }
-                }}
-                style={{
-                  fontSize: '11px',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${C.purple}55`,
-                  background: `${C.purple}18`,
-                  color: C.purple,
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                  opacity: descAiBusy || !title.trim() ? 0.55 : 1,
-                }}
-              >
-                {descAiBusy ? t(locale, 'recruiting.descAiWorking') : t(locale, 'recruiting.descAiSuggest')}
-              </button>
-            </div>
+            <VacancyDescriptionAssistBar
+              locale={locale}
+              busy={descAiBusy}
+              title={title}
+              descriptionHtml={description}
+              employmentType={employmentType}
+              salaryMin={salaryMin}
+              salaryMax={salaryMax}
+              onApplyDescription={setDescription}
+              onBusyChange={setDescAiBusy}
+            />
             <RichTextEditor
               value={description}
               onChange={setDescription}
@@ -1960,70 +2159,34 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 {t(locale, 'recruiting.clientReportShowSalaryHelp')}
               </span>
             </label>
+            <VacancyPublicFlagsFields
+              locale={locale}
+              values={{
+                publicPageEnabled: editingVacancy.publicPageEnabled,
+                publicAllowIndex: editingVacancy.publicAllowIndex,
+                publicShowCompanyInfo: editingVacancy.publicShowCompanyInfo,
+                publicShowSalary: editingVacancy.publicShowSalary,
+              }}
+              onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
+            />
             <div>
               <label style={{ display: 'block', fontSize: '12px', color: C.muted, fontFamily: 'monospace', marginBottom: '6px' }}>
                 {t(locale, 'recruiting.vacancyDescriptionLabel')}
               </label>
-              <div style={{ marginBottom: '8px' }}>
-                <button
-                  type="button"
-                  disabled={descAiBusy || !(editingVacancy?.title || '').trim()}
-                  onClick={async () => {
-                    setDescAiBusy(true);
-                    try {
-                      const res = await fetch(
-                        `/api/admin/vacancies/${encodeURIComponent(editingVacancy.id)}/assist-ai`,
-                        {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'vacancyDescription',
-                            title: editingVacancy.title,
-                            employmentType: editingVacancy.employmentType,
-                            salaryMin: editingVacancy.salaryMin,
-                            salaryMax: editingVacancy.salaryMax,
-                            description: editingVacancy.description,
-                            locale,
-                          }),
-                        }
-                      );
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok) {
-                        throw new Error(
-                          data?.errorCode
-                            ? t(locale, `errors.${data.errorCode}`)
-                            : data?.error || t(locale, 'recruiting.descAiFailed')
-                        );
-                      }
-                      if (data.description) {
-                        setEditingVacancy((cur) => ({ ...cur, description: String(data.description) }));
-                      }
-                      toast(t(locale, 'recruiting.descAiDone'), 'ok');
-                    } catch (e) {
-                      await notice({
-                        title: t(locale, 'panel.common.errorTitle'),
-                        message: e?.message || t(locale, 'recruiting.descAiFailed'),
-                        tone: 'error',
-                      });
-                    } finally {
-                      setDescAiBusy(false);
-                    }
-                  }}
-                  style={{
-                    fontSize: '11px',
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    border: `1px solid ${C.purple}55`,
-                    background: `${C.purple}18`,
-                    color: C.purple,
-                    cursor: 'pointer',
-                    fontFamily: 'monospace',
-                    opacity: descAiBusy || !(editingVacancy?.title || '').trim() ? 0.55 : 1,
-                  }}
-                >
-                  {descAiBusy ? t(locale, 'recruiting.descAiWorking') : t(locale, 'recruiting.descAiSuggest')}
-                </button>
-              </div>
+              <VacancyDescriptionAssistBar
+                locale={locale}
+                busy={descAiBusy}
+                title={editingVacancy.title}
+                descriptionHtml={editingVacancy.description}
+                employmentType={editingVacancy.employmentType}
+                salaryMin={editingVacancy.salaryMin}
+                salaryMax={editingVacancy.salaryMax}
+                vacancyId={editingVacancy.id}
+                onApplyDescription={(html) =>
+                  setEditingVacancy((cur) => ({ ...cur, description: html }))
+                }
+                onBusyChange={setDescAiBusy}
+              />
               <RichTextEditor
                 value={editingVacancy.description}
                 onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}
@@ -2042,6 +2205,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     const v = detailVacancy;
     const token = v?.activeToken || null;
     const link = token ? `${appUrl}/v/${token}` : '';
+    const publicPagePath =
+      v?.publicPageEnabled && v?.companySlug && v?.slug
+        ? `/vaga/${encodeURIComponent(v.companySlug)}/${encodeURIComponent(v.slug)}`
+        : '';
+    const publicPageLink = publicPagePath ? `${appUrl}${publicPagePath}` : '';
     const exp = v?.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
 
     return (
@@ -2131,6 +2299,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       {t(locale, 'recruiting.expiresAt', { when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') })}
                     </div>
                   ) : null}
+                  {publicPageLink ? (
+                    <div style={{ marginTop: '10px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      <span style={{ color: C.faint }}>{t(locale, 'recruiting.copyPublicPageLink')}: </span>
+                      {publicPageLink}
+                    </div>
+                  ) : null}
                   <div style={{ marginTop: '8px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {v.positionsCount != null && v.positionsCount > 0 && (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
@@ -2169,6 +2343,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 >
                   {t(locale, 'recruiting.copyLink')}
                 </button>
+                {publicPageLink ? (
+                  <button
+                    type="button"
+                    onClick={() => copy(publicPageLink)}
+                    disabled={loading}
+                    style={{ background: 'transparent', border: `1px solid ${C.border}`,
+                      borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '12px',
+                      cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                  >
+                    {t(locale, 'recruiting.copyPublicPageLink')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => editVacancy(v)}
