@@ -3,16 +3,22 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+@keyframes team30spin {
+  to { transform: rotate(360deg); }
+}
 .spinner {
   display: inline-block;
+  box-sizing: border-box;
   width: 14px;
   height: 14px;
-  border: 2px solid currentColor;
+  min-width: 14px;
+  min-height: 14px;
+  border: 2.5px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.65s linear infinite;
   vertical-align: middle;
-  opacity: 0.6;
+  flex-shrink: 0;
 }
 :root {
   --color-focus-ring: #7c3aed;

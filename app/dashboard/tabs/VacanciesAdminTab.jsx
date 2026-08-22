@@ -62,10 +62,15 @@ const descAssistBtn = (opts = {}) => ({
   border: opts.primary ? `1px solid ${C.purple}55` : `1px solid ${C.border}`,
   background: opts.primary ? `${C.purple}18` : C.card,
   color: opts.primary ? C.purple : C.text,
-  cursor: opts.disabled ? 'default' : 'pointer',
+  cursor: opts.busy ? 'wait' : opts.disabled ? 'default' : 'pointer',
   fontFamily: 'monospace',
-  opacity: opts.disabled ? 0.55 : 1,
+  // Em busy manter opacidade alta — spinner precisa ser legível
+  opacity: opts.busy ? 1 : opts.disabled ? 0.55 : 1,
   minHeight: '36px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
 });
 
 function VacancyPublicFlagCheckbox({ locale, checked, onChange, labelKey, helpKey }) {
@@ -239,7 +244,7 @@ function VacancyDescriptionAssistBar({
                 ? t(locale, 'recruiting.descAiCreate')
                 : t(locale, 'recruiting.descAiImprove')
           }
-          style={descAssistBtn({ primary: true, disabled: busy || !titleOk })}
+          style={descAssistBtn({ primary: true, disabled: busy || !titleOk, busy })}
         >
           {busy ? (
             <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.descAiWorking')} />
@@ -253,7 +258,7 @@ function VacancyDescriptionAssistBar({
       {busy ? (
         <AppLoading
           locale={locale}
-          variant="block"
+          variant="banner"
           label={t(locale, 'recruiting.descAiWorkingHint')}
         />
       ) : (
