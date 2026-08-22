@@ -16,7 +16,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 
 | Camada | Detalhe |
 |--------|---------|
-| Frontend | React + Next.js App Router |
+| Frontend | React + Next.js App Router + **Tailwind CSS** (tokens em `tailwind.config.js` / `lib/theme.js`) |
 | Backend | API Routes + Server Components |
 | Auth | Tabela `users` + JWT em cookie httpOnly (`session_version` revoga sessões) |
 | Roles | `admin`, `direction`, `hr` |

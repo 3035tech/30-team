@@ -16,7 +16,7 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 3. **Progressive disclosure** — esconder complexidade até ser necessária (filtros avançados, criar vaga, detalhes).
 4. **Feedback imediato** — loading, sucesso, erro e estado vazio com copy útil (`t()`); nunca silêncio após clique.
 5. **Alvos tocáveis / clicáveis** — área mínima confortável (~40px); labels e `aria-label` em ícones.
-6. **Consistência** — mesmos padrões de card, botão, tipografia e navegação já usados no dashboard; tokens `C` / `FONTS` / `dashboard-shared`.
+6. **Consistência** — Tailwind (`tailwind.config.js` tokens) + `C`/`FONTS` onde ainda inline; padrões das tabs existentes; ver `.cursor/rules/tailwind-ui.mdc`.
 7. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
 8. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
 9. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
@@ -29,7 +29,8 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 - Ícones sem label nem tooltip
 - Modais empilhados ou confirmações sem contexto
 - Densidade extrema sem agrupamento (especialmente kanban/tabelas)
-- Inventar segundo design system (Tailwind, cards genéricos IA, roxo-em-tudo)
+- Inventar segundo design system (MUI/Chakra/etc.), cards genéricos IA, roxo-em-tudo / roxo em status
+- Hex solto fora de `theme.js` / `tailwind.config.js`
 
 ## Checklist rápido antes de entregar UI
 

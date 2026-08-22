@@ -62,7 +62,7 @@ export default function HomePage() {
             fontSize: '11px',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: 'rgba(124,58,237,.65)',
+            color: `${C.purple}A6`,
             fontFamily: FONTS.mono,
             marginBottom: '10px',
             marginTop: 0,

@@ -124,20 +124,11 @@ export function OverviewTab({
       {data.error ? (
         <p style={{ ...S.muted, color: '#b91c1c', margin: 0 }}>{t(locale, 'panel.overview.loadError')}</p>
       ) : null}
-      <div style={{ ...S.card, padding: '20px 24px' }}>
-        <span style={S.label}>{t(locale, 'dashboard.overview')}</span>
-        <h2
-          style={{
-            margin: '8px 0 0',
-            fontSize: '22px',
-            fontWeight: 'normal',
-            fontFamily: "'Georgia',serif",
-            color: C.text,
-          }}
-        >
-          {t(locale, 'panel.overview.headline')}
-        </h2>
-        <p style={{ margin: '8px 0 0', fontSize: '13px', color: C.muted, lineHeight: 1.55, maxWidth: '62ch' }}>
+      <div className="rounded-card border border-ink/12 bg-white p-5 sm:px-6">
+        <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.15em] text-ink-label">
+          {t(locale, 'dashboard.overview')}
+        </span>
+        <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
           {t(locale, 'panel.overview.intro')}
         </p>
         {chips.length > 0 ? (
@@ -406,7 +397,7 @@ export function OverviewTab({
         </div>
       </div>
 
-      <div style={{ ...S.card, background: 'rgba(124,58,237,.04)', border: `1px solid ${C.purple}22` }}>
+      <div style={{ ...S.card, background: `${C.purple}0A`, border: `1px solid ${C.purple}22` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           <span style={S.label}>{t(locale, 'panel.overview.typeMixTitle')}</span>
           <button

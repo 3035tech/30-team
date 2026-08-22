@@ -5,7 +5,7 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { personListName, personSortKey } from '../../../lib/person-name';
 import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
-import { C } from '../../../lib/theme';
+import { C, FONTS } from '../../../lib/theme';
 import { S, TypeBadge } from '../dashboard-shared';
 
 function scoreOf(row, typeNum) {
@@ -77,14 +77,14 @@ function InsightStrip({ locale, visible }) {
         marginBottom: '18px',
         padding: '12px 14px',
         borderRadius: '12px',
-        background: 'rgba(124,58,237,.06)',
+        background: `${C.purple}0F`,
         border: `1px solid ${C.purple}28`,
       }}
     >
       <span
         style={{
           fontSize: '10px',
-          fontFamily: 'monospace',
+          fontFamily: FONTS.mono,
           letterSpacing: '1.5px',
           textTransform: 'uppercase',
           color: C.purple,
@@ -202,7 +202,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
     borderRadius: '8px',
     fontSize: '11px',
     cursor: 'pointer',
-    fontFamily: 'monospace',
+    fontFamily: FONTS.mono,
     letterSpacing: '0.5px',
     textTransform: 'uppercase',
   };
@@ -244,7 +244,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                 border: `1px solid ${C.border}`,
               }}
             >
-              <div style={{ fontSize: '10px', fontFamily: 'monospace', color: C.purple, letterSpacing: '1px', marginBottom: '6px' }}>
+              <div style={{ fontSize: '10px', fontFamily: FONTS.mono, color: C.purple, letterSpacing: '1px', marginBottom: '6px' }}>
                 {t(locale, 'panel.compare.useStep', { n })}
               </div>
               <div style={{ fontSize: '13px', color: C.muted, lineHeight: 1.5 }}>
@@ -267,7 +267,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             borderBottom: `1px solid ${C.border}`,
           }}
         >
-          <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>
             {t(locale, 'panel.compare.inTable', { selected: nSel, total: nTot })}
           </span>
           <input
@@ -296,7 +296,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             }}
           />
           {(search || '').trim() ? (
-            <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono }}>
               {t(locale, 'panel.compare.searchResultsTotal', { n: listTotal })}
             </span>
           ) : null}          <button
@@ -425,7 +425,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                       padding: '10px 12px',
                       color: C.muted,
                       fontWeight: 'normal',
-                      fontFamily: 'monospace',
+                      fontFamily: FONTS.mono,
                       borderBottom: `1px solid ${C.border}`,
                       cursor: 'pointer',
                       userSelect: 'none',
@@ -458,7 +458,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                     >
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                         <span style={{ fontSize: '14px' }}>{TYPE_DATA[typeNum].emoji}</span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.5px' }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: '11px', letterSpacing: '0.5px' }}>
                           T{typeNum}
                         </span>
                         <span style={{ color: C.faint, fontSize: '10px', minHeight: '12px' }}>{sortMark(typeNum)}</span>
@@ -517,7 +517,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                                 justifyContent: 'center',
                                 fontSize: '10px',
                                 color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
-                                fontFamily: 'monospace',
+                                fontFamily: FONTS.mono,
                                 fontWeight: isTop ? 600 : 400,
                               }}
                             >

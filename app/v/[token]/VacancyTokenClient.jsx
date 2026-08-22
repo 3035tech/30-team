@@ -73,13 +73,7 @@ function VacancyEntryInner({ token, initial }) {
         >
           <a
             href="/j"
-            style={{
-              display: 'inline-block',
-              marginBottom: '8px',
-              color: '#8930B8',
-              fontFamily: 'Georgia, serif',
-              fontSize: '15px',
-            }}
+            className="mb-2 inline-block font-display text-[15px] text-brand-500"
           >
             {t(locale, 'publicVacancy.browseOpenCta')}
           </a>

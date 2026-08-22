@@ -17,5 +17,5 @@ Antes de qualquer mudança visual: seguir **UI/UX** em `AGENTS.md` e `.cursor/ru
 5. Tipos: `typeFullName` / `typeShortLabel` (`lib/type-en.js`) — não hardcodar nomes T1–T9.
 6. Pipeline no kanban: drag-and-drop atualiza o estágio; **sem** select de status no card.
 7. Público (`/t`, `/v`, assessment): fluxo em `AssessmentFlow.jsx` / `MotivatorsFlow.jsx`; resultado vem da API, não do cálculo no cliente.
-8. Não adicionar TypeScript nem CSS-in-JS novo; seguir o estilo inline + tokens já usado.
+8. Preferir **Tailwind** (`className` + tokens do `tailwind.config.js`) em UI nova ou bloco em edição; `style={{}}` + `C.*` só para dinâmico ou legado ainda não migrado. Sem TypeScript / sem pasta `src/`. Ver `.cursor/rules/tailwind-ui.mdc`.
 9. Ícones sozinhos (sidebar colapsada, sino, etc.): `aria-label` + `title`/tooltip; alvo clicável confortável.

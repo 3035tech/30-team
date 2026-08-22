@@ -16,6 +16,7 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 ## Stack (obrigatória)
 
 - **Next.js 14** App Router + **React 18** — JavaScript/JSX (**sem TypeScript**)
+- **UI:** **Tailwind CSS** (`tailwind.config.js` + `app/globals.css`) — padrão para UI nova e para blocos que o agente estiver editando. Tokens de marca/semântica alinhados a `lib/theme.js` / `lib/brand.js` (`brand-*`, `canvas`, `ink`, `pipeline-*`, etc.). Ver `.cursor/rules/tailwind-ui.mdc`.
 - Backend: API Routes + Server Components (não Express separado)
 - **PostgreSQL 16** via `pg` — `query` (primário) / `queryRead` (réplica opcional)
 - Auth: tabela `users`, bcrypt, JWT no cookie httpOnly `team30_session` (8h)
@@ -23,7 +24,8 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 - i18n: `pt-BR` e `en` em `lib/i18n.js`
 - Deploy: Docker standalone (`output: 'standalone'`), Compose, GHCR
 
-Não instale pacotes novos sem necessidade clara. Não introduza TypeScript, Tailwind, nem pasta `src/` paralela.
+Não instale pacotes novos sem necessidade clara. Não introduza TypeScript nem pasta `src/` paralela. **Não** inventar outro design system além de Tailwind + tokens do theme.
+
 
 ## Arquitetura
 
@@ -72,7 +74,8 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 |------|--------|
 | Helpers em `lib/` | Duplicar SQL, filtros ou cores em várias tabs |
 | `t(locale, 'key')` | String de UI hardcoded |
-| Tokens `C` / `FONTS` em `lib/theme.js` | Hex solto; roxo da marca como cor de status |
+| Tokens `C` / `FONTS` em `lib/theme.js` **e** classes Tailwind do `tailwind.config.js` (`brand-*`, `pipeline-*`) | Hex solto; roxo da marca como cor de status; `bg-purple-*` genérico do default |
+| **Tailwind `className`** em UI nova / bloco em edição; `style={{}}` só para dinâmico (T1–T9, widths) | Big-bang rewrite; segundo kit (MUI etc.); CSS module por tela sem necessidade |
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
 | Nomes de arquivo/export em inglês | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`) |
@@ -115,7 +118,7 @@ O agente atua como **especialista de usabilidade e interface**. Objetivo: gestor
 1. **Uma tarefa principal** por tela ou primeiro viewport — o resto é secundário ou progressive disclosure.
 2. **Lista antes de formulário** — entidades ricas (vagas, usuários, etc.): ver/buscar primeiro; criar/editar atrás de botão, drawer ou rota dedicada.
 3. **Feedback** — loading, sucesso, erro e empty state com copy útil (i18n); nunca clique sem resposta.
-4. **Consistência** — `C` / `FONTS` / `dashboard-shared`; mesmos botões, cards e densidade das tabs já existentes.
+4. **Consistência** — Tailwind + tokens `brand`/`pipeline`/`C`; mesmos padrões de botão, card e densidade; `dashboard-shared` onde já existir.
 5. **Acessibilidade básica** — alvos ~40px, `aria-label`/`title` em ícones, contraste, foco; sidebar colapsada = ícone + tooltip.
 6. **Responsive** — mobile: drawer; desktop: collapse de menu ok; não quebrar assessment público.
 7. **Copy de perfil** — hedging (“tende a”); nunca diagnóstico clínico.
@@ -123,7 +126,8 @@ O agente atua como **especialista de usabilidade e interface**. Objetivo: gestor
 ### Anti-padrões
 - Formulário de criação permanente no topo da listagem
 - Ícones sem texto nem tooltip; CTAs competindo sem hierarquia
-- Segundo design system (Tailwind, cards “genéricos de IA”, roxo em status de pipeline)
+- Segundo design system paralelo (MUI, Chakra, cards “genéricos de IA”); roxo em status de pipeline; hex fora dos tokens
+- Big-bang de migração Tailwind só por estética (migrar o bloco que estiver tocando)
 - Densidade sem agrupamento; modais empilhados sem contexto
 
 ### Checklist ao entregar UI
@@ -253,7 +257,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` |
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
-| Cores / marca | `lib/theme.js`, `lib/brand.js` |
+| Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |

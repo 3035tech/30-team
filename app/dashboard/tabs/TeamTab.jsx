@@ -15,6 +15,7 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
+import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
@@ -181,7 +182,7 @@ export function TeamTab({
   focusCandidateId = null,
 }) {
   const [open, setOpen] = useState(null);
-  const [personTab, setPersonTab] = useState('style');
+  const [personTab, setPersonTab] = useState('people');
   const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -223,7 +224,7 @@ export function TeamTab({
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab('style');
+      setPersonTab('people');
       loadDetail(cid);
       return;
     }
@@ -236,13 +237,13 @@ export function TeamTab({
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab('style');
+      setPersonTab('people');
       return;
     }
     const aid = detail.assessments?.[0]?.id;
     if (aid) {
       setOpen(String(aid));
-      setPersonTab('style');
+      setPersonTab('people');
     }
   }, [detail, focusCandidateId, results]);
 
@@ -579,10 +580,11 @@ export function TeamTab({
             </button>
           );
         })}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
           {[
-            { id: 'list',   icon: '≡', label: t(locale, 'panel.team.viewList') },
-            { id: 'kanban', icon: '⊞', label: t(locale, 'panel.team.viewKanban') },
+            { id: 'list',   icon: 'list', label: t(locale, 'panel.team.viewList') },
+            { id: 'kanban', icon: 'kanban', label: t(locale, 'panel.team.viewKanban') },
           ].map(({ id, icon, label }) => (
             <button
               key={id}
@@ -591,14 +593,21 @@ export function TeamTab({
               title={label}
               aria-pressed={viewMode === id}
               style={{ padding: '5px 10px', borderRadius: '8px', fontSize: '12px',
-                fontFamily: 'monospace', cursor: 'pointer',
+                fontFamily: FONTS.mono, cursor: 'pointer',
                 border: `1px solid ${viewMode === id ? `${C.purple}55` : C.border}`,
                 background: viewMode === id ? `${C.purple}18` : 'transparent',
-                color: viewMode === id ? C.purple : C.muted }}
+                color: viewMode === id ? C.purple : C.muted,
+                display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              {icon} {label}
+              <Icon name={icon} /> {label}
             </button>
           ))}
+          </div>
+          {viewMode === 'kanban' ? (
+            <p className="m-0 max-w-[320px] text-right text-[11px] leading-snug text-ink-faint">
+              {t(locale, 'panel.team.teamKanbanHint')}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -672,7 +681,7 @@ export function TeamTab({
                           onClick={() => {
                             if (draggingId) return;
                             setOpen(rid);
-                            setPersonTab('style');
+                            setPersonTab('people');
                             if (r.candidateId) loadDetail(r.candidateId);
                           }}
                           style={{ background: 'rgba(255,255,255,.92)',
@@ -829,7 +838,7 @@ export function TeamTab({
             }}
             onClick={() => {
               setOpen(id);
-              setPersonTab('style');
+              setPersonTab('people');
               if (r.candidateId) loadDetail(r.candidateId);
               else { setDetail(null); setDetailErr(''); }
             }}
@@ -893,10 +902,10 @@ export function TeamTab({
                         padding: '3px 10px',
                         fontSize: '12px',
                         borderRadius: '20px',
-                        background: 'rgba(124,58,237,.12)',
-                        border: '1px solid rgba(124,58,237,.35)',
+                        background: `${C.purple}1F`,
+                        border: `1px solid ${C.purple}59`,
                         color: C.purpleLight,
-                        fontFamily: 'monospace',
+                        fontFamily: FONTS.mono,
                       }}
                     >
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
@@ -985,7 +994,7 @@ export function TeamTab({
         open={Boolean(open && openRow)}
         title={openRow ? titleCasePersonName(openRow.name) : t(locale, 'panel.team.personDetailTitle')}
         locale={locale}
-        onClose={() => { setOpen(null); setDetail(null); setDetailErr(''); setPersonTab('style'); }}
+        onClose={() => { setOpen(null); setDetail(null); setDetailErr(''); setPersonTab('people'); }}
         maxWidth="920px"
       >
         {openRow ? (
@@ -994,9 +1003,12 @@ export function TeamTab({
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
               onChange={setPersonTab}
+              moreLabel={t(locale, 'panel.team.personTabMore')}
               tabs={[
-                { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
                 { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
+                { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
+              ]}
+              moreTabs={[
                 { id: 'history', label: t(locale, 'panel.team.personTabHistory') },
                 { id: 'profile', label: t(locale, 'panel.team.personTabProfile') },
               ]}

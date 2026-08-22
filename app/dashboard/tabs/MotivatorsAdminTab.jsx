@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { S, Bar } from '../dashboard-shared';
+import { S, Bar, PanelSubNav } from '../dashboard-shared';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -791,27 +791,12 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {visibleViews.map((v) => (
-          <button
-            key={v.id}
-            type="button"
-            onClick={() => setView(v.id)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '10px',
-              border: `1px solid ${view === v.id ? C.purple : C.border}`,
-              background: view === v.id ? `${C.purple}14` : 'transparent',
-              color: view === v.id ? C.purpleDark : C.muted,
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontFamily: 'monospace',
-            }}
-          >
-            {v.label}
-          </button>
-        ))}
-      </div>
+      <PanelSubNav
+        ariaLabel={t(locale, 'panel.motivatorsAdmin.tabsAria')}
+        active={view}
+        onChange={setView}
+        tabs={visibleViews.map((v) => ({ id: v.id, label: v.label }))}
+      />
 
       {view === 'invites' ? (
         <>

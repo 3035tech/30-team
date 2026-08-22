@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { typeShortLabel, typeTitleTooltip } from '../../../lib/type-en';
-import { C } from '../../../lib/theme';
+import { C, FONTS } from '../../../lib/theme';
+import { Icon } from '../../_components/Icon';
 import { Bar, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 
 const BAND_KEYS = {
@@ -59,9 +60,9 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
 
   const Kpi = ({ icon, value, label, hint }) => (
     <div style={{ ...S.card, padding: '22px' }}>
-      <div style={{ fontSize: '22px', marginBottom: '8px' }}>{icon}</div>
-      <div style={{ fontSize: '28px', color: C.purpleLight, fontFamily: 'monospace', marginBottom: '4px' }}>{value}</div>
-      <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+      <div style={{ color: C.purple, marginBottom: '8px', display: 'flex' }}><Icon name={icon} /></div>
+      <div style={{ fontSize: '28px', color: C.purpleLight, fontFamily: FONTS.mono, marginBottom: '4px' }}>{value}</div>
+      <div style={{ fontSize: '11px', color: C.muted, fontFamily: FONTS.mono, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
       {hint && <div style={{ fontSize: '11px', color: C.faint, marginTop: '8px', lineHeight: 1.5 }}>{hint}</div>}
     </div>
   );
@@ -101,9 +102,9 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-        <Kpi icon="📊" value={kpis.assessments} label={t(locale, 'panel.leadership.kpiAssessments')} hint={t(locale, 'panel.leadership.kpiAssessmentsHint')} />
-        <Kpi icon="👤" value={kpis.candidates} label={t(locale, 'panel.leadership.kpiCandidates')} hint={t(locale, 'panel.leadership.kpiCandidatesHint')} />
-        <Kpi icon="🏢" value={kpis.areasActive} label={t(locale, 'panel.leadership.kpiAreas')} hint={t(locale, 'panel.leadership.kpiAreasHint')} />
+        <Kpi icon="chart" value={kpis.assessments} label={t(locale, 'panel.leadership.kpiAssessments')} hint={t(locale, 'panel.leadership.kpiAssessmentsHint')} />
+        <Kpi icon="user" value={kpis.candidates} label={t(locale, 'panel.leadership.kpiCandidates')} hint={t(locale, 'panel.leadership.kpiCandidatesHint')} />
+        <Kpi icon="building" value={kpis.areasActive} label={t(locale, 'panel.leadership.kpiAreas')} hint={t(locale, 'panel.leadership.kpiAreasHint')} />
       </div>
 
       {viewMode === 'summary' ? (
@@ -130,12 +131,12 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                     }}
                   >
                     <span style={{ fontSize: '13px', color: C.text, flex: '1 1 140px' }}>{p.name}</span>
-                    <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{p.companyName}</span>
+                    <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono }}>{p.companyName}</span>
                     <TypeBadge type={p.topType} locale={locale} compact />
-                    <span style={{ fontSize: '12px', color: C.purpleLight, fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '12px', color: C.purpleLight, fontFamily: FONTS.mono }}>
                       {p.leadership010}/10
                     </span>
-                    <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '11px', color: C.muted, fontFamily: FONTS.mono }}>
                       {bandLabel(locale, p.leadershipBand)}
                     </span>
                   </div>
@@ -152,7 +153,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                   padding: '8px 12px',
                   color: C.muted,
                   fontSize: '12px',
-                  fontFamily: 'monospace',
+                  fontFamily: FONTS.mono,
                   cursor: 'pointer',
                   minHeight: '40px',
                 }}
@@ -173,11 +174,11 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {monthlyTrend.slice(-6).map((m) => (
                   <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
+                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono, flexShrink: 0 }}>{m.period}</span>
                     <div style={{ flex: 1 }}>
                       <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
                     </div>
-                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
+                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>{m.cnt}</span>
                   </div>
                 ))}
               </div>
@@ -203,7 +204,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                       padding: '16px 18px',
                     }}
                   >
-                    <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontFamily: 'monospace' }}>
+                    <div style={{ fontSize: '13px', color: C.text, marginBottom: '12px', fontFamily: FONTS.mono }}>
                       {co.companyName}
                       <span style={{ color: C.faint, marginLeft: '8px' }}>#{co.companyId}</span>
                     </div>
@@ -219,7 +220,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                                   padding: '8px 10px',
                                   color: C.muted,
                                   fontWeight: 'normal',
-                                  fontFamily: 'monospace',
+                                  fontFamily: FONTS.mono,
                                   borderBottom: `1px solid ${C.border}`,
                                 }}
                               >
@@ -238,12 +239,12 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                                 <TypeBadge type={p.topType} locale={locale} compact />
                               </td>
                               <td
-                                style={{ padding: '10px', color: C.purpleLight, fontFamily: 'monospace' }}
+                                style={{ padding: '10px', color: C.purpleLight, fontFamily: FONTS.mono }}
                                 title={t(locale, 'panel.leadership.scoreTitleHint')}
                               >
                                 {p.leadership010}/10
                               </td>
-                              <td style={{ padding: '10px', color: C.muted, fontFamily: 'monospace' }}>
+                              <td style={{ padding: '10px', color: C.muted, fontFamily: FONTS.mono }}>
                                 {bandLabel(locale, p.leadershipBand)}
                               </td>
                             </tr>
@@ -268,11 +269,11 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {monthlyTrend.map((m) => (
                   <div key={m.period} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: 'monospace', flexShrink: 0 }}>{m.period}</span>
+                    <span style={{ width: '72px', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono, flexShrink: 0 }}>{m.period}</span>
                     <div style={{ flex: 1 }}>
                       <Bar value={m.cnt} max={maxMonthly} color={C.purple} h={8} />
                     </div>
-                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{m.cnt}</span>
+                    <span style={{ width: '36px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>{m.cnt}</span>
                   </div>
                 ))}
               </div>
@@ -302,7 +303,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                             fontSize: '12px',
                             color: d.color,
                             flexShrink: 0,
-                            fontFamily: 'monospace',
+                            fontFamily: FONTS.mono,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -318,8 +319,8 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                         <div style={{ flex: 1 }}>
                           <Bar value={c} max={maxG} color={d.color} h={8} />
                         </div>
-                        <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', width: '28px', textAlign: 'right' }}>{c}</span>
-                        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', width: '40px', textAlign: 'right' }}>
+                        <span style={{ fontSize: '12px', color: C.muted, fontFamily: FONTS.mono, width: '28px', textAlign: 'right' }}>{c}</span>
+                        <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, width: '40px', textAlign: 'right' }}>
                           {Math.round((c / gTot) * 100)}%
                         </span>
                       </div>
@@ -342,7 +343,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                     <div style={{ flex: 1 }}>
                       <Bar value={row.diversity01} max={1} color={C.synergy} h={8} />
                     </div>
-                    <span style={{ width: '44px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+                    <span style={{ width: '44px', textAlign: 'right', fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>
                       {Math.round(row.diversity01 * 100)}%
                     </span>
                   </div>
@@ -365,7 +366,7 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                           padding: '8px 12px',
                           color: C.muted,
                           fontWeight: 'normal',
-                          fontFamily: 'monospace',
+                          fontFamily: FONTS.mono,
                           borderBottom: `1px solid ${C.border}`,
                         }}
                       >
@@ -378,17 +379,17 @@ export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
                   {areaSummaries.map((row) => (
                     <tr key={row.areaKey} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
                       <td style={{ padding: '10px 12px', color: C.text }}>{row.areaLabel}</td>
-                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>{row.n}</td>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: FONTS.mono }}>{row.n}</td>
                       <td style={{ padding: '10px 12px' }}>
                         {row.dominantType ? <TypeBadge type={row.dominantType} locale={locale} compact /> : <span style={{ color: C.faint }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: FONTS.mono }}>
                         {Math.round(row.diversity01 * 100)}%
                       </td>
-                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: FONTS.mono }}>
                         {row.avgFit010 != null ? `${row.avgFit010}/10` : '—'}
                       </td>
-                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: 'monospace' }}>
+                      <td style={{ padding: '10px 12px', color: C.muted, fontFamily: FONTS.mono }}>
                         {row.rubricAlignPct != null ? `${row.rubricAlignPct}%` : '—'}
                       </td>
                     </tr>

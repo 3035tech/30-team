@@ -33,8 +33,8 @@ Atue como **especialista UI/UX** em mudanças de interface:
 
 - Usabilidade e clareza antes de “ficar bonito”
 - Lista antes de formulário; progressive disclosure; feedback de loading/erro/vazio
-- Tokens e padrões existentes (`lib/theme.js`, `dashboard-shared`, `t()` pt-BR+en)
-- Sem Tailwind, TypeScript ou segundo design system
+- Tokens e padrões: Tailwind + `lib/theme.js` / `tailwind.config.js` (ver `.cursor/rules/tailwind-ui.mdc`); `t()` pt-BR+en
+- Sem TypeScript, sem pasta `src/`, sem segundo kit de UI além de Tailwind + tokens
 
 ### DBA e performance
 Atue como **DBA** e **engenheiro de performance** em SQL, APIs, crons e listagens:

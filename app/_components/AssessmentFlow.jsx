@@ -54,7 +54,7 @@ const S = {
     fontSize: '10px',
     letterSpacing: '3px',
     textTransform: 'uppercase',
-    color: 'rgba(124,58,237,.55)',
+    color: `${C.purple}8C`,
     fontFamily: FONTS.mono,
     marginBottom: '16px',
     display: 'block',

@@ -1,5 +1,9 @@
 /* Brand focus — keep aligned with lib/theme.js C.purple (PURPLE[500]) */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -21,7 +25,7 @@
   flex-shrink: 0;
 }
 :root {
-  --color-focus-ring: #7c3aed;
+  --color-focus-ring: #8930B8;
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
 }

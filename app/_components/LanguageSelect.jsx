@@ -1,6 +1,7 @@
 'use client';
 
 import { LOCALES, LOCALE_COOKIE, localeLabel, normalizeLocale, t } from '../../lib/i18n';
+import { C, FONTS } from '../../lib/theme';
 
 export default function LanguageSelect({ locale, onChange, persistUser = false, compact = false }) {
   const current = normalizeLocale(locale);
@@ -24,20 +25,20 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
 
   return (
     <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: compact ? '11px' : '12px', color: 'rgba(82,74,102,.72)' }}>
-      <span style={{ fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}>{t(current, 'common.language')}</span>
+      <span style={{ fontFamily: FONTS.mono, textTransform: 'uppercase', letterSpacing: '1px' }}>{t(current, 'common.language')}</span>
       <select
         value={current}
         onChange={(e) => changeLocale(e.target.value)}
         style={{
           background: 'rgba(26,22,37,.05)',
-          border: '1px solid rgba(124,58,237,.16)',
+          border: `1px solid ${C.purple}29`,
           borderRadius: '10px',
           padding: compact ? '10px 12px' : '9px 12px',
           minHeight: compact ? '40px' : undefined,
           color: 'rgba(52,44,70,.8)',
           fontSize: compact ? '12px' : '12px',
           cursor: 'pointer',
-          fontFamily: "'Georgia','Times New Roman',serif",
+          fontFamily: FONTS.serif,
         }}
       >
         {LOCALES.map((loc) => (

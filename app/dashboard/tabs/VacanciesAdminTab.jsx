@@ -3004,9 +3004,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   ariaLabel={t(locale, 'recruiting.detailTabsAria')}
                   active={detailSection}
                   onChange={setDetailSection}
+                  moreLabel={t(locale, 'recruiting.detailTabMore')}
                   tabs={[
                     { id: 'pipeline', label: t(locale, 'recruiting.detailTabPipeline') },
                     { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
+                  ]}
+                  moreTabs={[
                     { id: 'fit', label: t(locale, 'recruiting.detailTabFit') },
                     { id: 'analytics', label: t(locale, 'recruiting.detailTabAnalytics') },
                     { id: 'referral', label: t(locale, 'recruiting.detailTabReferral') },
@@ -3014,6 +3017,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     { id: 'config', label: t(locale, 'recruiting.detailTabConfig') },
                   ]}
                 />
+                {detailSection === 'pipeline' ? (
+                  <p className="mb-3 mt-0 text-xs leading-relaxed text-ink-muted">
+                    {t(locale, 'recruiting.vacancyKanbanHint')}
+                  </p>
+                ) : null}
               </div>
 
               {detailSection === 'pipeline' ? (

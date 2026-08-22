@@ -7,7 +7,7 @@ import { C, FONTS, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 
 const S = {
   label:{ fontSize:'11px', letterSpacing:'2.5px', textTransform:'uppercase',
-    color:'rgba(124,58,237,.55)', fontFamily:FONTS.mono,
+    color:`${C.purple}8C`, fontFamily:FONTS.mono,
     marginBottom:'12px', display:'block' },
   card:{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:'16px',
     padding:'28px', backdropFilter:'blur(16px)' },
@@ -234,7 +234,7 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
     background: 'transparent',
     cursor: 'pointer',
     font: 'inherit',
-    color: 'rgba(124,58,237,.55)',
+    color: `${C.purple}8C`,
     letterSpacing: '2.5px',
     textTransform: 'uppercase',
     fontFamily: FONTS.mono,
@@ -249,7 +249,7 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
       {sectionLabel ? (
         <>
           {sep}
-          <span style={{ color: 'rgba(124,58,237,.45)' }}>{sectionLabel}</span>
+          <span style={{ color: `${C.purple}73` }}>{sectionLabel}</span>
         </>
       ) : null}
       {sep}
@@ -258,19 +258,29 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
   );
 }
 
-function PanelSubNav({ tabs, active, onChange, ariaLabel }) {
+/**
+ * Horizontal section tabs. Optional `moreTabs` collapses secondary sections into a native select
+ * so recruiters keep primary jobs (e.g. pipeline + candidates) visible.
+ * Styled with Tailwind tokens (brand / ink / canvas).
+ */
+function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreLabel = 'More' }) {
+  const more = Array.isArray(moreTabs) ? moreTabs : [];
+  const moreActive = more.some((tab) => tab.id === active);
+  const moreValue = moreActive ? active : '';
+
+  const tabClass = (on) =>
+    [
+      'min-h-touch rounded-full border px-3.5 py-2 font-mono text-xs cursor-pointer',
+      on
+        ? 'border-brand-500/40 bg-brand-500/[0.08] text-brand-600'
+        : 'border-ink/12 bg-transparent text-ink-muted',
+    ].join(' ');
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel || undefined}
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '6px',
-        marginBottom: '14px',
-        paddingBottom: '12px',
-        borderBottom: `1px solid ${C.border}`,
-      }}
+      className="mb-3.5 flex flex-wrap items-center gap-1.5 border-b border-ink/12 pb-3"
     >
       {tabs.map((tab) => {
         const on = active === tab.id;
@@ -281,25 +291,44 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel }) {
             role="tab"
             aria-selected={on}
             onClick={() => onChange(tab.id)}
-            style={{
-              background: on ? `${C.purple}14` : 'transparent',
-              border: `1px solid ${on ? `${C.purple}44` : C.border}`,
-              borderRadius: '999px',
-              padding: '8px 14px',
-              color: on ? C.purpleDeep : C.muted,
-              fontSize: '12px',
-              cursor: 'pointer',
-              fontFamily: FONTS.mono,
-              minHeight: '40px',
-            }}
+            className={tabClass(on)}
           >
             {tab.label}
           </button>
         );
       })}
+      {more.length > 0 ? (
+        <label className="relative m-0 inline-flex min-h-touch items-center gap-2">
+          <span className="absolute h-px w-px overflow-hidden whitespace-nowrap border-0 p-0" style={{ clip: 'rect(0,0,0,0)', margin: -1 }}>
+            {moreLabel}
+          </span>
+          <select
+            aria-label={moreLabel}
+            value={moreValue}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next) onChange(next);
+            }}
+            className={[
+              'max-w-[220px] min-h-touch cursor-pointer rounded-full border px-3.5 py-2 font-mono text-xs',
+              moreActive
+                ? 'border-brand-500/40 bg-brand-500/[0.08] text-brand-600'
+                : 'border-ink/12 bg-ink/[0.05] text-ink-muted',
+            ].join(' ')}
+          >
+            <option value="">{moreLabel}</option>
+            {more.map((tab) => (
+              <option key={tab.id} value={tab.id}>
+                {tab.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
     </div>
   );
 }
+
 
 export {
   Bar,

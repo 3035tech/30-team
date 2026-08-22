@@ -21,7 +21,7 @@ const labelStyle = {
   fontSize: '11px',
   letterSpacing: '2.5px',
   textTransform: 'uppercase',
-  color: 'rgba(124,58,237,.55)',
+  color: `${C.purple}8C`,
   fontFamily: FONTS.mono,
   marginBottom: '8px',
   display: 'block',

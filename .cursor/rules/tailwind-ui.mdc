@@ -1,0 +1,33 @@
+---
+description: Tailwind é o estilo padrão de UI nova/alterada — tokens brand/pipeline, sem segundo sistema
+globs: app/**/*.{js,jsx},tailwind.config.js,app/globals.css
+alwaysApply: true
+---
+
+# Tailwind UI (30Team)
+
+**Fonte de verdade:** `AGENTS.md` § Stack / UI. Config: `tailwind.config.js` (cores alinhadas a `lib/theme.js` / `lib/brand.js`).
+
+## Obrigatório
+
+1. **UI nova ou tela que você estiver editando** → preferir `className` Tailwind com tokens do theme (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono`, `min-h-touch`, `rounded-card` / `rounded-control`).
+2. **Cores de marca** = `brand-*` / `bg-brand` — só CTA, nav ativa, focus. **Nunca** status de pipeline ou “neutro” semântico.
+3. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*` (espelha `PIPELINE_STAGE_COLORS`).
+4. **Dinâmico demais para classe** (cor T1–T9 de `TYPE_DATA`, width de barra) → `style={{}}` pontual ou arbitrary value; ainda assim sem hex solto se o token existir.
+5. **Legado inline** (`style={{…}}` + `C.*`) — OK deixar até tocar o arquivo; ao editar um bloco, migrar aquele bloco para Tailwind quando for barato.
+6. **Sem** TypeScript, **sem** pasta `src/`, **sem** inventar outro kit (não misturar MUI/Chakra/etc.).
+7. Continua valendo UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, `t()` pt-BR+en, reusar componentes.
+
+## Evitar
+
+- Hex / `rgba(124,58,237,…)` soltos — usar `brand-500` ou `C.purple` só se ainda inline
+- `bg-purple-600` genérico do default Tailwind em vez de `brand-*`
+- `@apply` massivo em CSS modules por tela — preferir `className` no JSX
+- Big-bang rewrite de tabs monstro só para “passar a Tailwind”
+
+## Checklist rápido
+
+- [ ] Tokens do `tailwind.config.js` / `theme.js`?
+- [ ] Roxo só em marca/CTA?
+- [ ] Alvo tocável `min-h-touch` (~40px) em ações?
+- [ ] i18n + reuso de componente existentes?
