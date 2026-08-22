@@ -28,6 +28,8 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, Spinner } from '../../_components/AppLoading';
 import { buildRubricWeightsPrompt, buildRubricContextDraft, parseRubricWeightsFromAiText, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
+import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
+import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
 import {
   buildVacancyDescriptionTemplate,
   isVacancyDescriptionSparse,
@@ -109,6 +111,7 @@ function VacancyPublicFlagsFields({ locale, values, onChange, seoContext = null 
     title: seoContext?.title,
     description: seoContext?.description,
     employmentType: seoContext?.employmentType,
+    workplaceModality: seoContext?.workplaceModality,
     salaryMin: seoContext?.salaryMin,
     salaryMax: seoContext?.salaryMax,
     publicPageEnabled: values.publicPageEnabled,
@@ -1945,6 +1948,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [employmentType, setEmploymentType] = useState('');
+  const [workplaceModality, setWorkplaceModality] = useState('');
+  const [workplaceState, setWorkplaceState] = useState('');
+  const [workplaceCity, setWorkplaceCity] = useState('');
   const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
   const [publicPageEnabled, setPublicPageEnabled] = useState(false);
   const [publicAllowIndex, setPublicAllowIndex] = useState(true);
@@ -2100,6 +2106,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         targetDate: targetDate || null,
         description,
         employmentType,
+        workplaceModality,
+        workplaceState,
+        workplaceCity,
         salaryMin: stripSalary(salaryMin),
         salaryMax: stripSalary(salaryMax),
         clientReportShowSalary,
@@ -2117,7 +2126,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
-      setDescription(''); setEmploymentType(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
+      setDescription(''); setEmploymentType(''); setWorkplaceModality(''); setWorkplaceState(''); setWorkplaceCity('');
+      setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
       setPublicPageEnabled(false); setPublicAllowIndex(true);
       setPublicShowCompanyInfo(false); setPublicShowSalary(false);
       setShowCreate(false);
@@ -2215,6 +2225,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
       description: v.description ?? '',
       employmentType: v.employmentType ?? '',
+      workplaceModality: v.workplaceModality ?? '',
+      workplaceState: v.workplaceState ?? '',
+      workplaceCity: v.workplaceCity ?? '',
       salaryMin: salaryToCentsDigits(v.salaryMin),
       salaryMax: salaryToCentsDigits(v.salaryMax),
       clientReportShowSalary: Boolean(v.clientReportShowSalary),
@@ -2237,6 +2250,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       targetDate,
       description,
       employmentType,
+      workplaceModality,
+      workplaceState,
+      workplaceCity,
       salaryMin,
       salaryMax,
       clientReportShowSalary,
@@ -2261,6 +2277,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           targetDate: targetDate || null,
           description,
           employmentType,
+          workplaceModality,
+          workplaceState,
+          workplaceCity,
           salaryMin: stripSalary(salaryMin),
           salaryMax: stripSalary(salaryMax),
           clientReportShowSalary: Boolean(clientReportShowSalary),
@@ -2490,6 +2509,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </label>
           </div>
 
+          <VacancyWorkplaceFields
+            locale={locale}
+            workplaceModality={workplaceModality}
+            workplaceState={workplaceState}
+            workplaceCity={workplaceCity}
+            onChange={(patch) => {
+              if (patch.workplaceModality !== undefined) setWorkplaceModality(patch.workplaceModality);
+              if (patch.workplaceState !== undefined) setWorkplaceState(patch.workplaceState);
+              if (patch.workplaceCity !== undefined) setWorkplaceCity(patch.workplaceCity);
+            }}
+          />
+
           <label
             style={{
               display: 'flex',
@@ -2528,6 +2559,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               employmentType,
               salaryMin,
               salaryMax,
+              workplaceModality,
+              workplaceCity,
+              workplaceState,
             }}
             onChange={(patch) => {
               if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
@@ -2693,6 +2727,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   fontFamily: 'monospace', boxSizing: 'border-box' }}
               />
             </div>
+            <VacancyWorkplaceFields
+              locale={locale}
+              compact
+              workplaceModality={editingVacancy.workplaceModality}
+              workplaceState={editingVacancy.workplaceState}
+              workplaceCity={editingVacancy.workplaceCity}
+              onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
+            />
             <label
               style={{
                 display: 'flex',
@@ -2732,6 +2774,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 employmentType: editingVacancy.employmentType,
                 salaryMin: editingVacancy.salaryMin,
                 salaryMax: editingVacancy.salaryMax,
+                workplaceModality: editingVacancy.workplaceModality,
+                workplaceCity: editingVacancy.workplaceCity,
+                workplaceState: editingVacancy.workplaceState,
               }}
               onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
             />
@@ -2936,6 +2981,27 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {employmentTypeLabelKey(v.employmentType) ? (
                       <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
                         {t(locale, employmentTypeLabelKey(v.employmentType))}
+                      </span>
+                    ) : null}
+                    {formatWorkplaceLabel(
+                      {
+                        workplaceModality: v.workplaceModality,
+                        workplaceCity: v.workplaceCity,
+                        workplaceState: v.workplaceState,
+                      },
+                      locale,
+                      t
+                    ) ? (
+                      <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+                        {formatWorkplaceLabel(
+                          {
+                            workplaceModality: v.workplaceModality,
+                            workplaceCity: v.workplaceCity,
+                            workplaceState: v.workplaceState,
+                          },
+                          locale,
+                          t
+                        )}
                       </span>
                     ) : null}
                   </div>

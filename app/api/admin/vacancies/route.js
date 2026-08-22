@@ -112,6 +112,9 @@ export async function GET(request) {
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
        v.employment_type AS "employmentType",
+       v.workplace_modality AS "workplaceModality",
+       v.workplace_city AS "workplaceCity",
+       v.workplace_state AS "workplaceState",
        v.public_page_enabled AS "publicPageEnabled",
        v.public_allow_index AS "publicAllowIndex",
        v.public_show_company_info AS "publicShowCompanyInfo",
@@ -178,6 +181,10 @@ export async function POST(request) {
   } catch (e) {
     if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
     if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, 'INVALID_EMPLOYMENT_TYPE', 400);
+    if (e?.code === 'INVALID_WORKPLACE_MODALITY') {
+      return apiError(request, 'INVALID_WORKPLACE_MODALITY', 400);
+    }
+    if (e?.code === 'INVALID_WORKPLACE_STATE') return apiError(request, 'INVALID_WORKPLACE_STATE', 400);
     throw e;
   }
 
@@ -188,14 +195,18 @@ export async function POST(request) {
     `INSERT INTO vacancies (
        company_id, title, slug, status, positions_count, target_date,
        description, salary_min, salary_max, client_report_show_salary, employment_type,
+       workplace_modality, workplace_city, workplace_state,
        public_page_enabled, public_allow_index, public_show_company_info, public_show_salary
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
                employment_type AS "employmentType",
+               workplace_modality AS "workplaceModality",
+               workplace_city AS "workplaceCity",
+               workplace_state AS "workplaceState",
                public_page_enabled AS "publicPageEnabled",
                public_allow_index AS "publicAllowIndex",
                public_show_company_info AS "publicShowCompanyInfo",
@@ -213,6 +224,9 @@ export async function POST(request) {
       details.salaryMax,
       details.clientReportShowSalary === true,
       details.employmentType ?? null,
+      details.workplaceModality ?? null,
+      details.workplaceCity ?? null,
+      details.workplaceState ?? null,
       details.publicPageEnabled === true,
       details.publicAllowIndex === true,
       details.publicShowCompanyInfo === true,

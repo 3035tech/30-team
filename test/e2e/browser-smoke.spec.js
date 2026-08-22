@@ -1,16 +1,14 @@
 /**
  * Smoke de navegação / layout no Chromium (DTOV + Next local).
  * Cobre superfícies públicas + login HR + abas do dashboard.
- *
- * Login: labels não estão ligados via htmlFor — usar type/placeholder.
  */
 
 import { test, expect } from '@playwright/test';
 import { TOK, HR, PUBLIC } from './fixtures.js';
 
 async function fillLogin(page, { email, password }) {
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
+  await page.getByLabel(/e-?mail/i).fill(email);
+  await page.getByLabel(/senha|password/i).fill(password);
   await page.getByRole('button', { name: /entrar|sign in/i }).click();
 }
 
@@ -19,8 +17,8 @@ test.describe('public pages', () => {
     await page.goto('/');
     await expect(page.locator('body')).toBeVisible();
     await page.goto('/login');
-    await expect(page.locator('input[type="email"]')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
+    await expect(page.getByLabel(/e-?mail/i)).toBeVisible();
+    await expect(page.getByLabel(/senha|password/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /entrar|sign in/i })).toBeVisible();
   });
 

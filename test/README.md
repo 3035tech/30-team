@@ -29,7 +29,16 @@ Config Playwright na raiz: `playwright.config.js` (`testDir: ./test/e2e`).
 | `test:browser` | Só Playwright (app já no ar) |
 | `DTOV_SKIP_BROWSER=1 …` | Pula Chromium no full-app |
 
-Provas relevantes à página pública / funil / referral: fixture `public-vacancy-page` (seed + `job_funnel_events` + `referral_codes`), checks em `full-regression.js` e `http-smoke.js` (`/api/public/job-funnel`, analytics da vaga, `/api/admin/referral-codes`).
+Provas relevantes à página pública / funil / referral (epic B-100 / **B-126**):
+
+| Camada | Cobertura |
+|--------|-----------|
+| Offline libs | `slugify` (acentos), JobPosting (open/closed/noindex/expirada), share UTM, cookie atribuição, referral normalize, canonical `/j`, Indexing mock, SEO score, job-alerts gates, índice `/j` paged — `full-regression.js` |
+| SQL | sitemap só abertas indexáveis; funil/referral seed — fixture `public-vacancy-page` |
+| HTTP | `/j`, redirects legado, `team30_job_attr`, analytics, referral CRUD — `http-smoke.js` |
+| Browser | páginas públicas + navegação vagas — `browser-smoke.spec.js` |
+
+Rodar: `npm run dtov:full-app`.
 
 ## Onde **não** colocar
 

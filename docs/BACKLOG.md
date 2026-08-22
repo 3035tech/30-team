@@ -34,9 +34,6 @@ Garantir GET candidato + one-on-ones mesmo se a 1ª vaga da lista não tiver can
 ### B-005 — Migrar `scripts/test-*.js` para `test/`
 Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `test/`.
 
-### B-006 — A11y login: `label` ↔ `input`
-`htmlFor`/`id` em `/login` (hoje o nome acessível é o placeholder).
-
 ---
 
 ## Aberto — Epic B-100: SEO, indexação, distribuição e analytics de vagas públicas
@@ -59,8 +56,9 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 | Assessment `/v/{token}` (noindex) | separado da página SEO |
 | Copiar links no **dashboard** | `VacanciesAdminTab` |
 | Company `website` / `about_html` | sem logo de empresa no DB |
+| Local / modalidade da vaga | migration `037`: `workplace_modality`, `workplace_city`, `workplace_state` (+ IBGE autocomplete no drawer) |
 
-**Gaps principais:** agregadores (B-119 — adiar até campos remoto/cidade); logo / local / modalidade (campos ainda inexistentes).
+**Gaps principais:** agregadores (B-119 — campos de local/modalidade já existem; falta massa + rotas); logo de empresa (ainda inexistente).
 
 **Regras de implementação do epic:**
 
@@ -115,6 +113,8 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 **Entregue:** índice `/j` com `?q=`, `employmentType`, `page`/`pageSize`; `listOpenPublicVacancies` paged; empty filtrado i18n.
 
 #### B-119 — Páginas agregadoras SEO (com guarda de qualidade)
+
+**Status:** aberto (schema de local/modalidade em `037` — falta massa pública + rotas `/j/remoto`, `/j/{cidade}` etc.)
 **Instruções:**
 - Rotas tipo `/vagas/remoto`, `/vagas/{cidade}`, etc. **somente** se count ≥ limiar configurável (ex. 3 vagas) — **proibir** milhares de combinações vazias.
 - Cada página: title, description, canonical, H1, intro curta, lista, paginação; sem JobPosting.
@@ -138,10 +138,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 
 ### Transversal (fazer junto das fases)
 
-#### B-126 — Suite de testes do epic
-Cobrir: slugify (acentos/especiais); JobPosting variantes; sitemap só ativas; UTM/referral persistence; SEO score; Indexing mock. Rodar `dtov:full-app` ao fechar cada fase relevante.
-
-Docs do epic (**B-123**, **B-124**, **B-125**, **B-127**): entregues — `docs/job-seo-and-distribution.md`, README/`.env.example`, Guia, checklist LGPD no mesmo doc + ponte em `privacidade-lgpd-interno.md`.
+Docs do epic (**B-123**, **B-124**, **B-125**, **B-127**) e suite (**B-126**): entregues — `docs/job-seo-and-distribution.md`, README/`.env.example`, Guia, checklist LGPD; provas em `test/dtov/full-regression.js` + HTTP/browser (`test/README.md`).
 
 ---
 
@@ -160,6 +157,6 @@ _(vazio)_
 
 ## Notas
 
-- Itens **B-001–B-006**: gaps de teste/a11y da sessão DTOV/Playwright.
-- Epic **B-100**: SEO/distribuição/analytics. Restos abertos: **B-119** (agregadores, bloqueado), **B-126** (suite testes). Docs B-123–125/127 fechados. Campos logo/local/modalidade ainda gap de schema.
+- Itens **B-001–B-005**: gaps de teste restantes (E2E assessment/kanban, SMTP/OpenAI mock, People HTTP, migrar `scripts/test-*`). **B-006** a11y login entregue.
+- Epic **B-100**: resto aberto **B-119** (agregadores — schema local/modalidade em `037`; falta massa + rotas). Docs + **B-126** fechados. Gap restante de schema: logo de empresa.
 - Ao concluir o epic inteiro: apagar a seção B-100 e filhos; manter só o que restar em Aberto.

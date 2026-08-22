@@ -29,6 +29,9 @@ async function getVacancyOr404(vacancyId) {
        v.salary_max AS "salaryMax",
        v.client_report_show_salary AS "clientReportShowSalary",
        v.employment_type AS "employmentType",
+       v.workplace_modality AS "workplaceModality",
+       v.workplace_city AS "workplaceCity",
+       v.workplace_state AS "workplaceState",
        v.public_page_enabled AS "publicPageEnabled",
        v.public_allow_index AS "publicAllowIndex",
        v.public_show_company_info AS "publicShowCompanyInfo",
@@ -123,6 +126,10 @@ export async function PATCH(request, { params }) {
   } catch (e) {
     if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
     if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, 'INVALID_EMPLOYMENT_TYPE', 400);
+    if (e?.code === 'INVALID_WORKPLACE_MODALITY') {
+      return apiError(request, 'INVALID_WORKPLACE_MODALITY', 400);
+    }
+    if (e?.code === 'INVALID_WORKPLACE_STATE') return apiError(request, 'INVALID_WORKPLACE_STATE', 400);
     throw e;
   }
 
@@ -150,6 +157,14 @@ export async function PATCH(request, { params }) {
       : Boolean(current.clientReportShowSalary);
   const nextEmploymentType =
     details.employmentType !== undefined ? details.employmentType : (current.employmentType ?? null);
+  const nextWorkplaceModality =
+    details.workplaceModality !== undefined
+      ? details.workplaceModality
+      : (current.workplaceModality ?? null);
+  const nextWorkplaceCity =
+    details.workplaceCity !== undefined ? details.workplaceCity : (current.workplaceCity ?? null);
+  const nextWorkplaceState =
+    details.workplaceState !== undefined ? details.workplaceState : (current.workplaceState ?? null);
   const nextPublicPageEnabled =
     details.publicPageEnabled !== undefined
       ? details.publicPageEnabled
@@ -173,14 +188,18 @@ export async function PATCH(request, { params }) {
      SET title = $2, slug = $3, status = $4, positions_count = $5, target_date = $6,
          description = $7, salary_min = $8, salary_max = $9, client_report_show_salary = $10,
          employment_type = $11,
-         public_page_enabled = $12, public_allow_index = $13,
-         public_show_company_info = $14, public_show_salary = $15
+         workplace_modality = $12, workplace_city = $13, workplace_state = $14,
+         public_page_enabled = $15, public_allow_index = $16,
+         public_show_company_info = $17, public_show_salary = $18
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, company_id AS "companyId", title, slug, status,
                positions_count AS "positionsCount", target_date AS "targetDate",
                description, salary_min AS "salaryMin", salary_max AS "salaryMax",
                client_report_show_salary AS "clientReportShowSalary",
                employment_type AS "employmentType",
+               workplace_modality AS "workplaceModality",
+               workplace_city AS "workplaceCity",
+               workplace_state AS "workplaceState",
                public_page_enabled AS "publicPageEnabled",
                public_allow_index AS "publicAllowIndex",
                public_show_company_info AS "publicShowCompanyInfo",
@@ -198,6 +217,9 @@ export async function PATCH(request, { params }) {
       nextSalaryMax,
       nextShowSalary,
       nextEmploymentType,
+      nextWorkplaceModality,
+      nextWorkplaceCity,
+      nextWorkplaceState,
       nextPublicPageEnabled,
       nextPublicAllowIndex,
       nextPublicShowCompanyInfo,

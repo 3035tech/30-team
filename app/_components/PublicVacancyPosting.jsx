@@ -7,6 +7,7 @@ import { t } from '../../lib/i18n';
 import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
 import { brandMarkSrc } from '../../lib/brand';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
+import { formatWorkplaceLabel } from '../../lib/vacancy-workplace';
 import { formatVacancySalaryRangeDisplay } from '../../lib/br-masks';
 import { PublicVacancyShareBar } from './PublicVacancyShareBar';
 import {
@@ -171,6 +172,15 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const closedReason = publicVacancyClosedReason(posting);
   const canApply = publicVacancyCanApply(posting);
   const empKey = employmentTypeLabelKey(posting?.employmentType);
+  const workplaceLabel = formatWorkplaceLabel(
+    {
+      workplaceModality: posting?.workplaceModality,
+      workplaceCity: posting?.workplaceCity,
+      workplaceState: posting?.workplaceState,
+    },
+    locale,
+    t
+  );
   const salary =
     posting?.showSalary && (posting.salaryMin || posting.salaryMax)
       ? formatVacancySalaryRangeDisplay(posting.salaryMin, posting.salaryMax)
@@ -335,6 +345,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                 </h1>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '22px' }}>
                   {empKey ? <MetaChip>{t(locale, empKey)}</MetaChip> : null}
+                  {workplaceLabel ? <MetaChip>{workplaceLabel}</MetaChip> : null}
                   {salary ? (
                     <MetaChip>
                       {t(locale, 'publicVacancy.salaryLabel')}: {salary}

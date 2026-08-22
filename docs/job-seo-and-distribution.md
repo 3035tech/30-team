@@ -35,6 +35,7 @@ Status de vaga no 30Team: `open` \| `closed` (+ soft `deleted`). Sem enum DRAFT/
 | Encerrada | `closed` ou `target_date` passado → UX fechada, noindex, sem JobPosting, sem CTA |
 
 Flags na vaga (drawer): página pública, permitir indexação, mostrar empresa, mostrar salário.  
+Local: `workplace_modality` (`onsite` \| `hybrid` \| `remote`), `workplace_state` (UF), `workplace_city` (município IBGE via `/api/public/br-cities` + autocomplete no drawer).  
 Salário no relatório cliente (`/r`) é flag **separada** (`client_report_show_salary`).
 
 Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/c/{slug}`).
@@ -144,7 +145,7 @@ npm run dtov:reset
 npm run dtov:full-app   # inclui mock Indexing, SQL funil/referral, HTTP /j, redirects
 ```
 
-Provas offline no `test/dtov/full-regression.js`: slug/canonical, JobPosting guards, SEO score, Indexing mock, job-alerts gates, listagem `/j` paged.
+Checklist do epic (slugify/acentos, JobPosting variantes, sitemap, UTM/referral, SEO score, Indexing mock): `test/dtov/full-regression.js` + HTTP/browser — ver `test/README.md`.
 
 Manual: abrir `/j/…` → Rich Results Test; Funil/Indicação no painel com HR demo DTOV.
 

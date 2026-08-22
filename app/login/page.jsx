@@ -110,30 +110,39 @@ function LoginForm() {
         ) : null}
         {mustChangePassword ? (
           <>
-            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+            <label htmlFor="login-current-password" style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
               {t(locale, 'login.changePasswordCurrent')}
             </label>
-            <input type="password"
+            <input
+              id="login-current-password"
+              type="password"
+              autoComplete="current-password"
               style={{ width:'100%', background:'rgba(26,22,37,.04)',
                 border:`1px solid ${C.border}`, borderRadius:'10px',
                 padding:'14px 18px', color:C.text, fontSize:'15px',
                 fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
               value={currentPassword}
               onChange={e=>setCurrentPassword(e.target.value)}/>
-            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+            <label htmlFor="login-new-password" style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
               {t(locale, 'login.changePasswordNew')}
             </label>
-            <input type="password"
+            <input
+              id="login-new-password"
+              type="password"
+              autoComplete="new-password"
               style={{ width:'100%', background:'rgba(26,22,37,.04)',
                 border:`1px solid ${C.border}`, borderRadius:'10px',
                 padding:'14px 18px', color:C.text, fontSize:'15px',
                 fontFamily:FONTS.serif, boxSizing:'border-box', marginBottom:'16px' }}
               value={newPassword}
               onChange={e=>setNewPassword(e.target.value)}/>
-            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+            <label htmlFor="login-confirm-password" style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
               {t(locale, 'login.changePasswordConfirm')}
             </label>
-            <input type="password"
+            <input
+              id="login-confirm-password"
+              type="password"
+              autoComplete="new-password"
               style={{ width:'100%', background:'rgba(26,22,37,.04)',
                 border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
                 padding:'14px 18px', color:C.text, fontSize:'15px',
@@ -144,10 +153,13 @@ function LoginForm() {
           </>
         ) : (
           <>
-            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+            <label htmlFor="login-email" style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
               {t(locale, 'login.email')}
             </label>
-            <input type="email"
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="username"
               style={{ width:'100%', background:'rgba(26,22,37,.04)',
                 border:`1px solid ${C.border}`, borderRadius:'10px',
                 padding:'14px 18px', color:C.text, fontSize:'15px',
@@ -155,10 +167,13 @@ function LoginForm() {
               value={email} placeholder={t(locale, 'login.emailPlaceholder')}
               onChange={e=>setEmail(e.target.value)}
               onKeyDown={e=>e.key==='Enter'&&login()}/>
-            <label style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
+            <label htmlFor="login-password" style={{ fontSize:'12px', color:C.muted, display:'block', marginBottom:'8px' }}>
               {t(locale, 'login.password')}
             </label>
-            <input type="password"
+            <input
+              id="login-password"
+              type="password"
+              autoComplete="current-password"
               style={{ width:'100%', background:'rgba(26,22,37,.04)',
                 border:`1px solid ${error?C.tension:C.border}`, borderRadius:'10px',
                 padding:'14px 18px', color:C.text, fontSize:'15px',

@@ -158,6 +158,19 @@ async function runOfflineLibs() {
     return 'modes ok';
   });
 
+  await check('lib', 'slugify-accents-specials', async () => {
+    const { slugify } = await import('../../lib/slugify.js');
+    if (slugify('São Paulo') !== 'sao-paulo') throw new Error(`São Paulo → ${slugify('São Paulo')}`);
+    if (slugify('Ação & RH!') !== 'acao-rh') throw new Error(`Ação → ${slugify('Ação & RH!')}`);
+    if (slugify('café') !== 'cafe') throw new Error(`café → ${slugify('café')}`);
+    if (slugify('Engenheiro(a) Fullstack') !== 'engenheiro-a-fullstack') {
+      throw new Error(slugify('Engenheiro(a) Fullstack'));
+    }
+    if (slugify('  ---  ') !== '') throw new Error('empty expected');
+    if (slugify('x'.repeat(100), { maxLength: 8 }).length !== 8) throw new Error('maxLength');
+    return 'slugify ok';
+  });
+
   await check('lib', 'job-posting-jsonld-guards', async () => {
     const { buildJobPostingJsonLd, serializeJsonLdForScript } = await import(
       '../../lib/public-vacancy-posting.js'
@@ -169,6 +182,21 @@ async function runOfflineLibs() {
       vacancyId: 1,
     });
     if (closed != null) throw new Error('closed must not emit JobPosting');
+    const noIndex = buildJobPostingJsonLd({
+      status: 'open',
+      publicAllowIndex: false,
+      title: 'X',
+      vacancyId: 2,
+    });
+    if (noIndex != null) throw new Error('publicAllowIndex false must not emit JobPosting');
+    const expired = buildJobPostingJsonLd({
+      status: 'open',
+      publicAllowIndex: true,
+      title: 'X',
+      vacancyId: 3,
+      targetDate: '2020-01-01',
+    });
+    if (expired != null) throw new Error('past targetDate must not emit JobPosting');
     const open = buildJobPostingJsonLd({
       status: 'open',
       publicAllowIndex: true,
@@ -195,6 +223,25 @@ async function runOfflineLibs() {
       throw new Error('must not invent TELECOMMUTE without remote field');
     }
     if (!open.applicantLocationRequirements) throw new Error('expected BR applicantLocationRequirements');
+    const remote = buildJobPostingJsonLd({
+      status: 'open',
+      publicAllowIndex: true,
+      title: 'Dev remoto',
+      vacancyId: 9,
+      workplaceModality: 'remote',
+      workplaceCity: 'São Paulo',
+      workplaceState: 'SP',
+      showCompany: false,
+      company: { id: 1 },
+      pageUrl: 'http://localhost:3000/j/dev-9',
+      createdAt: new Date('2026-01-15'),
+    });
+    if (remote?.jobLocationType !== 'TELECOMMUTE') {
+      throw new Error('remote modality should set TELECOMMUTE');
+    }
+    if (remote?.jobLocation?.address?.addressLocality !== 'São Paulo') {
+      throw new Error('expected city in jobLocation');
+    }
     const raw = serializeJsonLdForScript(open);
     if (raw.includes('</script>')) throw new Error('unescaped script closer');
     return 'jsonld ok';
@@ -690,6 +737,7 @@ async function runSqlSuite(client) {
       title: 'Engenheiro Fullstack Plataforma',
       description: `${'x'.repeat(300)}`,
       employmentType: 'clt',
+      workplaceModality: 'hybrid',
       salaryMin: '5000',
       salaryMax: '8000',
       publicPageEnabled: true,
