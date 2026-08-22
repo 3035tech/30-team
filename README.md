@@ -154,14 +154,14 @@ npm run dev
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
 - Perfil da empresa (admin → Empresas): `website`, texto “sobre” e flag **página pública de carreiras** (`public_profile_enabled`). Canônica: `/c/{slug}` (neutra pt/en); legado `/empresas/{slug}` → 308. Sem opt-in → 404.
-- Índice `/j`: busca, filtro de contrato, paginação; rodapé com **alerta de vagas** (`POST /api/public/job-alerts`). Cancelar: `/a/unsubscribe?token=…`. Envio SMTP de alertas ainda não dispara automaticamente (cadastro + unsubscribe prontos).
+- Índice `/j`: busca, filtro de contrato, paginação; rodapé com **alerta de vagas** (`POST /api/public/job-alerts`). Cancelar: `/a/unsubscribe?token=…`. Ao publicar página pública (create ou ligar flag), dispara e-mail aos alertas ativos que casam com filtros — exige SMTP; sem SMTP é no-op e não bloqueia o save.
 - Conteúdo exibido quando existir: título, empresa, tipo de contrato, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
 - Sem campos no schema hoje (omitidos de propósito): localização, modalidade remoto/híbrido, logo empresa, senioridade, skills/benefícios separados.
 - Encerrada ou `target_date` passado: agradecimento + relacionadas + `/j`; sem JobPosting / noindex / sem CTA de apply.
 - SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok).
 - Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
-- Referral (indicação): tabela `referral_codes`; APIs `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, analytics `GET /api/admin/referral-codes/analytics`. Link público: `/j/{slug}-{id}?ref=CODIGO`.
+- Referral (indicação): tabela `referral_codes`; APIs admin + **aba Indicação** no detalhe da vaga (criar, copiar `/j/…?ref=`, desativar, métricas). Analytics: `GET /api/admin/referral-codes/analytics`.
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`).
 

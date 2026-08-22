@@ -105,7 +105,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 
 ### Fase 5 — Referral
 
-**Entregue:** `referral_codes` + APIs admin (criar/listar/desativar) + analytics por código (`job_funnel_events.referral_code`). `?ref=` já persistia via Fase 4 (cookie → assessment). Migration `033`. UI rica de códigos no painel = futuro.
+**Entregue:** `referral_codes` + APIs admin + analytics por código; `?ref=` via cookie/assessment (Fase 4). Migration `033`. **UI:** aba Indicação no detalhe da vaga (criar/copiar/desativar + métricas).
 
 ---
 
@@ -125,7 +125,7 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 **Entregue:** canônica neutra `app/c/[companySlug]` + `resolvePublicCompanyBySlug` (exige `public_profile_enabled`); legado `/empresas/{slug}` → 308; opt-in no cadastro Empresas; link no índice `/j` quando perfil ligado.
 
 #### B-121 — Job Alerts (base)
-**Entregue:** tabela `job_alerts` (035); `POST /api/public/job-alerts` + unsubscribe API; formulário no rodapé de `/j`; página `/a/unsubscribe?token=`. Disparo SMTP = no-op até gancho de publish (documentado).
+**Entregue:** tabela `job_alerts` (035); `POST /api/public/job-alerts` + unsubscribe; formulário no rodapé de `/j`; `/a/unsubscribe?token=`. **Disparo SMTP:** `scheduleJobAlertDispatch` no create/update de vaga (só transição para página pública aberta; SMTP off = no-op).
 
 ---
 
@@ -166,5 +166,5 @@ _(vazio)_
 ## Notas
 
 - Itens **B-001–B-006**: gaps de teste/a11y da sessão DTOV/Playwright.
-- Epic **B-100 / B-101–B-127**: spec completo de SEO/distribuição/analytics (ago/2026). Implementar sob demanda, **fase a fase**, removendo sub-itens conforme entrega.
+- Epic **B-100 / B-101–B-127**: SEO/distribuição/analytics. Referral UI + job-alert SMTP no publish já entregues (Fase 5/6). Restos: B-119, B-123–B-127, B-001–B-006, campos logo/local/modalidade.
 - Ao concluir o epic inteiro: apagar a seção B-100 e filhos; manter só o que restar em Aberto.

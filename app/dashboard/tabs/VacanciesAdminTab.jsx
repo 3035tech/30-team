@@ -1295,6 +1295,353 @@ function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath }) {
   );
 }
 
+function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl = '' }) {
+  const { promptForm, confirm, toast } = useAppFeedback();
+  const [codes, setCodes] = useState([]);
+  const [analytics, setAnalytics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const qs = new URLSearchParams({ vacancyId: String(vacancyId) });
+      const [codesRes, analyticsRes] = await Promise.all([
+        fetch(`/api/admin/referral-codes?${qs.toString()}`),
+        fetch(`/api/admin/referral-codes/analytics?${qs.toString()}`),
+      ]);
+      const codesJson = await codesRes.json().catch(() => ({}));
+      const analyticsJson = await analyticsRes.json().catch(() => ({}));
+      if (!codesRes.ok) throw new Error(codesJson?.error || t(locale, 'panel.common.error'));
+      if (!analyticsRes.ok) throw new Error(analyticsJson?.error || t(locale, 'panel.common.error'));
+      setCodes(Array.isArray(codesJson.items) ? codesJson.items : []);
+      setAnalytics(Array.isArray(analyticsJson.items) ? analyticsJson.items : []);
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+      setCodes([]);
+      setAnalytics([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [vacancyId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const metricsByCode = Object.fromEntries(
+    (analytics || []).map((row) => [String(row.code || '').toUpperCase(), row])
+  );
+
+  const visibleCodes = showInactive ? codes : codes.filter((c) => c.active !== false);
+
+  const shareUrlFor = (code) => {
+    if (!publicPagePath || !code) return '';
+    const base = appUrl ? `${appUrl}${publicPagePath}` : publicPagePath;
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}ref=${encodeURIComponent(code)}`;
+  };
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (toast) toast(t(locale, 'panel.common.copied'));
+    } catch {
+      if (toast) toast(t(locale, 'panel.common.copyFailed'));
+    }
+  };
+
+  const createCode = async () => {
+    const values = await promptForm({
+      title: t(locale, 'recruiting.referralCreateTitle'),
+      confirmLabel: t(locale, 'recruiting.referralCreateSubmit'),
+      fields: [
+        {
+          key: 'code',
+          label: t(locale, 'recruiting.referralCodeLabel'),
+          placeholder: t(locale, 'recruiting.referralCodePlaceholder'),
+          defaultValue: '',
+        },
+        {
+          key: 'label',
+          label: t(locale, 'recruiting.referralLabelLabel'),
+          placeholder: t(locale, 'recruiting.referralLabelPlaceholder'),
+          defaultValue: '',
+        },
+        {
+          key: 'companyWide',
+          type: 'boolean',
+          label: t(locale, 'recruiting.referralCompanyWide'),
+          defaultValue: false,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    setErr('');
+    try {
+      const companyWide = values.companyWide === true || values.companyWide === 'true';
+      const res = await fetch('/api/admin/referral-codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vacancyId: companyWide ? null : vacancyId,
+          code: String(values.code || '').trim() || undefined,
+          label: String(values.label || '').trim() || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.referralCreateFailed'));
+      await load();
+      if (toast) toast(t(locale, 'recruiting.referralCreated'));
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setActive = async (row, active) => {
+    if (!active) {
+      const ok = await confirm({
+        message: t(locale, 'recruiting.referralDeactivateConfirm', { code: row.code }),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await fetch(`/api/admin/referral-codes/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      await load();
+    } catch (e) {
+      setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ ...S.card, padding: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Spinner size={18} />
+        <span style={{ color: C.muted, fontSize: '13px' }}>{t(locale, 'common.loading')}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ ...S.card, padding: '16px 18px' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '10px',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+            <div style={{ fontSize: '13px', color: C.text, marginBottom: '6px', fontWeight: 600 }}>
+              {t(locale, 'recruiting.referralTitle')}
+            </div>
+            <p style={{ margin: 0, color: C.muted, fontSize: '13px', lineHeight: 1.55 }}>
+              {t(locale, 'recruiting.referralIntro')}
+            </p>
+            {!publicPagePath ? (
+              <p style={{ margin: '8px 0 0', color: C.faint, fontSize: '12px' }}>
+                {t(locale, 'recruiting.referralNeedPublicPage')}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={createCode}
+            disabled={busy}
+            style={{
+              background: `${C.purple}18`,
+              border: `1px solid ${C.purple}55`,
+              borderRadius: '10px',
+              padding: '10px 14px',
+              color: C.purple,
+              fontSize: '12px',
+              cursor: busy ? 'default' : 'pointer',
+              fontFamily: 'monospace',
+              opacity: busy ? 0.6 : 1,
+              minHeight: '40px',
+            }}
+          >
+            {t(locale, 'recruiting.referralNewBtn')}
+          </button>
+        </div>
+
+        {err ? (
+          <p style={{ margin: '12px 0 0', color: C.tension, fontSize: '13px' }}>{err}</p>
+        ) : null}
+
+        <label
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginTop: '14px',
+            fontSize: '12px',
+            color: C.muted,
+            fontFamily: 'monospace',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          {t(locale, 'recruiting.referralShowInactive')}
+        </label>
+
+        {visibleCodes.length === 0 ? (
+          <p style={{ margin: '14px 0 0', color: C.muted, fontSize: '13px', fontStyle: 'italic' }}>
+            {t(locale, 'recruiting.referralEmpty')}
+          </p>
+        ) : (
+          <div style={{ marginTop: '12px', overflowX: 'auto' }} className="db-table-scroll">
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
+              <thead>
+                <tr style={{ color: C.muted, textAlign: 'left' }}>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>{t(locale, 'recruiting.referralColCode')}</th>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>{t(locale, 'recruiting.referralColScope')}</th>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsViews')}</th>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsApplications')}</th>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>{t(locale, 'recruiting.analyticsHires')}</th>
+                  <th style={{ padding: '8px', fontWeight: 500, textAlign: 'right' }}>
+                    {t(locale, 'recruiting.referralColActions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleCodes.map((row) => {
+                  const m = metricsByCode[String(row.code || '').toUpperCase()] || {};
+                  const share = shareUrlFor(row.code);
+                  const companyWide = row.vacancyId == null;
+                  return (
+                    <tr
+                      key={row.id}
+                      style={{
+                        borderTop: `1px solid ${C.border}`,
+                        opacity: row.active === false ? 0.55 : 1,
+                      }}
+                    >
+                      <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
+                        <div style={{ fontFamily: 'monospace', color: C.text, fontWeight: 600 }}>
+                          {row.code}
+                        </div>
+                        {row.label ? (
+                          <div style={{ marginTop: '2px', color: C.muted, fontSize: '11px' }}>{row.label}</div>
+                        ) : null}
+                        {row.active === false ? (
+                          <div style={{ marginTop: '2px', color: C.faint, fontSize: '10px', fontFamily: 'monospace' }}>
+                            {t(locale, 'recruiting.referralInactive')}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td style={{ padding: '10px 8px', color: C.muted, fontFamily: 'monospace', verticalAlign: 'top' }}>
+                        {companyWide
+                          ? t(locale, 'recruiting.referralScopeCompany')
+                          : t(locale, 'recruiting.referralScopeVacancy')}
+                      </td>
+                      <td style={{ padding: '10px 8px', color: C.muted, fontFamily: 'monospace', verticalAlign: 'top' }}>
+                        {Number(m.views) || 0}
+                      </td>
+                      <td style={{ padding: '10px 8px', color: C.muted, fontFamily: 'monospace', verticalAlign: 'top' }}>
+                        {Number(m.applications) || 0}
+                      </td>
+                      <td style={{ padding: '10px 8px', color: C.muted, fontFamily: 'monospace', verticalAlign: 'top' }}>
+                        {Number(m.hires) || 0}
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            disabled={busy || !share || row.active === false}
+                            onClick={() => copyText(share)}
+                            style={{
+                              background: `${C.purple}18`,
+                              border: `1px solid ${C.purple}55`,
+                              borderRadius: '10px',
+                              padding: '8px 10px',
+                              color: C.purple,
+                              fontSize: '11px',
+                              cursor: busy || !share || row.active === false ? 'default' : 'pointer',
+                              fontFamily: 'monospace',
+                              opacity: busy || !share || row.active === false ? 0.5 : 1,
+                              minHeight: '36px',
+                            }}
+                          >
+                            {t(locale, 'recruiting.referralCopyLink')}
+                          </button>
+                          {row.active !== false ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setActive(row, false)}
+                              style={{
+                                background: 'transparent',
+                                border: `1px solid ${C.border}`,
+                                borderRadius: '10px',
+                                padding: '8px 10px',
+                                color: C.muted,
+                                fontSize: '11px',
+                                cursor: busy ? 'default' : 'pointer',
+                                fontFamily: 'monospace',
+                                minHeight: '36px',
+                              }}
+                            >
+                              {t(locale, 'recruiting.referralDeactivate')}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setActive(row, true)}
+                              style={{
+                                background: 'transparent',
+                                border: `1px solid ${C.border}`,
+                                borderRadius: '10px',
+                                padding: '8px 10px',
+                                color: C.muted,
+                                fontSize: '11px',
+                                cursor: busy ? 'default' : 'pointer',
+                                fontFamily: 'monospace',
+                                minHeight: '36px',
+                              }}
+                            >
+                              {t(locale, 'recruiting.referralReactivate')}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2647,6 +2994,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
                     { id: 'fit', label: t(locale, 'recruiting.detailTabFit') },
                     { id: 'analytics', label: t(locale, 'recruiting.detailTabAnalytics') },
+                    { id: 'referral', label: t(locale, 'recruiting.detailTabReferral') },
                     { id: 'report', label: t(locale, 'recruiting.detailTabReport') },
                     { id: 'config', label: t(locale, 'recruiting.detailTabConfig') },
                   ]}
@@ -2661,6 +3009,19 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <VacancyFunnelAnalyticsBlock
                   vacancyId={v.id}
                   locale={locale}
+                  publicPagePath={
+                    v.publicPageEnabled && v.slug
+                      ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
+                      : ''
+                  }
+                />
+              ) : null}
+
+              {detailSection === 'referral' ? (
+                <VacancyReferralBlock
+                  vacancyId={v.id}
+                  locale={locale}
+                  appUrl={appUrl}
                   publicPagePath={
                     v.publicPageEnabled && v.slug
                       ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })

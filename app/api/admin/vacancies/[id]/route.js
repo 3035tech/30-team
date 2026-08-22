@@ -10,6 +10,7 @@ import { parseVacancyDetailsFromBody } from '../../../../../lib/vacancy-details'
 import { notifyCompanyManagers, NOTIF } from '../../../../../lib/manager-notifications';
 import { slugify } from '../../../../../lib/slugify';
 import { scheduleVacancyIndexSync } from '../../../../../lib/job-indexing';
+import { scheduleJobAlertDispatch } from '../../../../../lib/job-alerts';
 
 async function getVacancyOr404(vacancyId) {
   const v = await queryRead(
@@ -265,24 +266,35 @@ export async function PATCH(request, { params }) {
   }
 
   const updated = up.rows[0];
+  const previousPayload = {
+    id: current.id,
+    slug: current.slug,
+    status: current.status,
+    publicPageEnabled: current.publicPageEnabled,
+    publicAllowIndex: current.publicAllowIndex,
+    targetDate: current.targetDate,
+    title: current.title,
+    employmentType: current.employmentType,
+  };
+  const currentPayload = {
+    id: updated.id,
+    slug: updated.slug,
+    status: updated.status,
+    publicPageEnabled: updated.publicPageEnabled,
+    publicAllowIndex: updated.publicAllowIndex,
+    targetDate: updated.targetDate,
+    title: updated.title,
+    employmentType: updated.employmentType,
+  };
   scheduleVacancyIndexSync({
-    previous: {
-      id: current.id,
-      slug: current.slug,
-      status: current.status,
-      publicPageEnabled: current.publicPageEnabled,
-      publicAllowIndex: current.publicAllowIndex,
-      targetDate: current.targetDate,
-    },
-    current: {
-      id: updated.id,
-      slug: updated.slug,
-      status: updated.status,
-      publicPageEnabled: updated.publicPageEnabled,
-      publicAllowIndex: updated.publicAllowIndex,
-      targetDate: updated.targetDate,
-    },
+    previous: previousPayload,
+    current: currentPayload,
     reason: closedNow ? 'vacancy_close' : 'vacancy_update',
+  });
+  scheduleJobAlertDispatch({
+    previous: previousPayload,
+    current: currentPayload,
+    companyName: current.companyName,
   });
 
   return NextResponse.json({

@@ -703,6 +703,45 @@ async function runSqlSuite(client) {
     return `weak=${weak.score} strong=${strong.score}`;
   });
 
+  await check('lib', 'job-alerts-dispatch-gates', async () => {
+    const {
+      shouldDispatchJobAlerts,
+      jobAlertMatchesVacancy,
+      vacancyIsAlertablePublic,
+    } = await import('../../lib/job-alerts.js');
+    const openPub = {
+      id: 1,
+      title: 'Engenheiro Fullstack',
+      status: 'open',
+      publicPageEnabled: true,
+      employmentType: 'clt',
+    };
+    const closed = { ...openPub, status: 'closed' };
+    if (!vacancyIsAlertablePublic(openPub)) throw new Error('open public should alert');
+    if (vacancyIsAlertablePublic(closed)) throw new Error('closed should not');
+    if (!shouldDispatchJobAlerts({ previous: null, current: openPub })) {
+      throw new Error('create should dispatch');
+    }
+    if (shouldDispatchJobAlerts({ previous: openPub, current: openPub })) {
+      throw new Error('cosmetic update must not dispatch');
+    }
+    if (
+      !shouldDispatchJobAlerts({
+        previous: { ...openPub, publicPageEnabled: false },
+        current: openPub,
+      })
+    ) {
+      throw new Error('off→on should dispatch');
+    }
+    if (!jobAlertMatchesVacancy({ q: 'fullstack', employmentType: 'clt' }, openPub)) {
+      throw new Error('filters should match');
+    }
+    if (jobAlertMatchesVacancy({ employmentType: 'pj' }, openPub)) {
+      throw new Error('employment mismatch');
+    }
+    return 'gates ok';
+  });
+
   await check('lib', 'public-jobs-index-paged', async () => {
     const { listOpenPublicVacancies } = await import('../../lib/public-vacancy-posting.js');
     const page1 = await listOpenPublicVacancies({ page: 1, pageSize: 1, includeTotal: true });

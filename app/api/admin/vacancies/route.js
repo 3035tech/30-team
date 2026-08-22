@@ -10,6 +10,7 @@ import { CAP, isAdminRole, requireCapability } from '../../../../lib/permissions
 import { parseVacancyDetailsFromBody } from '../../../../lib/vacancy-details';
 import { slugify } from '../../../../lib/slugify';
 import { scheduleVacancyIndexSync } from '../../../../lib/job-indexing';
+import { scheduleJobAlertDispatch } from '../../../../lib/job-alerts';
 
 
 const VACANCY_PAGE_SIZES = new Set([10, 20, 30, 40, 50]);
@@ -221,17 +222,25 @@ export async function POST(request) {
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);
   const created = ins.rows[0];
+  const indexPayload = {
+    id: created.id,
+    slug: created.slug,
+    status: created.status,
+    publicPageEnabled: created.publicPageEnabled,
+    publicAllowIndex: created.publicAllowIndex,
+    targetDate: created.targetDate,
+    title: created.title,
+    employmentType: created.employmentType,
+  };
   scheduleVacancyIndexSync({
     previous: null,
-    current: {
-      id: created.id,
-      slug: created.slug,
-      status: created.status,
-      publicPageEnabled: created.publicPageEnabled,
-      publicAllowIndex: created.publicAllowIndex,
-      targetDate: created.targetDate,
-    },
+    current: indexPayload,
     reason: 'vacancy_create',
+  });
+  scheduleJobAlertDispatch({
+    previous: null,
+    current: indexPayload,
+    companyName: c.rows[0].name,
   });
   return NextResponse.json(
     { ...created, companyName: c.rows[0].name, activeToken: linkToken },
