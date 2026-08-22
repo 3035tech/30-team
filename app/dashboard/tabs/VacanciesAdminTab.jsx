@@ -1396,7 +1396,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [employmentType, setEmploymentType] = useState('');
   const [clientReportShowSalary, setClientReportShowSalary] = useState(false);
   const [publicPageEnabled, setPublicPageEnabled] = useState(false);
-  const [publicAllowIndex, setPublicAllowIndex] = useState(false);
+  const [publicAllowIndex, setPublicAllowIndex] = useState(true);
   const [publicShowCompanyInfo, setPublicShowCompanyInfo] = useState(false);
   const [publicShowSalary, setPublicShowSalary] = useState(false);
   const [companyId, setCompanyId] = useState('');
@@ -1567,7 +1567,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
       setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
       setDescription(''); setEmploymentType(''); setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
-      setPublicPageEnabled(false); setPublicAllowIndex(false);
+      setPublicPageEnabled(false); setPublicAllowIndex(true);
       setPublicShowCompanyInfo(false); setPublicShowSalary(false);
       setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));

@@ -275,7 +275,7 @@ ALTER TABLE companies
 
 ALTER TABLE vacancies
   ADD COLUMN IF NOT EXISTS public_page_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS public_allow_index BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_allow_index BOOLEAN NOT NULL DEFAULT TRUE,
   ADD COLUMN IF NOT EXISTS public_show_company_info BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS public_show_salary BOOLEAN NOT NULL DEFAULT FALSE;
 
@@ -289,4 +289,8 @@ CREATE INDEX IF NOT EXISTS idx_vacancies_public_open_created
     AND public_page_enabled = TRUE
     AND public_allow_index = TRUE
     AND status = 'open';
+
+-- 031 — indexação ligada por padrão (novas vagas)
+ALTER TABLE vacancies
+  ALTER COLUMN public_allow_index SET DEFAULT TRUE;
 
