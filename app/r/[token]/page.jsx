@@ -579,7 +579,7 @@ function ReportInner() {
         <h2 style={{ fontFamily: FONTS.serif, fontSize: '18px', color: C.text, margin: '0 0 14px' }}>
           {t(locale, 'panel.report.profilesTitle')}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {candidates.map((c, i) => (
             <CandidateCard
               key={`card-${c.name}-${i}`}
