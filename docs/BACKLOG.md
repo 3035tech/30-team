@@ -133,27 +133,15 @@ Alinhar one-offs (`test-ae-scoring`, `test-motivators-invite-flow`) ao pacote `t
 
 #### B-122 — JobSeoScoreService (determinístico)
 **Entregue:** `lib/job-seo-score.js` + checklist no drawer de vaga (`VacancyPublicFlagsFields`); teste DTOV offline.
-#### B-123 — Abstração futura de IA para conteúdo de vaga
-**Instruções:**
-- **Não** criar código morto. Só documentar em `docs/job-seo-and-distribution.md` que `lib/vacancy-assist-ai.js` já cobre draft/improve description; futuros `generateMetaDescription` / `suggestSkills` estendem esse módulo.
-- Se precisar de interface, 1 arquivo fino reexport — sem stubs vazios.
-- Critério: doc clara; zero dependência nova.
 
 ---
 
 ### Transversal (fazer junto das fases)
 
-#### B-124 — Documentação `docs/job-seo-and-distribution.md`
-Arquitetura, fluxos, JSON-LD, sitemap, Indexing API, envs, tracking, referral, analytics, score, como testar e validar JSON-LD (Google Rich Results).
-
-#### B-125 — Guia do painel + README
-**Parcial:** Guia do painel atualizado (Funil, Indicação, score SEO, /j /c job alerts, parecer, shell). Falta fechar README/`.env.example` (Indexing, SMTP alerts) se ainda incompleto.
-
 #### B-126 — Suite de testes do epic
 Cobrir: slugify (acentos/especiais); JobPosting variantes; sitemap só ativas; UTM/referral persistence; SEO score; Indexing mock. Rodar `dtov:full-app` ao fechar cada fase relevante.
 
-#### B-127 — Segurança / LGPD checklist do epic
-Nada de candidato em sitemap/JSON-LD/analytics público; admin analytics com CAP; sem IP em claro; UTMs/ref ok de armazenar.
+Docs do epic (**B-123**, **B-124**, **B-125**, **B-127**): entregues — `docs/job-seo-and-distribution.md`, README/`.env.example`, Guia, checklist LGPD no mesmo doc + ponte em `privacidade-lgpd-interno.md`.
 
 ---
 
@@ -173,5 +161,5 @@ _(vazio)_
 ## Notas
 
 - Itens **B-001–B-006**: gaps de teste/a11y da sessão DTOV/Playwright.
-- Epic **B-100 / B-101–B-127**: SEO/distribuição/analytics. Referral UI + job-alert SMTP no publish já entregues (Fase 5/6). Restos: B-119, B-123–B-127, B-001–B-006, campos logo/local/modalidade.
+- Epic **B-100**: SEO/distribuição/analytics. Restos abertos: **B-119** (agregadores, bloqueado), **B-126** (suite testes). Docs B-123–125/127 fechados. Campos logo/local/modalidade ainda gap de schema.
 - Ao concluir o epic inteiro: apagar a seção B-100 e filhos; manter só o que restar em Aberto.

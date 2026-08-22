@@ -165,6 +165,8 @@ npm run dev
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`).
 
+Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**.
+
 ---
 
 ## Segurança
@@ -176,6 +178,7 @@ Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` def
 | Rotas do painel | Middleware + roles `admin` / `direction` / `hr` |
 | Senha | `users.password_hash` (bcrypt) |
 | Escrita do teste | Endpoints públicos de resultado / convite (com token de link) |
+| SEO / funil | Sem candidato em sitemap/JSON-LD; analytics só autenticado — ver checklist em `docs/job-seo-and-distribution.md` |
 
 ---
 
@@ -189,9 +192,17 @@ Principais (lista completa em `.env.example`):
 | `POSTGRES_READ_HOST` | Réplica só-leitura (opcional) |
 | `BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD` | Admin inicial |
 | `JWT_SECRET` | Assinatura do JWT (≥32 chars em produção) |
-| `NEXT_PUBLIC_APP_URL` | URL pública (cookie Secure em HTTPS) |
+| `NEXT_PUBLIC_APP_URL` | URL pública (links de e-mail, Indexing, share) |
 | `COOKIE_SECURE` | Força Secure (`true`/`false`) |
+| `SMTP_HOST` + `MAIL_FROM` | E-mail (convites **e** job alerts ao publicar `/j`; sem SMTP = alerts no-op) |
+| `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | Detalhe SMTP |
+| `OPENAI_API_KEY` | IA (rubrica, descrição de vaga, parecer `/r`) — opcional |
+| `OPENAI_RUBRIC_MODEL` | Modelo (default `gpt-4o-mini`) |
+| `GOOGLE_INDEXING_ENABLED` | `true` liga push Google Indexing (default off) |
+| `GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON` | JSON inline ou path da service account |
+| `GOOGLE_INDEXING_MOCK` | `1` = não chama Google (DTOV já mocka com `DTOV=1`) |
 | `RETENTION_DAYS` | Retenção / LGPD |
+| `CRON_SECRET` | Crons (lembretes, prazos, retenção de notificações) |
 
 ---
 

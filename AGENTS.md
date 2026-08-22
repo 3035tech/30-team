@@ -257,6 +257,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
+| SEO / vagas públicas | `docs/job-seo-and-distribution.md`, `app/j`, `lib/job-indexing.js`, Guia `panel.help.publicVacancy*` |
 | Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js` |
 | Backlog de ideias | `docs/BACKLOG.md` — adicionar ao pedir; remover ao implementar |
 
@@ -266,4 +267,4 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - `CLAUDE.md`: entrada para Claude Code (aponta para este arquivo)
 - `.cursor/rules/`: atalhos Cursor por área (`ui-ux.mdc`, `dba-performance.mdc` alwaysApply)
 - `.cursor/skills/dev-test-validate/` + `.cursor/rules/dev-test-validate.mdc`: **obrigatório** após implementação (Dev → Test → Validate, DTOV, `max_rounds`)
-- `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`
+- `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`, `docs/job-seo-and-distribution.md`

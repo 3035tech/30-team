@@ -43,7 +43,8 @@ Implementação técnica: exclusões em cascata onde houver `ON DELETE CASCADE`;
 
 ## SEO / URLs sensíveis
 
-- Rotas com token (`/t/…`, `/v/…`) exportam **`robots: noindex`** para reduzir indexação acidental de URLs únicas.
+- Rotas com token (`/t/…`, `/v/…`, `/r/…`) exportam **`robots: noindex`** para reduzir indexação acidental de URLs únicas.
+- Checklist do epic de vagas públicas (sitemap, funil, referral, alerts): [`docs/job-seo-and-distribution.md`](./job-seo-and-distribution.md) § Segurança / LGPD.
 
 ## Tabela legada `results`
 
