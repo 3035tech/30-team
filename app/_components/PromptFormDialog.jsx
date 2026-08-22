@@ -20,6 +20,8 @@ import {
  *   options?: [{value,label}],
  *   showWhen?: (values) => boolean,
  *   placeholder?: string,
+ *   help?: string,
+ *   rows?: number,
  * }]
  */
 export function PromptFormDialog({
@@ -165,23 +167,24 @@ export function PromptFormDialog({
       return (
         <label
           style={{
-            marginTop: '8px',
-            display: 'inline-flex',
-            alignItems: 'center',
+            marginTop: f.help ? 0 : '4px',
+            display: 'flex',
+            alignItems: 'flex-start',
             gap: '10px',
             cursor: 'pointer',
             fontSize: '14px',
             color: C.text,
             fontFamily: 'Georgia, serif',
+            lineHeight: 1.45,
           }}
         >
           <input
             type="checkbox"
             checked={checked}
             onChange={(e) => setField(f.key, e.target.checked)}
-            style={{ width: '18px', height: '18px', accentColor: C.purple }}
+            style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, accentColor: C.purple }}
           />
-          {checked ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}
+          <span>{f.label}</span>
         </label>
       );
     }
@@ -257,8 +260,22 @@ export function PromptFormDialog({
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {visibleFields.map((f) => (
             <div key={f.key} style={{ display: 'block' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
+              {f.type !== 'boolean' ? (
+                <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
+              ) : null}
               {renderControl(f)}
+              {f.help ? (
+                <p
+                  style={{
+                    margin: f.type === 'boolean' ? '6px 0 0 28px' : '6px 0 0',
+                    fontSize: '12px',
+                    color: C.muted,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {f.help}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>

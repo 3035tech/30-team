@@ -67,6 +67,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const openCreateCompany = async () => {
     const values = await promptForm({
       title: t(locale, 'panel.admin.createCompanyTitle'),
+      message: t(locale, 'panel.admin.createCompanyHelp'),
       confirmLabel: t(locale, 'panel.admin.create'),
       fields: [
         {
@@ -78,7 +79,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         {
           key: 'slug',
           label: t(locale, 'panel.admin.editCompanySlug'),
-          placeholder: t(locale, 'panel.admin.slugPlaceholder'),
+          placeholder: t(locale, 'panel.admin.companySlugPlaceholder'),
+          help: t(locale, 'panel.admin.companySlugHelp'),
           defaultValue: '',
         },
         {
@@ -88,17 +90,20 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           defaultValue: '',
         },
         {
+          key: 'publicProfileEnabled',
+          type: 'boolean',
+          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
+          help: t(locale, 'panel.admin.editCompanyPublicProfileHelp'),
+          defaultValue: false,
+        },
+        {
           key: 'aboutHtml',
           type: 'textarea',
           label: t(locale, 'panel.admin.editCompanyAbout'),
           placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
+          help: t(locale, 'panel.admin.editCompanyAboutHelp'),
+          rows: 3,
           defaultValue: '',
-        },
-        {
-          key: 'publicProfileEnabled',
-          type: 'boolean',
-          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
-          defaultValue: false,
         },
       ],
     });
@@ -172,10 +177,17 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const editCompany = async (c) => {
     const values = await promptForm({
       title: t(locale, 'panel.admin.editCompanyTitle'),
+      message: t(locale, 'panel.admin.editCompanyHelp'),
       confirmLabel: t(locale, 'panel.common.save'),
       fields: [
         { key: 'name', label: t(locale, 'panel.admin.editCompanyName'), defaultValue: c?.name ?? '' },
-        { key: 'slug', label: t(locale, 'panel.admin.editCompanySlug'), defaultValue: c?.slug ?? '' },
+        {
+          key: 'slug',
+          label: t(locale, 'panel.admin.editCompanySlug'),
+          placeholder: t(locale, 'panel.admin.companySlugPlaceholder'),
+          help: t(locale, 'panel.admin.companySlugHelp'),
+          defaultValue: c?.slug ?? '',
+        },
         {
           key: 'website',
           label: t(locale, 'panel.admin.editCompanyWebsite'),
@@ -183,17 +195,20 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           defaultValue: c?.website ?? '',
         },
         {
+          key: 'publicProfileEnabled',
+          type: 'boolean',
+          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
+          help: t(locale, 'panel.admin.editCompanyPublicProfileHelp'),
+          defaultValue: Boolean(c?.publicProfileEnabled),
+        },
+        {
           key: 'aboutHtml',
           type: 'textarea',
           label: t(locale, 'panel.admin.editCompanyAbout'),
           placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
+          help: t(locale, 'panel.admin.editCompanyAboutHelp'),
+          rows: 3,
           defaultValue: c?.aboutHtml ?? '',
-        },
-        {
-          key: 'publicProfileEnabled',
-          type: 'boolean',
-          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
-          defaultValue: Boolean(c?.publicProfileEnabled),
         },
         {
           key: 'active',
