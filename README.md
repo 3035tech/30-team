@@ -140,7 +140,7 @@ npm run dev
 1. /login → JWT em cookie httpOnly (claim `sv` = `users.session_version`)
 2. Logout / troca de senha / desativação incrementam `session_version` e invalidam JWTs antigos
 3. APIs admin e SSR do painel revalidam usuário live (active, role, company) a cada request
-4. /dashboard → Server Component lê o Postgres (dados por aba)
+4. /dashboard → auth leve pinta o shell (sidebar); queries da aba em Suspense (`load-dashboard-data.js`)
 5. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
 6. Em Vagas: link /v/… (teste) e, se habilitado, página /j/{slug}-{id} (divulgação/SEO)
 ```

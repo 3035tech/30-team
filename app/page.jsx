@@ -143,8 +143,7 @@ export default function HomePage() {
             {t(locale, 'home.formAccess')}
           </div>
           <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
-            - {t(locale, 'home.companyPath')}
-            <br />- {t(locale, 'home.vacancyPath')}
+            {t(locale, 'home.formAccessHint')}
           </div>
         </div>
       </div>

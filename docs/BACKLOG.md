@@ -157,6 +157,13 @@ Nada de candidato em sitemap/JSON-LD/analytics público; admin analytics com CAP
 
 ---
 
+## Aberto — performance (audit dashboard)
+
+### B-202 — (opcional) caps/API restantes do audit
+Já entregue na maior parte: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps. Revisitar só se métricas de produção pedirem.
+
+---
+
 ## Em andamento
 
 _(vazio)_

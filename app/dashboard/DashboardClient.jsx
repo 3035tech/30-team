@@ -23,7 +23,6 @@ import {
 
 import { DashboardBreadcrumb, getDashboardTabNav, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
-import { TeamTab } from './tabs/TeamTab';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
@@ -32,6 +31,11 @@ import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
 }
+
+const TeamTab = dynamic(
+  () => import('./tabs/TeamTab').then((m) => ({ default: m.TeamTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 
 function ExportCsvButton({ href, locale }) {
   const fb = useAppFeedbackOptional();
@@ -310,6 +314,8 @@ export default function DashboardClient({
   overviewMetrics = null,
   auth = null,
   initialLocale = 'pt-BR',
+  /** Shell-only paint while tab queries stream (B-201). */
+  panelLoading = false,
 }) {
   const router = useRouter();
   const urlParams = useSearchParams();
@@ -957,7 +963,9 @@ export default function DashboardClient({
                 {t(locale, getDashboardTabNav(tab).labelKey)}
               </h2>
               <span style={{ fontSize: '13px', color: C.muted }}>
-                {showsCohortChrome ? (
+                {panelLoading ? (
+                  t(locale, 'dashboard.loadingPanel')
+                ) : showsCohortChrome ? (
                   <>
                     {listTotal}{' '}
                     {listTotal === 1
@@ -979,7 +987,7 @@ export default function DashboardClient({
               </span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', alignSelf: 'flex-end' }}>
-              {showsCohortChrome ? (
+              {showsCohortChrome && !panelLoading ? (
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(!filtersExpanded)}
@@ -1005,12 +1013,18 @@ export default function DashboardClient({
                     : ''}
                 </button>
               ) : null}
-              {showsCohortChrome ? (
+              {showsCohortChrome && !panelLoading ? (
               <ExportCsvButton href={exportUrl} locale={locale} />
               ) : null}
             </div>
           </div>
 
+          {panelLoading ? (
+            <div role="status" aria-live="polite" style={{ padding: '48px 0', minHeight: 240 }}>
+              <AppLoading variant="panel" label={t(locale, 'dashboard.loadingPanel')} />
+            </div>
+          ) : (
+          <>
           {/* Filter row — essentials always on; advanced behind disclosure */}
           {showsCohortChrome ? (
           <>
@@ -1348,6 +1362,8 @@ export default function DashboardClient({
                 />
               )}
             </>
+          )}
+          </>
           )}
         </div>
       </div>
