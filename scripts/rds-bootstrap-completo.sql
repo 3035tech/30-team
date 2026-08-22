@@ -413,8 +413,15 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS website TEXT;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS about_html TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT NOT NULL DEFAULT 'pt-BR';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_setup_token TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_setup_expires_at TIMESTAMPTZ;
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_locale_check;
 ALTER TABLE users ADD CONSTRAINT users_locale_check CHECK (locale IN ('pt-BR', 'en'));
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_users_password_setup_token
+  ON users (password_setup_token)
+  WHERE password_setup_token IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_vacancies_company_slug_public
   ON vacancies (company_id, LOWER(slug))

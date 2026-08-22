@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import crypto from 'crypto';
 import { COOKIE_NAME, hashPassword } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { PAGE_SIZE_OPTIONS, sqlUsersOrderBy } from '../../../../lib/assessment-filters';
@@ -11,8 +10,11 @@ import {
   verifySessionWithCapabilities,
 } from '../../../../lib/user-capabilities';
 import { audit } from '../../../../lib/audit';
-import { buildUserAccessMail } from '../../../../lib/user-access-mail';
-import { enqueueTransactionalMail, isMailConfigured } from '../../../../lib/mail';
+import { isMailConfigured } from '../../../../lib/mail';
+import {
+  hashUnusablePassword,
+  issuePasswordSetupInvite,
+} from '../../../../lib/user-password-invite';
 
 const USER_SORT_KEYS = new Set(['id', 'email', 'role', 'companyName', 'active', 'createdAt']);
 
@@ -51,7 +53,8 @@ export async function GET(request) {
        u.company_id AS "companyId",
        c.name AS "companyName",
        u.last_login_at AS "lastLoginAt",
-       u.created_at AS "createdAt"
+       u.created_at AS "createdAt",
+       (u.password_setup_token IS NOT NULL) AS "passwordSetupPending"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id
      WHERE u.deleted = FALSE
@@ -92,6 +95,7 @@ export async function GET(request) {
       : defaultAssignableModulesForRole(row.role);
     return {
       ...row,
+      passwordSetupPending: Boolean(row.passwordSetupPending),
       capabilitiesCustomized: customized,
       modules,
     };
@@ -117,28 +121,35 @@ export async function POST(request) {
   const suppliedPassword = String(body.password || '').trim();
   const role = String(body.role || '').trim();
   const companyId = body.companyId ?? null;
-  const generatedPassword =
+  const wantInvite =
     !suppliedPassword || body.sendInvite === true || body.temporaryPassword === true;
-  const password = generatedPassword
-    ? crypto.randomBytes(9).toString('base64url')
-    : suppliedPassword;
-  const mustChangePassword = generatedPassword || body.forcePasswordChange === true;
 
   if (!email) return apiError(request, 'EMAIL_REQUIRED', 400);
   if (!['hr', 'direction', 'admin'].includes(role)) return apiError(request, 'INVALID_ROLE', 400);
   if (role !== 'admin' && !companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
+  if (wantInvite && !isMailConfigured()) {
+    return apiError(request, 'PASSWORD_OR_SMTP_REQUIRED', 400);
+  }
 
   if (companyId) {
     const c = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
     if (c.rowCount === 0) return apiError(request, 'INVALID_COMPANY', 400);
   }
 
-  const hash = await hashPassword(password);
+  if (!wantInvite && suppliedPassword.length < 8) {
+    return apiError(request, 'PASSWORD_TOO_SHORT', 400);
+  }
+
+  const hash = wantInvite ? await hashUnusablePassword() : await hashPassword(suppliedPassword);
   const ins = await query(
-    `INSERT INTO users (email, password_hash, role, active, company_id, must_change_password)
-     VALUES ($1, $2, $3, TRUE, $4, $5)
+    `INSERT INTO users (
+       email, password_hash, role, active, company_id, must_change_password,
+       password_setup_token, password_setup_expires_at
+     )
+     VALUES ($1, $2, $3, TRUE, $4, FALSE, NULL, NULL)
      RETURNING id, email, role, active, company_id AS "companyId", created_at AS "createdAt"`,
-    [email, hash, role, companyId, mustChangePassword]
+    [email, hash, role, companyId]
   );
   const created = ins.rows[0];
 
@@ -155,29 +166,32 @@ export async function POST(request) {
     action: 'user.create',
     targetType: 'user',
     targetId: created.id,
-    meta: { email, role },
+    meta: { email, role, invite: wantInvite },
   });
 
-  const temporaryPasswordResult = {};
-  if (generatedPassword) {
-    if (isMailConfigured()) {
-      const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin).replace(/\/+$/, '');
-      const mail = buildUserAccessMail({
-        email,
-        temporaryPassword: password,
-        loginUrl: `${appUrl}/login`,
-      });
-      enqueueTransactionalMail({ to: email, ...mail });
-      temporaryPasswordResult.temporaryPasswordSent = true;
-    } else {
-      temporaryPasswordResult.temporaryPassword = password;
-    }
-  }
-
-  return NextResponse.json({
+  const result = {
     ...created,
     modules,
     capabilitiesCustomized: customized,
-    ...temporaryPasswordResult,
-  }, { status: 201 });
+  };
+
+  if (wantInvite) {
+    const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin).replace(
+      /\/+$/,
+      ''
+    );
+    const issued = await issuePasswordSetupInvite(created.id, {
+      appUrl,
+      locale: payload?.locale || 'pt-BR',
+    });
+    if (!issued.ok) {
+      // Conta já criada — admin pode reenviar. Não falhar o create.
+      result.inviteSent = false;
+      result.inviteError = issued.code;
+    } else {
+      result.inviteSent = true;
+    }
+  }
+
+  return NextResponse.json(result, { status: 201 });
 }

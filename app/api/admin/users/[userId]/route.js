@@ -62,13 +62,20 @@ export async function PATCH(request, { params }) {
     ? await hashPassword(newPassword.trim())
     : null;
 
+  if (nextHash != null && newPassword.trim().length < 8) {
+    return apiError(request, 'PASSWORD_TOO_SHORT', 400);
+  }
+
   const up = await query(
     `UPDATE users
      SET email = $2,
          role = $3,
          active = $4,
          company_id = $5,
-         password_hash = COALESCE($6, password_hash)
+         password_hash = COALESCE($6, password_hash),
+         password_setup_token = CASE WHEN $6 IS NOT NULL THEN NULL ELSE password_setup_token END,
+         password_setup_expires_at = CASE WHEN $6 IS NOT NULL THEN NULL ELSE password_setup_expires_at END,
+         must_change_password = CASE WHEN $6 IS NOT NULL THEN FALSE ELSE must_change_password END
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, email, role, active, company_id AS "companyId", created_at AS "createdAt", last_login_at AS "lastLoginAt"`,
     [userId, nextEmail, nextRole, nextActive, nextRole === 'admin' ? null : nextCompanyId, nextHash]

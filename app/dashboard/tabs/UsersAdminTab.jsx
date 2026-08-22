@@ -218,15 +218,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createUserFailed'));
-      if (data.temporaryPasswordSent) {
-        setMsg(t(locale, 'panel.admin.userCreatedMailSent', { email }));
-      } else if (data.temporaryPassword) {
-        setMsg(t(locale, 'panel.admin.userCreatedWithTempPassword', { password: data.temporaryPassword }));
+      if (data.inviteSent) {
+        setMsg(t(locale, 'panel.admin.userCreatedInviteSent', { email }));
+      } else if (data.inviteError === 'SMTP_NOT_CONFIGURED' || data.inviteError) {
+        setMsg(t(locale, 'panel.admin.userCreatedInvitePending', { email }));
       } else {
         setMsg(t(locale, 'panel.admin.userCreated'));
       }
       await loadUsersOnly();
-      if (!data.temporaryPassword) setTimeout(() => setMsg(''), 1600);
+      setTimeout(() => setMsg(''), 2800);
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -245,6 +245,26 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       setMsg(t(locale, 'panel.admin.userDeactivated'));
       await loadUsersOnly();
       setTimeout(() => setMsg(''), 1600);
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendInvite = async (userId, email) => {
+    setLoading(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/resend-invite`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.resendInviteFailed'));
+      setMsg(t(locale, 'panel.admin.resendInviteOk', { email: email || data.email || '' }));
+      await loadUsersOnly();
+      setTimeout(() => setMsg(''), 2800);
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -437,6 +457,23 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                             {t(locale, 'panel.admin.userModulesCustom')}
                           </span>
                         ) : null}
+                        {u.passwordSetupPending ? (
+                          <span
+                            title={t(locale, 'panel.admin.passwordSetupPendingHint')}
+                            style={{
+                              marginLeft: '6px',
+                              padding: '2px 8px',
+                              fontSize: '10px',
+                              borderRadius: '20px',
+                              background: 'rgba(26,22,37,.04)',
+                              border: `1px solid ${C.border}`,
+                              color: C.muted,
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            {t(locale, 'panel.admin.passwordSetupPending')}
+                          </span>
+                        ) : null}
                       </td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{companyLabel}</td>
                       <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
@@ -445,13 +482,26 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          {u.passwordSetupPending ? (
+                            <button
+                              type="button"
+                              onClick={() => resendInvite(u.id, u.email)}
+                              disabled={loading}
+                              title={t(locale, 'panel.admin.resendInvite')}
+                              style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}40`,
+                                borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
+                                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+                            >
+                              {t(locale, 'panel.admin.resendInvite')}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => editUser(u)}
                             disabled={loading}
                             style={{ background: 'transparent', border: `1px solid ${C.border}`,
                               borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
                           >
                             {t(locale, 'panel.admin.editUser')}
                           </button>
@@ -462,7 +512,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                             title={t(locale, 'panel.admin.deactivateTitle')}
                             style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
                               borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
                           >
                             {t(locale, 'panel.admin.deactivate')}
                           </button>

@@ -35,6 +35,7 @@ export async function POST(request) {
          u.locale,
          u.active,
          u.must_change_password AS "mustChangePassword",
+         u.password_setup_token AS "passwordSetupToken",
          u.company_id AS "companyId",
          u.deleted AS "userDeleted",
          COALESCE(u.session_version, 1) AS "sessionVersion",
@@ -51,6 +52,11 @@ export async function POST(request) {
     if (res.rowCount === 0 || !row0?.active || row0?.userDeleted || companyBlocked) {
       await new Promise((r) => setTimeout(r, 500));
       return apiError(request, 'INVALID_CREDENTIALS', 401);
+    }
+
+    if (row0.passwordSetupToken) {
+      await new Promise((r) => setTimeout(r, 500));
+      return apiError(request, 'PASSWORD_SETUP_PENDING', 403);
     }
 
     const u = res.rows[0];

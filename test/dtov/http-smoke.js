@@ -140,9 +140,15 @@ export async function runHttpSmoke(baseUrl) {
     ['vacancy-report', `/api/public/vacancy-report?token=${TOK.report}`],
     ['ae-invite', `/api/public/ae-invite?token=${TOK.aeInvite}`],
     ['candidate-invite', `/api/public/candidate-invite?token=${TOK.candInvite}`],
+    ['set-password-bad', '/api/public/set-password?token=invalid'],
   ]) {
     const { res, data } = await req(base, path);
-    const okStatuses = name === 'candidate-invite' ? [200, 404, 410] : [200];
+    const okStatuses =
+      name === 'candidate-invite'
+        ? [200, 404, 410]
+        : name === 'set-password-bad'
+          ? [400]
+          : [200];
     // invite may expire in odd seeds — still accept 404 for cand invite
     const allowed = name.includes('invite') && name !== 'ae-invite' ? [200, 404, 410, 409] : okStatuses;
     await expectStatus('public-api', name, res.status, allowed, typeof data === 'object' && data?.errorCode ? data.errorCode : '');

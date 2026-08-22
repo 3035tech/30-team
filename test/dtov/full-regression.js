@@ -171,6 +171,19 @@ async function runOfflineLibs() {
     return 'slugify ok';
   });
 
+  await check('lib', 'password-setup-invite-mask', async () => {
+    const {
+      generatePasswordSetupToken,
+      maskEmail,
+      PASSWORD_SETUP_TTL_MS,
+    } = await import('../../lib/user-password-invite.js');
+    const tok = generatePasswordSetupToken();
+    if (!tok || tok.length < 20) throw new Error('token too short');
+    if (maskEmail('hr@acme.com') !== 'hr***@acme.com') throw new Error(maskEmail('hr@acme.com'));
+    if (PASSWORD_SETUP_TTL_MS < 24 * 60 * 60 * 1000) throw new Error('ttl too short');
+    return 'invite helpers ok';
+  });
+
   await check('lib', 'job-posting-jsonld-guards', async () => {
     const { buildJobPostingJsonLd, serializeJsonLdForScript } = await import(
       '../../lib/public-vacancy-posting.js'

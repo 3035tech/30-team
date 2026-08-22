@@ -218,7 +218,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     people: 6,
     report: 8,
     motivators: 7,
-    access: 8,
+    access: 9,
     tips: 11,
   };
 
