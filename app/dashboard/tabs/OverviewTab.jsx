@@ -193,9 +193,11 @@ export function OverviewTab({
           {(() => {
             const pdi = data.peopleOps.pdi;
             const clima = data.peopleOps.climate;
+            const ret = data.peopleOps.retention;
             const hasPdi = pdi && (pdi.activePlans > 0 || pdi.activeItems > 0);
             const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
-            if (!hasPdi && !hasClima) {
+            const hasRet = ret && ret.count > 0;
+            if (!hasPdi && !hasClima && !hasRet) {
               return (
                 <p className="m-0 text-[13px] italic text-ink-muted">
                   {t(locale, 'panel.overview.peopleOpsEmpty')}
@@ -204,6 +206,15 @@ export function OverviewTab({
             }
             return (
               <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {hasRet ? (
+                  <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-[13px] text-ink">
+                    {t(locale, 'panel.overview.peopleOpsRetention', {
+                      n: ret.count,
+                      days: ret.lookbackDays || 14,
+                      min: ret.minScore ?? 55,
+                    })}
+                  </li>
+                ) : null}
                 {hasPdi ? (
                   <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
                     {pdi.donePct != null

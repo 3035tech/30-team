@@ -100,9 +100,15 @@ async function runOfflineLibs() {
       notificationHref,
       notificationCopySpec,
     } = await import('../../lib/manager-notification-catalog.js');
+    const { retentionWatchMinScore, listCompanyRetentionWatches } = await import(
+      '../../lib/people/retention-watch.js'
+    );
     if (!NOTIF_TYPES.has(NOTIF.RETENTION_WATCH)) throw new Error('RETENTION_WATCH not in catalog');
     if (!NOTIF_TYPES.has(NOTIF.HIRE_ONBOARDING_KIT)) throw new Error('HIRE_ONBOARDING_KIT not in catalog');
     if (!NOTIF_TYPES.has(NOTIF.MANAGER_WEEKLY_DIGEST)) throw new Error('MANAGER_WEEKLY_DIGEST not in catalog');
+    const min = retentionWatchMinScore();
+    if (!(min >= 1 && min <= 100)) throw new Error(`bad min score ${min}`);
+    if (typeof listCompanyRetentionWatches !== 'function') throw new Error('missing listCompanyRetentionWatches');
     const href = notificationHref(NOTIF.RETENTION_WATCH, { candidateId: 42 });
     if (!String(href).includes('candidate=42')) throw new Error(`bad href ${href}`);
     const hireHref = notificationHref(NOTIF.HIRE_ONBOARDING_KIT, { candidateId: 7 });

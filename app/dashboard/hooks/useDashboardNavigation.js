@@ -71,6 +71,15 @@ export function useDashboardNavigation({
       if (curDetail) p.set('vacancyDetail', curDetail);
     }
 
+    // Deep-link Equipe → pessoa: /dashboard?tab=team&candidate=<id>
+    const nextTab = opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
+    if (opts.candidate !== undefined) {
+      if (opts.candidate) p.set('candidate', String(opts.candidate));
+    } else if (nextTab === 'team') {
+      const curCand = urlParams.get('candidate');
+      if (curCand) p.set('candidate', curCand);
+    }
+
     const merged = { ...snapshot(), ...opts };
     const teamFrom = parseTeamPagination(merged);
     const teamSortSt = parseTeamSort(merged);
