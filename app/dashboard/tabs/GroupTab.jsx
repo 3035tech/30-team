@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getCompat } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
+import { buildNucleusCompositionAdvice } from '../../../lib/people/decision-brief';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 
 export function GroupTab({
@@ -22,6 +23,40 @@ export function GroupTab({
   const [search, setSearch] = useState('');
   const [baseSearch, setBaseSearch] = useState('');
   const [showAllBase, setShowAllBase] = useState(false);
+
+  const nucleusAdvice = useMemo(() => {
+    if (!groupBase) return null;
+    const members = (groupIds || [])
+      .map((id) => (results || []).find((r) => String(r.assessmentId) === String(id)))
+      .filter(Boolean);
+    if (members.length < 1) return null;
+    const nucleus = [
+      {
+        id: groupBase.assessmentId,
+        name: groupBase.name,
+        topType: groupBase.topType,
+      },
+      ...members.map((m) => ({
+        id: m.assessmentId,
+        name: m.name,
+        topType: m.topType,
+      })),
+    ];
+    const candidates = (results || [])
+      .filter((r) => !dismissedIds.includes(String(r.assessmentId)))
+      .map((r) => ({
+        id: r.assessmentId,
+        name: r.name,
+        topType: r.topType,
+      }));
+    return buildNucleusCompositionAdvice({
+      locale,
+      nucleus,
+      candidates,
+      limitCompleters: 5,
+      limitRisks: 3,
+    });
+  }, [groupBase, groupIds, results, dismissedIds, locale]);
 
   const addToGroup = (assessmentId) => {
     const id = String(assessmentId);
@@ -237,6 +272,81 @@ export function GroupTab({
                 {t(locale, 'panel.group.tension')}
               </span>
             </div>
+
+            {nucleusAdvice && !nucleusAdvice.empty ? (
+              <div className="mb-4 rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-3.5 py-3">
+                <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-brand-600">
+                  {t(locale, 'panel.group.nucleusTitle')}
+                </div>
+                <p className="mb-3 mt-0 text-[11px] leading-snug text-ink-faint">
+                  {t(locale, 'panel.group.nucleusHint', { n: nucleusAdvice.nucleusSize })}
+                </p>
+                {nucleusAdvice.completers.length > 0 ? (
+                  <div className="mb-3">
+                    <div className="mb-1.5 text-xs font-semibold text-success">
+                      {t(locale, 'panel.group.nucleusCompleters')}
+                    </div>
+                    <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                      {nucleusAdvice.completers.map((row) => {
+                        const already = groupIds.includes(String(row.id));
+                        return (
+                          <li
+                            key={`comp-${row.id}`}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-success/20 bg-white/70 px-2.5 py-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <TypeBadge type={row.topType} locale={locale} compact />
+                                <span className="text-[13px] text-ink">{row.name}</span>
+                              </div>
+                              <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">{row.summary}</p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={already}
+                              onClick={() => addToGroup(row.id)}
+                              className={cn(
+                                'shrink-0 rounded-control border px-2.5 py-1.5 font-mono text-[11px]',
+                                already
+                                  ? 'cursor-not-allowed border-ink/12 text-ink-faint'
+                                  : 'cursor-pointer border-success/35 bg-success/[0.09] text-success'
+                              )}
+                            >
+                              {already ? t(locale, 'panel.group.inGroup') : t(locale, 'panel.group.add')}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
+                {nucleusAdvice.risks.length > 0 ? (
+                  <div>
+                    <div className="mb-1.5 text-xs font-semibold text-warning">
+                      {t(locale, 'panel.group.nucleusRisks')}
+                    </div>
+                    <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                      {nucleusAdvice.risks.map((row) => (
+                        <li
+                          key={`risk-${row.id}`}
+                          className="rounded-control border border-warning/25 bg-warning/[0.06] px-2.5 py-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <TypeBadge type={row.topType} locale={locale} compact />
+                            <span className="text-[13px] text-ink">{row.name}</span>
+                          </div>
+                          <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">{row.summary}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : nucleusAdvice && groupIds.length > 0 ? (
+              <p className="mb-3 mt-0 text-xs italic text-ink-faint">
+                {t(locale, 'panel.group.nucleusEmpty')}
+              </p>
+            ) : null}
 
             <div className="mb-4 flex flex-col gap-2.5">
               {suggestions.slice(0, 10).map(({ person, compat }) => {

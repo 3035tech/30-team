@@ -80,6 +80,14 @@ function NotifTypeIcon({ category, tone }) {
         <path d="M9 14l2 2 4-4" />
       </svg>
     );
+  } else if (category === 'retention') {
+    glyph = (
+      <svg {...svgProps}>
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+        <path d="M10.3 4.3 2.6 18a1.5 1.5 0 0 0 1.3 2.2h16.2a1.5 1.5 0 0 0 1.3-2.2L13.7 4.3a1.5 1.5 0 0 0-2.6 0Z" />
+      </svg>
+    );
   } else {
     glyph = (
       <svg {...svgProps}>

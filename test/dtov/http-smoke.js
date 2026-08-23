@@ -483,10 +483,20 @@ export async function runHttpSmoke(baseUrl) {
   // People / 1:1 — always against fixture candidate (not tied to first vacancy)
   if (peopleCandidateId) {
     ok('people', 'fixture-candidate', String(peopleCandidateId));
-    const { res } = await req(base, `/api/admin/candidates/${peopleCandidateId}`, {
+    const { res, data } = await req(base, `/api/admin/candidates/${peopleCandidateId}?locale=pt-BR`, {
       cookie: hrCookie,
     });
     await expectStatus('people', 'candidate-get', res.status, 200);
+    if (res.status === 200) {
+      const brief = data?.people?.decisionBrief;
+      if (!brief || typeof brief !== 'object') {
+        fail('people', 'decision-brief', 'missing people.decisionBrief');
+      } else if (typeof brief.hasAny !== 'boolean') {
+        fail('people', 'decision-brief', 'decisionBrief.hasAny missing');
+      } else {
+        ok('people', 'decision-brief', brief.hasAny ? 'hasAny' : 'empty-ok');
+      }
+    }
     const { res: r2 } = await req(base, `/api/admin/candidates/${peopleCandidateId}/one-on-ones`, {
       cookie: hrCookie,
     });

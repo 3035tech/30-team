@@ -9,6 +9,7 @@ import { bootstrapMotivators } from '../../../../lib/ae/bootstrap-motivators';
 import { formatScoringFailure, summarizeScoringInput } from '../../../../lib/ae/scoring-diagnostics';
 import { apiError } from '../../../../lib/api-error';
 import { notifyCompanyManagers, NOTIF } from '../../../../lib/manager-notifications';
+import { buildManagementHypotheses } from '../../../../lib/people/management-hypotheses';
 
 /**
  * POST /api/ae/submit
@@ -114,6 +115,35 @@ export async function POST(request) {
         candidateName: attempt.candidateName || null,
       },
     });
+
+    const hyp = buildManagementHypotheses({
+      locale,
+      motivators: {
+        dimensionScores: scored.dimensionScores,
+        ranking: scored.ranking,
+      },
+    });
+    const signals = hyp.retentionSignals || [];
+    if (signals.length > 0 && attempt.candidateId) {
+      const signalLabels = signals
+        .map((s) => s.label || s.key)
+        .filter(Boolean)
+        .join(', ');
+      await notifyCompanyManagers(query, {
+        companyId: attempt.companyId,
+        type: NOTIF.RETENTION_WATCH,
+        entityType: 'candidate',
+        entityId: attempt.candidateId,
+        dedupeKey: `retention_watch:attempt:${attemptId}`,
+        payload: {
+          candidateId: attempt.candidateId,
+          attemptId,
+          candidateName: attempt.candidateName || null,
+          signalLabels: signalLabels || '—',
+          signalKeys: signals.map((s) => s.key),
+        },
+      });
+    }
 
     return NextResponse.json({
       ok: true,

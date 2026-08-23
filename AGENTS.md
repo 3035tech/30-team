@@ -245,8 +245,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Dashboard | `app/dashboard/page.jsx`, `tabs/*`, `lib/overview-metrics.js`, `lib/compat-bundles.js` |
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
 | Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
-| People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
-| Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js`, `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications` e `notification-retention` |
+| People (1:1 / hipóteses / briefing) | `lib/people/*` (`decision-brief.js`), `app/_components/PeopleManagementPanel.jsx`, `HrActionBrief.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
+| Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js` (incl. `retention_watch`), `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications` e `notification-retention` |
 | Export CSV | `lib/export-assessments-csv.js`, `GET /api/admin/export` (cap `EXPORT_MAX_ROWS` + stream) |
 | Retenção LGPD | `lib/retention.js`, `POST /api/admin/retention/purge` (lotes) |
 | Links públicos | `lib/public-company-link.js`, `lib/public-vacancy-link.js`, `app/t`, `app/v` |

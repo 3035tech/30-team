@@ -3,11 +3,15 @@
 import { cn } from '../../lib/cn';
 import { copyToClipboard } from '../../lib/clipboard';
 import { t } from '../../lib/i18n';
-import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedbackOptional } from './AppFeedback';
+import { Icon } from './Icon';
+
+const iconActionClass =
+  'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 disabled:cursor-default disabled:opacity-50';
 
 /**
- * Shareable URL for managers: clickable link + copy (toast via AppFeedback when present).
+ * Shareable URL for managers: clickable link + icon actions (copy / open).
+ * Labels stay in aria-label + title; toast via AppFeedback when present.
  *
  * @param {{
  *   url: string,
@@ -37,6 +41,9 @@ export function CopyableLink({
   const feedback = useAppFeedbackOptional();
   const href = String(url || '').trim();
   const canUse = Boolean(href) && !disabled;
+  const copyText = copyLabel || t(locale, 'panel.common.copyLink');
+  const openText = openLabel || t(locale, 'panel.common.openLink');
+  const hit = compact ? 'min-h-9 min-w-9' : 'min-h-touch min-w-touch';
 
   const onCopy = async () => {
     if (!canUse) return;
@@ -50,37 +57,27 @@ export function CopyableLink({
     }
   };
 
-  const btnCopy = cn(
-    compact ? 'min-h-[36px] px-2.5 py-1.5 text-[11px]' : 'min-h-touch px-3 py-2 text-xs',
-    S.btnBrandSoft,
-    !canUse && 'cursor-default opacity-50'
-  );
-  const btnOpen = cn(
-    compact ? 'min-h-[36px] px-2.5 py-1.5 text-[11px]' : 'min-h-touch px-3 py-2 text-xs',
-    S.btnGhost,
-    !canUse && 'cursor-default opacity-50'
-  );
-
   return (
     <div className={cn('flex min-w-0 flex-col gap-1', className)}>
       {label ? (
         <span className="font-mono text-[11px] tracking-[0.02em] text-ink-faint">{label}</span>
       ) : null}
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {showUrl ? (
           canUse && openable ? (
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 break-all font-mono text-xs text-brand-500 underline underline-offset-2"
+              className="min-w-0 flex-1 break-all font-mono text-xs text-brand-500 underline underline-offset-2"
+              title={openText}
             >
               {href}
             </a>
           ) : (
             <span
               className={cn(
-                'min-w-0 break-all font-mono text-xs',
+                'min-w-0 flex-1 break-all font-mono text-xs',
                 canUse ? 'text-ink-muted' : 'text-ink-faint'
               )}
             >
@@ -92,19 +89,30 @@ export function CopyableLink({
           type="button"
           onClick={onCopy}
           disabled={!canUse}
-          className={btnCopy}
-          aria-label={copyLabel || t(locale, 'panel.common.copyLink')}
+          className={cn(
+            iconActionClass,
+            hit,
+            'border-brand-500/35 bg-brand-500/[0.09] text-brand-600'
+          )}
+          aria-label={copyText}
+          title={copyText}
         >
-          {copyLabel || t(locale, 'panel.common.copyLink')}
+          <Icon name="copy" />
         </button>
         {openable && !showUrl && canUse ? (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(btnOpen, 'inline-flex items-center no-underline')}
+            className={cn(
+              iconActionClass,
+              hit,
+              'border-ink/12 bg-transparent text-ink-muted no-underline'
+            )}
+            aria-label={openText}
+            title={openText}
           >
-            {openLabel || t(locale, 'panel.common.openLink')}
+            <Icon name="externalLink" />
           </a>
         ) : null}
       </div>

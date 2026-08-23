@@ -180,6 +180,36 @@ export function Icon({ name, className }) {
           <path d="M18 16v-4" />
         </svg>
       );
+    case 'copy':
+      return (
+        <svg {...props}>
+          <rect x="9" y="9" width="11" height="11" rx="1.5" />
+          <path d="M5 15V5.5A1.5 1.5 0 0 1 6.5 4H15" />
+        </svg>
+      );
+    case 'externalLink':
+      return (
+        <svg {...props}>
+          <path d="M14 4h6v6" />
+          <path d="M10 14 20 4" />
+          <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...props}>
+          <path d="M3 6h18" />
+          <path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6" />
+          <path d="M6.5 6l.8 13.2A1.5 1.5 0 0 0 8.8 20.5h6.4a1.5 1.5 0 0 0 1.5-1.3L17.5 6" />
+        </svg>
+      );
+    case 'pencil':
+      return (
+        <svg {...props}>
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+      );
     default:
       return null;
   }

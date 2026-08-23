@@ -10,7 +10,8 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../lib/person-name';
 import { S } from './dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
-import { AppLoading } from '../_components/AppLoading';
+import { AppLoading, Spinner } from '../_components/AppLoading';
+import { HrActionBrief } from '../_components/HrActionBrief';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
 const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
@@ -71,6 +72,8 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   const [inviteBusy, setInviteBusy] = useState(false);
   const [motivatorsBusy, setMotivatorsBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [decisionBrief, setDecisionBrief] = useState(null);
+  const [briefLoading, setBriefLoading] = useState(false);
 
   const showError = async (message) => {
     await notice({
@@ -90,6 +93,33 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     setAvailability(row.availability || '');
     setSource(row.source || '');
   }, [row]);
+
+  useEffect(() => {
+    if (!expanded || !row.candidateId) return undefined;
+    let cancelled = false;
+    (async () => {
+      setBriefLoading(true);
+      try {
+        const res = await fetch(
+          `/api/admin/candidates/${encodeURIComponent(row.candidateId)}?locale=${encodeURIComponent(locale === 'en' ? 'en' : 'pt-BR')}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!res.ok) {
+          setDecisionBrief(null);
+          return;
+        }
+        setDecisionBrief(data?.people?.decisionBrief || null);
+      } catch {
+        if (!cancelled) setDecisionBrief(null);
+      } finally {
+        if (!cancelled) setBriefLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded, row.candidateId, locale]);
 
   const saveNotes = async () => {
     setBusy(true);
@@ -338,6 +368,15 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
       {expanded && (
         <div className="mt-3 border-t border-ink/12 pt-3">
+          {briefLoading ? (
+            <div className="mb-3 flex items-center gap-2 text-[13px] text-ink-muted">
+              <Spinner size={16} />
+              <span>{t(locale, 'common.loading')}</span>
+            </div>
+          ) : (
+            <HrActionBrief locale={locale} brief={decisionBrief} dense />
+          )}
+
           <div className="flex flex-wrap gap-2.5 mb-2.5">
             <input
               value={formatPhoneBr(phone)}

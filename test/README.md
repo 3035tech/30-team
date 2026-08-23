@@ -19,6 +19,7 @@ test/
   unit/                 # One-offs / unitários (sem Playwright)
     ae-scoring.js       # scoring Motivadores offline
     motivators-invite-flow.js  # bootstrap + insert de convite (precisa Postgres)
+    decision-brief.js          # estrutura do briefing acionável (B-301)
 ```
 
 Config Playwright na raiz: `playwright.config.js` (`testDir: ./test/e2e`).

@@ -36,6 +36,12 @@ Já entregue na maior parte: vac-n1 LATERAL, export cap, purge batches, AE analy
 
 ---
 
+## Aberto — Epic B-300 (acionar perfil)
+
+_(entregue — B-301 briefing Equipe, B-302 briefing na vaga, B-303 notif `retention_watch`, B-304 composição do núcleo em Grupos.)_
+
+---
+
 ## Em andamento
 
 _(vazio)_
@@ -47,3 +53,4 @@ _(vazio)_
 - Qualidade/testes **B-001–B-006** entregues.
 - Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
+- Epic **B-300** fechado.

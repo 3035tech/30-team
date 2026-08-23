@@ -19,6 +19,7 @@ import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
+import { HrActionBrief } from '../../_components/HrActionBrief';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
@@ -873,7 +874,7 @@ export function TeamTab({
                   ) : null}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 {r.candidateId ? (
                   <button
                     type="button"
@@ -885,11 +886,11 @@ export function TeamTab({
                     title={t(locale, 'panel.team.ariaDeletePerson')}
                     aria-label={t(locale, 'panel.team.ariaDeletePerson')}
                     className={cn(
-                      'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 font-mono text-[11px] text-danger',
+                      'inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-danger/35 bg-danger/[0.08] p-0 text-danger',
                       deleting && 'opacity-60'
                     )}
                   >
-                    {t(locale, 'panel.team.deletePerson')}
+                    <Icon name="trash" />
                   </button>
                 ) : null}
                 <span className="font-mono text-[11px] text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
@@ -942,12 +943,18 @@ export function TeamTab({
                 {detailLoading ? (
                   <p className="m-0 font-mono text-xs text-ink-muted">…</p>
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
-                  <PeopleManagementPanel
-                    locale={locale}
-                    candidateId={detail.candidate.id}
-                    people={detail.people}
-                    onRefresh={() => loadDetail(detail.candidate.id)}
-                  />
+                  <>
+                    <HrActionBrief
+                      locale={locale}
+                      brief={detail.people?.decisionBrief}
+                    />
+                    <PeopleManagementPanel
+                      locale={locale}
+                      candidateId={detail.candidate.id}
+                      people={detail.people}
+                      onRefresh={() => loadDetail(detail.candidate.id)}
+                    />
+                  </>
                 ) : (
                   <p className="m-0 text-xs text-ink-muted">—</p>
                 )}

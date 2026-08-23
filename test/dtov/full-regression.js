@@ -75,6 +75,41 @@ async function runOfflineLibs() {
     return 'ok';
   });
 
+  await check('lib', 'decision-brief-exports', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+    const src = await readFile(join(root, 'lib', 'people', 'decision-brief.js'), 'utf8');
+    for (const name of ['buildDecisionBrief', 'buildInterviewQuestions', 'buildTeamCompositionHints', 'buildNucleusCompositionAdvice']) {
+      if (!src.includes(`export function ${name}`)) throw new Error(`missing ${name}`);
+    }
+    const wire = await readFile(join(root, 'lib', 'people', 'candidate-people-brief.js'), 'utf8');
+    if (!wire.includes('decisionBrief')) throw new Error('candidate brief missing decisionBrief');
+    return 'exports wired';
+  });
+
+  await check('lib', 'retention-watch-notif', async () => {
+    const {
+      NOTIF,
+      NOTIF_TYPES,
+      notificationHref,
+      notificationCopySpec,
+    } = await import('../../lib/manager-notification-catalog.js');
+    if (!NOTIF_TYPES.has(NOTIF.RETENTION_WATCH)) throw new Error('RETENTION_WATCH not in catalog');
+    const href = notificationHref(NOTIF.RETENTION_WATCH, { candidateId: 42 });
+    if (!String(href).includes('candidate=42')) throw new Error(`bad href ${href}`);
+    const spec = notificationCopySpec(NOTIF.RETENTION_WATCH, {
+      candidateName: 'Ana',
+      signalLabels: 'Equilíbrio',
+    });
+    if (spec.tone !== 'attention' || spec.category !== 'retention') {
+      throw new Error(`bad spec ${JSON.stringify(spec)}`);
+    }
+    if (spec.titleKey !== 'dashboard.notifRetentionTitle') throw new Error('bad title key');
+    return 'retention_watch ok';
+  });
+
   await check('lib', 'assessment-score-export', async () => {
     const { readFile } = await import('node:fs/promises');
     const { fileURLToPath } = await import('node:url');

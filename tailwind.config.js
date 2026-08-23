@@ -70,6 +70,9 @@ module.exports = {
       minHeight: {
         touch: '40px',
       },
+      minWidth: {
+        touch: '40px',
+      },
     },
   },
   plugins: [],
