@@ -5,12 +5,11 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { CopyableLink } from '../../_components/CopyableLink';
 import { Spinner } from '../../_components/AppLoading';
 
 const BTN_BRAND =
   'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
-const BTN_ROW =
-  'min-h-[36px] rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-2 font-mono text-[11px] text-brand-500 disabled:cursor-default disabled:opacity-50';
 const BTN_GHOST =
   'min-h-[36px] rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-[11px] text-ink-muted disabled:cursor-default disabled:opacity-60';
 
@@ -62,15 +61,6 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
     const base = appUrl ? `${appUrl}${publicPagePath}` : publicPagePath;
     const sep = base.includes('?') ? '&' : '?';
     return `${base}${sep}ref=${encodeURIComponent(code)}`;
-  };
-
-  const copyText = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (toast) toast(t(locale, 'panel.common.copied'));
-    } catch {
-      if (toast) toast(t(locale, 'panel.common.copyFailed'));
-    }
   };
 
   const createCode = async () => {
@@ -256,18 +246,16 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
                         {Number(m.hires) || 0}
                       </td>
                       <td className="px-2 py-2.5 align-top text-right">
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          <button
-                            type="button"
+                        <div className="flex flex-col items-end gap-1.5">
+                          <CopyableLink
+                            url={share}
+                            locale={locale}
+                            compact
+                            showUrl={Boolean(share)}
                             disabled={busy || !share || row.active === false}
-                            onClick={() => copyText(share)}
-                            className={cn(
-                              BTN_ROW,
-                              busy || !share || row.active === false ? 'cursor-default' : 'cursor-pointer'
-                            )}
-                          >
-                            {t(locale, 'recruiting.referralCopyLink')}
-                          </button>
+                            className="w-full max-w-[280px] text-left"
+                          />
+                          <div className="flex flex-wrap justify-end gap-1.5">
                           {row.active !== false ? (
                             <button
                               type="button"
@@ -287,6 +275,7 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
                               {t(locale, 'recruiting.referralReactivate')}
                             </button>
                           )}
+                          </div>
                         </div>
                       </td>
                     </tr>

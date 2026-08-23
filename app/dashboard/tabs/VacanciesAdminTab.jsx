@@ -37,6 +37,7 @@ import { VacancyFitRankingBlock } from '../vacancies/VacancyFitRankingBlock';
 import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalyticsBlock';
 import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
+import { CopyableLink } from '../../_components/CopyableLink';
 
 
 const FIELD =
@@ -56,8 +57,6 @@ const BTN_BRAND_SOFT =
 const CHECK_LABEL =
   'flex max-w-[520px] items-start gap-2.5 text-xs leading-[1.45] text-ink-muted';
 const LINK_ROW = 'mt-2.5 flex min-w-0 flex-col gap-1';
-const LINK_LABEL = 'font-mono text-[11px] tracking-[0.02em] text-ink-faint';
-const LINK_A = 'break-all font-mono text-xs text-brand-500 underline underline-offset-2';
 const META = 'font-mono text-[11px] text-ink-muted';
 const META_FAINT = 'font-mono text-[11px] text-ink-faint';
 const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
@@ -236,17 +235,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     setLinkExpiryEdit(null);
     setEditingVacancy(null);
     navigateDashboard({ tab: 'vacancies', vacancyDetail: '' });
-  };
-
-  const copy = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setMsg(t(locale, 'recruiting.copied'));
-      setTimeout(() => setMsg(''), 3000);
-    } catch {
-      setMsg(t(locale, 'recruiting.copyFailed'));
-      setTimeout(() => setMsg(''), 3000);
-    }
   };
 
   const createVacancy = async () => {
@@ -965,15 +953,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   </div>
                   {token ? (
                     <div className={LINK_ROW}>
-                      <span className={LINK_LABEL}>{t(locale, 'recruiting.enneagramLinkLabel')}</span>
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={LINK_A}
-                      >
-                        {link}
-                      </a>
+                      <CopyableLink
+                        url={link}
+                        locale={locale}
+                        label={t(locale, 'recruiting.enneagramLinkLabel')}
+                        disabled={loading}
+                      />
                       {exp ? (
                         <span className={META_FAINT}>
                           {t(locale, 'recruiting.expiresAt', {
@@ -989,15 +974,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   )}
                   {publicPageLink ? (
                     <div className={LINK_ROW}>
-                      <span className={LINK_LABEL}>{t(locale, 'recruiting.publicPageLinkLabel')}</span>
-                      <a
-                        href={publicPageLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={LINK_A}
-                      >
-                        {publicPageLink}
-                      </a>
+                      <CopyableLink
+                        url={publicPageLink}
+                        locale={locale}
+                        label={t(locale, 'recruiting.publicPageLinkLabel')}
+                        disabled={loading}
+                      />
                       {!v.publicPageEnabled ? (
                         <span className={META_FAINT}>
                           {t(locale, 'recruiting.publicPageLinkDisabledHint')}
@@ -1056,22 +1038,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => token && copy(link)}
-                  disabled={loading || !token}
-                  className={cn(BTN_BRAND, (loading || !token) && "opacity-60")}
-                >
-                  {t(locale, 'recruiting.copyLink')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => publicPageLink && copy(publicPageLink)}
-                  disabled={loading || !publicPageLink}
-                  className={cn(BTN_GHOST, (loading || !publicPageLink) && "opacity-60")}
-                >
-                  {t(locale, 'recruiting.copyPublicPageLink')}
-                </button>
-                <button
-                  type="button"
                   onClick={() => editVacancy(v)}
                   disabled={loading}
                   className={cn(BTN_GHOST, loading && "opacity-60")}
@@ -1120,6 +1086,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <VacancyFunnelAnalyticsBlock
                   vacancyId={v.id}
                   locale={locale}
+                  appUrl={appUrl}
                   publicPagePath={
                     v.publicPageEnabled && v.slug
                       ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
@@ -1437,8 +1404,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         )}
                       </div>
                       {token ? (
-                        <div className="mt-1.5 break-all font-mono text-xs text-ink-muted">
-                          {link}
+                        <div className="mt-1.5">
+                          <CopyableLink url={link} locale={locale} compact disabled={loading} />
                         </div>
                       ) : (
                         <div className="mt-1.5 font-mono text-xs text-ink-faint">
@@ -1501,14 +1468,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         className={cn(BTN_GHOST, loading && "opacity-60")}
                       >
                         {t(locale, 'recruiting.rotateLink')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => token && copy(link)}
-                        disabled={loading || !token}
-                        className={cn(BTN_BRAND, (loading || !token) && "opacity-60")}
-                      >
-                        {t(locale, 'recruiting.copyLink')}
                       </button>
                       <button
                         type="button"

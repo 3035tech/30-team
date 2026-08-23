@@ -220,7 +220,7 @@ Fechar a entrega com o bloco **Pipeline result** do skill (`done` | `failed` | `
 
 Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotente). Não deixar `.sql` solto na raiz. Ver `migrations/README.md`. Em toda mudança de query/API, aplicar a seção **DBA e performance** acima.
 
-**Motivadores — banco de perguntas:** itens situacionais (o respondente não vê nomes de dimensões; pesos só no servidor). Publicar banco novo com sync/desativar chaves antigas (`lib/ae/sync-question-bank.js` / `scripts/seed-motivators-questions-v3.sql`) — **não** `DELETE` de `ae_questions` se houver tentativas (preserva `question_ids` / scores). Seed: `npm run db:seed-motivators` ou o SQL v3 no pgAdmin.
+**Motivadores — banco de perguntas:** itens situacionais em linguagem de trabalho clara (o respondente não vê nomes de dimensões; pesos só no servidor). Publicar banco novo com sync/desativar chaves antigas (`lib/ae/sync-question-bank.js` / `scripts/seed-motivators-questions-v4.sql`) — **não** `DELETE` de `ae_questions` se houver tentativas (preserva `question_ids` / scores). Seed: `npm run db:seed-motivators` ou o SQL v4 no pgAdmin.
 
 ## O que não fazer
 
@@ -244,7 +244,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Links públicos | `app/t`, `app/v`, `app/api/public/*`, `lib/vacancy-link.js` |
 | Dashboard | `app/dashboard/page.jsx`, `tabs/*`, `lib/overview-metrics.js`, `lib/compat-bundles.js` |
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
-| Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v3.sql` |
+| Motivadores | `lib/ae/*`, `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
 | People (1:1 / hipóteses) | `lib/people/*`, `app/_components/PeopleManagementPanel.jsx`, Equipe (`TeamTab`), `migrations/022_one_on_ones.sql` |
 | Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js`, `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications` e `notification-retention` |
 | Export CSV | `lib/export-assessments-csv.js`, `GET /api/admin/export` (cap `EXPORT_MAX_ROWS` + stream) |
@@ -255,6 +255,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx`, `EmptyState.jsx` |
+| Links compartilháveis (copiar / abrir) | `app/_components/CopyableLink.jsx`, `lib/clipboard.js` |
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css`, tokens `S.*` em `dashboard-shared.jsx` |

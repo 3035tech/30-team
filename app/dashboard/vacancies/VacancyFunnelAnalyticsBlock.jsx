@@ -5,8 +5,9 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { Spinner } from '../../_components/AppLoading';
+import { CopyableLink } from '../../_components/CopyableLink';
 
-export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath }) {
+export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath, appUrl = '' }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -57,6 +58,10 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath 
 
   const views = Number(data?.views) || 0;
   const empty = views === 0 && !(Number(data?.applications) || 0);
+  const publicPageUrl =
+    publicPagePath
+      ? (appUrl ? `${appUrl}${publicPagePath}` : publicPagePath)
+      : '';
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -65,22 +70,19 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath 
           {t(locale, 'recruiting.analyticsFunnelTitle')}
         </div>
         {empty ? (
-          <p className="m-0 text-[13px] leading-[1.55] text-ink-muted">
-            {t(locale, 'recruiting.analyticsEmpty')}
-            {publicPagePath ? (
-              <>
-                {' '}
-                <a
-                  href={publicPagePath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand-500"
-                >
-                  {t(locale, 'recruiting.analyticsOpenPublic')}
-                </a>
-              </>
+          <div className="flex flex-col gap-2.5">
+            <p className="m-0 text-[13px] leading-[1.55] text-ink-muted">
+              {t(locale, 'recruiting.analyticsEmpty')}
+            </p>
+            {publicPageUrl ? (
+              <CopyableLink
+                url={publicPageUrl}
+                locale={locale}
+                compact
+                label={t(locale, 'recruiting.analyticsOpenPublic')}
+              />
             ) : null}
-          </p>
+          </div>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-2.5">
             {steps.map((s) => (

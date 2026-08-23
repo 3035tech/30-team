@@ -8,6 +8,7 @@ import { C } from '../../../lib/theme';
 import { Bar, PanelSubNav, S } from '../dashboard-shared';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { CopyableLink } from '../../_components/CopyableLink';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -15,9 +16,9 @@ function dateLocale(locale) {
 
 function getViews(locale) {
   return [
+    { id: 'dashboard', label: t(locale, 'panel.motivatorsAdmin.tabs.dashboard') },
     { id: 'invites', label: t(locale, 'panel.motivatorsAdmin.tabs.invites') },
     { id: 'results', label: t(locale, 'panel.motivatorsAdmin.tabs.results') },
-    { id: 'dashboard', label: t(locale, 'panel.motivatorsAdmin.tabs.dashboard') },
     { id: 'config', label: t(locale, 'panel.motivatorsAdmin.tabs.config'), adminOnly: true },
   ];
 }
@@ -169,6 +170,8 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
   const [notice, setNotice] = useState(null);
+  const appUrl =
+    (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -245,11 +248,25 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((row) => (
+          {items.map((row) => {
+            const inviteUrl =
+              row.token && appUrl ? `${appUrl}/assessment/motivators/${row.token}` : '';
+            const canShareLink = ['sent', 'opened'].includes(row.status) && Boolean(inviteUrl);
+            return (
             <tr key={row.id} className="border-t border-ink/12">
               <td className="px-2 py-2.5">
                 <div>{row.candidateName}</div>
                 <div className="text-[11px] text-ink-muted">{row.candidateEmail}</div>
+                {canShareLink ? (
+                  <div className="mt-1.5 max-w-[320px]">
+                    <CopyableLink
+                      url={inviteUrl}
+                      locale={locale}
+                      compact
+                      label={t(locale, 'panel.motivatorsAdmin.invites.assessmentLink')}
+                    />
+                  </div>
+                ) : null}
               </td>
               <td className="px-2 py-2.5">{statusBadge(locale, row.status)}</td>
               <td className="px-2 py-2.5 text-ink-muted">{row.sentAt ? new Date(row.sentAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
@@ -263,7 +280,8 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
                 ) : null}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
       {!loading && items.length === 0 ? <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
@@ -735,7 +753,9 @@ function ConfigPanel({ locale }) {
 export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const view = searchParams.get('motivatorsView') || 'invites';
+  const view =
+    searchParams.get('motivatorsView') ||
+    (searchParams.get('attempt') ? 'results' : 'dashboard');
   const companyFilter = searchParams.get('company') || 'all';
   const focusAttemptId = searchParams.get('attempt') || null;
   const [refreshKey, setRefreshKey] = useState(0);
@@ -820,6 +840,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         tabs={visibleViews.map((v) => ({ id: v.id, label: v.label }))}
       />
 
+      {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
       {view === 'invites' ? (
         <>
           <InviteForm locale={locale} isAdmin={isAdmin} companies={companies} companyId={companyFilter !== 'all' ? companyFilter : ''} onSent={() => setRefreshKey((k) => k + 1)} />
@@ -834,7 +855,6 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
           focusAttemptId={focusAttemptId}
         />
       ) : null}
-      {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
       {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
     </div>
   );

@@ -1,5 +1,5 @@
 -- NÃO EXECUTE ESTE ARQUIVO.
--- Foi substituído por scripts/seed-motivators-questions-v3.sql, que NÃO apaga
+-- Foi substituído por scripts/seed-motivators-questions-v4.sql, que NÃO apaga
 -- perguntas antigas e preserva tentativas já feitas.
 -- Este script faz DELETE FROM ae_questions e quebraria testes concluídos.
 

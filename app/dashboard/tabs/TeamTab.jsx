@@ -789,11 +789,12 @@ export function TeamTab({
           </p>
         </div>
       ) : null}
-      {viewMode === 'list' && filtered.map((r) => {
+      {viewMode === 'list' ? (
+        <div className="flex flex-col gap-1.5">
+          {filtered.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
         const isSelected = open === id;
-        const clusterTypes = new Set(nearbyCluster(r.scores).map((item) => item.type));
         const showVacancyFit = r.vacancyFitScore010 != null && r.vacancyFitScore010 !== undefined;
         const created = r.createdAt != null ? new Date(r.createdAt) : null;
         const createdLabel =
@@ -803,7 +804,7 @@ export function TeamTab({
         return (
           <div
             key={id}
-            className={cn(S.card, 'cursor-pointer overflow-hidden p-0')}
+            className={cn(S.cardTight, 'cursor-pointer overflow-hidden p-0')}
             style={{
               border: isSelected ? `1px solid ${d.color}44` : undefined,
             }}
@@ -814,7 +815,7 @@ export function TeamTab({
               else { setDetail(null); setDetailErr(''); }
             }}
           >
-            <div className="flex items-center gap-4 px-6 py-[18px]">
+            <div className="flex items-center gap-3 px-3.5 py-2.5">
               <input
                 type="checkbox"
                 checked={selectedIds.has(id)}
@@ -823,54 +824,56 @@ export function TeamTab({
                 aria-label={t(locale, 'panel.team.selectPersonAria', { name: titleCasePersonName(r.name) })}
                 className="h-4 w-4 shrink-0 cursor-pointer accent-brand-500"
               />
-              <div className="shrink-0 text-2xl">{d.emoji}</div>
-              <div className="flex-1">
-                <div className="mb-1 text-base">
-                  {titleCasePersonName(r.name)}
+              <div className="shrink-0 text-lg leading-none">{d.emoji}</div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-[15px] leading-snug text-ink">
+                    {titleCasePersonName(r.name)}
+                  </span>
                   {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === 'employee' ? (
-                    <span className="ml-2 rounded-full border border-success/35 px-2 py-px font-mono text-[11px] text-success">
+                    <span className="rounded-full border border-success/35 px-1.5 py-px font-mono text-[10px] text-success">
                       {t(locale, 'recruiting.employmentEmployee')}
                     </span>
                   ) : null}
+                  {createdLabel ? (
+                    <span
+                      title={t(locale, 'dashboard.teamListDateHelp')}
+                      className="font-mono text-[11px] text-ink-faint"
+                    >
+                      {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
+                    </span>
+                  ) : null}
                 </div>
-                {createdLabel ? (
-                  <div
-                    title={t(locale, 'dashboard.teamListDateHelp')}
-                    className="mb-1.5 font-mono text-xs text-ink-faint"
-                  >
-                    {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <TypeBadge type={r.topType} locale={locale} compact />
                   <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
-                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2.5 py-[3px] font-mono text-xs text-ink-muted">
+                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-px font-mono text-[11px] text-ink-muted">
                       {r.areaLabel}
                     </span>
                   )}
                   {r.pipelineStage ? (
-                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2.5 py-[3px] font-mono text-xs text-brand-600">
+                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2 py-px font-mono text-[11px] text-brand-600">
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
                     </span>
                   ) : null}
                   {r.fitLabel && (
-                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2.5 py-[3px] font-mono text-xs text-brand-600">
+                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2 py-px font-mono text-[11px] text-brand-600">
                       {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
                     </span>
                   )}
                   {showVacancyFit ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2.5 py-[3px] font-mono text-xs text-success">
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-[11px] text-success">
                       {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
                     </span>
                   ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2.5 py-[3px] font-mono text-xs text-success">
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-[11px] text-success">
                       {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
                     </span>
                   ) : null}
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex shrink-0 items-center gap-2">
                 {r.candidateId ? (
                   <button
                     type="button"
@@ -882,19 +885,21 @@ export function TeamTab({
                     title={t(locale, 'panel.team.ariaDeletePerson')}
                     aria-label={t(locale, 'panel.team.ariaDeletePerson')}
                     className={cn(
-                      'cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger',
+                      'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 font-mono text-[11px] text-danger',
                       deleting && 'opacity-60'
                     )}
                   >
                     {t(locale, 'panel.team.deletePerson')}
                   </button>
                 ) : null}
-                <span className="font-mono text-xs text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
+                <span className="font-mono text-[11px] text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
               </div>
             </div>
           </div>
         );
       })}
+        </div>
+      ) : null}
 
       <AdminRichFormDrawer
         open={Boolean(open && openRow)}
@@ -909,12 +914,9 @@ export function TeamTab({
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
               onChange={setPersonTab}
-              moreLabel={t(locale, 'panel.team.personTabMore')}
               tabs={[
                 { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
-              ]}
-              moreTabs={[
                 { id: 'history', label: t(locale, 'panel.team.personTabHistory') },
                 { id: 'profile', label: t(locale, 'panel.team.personTabProfile') },
               ]}

@@ -113,9 +113,9 @@ function StepList({ locale, sectionKey, count }) {
     items.push(t(locale, `panel.help.${sectionKey}Step${i}`));
   }
   return (
-    <ol className="mt-3 mb-0 list-decimal pl-5 text-[13px] leading-relaxed text-ink-muted">
+    <ol className="mt-2.5 mb-0 list-decimal pl-5 text-[13px] leading-snug text-ink-muted">
       {items.map((text) => (
-        <li key={text} className="mb-1.5">{text}</li>
+        <li key={text} className="mb-1">{text}</li>
       ))}
     </ol>
   );
@@ -185,15 +185,15 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   };
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className={cn(S.card, 'px-7 py-[22px]')}>
+    <div className="flex flex-col gap-1.5">
+      <div className={cn(S.card, 'px-5 py-4')}>
         <span className={S.label}>
           {t(locale, 'panel.help.title')}
         </span>
-        <p className="mt-2.5 mb-0 text-sm leading-relaxed text-ink-muted">
+        <p className="mt-2 mb-0 text-sm leading-relaxed text-ink-muted">
           {t(locale, 'panel.help.intro')}
         </p>
-        <div className="mt-3.5 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <LinkBtn label={t(locale, 'panel.help.linkOverview')} onClick={() => go('overview')} />
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
@@ -201,7 +201,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
         </div>
         <nav
           aria-label={t(locale, 'panel.help.tocAria')}
-          className="mt-4 flex flex-wrap gap-1.5 border-t border-ink/12 pt-3.5"
+          className="mt-3 flex flex-wrap gap-1.5 border-t border-ink/12 pt-3"
         >
           {SECTIONS.map((key) => (
             <button
@@ -229,20 +229,20 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
               type="button"
               onClick={() => setOpen(isOpen ? '' : key)}
               className={cn(
-                'flex w-full cursor-pointer items-center justify-between gap-3 border-none px-5 py-4 text-left',
+                'flex min-h-touch w-full cursor-pointer items-center justify-between gap-3 border-none px-4 py-2.5 text-left',
                 isOpen ? 'bg-brand-500/[0.04]' : 'bg-transparent'
               )}
             >
-              <span className="font-display text-[15px] text-ink">
+              <span className="font-display text-sm text-ink">
                 {t(locale, `panel.help.${key}Title`)}
               </span>
-              <span className="font-mono text-xs text-ink-muted">
+              <span className="font-mono text-[11px] text-ink-muted">
                 {isOpen ? '▲' : '▼'}
               </span>
             </button>
             {isOpen ? (
-              <div className="border-t border-ink/12 px-5 pb-[18px]">
-                <p className="mt-3.5 mb-0 text-[13px] leading-relaxed text-ink-muted">
+              <div className="border-t border-ink/12 px-4 pb-3.5">
+                <p className="mt-2.5 mb-0 text-[13px] leading-relaxed text-ink-muted">
                   {t(locale, `panel.help.${key}Body`)}
                 </p>
                 {key === 'flow' ? <FlowStrip locale={locale} /> : null}

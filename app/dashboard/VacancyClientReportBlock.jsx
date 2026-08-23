@@ -8,6 +8,8 @@ import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
+import { CopyableLink } from '../_components/CopyableLink';
+import { copyToClipboard } from '../../lib/clipboard';
 import { htmlToPlainText } from '../../lib/sanitize-html';
 import { getTypeData } from '../../lib/i18n-data';
 import {
@@ -563,12 +565,8 @@ export function VacancyClientReportBlock({
       setLastUrl(url);
       showOk(t(locale, 'panel.report.generated'));
       await loadReports();
-      try {
-        await navigator.clipboard.writeText(url);
-        showOk(t(locale, 'panel.report.generatedCopied'));
-      } catch {
-        /* ignore */
-      }
+      const copied = await copyToClipboard(url);
+      if (copied) showOk(t(locale, 'panel.report.generatedCopied'));
     } catch (e) {
       void showError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -634,15 +632,6 @@ export function VacancyClientReportBlock({
     }
   };
 
-  const copyUrl = async (url) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      showOk(t(locale, 'panel.common.copied'));
-    } catch {
-      void showError(t(locale, 'panel.common.copyFailed'));
-    }
-  };
-
   const canGenerate = selected.size > 0 && noteOk && !busy;
 
   const rubricTypesLabel = (rubricMeta?.weightedTypes || [])
@@ -669,13 +658,8 @@ export function VacancyClientReportBlock({
           </p>
 
           {lastUrl ? (
-            <div
-              className="mt-3 flex flex-wrap items-center gap-2 rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2.5"
-            >
-              <code className="text-[11px] text-brand-500 break-all flex-1">{lastUrl}</code>
-              <button type="button" onClick={() => copyUrl(lastUrl)} className={btnPurpleClass()}>
-                {t(locale, 'panel.report.copyLink')}
-              </button>
+            <div className="mt-3 rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2.5">
+              <CopyableLink url={lastUrl} locale={locale} />
             </div>
           ) : null}
 
@@ -1026,9 +1010,14 @@ export function VacancyClientReportBlock({
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => copyUrl(url)} className={btnGhostClass()} disabled={!r.isLive}>
-                            {t(locale, 'panel.report.copyLink')}
-                          </button>
+                          <CopyableLink
+                            url={url}
+                            locale={locale}
+                            compact
+                            showUrl={Boolean(r.isLive)}
+                            disabled={!r.isLive}
+                            className="min-w-0 flex-1"
+                          />
                           {r.isLive ? (
                             <button
                               type="button"

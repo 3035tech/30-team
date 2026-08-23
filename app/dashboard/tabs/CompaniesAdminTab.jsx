@@ -10,6 +10,7 @@ import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
+import { CopyableLink } from '../../_components/CopyableLink';
 
 const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
 const FIELD_INPUT =
@@ -385,18 +386,6 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     }
   };
 
-  const copy = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setMsg(t(locale, 'panel.common.copied'));
-      setTimeout(() => setMsg(''), 1200);
-    } catch {
-      setMsg(t(locale, 'panel.common.copyFailed'));
-      setTimeout(() => setMsg(''), 1600);
-    }
-  };
-
-
 
   return (
     <div className="flex flex-col gap-4">
@@ -495,19 +484,35 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <div className="mb-2 break-all text-left font-mono text-[11px] text-ink-muted">
-                          {token ? link : t(locale, 'panel.admin.noLink')}
+                        <div className="mb-2 space-y-2 text-left">
+                          {token ? (
+                            <CopyableLink
+                              url={link}
+                              locale={locale}
+                              compact
+                              label={t(locale, 'panel.admin.linkAssessmentLabel')}
+                              disabled={loading}
+                            />
+                          ) : (
+                            <span className="font-mono text-[11px] text-ink-faint">
+                              {t(locale, 'panel.admin.noLink')}
+                            </span>
+                          )}
                           {token && exp ? (
-                            <div className="mt-1 text-[10px] text-ink-faint">
+                            <div className="text-[10px] text-ink-faint">
                               {t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}
                             </div>
                           ) : null}
                           {publicOn && careersUrl ? (
-                            <div className="mt-1.5 text-[10px] text-ink-faint">
-                              {t(locale, 'panel.admin.companyPublicPageLabel')}: {careersUrl}
-                            </div>
+                            <CopyableLink
+                              url={careersUrl}
+                              locale={locale}
+                              compact
+                              label={t(locale, 'panel.admin.companyPublicPageLabel')}
+                              disabled={loading}
+                            />
                           ) : (
-                            <div className="mt-1.5 text-[10px] text-ink-faint">
+                            <div className="text-[10px] text-ink-faint">
                               {t(locale, 'panel.admin.companyPublicPageOff')}
                             </div>
                           )}
@@ -529,24 +534,6 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           >
                             {t(locale, 'panel.admin.rotateLink')}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => token && copy(link)}
-                            disabled={loading || !token}
-                            className={cn(BTN_ROW, 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500', (loading || !token) && 'opacity-60')}
-                          >
-                            {t(locale, 'panel.admin.copyLink')}
-                          </button>
-                          {publicOn && careersUrl ? (
-                            <button
-                              type="button"
-                              onClick={() => copy(careersUrl)}
-                              disabled={loading}
-                              className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
-                            >
-                              {t(locale, 'panel.admin.copyPublicPage')}
-                            </button>
-                          ) : null}
                           <button
                             type="button"
                             onClick={() => deleteCompany(c.id, c.name)}

@@ -1,13 +1,13 @@
 /**
- * Gera SQL para publicar o banco situacional v3 SEM apagar perguntas antigas.
- * Uso: node scripts/generate-motivators-seed-sql.js > scripts/seed-motivators-questions-v3.sql
+ * Gera SQL para publicar o banco situacional atual SEM apagar perguntas antigas.
+ * Uso: node scripts/generate-motivators-seed-sql.js > scripts/seed-motivators-questions-v4.sql
  *
- * Desativa o banco anterior e insere as perguntas v3 (chaves v3_*).
+ * Desativa o banco anterior e insere as perguntas da geração ativa (chaves v4_*).
  * Tentativas já concluídas ou em andamento continuam apontando para os IDs originais.
  * Assessments de Eneagrama não são afetados.
  */
 import { MOTIVATORS_DEFINITION, MOTIVATORS_DIMENSIONS } from '../lib/ae/motivators-dimensions.js';
-import { generateMotivatorsQuestionBank } from '../lib/ae/motivators-question-bank.js';
+import { generateMotivatorsQuestionBank, MOTIVATORS_QUESTION_BANK_GENERATION } from '../lib/ae/motivators-question-bank.js';
 
 function sqlStr(s) {
   return `'${String(s).replace(/'/g, "''")}'`;
@@ -23,7 +23,7 @@ const defSub = `(SELECT id FROM ae_definitions WHERE LOWER(slug) = LOWER(${sqlSt
 
 const lines = [];
 lines.push(`-- Publica Motivadores v${def.version} (${bank.length} perguntas situacionais)`);
-lines.push('-- NÃO apaga perguntas antigas: só desativa e insere v3_*.');
+lines.push(`-- NÃO apaga perguntas antigas: só desativa e insere ${MOTIVATORS_QUESTION_BANK_GENERATION}_*.`);
 lines.push('-- Preserva tentativas já feitas (scores, respostas, question_ids).');
 lines.push('-- Equivalente a: npm run db:seed-motivators');
 lines.push('');
