@@ -195,6 +195,7 @@ export function OverviewTab({
             const clima = data.peopleOps.climate;
             const ret = data.peopleOps.retention;
             const queue = pdi?.queue || {};
+            const plans = pdi?.plans || [];
             const overdueN = Number(pdi?.overdueItemCount) || 0;
             const overduePlansN = Number(pdi?.overduePlanCount) || 0;
             const noPlanN = Number(pdi?.noPlanEmployeeCount) || 0;
@@ -207,9 +208,10 @@ export function OverviewTab({
               (queue.overdue || []).length > 0 ||
               (queue.unlinked || []).length > 0 ||
               (queue.noPlan || []).length > 0;
+            const hasPdiPlans = plans.length > 0;
             const hasPdi =
               pdi &&
-              (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue);
+              (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue || hasPdiPlans);
             const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
             const hasRet = ret && ret.count > 0;
             if (!hasPdi && !hasClima && !hasRet) {
@@ -248,6 +250,79 @@ export function OverviewTab({
                           className="h-full rounded-full bg-success"
                           style={{ width: `${pdi.donePct || 0}%` }}
                         />
+                      </div>
+                    ) : null}
+                    {hasPdiPlans ? (
+                      <div className="mt-3 flex flex-col gap-2 border-t border-ink/10 pt-2.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                            {t(locale, 'panel.overview.peopleOpsPdiPlansTitle')}
+                          </div>
+                          {Number(pdi.activePlans) > plans.length ? (
+                            <span className="font-mono text-[10px] text-ink-faint">
+                              {t(locale, 'panel.overview.peopleOpsPdiPlansMore', {
+                                shown: plans.length,
+                                total: pdi.activePlans,
+                              })}
+                            </span>
+                          ) : null}
+                        </div>
+                        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                          {plans.map((row) => {
+                            const pct = row.donePct != null ? row.donePct : 0;
+                            const flagged = row.periodOverdue || (row.overdueItemCount || 0) > 0;
+                            return (
+                              <li key={`plan-${row.planId}`}>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    'w-full cursor-pointer rounded-control border px-2.5 py-2 text-left',
+                                    flagged
+                                      ? 'border-warning/25 bg-warning/[0.04]'
+                                      : 'border-ink/10 bg-ink/[0.02] hover:border-ink/16'
+                                  )}
+                                  onClick={() => go(row.nav)}
+                                >
+                                  <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <span className="block text-[12px] font-medium text-ink">
+                                        {row.candidateName}
+                                      </span>
+                                      <span className="mt-0.5 block truncate text-[11px] text-ink-muted">
+                                        {row.planTitle}
+                                      </span>
+                                    </div>
+                                    <span className="shrink-0 font-mono text-[10px] text-ink-faint">
+                                      {t(locale, 'panel.overview.peopleOpsPdiPlanProgress', {
+                                        done: row.doneCount,
+                                        total: row.itemCount,
+                                      })}
+                                      {flagged ? (
+                                        <span className="ml-1 text-warning">
+                                          {t(locale, 'panel.overview.peopleOpsPdiPlanFlag')}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  </div>
+                                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink/10">
+                                    <div
+                                      className={cn(
+                                        'h-full rounded-full',
+                                        flagged ? 'bg-warning' : 'bg-success'
+                                      )}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  {row.periodStart || row.periodEnd ? (
+                                    <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                                      {[row.periodStart, row.periodEnd].filter(Boolean).join(' → ')}
+                                    </span>
+                                  ) : null}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </div>
                     ) : null}
                     {hasPdiQueue ? (

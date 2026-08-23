@@ -124,7 +124,14 @@ async function runOfflineLibs() {
       new URL('../../lib/people/development-plans.js', import.meta.url),
       'utf8'
     );
-    for (const marker of ['overdueItemCount', 'noPlanEmployeeCount', 'itemsWithoutOneOnOne', 'queue:']) {
+    for (const marker of [
+      'overdueItemCount',
+      'noPlanEmployeeCount',
+      'itemsWithoutOneOnOne',
+      'queue:',
+      'plans,',
+      'PULSE_ACTIVE_PLANS_CAP',
+    ]) {
       if (!pulseSrc.includes(marker)) throw new Error(`pdi pulse missing ${marker}`);
     }
     const { openRetentionFollowUp } = await import('../../lib/people/retention-followups.js');
