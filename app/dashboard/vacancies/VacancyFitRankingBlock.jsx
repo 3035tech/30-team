@@ -151,6 +151,26 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       {band ? (
                         <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
                       ) : null}
+                      {r.fitBreakdown ? (
+                        <details className="mt-1 max-w-[240px]">
+                          <summary className="cursor-pointer font-mono text-[10px] text-brand-600">
+                            {t(locale, 'recruiting.fitExplainToggle')}
+                          </summary>
+                          <div className="mt-1 rounded-md border border-ink/10 bg-canvas/60 px-2 py-1.5 text-[10px] leading-snug text-ink-muted">
+                            <p className="m-0 mb-1">{t(locale, 'recruiting.fitExplainIntro')}</p>
+                            <ul className="m-0 list-none space-y-0.5 p-0">
+                              {(r.fitBreakdown.types || []).slice(0, 5).map((row) => (
+                                <li key={row.type}>
+                                  T{row.type}: w={row.weight} · n={row.normalized} → {row.contribution}
+                                </li>
+                              ))}
+                            </ul>
+                            <p className="mb-0 mt-1 text-ink-faint">
+                              {t(locale, 'recruiting.fitExplainLimits')}
+                            </p>
+                          </div>
+                        </details>
+                      ) : null}
                     </td>
                     <td className="p-2.5">
                       {nf && (nf.synergy > 0 || nf.tension > 0) ? (

@@ -48,6 +48,12 @@ _(entregue — estrutura 042 + B-501–B-506 + polish UX/indicadores/visões: pr
 
 ---
 
+## Aberto — Epic B-600 (assessment → ação)
+
+_(entregue — B-601–B-605: ciclo PDI pós-1:1, retention acionável, pulso de grupo, link `/e`, explicabilidade Fit.)_
+
+---
+
 ## Aberto — qualidade / testes
 
 _(vazio — B-001–B-006 entregues)_

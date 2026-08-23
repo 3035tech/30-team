@@ -4,15 +4,13 @@ import { apiError } from '../../../../../../lib/api-error';
 import { audit } from '../../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import {
-  createDevelopmentPlan,
-  importItemsFromOneOnOne,
-  listDevelopmentPlans,
-} from '../../../../../../lib/people/development-plans';
+  listRetentionFollowUps,
+  openRetentionFollowUp,
+} from '../../../../../../lib/people/retention-followups';
 
 async function loadCandidateScope(candidateId, scope) {
   const c = await query(
-    `SELECT id, company_id AS "companyId", full_name AS "fullName"
-     FROM candidates WHERE id = $1 LIMIT 1`,
+    `SELECT id, company_id AS "companyId" FROM candidates WHERE id = $1 LIMIT 1`,
     [candidateId]
   );
   if (c.rowCount === 0) return { error: 'NOT_FOUND' };
@@ -22,7 +20,7 @@ async function loadCandidateScope(candidateId, scope) {
   return { candidate: c.rows[0] };
 }
 
-/** GET /api/admin/candidates/[id]/development-plans */
+/** GET /api/admin/candidates/[id]/retention-followups */
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
@@ -32,23 +30,22 @@ export async function GET(request, { params }) {
 
     const candidateId = params?.id;
     if (!candidateId) return apiError(request, 'INVALID_ID', 400);
-
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
-    const items = await listDevelopmentPlans(query, {
+    const items = await listRetentionFollowUps(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
     });
     return NextResponse.json({ items });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
-    console.error('GET development-plans', err);
+    console.error('GET retention-followups', err);
     return apiError(request, 'INTERNAL', 500);
   }
 }
 
-/** POST /api/admin/candidates/[id]/development-plans */
+/** POST /api/admin/candidates/[id]/retention-followups — open actionable plan */
 export async function POST(request, { params }) {
   try {
     const payload = await getSessionPayload();
@@ -58,67 +55,37 @@ export async function POST(request, { params }) {
 
     const candidateId = params?.id;
     if (!candidateId) return apiError(request, 'INVALID_ID', 400);
-
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
     const body = await request.json().catch(() => ({}));
-
-    if (body.action === 'fromOneOnOne' || body.oneOnOneId) {
-      const imported = await importItemsFromOneOnOne(query, {
-        companyId: loaded.candidate.companyId,
-        candidateId,
-        oneOnOneId: body.oneOnOneId,
-        planId: body.planId,
-        createdByUserId: payload.userId || null,
-        ownerLabel: body.ownerLabel,
-        periodDays: body.periodDays,
-      });
-      if (!imported.ok) {
-        return apiError(request, imported.errorCode || 'INVALID_DATA', 400);
-      }
-      await audit({
-        actorUserId: payload.userId || null,
-        action: 'development_plan.from_one_on_one',
-        targetType: 'candidate',
-        targetId: candidateId,
-        metadata: { planId: imported.plan?.id, addedCount: imported.addedCount },
-      });
-      return NextResponse.json({
-        ok: true,
-        plan: imported.plan,
-        addedCount: imported.addedCount,
-        linesParsed: imported.linesParsed,
-      });
-    }
-
-    const created = await createDevelopmentPlan(query, {
+    const opened = await openRetentionFollowUp(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
-      title: body.title,
-      objective: body.objective,
-      status: body.status,
-      periodStart: body.periodStart,
-      periodEnd: body.periodEnd,
+      signals: body.signals,
+      explanation: body.explanation,
+      suggestedQuestion: body.suggestedQuestion,
+      reviewDue: body.reviewDue,
       createdByUserId: payload.userId || null,
-      seedIdeas: body.seedIdeas,
+      locale: body.locale || payload.locale || 'pt-BR',
     });
-    if (!created.ok) {
-      return apiError(request, created.errorCode || 'INVALID_DATA', 400);
-    }
+    if (!opened.ok) return apiError(request, opened.errorCode || 'INVALID_DATA', 400);
 
     await audit({
       actorUserId: payload.userId || null,
-      action: 'development_plan.create',
+      action: 'retention_followup.open',
       targetType: 'candidate',
       targetId: candidateId,
-      metadata: { planId: created.plan.id },
+      metadata: { followUpId: opened.followUp?.id, planId: opened.plan?.id },
     });
 
-    return NextResponse.json({ ok: true, plan: created.plan }, { status: 201 });
+    return NextResponse.json(
+      { ok: true, followUp: opened.followUp, plan: opened.plan },
+      { status: 201 }
+    );
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
-    console.error('POST development-plans', err);
+    console.error('POST retention-followups', err);
     return apiError(request, 'INTERNAL', 500);
   }
 }

@@ -158,7 +158,7 @@ export async function GET(request, { params }) {
     );
 
     const ranked = rows.rows.map((r) => {
-      const fit = computeAreaScore010(r.scores, weights);
+      const fit = computeAreaScore010(r.scores, weights, { withBreakdown: true });
       let nucleusFit = null;
       if (r.topType != null && nucleus.length > 0) {
         const scored = scorePersonAgainstNucleus({
@@ -179,6 +179,7 @@ export async function GET(request, { params }) {
         ...r,
         vacancyFitScore010: fit.score010,
         vacancyFitLabel: fit.label,
+        fitBreakdown: fit.breakdown || null,
         nucleusFit,
       };
     });

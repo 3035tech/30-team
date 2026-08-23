@@ -9,6 +9,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
 import { DevelopmentPlansBlock } from './DevelopmentPlansBlock';
 import { useAppFeedback } from './AppFeedback';
+import { CopyableLink } from './CopyableLink';
 
 function todayIso() {
   const d = new Date();
@@ -47,7 +48,9 @@ export function PeopleManagementPanel({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgError, setMsgError] = useState(false);
-  const { confirm, notice } = useAppFeedback();
+  const [pdiRefresh, setPdiRefresh] = useState(0);
+  const [portalUrl, setPortalUrl] = useState('');
+  const { confirm, notice, toast, promptForm } = useAppFeedback();
 
   if (!management && !people) {
     return null;
@@ -72,15 +75,123 @@ export function PeopleManagementPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.oneOnOneSaveError'));
+      const savedNext = nextSteps;
       setNotes('');
       setNextSteps('');
       setMeetingDate(todayIso());
       setMsgError(false);
       setMsg(t(locale, 'panel.team.oneOnOneSaved'));
       if (onRefresh) await onRefresh();
+      if (!isRichTextEmpty(savedNext) && data?.item?.id) {
+        const go = await confirm({
+          message: t(locale, 'panel.team.convertToPdiPrompt'),
+          confirmLabel: t(locale, 'panel.team.convertToPdiConfirm'),
+        });
+        if (go) await convertToPdi(data.item.id);
+      }
     } catch (e) {
       setMsgError(true);
       setMsg(e?.message || t(locale, 'panel.team.oneOnOneSaveError'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const convertToPdi = async (oneOnOneId) => {
+    if (!candidateId || !oneOnOneId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/development-plans`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'fromOneOnOne', oneOnOneId }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || data?.errorCode || 'convert');
+      toast(
+        t(locale, 'panel.team.convertToPdiOk', { n: data.addedCount || 0 }),
+        'ok'
+      );
+      setPdiRefresh((k) => k + 1);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openRetentionPlan = async () => {
+    if (!candidateId || !signals.length) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.team.retentionOpenTitle'),
+      confirmLabel: t(locale, 'panel.team.retentionOpenConfirm'),
+      fields: [
+        {
+          key: 'reviewDue',
+          type: 'date',
+          label: t(locale, 'panel.team.retentionReviewDue'),
+          defaultValue: (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 21);
+            return d.toISOString().slice(0, 10);
+          })(),
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const explanation = signals.map((s) => s.text).join(' ');
+      const suggestedQuestion =
+        signals.map((s) => s.suggestedQuestion).filter(Boolean)[0] || '';
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/retention-followups`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signals,
+            explanation,
+            suggestedQuestion,
+            reviewDue: values.reviewDue,
+            locale,
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'retention');
+      toast(t(locale, 'panel.team.retentionOpened'), 'ok');
+      setPdiRefresh((k) => k + 1);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const issueEmployeePortal = async () => {
+    if (!candidateId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/employee-portal`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'portal');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${origin}/e/${data.invite?.token}`;
+      setPortalUrl(url);
+      toast(t(locale, 'panel.employeePortal.created'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
     } finally {
       setBusy(false);
     }
@@ -135,7 +246,22 @@ export function PeopleManagementPanel({
         >
           {completeness.motivators ? t(locale, 'panel.team.peopleHasMotivators') : t(locale, 'panel.team.peopleMissingMotivators')}
         </span>
+        <button
+          type="button"
+          disabled={busy}
+          className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+          onClick={issueEmployeePortal}
+        >
+          {t(locale, 'panel.employeePortal.issueBtn')}
+        </button>
       </div>
+
+      {portalUrl ? (
+        <div className="mb-3 rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2">
+          <p className={cn(S.muted, 'm-0 mb-1 text-xs')}>{t(locale, 'panel.employeePortal.linkHint')}</p>
+          <CopyableLink url={portalUrl} locale={locale} />
+        </div>
+      ) : null}
 
       {topMot.length > 0 ? (
         <div className="mb-3">
@@ -160,17 +286,30 @@ export function PeopleManagementPanel({
       ) : null}
 
       {signals.length > 0 ? (
-        <div className="mb-3">
+        <div className="mb-3 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2.5">
           <span className={cn(S.label, 'mb-1.5')}>
             {t(locale, 'panel.team.peopleRetention')}
           </span>
-          <ul className="m-0 pl-[18px]">
+          <ul className="m-0 mb-2 pl-[18px]">
             {signals.map((s) => (
-              <li key={s.key} className="mb-1 text-[13px] leading-[1.55] text-ink-muted">
-                {s.text}
+              <li key={s.key} className="mb-1.5 text-[13px] leading-[1.55] text-ink-muted">
+                <div>{s.text}</div>
+                {s.suggestedQuestion ? (
+                  <div className="mt-0.5 text-xs italic text-ink">
+                    {t(locale, 'panel.team.retentionAsk')}: {s.suggestedQuestion}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
+          <button
+            type="button"
+            disabled={busy}
+            className={cn(S.btnBrandSoft, 'min-h-touch')}
+            onClick={openRetentionPlan}
+          >
+            {t(locale, 'panel.team.retentionOpenBtn')}
+          </button>
         </div>
       ) : null}
 
@@ -180,28 +319,34 @@ export function PeopleManagementPanel({
             {t(locale, 'panel.team.peopleHypotheses')}
           </span>
           <div className="flex flex-col gap-2">
-            {[...hypotheses].sort((a, b) => Number(b.source === 'cross') - Number(a.source === 'cross')).map((h) => (
-              <div
-                key={h.id}
-                className={cn(
-                  'rounded-lg px-3 py-2.5',
-                  h.source === 'cross'
-                    ? 'border border-brand-500/30 bg-brand-500/[0.04]'
-                    : 'border border-ink/12 bg-white/45'
-                )}
-              >
-                {h.source === 'cross' ? (
-                  <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-brand-500">
-                    {t(locale, 'panel.team.peopleCrossBadge')}
+            {[...hypotheses]
+              .sort((a, b) => Number(b.source === 'cross') - Number(a.source === 'cross'))
+              .map((h) => (
+                <div
+                  key={h.id}
+                  className={cn(
+                    'rounded-lg px-3 py-2.5',
+                    h.source === 'cross'
+                      ? 'border border-brand-500/30 bg-brand-500/[0.04]'
+                      : 'border border-ink/12 bg-white/45'
+                  )}
+                >
+                  <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                    {t(locale, `panel.team.evidenceSource.${h.source || 'other'}`)}
                   </div>
-                ) : null}
-                <div className="mb-1 text-xs font-semibold text-ink">
-                  {h.title}
+                  {h.source === 'cross' ? (
+                    <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-brand-500">
+                      {t(locale, 'panel.team.peopleCrossBadge')}
+                    </div>
+                  ) : null}
+                  <div className="mb-1 text-xs font-semibold text-ink">{h.title}</div>
+                  <div className="text-[13px] leading-[1.55] text-ink-muted">{h.body}</div>
                 </div>
-                <div className="text-[13px] leading-[1.55] text-ink-muted">{h.body}</div>
-              </div>
-            ))}
+              ))}
           </div>
+          <p className={cn(S.faint, 'mb-0 mt-2 text-[11px]')}>
+            {t(locale, 'panel.team.evidenceLimits')}
+          </p>
         </div>
       ) : (
         <p className="mb-3 mt-0 text-xs italic text-ink-faint">
@@ -292,19 +437,31 @@ export function PeopleManagementPanel({
                 key={item.id}
                 className="rounded-lg border border-ink/12 bg-white/40 px-3 py-2.5"
               >
-                <div className="mb-1.5 flex justify-between gap-2">
+                <div className="mb-1.5 flex flex-wrap justify-between gap-2">
                   <span className="font-mono text-xs text-ink-muted">
                     {formatMeetingDate(item.meetingDate, locale)}
                     {item.createdByName ? ` · ${item.createdByName}` : ''}
                   </span>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => remove(item.id)}
-                    className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger"
-                  >
-                    {t(locale, 'panel.team.oneOnOneDelete')}
-                  </button>
+                  <div className="flex gap-2">
+                    {!isRichTextEmpty(item.nextSteps) ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => convertToPdi(item.id)}
+                        className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                      >
+                        {t(locale, 'panel.team.convertToPdi')}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => remove(item.id)}
+                      className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger"
+                    >
+                      {t(locale, 'panel.team.oneOnOneDelete')}
+                    </button>
+                  </div>
                 </div>
                 <RichTextView html={item.notes} />
                 {!isRichTextEmpty(item.nextSteps) ? (
@@ -327,6 +484,7 @@ export function PeopleManagementPanel({
           candidateId={candidateId}
           seedIdeas={pdiSeedIdeas}
           oneOnOnes={oneOnOnes}
+          refreshKey={pdiRefresh}
         />
       ) : null}
     </div>

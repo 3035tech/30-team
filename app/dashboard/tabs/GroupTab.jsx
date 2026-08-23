@@ -8,6 +8,7 @@ import { cn } from '../../../lib/cn';
 import { buildNucleusCompositionAdvice } from '../../../lib/people/decision-brief';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
+import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
 
 export function GroupTab({
   results,
@@ -389,6 +390,14 @@ export function GroupTab({
             </ul>
           )}
         </div>
+
+        {resolvedCompanyId && activeSavedId ? (
+          <TeamPulseBlock
+            locale={locale}
+            companyId={resolvedCompanyId}
+            teamGroupId={activeSavedId}
+          />
+        ) : null}
 
         <span className={cn(S.label, 'mt-[18px]')}>{t(locale, 'panel.group.basePerson')}</span>
         {groupBase ? (

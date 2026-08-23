@@ -662,3 +662,170 @@ COMMENT ON COLUMN development_plan_items.one_on_one_id IS
 INSERT INTO schema_migrations (name) VALUES ('043_pdi_item_one_on_one.sql')
 ON CONFLICT (name) DO NOTHING;
 
+-- 044 — B-600 A/B: PDI ciclo (owner) + fontes one_on_one/retention; follow-up de retenção
+
+ALTER TABLE development_plan_items
+  ADD COLUMN IF NOT EXISTS owner_label TEXT NOT NULL DEFAULT '';
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'development_plan_items_owner_label_len'
+  ) THEN
+    ALTER TABLE development_plan_items DROP CONSTRAINT development_plan_items_owner_label_len;
+  END IF;
+END $$;
+
+ALTER TABLE development_plan_items
+  ADD CONSTRAINT development_plan_items_owner_label_len
+  CHECK (char_length(owner_label) <= 120);
+
+ALTER TABLE development_plan_items
+  DROP CONSTRAINT IF EXISTS development_plan_items_source_chk;
+
+ALTER TABLE development_plan_items
+  ADD CONSTRAINT development_plan_items_source_chk
+  CHECK (source IN ('manual', 'synthesis', 'one_on_one', 'retention'));
+
+COMMENT ON COLUMN development_plan_items.owner_label IS
+  'Free-text owner / responsible for the item (B-601).';
+COMMENT ON COLUMN development_plan_items.source IS
+  'manual | synthesis | one_on_one | retention (B-601/B-602).';
+
+CREATE TABLE IF NOT EXISTS retention_followups (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  candidate_id         BIGINT NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  plan_id              BIGINT REFERENCES development_plans(id) ON DELETE SET NULL,
+  signal_keys          TEXT[] NOT NULL DEFAULT '{}',
+  explanation          TEXT NOT NULL DEFAULT '',
+  suggested_question   TEXT NOT NULL DEFAULT '',
+  review_due           DATE,
+  reviewed_at          TIMESTAMPTZ,
+  review_notes         TEXT NOT NULL DEFAULT '',
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT retention_followups_explanation_len CHECK (char_length(explanation) <= 2000),
+  CONSTRAINT retention_followups_question_len CHECK (char_length(suggested_question) <= 1000),
+  CONSTRAINT retention_followups_notes_len CHECK (char_length(review_notes) <= 4000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_retention_followups_candidate
+  ON retention_followups (candidate_id, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_retention_followups_company_review
+  ON retention_followups (company_id, review_due ASC NULLS LAST)
+  WHERE reviewed_at IS NULL;
+
+COMMENT ON TABLE retention_followups IS
+  'Retention watch → actionable follow-up (signal + question + plan + review). B-602.';
+
+INSERT INTO schema_migrations (name) VALUES ('044_pdi_cycle_and_retention_action.sql')
+ON CONFLICT (name) DO NOTHING;
+-- 045 — B-600 C: short contextual team pulse (scoped to saved team group)
+
+CREATE TABLE IF NOT EXISTS team_pulses (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  team_group_id        BIGINT NOT NULL REFERENCES team_groups(id) ON DELETE CASCADE,
+  title                TEXT NOT NULL,
+  status               TEXT NOT NULL DEFAULT 'draft',
+  opens_at             TIMESTAMPTZ,
+  closes_at            TIMESTAMPTZ,
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  deleted              BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT team_pulses_title_len CHECK (char_length(btrim(title)) >= 1 AND char_length(title) <= 200),
+  CONSTRAINT team_pulses_status_chk CHECK (status IN ('draft', 'open', 'closed'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_pulses_group
+  ON team_pulses (team_group_id, updated_at DESC)
+  WHERE deleted = FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_team_pulses_company
+  ON team_pulses (company_id, updated_at DESC)
+  WHERE deleted = FALSE;
+
+CREATE TABLE IF NOT EXISTS team_pulse_questions (
+  id                   BIGSERIAL PRIMARY KEY,
+  pulse_id             BIGINT NOT NULL REFERENCES team_pulses(id) ON DELETE CASCADE,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  prompt_key           TEXT NOT NULL,
+  prompt               TEXT NOT NULL,
+  sort_order           INT NOT NULL DEFAULT 0,
+  scale_min            SMALLINT NOT NULL DEFAULT 1,
+  scale_max            SMALLINT NOT NULL DEFAULT 5,
+  active               BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT team_pulse_questions_prompt_len CHECK (char_length(btrim(prompt)) >= 1 AND char_length(prompt) <= 500),
+  CONSTRAINT team_pulse_questions_scale_chk CHECK (scale_min >= 1 AND scale_max <= 10 AND scale_min < scale_max)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_pulse_questions_pulse
+  ON team_pulse_questions (pulse_id, sort_order ASC, id ASC)
+  WHERE active = TRUE;
+
+CREATE TABLE IF NOT EXISTS team_pulse_invites (
+  id                   BIGSERIAL PRIMARY KEY,
+  pulse_id             BIGINT NOT NULL REFERENCES team_pulses(id) ON DELETE CASCADE,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  token                TEXT NOT NULL UNIQUE,
+  expires_at           TIMESTAMPTZ NOT NULL,
+  used_at              TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT team_pulse_invites_token_len CHECK (char_length(token) >= 16 AND char_length(token) <= 128)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_pulse_invites_pulse
+  ON team_pulse_invites (pulse_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS team_pulse_responses (
+  id                   BIGSERIAL PRIMARY KEY,
+  pulse_id             BIGINT NOT NULL REFERENCES team_pulses(id) ON DELETE CASCADE,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  invite_id            BIGINT REFERENCES team_pulse_invites(id) ON DELETE SET NULL,
+  answers              JSONB NOT NULL DEFAULT '{}'::jsonb,
+  submitted_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT team_pulse_responses_invite_unique UNIQUE (invite_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_pulse_responses_pulse
+  ON team_pulse_responses (pulse_id, submitted_at DESC);
+
+COMMENT ON TABLE team_pulses IS
+  'Short anonymous pulse scoped to a saved team group (B-603).';
+
+INSERT INTO schema_migrations (name) VALUES ('045_team_pulse.sql')
+ON CONFLICT (name) DO NOTHING;
+-- 046 — B-600 D: minimal employee view via token (no candidate account)
+
+CREATE TABLE IF NOT EXISTS employee_portal_tokens (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  candidate_id         BIGINT NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  token                TEXT NOT NULL UNIQUE,
+  expires_at           TIMESTAMPTZ NOT NULL,
+  revoked_at           TIMESTAMPTZ,
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_seen_at         TIMESTAMPTZ,
+  CONSTRAINT employee_portal_tokens_token_len CHECK (char_length(token) >= 16 AND char_length(token) <= 128)
+);
+
+CREATE INDEX IF NOT EXISTS idx_employee_portal_candidate
+  ON employee_portal_tokens (candidate_id, created_at DESC)
+  WHERE revoked_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_employee_portal_token_active
+  ON employee_portal_tokens (token)
+  WHERE revoked_at IS NULL;
+
+COMMENT ON TABLE employee_portal_tokens IS
+  'Token link /e/{token} for hired people: PDI + 1:1 prep (no login). B-604.';
+
+INSERT INTO schema_migrations (name) VALUES ('046_employee_portal.sql')
+ON CONFLICT (name) DO NOTHING;

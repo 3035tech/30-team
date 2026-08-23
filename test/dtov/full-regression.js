@@ -93,6 +93,49 @@ async function runOfflineLibs() {
     return 'exports wired';
   });
 
+  await check('lib', 'b600-pdi-retention-pulse', async () => {
+    const { parseActionLinesFromRichText, isItemDueOverdue } = await import(
+      '../../lib/people/pdi-action-lines.js'
+    );
+    const lines = parseActionLinesFromRichText(
+      '<ul><li>Praticar feedback semanal</li><li>Revisar carga do time</li></ul>'
+    );
+    if (lines.length < 2) throw new Error(`parse lines ${lines.length}`);
+    if (!isItemDueOverdue({ status: 'todo', dueDate: '2000-01-01' })) {
+      throw new Error('expected overdue');
+    }
+    const { computeAreaScore010 } = await import('../../lib/area-fit.js');
+    const fit = computeAreaScore010(
+      { 1: 10, 2: 5, 3: 2 },
+      { 1: 3, 2: 1 },
+      { withBreakdown: true }
+    );
+    if (fit.score010 == null || !fit.breakdown?.types?.length) {
+      throw new Error('fit breakdown missing');
+    }
+    if (!fit.breakdown.excludes?.includes('motivators')) throw new Error('excludes missing');
+    const { importItemsFromOneOnOne } = await import('../../lib/people/development-plans.js');
+    if (typeof importItemsFromOneOnOne !== 'function') throw new Error('missing importItemsFromOneOnOne');
+    const { openRetentionFollowUp } = await import('../../lib/people/retention-followups.js');
+    if (typeof openRetentionFollowUp !== 'function') throw new Error('missing openRetentionFollowUp');
+    const { createTeamPulse, DEFAULT_TEAM_PULSE_PROMPTS } = await import(
+      '../../lib/people/team-pulses.js'
+    );
+    if (typeof createTeamPulse !== 'function') throw new Error('missing createTeamPulse');
+    if (DEFAULT_TEAM_PULSE_PROMPTS.length < 3) throw new Error('pulse prompts');
+    const fs = await import('node:fs/promises');
+    const portalSrc = await fs.readFile(
+      new URL('../../lib/people/employee-portal.js', import.meta.url),
+      'utf8'
+    );
+    for (const name of ['createEmployeePortalToken', 'getEmployeePortalView']) {
+      if (!portalSrc.includes(`export async function ${name}`)) {
+        throw new Error(`missing ${name}`);
+      }
+    }
+    return 'b600 helpers ok';
+  });
+
   await check('lib', 'retention-watch-notif', async () => {
     const {
       NOTIF,

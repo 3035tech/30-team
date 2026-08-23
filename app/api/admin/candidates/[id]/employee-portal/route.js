@@ -4,15 +4,14 @@ import { apiError } from '../../../../../../lib/api-error';
 import { audit } from '../../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import {
-  createDevelopmentPlan,
-  importItemsFromOneOnOne,
-  listDevelopmentPlans,
-} from '../../../../../../lib/people/development-plans';
+  createEmployeePortalToken,
+  listEmployeePortalTokens,
+  revokeEmployeePortalToken,
+} from '../../../../../../lib/people/employee-portal';
 
 async function loadCandidateScope(candidateId, scope) {
   const c = await query(
-    `SELECT id, company_id AS "companyId", full_name AS "fullName"
-     FROM candidates WHERE id = $1 LIMIT 1`,
+    `SELECT id, company_id AS "companyId" FROM candidates WHERE id = $1 LIMIT 1`,
     [candidateId]
   );
   if (c.rowCount === 0) return { error: 'NOT_FOUND' };
@@ -22,7 +21,7 @@ async function loadCandidateScope(candidateId, scope) {
   return { candidate: c.rows[0] };
 }
 
-/** GET /api/admin/candidates/[id]/development-plans */
+/** GET /api/admin/candidates/[id]/employee-portal */
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
@@ -32,23 +31,22 @@ export async function GET(request, { params }) {
 
     const candidateId = params?.id;
     if (!candidateId) return apiError(request, 'INVALID_ID', 400);
-
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
-    const items = await listDevelopmentPlans(query, {
+    const items = await listEmployeePortalTokens(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
     });
     return NextResponse.json({ items });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
-    console.error('GET development-plans', err);
+    console.error('GET employee-portal', err);
     return apiError(request, 'INTERNAL', 500);
   }
 }
 
-/** POST /api/admin/candidates/[id]/development-plans */
+/** POST /api/admin/candidates/[id]/employee-portal */
 export async function POST(request, { params }) {
   try {
     const payload = await getSessionPayload();
@@ -58,67 +56,40 @@ export async function POST(request, { params }) {
 
     const candidateId = params?.id;
     if (!candidateId) return apiError(request, 'INVALID_ID', 400);
-
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
     const body = await request.json().catch(() => ({}));
-
-    if (body.action === 'fromOneOnOne' || body.oneOnOneId) {
-      const imported = await importItemsFromOneOnOne(query, {
+    if (body.action === 'revoke') {
+      const revoked = await revokeEmployeePortalToken(query, {
         companyId: loaded.candidate.companyId,
         candidateId,
-        oneOnOneId: body.oneOnOneId,
-        planId: body.planId,
-        createdByUserId: payload.userId || null,
-        ownerLabel: body.ownerLabel,
-        periodDays: body.periodDays,
+        tokenId: body.tokenId,
       });
-      if (!imported.ok) {
-        return apiError(request, imported.errorCode || 'INVALID_DATA', 400);
-      }
-      await audit({
-        actorUserId: payload.userId || null,
-        action: 'development_plan.from_one_on_one',
-        targetType: 'candidate',
-        targetId: candidateId,
-        metadata: { planId: imported.plan?.id, addedCount: imported.addedCount },
-      });
-      return NextResponse.json({
-        ok: true,
-        plan: imported.plan,
-        addedCount: imported.addedCount,
-        linesParsed: imported.linesParsed,
-      });
+      if (!revoked.ok) return apiError(request, revoked.errorCode || 'NOT_FOUND', 404);
+      return NextResponse.json({ ok: true });
     }
 
-    const created = await createDevelopmentPlan(query, {
+    const created = await createEmployeePortalToken(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
-      title: body.title,
-      objective: body.objective,
-      status: body.status,
-      periodStart: body.periodStart,
-      periodEnd: body.periodEnd,
       createdByUserId: payload.userId || null,
-      seedIdeas: body.seedIdeas,
+      ttlDays: body.ttlDays,
     });
-    if (!created.ok) {
-      return apiError(request, created.errorCode || 'INVALID_DATA', 400);
-    }
+    if (!created.ok) return apiError(request, created.errorCode || 'INVALID_DATA', 400);
 
     await audit({
       actorUserId: payload.userId || null,
-      action: 'development_plan.create',
+      action: 'employee_portal.create',
       targetType: 'candidate',
       targetId: candidateId,
-      metadata: { planId: created.plan.id },
+      metadata: { tokenId: created.invite?.id },
     });
 
-    return NextResponse.json({ ok: true, plan: created.plan }, { status: 201 });
+    return NextResponse.json({ ok: true, invite: created.invite }, { status: 201 });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
-    console.error('POST development-plans', err);
+    console.error('POST employee-portal', err);
     return apiError(request, 'INTERNAL', 500);
   }
 }

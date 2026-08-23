@@ -34,6 +34,8 @@ Hub = tabela candidates (company_id + e-mail). O mesmo candidate_id une:
 | /c/{companySlug} | Carreiras da empresa (opt-in) |
 | /r/{token} | Relatório shortlist para o cliente |
 | /clima/{token} | Pesquisa de clima anônima (um uso por convite) |
+| /pulso/{token} | Pulso curto de grupo (anônimo, um uso) |
+| /e/{token} | Espaço mínimo do colaborador (PDI + combinados; sem conta) |
 | /a/set-password , /a/unsubscribe | Setup de senha / cancelar job alert |
 
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
@@ -67,9 +69,12 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Briefing de decisão (HrActionBrief): alertas, faça/evite, perguntas de entrevista, dicas de composição com o time — a partir de Eneagrama + Motivadores. **Imprimir / PDF** (one-pager).
 - Mesmo briefing no detalhe do candidato na vaga (“Notas / ações”).
 - Hipóteses de gestão (tom “tende a”) + registro de 1:1 (data, notas ricas, próximos passos) — separado de hr_notes de triagem.
-- Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe; limiar `RETENTION_WATCH_MIN_SCORE` (padrão 55); card + Atenção na Visão geral (14d).
+- Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe; limiar `RETENTION_WATCH_MIN_SCORE` (padrão 55); card + Atenção na Visão geral (14d); **fluxo acionável** (pergunta + plano PDI + revisão).
 - Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
-- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo.
+- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo; **ciclo** (período); **responsável**; **converter próximos passos do 1:1**.
+- **Pulso de grupo:** Grupos → grupo salvo → `/pulso/{token}` (curto, anônimo; não substitui Clima).
+- **Link do colaborador:** `/e/{token}` (sem conta) — PDI, combinados, prep 1:1.
+- Ranking: **explicar Fit** (pesos × T1–T9; exclusões).
 - **Clima:** perguntas editáveis; links em lote / e-mail; médias só após mínimo de respostas; barras por pergunta; benchmark com média geral e Δ; pulse na Visão geral.
 
 ### Clima (estrutura B-500)
