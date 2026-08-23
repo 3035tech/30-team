@@ -7,95 +7,37 @@ import { localizeAreaLabel } from '../../lib/i18n-data';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { titleCasePersonName } from '../../lib/person-name';
-import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import LanguageSelect from './LanguageSelect';
 
 const SESSION_CFG = MOTIVATORS_DEFINITION.config;
 const SESSION_QUESTIONS = SESSION_CFG.questions_per_session ?? 30;
 const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
 
-const S = {
-  app: {
-    minHeight: '100vh',
-    background: C.bg,
-    fontFamily: FONTS.serif,
-    color: C.text,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    position: 'relative',
-    overflow: 'auto',
-    boxSizing: 'border-box',
-  },
-  glow: { position: 'fixed', inset: 0, pointerEvents: 'none', background: RADIAL_GLOW },
-  card: {
-    maxWidth: '660px',
-    width: '100%',
-    background: C.card,
-    border: `1px solid ${C.border}`,
-    borderRadius: '20px',
-    padding: '44px 48px',
-    backdropFilter: 'blur(24px)',
-    boxShadow: SHADOW.cardElevated,
-    position: 'relative',
-    zIndex: 1,
-    boxSizing: 'border-box',
-  },
-  label: {
-    fontSize: '10px',
-    letterSpacing: '3px',
-    textTransform: 'uppercase',
-    color: `${C.purple}8C`,
-    fontFamily: FONTS.mono,
-    marginBottom: '16px',
-    display: 'block',
-  },
-  h1: {
-    fontSize: 'clamp(26px,5vw,40px)',
-    fontWeight: 'normal',
-    lineHeight: 1.15,
-    marginBottom: '12px',
-    background: GRADIENT.title,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  p: { fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '28px', fontStyle: 'italic' },
-  input: {
-    width: '100%',
-    background: 'rgba(26,22,37,.04)',
-    border: `1px solid ${C.border}`,
-    borderRadius: '10px',
-    padding: '14px 18px',
-    color: C.text,
-    fontSize: '15px',
-    fontFamily: FONTS.serif,
-    boxSizing: 'border-box',
-    marginBottom: '16px',
-  },
-  btn: (bg = C.purple) => ({
-    background: GRADIENT.primaryBtn(bg, C.purpleDark),
-    border: 'none',
-    borderRadius: '10px',
-    padding: '14px 32px',
-    color: '#fff',
-    fontSize: '14px',
-    cursor: 'pointer',
-    fontFamily: FONTS.serif,
-  }),
+
+const SC = {
+  app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
+  glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
+  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[660px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl',
+  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-brand-500/55',
+  h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,5vw,40px)] font-normal leading-[1.15] text-transparent',
+  p: 'mb-7 text-[15px] italic leading-[1.75] text-ink-muted',
+  btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
+  input: 'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink',
+  fieldLabel: 'mb-2 block text-xs text-ink-muted',
 };
+
 
 function ThankYouScreen({ locale, saveError, onDone }) {
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
-        <span style={S.label}>{t(locale, 'motivators.thankYouLabel')}</span>
-        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{t(locale, 'motivators.thankYouTitle')}</h1>
-        {saveError ? <p style={{ color: C.tension, marginBottom: '16px', fontSize: '14px' }}>{saveError}</p> : null}
-        <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{t(locale, 'motivators.thankYouBody')}</p>
-        <button type="button" style={S.btn()} onClick={onDone}>{t(locale, 'motivators.thankYouDone')}</button>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={cn(SC.card, 'max-w-[560px] text-center')}>
+        <span className={SC.label}>{t(locale, 'motivators.thankYouLabel')}</span>
+        <h1 className={cn(SC.h1, 'mb-4 text-[32px]')}>{t(locale, 'motivators.thankYouTitle')}</h1>
+        {saveError ? <p className="mb-4 text-sm text-danger">{saveError}</p> : null}
+        <p className={cn(SC.p, 'mb-8 not-italic')}>{t(locale, 'motivators.thankYouBody')}</p>
+        <button type="button" className={SC.btn} onClick={onDone}>{t(locale, 'motivators.thankYouDone')}</button>
       </div>
     </div>
   );
@@ -160,101 +102,90 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
   ];
 
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={S.card}>
-        <div className="cand-flow-header" style={{ marginBottom: '16px' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'motivators.brand')}</span>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={SC.card}>
+        <div className="cand-flow-header mb-4">
+          <span className={cn(SC.label, 'mb-0')}>{t(locale, 'motivators.brand')}</span>
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 style={{ ...S.h1, fontSize: 'clamp(24px, 6vw, 40px)' }}>{t(locale, 'motivators.title')}</h1>
-        <p style={S.p}>{t(locale, 'motivators.intro', { minutes: SESSION_MINUTES })}</p>
+        <h1 className={cn(SC.h1, 'text-[clamp(24px,6vw,40px)]')}>{t(locale, 'motivators.title')}</h1>
+        <p className={SC.p}>{t(locale, 'motivators.intro', { minutes: SESSION_MINUTES })}</p>
 
         {notice ? (
           <div
-            style={{
-              marginBottom: '18px',
-              padding: '12px 14px',
-              background: notice.kind === 'warning' ? 'rgba(232,71,71,.06)' : 'rgba(26,22,37,.04)',
-              border: `1px solid ${notice.kind === 'warning' ? 'rgba(232,71,71,.22)' : C.border}`,
-              borderRadius: '12px',
-              fontSize: '12px',
-              color: C.muted,
-            }}
+            className={cn(
+              'mb-[18px] rounded-xl px-3.5 py-3 text-xs text-ink-muted',
+              notice.kind === 'warning'
+                ? 'border border-danger/20 bg-danger/[0.06]'
+                : 'border border-ink/12 bg-ink/[0.04]'
+            )}
           >
             <strong>{notice.title}</strong>
-            <div style={{ marginTop: '6px' }}>{notice.message}</div>
+            <div className="mt-1.5">{notice.message}</div>
           </div>
         ) : null}
 
-        <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', flexWrap: 'wrap' }}>
+        <div className="mb-7 flex flex-wrap gap-6">
           {stats.map(([n, l]) => (
             <div key={l}>
-              <div style={{ fontSize: '22px', color: C.purpleLight }}>{n}</div>
-              <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'monospace' }}>{l}</div>
+              <div className="text-[22px] text-brand-600">{n}</div>
+              <div className="font-mono text-[10px] uppercase tracking-[2px] text-ink-muted">{l}</div>
             </div>
           ))}
         </div>
 
         {identityLocked ? (
-          <div
-            style={{
-              marginBottom: '18px',
-              padding: '14px 16px',
-              background: `${C.purple}0a`,
-              border: `1px solid ${C.purple}33`,
-              borderRadius: '12px',
-            }}
-          >
-            <div style={{ fontSize: '16px', color: C.text, marginBottom: '6px' }}>
+          <div className="mb-[18px] rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-4 py-3.5">
+            <div className="mb-1.5 text-base text-ink">
               {t(locale, 'motivators.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
             </div>
-            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
+            <div className="mb-1.5 text-xs leading-relaxed text-ink-muted">
               {inviteInfo?.hasHrProfile
                 ? t(locale, 'motivators.inviteIdentityNoteWithProfile')
                 : t(locale, 'motivators.inviteIdentityNote')}
             </div>
-            <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            <div className="font-mono text-[11px] text-ink-faint">
               {t(locale, 'motivators.inviteIdentityEmail', { email: effectiveEmail })}
             </div>
           </div>
         ) : (
           <>
-            <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'candidate.fullName')}</label>
+            <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'candidate.fullName')}</label>
             <input
-              style={S.input}
+              className={SC.input}
               value={name}
               onChange={(e) => setName(e.target.value)}
               onBlur={() => setName(titleCasePersonName(name))}
               placeholder={t(locale, 'candidate.namePlaceholder')}
             />
 
-            <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.emailInvite')}</label>
-            <input style={S.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+            <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'motivators.emailInvite')}</label>
+            <input className={SC.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
           </>
         )}
 
-        <label style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'motivators.areaLabel')}</label>
-        <select style={{ ...S.input, cursor: 'pointer' }} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
+        <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'motivators.areaLabel')}</label>
+        <select className={cn(SC.input, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
           {areaOptions.map((a) => (
             <option key={a.key} value={a.key}>{localizeAreaLabel(a, locale)}</option>
           ))}
         </select>
 
-        <label style={{ display: 'flex', gap: '10px', fontSize: '12px', color: C.muted, marginBottom: '16px' }}>
+        <label className="mb-4 flex gap-2.5 text-xs text-ink-muted">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           {t(locale, 'motivators.consent')}
         </label>
 
-        {error ? <p style={{ color: C.tension, fontSize: '13px' }}>{error}</p> : null}
+        {error ? <p className="text-[13px] text-danger">{error}</p> : null}
 
-        <button type="button" disabled={!ready || busy} style={{ ...S.btn(), opacity: ready ? 1 : 0.45 }} onClick={submit}>
+        <button type="button" disabled={!ready || busy} className={cn(SC.btn, !ready && 'opacity-45')} onClick={submit}>
           {busy ? t(locale, 'motivators.starting') : t(locale, 'motivators.startAssessment')}
         </button>
 
-        <p style={{ marginTop: '20px', fontSize: '11px', color: C.faint }}>
+        <p className="mt-5 text-[11px] text-ink-faint">
           {t(locale, 'candidate.manager')}{' '}
-          <span style={{ color: C.purpleLight, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/login')}>
+          <span className="cursor-pointer text-brand-600 underline" onClick={() => router.push('/login')}>
             {t(locale, 'motivators.accessPanel')}
           </span>
         </p>
@@ -274,10 +205,10 @@ function RankingChoice({ question, onConfirm, locale }) {
 
   return (
     <div>
-      <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px', fontStyle: 'italic' }}>
+      <p className="mb-4 text-xs italic text-ink-muted">
         {t(locale, 'motivators.rankingInstruction')}
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="flex flex-col gap-2.5">
         {options.map((opt) => {
           const pos = order.indexOf(opt.id);
           const ranked = pos >= 0;
@@ -286,48 +217,32 @@ function RankingChoice({ question, onConfirm, locale }) {
               key={opt.id}
               type="button"
               onClick={() => toggle(opt.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                textAlign: 'left',
-                padding: '14px 18px',
-                borderRadius: '12px',
-                border: `1px solid ${ranked ? C.purple : C.border}`,
-                background: ranked ? `${C.purple}14` : 'rgba(26,22,37,.03)',
-                cursor: 'pointer',
-                fontSize: '14px',
-                color: C.text,
-                fontFamily: FONTS.serif,
-              }}
+              className={cn(
+                'flex cursor-pointer items-center gap-3 rounded-xl px-[18px] py-3.5 text-left font-display text-sm text-ink',
+                ranked
+                  ? 'border border-brand-500 bg-brand-500/[0.08]'
+                  : 'border border-ink/12 bg-ink/[0.03]'
+              )}
             >
               <span
-                style={{
-                  flexShrink: 0,
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '13px',
-                  fontFamily: FONTS.mono,
-                  border: `1px solid ${ranked ? C.purple : C.border}`,
-                  background: ranked ? C.purple : 'transparent',
-                  color: ranked ? '#fff' : C.muted,
-                }}
+                className={cn(
+                  'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[13px]',
+                  ranked
+                    ? 'border border-brand-500 bg-brand-500 text-white'
+                    : 'border border-ink/12 bg-transparent text-ink-muted'
+                )}
               >
                 {ranked ? pos + 1 : '+'}
               </span>
               <span>
                 {opt.text}
                 {ranked && pos === 0 ? (
-                  <span style={{ display: 'block', fontSize: '11px', color: C.muted, marginTop: '4px' }}>
+                  <span className="mt-1 block text-[11px] text-ink-muted">
                     {t(locale, 'motivators.rankingMost')}
                   </span>
                 ) : null}
                 {ranked && complete && pos === order.length - 1 && order.length > 1 ? (
-                  <span style={{ display: 'block', fontSize: '11px', color: C.muted, marginTop: '4px' }}>
+                  <span className="mt-1 block text-[11px] text-ink-muted">
                     {t(locale, 'motivators.rankingLeast')}
                   </span>
                 ) : null}
@@ -336,19 +251,15 @@ function RankingChoice({ question, onConfirm, locale }) {
           );
         })}
       </div>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '20px' }}>
+      <div className="mt-5 flex items-center gap-3">
         <button
           type="button"
-          className="cand-tap"
+          className={cn(
+            'cand-tap border-none bg-transparent text-[13px]',
+            order.length === 0 ? 'cursor-default text-ink-faint' : 'cursor-pointer text-ink-muted'
+          )}
           disabled={order.length === 0}
           onClick={() => setOrder([])}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: order.length === 0 ? C.faint : C.muted,
-            cursor: order.length === 0 ? 'default' : 'pointer',
-            fontSize: '13px',
-          }}
         >
           {t(locale, 'motivators.clearRanking')}
         </button>
@@ -356,7 +267,7 @@ function RankingChoice({ question, onConfirm, locale }) {
           type="button"
           disabled={!complete}
           onClick={() => onConfirm(order)}
-          style={{ ...S.btn(), opacity: complete ? 1 : 0.45, marginLeft: 'auto' }}
+          className={cn(SC.btn, 'ml-auto', !complete && 'opacity-45')}
         >
           {t(locale, 'motivators.confirmOrder')}
         </button>
@@ -395,35 +306,25 @@ function TestScreen({ questions, onComplete, locale }) {
   if (!q) return null;
 
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px', opacity: fade ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-        <span style={S.label}>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={cn(SC.card, 'max-w-[700px] transition-opacity duration-200', fade ? 'opacity-60' : 'opacity-100')}>
+        <span className={SC.label}>
           {t(locale, 'motivators.questionProgress', { current: idx + 1, total: questions.length })}
         </span>
-        <div style={{ height: '4px', background: 'rgba(26,22,37,.08)', borderRadius: 2, marginBottom: '24px' }}>
-          <div style={{ width: `${progress}%`, height: '100%', background: C.purple, borderRadius: 2 }} />
+        <div className="mb-6 h-1 overflow-hidden rounded-sm bg-ink/[0.08]">
+          <div className="h-full rounded-sm bg-brand-500" style={{ width: `${progress}%` }} />
         </div>
-        <p className="cand-q-text" style={{ fontSize: '17px', lineHeight: 1.6, marginBottom: '28px', color: C.text }}>{q.text}</p>
+        <p className="cand-q-text mb-7 text-[17px] leading-relaxed text-ink">{q.text}</p>
 
         {q.questionType === 'forced_choice' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-2.5">
             {(q.options || []).map((opt) => (
               <button
                 key={opt.id}
                 type="button"
                 onClick={() => advance({ optionId: opt.id })}
-                style={{
-                  textAlign: 'left',
-                  padding: '14px 18px',
-                  borderRadius: '12px',
-                  border: `1px solid ${C.border}`,
-                  background: 'rgba(26,22,37,.03)',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  color: C.text,
-                  fontFamily: FONTS.serif,
-                }}
+                className="cursor-pointer rounded-xl border border-ink/12 bg-ink/[0.03] px-[18px] py-3.5 text-left font-display text-sm text-ink" 
               >
                 {opt.text}
               </button>
@@ -433,7 +334,7 @@ function TestScreen({ questions, onComplete, locale }) {
           <RankingChoice key={q.id} question={q} locale={locale} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
         ) : (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C.muted, marginBottom: '12px', gap: '8px' }}>
+            <div className="mb-3 flex justify-between gap-2 text-[11px] text-ink-muted">
               <span>{q.likertScale?.minLabel || t(locale, 'motivators.likertMinShort')}</span>
               <span>{q.likertScale?.maxLabel || t(locale, 'motivators.likertMaxShort')}</span>
             </div>
@@ -444,16 +345,7 @@ function TestScreen({ questions, onComplete, locale }) {
                   type="button"
                   className="cand-likert-btn"
                   onClick={() => advance({ likertValue: v })}
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    border: `2px solid ${C.purple}44`,
-                    background: `${C.purple}0F`,
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    color: C.purpleDark,
-                  }}
+                  className="h-12 w-12 cursor-pointer rounded-full border-2 border-brand-500/25 bg-brand-500/[0.06] text-base text-brand-800"
                 >
                   {v}
                 </button>
@@ -465,8 +357,7 @@ function TestScreen({ questions, onComplete, locale }) {
         {idx > 0 ? (
           <button
             type="button"
-            className="cand-tap"
-            style={{ marginTop: '24px', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: '13px' }}
+            className="cand-tap mt-6 cursor-pointer border-none bg-transparent text-[13px] text-ink-muted"
             onClick={() => { setIdx((i) => i - 1); setFade(false); }}
           >
             {t(locale, 'candidate.previous')}
@@ -537,11 +428,11 @@ export default function MotivatorsFlow({
   if (screen === 'result') {
     if (!submitOk && saveError) {
       return (
-        <div className="cand-flow" style={S.app}>
-          <div style={S.glow} />
-          <div className="cand-flow-card" style={S.card}>
-            <p style={S.p}>{saveError}</p>
-            <button type="button" style={S.btn()} onClick={() => setScreen('home')}>{t(locale, 'common.back')}</button>
+        <div className={SC.app}>
+          <div className={SC.glow} />
+          <div className={SC.card}>
+            <p className={SC.p}>{saveError}</p>
+            <button type="button" className={SC.btn} onClick={() => setScreen('home')}>{t(locale, 'common.back')}</button>
           </div>
         </div>
       );

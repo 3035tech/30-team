@@ -2,24 +2,12 @@
 
 import { useState } from 'react';
 import { t } from '../../lib/i18n';
-import { C, FONTS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { buildJobShareCopy } from '../../lib/job-share-copy';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
 
-const iconBtn = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '44px',
-  height: '44px',
-  minWidth: '44px',
-  minHeight: '44px',
-  padding: 0,
-  borderRadius: '12px',
-  cursor: 'pointer',
-  textDecoration: 'none',
-  boxSizing: 'border-box',
-};
+const iconBtnClass =
+  'inline-flex h-11 w-11 min-h-[44px] min-w-[44px] box-border cursor-pointer items-center justify-center rounded-xl p-0 no-underline';
 
 function IconWhatsApp({ size = 22 }) {
   return (
@@ -103,26 +91,13 @@ export function PublicVacancyShareBar({ locale = 'pt-BR', posting }) {
 
   return (
     <div
-      style={{
-        marginTop: '20px',
-        paddingTop: '18px',
-        borderTop: `1px solid ${C.border}`,
-      }}
+      className="mt-5 border-t border-ink/12 pt-[18px]"
       aria-label={t(locale, 'publicVacancy.shareAria')}
     >
-      <p
-        style={{
-          margin: '0 0 10px',
-          fontSize: '11px',
-          fontFamily: FONTS.mono,
-          color: C.faint,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-        }}
-      >
+      <p className="mb-2.5 mt-0 font-mono text-[11px] uppercase tracking-[0.04em] text-ink-faint">
         {t(locale, 'publicVacancy.shareHeading')}
       </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+      <div className="flex flex-wrap items-center gap-2.5">
         {share.whatsappShareHref ? (
           <a
             href={share.whatsappShareHref}
@@ -130,12 +105,7 @@ export function PublicVacancyShareBar({ locale = 'pt-BR', posting }) {
             rel="noopener noreferrer"
             title={t(locale, 'publicVacancy.shareWhatsapp')}
             aria-label={t(locale, 'publicVacancy.shareWhatsapp')}
-            style={{
-              ...iconBtn,
-              background: `${C.synergy}18`,
-              border: `1px solid ${C.synergy}55`,
-              color: C.synergy,
-            }}
+            className={cn(iconBtnClass, 'border border-success/35 bg-success/[0.09] text-success')}
           >
             <IconWhatsApp />
           </a>
@@ -147,12 +117,7 @@ export function PublicVacancyShareBar({ locale = 'pt-BR', posting }) {
             rel="noopener noreferrer"
             title={t(locale, 'publicVacancy.shareLinkedin')}
             aria-label={t(locale, 'publicVacancy.shareLinkedin')}
-            style={{
-              ...iconBtn,
-              background: `${C.purple}12`,
-              border: `1px solid ${C.purple}44`,
-              color: C.purple,
-            }}
+            className={cn(iconBtnClass, 'border border-brand-500/27 bg-brand-500/[0.07] text-brand-500')}
           >
             <IconLinkedIn />
           </a>
@@ -163,14 +128,12 @@ export function PublicVacancyShareBar({ locale = 'pt-BR', posting }) {
           disabled={!share.pageUrl}
           title={copied ? t(locale, 'publicVacancy.shareCopied') : t(locale, 'publicVacancy.shareCopy')}
           aria-label={copied ? t(locale, 'publicVacancy.shareCopied') : t(locale, 'publicVacancy.shareCopy')}
-          style={{
-            ...iconBtn,
-            background: 'transparent',
-            border: `1px solid ${C.border}`,
-            color: copied ? C.synergy : C.muted,
-            opacity: share.pageUrl ? 1 : 0.5,
-            cursor: share.pageUrl ? 'pointer' : 'default',
-          }}
+          className={cn(
+            iconBtnClass,
+            'border border-ink/12 bg-transparent',
+            copied ? 'text-success' : 'text-ink-muted',
+            share.pageUrl ? 'cursor-pointer opacity-100' : 'cursor-default opacity-50'
+          )}
         >
           {copied ? <IconCheck /> : <IconLink />}
         </button>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
-import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
 
@@ -62,15 +62,15 @@ export function CompareTabLoader({
 
   if (loading) {
     return (
-      <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
-        <p style={{ color: C.muted, margin: 0 }}>{t(locale, 'panel.compare.loading')}</p>
+      <div className={cn(S.card, 'p-10 text-center')}>
+        <p className="m-0 text-ink-muted">{t(locale, 'panel.compare.loading')}</p>
       </div>
     );
   }
   if (err) {
     return (
-      <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
-        <p style={{ color: C.tension, margin: 0 }}>{err}</p>
+      <div className={cn(S.card, 'p-10 text-center')}>
+        <p className="m-0 text-danger">{err}</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export function CompareTabLoader({
   const totPg = meta.totalPages;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <div className="flex flex-col gap-3.5">
       <CompareTab
         results={rows}
         locale={locale}
@@ -88,23 +88,18 @@ export function CompareTabLoader({
         listTotal={meta.total}
       />
       {meta.total > 0 ? (
-        <div style={{
-          ...S.card, padding: '14px 20px', display: 'flex', flexWrap: 'wrap',
-          alignItems: 'center', gap: '12px', justifyContent: 'space-between',
-        }}>
-          <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+        <div className={cn(S.card, 'flex flex-wrap items-center justify-between gap-3 px-5 py-3.5')}>
+          <span className="font-mono text-xs text-ink-muted">
             {t(locale, 'panel.compare.listMeta', { n: meta.total })}
           </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+          <div className="flex flex-wrap items-center gap-2.5">
             <select
               value={String(comparePageSize)}
               onChange={(e) => {
                 const ps = parseInt(e.target.value, 10);
                 onComparePagination({ page: 1, pageSize: ps });
               }}
-              style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
-                cursor: 'pointer', fontFamily: 'monospace' }}
+              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2 font-mono text-xs text-ink-muted"
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
@@ -114,26 +109,28 @@ export function CompareTabLoader({
               type="button"
               disabled={effPage <= 1}
               onClick={() => onComparePagination({ page: effPage - 1, pageSize: comparePageSize })}
-              style={{ background: effPage <= 1 ? 'transparent' : `${C.purple}18`,
-                border: `1px solid ${effPage <= 1 ? C.border : `${C.purple}55`}`,
-                borderRadius: '10px', padding: '8px 14px', color: effPage <= 1 ? C.faint : C.purple,
-                fontSize: '12px', cursor: effPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+              className={cn(
+                'rounded-control border px-3.5 py-2 font-mono text-xs',
+                effPage <= 1
+                  ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                  : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'
+              )}
             >
               {t(locale, 'dashboard.previous')}
             </button>
-            <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', minWidth: '90px', textAlign: 'center' }}>
+            <span className="min-w-[90px] text-center font-mono text-xs text-ink-muted">
               {effPage} / {totPg}
             </span>
             <button
               type="button"
               disabled={effPage >= totPg}
               onClick={() => onComparePagination({ page: effPage + 1, pageSize: comparePageSize })}
-              style={{ background: effPage >= totPg ? 'transparent' : `${C.purple}18`,
-                border: `1px solid ${effPage >= totPg ? C.border : `${C.purple}55`}`,
-                borderRadius: '10px', padding: '8px 14px',
-                color: effPage >= totPg ? C.faint : C.purple,
-                fontSize: '12px',
-                cursor: effPage >= totPg ? 'default' : 'pointer', fontFamily: 'monospace' }}
+              className={cn(
+                'rounded-control border px-3.5 py-2 font-mono text-xs',
+                effPage >= totPg
+                  ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                  : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'
+              )}
             >
               {t(locale, 'dashboard.next')}
             </button>

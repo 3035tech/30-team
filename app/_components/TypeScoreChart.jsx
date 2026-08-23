@@ -5,14 +5,18 @@ import { getTypeData } from '../../lib/i18n-data';
 import { rankEnneagramScores } from '../../lib/enneagram-cross';
 import { t } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
-import { C, FONTS } from '../../lib/theme';
+import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 function MiniBar({ value, max, color, h = 6 }) {
   return (
-    <div style={{ width: '100%', height: h, background: 'rgba(26,22,37,.08)', borderRadius: h / 2, overflow: 'hidden' }}>
+    <div
+      className="w-full overflow-hidden bg-ink/[0.08]"
+      style={{ height: h, borderRadius: h / 2 }}
+    >
       <div
+        className="h-full"
         style={{
-          height: '100%',
           width: `${(value / Math.max(max, 1)) * 100}%`,
           background: color,
           borderRadius: h / 2,
@@ -34,10 +38,10 @@ export function TypeScoreChart({ scores, locale, highlightTypes }) {
 
   return (
     <div>
-      <p style={{ margin: '0 0 10px', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
+      <p className="mb-2.5 mt-0 text-xs leading-normal text-ink-faint">
         {t(locale, 'candidate.scoreChartHint')}
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="flex flex-col gap-2">
         {ranked.map(({ type, score }) => {
           const d = typeData[type];
           if (!d) return null;
@@ -53,43 +57,40 @@ export function TypeScoreChart({ scores, locale, highlightTypes }) {
               aria-expanded={expanded}
               title={tip}
               aria-label={tip}
+              className={cn(
+                'block w-full cursor-pointer rounded-control px-3 py-2.5 text-left font-display',
+                highlight ? 'opacity-100' : 'opacity-[0.78]'
+              )}
               style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                cursor: 'pointer',
                 border: expanded ? `1px solid ${d.color}55` : `1px solid ${C.border}`,
                 background: expanded ? `${d.color}0c` : highlight ? `${d.color}08` : 'transparent',
-                borderRadius: '10px',
-                padding: '10px 12px',
-                opacity: highlight ? 1 : 0.78,
-                fontFamily: FONTS.serif,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px' }}>
-                <span style={{ fontSize: '13px', color: d.color, fontWeight: 600, minWidth: 0 }}>
+              <div className="flex items-baseline justify-between gap-2.5">
+                <span className="min-w-0 text-[13px] font-semibold" style={{ color: d.color }}>
                   {d.emoji}{' '}
-                  <span style={{ fontFamily: FONTS.mono, fontSize: '11px', letterSpacing: '0.04em' }}>T{type}</span>
+                  <span className="font-mono text-[11px] tracking-wide">T{type}</span>
                   {' · '}
                   {short}
                 </span>
-                <span style={{ fontSize: '12px', color: C.text, fontFamily: FONTS.mono, flexShrink: 0 }}>{score}</span>
+                <span className="shrink-0 font-mono text-xs text-ink">{score}</span>
               </div>
-              <p style={{ margin: '4px 0 8px', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>
+              <p className="mb-2 mt-1 text-xs leading-[1.45] text-ink-muted">
                 {d.team}
               </p>
               <MiniBar value={score} max={maxS} color={d.color} h={highlight ? 7 : 5} />
               {expanded ? (
-                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${d.color}33` }}>
-                  <p style={{ margin: '0 0 8px', fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{d.desc}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                <div
+                  className="mt-2.5 pt-2.5"
+                  style={{ borderTop: `1px solid ${d.color}33` }}
+                >
+                  <p className="mb-2 mt-0 text-[13px] leading-relaxed text-ink">{d.desc}</p>
+                  <div className="mb-2 flex flex-wrap gap-1.5">
                     {d.strengths.map((s) => (
                       <span
                         key={s}
+                        className="rounded-full px-2 py-0.5 text-[11px]"
                         style={{
-                          padding: '2px 8px',
-                          fontSize: '11px',
-                          borderRadius: '20px',
                           background: `${d.color}18`,
                           border: `1px solid ${d.color}35`,
                           color: d.color,
@@ -99,7 +100,7 @@ export function TypeScoreChart({ scores, locale, highlightTypes }) {
                       </span>
                     ))}
                   </div>
-                  <p style={{ margin: 0, fontSize: '12px', color: C.muted, fontStyle: 'italic', lineHeight: 1.5 }}>
+                  <p className="m-0 text-xs italic leading-normal text-ink-muted">
                     {t(locale, 'candidate.challenge')}: {d.challenge}
                   </p>
                 </div>

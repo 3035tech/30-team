@@ -1,12 +1,14 @@
 import { sanitizeRichTextHtml } from '../../lib/sanitize-html';
 import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 /**
  * Renderiza HTML de notas já sanitizado (ou re-sanitiza no cliente).
  */
 export function RichTextView({
   html,
-  style = {},
+  className,
+  style,
   as: Tag = 'div',
 }) {
   const safe = sanitizeRichTextHtml(html);
@@ -14,15 +16,11 @@ export function RichTextView({
   return (
     <>
       <Tag
-        className="rich-text-view"
-        style={{
-          fontSize: '13px',
-          color: C.text,
-          lineHeight: 1.6,
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          wordBreak: 'break-word',
-          ...style,
-        }}
+        className={cn(
+          'rich-text-view break-words font-display text-[13px] leading-relaxed text-ink',
+          className
+        )}
+        style={style}
         dangerouslySetInnerHTML={{ __html: safe }}
       />
       <style>{`

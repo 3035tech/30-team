@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import {
-  dialogBtnPrimary,
-  dialogCardStyle,
-  dialogOverlayStyle,
+  dialogBtnSolidClass,
+  dialogCardClass,
+  dialogOverlayClass,
 } from './app-dialog-styles';
 
 /**
@@ -44,13 +44,15 @@ export function SystemNoticeModal({
 
   if (!mounted || !open || !message) return null;
 
-  const accent = tone === 'ok' ? C.synergy : tone === 'error' ? C.tension : C.purple;
   const heading = title || t(locale, 'panel.common.noticeTitle');
+  const accentClass =
+    tone === 'ok' ? 'text-success' : tone === 'error' ? 'text-danger' : 'text-brand-500';
+  const btnBgClass =
+    tone === 'ok' ? 'bg-success' : tone === 'error' ? 'bg-danger' : 'bg-brand-500';
 
   return createPortal(
     <div
-      className="app-dialog-overlay"
-      style={dialogOverlayStyle}
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
@@ -60,36 +62,26 @@ export function SystemNoticeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="system-notice-title"
-        style={dialogCardStyle}
+        className={dialogCardClass}
         onClick={(e) => e.stopPropagation()}
       >
-        <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            color: accent,
-            fontFamily: 'monospace',
-          }}
-        >
+        <span className={cn('font-mono text-[10px] uppercase tracking-[2px]', accentClass)}>
           30Team
         </span>
         <h2
           id="system-notice-title"
-          style={{
-            margin: '8px 0 0',
-            fontSize: '20px',
-            fontWeight: 'normal',
-            fontFamily: 'Georgia, serif',
-            color: C.text,
-            lineHeight: 1.25,
-          }}
+          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
         >
           {heading}
         </h2>
-        <p style={{ margin: '12px 0 0', fontSize: '14px', color: C.muted, lineHeight: 1.55 }}>{message}</p>
-        <div style={{ marginTop: '22px', display: 'flex', justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} autoFocus style={dialogBtnPrimary(accent)}>
+        <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+        <div className="mt-[22px] flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            autoFocus
+            className={cn(dialogBtnSolidClass, btnBgClass)}
+          >
             {t(locale, 'panel.common.ok')}
           </button>
         </div>

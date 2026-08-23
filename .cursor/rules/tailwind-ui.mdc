@@ -1,5 +1,5 @@
 ---
-description: Tailwind é o estilo padrão de UI nova/alterada — tokens brand/pipeline, sem segundo sistema
+description: Tailwind é o estilo padrão — reusar S.* / dialog*Class / componentes antes de inventar
 globs: app/**/*.{js,jsx},tailwind.config.js,app/globals.css
 alwaysApply: true
 ---
@@ -10,24 +10,39 @@ alwaysApply: true
 
 ## Obrigatório
 
-1. **UI nova ou tela que você estiver editando** → preferir `className` Tailwind com tokens do theme (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono`, `min-h-touch`, `rounded-card` / `rounded-control`).
-2. **Cores de marca** = `brand-*` / `bg-brand` — só CTA, nav ativa, focus. **Nunca** status de pipeline ou “neutro” semântico.
-3. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*` (espelha `PIPELINE_STAGE_COLORS`).
-4. **Dinâmico demais para classe** (cor T1–T9 de `TYPE_DATA`, width de barra) → `style={{}}` pontual ou arbitrary value; ainda assim sem hex solto se o token existir.
-5. **Legado inline** (`style={{…}}` + `C.*`) — OK deixar até tocar o arquivo; ao editar um bloco, migrar aquele bloco para Tailwind quando for barato.
-6. **Sem** TypeScript, **sem** pasta `src/`, **sem** inventar outro kit (não misturar MUI/Chakra/etc.).
-7. Continua valendo UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, `t()` pt-BR+en, reusar componentes.
+1. **UI nova ou bloco em edição** → `className` Tailwind com tokens (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono` / `font-ui`, `min-h-touch`, `rounded-card` / `rounded-control`).
+
+2. **Reutilizar antes de inventar** (grep primeiro):
+   - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`
+   - `dialog*Class` em `app/_components/app-dialog-styles.js`
+   - `EmptyState`, `Icon`, `PanelSubNav`, `TypeBadge`, `AdminRichFormDrawer`, `PromptFormDialog`, `AppLoading`, `useAppFeedback`
+   - `cn()` em `lib/cn.js` para condicionais
+   - Só criar constante local se nada servir
+
+3. **Cores de marca** = `brand-*` — só CTA / nav ativa / focus. Nunca status de pipeline.
+
+4. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*`.
+
+5. **Dinâmico** (T1–T9 `TYPE_DATA`, width %) → `style={{}}` pontual; sem hex solto.
+
+6. Ao migrar: trocar `style={{}}` estático por `className={S.x}` / tokens TW.
+
+7. Sem TypeScript, sem `src/`, sem segundo kit UI.
+
+8. UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, `t()` pt-BR+en.
 
 ## Evitar
 
-- Hex / `rgba(124,58,237,…)` soltos — usar `brand-500` ou `C.purple` só se ainda inline
-- `bg-purple-600` genérico do default Tailwind em vez de `brand-*`
-- `@apply` massivo em CSS modules por tela — preferir `className` no JSX
-- Big-bang rewrite de tabs monstro só para “passar a Tailwind”
+- Hex / `rgba(124,58,237,…)` soltos
+- `bg-purple-600` genérico em vez de `brand-*`
+- Novo botão/card com classes ad hoc quando `S.btn*` / `S.card` bastam
+- `@apply` massivo por tela
+- Big-bang rewrite só por estética
 
 ## Checklist rápido
 
+- [ ] Grep de `S.` / componente / `dialog*Class` feito?
 - [ ] Tokens do `tailwind.config.js` / `theme.js`?
 - [ ] Roxo só em marca/CTA?
-- [ ] Alvo tocável `min-h-touch` (~40px) em ações?
-- [ ] i18n + reuso de componente existentes?
+- [ ] Alvo `min-h-touch` (~40px)?
+- [ ] i18n + reuso de componente?

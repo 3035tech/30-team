@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { ConfirmDialog } from './ConfirmDialog';
 import { PromptFormDialog } from './PromptFormDialog';
 import { SystemNoticeModal } from './SystemNoticeModal';
@@ -141,44 +141,21 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
       ) : null}
       {typeof document !== 'undefined' && toasts.length > 0
         ? createPortal(
-            <div
-              style={{
-                position: 'fixed',
-                right: '16px',
-                bottom: '16px',
-                zIndex: 10080,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                maxWidth: 'min(360px, calc(100vw - 32px))',
-                pointerEvents: 'none',
-              }}
-            >
-              {toasts.map((item) => {
-                const accent =
-                  item.tone === 'error' ? C.tension : item.tone === 'info' ? C.purple : C.synergy;
-                return (
-                  <div
-                    key={item.id}
-                    role="status"
-                    style={{
-                      pointerEvents: 'auto',
-                      background: C.surface || '#fff',
-                      border: `1px solid ${accent}55`,
-                      borderLeft: `4px solid ${accent}`,
-                      borderRadius: '12px',
-                      padding: '12px 14px',
-                      boxShadow: '0 12px 32px rgba(26,22,37,.14)',
-                      fontSize: '13px',
-                      color: C.text,
-                      lineHeight: 1.4,
-                      fontFamily: 'Georgia, serif',
-                    }}
-                  >
-                    {item.message}
-                  </div>
-                );
-              })}
+            <div className="pointer-events-none fixed bottom-4 right-4 z-[10080] flex max-w-[min(360px,calc(100vw-32px))] flex-col gap-2">
+              {toasts.map((item) => (
+                <div
+                  key={item.id}
+                  role="status"
+                  className={cn(
+                    'pointer-events-auto rounded-xl border border-l-4 bg-white px-3.5 py-3 font-display text-[13px] leading-snug text-ink shadow-toast',
+                    item.tone === 'error' && 'border-danger/33 border-l-danger',
+                    item.tone === 'info' && 'border-brand-500/33 border-l-brand-500',
+                    item.tone !== 'error' && item.tone !== 'info' && 'border-success/33 border-l-success'
+                  )}
+                >
+                  {item.message}
+                </div>
+              ))}
             </div>,
             document.body
           )

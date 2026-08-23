@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
-import { S } from '../dashboard/dashboard-shared';
+import { cn } from '../../lib/cn';
+import { S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
+
+const inputClass =
+  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-[13px] text-ink';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
@@ -84,140 +87,113 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
     }
   };
 
-  const inputStyle = {
-    width: '100%',
-    boxSizing: 'border-box',
-    background: 'rgba(26,22,37,.04)',
-    border: `1px solid ${C.border}`,
-    borderRadius: '10px',
-    padding: '10px 12px',
-    color: C.text,
-    fontSize: '13px',
-    fontFamily: 'monospace',
-  };
-
   return (
-    <div
-      style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-      }}
-    >
-    <div style={{ ...S.card, maxWidth: '560px', width: '100%', boxSizing: 'border-box' }}>
-      <span style={S.label}>{t(locale, 'dashboard.profileTitle')}</span>
-      <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px', lineHeight: 1.55 }}>
-        {t(locale, 'dashboard.profileIntro')}
-      </p>
+    <div className="flex w-full items-start justify-center">
+      <div className={cn(dashS.card, 'box-border w-full max-w-[560px]')}>
+        <span className={dashS.label}>{t(locale, 'dashboard.profileTitle')}</span>
+        <p className="mt-2 text-[13px] leading-[1.55] text-ink-muted">
+          {t(locale, 'dashboard.profileIntro')}
+        </p>
 
-      {loading ? (
-        <p style={{ color: C.muted, marginTop: '16px' }}>{t(locale, 'panel.common.loading')}</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '18px' }}>
-          <label style={{ display: 'block' }}>
-            <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-              {t(locale, 'dashboard.profileDisplayName')}
-            </span>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              style={{ ...inputStyle, marginTop: '6px' }}
-              maxLength={120}
-            />
-          </label>
-          <label style={{ display: 'block' }}>
-            <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-              {t(locale, 'dashboard.profileEmail')}
-            </span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ ...inputStyle, marginTop: '6px' }}
-            />
-          </label>
-          <div style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
-            {t(locale, 'dashboard.profileRole')}: {role}
-            {companyName ? ` · ${companyName}` : ''}
-          </div>
-
-          <div>
-            <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', display: 'block', marginBottom: '6px' }}>
-              {t(locale, 'dashboard.profileLocale')}
-            </span>
-            <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
-          </div>
-
-          <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '14px', marginTop: '4px' }}>
-            <span style={{ ...S.label, marginBottom: '10px' }}>{t(locale, 'dashboard.profilePasswordSection')}</span>
-            <label style={{ display: 'block', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                {t(locale, 'dashboard.profileCurrentPassword')}
+        {loading ? (
+          <p className="mt-4 text-ink-muted">{t(locale, 'panel.common.loading')}</p>
+        ) : (
+          <div className="mt-[18px] flex flex-col gap-3.5">
+            <label className="block">
+              <span className="font-mono text-[11px] text-ink-faint">
+                {t(locale, 'dashboard.profileDisplayName')}
               </span>
               <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-                style={{ ...inputStyle, marginTop: '6px' }}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className={inputClass}
+                maxLength={120}
               />
             </label>
-            <label style={{ display: 'block', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                {t(locale, 'dashboard.profileNewPassword')}
+            <label className="block">
+              <span className="font-mono text-[11px] text-ink-faint">
+                {t(locale, 'dashboard.profileEmail')}
               </span>
               <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-                style={{ ...inputStyle, marginTop: '6px' }}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputClass}
               />
             </label>
-            <label style={{ display: 'block' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
-                {t(locale, 'dashboard.profileConfirmPassword')}
+            <div className="font-mono text-xs text-ink-muted">
+              {t(locale, 'dashboard.profileRole')}: {role}
+              {companyName ? ` · ${companyName}` : ''}
+            </div>
+
+            <div>
+              <span className="mb-1.5 block font-mono text-[11px] text-ink-faint">
+                {t(locale, 'dashboard.profileLocale')}
               </span>
-              <input
-                type="password"
-                value={newPassword2}
-                onChange={(e) => setNewPassword2(e.target.value)}
-                autoComplete="new-password"
-                style={{ ...inputStyle, marginTop: '6px' }}
-              />
-            </label>
+              <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
+            </div>
+
+            <div className="mt-1 border-t border-ink/12 pt-3.5">
+              <span className={cn(dashS.label, 'mb-2.5')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
+              <label className="mb-2.5 block">
+                <span className="font-mono text-[11px] text-ink-faint">
+                  {t(locale, 'dashboard.profileCurrentPassword')}
+                </span>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className={inputClass}
+                />
+              </label>
+              <label className="mb-2.5 block">
+                <span className="font-mono text-[11px] text-ink-faint">
+                  {t(locale, 'dashboard.profileNewPassword')}
+                </span>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className="font-mono text-[11px] text-ink-faint">
+                  {t(locale, 'dashboard.profileConfirmPassword')}
+                </span>
+                <input
+                  type="password"
+                  value={newPassword2}
+                  onChange={(e) => setNewPassword2(e.target.value)}
+                  autoComplete="new-password"
+                  className={inputClass}
+                />
+              </label>
+            </div>
+
+            {error ? (
+              <p className="m-0 font-mono text-xs text-danger">{error}</p>
+            ) : null}
+            {msg ? (
+              <p className="m-0 font-mono text-xs text-success">{msg}</p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving || !email.trim()}
+              className={cn(
+                'min-h-touch cursor-pointer self-start rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-500',
+                (saving || !email.trim()) && 'cursor-default opacity-60'
+              )}
+            >
+              {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileSave')}
+            </button>
           </div>
-
-          {error ? (
-            <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
-          ) : null}
-          {msg ? (
-            <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{msg}</p>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving || !email.trim()}
-            style={{
-              alignSelf: 'flex-start',
-              background: `${C.purple}18`,
-              border: `1px solid ${C.purple}55`,
-              borderRadius: '10px',
-              padding: '10px 16px',
-              color: C.purple,
-              fontSize: '12px',
-              cursor: 'pointer',
-              fontFamily: 'monospace',
-              opacity: saving || !email.trim() ? 0.6 : 1,
-            }}
-          >
-            {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileSave')}
-          </button>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { BR_UF_SET } from '../../lib/candidate-profile';
+import { cn } from '../../lib/cn';
 
 function foldCity(s) {
   return String(s || '')
@@ -109,7 +110,7 @@ export function BrCitySelect({
   if (autocomplete) {
     const showList = open && hasUf && !loading && !loadErr && suggestions.length > 0;
     return (
-      <div ref={wrapRef} style={{ position: 'relative', width: '100%' }} className={className}>
+      <div ref={wrapRef} className={cn('relative w-full', className)}>
         <input
           id={id}
           type="text"
@@ -131,27 +132,17 @@ export function BrCitySelect({
           onFocus={() => {
             if (hasUf && !loading) setOpen(true);
           }}
-          style={{
-            width: '100%',
-            boxSizing: 'border-box',
-            cursor: !hasUf || loading ? 'default' : 'text',
-            opacity: !hasUf ? 0.65 : 1,
-            ...style,
-          }}
+          className={cn(
+            'box-border w-full',
+            !hasUf || loading ? 'cursor-default' : 'cursor-text',
+            !hasUf && 'opacity-65'
+          )}
+          style={style}
         />
         {loading && hasUf ? (
           <span
             aria-live="polite"
-            style={{
-              position: 'absolute',
-              right: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '10px',
-              fontFamily: 'monospace',
-              opacity: 0.7,
-              pointerEvents: 'none',
-            }}
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] opacity-70"
           >
             …
           </span>
@@ -160,22 +151,7 @@ export function BrCitySelect({
           <ul
             id={listId}
             role="listbox"
-            style={{
-              position: 'absolute',
-              zIndex: 40,
-              left: 0,
-              right: 0,
-              top: 'calc(100% + 4px)',
-              margin: 0,
-              padding: '6px 0',
-              listStyle: 'none',
-              maxHeight: '220px',
-              overflowY: 'auto',
-              background: '#fff',
-              border: '1px solid rgba(26,22,37,.16)',
-              borderRadius: '10px',
-              boxShadow: '0 8px 24px rgba(26,22,37,.12)',
-            }}
+            className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 m-0 max-h-[220px] list-none overflow-y-auto rounded-control border border-ink/16 bg-white py-1.5 shadow-menu"
           >
             {suggestions.map((name) => (
               <li key={name} role="option" aria-selected={name === cityValue}>
@@ -187,18 +163,10 @@ export function BrCitySelect({
                     onChange?.(name);
                     setOpen(false);
                   }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    border: 'none',
-                    background: name === cityValue ? 'rgba(26,22,37,.06)' : 'transparent',
-                    padding: '8px 12px',
-                    fontSize: '13px',
-                    fontFamily: 'inherit',
-                    color: 'inherit',
-                    cursor: 'pointer',
-                  }}
+                  className={cn(
+                    'block w-full cursor-pointer border-none px-3 py-2 text-left font-inherit text-[13px] text-inherit',
+                    name === cityValue ? 'bg-ink/[0.06]' : 'bg-transparent'
+                  )}
                 >
                   {name}
                 </button>
@@ -213,16 +181,12 @@ export function BrCitySelect({
   return (
     <select
       id={id}
-      className={className}
+      className={cn(className, !hasUf && 'opacity-65', !hasUf || loading ? 'cursor-default' : 'cursor-pointer')}
       value={showLegacy || inList ? cityValue : ''}
       disabled={!hasUf || loading}
       onChange={(e) => onChange?.(e.target.value)}
       aria-label={ariaLabel || t(locale, 'recruiting.cityPh')}
-      style={{
-        ...style,
-        cursor: !hasUf || loading ? 'default' : 'pointer',
-        opacity: !hasUf ? 0.65 : 1,
-      }}
+      style={style}
     >
       <option value="">{placeholder}</option>
       {showLegacy ? <option value={cityValue}>{cityValue}</option> : null}

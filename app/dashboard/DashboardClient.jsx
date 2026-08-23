@@ -8,8 +8,8 @@ import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { C, FONTS, GRADIENT, RADIAL_GLOW_SINGLE } from '../../lib/theme';
 import { CAP, can, canSeeManagementSection, isAdminRole } from '../../lib/permissions';
+import { cn } from '../../lib/cn';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
@@ -79,22 +79,10 @@ function ExportCsvButton({ href, locale }) {
       type="button"
       onClick={onExport}
       disabled={busy}
-      style={{
-        background: `${C.purple}12`,
-        border: `1px solid ${C.purple}44`,
-        borderRadius: '10px',
-        padding: '10px 16px',
-        color: C.purple,
-        fontSize: '13px',
-        fontFamily: FONTS.serif,
-        cursor: busy ? 'wait' : 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px',
-        whiteSpace: 'nowrap',
-        opacity: busy ? 0.7 : 1,
-        minHeight: '40px',
-      }}
+      className={cn(
+        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-display text-[13px] text-brand-500',
+        busy ? 'cursor-wait opacity-70' : 'cursor-pointer'
+      )}
     >
       ↓ {t(locale, 'dashboard.exportCsv')}
     </button>
@@ -548,60 +536,40 @@ export default function DashboardClient({
       title={navCollapsed ? label : undefined}
       aria-label={label}
       aria-current={tab === id ? 'page' : undefined}
-      style={{
-        width: '100%',
-        textAlign: 'left',
-        padding: navCollapsed ? '11px 0' : '11px 12px',
-        marginBottom: '4px',
-        borderRadius: '10px',
-        border: 'none',
-        background: tab === id ? `${C.purple}18` : 'transparent',
-        color: tab === id ? C.purpleDark : C.muted,
-        fontSize: '13px',
-        cursor: 'pointer',
-        fontFamily: FONTS.mono,
-        letterSpacing: '0.5px',
-        borderLeft: navCollapsed ? 'none' : (tab === id ? `3px solid ${C.purple}` : '3px solid transparent'),
-        paddingLeft: navCollapsed ? '0' : (tab === id ? '9px' : '11px'),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: navCollapsed ? 'center' : 'flex-start',
-        gap: '10px',
-        position: 'relative',
-      }}
+      className={cn(
+        'relative mb-1 flex w-full items-center gap-2.5 rounded-control border-none font-mono text-[13px] tracking-[0.5px]',
+        navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start py-[11px]',
+        !navCollapsed && (tab === id ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
+        tab === id ? 'bg-brand-500/10 text-brand-800' : 'bg-transparent text-ink-muted',
+        'cursor-pointer text-left'
+      )}
     >
       <Icon name={icon} />
-      {!navCollapsed ? <span style={{ flex: 1, minWidth: 0 }}>{label}</span> : null}
+      {!navCollapsed ? <span className="min-w-0 flex-1">{label}</span> : null}
       {badge ? (
-        <span style={{
-          display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
-          background: C.purple, flexShrink: 0,
-          ...(navCollapsed ? { position: 'absolute', top: '8px', right: '10px' } : {}),
-        }} />
+        <span
+          className={cn(
+            'inline-block h-[7px] w-[7px] flex-shrink-0 rounded-full bg-brand-500',
+            navCollapsed && 'absolute right-2.5 top-2'
+          )}
+        />
       ) : null}
     </button>
   );
 
   const sectionLabel = (text) => (
     navCollapsed ? (
-      <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 4px 8px' }} aria-hidden />
+      <div className="mx-1 mb-2 mt-2.5 h-px bg-ink/[0.08]" aria-hidden />
     ) : (
-      <span style={S.sidebarSection}>{text}</span>
+      <span className={S.sidebarSection}>{text}</span>
     )
   );
 
   return (
     <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
-    <div style={{
-      minHeight: '100vh',
-      background: C.bg,
-      fontFamily: "'Georgia','Times New Roman',serif",
-      color: C.text,
-      position: 'relative',
-    }}>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
-        background: RADIAL_GLOW_SINGLE }} />
+    <div className="relative min-h-screen bg-canvas font-display text-ink">
+      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
 
       <button
         type="button"
@@ -617,31 +585,23 @@ export default function DashboardClient({
         className={`db-overlay${sidebarOpen ? ' db-overlay-visible' : ''}`}
         onClick={() => setSidebarOpen(false)}
       />
-      <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+      <div className="relative z-[1] flex min-h-screen">
         <aside
           id="dashboard-sidebar"
-          className={`db-sidebar${sidebarOpen ? ' db-sidebar-open' : ''}${navCollapsed ? ' db-sidebar-collapsed' : ''}`}
-          style={{
-            width: navCollapsed ? '72px' : '226px',
-            flexShrink: 0,
-            borderRight: `1px solid ${C.border}`,
-            padding: navCollapsed ? '20px 10px 24px' : '24px 14px 32px 18px',
-            background: 'rgba(255,255,255,0.88)',
-            backdropFilter: 'blur(14px)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
+          className={cn(
+            'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-white/88 backdrop-blur-[14px]',
+            sidebarOpen && 'db-sidebar-open',
+            navCollapsed && 'db-sidebar-collapsed',
+            navCollapsed ? 'w-[72px] px-2.5 pb-6 pt-5' : 'w-[226px] pb-8 pl-[18px] pr-3.5 pt-6'
+          )}
         >
-          <div style={{
-            marginBottom: '8px',
-            display: 'flex',
-            flexDirection: navCollapsed ? 'column' : 'row',
-            alignItems: navCollapsed ? 'center' : 'flex-start',
-            justifyContent: navCollapsed ? 'center' : 'space-between',
-            gap: '8px',
-          }}>
-            <div style={{ minWidth: 0, textAlign: navCollapsed ? 'center' : 'left' }}>
+          <div
+            className={cn(
+              'mb-2 flex gap-2',
+              navCollapsed ? 'flex-col items-center justify-center' : 'flex-row items-start justify-between'
+            )}
+          >
+            <div className={cn('min-w-0', navCollapsed ? 'text-center' : 'text-left')}>
               <BrandMark
                 size={28}
                 withWordmark={!navCollapsed}
@@ -653,33 +613,23 @@ export default function DashboardClient({
                 aria-label={t(locale, 'dashboard.homeAria')}
               />
               {!navCollapsed ? (
-                <span style={{ ...S.label, marginTop: '10px', display: 'block' }}>{t(locale, 'dashboard.panel')}</span>
+                <span className={cn(S.label, 'mt-2.5 block')}>{t(locale, 'dashboard.panel')}</span>
               ) : null}
             </div>
             <button
               type="button"
-              className="db-sidebar-collapse-toggle"
+              className={cn(
+                'db-sidebar-collapse-toggle flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted',
+                !navCollapsed && 'mt-0.5'
+              )}
               onClick={toggleSidebarCollapsed}
               aria-label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
               title={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                flexShrink: 0,
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                background: 'transparent',
-                color: C.muted,
-                cursor: 'pointer',
-                marginTop: navCollapsed ? 0 : '2px',
-              }}
             >
               <Icon name={navCollapsed ? 'expand' : 'collapse'} />
             </button>
           </div>
-          <nav style={{ flex: 1 }}>
+          <nav className="flex-1">
             {sectionLabel(t(locale, 'dashboard.sectionAnalysis'))}
             {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
               <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
@@ -701,7 +651,7 @@ export default function DashboardClient({
             ) : null}
             {showManagement ? (
               <>
-                <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
+                <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
                 {showVacancies ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
                 {showMotivators ? (
@@ -712,39 +662,27 @@ export default function DashboardClient({
               </>
             ) : showMotivators ? (
               <>
-                <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
+                <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
                 <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
               </>
             ) : null}
-            <div style={{ height: '1px', background: 'rgba(26,22,37,.08)', margin: '10px 0 8px' }} />
+            <div className="my-2 h-px bg-ink/[0.08]" />
             {sectionLabel(t(locale, 'dashboard.sectionHelp'))}
             {can(sessionAuth, CAP.HELP_VIEW) ? (
               <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
             ) : null}
           </nav>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: navCollapsed ? 'center' : 'stretch' }}>
+          <div className={cn('flex flex-col gap-2', navCollapsed ? 'items-center' : 'items-stretch')}>
             <button
               type="button"
               onClick={logout}
               title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
               aria-label={t(locale, 'dashboard.logout')}
-              style={{
-                background: 'transparent',
-                border: `1px solid rgba(220,38,38,.25)`,
-                borderRadius: '10px',
-                padding: navCollapsed ? '9px' : '9px 12px',
-                color: 'rgba(220,38,38,.6)',
-                fontSize: '11px',
-                cursor: 'pointer',
-                fontFamily: FONTS.mono,
-                textAlign: 'left',
-                width: navCollapsed ? '40px' : '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: navCollapsed ? 'center' : 'flex-start',
-                gap: '8px',
-              }}
+              className={cn(
+                'flex cursor-pointer items-center gap-2 rounded-control border border-danger/25 bg-transparent font-mono text-[11px] text-danger/60',
+                navCollapsed ? 'w-10 justify-center p-[9px]' : 'w-full justify-start px-3 py-[9px] text-left'
+              )}
             >
               <Icon name="logout" />
               {!navCollapsed ? <span>{t(locale, 'dashboard.logout')}</span> : null}
@@ -755,16 +693,11 @@ export default function DashboardClient({
           </div>
         </aside>
 
-        <div className="db-main" style={{
-          flex: 1,
-          minWidth: 0,
-          padding: '28px 24px 60px',
-          maxWidth: '1600px',
-        }}>
+        <div className="db-main max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
 
-          <div className="db-top-row" style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
           {showGlobalSearch ? (
-          <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 0 }}>
+          <div className="relative min-w-0 flex-[1_1_280px]">
             <input
               type="search"
               value={search}
@@ -782,27 +715,21 @@ export default function DashboardClient({
               }}
               placeholder={t(locale, 'dashboard.searchPlaceholder')}
               aria-label={t(locale, 'dashboard.searchAriaLabel')}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
-                border: `1px solid ${C.border}`, borderRadius: '12px',
-                padding: '12px 16px 12px 42px', color: C.text, fontSize: '14px',
-                fontFamily: "'Georgia',serif" }}
+              className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-[42px] pr-4 font-display text-sm text-ink"
             />
-            <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)',
-              color: C.faint, pointerEvents: 'none', display: 'inline-flex' }}><Icon name="search" /></span>
+            <span className="pointer-events-none absolute left-[15px] top-1/2 inline-flex -translate-y-1/2 text-ink-faint"><Icon name="search" /></span>
             {selectedSearch && (
               <button
                 type="button"
                 onClick={() => { setSearch(''); pushFilters({ search: null }); }}
-                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  color: C.muted, fontSize: '13px', fontFamily: FONTS.mono }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent font-mono text-[13px] text-ink-muted"
               >
                 {t(locale, 'common.clearSearch')}
               </button>
             )}
           </div>
           ) : (
-            <div style={{ flex: '1 1 120px', minWidth: 0 }} aria-hidden />
+            <div className="min-w-0 flex-[1_1_120px]" aria-hidden />
           )}
           <DashboardTopBarMenus
             locale={locale}
@@ -821,25 +748,19 @@ export default function DashboardClient({
           </div>
 
           {/* Title row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-            flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div style={{ marginBottom: '6px' }}>
+              <div className="mb-1.5">
                 <DashboardBreadcrumb
                   locale={locale}
                   tab={tab}
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              <h2
-                className="db-page-title"
-                style={{ fontSize: '32px', fontWeight: 'normal', marginBottom: '4px',
-                background: GRADIENT.title,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-              >
+              <h2 className="db-page-title mb-1 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[32px] font-normal text-transparent">
                 {t(locale, getDashboardTabNav(tab).labelKey)}
               </h2>
-              <span style={{ fontSize: '13px', color: C.muted }}>
+              <span className="text-[13px] text-ink-muted">
                 {panelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
                 ) : showsCohortChrome ? (
@@ -849,7 +770,7 @@ export default function DashboardClient({
                       ? t(locale, 'dashboard.assessmentSingular')
                       : t(locale, 'dashboard.assessmentPlural')}
                     {pagination.total > 0 && tab === 'team' ? (
-                      <span style={{ color: C.faint }}>
+                      <span className="text-ink-faint">
                         {' '}
                         ·{' '}
                         {t(locale, 'dashboard.pageInfo', {
@@ -863,24 +784,19 @@ export default function DashboardClient({
                 ) : null}
               </span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', alignSelf: 'flex-end' }}>
+            <div className="flex flex-wrap items-center gap-2 self-end">
               {showsCohortChrome && !panelLoading ? (
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(!filtersExpanded)}
                   aria-expanded={filtersExpanded}
                   aria-label={t(locale, 'dashboard.filtersToggleAria')}
-                  style={{
-                    background: filtersExpanded ? `${C.purple}12` : 'transparent',
-                    border: `1px solid ${filtersExpanded ? `${C.purple}44` : C.border}`,
-                    borderRadius: '10px',
-                    padding: '10px 14px',
-                    color: filtersExpanded ? C.purple : C.muted,
-                    fontSize: '13px',
-                    fontFamily: FONTS.mono,
-                    cursor: 'pointer',
-                    minHeight: '40px',
-                  }}
+                  className={cn(
+                    'min-h-touch cursor-pointer rounded-control border px-3.5 py-2.5 font-mono text-[13px]',
+                    filtersExpanded
+                      ? 'border-brand-500/25 bg-brand-500/10 text-brand-500'
+                      : 'border-ink/12 bg-transparent text-ink-muted'
+                  )}
                 >
                   {filtersExpanded
                     ? t(locale, 'dashboard.hideFilters')
@@ -897,7 +813,7 @@ export default function DashboardClient({
           </div>
 
           {panelLoading ? (
-            <div role="status" aria-live="polite" style={{ padding: '48px 0', minHeight: 240 }}>
+            <div role="status" aria-live="polite" className="min-h-[240px] py-12">
               <AppLoading variant="panel" label={t(locale, 'dashboard.loadingPanel')} />
             </div>
           ) : (
@@ -906,10 +822,12 @@ export default function DashboardClient({
           {showsCohortChrome ? (
           <>
           <div
-            className="db-filters"
+            className={cn(
+              'db-filters flex flex-wrap items-center gap-2',
+              filtersExpanded ? 'mb-2' : 'mb-2.5'
+            )}
             role="group"
             aria-label={t(locale, 'dashboard.filtersEssentialsAria')}
-            style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: filtersExpanded ? '8px' : '10px' }}
           >
             <select
               value={roster}
@@ -918,7 +836,7 @@ export default function DashboardClient({
                 setRoster(v);
                 pushFilters({ roster: v });
               }}
-              style={S.select}
+              className={S.select}
               title={t(locale, 'dashboard.rosterHint')}
             >
               <option value="internal">{t(locale, 'dashboard.rosterInternal')}</option>
@@ -941,7 +859,7 @@ export default function DashboardClient({
                 }
                 pushFilters({ vacancy: v, pipeline: 'all' });
               }}
-              style={S.select}
+              className={S.select}
             >
               <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
               {vacancies.map((v) => (
@@ -954,10 +872,9 @@ export default function DashboardClient({
 
           {filtersExpanded ? (
           <div
-            className="db-filters"
+            className="db-filters mb-2.5 flex flex-wrap items-center gap-2"
             role="group"
             aria-label={t(locale, 'dashboard.filtersAdvancedAria')}
-            style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}
           >
             {isAdmin && companies.length > 0 ? (
               <select
@@ -968,7 +885,7 @@ export default function DashboardClient({
                   setPipeline('all');
                   pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
                 }}
-                style={S.select}
+                className={S.select}
               >
                 <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
                 {companies.map((co) => (
@@ -976,7 +893,7 @@ export default function DashboardClient({
                 ))}
               </select>
             ) : null}
-            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} style={S.select}>
+            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} className={S.select}>
               <option value="all">{t(locale, 'dashboard.allAreas')}</option>
               {areas.map((a) => (
                 <option key={a.key} value={a.key}>
@@ -984,7 +901,7 @@ export default function DashboardClient({
                 </option>
               ))}
             </select>
-            <select value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} style={S.select}>
+            <select value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} className={S.select}>
               <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
                 <option key={t} value={String(t)} title={typeHintTooltip(t, locale)}>
@@ -992,7 +909,7 @@ export default function DashboardClient({
                 </option>
               ))}
             </select>
-            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} style={S.select}>
+            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} className={S.select}>
               <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
               <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
               <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
@@ -1002,24 +919,20 @@ export default function DashboardClient({
               <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
             </select>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px',
-              background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: '10px',
-              padding: '6px 12px' }}>
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>{t(locale, 'dashboard.dateFromLabel')}</span>
+            <div className="inline-flex items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-1.5">
+              <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { const v = e.target.value; setDateFrom(v); pushFilters({ dateFrom: v || null, dateTo: dateTo || null }); }}
-                style={{ border: 'none', background: 'transparent', color: C.muted,
-                  fontSize: '12px', fontFamily: FONTS.mono, outline: 'none', minWidth: '120px' }}
+                className="min-w-[120px] border-none bg-transparent font-mono text-xs text-ink-muted outline-none"
               />
-              <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono, whiteSpace: 'nowrap' }}>{t(locale, 'dashboard.dateToLabel')}</span>
+              <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => { const v = e.target.value; setDateTo(v); pushFilters({ dateFrom: dateFrom || null, dateTo: v || null }); }}
-                style={{ border: 'none', background: 'transparent', color: C.muted,
-                  fontSize: '12px', fontFamily: FONTS.mono, outline: 'none', minWidth: '120px' }}
+                className="min-w-[120px] border-none bg-transparent font-mono text-xs text-ink-muted outline-none"
               />
             </div>
           </div>
@@ -1027,17 +940,15 @@ export default function DashboardClient({
 
           {/* Active filter chips — always visible when set */}
           {activeChips.length > 0 ? (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="mb-5 flex flex-wrap items-center gap-1.5">
               {activeChips.map((chip) => (
-                <span key={chip.key} style={S.filterChip} title={chip.title}>
+                <span key={chip.key} className={S.filterChip} title={chip.title}>
                   {chip.label}
                   <button
                     type="button"
                     onClick={chip.onRemove}
                     aria-label={chip.title || chip.label}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer',
-                      color: C.purpleLight, padding: '0 0 0 2px',
-                      lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}
+                    className="inline-flex cursor-pointer items-center border-none bg-transparent p-0 pl-0.5 leading-none text-brand-600"
                   >
                     <Icon name="clear" />
                   </button>
@@ -1046,25 +957,23 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={clearAllFilters}
-                style={{ fontSize: '11px', color: C.muted, fontFamily: FONTS.mono,
-                  background: 'transparent', border: `1px solid ${C.border}`,
-                  borderRadius: '20px', padding: '4px 10px', cursor: 'pointer' }}
+                className="cursor-pointer rounded-full border border-ink/12 bg-transparent px-2.5 py-1 font-mono text-[11px] text-ink-muted"
               >
                 {t(locale, 'common.clearAll')}
               </button>
             </div>
           ) : (
-            <div style={{ marginBottom: '16px' }} />
+            <div className="mb-4" />
           )}
           </>
           ) : (
-            <div style={{ marginBottom: '12px' }} />
+            <div className="mb-3" />
           )}
 
           {showsCohortChrome && compatMetrics.total === 0 && tab !== 'overview' ? (
-            <div style={{ ...S.card, textAlign: 'center', padding: '60px' }}>
-              <div style={{ fontSize: '40px', marginBottom: '16px' }}>🌑</div>
-              <p style={{ color: C.muted, fontStyle: 'italic' }}>
+            <div className={cn(S.card, 'p-[60px] text-center')}>
+              <div className="mb-4 text-[40px]">🌑</div>
+              <p className="italic text-ink-muted">
                 {t(locale, 'dashboard.empty').split('\n').map((line, i) => (
                   <span key={line}>
                     {i > 0 ? <br /> : null}
@@ -1124,51 +1033,50 @@ export default function DashboardClient({
                     }}
                   />
                   {listTotal > 0 ? (
-                    <div style={{ ...S.card, padding: '16px 22px', marginTop: '18px', display: 'flex',
-                      flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '13px', color: C.muted, fontFamily: FONTS.mono }}>
+                    <div className={cn(S.card, 'mt-[18px] flex flex-wrap items-center justify-between gap-3 px-[22px] py-4')}>
+                      <span className="font-mono text-[13px] text-ink-muted">
                         {t(locale, 'dashboard.itemsPerPageTeam')}
                       </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <select
                           value={String(pagination.pageSize)}
                           onChange={(e) => {
                             const ps = parseInt(e.target.value, 10);
                             pushTeamPagination({ teamPage: 1, teamPageSize: ps });
                           }}
-                          style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                            borderRadius: '10px', padding: '8px 12px', color: C.muted, fontSize: '12px',
-                            cursor: 'pointer', fontFamily: FONTS.mono }}
+                          className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2 font-mono text-xs text-ink-muted"
                         >
                           {PAGE_SIZE_OPTIONS.map((n) => (
                             <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
                           ))}
                         </select>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             disabled={pagination.page <= 1}
                             onClick={() => pushTeamPagination({ teamPage: pagination.page - 1 })}
-                            style={{ background: pagination.page <= 1 ? 'transparent' : `${C.purple}18`,
-                              border: `1px solid ${pagination.page <= 1 ? C.border : `${C.purple}55`}`,
-                              borderRadius: '10px', padding: '8px 14px', color: pagination.page <= 1 ? C.faint : C.purple,
-                              fontSize: '13px', cursor: pagination.page <= 1 ? 'default' : 'pointer', fontFamily: FONTS.mono }}
+                            className={cn(
+                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-[13px]',
+                              pagination.page <= 1
+                                ? 'cursor-default text-ink-faint'
+                                : 'cursor-pointer text-ink-muted'
+                            )}
                           >
                             {t(locale, 'dashboard.previous')}
                           </button>
-                          <span style={{ fontSize: '13px', color: C.muted, fontFamily: FONTS.mono, minWidth: '100px', textAlign: 'center' }}>
+                          <span className="min-w-[100px] text-center font-mono text-[13px] text-ink-muted">
                             {pagination.page} / {pagination.totalPages}
                           </span>
                           <button
                             type="button"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pushTeamPagination({ teamPage: pagination.page + 1 })}
-                            style={{ background: pagination.page >= pagination.totalPages ? 'transparent' : `${C.purple}18`,
-                              border: `1px solid ${pagination.page >= pagination.totalPages ? C.border : `${C.purple}55`}`,
-                              borderRadius: '10px', padding: '8px 14px',
-                              color: pagination.page >= pagination.totalPages ? C.faint : C.purple,
-                              fontSize: '13px',
-                              cursor: pagination.page >= pagination.totalPages ? 'default' : 'pointer', fontFamily: FONTS.mono }}
+                            className={cn(
+                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-[13px]',
+                              pagination.page >= pagination.totalPages
+                                ? 'cursor-default text-ink-faint'
+                                : 'cursor-pointer text-ink-muted'
+                            )}
                           >
                             {t(locale, 'dashboard.next')}
                           </button>

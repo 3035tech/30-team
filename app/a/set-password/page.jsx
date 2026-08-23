@@ -5,9 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
-import { C, FONTS, RADIAL_GLOW_SINGLE, GRADIENT, SHADOW } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
+
+const inputClass =
+  'mb-3.5 box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -89,102 +92,37 @@ function SetPasswordForm() {
     }
   };
 
-  const inputStyle = {
-    width: '100%',
-    background: 'rgba(26,22,37,.04)',
-    border: `1px solid ${C.border}`,
-    borderRadius: '12px',
-    padding: '12px 14px',
-    color: C.text,
-    fontSize: '15px',
-    fontFamily: FONTS.serif,
-    boxSizing: 'border-box',
-    marginBottom: '14px',
-  };
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: C.bg,
-        fontFamily: FONTS.serif,
-        color: C.text,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          pointerEvents: 'none',
-          background: RADIAL_GLOW_SINGLE,
-        }}
-      />
-      <div
-        style={{
-          maxWidth: '420px',
-          width: '100%',
-          background: C.card,
-          border: `1px solid ${C.border}`,
-          borderRadius: '20px',
-          padding: '44px 48px',
-          backdropFilter: 'blur(24px)',
-          position: 'relative',
-          zIndex: 1,
-          boxShadow: SHADOW.cardElevated,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '16px',
-          }}
-        >
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-display text-ink">
+      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
+      <div className="relative z-[1] w-full max-w-[420px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1
-          style={{
-            fontSize: '28px',
-            fontWeight: 'normal',
-            lineHeight: 1.2,
-            margin: '0 0 12px',
-            background: GRADIENT.titleLogin,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
+        <h1 className="mb-3 mt-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[28px] font-normal leading-tight text-transparent">
           {t(locale, 'setPassword.title')}
         </h1>
 
         {checking ? (
-          <p style={{ color: C.muted, fontSize: '14px' }}>{t(locale, 'common.loading')}</p>
+          <p className="text-sm text-ink-muted">{t(locale, 'common.loading')}</p>
         ) : tokenError ? (
           <>
-            <p style={{ color: C.tension, fontSize: '14px', lineHeight: 1.6 }}>
+            <p className="text-sm leading-relaxed text-danger">
               {errorMessage(locale, tokenError, t(locale, 'setPassword.invalidLink'))}
             </p>
-            <Link href="/login" style={{ color: C.purple, fontSize: '14px' }}>
+            <Link href="/login" className="text-sm text-brand-500">
               {t(locale, 'setPassword.backToLogin')}
             </Link>
           </>
         ) : success ? (
-          <p style={{ color: C.synergy, fontSize: '14px' }}>{t(locale, 'setPassword.ok')}</p>
+          <p className="text-sm text-success">{t(locale, 'setPassword.ok')}</p>
         ) : (
           <>
-            <p style={{ fontSize: '14px', color: C.muted, lineHeight: 1.65, marginBottom: '20px' }}>
+            <p className="mb-5 text-sm leading-[1.65] text-ink-muted">
               {t(locale, 'setPassword.intro', { email: emailMasked })}
             </p>
-            <label
-              htmlFor="set-password-new"
-              style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}
-            >
+            <label htmlFor="set-password-new" className="mb-2 block text-xs text-ink-muted">
               {t(locale, 'setPassword.newPassword')}
             </label>
             <input
@@ -193,12 +131,9 @@ function SetPasswordForm() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={inputStyle}
+              className={inputClass}
             />
-            <label
-              htmlFor="set-password-confirm"
-              style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}
-            >
+            <label htmlFor="set-password-confirm" className="mb-2 block text-xs text-ink-muted">
               {t(locale, 'setPassword.confirmPassword')}
             </label>
             <input
@@ -210,27 +145,19 @@ function SetPasswordForm() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void submit();
               }}
-              style={inputStyle}
+              className={inputClass}
             />
             {error ? (
-              <p style={{ color: C.tension, fontSize: '13px', margin: '0 0 12px' }}>{error}</p>
+              <p className="mb-3 mt-0 text-[13px] text-danger">{error}</p>
             ) : null}
             <button
               type="button"
               onClick={() => void submit()}
               disabled={loading}
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                border: 'none',
-                borderRadius: '12px',
-                background: C.purple,
-                color: '#fff',
-                fontSize: '15px',
-                fontWeight: 600,
-                cursor: loading ? 'default' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-              }}
+              className={cn(
+                'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-[15px] font-semibold text-white',
+                loading ? 'cursor-default opacity-70' : 'cursor-pointer'
+              )}
             >
               {loading ? t(locale, 'common.loading') : t(locale, 'setPassword.submit')}
             </button>

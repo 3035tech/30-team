@@ -24,6 +24,17 @@
   vertical-align: middle;
   flex-shrink: 0;
 }
+
+/* Auth / marketing canvas atmosphere (aligned to lib/theme.js RADIAL_GLOW*) */
+.bg-radial-glow {
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(71, 168, 232, 0.04) 0%, transparent 55%);
+}
+.bg-radial-glow-single {
+  background: radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.07) 0%, transparent 55%);
+}
+
 :root {
   --color-focus-ring: #8930B8;
   --focus-ring-width: 2px;
@@ -47,7 +58,7 @@ textarea:focus-visible {
   outline-offset: 1px;
 }
 
-/* Responsive sidebar */
+/* Responsive sidebar — keep in CSS (media + safe-area); not migrated to utility classes. */
 .db-hamburger {
   display: none;
 }
@@ -183,7 +194,7 @@ textarea:focus-visible {
   }
 }
 
-/* Candidate assessment flows (eneagrama + motivadores) — mobile */
+/* Candidate assessment flows — mobile overrides stay in CSS (touch targets + breakpoints). */
 .cand-flow {
   -webkit-overflow-scrolling: touch;
 }

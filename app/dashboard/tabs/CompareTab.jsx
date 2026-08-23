@@ -5,8 +5,10 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { personListName, personSortKey } from '../../../lib/person-name';
 import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
-import { C, FONTS } from '../../../lib/theme';
+import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { S, TypeBadge } from '../dashboard-shared';
+import { EmptyState } from '../../_components/EmptyState';
 
 function scoreOf(row, typeNum) {
   const v = row?.scores?.[typeNum] ?? row?.scores?.[String(typeNum)] ?? 0;
@@ -69,43 +71,14 @@ function InsightStrip({ locale, visible }) {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        marginBottom: '18px',
-        padding: '12px 14px',
-        borderRadius: '12px',
-        background: `${C.purple}0F`,
-        border: `1px solid ${C.purple}28`,
-      }}
-    >
-      <span
-        style={{
-          fontSize: '10px',
-          fontFamily: FONTS.mono,
-          letterSpacing: '1.5px',
-          textTransform: 'uppercase',
-          color: C.purple,
-          alignSelf: 'center',
-          marginRight: '4px',
-        }}
-      >
+    <div className="mb-[18px] flex flex-wrap gap-2 rounded-xl border border-brand-500/20 bg-brand-500/[0.06] px-3.5 py-3">
+      <span className="mr-1 self-center font-mono text-[10px] uppercase tracking-wider text-brand-500">
         {t(locale, 'panel.compare.insightLabel')}
       </span>
       {chips.map((text) => (
         <span
           key={text}
-          style={{
-            fontSize: '12px',
-            color: C.muted,
-            lineHeight: 1.45,
-            padding: '4px 10px',
-            borderRadius: '8px',
-            background: 'rgba(255,255,255,.55)',
-            border: `1px solid ${C.border}`,
-          }}
+          className="rounded-lg border border-ink/12 bg-white/55 px-2.5 py-1 text-xs leading-snug text-ink-muted"
         >
           {text}
         </span>
@@ -197,57 +170,32 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
   const nTot = results.length;
   const allSelected = nTot > 0 && nSel === nTot;
 
-  const miniBtn = {
-    padding: '6px 12px',
-    borderRadius: '8px',
-    fontSize: '11px',
-    cursor: 'pointer',
-    fontFamily: FONTS.mono,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-  };
+  const miniBtnBase =
+    'cursor-pointer rounded-lg px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>{t(locale, 'panel.compare.title')}</span>
-        <h2
-          style={{
-            margin: '8px 0 0',
-            fontSize: '22px',
-            fontWeight: 'normal',
-            fontFamily: "'Georgia',serif",
-            color: C.text,
-            lineHeight: 1.25,
-          }}
-        >
+    <div className="flex flex-col gap-3.5">
+      <div className={cn(S.card, 'px-7 py-[22px]')}>
+        <span className={S.label}>{t(locale, 'panel.compare.title')}</span>
+        <h2 className="mt-2 mb-0 font-display text-[22px] font-normal leading-tight text-ink">
           {t(locale, 'panel.compare.headline')}
         </h2>
-        <p style={{ fontSize: '14px', color: C.muted, margin: '10px 0 0', lineHeight: 1.65, maxWidth: '62ch' }}>
+        <p className="mt-2.5 mb-0 max-w-[62ch] text-sm leading-relaxed text-ink-muted">
           {t(locale, 'panel.compare.intro')}
         </p>
-        <div
-          style={{
-            marginTop: '16px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '10px',
-          }}
-        >
+        <p className="mt-2 mb-0 max-w-[62ch] text-xs leading-snug text-ink-faint">
+          {t(locale, 'panel.compare.whyTeam')}
+        </p>
+        <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              style={{
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'rgba(26,22,37,.03)',
-                border: `1px solid ${C.border}`,
-              }}
+              className="rounded-xl border border-ink/12 bg-ink/[0.03] px-3.5 py-3"
             >
-              <div style={{ fontSize: '10px', fontFamily: FONTS.mono, color: C.purple, letterSpacing: '1px', marginBottom: '6px' }}>
+              <div className="mb-1.5 font-mono text-[10px] tracking-wide text-brand-500">
                 {t(locale, 'panel.compare.useStep', { n })}
               </div>
-              <div style={{ fontSize: '13px', color: C.muted, lineHeight: 1.5 }}>
+              <div className="text-[13px] leading-snug text-ink-muted">
                 {t(locale, `panel.compare.use${n}`)}
               </div>
             </div>
@@ -255,19 +203,9 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
         </div>
       </div>
 
-      <div style={S.card}>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '14px',
-            paddingBottom: '14px',
-            borderBottom: `1px solid ${C.border}`,
-          }}
-        >
-          <span style={{ fontSize: '12px', color: C.muted, fontFamily: FONTS.mono }}>
+      <div className={S.card}>
+        <div className="mb-3.5 flex flex-wrap items-center gap-2.5 border-b border-ink/12 pb-3.5">
+          <span className="font-mono text-xs text-ink-muted">
             {t(locale, 'panel.compare.inTable', { selected: nSel, total: nTot })}
           </span>
           <input
@@ -282,34 +220,24 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             onBlur={commitSearch}
             placeholder={t(locale, 'panel.compare.searchPh')}
             aria-label={t(locale, 'panel.compare.searchPh')}
-            style={{
-              flex: '1 1 160px',
-              minWidth: '140px',
-              maxWidth: '260px',
-              background: 'rgba(26,22,37,.04)',
-              border: `1px solid ${C.border}`,
-              borderRadius: '10px',
-              padding: '8px 12px',
-              color: C.text,
-              fontSize: '13px',
-              fontFamily: 'inherit',
-            }}
+            className="min-w-[140px] max-w-[260px] flex-[1_1_160px] rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 text-[13px] text-ink"
           />
           {(search || '').trim() ? (
-            <span style={{ fontSize: '11px', color: C.faint, fontFamily: FONTS.mono }}>
+            <span className="font-mono text-[11px] text-ink-faint">
               {t(locale, 'panel.compare.searchResultsTotal', { n: listTotal })}
             </span>
-          ) : null}          <button
+          ) : null}
+          <button
             type="button"
             onClick={selectAll}
             disabled={nTot === 0 || (nTot > 0 && nSel === nTot)}
-            style={{
-              ...miniBtn,
-              background: allSelected ? 'rgba(26,22,37,.04)' : `${C.purple}18`,
-              border: `1px solid ${allSelected ? C.border : `${C.purple}55`}`,
-              color: allSelected ? C.faint : C.purple,
-              opacity: nTot === 0 ? 0.5 : 1,
-            }}
+            className={cn(
+              miniBtnBase,
+              allSelected
+                ? 'border border-ink/12 bg-ink/[0.04] text-ink-faint'
+                : 'border border-brand-500/40 bg-brand-500/[0.09] text-brand-500',
+              nTot === 0 && 'opacity-50'
+            )}
           >
             {t(locale, 'panel.compare.selectAll')}
           </button>
@@ -317,31 +245,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             type="button"
             onClick={clearSelection}
             disabled={nSel === 0}
-            style={{
-              ...miniBtn,
-              background: 'transparent',
-              border: `1px solid ${C.border}`,
-              color: C.muted,
-              opacity: nSel === 0 ? 0.5 : 1,
-            }}
+            className={cn(
+              miniBtnBase,
+              'border border-ink/12 bg-transparent text-ink-muted',
+              nSel === 0 && 'opacity-50'
+            )}
           >
             {t(locale, 'panel.compare.clearSelection')}
           </button>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '8px',
-            marginBottom: '18px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            padding: '2px 0',
-          }}
-        >
+        <div className="mb-[18px] grid max-h-[200px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 overflow-y-auto py-0.5">
           {resultsByName.length === 0 ? (
-            <span style={{ fontSize: '13px', color: C.faint, fontStyle: 'italic', gridColumn: '1 / -1' }}>
+            <span className="col-span-full text-[13px] italic text-ink-faint">
               {(search || '').trim()
                 ? t(locale, 'panel.compare.searchEmpty')
                 : t(locale, 'panel.compare.noneSelected')}
@@ -355,19 +271,12 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                 <label
                   key={id}
                   title={r.name}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: `1px solid ${on ? `${C.purple}40` : C.border}`,
-                    background: on ? `${C.purple}10` : 'rgba(26,22,37,.03)',
-                    fontSize: '13px',
-                    color: C.text,
-                    minWidth: 0,
-                  }}
+                  className={cn(
+                    'flex min-w-0 cursor-pointer items-center gap-2 rounded-control border px-2.5 py-2 text-[13px] text-ink',
+                    on
+                      ? 'border-brand-500/25 bg-brand-500/[0.06]'
+                      : 'border-ink/12 bg-ink/[0.03]'
+                  )}
                 >
                   <input
                     id={`compare-candidate-${id}`}
@@ -376,18 +285,9 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                     value={id}
                     checked={on}
                     onChange={() => toggleId(id)}
-                    style={{ accentColor: C.purple, width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}
+                    className="h-[15px] w-[15px] shrink-0 cursor-pointer accent-brand-500"
                   />
-                  <span
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      lineHeight: 1.3,
-                    }}
-                  >
+                  <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap leading-snug">
                     {displayName}
                   </span>
                   <TypeBadge type={r.topType} locale={locale} compact />
@@ -400,44 +300,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
         <InsightStrip locale={locale} visible={visibleSorted} />
 
         {visible.length === 0 ? (
-          <div
-            style={{
-              padding: '28px 20px',
-              textAlign: 'center',
-              borderRadius: '12px',
-              background: 'rgba(26,22,37,.03)',
-              border: `1px dashed ${C.border}`,
-            }}
-          >
-            <p style={{ color: C.muted, fontSize: '14px', margin: 0, lineHeight: 1.6 }}>
-              {t(locale, 'panel.compare.noneSelected')}
-            </p>
-          </div>
+          <EmptyState message={t(locale, 'panel.compare.noneSelected')} />
         ) : (
-          <div style={{ overflowX: 'auto' }} className="db-table-scroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <div className="overflow-x-auto db-table-scroll">
+            <table className="w-full border-collapse text-xs">
               <thead>
                 <tr>
                   <th
                     onClick={() => toggleSort('name')}
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px 12px',
-                      color: C.muted,
-                      fontWeight: 'normal',
-                      fontFamily: FONTS.mono,
-                      borderBottom: `1px solid ${C.border}`,
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                      position: 'sticky',
-                      left: 0,
-                      background: C.card,
-                      zIndex: 1,
-                    }}
+                    className="sticky left-0 z-[1] cursor-pointer select-none border-b border-ink/12 bg-white px-3 py-2.5 text-left font-normal font-mono text-ink-muted"
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="inline-flex items-center gap-2">
                       {t(locale, 'panel.compare.personCol')}
-                      <span style={{ color: C.faint, fontSize: '11px' }}>{sortMark('name')}</span>
+                      <span className="text-[11px] text-ink-faint">{sortMark('name')}</span>
                     </span>
                   </th>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
@@ -445,23 +320,15 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                       key={typeNum}
                       onClick={() => toggleSort(typeNum)}
                       title={typeHintTooltip(typeNum, locale)}
-                      style={{
-                        padding: '8px 4px',
-                        color: TYPE_DATA[typeNum].color,
-                        fontWeight: 'normal',
-                        borderBottom: `1px solid ${C.border}`,
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        minWidth: '52px',
-                      }}
+                      className="min-w-[52px] cursor-pointer select-none border-b border-ink/12 px-1 py-2 text-center font-normal"
+                      style={{ color: TYPE_DATA[typeNum].color }}
                     >
-                      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                        <span style={{ fontSize: '14px' }}>{TYPE_DATA[typeNum].emoji}</span>
-                        <span style={{ fontFamily: FONTS.mono, fontSize: '11px', letterSpacing: '0.5px' }}>
+                      <span className="flex flex-col items-center gap-0.5">
+                        <span className="text-sm">{TYPE_DATA[typeNum].emoji}</span>
+                        <span className="font-mono text-[11px] tracking-wide">
                           T{typeNum}
                         </span>
-                        <span style={{ color: C.faint, fontSize: '10px', minHeight: '12px' }}>{sortMark(typeNum)}</span>
+                        <span className="min-h-3 text-[10px] text-ink-faint">{sortMark(typeNum)}</span>
                       </span>
                     </th>
                   ))}
@@ -472,21 +339,10 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                   const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => scoreOf(r, n));
                   const maxS = Math.max(...scores, 1);
                   return (
-                    <tr key={String(r.assessmentId) || i} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
-                      <td
-                        style={{
-                          padding: '10px 12px',
-                          color: C.text,
-                          minWidth: '180px',
-                          maxWidth: '280px',
-                          position: 'sticky',
-                          left: 0,
-                          background: C.card,
-                          zIndex: 1,
-                        }}
-                      >
-                        <span title={r.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0, width: '100%' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                    <tr key={String(r.assessmentId) || i} className="border-b border-ink/[0.07]">
+                      <td className="sticky left-0 z-[1] min-w-[180px] max-w-[280px] bg-white px-3 py-2.5 text-ink">
+                        <span title={r.name} className="inline-flex w-full min-w-0 items-center gap-2">
+                          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                             {personListName(r.name)}
                           </span>
                           <TypeBadge type={r.topType} locale={locale} compact />
@@ -497,27 +353,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                         const pct = Math.round((s / maxS) * 100);
                         const isTop = r.topType === typeNum;
                         return (
-                          <td key={typeNum} style={{ padding: '6px', textAlign: 'center' }}>
+                          <td key={typeNum} className="p-1.5 text-center">
                             <div
                               title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
+                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px]"
                               style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '50%',
                                 background: isTop
                                   ? TYPE_DATA[typeNum].color
                                   : `${TYPE_DATA[typeNum].color}${Math.max(20, Math.round(pct * 1.5))
                                       .toString(16)
                                       .padStart(2, '0')}`,
-                                margin: '0 auto',
                                 border: isTop ? `2px solid ${TYPE_DATA[typeNum].color}` : `1px solid ${C.border}`,
                                 boxShadow: isTop ? `0 0 0 2px ${TYPE_DATA[typeNum].color}33` : 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '10px',
                                 color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
-                                fontFamily: FONTS.mono,
                                 fontWeight: isTop ? 600 : 400,
                               }}
                             >
@@ -533,43 +381,16 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
             </table>
           </div>
         )}
-        <div
-          style={{
-            marginTop: '16px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '14px',
-            alignItems: 'center',
-            fontSize: '11px',
-            color: C.faint,
-          }}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span
-              style={{
-                width: '14px',
-                height: '14px',
-                borderRadius: '50%',
-                background: C.purple,
-                border: `2px solid ${C.purple}`,
-                boxShadow: `0 0 0 2px ${C.purple}33`,
-              }}
-            />
+        <div className="mt-4 flex flex-wrap items-center gap-3.5 text-[11px] text-ink-faint">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-brand-500 bg-brand-500 ring-2 ring-brand-500/20" />
             {t(locale, 'panel.compare.legendDominant')}
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span
-              style={{
-                width: '14px',
-                height: '14px',
-                borderRadius: '50%',
-                background: `${C.purple}40`,
-                border: `1px solid ${C.border}`,
-              }}
-            />
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3.5 w-3.5 rounded-full border border-ink/12 bg-brand-500/25" />
             {t(locale, 'panel.compare.legendRelative')}
           </span>
-          <span style={{ fontStyle: 'italic' }}>{t(locale, 'panel.compare.footerHint')}</span>
+          <span className="italic">{t(locale, 'panel.compare.footerHint')}</span>
         </div>
       </div>
     </div>

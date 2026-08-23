@@ -6,92 +6,26 @@ import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
 import { drawLocalizedQuestions, getScaleLabels, localizeAreaLabel } from '../../lib/i18n-data';
 import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { C, FONTS, RADIAL_GLOW, GRADIENT, SHADOW } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import LanguageSelect from './LanguageSelect';
 import { BrStateSelect } from './BrStateSelect';
 import { BrCitySelect } from './BrCitySelect';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
 
-const S = {
-  app: {
-    minHeight: '100vh',
-    background: C.bg,
-    fontFamily: FONTS.serif,
-    color: C.text,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    position: 'relative',
-    overflow: 'auto',
-    boxSizing: 'border-box',
-  },
-  glow: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-    background: RADIAL_GLOW,
-  },
-  card: {
-    maxWidth: '660px',
-    width: '100%',
-    background: C.card,
-    border: `1px solid ${C.border}`,
-    borderRadius: '20px',
-    padding: '44px 48px',
-    backdropFilter: 'blur(24px)',
-    boxShadow: SHADOW.cardElevated,
-    position: 'relative',
-    zIndex: 1,
-    boxSizing: 'border-box',
-  },
-  label: {
-    fontSize: '10px',
-    letterSpacing: '3px',
-    textTransform: 'uppercase',
-    color: `${C.purple}8C`,
-    fontFamily: FONTS.mono,
-    marginBottom: '16px',
-    display: 'block',
-  },
-  h1: {
-    fontSize: 'clamp(28px,5vw,44px)',
-    fontWeight: 'normal',
-    lineHeight: 1.15,
-    marginBottom: '12px',
-    background: GRADIENT.title,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  p: { fontSize: '15px', color: C.muted, lineHeight: 1.75, marginBottom: '32px', fontStyle: 'italic' },
-  btn: (bg = C.purple) => ({
-    background: GRADIENT.primaryBtn(bg, C.purpleDark),
-    border: 'none',
-    borderRadius: '10px',
-    padding: '14px 32px',
-    color: '#fff',
-    fontSize: '14px',
-    cursor: 'pointer',
-    fontFamily: FONTS.serif,
-  }),
-  input: {
-    width: '100%',
-    background: 'rgba(26,22,37,.04)',
-    border: `1px solid ${C.border}`,
-    borderRadius: '10px',
-    padding: '14px 18px',
-    color: C.text,
-    fontSize: '15px',
-    fontFamily: FONTS.serif,
-    boxSizing: 'border-box',
-    marginBottom: '16px',
-  },
+
+const SC = {
+  app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
+  glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
+  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[660px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl',
+  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-brand-500/55',
+  h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(28px,5vw,44px)] font-normal leading-[1.15] text-transparent',
+  p: 'mb-8 text-[15px] italic leading-[1.75] text-ink-muted',
+  btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
+  input: 'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink',
+  fieldLabel: 'mb-2 block text-xs text-ink-muted',
 };
+
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -249,14 +183,14 @@ function HomeScreen({
   };
 
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={S.card}>
-        <div className="cand-flow-header" style={{ marginBottom: '16px' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'candidate.brand')}</span>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={SC.card}>
+        <div className="cand-flow-header mb-4">
+          <span className={cn(SC.label, 'mb-0')}>{t(locale, 'candidate.brand')}</span>
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 style={S.h1}>
+        <h1 className={SC.h1}>
           {t(locale, 'candidate.mapTitle').split('\n').map((line, i) => (
             <span key={line}>
               {i > 0 ? <br /> : null}
@@ -264,7 +198,7 @@ function HomeScreen({
             </span>
           ))}
         </h1>
-        <p style={S.p}>
+        <p className={SC.p}>
           {t(locale, 'candidate.intro').split('\n').map((line, i) => (
             <span key={line}>
               {i > 0 ? <br /> : null}
@@ -275,29 +209,26 @@ function HomeScreen({
 
         {notice ? (
           <div
-            style={{
-              marginBottom: '18px',
-              padding: '12px 14px',
-              background: notice.kind === 'warning' ? 'rgba(232,71,71,.06)' : 'rgba(26,22,37,.04)',
-              border: notice.kind === 'warning' ? '1px solid rgba(232,71,71,.22)' : `1px solid ${C.border}`,
-              borderRadius: '12px',
-            }}
+            className={cn(
+              'mb-[18px] rounded-xl px-3.5 py-3',
+              notice.kind === 'warning'
+                ? 'border border-danger/20 bg-danger/[0.06]'
+                : 'border border-ink/12 bg-ink/[0.04]'
+            )}
           >
             <div
-              style={{
-                fontSize: '11px',
-                color: notice.kind === 'warning' ? C.tension : C.faint,
-                fontFamily: 'monospace',
-                marginBottom: '6px',
-              }}
+              className={cn(
+                'mb-1.5 font-mono text-[11px]',
+                notice.kind === 'warning' ? 'text-danger' : 'text-ink-faint'
+              )}
             >
               {notice.title}
             </div>
-            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>{notice.message}</div>
+            <div className="text-xs leading-relaxed text-ink-muted">{notice.message}</div>
           </div>
         ) : null}
 
-        <div style={{ display: 'flex', gap: '28px', marginBottom: '36px', flexWrap: 'wrap' }}>
+        <div className="mb-9 flex flex-wrap gap-7">
           {[
             ['54', t(locale, 'candidate.statsQuestions')],
             ['~12', t(locale, 'candidate.statsMinutes')],
@@ -305,8 +236,8 @@ function HomeScreen({
             ['300', t(locale, 'candidate.statsBank')],
           ].map(([n, l]) => (
             <div key={l}>
-              <div style={{ fontSize: '24px', color: C.purpleLight }}>{n}</div>
-              <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+              <div className="text-2xl text-brand-600">{n}</div>
+              <div className="font-mono text-[10px] uppercase tracking-[2px] text-ink-muted">
                 {l}
               </div>
             </div>
@@ -314,39 +245,31 @@ function HomeScreen({
         </div>
 
         {inviteIdentityLoading ? (
-          <div style={{ ...S.input, color: C.muted, marginBottom: '16px' }}>{t(locale, 'candidate.inviteIdentityLoading')}</div>
+          <div className={cn(SC.input, 'mb-4 text-ink-muted')}>{t(locale, 'candidate.inviteIdentityLoading')}</div>
         ) : identityLocked ? (
-          <div
-            style={{
-              marginBottom: '18px',
-              padding: '14px 16px',
-              background: `${C.purple}0a`,
-              border: `1px solid ${C.purple}33`,
-              borderRadius: '12px',
-            }}
-          >
-            <div style={{ fontSize: '16px', color: C.text, marginBottom: '6px' }}>
+          <div className="mb-[18px] rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-4 py-3.5">
+            <div className="mb-1.5 text-base text-ink">
               {t(locale, 'candidate.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
             </div>
-            <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '6px' }}>
+            <div className="mb-1.5 text-xs leading-relaxed text-ink-muted">
               {hrProfileBits.length > 0
                 ? t(locale, 'candidate.inviteIdentityNoteWithProfile')
                 : t(locale, 'candidate.inviteIdentityNote')}
             </div>
-            <div style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            <div className="font-mono text-[11px] text-ink-faint">
               {t(locale, 'candidate.inviteIdentityEmail', { email: effectiveEmail })}
             </div>
             {hrProfileBits.length > 0 ? (
-              <div style={{ marginTop: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', lineHeight: 1.55 }}>
+              <div className="mt-2 font-mono text-[11px] leading-[1.55] text-ink-muted">
                 {hrProfileBits.join(' · ')}
               </div>
             ) : null}
           </div>
         ) : (
           <>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.fullName')}</label>
+            <label className={SC.fieldLabel}>{t(locale, 'candidate.fullName')}</label>
             <input
-              style={S.input}
+              className={SC.input}
               placeholder={t(locale, 'candidate.namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -356,18 +279,12 @@ function HomeScreen({
           </>
         )}
 
-        <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.area')}</label>
+        <label className={SC.fieldLabel}>{t(locale, 'candidate.area')}</label>
         {areasLoading ? (
-          <div style={{ ...S.input, color: C.muted, marginBottom: '16px' }}>{t(locale, 'candidate.loadingAreas')}</div>
+          <div className={cn(SC.input, 'mb-4 text-ink-muted')}>{t(locale, 'candidate.loadingAreas')}</div>
         ) : areasError ? (
           <div
-            style={{
-              ...S.input,
-              borderColor: 'rgba(232,71,71,.35)',
-              background: 'rgba(232,71,71,.06)',
-              color: '#b91c1c',
-              marginBottom: '16px',
-            }}
+            className={cn(SC.input, 'mb-4 border-danger/35 bg-danger/[0.06] text-danger')}
           >
             {areasError}
           </div>
@@ -375,7 +292,7 @@ function HomeScreen({
           <select
             value={areaKey}
             onChange={(e) => setAreaKey(e.target.value)}
-            style={{ ...S.input, appearance: 'none', cursor: 'pointer' }}
+            className={cn(SC.input, 'cursor-pointer appearance-none')}
           >
             {areaOptions.map((a) => (
               <option key={a.key} value={a.key}>
@@ -387,16 +304,16 @@ function HomeScreen({
 
         {!inviteIdentityLoading && !identityLocked ? (
           <>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '4px' }}>
+            <label className={cn(SC.fieldLabel, 'mb-1')}>
               {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
             </label>
-            <p style={{ fontSize: '11px', color: C.faint, lineHeight: 1.5, margin: '0 0 8px' }}>
+            <p className="mb-2 mt-0 text-[11px] leading-normal text-ink-faint">
               {requireCandidateEmail
                 ? t(locale, 'candidate.emailHelpRequired')
                 : t(locale, 'candidate.emailHelpOptional')}
             </p>
             <input
-              style={{ ...S.input, marginBottom: '16px', borderColor: requireCandidateEmail && !emailOk && email.length > 0 ? 'rgba(232,71,71,.4)' : undefined }}
+              className={cn(SC.input, 'mb-4', requireCandidateEmail && !emailOk && email.length > 0 && 'border-danger/40')}
               placeholder={t(locale, 'candidate.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -408,9 +325,9 @@ function HomeScreen({
 
         {!phoneFromHr ? (
           <>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.phone')}</label>
+            <label className={SC.fieldLabel}>{t(locale, 'candidate.phone')}</label>
             <input
-              style={S.input}
+              className={SC.input}
               placeholder={t(locale, 'candidate.phonePlaceholder')}
               value={formatPhoneBr(phone)}
               onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
@@ -422,9 +339,9 @@ function HomeScreen({
 
         {!linkedinFromHr ? (
           <>
-            <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.linkedin')}</label>
+            <label className={SC.fieldLabel}>{t(locale, 'candidate.linkedin')}</label>
             <input
-              style={S.input}
+              className={SC.input}
               placeholder={t(locale, 'candidate.linkedinPlaceholder')}
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
@@ -434,9 +351,9 @@ function HomeScreen({
         ) : null}
 
         {!locationFromHr ? (
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 120px' }}>
-              <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.state')}</label>
+          <div className="flex flex-wrap gap-2.5">
+            <div className="min-w-[120px] flex-[1_1_120px]">
+              <label className={SC.fieldLabel}>{t(locale, 'candidate.state')}</label>
               <BrStateSelect
                 value={stateUf}
                 onChange={(uf) => {
@@ -444,53 +361,42 @@ function HomeScreen({
                   setCity('');
                 }}
                 locale={locale}
-                style={S.input}
+                className={SC.input}
               />
             </div>
-            <div style={{ flex: '2 1 180px' }}>
-              <label style={{ fontSize: '12px', color: C.muted, display: 'block', marginBottom: '8px' }}>{t(locale, 'candidate.city')}</label>
-              <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} style={S.input} />
+            <div className="min-w-[180px] flex-[2_1_180px]">
+              <label className={SC.fieldLabel}>{t(locale, 'candidate.city')}</label>
+              <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className={SC.input} />
             </div>
           </div>
         ) : null}
 
-        <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '12px', color: C.muted, lineHeight: 1.5, marginBottom: '16px' }}>
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: '2px' }} />
+        <label className="mb-4 flex items-start gap-2.5 text-xs leading-normal text-ink-muted">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
           {t(locale, 'candidate.consent')}
         </label>
 
         {startError ? (
-          <div
-            style={{
-              marginBottom: '16px',
-              padding: '12px 14px',
-              background: 'rgba(232,71,71,.06)',
-              border: '1px solid rgba(232,71,71,.22)',
-              borderRadius: '12px',
-              fontSize: '12px',
-              color: '#b91c1c',
-              lineHeight: 1.5,
-            }}
-          >
+          <div className="mb-4 rounded-xl border border-danger/20 bg-danger/[0.06] px-3.5 py-3 text-xs leading-normal text-danger">
             {startError}
           </div>
         ) : null}
 
         <button
           disabled={!canStart}
-          style={{
-            ...S.btn(),
-            opacity: canStart ? 1 : 0.4,
-            cursor: startBusy ? 'wait' : canStart ? 'pointer' : 'not-allowed',
-          }}
+          className={cn(
+            SC.btn,
+            !canStart && 'opacity-40',
+            startBusy ? 'cursor-wait' : canStart ? 'cursor-pointer' : 'cursor-not-allowed'
+          )}
           onClick={handleSubmitStart}
         >
           {startBusy ? t(locale, 'common.validating') : t(locale, 'candidate.start')}
         </button>
 
-        <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: `1px solid ${C.border}` }}>
-          <span style={{ fontSize: '11px', color: C.faint }}>{t(locale, 'candidate.manager')} </span>
-          <span style={{ fontSize: '11px', color: C.purpleLight, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/login')}>
+        <div className="mt-6 border-t border-ink/12 pt-5">
+          <span className="text-[11px] text-ink-faint">{t(locale, 'candidate.manager')} </span>
+          <span className="cursor-pointer text-[11px] text-brand-600 underline" onClick={() => router.push('/login')}>
             {t(locale, 'candidate.dashboardAccess')}
           </span>
         </div>
@@ -583,47 +489,33 @@ function TestScreen({ name, onComplete, locale }) {
   }, [fade, idx, questions, answers]);
 
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '700px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={cn(SC.card, 'max-w-[700px]')}>
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2.5">
+          <span className={cn(SC.label, 'mb-0')}>
             {t(locale, 'candidate.questionProgress', { current: idx + 1, total: questions.length })}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="flex items-center gap-3">
             {idx > 0 ? (
               <button
                 type="button"
-                className="cand-tap"
+                className="cand-tap cursor-pointer rounded-lg border border-ink/12 bg-ink/[0.04] px-3 py-1.5 font-display text-xs text-ink-muted"
                 onClick={goBack}
-                style={{
-                  background: 'rgba(26,22,37,.04)',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: '8px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  color: C.muted,
-                  cursor: 'pointer',
-                  fontFamily: FONTS.serif,
-                }}
               >
                 {t(locale, 'candidate.previous')}
               </button>
             ) : null}
-            <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>{Math.round(progress)}%</span>
+            <span className="font-mono text-[11px] text-ink-muted">{Math.round(progress)}%</span>
           </div>
         </div>
-        <div style={{ height: '2px', background: 'rgba(26,22,37,.08)', borderRadius: '1px', marginBottom: '12px', overflow: 'hidden' }}>
+        <div className="mb-3 h-0.5 overflow-hidden rounded-sm bg-ink/[0.08]">
           <div
-            style={{
-              height: '100%',
-              width: `${progress}%`,
-              background: `linear-gradient(90deg,${C.purpleDark},${C.purpleLight})`,
-              transition: 'width .4s',
-            }}
+            className="h-full bg-gradient-to-r from-brand-800 to-brand-600 transition-[width] duration-400"
+            style={{ width: `${progress}%` }}
           />
         </div>
-        <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '11px', color: C.faint, marginBottom: '24px', cursor: 'pointer' }}>
+        <label className="mb-6 flex cursor-pointer items-center gap-2 text-[11px] text-ink-faint">
           <input
             type="checkbox"
             checked={carefulMode}
@@ -638,10 +530,10 @@ function TestScreen({ name, onComplete, locale }) {
           />
           {t(locale, 'candidate.carefulMode')}
         </label>
-        <p className="cand-q-text" style={{ fontSize: '20px', lineHeight: 1.6, marginBottom: '36px', fontWeight: 'normal', opacity: fade ? 0.3 : 1, transition: 'opacity .28s' }}>
+        <p className={cn('cand-q-text mb-9 text-xl font-normal leading-relaxed transition-opacity duration-[280ms]', fade ? 'opacity-30' : 'opacity-100')}>
           "{q.text}"
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="flex flex-col gap-2.5">
           {scaleLabels.map((label, i) => {
             const val = i + 1;
             const isSel = selected === val;
@@ -649,38 +541,20 @@ function TestScreen({ name, onComplete, locale }) {
               <button
                 key={i}
                 type="button"
-                className="cand-scale-btn"
                 onClick={() => chooseOption(val)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  padding: '13px 18px',
-                  background: isSel ? `${C.purple}22` : 'rgba(26,22,37,.03)',
-                  border: isSel ? `1px solid ${C.purple}88` : `1px solid ${C.border}`,
-                  borderRadius: '10px',
-                  cursor: fade ? 'default' : 'pointer',
-                  color: isSel ? C.purpleLight : C.text,
-                  fontSize: '14px',
-                  fontFamily: FONTS.serif,
-                  textAlign: 'left',
-                }}
+                className={cn(
+                  'cand-scale-btn flex items-center gap-3.5 rounded-control px-[18px] py-[13px] text-left font-display text-sm',
+                  fade ? 'cursor-default' : 'cursor-pointer',
+                  isSel
+                    ? 'border border-brand-500/50 bg-brand-500/[0.13] text-brand-600'
+                    : 'border border-ink/12 bg-ink/[0.03] text-ink'
+                )}
               >
                 <span
-                  style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: isSel ? C.purple : 'rgba(26,22,37,.06)',
-                    fontSize: '11px',
-                    fontFamily: 'monospace',
-                    color: isSel ? '#fff' : C.muted,
-                    border: isSel ? 'none' : `1px solid ${C.border}`,
-                  }}
+                  className={cn(
+                    'flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[11px]',
+                    isSel ? 'border-none bg-brand-500 text-white' : 'border border-ink/12 bg-ink/[0.06] text-ink-muted'
+                  )}
                 >
                   {val}
                 </span>
@@ -690,22 +564,13 @@ function TestScreen({ name, onComplete, locale }) {
           })}
         </div>
         {carefulMode && pendingVal !== null && !fade ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
-            <button type="button" style={{ ...S.btn(), fontSize: '13px' }} onClick={() => advanceWithAnswer(pendingVal)}>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <button type="button" className={cn(SC.btn, 'text-[13px]')} onClick={() => advanceWithAnswer(pendingVal)}>
               {t(locale, 'candidate.confirmAdvance')}
             </button>
             <button
               type="button"
-              style={{
-                background: 'rgba(26,22,37,.04)',
-                border: `1px solid ${C.border}`,
-                borderRadius: '10px',
-                padding: '14px 20px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                fontFamily: FONTS.serif,
-                color: C.muted,
-              }}
+              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-5 py-3.5 font-display text-[13px] text-ink-muted" 
               onClick={() => {
                 setPendingVal(null);
                 setSelected(null);
@@ -722,51 +587,35 @@ function TestScreen({ name, onComplete, locale }) {
 
 function ThankYouScreen({ saveError = null, onRetrySave = null, retryBusy = false, onDone, locale }) {
   return (
-    <div className="cand-flow" style={S.app}>
-      <div style={S.glow} />
-      <div className="cand-flow-card" style={{ ...S.card, maxWidth: '560px', textAlign: 'center' }}>
-        <span style={S.label}>{t(locale, 'candidate.thankYouLabel')}</span>
-        <h1 style={{ ...S.h1, fontSize: '32px', marginBottom: '16px' }}>{t(locale, 'candidate.thankYouTitle')}</h1>
+    <div className={SC.app}>
+      <div className={SC.glow} />
+      <div className={cn(SC.card, 'max-w-[560px] text-center')}>
+        <span className={SC.label}>{t(locale, 'candidate.thankYouLabel')}</span>
+        <h1 className={cn(SC.h1, 'mb-4 text-[32px]')}>{t(locale, 'candidate.thankYouTitle')}</h1>
         {saveError ? (
-          <div
-            style={{
-              marginBottom: '18px',
-              padding: '12px 14px',
-              background: 'rgba(232,71,71,.08)',
-              border: '1px solid rgba(232,71,71,.25)',
-              borderRadius: '12px',
-              fontSize: '13px',
-              color: '#b91c1c',
-              lineHeight: 1.5,
-              textAlign: 'left',
-            }}
-          >
+          <div className="mb-[18px] rounded-xl border border-danger/25 bg-danger/[0.08] px-3.5 py-3 text-left text-[13px] leading-normal text-danger">
             {t(locale, 'candidate.saveErrorPrefix')} {saveError}
             {onRetrySave ? (
-              <div style={{ marginTop: '14px' }}>
+              <div className="mt-3.5">
                 <button
                   type="button"
                   disabled={retryBusy}
-                  style={{
-                    ...S.btn(),
-                    opacity: retryBusy ? 0.6 : 1,
-                    cursor: retryBusy ? 'wait' : 'pointer',
-                  }}
+                  className={cn(SC.btn, retryBusy ? 'cursor-wait opacity-60' : 'cursor-pointer')}
                   onClick={onRetrySave}
                 >
                   {retryBusy ? t(locale, 'candidate.sending') : t(locale, 'candidate.retrySave')}
                 </button>
-                <div style={{ fontSize: '11px', color: C.muted, marginTop: '10px', lineHeight: 1.5 }}>
+                <div className="mt-2.5 text-[11px] leading-normal text-ink-muted">
                   {t(locale, 'candidate.retryHelp')}
                 </div>
               </div>
             ) : null}
           </div>
         ) : (
-          <p style={{ ...S.p, fontStyle: 'normal', marginBottom: '32px' }}>{t(locale, 'candidate.thankYouBody')}</p>
+          <p className={cn(SC.p, 'mb-8 not-italic')}>{t(locale, 'candidate.thankYouBody')}</p>
         )}
         {!saveError ? (
-          <button type="button" style={S.btn()} onClick={onDone}>
+          <button type="button" className={SC.btn} onClick={onDone}>
             {t(locale, 'candidate.thankYouDone')}
           </button>
         ) : null}
@@ -881,14 +730,14 @@ export default function AssessmentFlow({
   if (screen === 'result') {
     if (!completedOk && !retryPayload) {
       return (
-        <div className="cand-flow" style={S.app}>
-          <div style={S.glow} />
-          <div className="cand-flow-card" style={S.card}>
-            <span style={S.label}>◈ 30Team</span>
-            <p style={{ ...S.p, marginBottom: 0 }}>{saveError || t(locale, 'candidate.finishErrorFallback')}</p>
+        <div className={SC.app}>
+          <div className={SC.glow} />
+          <div className={SC.card}>
+            <span className={SC.label}>◈ 30Team</span>
+            <p className={cn(SC.p, 'mb-0')}>{saveError || t(locale, 'candidate.finishErrorFallback')}</p>
             <button
               type="button"
-              style={{ ...S.btn(), marginTop: '24px' }}
+              className={cn(SC.btn, 'mt-6')}
               onClick={() => {
                 setSaveError(null);
                 setRetryPayload(null);

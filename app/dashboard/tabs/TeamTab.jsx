@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
-import { C, FONTS } from '../../../lib/theme';
+import { C } from '../../../lib/theme';
 import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
@@ -45,25 +46,19 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
   ].filter(([key]) => synthesis[key]?.length);
 
   return (
-    <section style={{
-      marginBottom: '16px',
-      padding: '14px',
-      borderRadius: '10px',
-      border: `1px solid ${C.border}`,
-      background: C.cardTint,
-    }}>
-      <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.synthesisTitle')}</span>
-      <p style={{ margin: '0 0 12px', color: C.text, fontFamily: FONTS.serif, fontSize: '14px', lineHeight: 1.55 }}>
+    <section className="mb-4 rounded-control border border-ink/12 bg-brand-500/[0.06] p-3.5">
+      <span className={cn(S.label, 'mb-2')}>{t(locale, 'panel.team.synthesisTitle')}</span>
+      <p className="mb-3 mt-0 font-display text-sm leading-snug text-ink">
         {synthesis.headline}
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         {sections.map(([key, labelKey]) => (
           <div key={key}>
-            <span style={{ fontSize: '10px', color: C.faint, fontFamily: FONTS.mono, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint">
               {t(locale, labelKey)}
             </span>
-            <ul style={{ margin: '6px 0 0', paddingLeft: '18px', color: C.muted, fontSize: '12px', lineHeight: 1.55 }}>
-              {synthesis[key].map((item) => <li key={item} style={{ marginBottom: '4px' }}>{item}</li>)}
+            <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-xs leading-snug text-ink-muted">
+              {synthesis[key].map((item) => <li key={item} className="mb-1">{item}</li>)}
             </ul>
           </div>
         ))}
@@ -501,8 +496,8 @@ export function TeamTab({
     : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ position: 'relative' }}>
+    <div className="flex flex-col gap-3">
+      <div className="relative">
         <input
           type="search"
           value={searchDraft}
@@ -513,17 +508,13 @@ export function TeamTab({
           onBlur={commitSearch}
           placeholder={t(locale, 'dashboard.searchPlaceholder')}
           aria-label={t(locale, 'panel.team.searchAriaLabel')}
-          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(26,22,37,.03)',
-            border: `1px solid ${C.border}`, borderRadius: '12px', padding: '12px 16px 12px 40px',
-            color: C.text, fontSize: '14px', fontFamily: "'Georgia',serif", outline: 'none' }}
+          className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-10 pr-4 font-display text-sm text-ink outline-none"
         />
-        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
-          color: C.faint, fontSize: '15px', pointerEvents: 'none' }}>
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-faint">
           ⌕
         </span>
         {activeSearch ? (
-          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-            color: C.faint, fontSize: '11px', fontFamily: 'monospace' }}>
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-[11px] text-ink-faint">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
         ) : null}
@@ -531,29 +522,19 @@ export function TeamTab({
       <div
         role="group"
         aria-label={t(locale, 'panel.team.sortAria')}
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '12px 16px',
-          background: 'rgba(26,22,37,.03)',
-          borderRadius: '12px',
-          border: `1px solid ${C.border}`,
-        }}
+        className="flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] px-4 py-3"
       >
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px',
-          fontSize: '11px', color: C.muted, fontFamily: 'monospace', cursor: 'pointer' }}>
+        <label className="flex cursor-pointer items-center gap-1.5 font-mono text-[11px] text-ink-muted">
           <input
             type="checkbox"
             checked={allSelected}
             onChange={toggleSelectAll}
             aria-label={t(locale, 'panel.team.selectAllPage')}
-            style={{ width: '14px', height: '14px', accentColor: C.purple }}
+            className="h-3.5 w-3.5 accent-brand-500"
           />
           {t(locale, 'panel.team.all')}
         </label>
-        <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
           {t(locale, 'panel.team.sortBy')}
         </span>
         {viewMode === 'list' && sortColumns.map(({ k, labelKey }) => {
@@ -564,24 +545,20 @@ export function TeamTab({
               type="button"
               onClick={() => onSort(k)}
               aria-pressed={active}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                fontFamily: 'monospace',
-                cursor: 'pointer',
-                border: `1px solid ${active ? `${C.purple}55` : C.border}`,
-                background: active ? `${C.purple}18` : 'transparent',
-                color: active ? C.purple : C.muted,
-              }}
+              className={cn(
+                'cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-xs',
+                active
+                  ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                  : 'border-ink/12 bg-transparent text-ink-muted'
+              )}
             >
               {t(locale, labelKey)}
               {active ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
             </button>
           );
         })}
-        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-          <div style={{ display: 'flex', gap: '4px' }}>
+        <div className="ml-auto flex flex-col items-end gap-1.5">
+          <div className="flex gap-1">
           {[
             { id: 'list',   icon: 'list', label: t(locale, 'panel.team.viewList') },
             { id: 'kanban', icon: 'kanban', label: t(locale, 'panel.team.viewKanban') },
@@ -592,12 +569,12 @@ export function TeamTab({
               onClick={() => setViewMode(id)}
               title={label}
               aria-pressed={viewMode === id}
-              style={{ padding: '5px 10px', borderRadius: '8px', fontSize: '12px',
-                fontFamily: FONTS.mono, cursor: 'pointer',
-                border: `1px solid ${viewMode === id ? `${C.purple}55` : C.border}`,
-                background: viewMode === id ? `${C.purple}18` : 'transparent',
-                color: viewMode === id ? C.purple : C.muted,
-                display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-xs',
+                viewMode === id
+                  ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                  : 'border-ink/12 bg-transparent text-ink-muted'
+              )}
             >
               <Icon name={icon} /> {label}
             </button>
@@ -612,14 +589,8 @@ export function TeamTab({
       </div>
 
       {viewMode === 'kanban' && (
-        <div
-          className="kanban-scroll"
-          style={{ overflowX: 'auto', paddingBottom: '16px',
-            marginLeft: '-24px', marginRight: '-24px',
-            paddingLeft: '24px', paddingRight: '24px',
-            WebkitOverflowScrolling: 'touch' }}
-        >
-          <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content', alignItems: 'flex-start' }}>
+        <div className="kanban-scroll -mx-6 overflow-x-auto px-6 pb-4 [-webkit-overflow-scrolling:touch]">
+          <div className="flex min-w-max items-start gap-3">
             {getKanbanStages(locale).map((stage) => {
               const items = filtered.filter((r) => getEffectiveStage(r) === stage.id);
               const isDropTarget = dragOverStage === stage.id;
@@ -639,29 +610,36 @@ export function TeamTab({
                     setStageOverrides((prev) => ({ ...prev, [id]: stage.id }));
                     await patchPipeline(parseInt(id, 10), stage.id);
                   }}
-                  style={{ width: '260px', flexShrink: 0, borderRadius: '12px',
+                  className="w-[260px] shrink-0 rounded-xl transition-[outline-color] duration-100"
+                  style={{
                     outline: isDropTarget ? `2px dashed ${stage.color}` : '2px dashed transparent',
-                    outlineOffset: '3px', transition: 'outline-color 0.12s' }}
+                    outlineOffset: '3px',
+                  }}
                 >
-                  <div style={{ padding: '10px 14px', borderRadius: '10px 10px 0 0',
-                    background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
-                    borderTop: `3px solid ${stage.color}`, border: `1px solid ${stage.color}30`,
-                    marginBottom: '8px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'space-between', transition: 'background 0.12s' }}>
-                    <span style={{ fontSize: '12px', color: stage.color, fontFamily: 'monospace',
-                      fontWeight: 700, letterSpacing: '0.5px' }}>
+                  <div
+                    className="mb-2 flex items-center justify-between rounded-t-[10px] border px-3.5 py-2.5 transition-colors duration-100"
+                    style={{
+                      background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
+                      borderTop: `3px solid ${stage.color}`,
+                      borderColor: `${stage.color}30`,
+                    }}
+                  >
+                    <span className="font-mono text-xs font-bold tracking-[0.5px]" style={{ color: stage.color }}>
                       {stage.label}
                     </span>
-                    <span style={{ fontSize: '12px', color: stage.color, fontFamily: 'monospace',
-                      background: `${stage.color}25`, borderRadius: '10px', padding: '1px 8px',
-                      fontWeight: 700 }}>
+                    <span
+                      className="rounded-control px-2 py-px font-mono text-xs font-bold"
+                      style={{ color: stage.color, background: `${stage.color}25` }}
+                    >
                       {items.length}
                     </span>
                   </div>
                   <div
                     onDragOver={(e) => e.preventDefault()}
-                    style={{ minHeight: isDropTarget ? '80px' : '40px', display: 'flex',
-                      flexDirection: 'column', gap: '8px', transition: 'min-height 0.12s' }}
+                    className={cn(
+                      'flex flex-col gap-2 transition-[min-height] duration-100',
+                      isDropTarget ? 'min-h-20' : 'min-h-10'
+                    )}
                   >
                     {items.map((r) => {
                       const rid = String(r.assessmentId);
@@ -684,44 +662,46 @@ export function TeamTab({
                             setPersonTab('people');
                             if (r.candidateId) loadDetail(r.candidateId);
                           }}
-                          style={{ background: 'rgba(255,255,255,.92)',
-                            border: `1px solid ${open === rid ? `${d.color}55` : C.border}`, borderRadius: '10px',
-                            padding: '11px 13px', boxShadow: '0 1px 6px rgba(0,0,0,.05)',
-                            opacity: isDragging ? 0.4 : 1, cursor: 'grab',
-                            transition: 'opacity 0.15s', userSelect: 'none',
-                            pointerEvents: draggingId && !isDragging ? 'none' : 'auto' }}
+                          className={cn(
+                            'cursor-grab select-none rounded-control bg-white/90 px-3.5 py-[11px] shadow-sm transition-opacity duration-150',
+                            isDragging && 'opacity-40',
+                            draggingId && !isDragging && 'pointer-events-none'
+                          )}
+                          style={{
+                            border: `1px solid ${open === rid ? `${d.color}55` : C.border}`,
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <span style={{ fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>{d.emoji}</span>
-                            <span style={{ fontSize: '13px', lineHeight: 1.3,
-                              fontFamily: "'Georgia',serif", color: C.text, flex: 1,
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div className="mb-2 flex items-center gap-2">
+                            <span className="shrink-0 text-xl leading-none">{d.emoji}</span>
+                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] leading-snug text-ink">
                               {titleCasePersonName(r.name)}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '7px' }}>
+                          <div className="mb-1.5 flex flex-wrap gap-1">
                             <TypeBadge type={r.topType} locale={locale} compact />
                             <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                             {r.areaLabel && (
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
-                                background: C.inputBg, border: `1px solid ${C.border}`,
-                                color: C.muted, fontFamily: 'monospace' }}>
+                              <span className="rounded-full border border-ink/12 bg-ink/[0.05] px-[7px] py-0.5 font-mono text-[11px] text-ink-muted">
                                 {r.areaLabel}
                               </span>
                             )}
                             {fitScore != null && (
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px',
-                                background: fitScore >= 7 ? 'rgba(21,128,61,.1)' : fitScore >= 4 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
-                                border: `1px solid ${fitScore >= 7 ? 'rgba(21,128,61,.3)' : fitScore >= 4 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
-                                color: fitScore >= 7 ? C.success : fitScore >= 4 ? C.warning : C.danger,
-                                fontFamily: 'monospace' }}>
+                              <span
+                                className={cn(
+                                  'rounded-full border px-[7px] py-0.5 font-mono text-[11px]',
+                                  fitScore >= 7
+                                    ? 'border-success/30 bg-success/10 text-success'
+                                    : fitScore >= 4
+                                      ? 'border-warning/30 bg-warning/10 text-warning'
+                                      : 'border-danger/30 bg-danger/10 text-danger'
+                                )}
+                              >
                                 {fitScore}/10
                               </span>
                             )}
                           </div>
                           {r.vacancyTitle && (
-                            <div style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace',
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] text-ink-faint">
                               {r.vacancyTitle}
                             </div>
                           )}
@@ -729,11 +709,13 @@ export function TeamTab({
                       );
                     })}
                     {items.length === 0 && (
-                      <div style={{ padding: '20px 12px', textAlign: 'center',
-                        color: isDropTarget ? stage.color : C.faint, fontSize: '12px',
-                        fontFamily: 'monospace', fontStyle: 'italic',
-                        border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
-                        borderRadius: '8px', transition: 'all 0.12s' }}>
+                      <div
+                        className="rounded-lg px-3 py-5 text-center font-mono text-xs italic transition-all duration-100"
+                        style={{
+                          color: isDropTarget ? stage.color : C.faint,
+                          border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
+                        }}
+                      >
                         {isDropTarget ? t(locale, 'panel.team.dropHere') : '—'}
                       </div>
                     )}
@@ -743,8 +725,7 @@ export function TeamTab({
             })}
           </div>
           {filtered.length === 0 && activeSearch && (
-            <div style={{ textAlign: 'center', padding: '40px', color: C.muted,
-              fontStyle: 'italic', fontSize: '14px' }}>
+            <div className="p-10 text-center text-sm italic text-ink-muted">
               {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
             </div>
           )}
@@ -752,18 +733,15 @@ export function TeamTab({
       )}
 
       {viewMode === 'list' && selectedIds.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
-          padding: '12px 16px', borderRadius: '12px', border: `1px solid ${C.purple}44`,
-          background: `${C.purple}0a` }}>
-          <span style={{ fontSize: '13px', color: C.purple, fontFamily: 'monospace' }}>
+        <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-brand-500/25 bg-brand-500/[0.04] px-4 py-3">
+          <span className="font-mono text-[13px] text-brand-500">
             {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
           </span>
           <select
             value={bulkStage}
             onChange={(e) => setBulkStage(e.target.value)}
             disabled={bulkBusy}
-            style={{ fontSize: '12px', padding: '6px 10px', borderRadius: '8px',
-              border: `1px solid ${C.border}`, background: 'transparent', color: C.text }}
+            className="rounded-lg border border-ink/12 bg-transparent px-2.5 py-1.5 text-xs text-ink"
           >
             {PIPELINE_OPTIONS.map((code) => (
               <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
@@ -773,11 +751,10 @@ export function TeamTab({
             type="button"
             onClick={applyBulk}
             disabled={bulkBusy}
-            style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
-              border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
-              color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
-              display: 'flex', alignItems: 'center', gap: '6px',
-              opacity: bulkBusy ? 0.6 : 1 }}
+            className={cn(
+              'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+              bulkBusy && 'opacity-60'
+            )}
           >
             {bulkBusy ? <span className="spinner" /> : null}
             {t(locale, 'panel.team.applyStage')}
@@ -786,22 +763,19 @@ export function TeamTab({
             type="button"
             onClick={() => setSelectedIds(new Set())}
             disabled={bulkBusy}
-            style={{ fontSize: '12px', padding: '7px 12px', borderRadius: '8px',
-              border: `1px solid ${C.border}`, background: 'transparent',
-              color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+            className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-xs text-ink-muted"
           >
             {t(locale, 'panel.compare.clearSelection')}
           </button>
           {bulkMsg && (
-            <span style={{ fontSize: '12px', color: bulkMsgIsError ? C.tension : C.synergy,
-              fontFamily: 'monospace' }}>
+            <span className={cn('font-mono text-xs', bulkMsgIsError ? 'text-danger' : 'text-success')}>
               {bulkMsg}
             </span>
           )}
         </div>
       )}
       {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: C.muted, fontStyle: 'italic', fontSize: '14px' }}>
+        <div className="p-10 text-center text-sm italic text-ink-muted">
           {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
         </div>
       ) : null}
@@ -809,8 +783,8 @@ export function TeamTab({
         && detail?.candidate
         && String(detail.candidate.id) === String(focusCandidateId)
         && !(results || []).some((r) => String(r.candidateId) === String(focusCandidateId)) ? (
-        <div style={{ ...S.card, marginBottom: '16px', padding: '14px 18px' }}>
-          <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>
+        <div className={cn(S.card, 'mb-4 px-[18px] py-3.5')}>
+          <p className="m-0 text-xs text-ink-muted">
             {t(locale, 'dashboard.notifOpenOutsideFilters')}
           </p>
         </div>
@@ -829,12 +803,9 @@ export function TeamTab({
         return (
           <div
             key={id}
+            className={cn(S.card, 'cursor-pointer overflow-hidden p-0')}
             style={{
-              ...S.card,
-              padding: 0,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              border: isSelected ? `1px solid ${d.color}44` : `1px solid ${C.border}`,
+              border: isSelected ? `1px solid ${d.color}44` : undefined,
             }}
             onClick={() => {
               setOpen(id);
@@ -843,24 +814,21 @@ export function TeamTab({
               else { setDetail(null); setDetailErr(''); }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 24px' }}>
+            <div className="flex items-center gap-4 px-6 py-[18px]">
               <input
                 type="checkbox"
                 checked={selectedIds.has(id)}
                 onClick={(e) => e.stopPropagation()}
                 onChange={() => toggleSelect(id)}
                 aria-label={t(locale, 'panel.team.selectPersonAria', { name: titleCasePersonName(r.name) })}
-                style={{ width: '16px', height: '16px', flexShrink: 0, accentColor: C.purple, cursor: 'pointer' }}
+                className="h-4 w-4 shrink-0 cursor-pointer accent-brand-500"
               />
-              <div style={{ fontSize: '24px', flexShrink: 0 }}>{d.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+              <div className="shrink-0 text-2xl">{d.emoji}</div>
+              <div className="flex-1">
+                <div className="mb-1 text-base">
                   {titleCasePersonName(r.name)}
                   {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === 'employee' ? (
-                    <span style={{
-                      marginLeft: '8px', fontSize: '11px', fontFamily: 'monospace',
-                      color: C.synergy, border: `1px solid ${C.synergy}55`, borderRadius: '999px', padding: '1px 8px',
-                    }}>
+                    <span className="ml-2 rounded-full border border-success/35 px-2 py-px font-mono text-[11px] text-success">
                       {t(locale, 'recruiting.employmentEmployee')}
                     </span>
                   ) : null}
@@ -868,96 +836,41 @@ export function TeamTab({
                 {createdLabel ? (
                   <div
                     title={t(locale, 'dashboard.teamListDateHelp')}
-                    style={{
-                      fontSize: '12px',
-                      color: C.faint,
-                      fontFamily: 'monospace',
-                      marginBottom: '6px',
-                    }}
+                    className="mb-1.5 font-mono text-xs text-ink-faint"
                   >
                     {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
                   </div>
                 ) : null}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="flex flex-wrap items-center gap-2">
                   <TypeBadge type={r.topType} locale={locale} compact />
                   <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: '12px',
-                        borderRadius: '20px',
-                        background: 'rgba(26,22,37,.04)',
-                        border: `1px solid ${C.border}`,
-                        color: C.muted,
-                        fontFamily: 'monospace',
-                      }}
-                    >
+                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2.5 py-[3px] font-mono text-xs text-ink-muted">
                       {r.areaLabel}
                     </span>
                   )}
                   {r.pipelineStage ? (
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: '12px',
-                        borderRadius: '20px',
-                        background: `${C.purple}1F`,
-                        border: `1px solid ${C.purple}59`,
-                        color: C.purpleLight,
-                        fontFamily: FONTS.mono,
-                      }}
-                    >
+                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2.5 py-[3px] font-mono text-xs text-brand-600">
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
                     </span>
                   ) : null}
                   {r.fitLabel && (
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: '12px',
-                        borderRadius: '20px',
-                        background: `${C.purple}18`,
-                        border: `1px solid ${C.purple}44`,
-                        color: C.purpleLight,
-                        fontFamily: 'monospace',
-                      }}
-                    >
+                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2.5 py-[3px] font-mono text-xs text-brand-600">
                       {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
                     </span>
                   )}
                   {showVacancyFit ? (
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: '12px',
-                        borderRadius: '20px',
-                        background: 'rgba(71,232,123,.08)',
-                        border: '1px solid rgba(71,232,123,.25)',
-                        color: 'rgba(71,232,123,.95)',
-                        fontFamily: 'monospace',
-                      }}
-                    >
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2.5 py-[3px] font-mono text-xs text-success">
                       {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
                     </span>
                   ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
-                    <span
-                      style={{
-                        padding: '3px 10px',
-                        fontSize: '12px',
-                        borderRadius: '20px',
-                        background: 'rgba(71,232,123,.08)',
-                        border: '1px solid rgba(71,232,123,.25)',
-                        color: 'rgba(71,232,123,.95)',
-                        fontFamily: 'monospace',
-                      }}
-                    >
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2.5 py-[3px] font-mono text-xs text-success">
                       {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
                     </span>
                   ) : null}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="flex items-center gap-2.5">
                 {r.candidateId ? (
                   <button
                     type="button"
@@ -968,22 +881,15 @@ export function TeamTab({
                     disabled={deleting}
                     title={t(locale, 'panel.team.ariaDeletePerson')}
                     aria-label={t(locale, 'panel.team.ariaDeletePerson')}
-                    style={{
-                      background: 'rgba(232,71,71,.08)',
-                      border: '1px solid rgba(232,71,71,.35)',
-                      borderRadius: '10px',
-                      padding: '8px 10px',
-                      color: C.tension,
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      fontFamily: 'monospace',
-                      opacity: deleting ? 0.6 : 1,
-                    }}
+                    className={cn(
+                      'cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger',
+                      deleting && 'opacity-60'
+                    )}
                   >
                     {t(locale, 'panel.team.deletePerson')}
                   </button>
                 ) : null}
-                <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>{t(locale, 'panel.team.openDetail')} →</span>
+                <span className="font-mono text-xs text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
               </div>
             </div>
           </div>
@@ -1018,10 +924,10 @@ export function TeamTab({
                 <EnneagramCross scores={openRow.scores} locale={locale} />
                 <IntegratedProfileSynthesis synthesis={synthesis} locale={locale} />
 
-                <div style={{ marginBottom: '16px' }}>
-                  <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.team.scoresByType')}</span>
+                <div className="mb-4">
+                  <span className={cn(S.label, 'mb-2')}>{t(locale, 'panel.team.scoresByType')}</span>
                   {openCluster.size > 1 ? (
-                    <p style={{ margin: '0 0 8px', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
+                    <p className="mb-2 mt-0 text-xs leading-snug text-ink-faint">
                       {t(locale, 'panel.team.scoresClusterHint')}
                     </p>
                   ) : null}
@@ -1032,7 +938,7 @@ export function TeamTab({
             {personTab === 'people' ? (
               <div>
                 {detailLoading ? (
-                  <p style={{ margin: 0, fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>…</p>
+                  <p className="m-0 font-mono text-xs text-ink-muted">…</p>
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
                   <PeopleManagementPanel
                     locale={locale}
@@ -1041,14 +947,14 @@ export function TeamTab({
                     onRefresh={() => loadDetail(detail.candidate.id)}
                   />
                 ) : (
-                  <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>—</p>
+                  <p className="m-0 text-xs text-ink-muted">—</p>
                 )}
               </div>
             ) : null}
             {personTab === 'history' ? (
               <div>
-<div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-                  <span style={{ ...S.label, marginBottom: '8px', display: 'block', textAlign: 'center' }}>{t(locale, 'recruiting.timelineTitle')}</span>
+                <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+                  <span className={cn(S.label, 'mb-2 block text-center')}>{t(locale, 'recruiting.timelineTitle')}</span>
                   <CandidateTimeline
                     locale={locale}
                     loading={detailLoading}
@@ -1057,44 +963,32 @@ export function TeamTab({
                   />
                 </div>
 
-                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-                  <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>{t(locale, 'recruiting.assessmentsForCandidate')}</span>
+                <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+                  <span className={cn(S.label, 'mb-2 block')}>{t(locale, 'recruiting.assessmentsForCandidate')}</span>
                   {detailLoading ? (
-                    <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>…</p>
+                    <p className="m-0 text-xs text-ink-muted">…</p>
                   ) : detailErr ? (
-                    <p style={{ margin: 0, fontSize: '12px', color: C.tension }}>{detailErr}</p>
+                    <p className="m-0 text-xs text-danger">{detailErr}</p>
                   ) : detail?.assessments?.length ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div className="flex flex-col gap-2.5">
                       {detail.assessments.map((a) => (
                         <div
                           key={a.id}
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                            alignItems: 'center',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            border: `1px solid ${C.border}`,
-                            background: 'rgba(255,255,255,.4)',
-                          }}
+                          className="flex flex-wrap items-center gap-2.5 rounded-lg border border-ink/12 bg-white/40 p-2.5"
                         >
                           <div>
-                            <span style={{ fontFamily: 'monospace', fontSize: '12px', color: C.muted }}>
+                            <span className="font-mono text-xs text-ink-muted">
                               #{a.id} · {a.areaLabel}
                               {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
                             </span>
                             {isAdmin && (a.fillDurationMs != null || a.copyEventCount != null) && (
                               <div
-                                style={{
-                                  marginTop: '6px',
-                                  fontSize: '11px',
-                                  fontFamily: 'monospace',
-                                  lineHeight: 1.5,
-                                  color: isSuspiciouslyFast(a.fillDurationMs) || (a.copyEventCount || 0) > 0
-                                    ? '#b45309'
-                                    : C.faint,
-                                }}
+                                className={cn(
+                                  'mt-1.5 font-mono text-[11px] leading-snug',
+                                  isSuspiciouslyFast(a.fillDurationMs) || (a.copyEventCount || 0) > 0
+                                    ? 'text-warning'
+                                    : 'text-ink-faint'
+                                )}
                                 title={t(locale, 'panel.team.integrityTitle')}
                               >
                                 {t(locale, 'panel.team.testDuration', {
@@ -1107,20 +1001,19 @@ export function TeamTab({
                               </div>
                             )}
                             {a.rejectionReason ? (
-                              <div style={{ marginTop: '4px', fontSize: '11px', color: C.tension, fontFamily: 'monospace' }}>
+                              <div className="mt-1 font-mono text-[11px] text-danger">
                                 {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, a.rejectionReason)}
                               </div>
                             ) : null}
                             {a.startDate && a.pipelineStage === 'hired' ? (
-                              <div style={{ marginTop: '4px', fontSize: '11px', color: C.synergy, fontFamily: 'monospace' }}>
+                              <div className="mt-1 font-mono text-[11px] text-success">
                                 {t(locale, 'recruiting.startDateLabel')}: {a.startDate}
                               </div>
                             ) : null}
                             {a.pipelineHistory?.length > 0 && (
-                              <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint,
-                                fontFamily: 'monospace', lineHeight: 1.8 }}>
+                              <div className="mt-1 font-mono text-[10px] leading-loose text-ink-faint">
                                 {a.pipelineHistory.map((h, i) => (
-                                  <span key={i} style={{ marginRight: '10px' }}>
+                                  <span key={i} className="mr-2.5">
                                     {h.fromStage || '—'} → {h.toStage}
                                     {h.reason ? ` (${rejectionReasonLabel(locale, h.reason)})` : ''}
                                     {h.startDate ? ` · ${h.startDate}` : ''}
@@ -1131,20 +1024,13 @@ export function TeamTab({
                               </div>
                             )}
                           </div>
-                          <label style={{ fontSize: '12px', color: C.muted, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <label className="flex items-center gap-1.5 text-xs text-ink-muted">
                             {t(locale, 'recruiting.stageLabel')}
                             <select
                               value={a.pipelineStage || 'test_completed'}
                               disabled={!!stageBusy}
                               onChange={(e) => patchPipeline(a.id, e.target.value)}
-                              style={{
-                                fontSize: '11px',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                border: `1px solid ${C.border}`,
-                                background: 'transparent',
-                                color: C.text,
-                              }}
+                              className="rounded-md border border-ink/12 bg-transparent px-2 py-1 text-[11px] text-ink"
                             >
                               {PIPELINE_OPTIONS.map((code) => (
                                 <option key={code} value={code}>
@@ -1157,17 +1043,7 @@ export function TeamTab({
                             type="button"
                             disabled={deleting}
                             onClick={() => deleteAssessment(a.id)}
-                            style={{
-                              marginLeft: 'auto',
-                              fontSize: '12px',
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(232,71,71,.35)',
-                              background: 'rgba(232,71,71,.08)',
-                              color: C.tension,
-                              cursor: 'pointer',
-                              fontFamily: 'monospace',
-                            }}
+                            className="ml-auto cursor-pointer rounded-lg border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 font-mono text-xs text-danger"
                           >
                             {t(locale, 'recruiting.allowRetake')}
                           </button>
@@ -1175,17 +1051,16 @@ export function TeamTab({
                       ))}
                     </div>
                   ) : (
-                    <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>—</p>
+                    <p className="m-0 text-xs text-ink-muted">—</p>
                   )}
                 </div>
               </div>
             ) : null}
             {personTab === 'profile' ? (
               <div>
-<div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
-                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'recruiting.candidateProfile')}</span>
+                <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+                  <div className="mb-2.5 flex items-center gap-2.5">
+                    <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.candidateProfile')}</span>
                     {!profileEditing && (
                       <button
                         type="button"
@@ -1194,8 +1069,7 @@ export function TeamTab({
                           setProfileEditing(true);
                           setProfileMsg('');
                         }}
-                        style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
-                          background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-[11px] text-ink-muted"
                       >
                         {t(locale, 'panel.team.editNote')}
                       </button>
@@ -1215,16 +1089,16 @@ export function TeamTab({
                       ].filter(Boolean);
                       if (!bits.length) {
                         return (
-                          <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>—</p>
+                          <p className="m-0 text-xs italic text-ink-faint">—</p>
                         );
                       }
                       return (
-                        <div style={{ fontSize: '13px', color: C.text, lineHeight: 1.65, fontFamily: 'monospace' }}>
+                        <div className="font-mono text-[13px] leading-relaxed text-ink">
                           {c?.phone ? <div>{formatPhoneBr(c.phone)}</div> : null}
                           {locBits ? <div>{locBits}</div> : null}
                           {c?.linkedinUrl ? (
                             <div>
-                              <a href={c.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: C.purpleLight }}>
+                              <a href={c.linkedinUrl} target="_blank" rel="noreferrer" className="text-brand-600">
                                 {c.linkedinUrl}
                               </a>
                             </div>
@@ -1241,51 +1115,45 @@ export function TeamTab({
                     })()
                   ) : (
                     <div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                      <div className="mb-2.5 flex flex-wrap gap-2">
                         <input
                           value={formatPhoneBr(profileDraft.phone)}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, phone: stripPhone(e.target.value) || '' }))}
                           placeholder={t(locale, 'recruiting.phonePh')}
                           inputMode="tel"
-                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
                         />
                         <input
                           value={profileDraft.linkedinUrl}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, linkedinUrl: e.target.value }))}
                           placeholder={t(locale, 'recruiting.linkedinPh')}
-                          style={{ flex: '2 1 200px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[2_1_200px]"
                         />
                         <BrStateSelect
                           value={profileDraft.state}
                           onChange={(state) => setProfileDraft((p) => ({ ...p, state, city: '' }))}
                           locale={locale}
-                          style={{ flex: '0 1 160px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text, cursor: 'pointer' }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[0_1_160px] cursor-pointer"
                         />
                         <BrCitySelect
                           uf={profileDraft.state}
                           value={profileDraft.city}
                           onChange={(city) => setProfileDraft((p) => ({ ...p, city }))}
                           locale={locale}
-                          style={{ flex: '1 1 180px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_180px]"
                         />
                         <input
                           value={formatSalaryBr(profileDraft.salaryExpectation)}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: digitsOnly(e.target.value).slice(0, 15) }))}
                           placeholder={t(locale, 'recruiting.salaryPh')}
                           inputMode="numeric"
-                          style={{ flex: '1 1 160px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_160px]"
                         />
                         <select
                           value={profileDraft.availability}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, availability: e.target.value }))}
                           aria-label={t(locale, 'recruiting.availabilityLabel')}
-                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
                         >
                           <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
                           <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
@@ -1298,8 +1166,7 @@ export function TeamTab({
                           value={profileDraft.source}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, source: e.target.value }))}
                           aria-label={t(locale, 'recruiting.sourceLabel')}
-                          style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${C.border}`,
-                            fontSize: '12px', fontFamily: 'monospace', background: 'rgba(26,22,37,.03)', color: C.text }}
+                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
                         >
                           <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
                           <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
@@ -1309,15 +1176,15 @@ export function TeamTab({
                           <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
                         </select>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={saveProfile}
                           disabled={profileBusy}
-                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
-                            border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
-                            color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
-                            opacity: profileBusy ? 0.6 : 1 }}
+                          className={cn(
+                            'cursor-pointer rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+                            profileBusy && 'opacity-60'
+                          )}
                         >
                           {profileBusy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveProfile')}
                         </button>
@@ -1329,9 +1196,7 @@ export function TeamTab({
                             setProfileMsg('');
                           }}
                           disabled={profileBusy}
-                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
-                            border: `1px solid ${C.border}`, background: 'transparent',
-                            color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3.5 py-[7px] font-mono text-xs text-ink-muted"
                         >
                           {t(locale, 'panel.admin.cancel')}
                         </button>
@@ -1339,23 +1204,20 @@ export function TeamTab({
                     </div>
                   )}
                   {profileMsg ? (
-                    <p style={{ margin: '8px 0 0', fontSize: '11px', fontFamily: 'monospace',
-                      color: profileMsgIsError ? C.tension : C.synergy }}>
+                    <p className={cn('mt-2 mb-0 font-mono text-[11px]', profileMsgIsError ? 'text-danger' : 'text-success')}>
                       {profileMsg}
                     </p>
                   ) : null}
                 </div>
 
-                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px',
-                  border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.team.hrNotes')}</span>
+                <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+                  <div className="mb-2 flex items-center gap-2.5">
+                    <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.hrNotes')}</span>
                     {!notesEditing && (
                       <button
                         type="button"
                         onClick={() => { setNotesDraft(detail?.candidate?.hrNotes || ''); setNotesEditing(true); setNotesMsg(''); }}
-                        style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: `1px solid ${C.border}`,
-                          background: 'transparent', color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-[11px] text-ink-muted"
                       >
                         {detail?.candidate?.hrNotes && !isRichTextEmpty(detail.candidate.hrNotes)
                           ? t(locale, 'panel.team.editNote')
@@ -1367,13 +1229,13 @@ export function TeamTab({
                     !isRichTextEmpty(detail?.candidate?.hrNotes) ? (
                       <RichTextView html={detail.candidate.hrNotes} />
                     ) : (
-                      <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+                      <p className="m-0 text-xs italic text-ink-faint">
                         {t(locale, 'panel.team.noNotes')}
                       </p>
                     )
                   ) : (
                     <div>
-                      <div style={{ marginBottom: '8px' }}>
+                      <div className="mb-2">
                         <RichTextEditor
                           value={notesDraft}
                           onChange={setNotesDraft}
@@ -1383,16 +1245,15 @@ export function TeamTab({
                           locale={locale}
                         />
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={saveNotes}
                           disabled={notesBusy}
-                          style={{ fontSize: '12px', padding: '7px 14px', borderRadius: '8px',
-                            border: `1px solid ${C.purple}55`, background: `${C.purple}18`,
-                            color: C.purple, cursor: 'pointer', fontFamily: 'monospace',
-                            display: 'flex', alignItems: 'center', gap: '6px',
-                            opacity: notesBusy ? 0.6 : 1 }}
+                          className={cn(
+                            'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+                            notesBusy && 'opacity-60'
+                          )}
                         >
                           {notesBusy ? <span className="spinner" /> : null}
                           {t(locale, 'panel.admin.save')}
@@ -1401,15 +1262,12 @@ export function TeamTab({
                           type="button"
                           onClick={() => { setNotesEditing(false); setNotesDraft(detail?.candidate?.hrNotes || ''); }}
                           disabled={notesBusy}
-                          style={{ fontSize: '12px', padding: '7px 12px', borderRadius: '8px',
-                            border: `1px solid ${C.border}`, background: 'transparent',
-                            color: C.muted, cursor: 'pointer', fontFamily: 'monospace' }}
+                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-xs text-ink-muted"
                         >
                           {t(locale, 'panel.admin.cancel')}
                         </button>
                         {notesMsg && (
-                          <span style={{ fontSize: '12px', color: notesMsgIsError ? C.tension : C.synergy,
-                            fontFamily: 'monospace' }}>
+                          <span className={cn('font-mono text-xs', notesMsgIsError ? 'text-danger' : 'text-success')}>
                             {notesMsg}
                           </span>
                         )}
@@ -1417,7 +1275,7 @@ export function TeamTab({
                     </div>
                   )}
                   {!notesEditing && notesMsg && (
-                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: notesMsgIsError ? C.tension : C.synergy, fontFamily: 'monospace' }}>
+                    <p className={cn('mt-1.5 mb-0 font-mono text-xs', notesMsgIsError ? 'text-danger' : 'text-success')}>
                       {notesMsg}
                     </p>
                   )}

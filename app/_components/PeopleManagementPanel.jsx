@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
@@ -108,48 +108,47 @@ export function PeopleManagementPanel({
   };
 
   return (
-    <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: 'rgba(26,22,37,.02)' }}>
-      <span style={{ ...S.label, marginBottom: '6px', display: 'block' }}>
+    <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+      <span className={cn(S.label, 'mb-1.5')}>
         {t(locale, 'panel.team.peopleTitle')}
       </span>
-      <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
+      <p className="mb-3 mt-0 text-xs leading-normal text-ink-faint">
         {t(locale, 'panel.team.peopleHint')}
       </p>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-        <span style={{
-          fontSize: '11px', fontFamily: 'monospace', padding: '3px 8px', borderRadius: '999px',
-          background: completeness.enneagram ? `${C.synergy}18` : 'rgba(26,22,37,.06)',
-          color: completeness.enneagram ? C.synergy : C.muted,
-        }}>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 font-mono text-[11px]',
+            completeness.enneagram ? 'bg-success/10 text-success' : 'bg-ink/[0.06] text-ink-muted'
+          )}
+        >
           {completeness.enneagram ? t(locale, 'panel.team.peopleHasEnneagram') : t(locale, 'panel.team.peopleMissingEnneagram')}
         </span>
-        <span style={{
-          fontSize: '11px', fontFamily: 'monospace', padding: '3px 8px', borderRadius: '999px',
-          background: completeness.motivators ? `${C.synergy}18` : 'rgba(26,22,37,.06)',
-          color: completeness.motivators ? C.synergy : C.muted,
-        }}>
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 font-mono text-[11px]',
+            completeness.motivators ? 'bg-success/10 text-success' : 'bg-ink/[0.06] text-ink-muted'
+          )}
+        >
           {completeness.motivators ? t(locale, 'panel.team.peopleHasMotivators') : t(locale, 'panel.team.peopleMissingMotivators')}
         </span>
       </div>
 
       {topMot.length > 0 ? (
-        <div style={{ marginBottom: '12px' }}>
-          <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+        <div className="mb-3">
+          <span className="font-mono text-[11px] text-ink-muted">
             {t(locale, 'panel.team.peopleTopMotivators')}
           </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
             {topMot.map((d) => (
               <span
                 key={d.key}
-                style={{
-                  fontSize: '12px',
-                  padding: '4px 8px',
-                  borderRadius: '8px',
-                  border: `1px solid ${d.color || C.border}`,
-                  color: C.text,
-                  background: 'rgba(255,255,255,.5)',
-                }}
+                className={cn(
+                  'rounded-lg border bg-white/50 px-2 py-1 text-xs text-ink',
+                  !d.color && 'border-ink/12'
+                )}
+                style={d.color ? { borderColor: d.color } : undefined}
               >
                 {d.label} · {Math.round(d.score)}
               </span>
@@ -159,13 +158,13 @@ export function PeopleManagementPanel({
       ) : null}
 
       {signals.length > 0 ? (
-        <div style={{ marginBottom: '12px' }}>
-          <span style={{ ...S.label, marginBottom: '6px', display: 'block' }}>
+        <div className="mb-3">
+          <span className={cn(S.label, 'mb-1.5')}>
             {t(locale, 'panel.team.peopleRetention')}
           </span>
-          <ul style={{ margin: 0, paddingLeft: '18px' }}>
+          <ul className="m-0 pl-[18px]">
             {signals.map((s) => (
-              <li key={s.key} style={{ fontSize: '13px', color: C.muted, lineHeight: 1.55, marginBottom: '4px' }}>
+              <li key={s.key} className="mb-1 text-[13px] leading-[1.55] text-ink-muted">
                 {s.text}
               </li>
             ))}
@@ -174,57 +173,48 @@ export function PeopleManagementPanel({
       ) : null}
 
       {hypotheses.length > 0 ? (
-        <div style={{ marginBottom: '14px' }}>
-          <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>
+        <div className="mb-3.5">
+          <span className={cn(S.label, 'mb-2')}>
             {t(locale, 'panel.team.peopleHypotheses')}
           </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="flex flex-col gap-2">
             {[...hypotheses].sort((a, b) => Number(b.source === 'cross') - Number(a.source === 'cross')).map((h) => (
               <div
                 key={h.id}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${h.source === 'cross' ? `${C.purple}55` : C.border}`,
-                  background: h.source === 'cross' ? `${C.purple}0a` : 'rgba(255,255,255,.45)',
-                }}
+                className={cn(
+                  'rounded-lg px-3 py-2.5',
+                  h.source === 'cross'
+                    ? 'border border-brand-500/30 bg-brand-500/[0.04]'
+                    : 'border border-ink/12 bg-white/45'
+                )}
               >
                 {h.source === 'cross' ? (
-                  <div
-                    style={{
-                      fontSize: '10px',
-                      fontFamily: 'monospace',
-                      color: C.purple,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      marginBottom: '4px',
-                    }}
-                  >
+                  <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-brand-500">
                     {t(locale, 'panel.team.peopleCrossBadge')}
                   </div>
                 ) : null}
-                <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '4px' }}>
+                <div className="mb-1 text-xs font-semibold text-ink">
                   {h.title}
                 </div>
-                <div style={{ fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{h.body}</div>
+                <div className="text-[13px] leading-[1.55] text-ink-muted">{h.body}</div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+        <p className="mb-3 mt-0 text-xs italic text-ink-faint">
           {t(locale, 'panel.team.peopleHypothesesEmpty')}
         </p>
       )}
 
       {prompts.length > 0 ? (
-        <div style={{ marginBottom: '14px' }}>
-          <span style={{ ...S.label, marginBottom: '6px', display: 'block' }}>
+        <div className="mb-3.5">
+          <span className={cn(S.label, 'mb-1.5')}>
             {t(locale, 'panel.team.peoplePrompts')}
           </span>
-          <ol style={{ margin: 0, paddingLeft: '18px' }}>
+          <ol className="m-0 pl-[18px]">
             {prompts.map((q) => (
-              <li key={q} style={{ fontSize: '13px', color: C.text, lineHeight: 1.55, marginBottom: '4px' }}>
+              <li key={q} className="mb-1 text-[13px] leading-[1.55] text-ink">
                 {q}
               </li>
             ))}
@@ -232,35 +222,24 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
-      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '12px', marginTop: '4px' }}>
-        <span style={{ ...S.label, marginBottom: '8px', display: 'block' }}>
+      <div className="mt-1 border-t border-ink/12 pt-3">
+        <span className={cn(S.label, 'mb-2')}>
           {t(locale, 'panel.team.oneOnOneTitle')}
         </span>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
-          <label style={{ fontSize: '12px', color: C.muted }}>
+        <div className="mb-2.5 flex flex-col gap-2">
+          <label className="text-xs text-ink-muted">
             {t(locale, 'panel.team.oneOnOneDate')}
             <input
               type="date"
               value={meetingDate}
               onChange={(e) => setMeetingDate(e.target.value)}
-              style={{
-                display: 'block',
-                marginTop: '4px',
-                width: '100%',
-                maxWidth: '220px',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                background: C.card,
-                color: C.text,
-                fontFamily: 'inherit',
-              }}
+              className="mt-1 block w-full max-w-[220px] rounded-lg border border-ink/12 bg-white px-2.5 py-2 font-inherit text-ink"
             />
           </label>
-          <label style={{ fontSize: '12px', color: C.muted, display: 'block' }}>
+          <label className="block text-xs text-ink-muted">
             {t(locale, 'panel.team.oneOnOneNotes')}
-            <div style={{ marginTop: '4px' }}>
+            <div className="mt-1">
               <RichTextEditor
                 value={notes}
                 onChange={setNotes}
@@ -270,9 +249,9 @@ export function PeopleManagementPanel({
               />
             </div>
           </label>
-          <label style={{ fontSize: '12px', color: C.muted, display: 'block' }}>
+          <label className="block text-xs text-ink-muted">
             {t(locale, 'panel.team.oneOnOneNextSteps')}
-            <div style={{ marginTop: '4px' }}>
+            <div className="mt-1">
               <RichTextEditor
                 value={nextSteps}
                 onChange={setNextSteps}
@@ -282,49 +261,37 @@ export function PeopleManagementPanel({
               />
             </div>
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               disabled={busy || isRichTextEmpty(notes)}
               onClick={save}
-              style={{
-                background: C.purple,
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 14px',
-                fontSize: '13px',
-                cursor: busy || isRichTextEmpty(notes) ? 'default' : 'pointer',
-                opacity: busy || isRichTextEmpty(notes) ? 0.5 : 1,
-                fontFamily: 'inherit',
-              }}
+              className={cn(
+                'rounded-lg border-none bg-brand-500 px-3.5 py-2 font-inherit text-[13px] text-white',
+                busy || isRichTextEmpty(notes) ? 'cursor-default opacity-50' : 'cursor-pointer'
+              )}
             >
               {busy ? t(locale, 'panel.admin.save') : t(locale, 'panel.team.oneOnOneSave')}
             </button>
             {msg ? (
-              <span style={{ fontSize: '12px', color: msgError ? C.tension : C.synergy }}>{msg}</span>
+              <span className={cn('text-xs', msgError ? 'text-danger' : 'text-success')}>{msg}</span>
             ) : null}
           </div>
         </div>
 
         {oneOnOnes.length === 0 ? (
-          <p style={{ margin: 0, fontSize: '12px', color: C.faint, fontStyle: 'italic' }}>
+          <p className="m-0 text-xs italic text-ink-faint">
             {t(locale, 'panel.team.oneOnOneEmpty')}
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="flex flex-col gap-2">
             {oneOnOnes.map((item) => (
               <div
                 key={item.id}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${C.border}`,
-                  background: 'rgba(255,255,255,.4)',
-                }}
+                className="rounded-lg border border-ink/12 bg-white/40 px-3 py-2.5"
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '12px', fontFamily: 'monospace', color: C.muted }}>
+                <div className="mb-1.5 flex justify-between gap-2">
+                  <span className="font-mono text-xs text-ink-muted">
                     {formatMeetingDate(item.meetingDate, locale)}
                     {item.createdByName ? ` · ${item.createdByName}` : ''}
                   </span>
@@ -332,25 +299,18 @@ export function PeopleManagementPanel({
                     type="button"
                     disabled={busy}
                     onClick={() => remove(item.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: C.tension,
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                      fontFamily: 'monospace',
-                    }}
+                    className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger"
                   >
                     {t(locale, 'panel.team.oneOnOneDelete')}
                   </button>
                 </div>
                 <RichTextView html={item.notes} />
                 {!isRichTextEmpty(item.nextSteps) ? (
-                  <div style={{ marginTop: '6px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '2px' }}>
+                  <div className="mt-1.5">
+                    <div className="mb-0.5 text-xs font-semibold text-ink">
                       {t(locale, 'panel.team.oneOnOneNextSteps')}
                     </div>
-                    <RichTextView html={item.nextSteps} style={{ fontSize: '12px', color: C.muted }} />
+                    <RichTextView html={item.nextSteps} className="text-xs text-ink-muted" />
                   </div>
                 ) : null}
               </div>

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { S, Bar, PanelSubNav } from '../dashboard-shared';
+import { Bar, PanelSubNav, S } from '../dashboard-shared';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -32,15 +33,20 @@ function inviteStatusLabel(locale, status) {
 }
 
 function statusBadge(locale, status) {
-  const colors = {
-    sent: C.muted,
-    opened: C.info,
-    completed: C.synergy,
-    cancelled: C.tension,
-    expired: C.tension,
+  const tone = {
+    sent: 'bg-ink/[0.06] text-ink-muted',
+    opened: 'bg-info/10 text-info',
+    completed: 'bg-success/10 text-success',
+    cancelled: 'bg-danger/10 text-danger',
+    expired: 'bg-danger/10 text-danger',
   };
   return (
-    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: `${colors[status] || C.muted}18`, color: colors[status] || C.muted, fontFamily: 'monospace' }}>
+    <span
+      className={cn(
+        'rounded-xl px-2 py-0.5 font-mono text-[10px]',
+        tone[status] || tone.sent
+      )}
+    >
       {inviteStatusLabel(locale, status)}
     </span>
   );
@@ -136,31 +142,23 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
   };
 
   return (
-    <div style={{ ...S.card, marginBottom: '20px' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
+    <div className={cn(S.card, 'mb-5')}>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
         <button
           type="button"
           onClick={openInvite}
           disabled={busy}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            border: 'none',
-            background: C.purple,
-            color: '#fff',
-            cursor: busy ? 'not-allowed' : 'pointer',
-            opacity: busy ? 0.5 : 1,
-            minHeight: '40px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-          }}
+          className={cn(
+            'min-h-touch rounded-lg border-none bg-brand-500 px-4 py-2 font-mono text-xs text-white',
+            busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          )}
         >
           {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')}
         </button>
       </div>
-      {err ? <p style={{ color: C.tension, fontSize: '12px', marginTop: '8px' }}>{err}</p> : null}
-      {msg ? <p style={{ color: C.synergy, fontSize: '12px', marginTop: '8px' }}>{msg}</p> : null}
+      {err ? <p className="mt-2 text-xs text-danger">{err}</p> : null}
+      {msg ? <p className="mt-2 text-xs text-success">{msg}</p> : null}
     </div>
   );
 }
@@ -216,7 +214,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   };
 
   return (
-    <div style={S.card}>
+    <div className={S.card}>
       <SystemNoticeModal
         open={Boolean(notice)}
         locale={locale}
@@ -225,9 +223,9 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         message={notice?.message || ''}
         onClose={() => setNotice(null)}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
+      <div className="mb-4 flex flex-wrap justify-between gap-2.5">
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-lg border border-ink/12 px-2.5 py-1.5">
           <option value="all">{t(locale, 'panel.motivatorsAdmin.invites.allStatuses')}</option>
           <option value="sent">{t(locale, 'panel.motivatorsAdmin.invites.statusSent')}</option>
           <option value="opened">{t(locale, 'panel.motivatorsAdmin.invites.statusOpened')}</option>
@@ -235,32 +233,32 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
           <option value="cancelled">{t(locale, 'panel.motivatorsAdmin.invites.statusCancelled')}</option>
         </select>
       </div>
-      {loading ? <p style={{ color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+      {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
+      <table className="w-full border-collapse text-xs">
         <thead>
-          <tr style={{ textAlign: 'left', color: C.muted, fontFamily: 'monospace', fontSize: '10px' }}>
-            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colEmployee')}</th>
-            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colStatus')}</th>
-            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colSent')}</th>
-            <th style={{ padding: '8px' }}>{t(locale, 'panel.motivatorsAdmin.invites.colExpires')}</th>
-            <th style={{ padding: '8px' }} />
+          <tr className="text-left font-mono text-[10px] text-ink-muted">
+            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colEmployee')}</th>
+            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colStatus')}</th>
+            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colSent')}</th>
+            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colExpires')}</th>
+            <th className="p-2" />
           </tr>
         </thead>
         <tbody>
           {items.map((row) => (
-            <tr key={row.id} style={{ borderTop: `1px solid ${C.border}` }}>
-              <td style={{ padding: '10px 8px' }}>
+            <tr key={row.id} className="border-t border-ink/12">
+              <td className="px-2 py-2.5">
                 <div>{row.candidateName}</div>
-                <div style={{ color: C.muted, fontSize: '11px' }}>{row.candidateEmail}</div>
+                <div className="text-[11px] text-ink-muted">{row.candidateEmail}</div>
               </td>
-              <td style={{ padding: '10px 8px' }}>{statusBadge(locale, row.status)}</td>
-              <td style={{ padding: '10px 8px', color: C.muted }}>{row.sentAt ? new Date(row.sentAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
-              <td style={{ padding: '10px 8px', color: C.muted }}>{row.expiresAt ? new Date(row.expiresAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
-              <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+              <td className="px-2 py-2.5">{statusBadge(locale, row.status)}</td>
+              <td className="px-2 py-2.5 text-ink-muted">{row.sentAt ? new Date(row.sentAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
+              <td className="px-2 py-2.5 text-ink-muted">{row.expiresAt ? new Date(row.expiresAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
+              <td className="px-2 py-2.5 text-right">
                 {['sent', 'opened'].includes(row.status) ? (
                   <>
-                    <button type="button" onClick={() => remind(row.id)} style={{ marginRight: '8px', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.purple }}>{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
-                    <button type="button" onClick={() => cancel(row.id)} style={{ fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none', color: C.tension }}>{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
+                    <button type="button" onClick={() => remind(row.id)} className="mr-2 cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
+                    <button type="button" onClick={() => cancel(row.id)} className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger">{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
                   </>
                 ) : null}
               </td>
@@ -268,7 +266,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
           ))}
         </tbody>
       </table>
-      {!loading && items.length === 0 ? <p style={{ color: C.muted, marginTop: '12px' }}>{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
+      {!loading && items.length === 0 ? <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
     </div>
   );
 }
@@ -363,7 +361,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: detail ? '1fr 1fr' : '1fr', gap: '20px' }}>
+    <div className={cn('grid gap-5', detail ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
       <SystemNoticeModal
         open={Boolean(notice)}
         locale={locale}
@@ -372,29 +370,29 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
         message={notice?.message || ''}
         onClose={() => setNotice(null)}
       />
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
+        <table className="w-full border-collapse text-xs">
           <thead>
-            <tr style={{ color: C.muted, fontFamily: 'monospace', fontSize: '10px' }}>
-              <th style={{ padding: '8px', textAlign: 'left' }}>{t(locale, 'panel.motivatorsAdmin.results.colEmployee')}</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>{t(locale, 'panel.motivatorsAdmin.results.colDate')}</th>
-              <th style={{ padding: '8px' }} />
+            <tr className="font-mono text-[10px] text-ink-muted">
+              <th className="p-2 text-left">{t(locale, 'panel.motivatorsAdmin.results.colEmployee')}</th>
+              <th className="p-2 text-left">{t(locale, 'panel.motivatorsAdmin.results.colDate')}</th>
+              <th className="p-2" />
             </tr>
           </thead>
           <tbody>
             {items.map((row) => (
-              <tr key={row.id} style={{ borderTop: `1px solid ${C.border}` }}>
-                <td style={{ padding: '10px 8px' }}>
+              <tr key={row.id} className="border-t border-ink/12">
+                <td className="px-2 py-2.5">
                   <div>{row.candidateName}</div>
-                  <div style={{ fontSize: '11px', color: C.muted }}>{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
+                  <div className="text-[11px] text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
                 </td>
-                <td style={{ padding: '10px 8px', color: C.muted }}>
+                <td className="px-2 py-2.5 text-ink-muted">
                   {row.completedAt ? new Date(row.completedAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}
                 </td>
-                <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                  <button type="button" onClick={() => setSelected(row.id)} style={{ background: 'none', border: 'none', color: C.purple, cursor: 'pointer', fontSize: '11px', marginRight: '10px' }}>{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
-                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} style={{ background: 'none', border: 'none', color: C.tension, cursor: busy ? 'not-allowed' : 'pointer', fontSize: '11px' }}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
+                <td className="px-2 py-2.5 text-right">
+                  <button type="button" onClick={() => setSelected(row.id)} className="mr-2.5 cursor-pointer border-none bg-transparent text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
+                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} className={cn('border-none bg-transparent text-[11px] text-danger', busy ? 'cursor-not-allowed' : 'cursor-pointer')}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
                 </td>
               </tr>
             ))}
@@ -402,17 +400,17 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
         </table>
       </div>
       {detail?.attempt ? (
-        <div style={S.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+        <div className={S.card}>
+          <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.results.profileTitle')}</span>
-              <div style={{ fontSize: '18px', color: C.text, marginTop: '4px' }}>{detail.attempt.candidateName}</div>
-              <div style={{ fontSize: '12px', color: C.muted, marginTop: '6px', lineHeight: 1.5 }}>
+              <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.profileTitle')}</span>
+              <div className="mt-1 text-lg text-ink">{detail.attempt.candidateName}</div>
+              <div className="mt-1.5 text-xs leading-snug text-ink-muted">
                 {detail.attempt.candidateEmail}
                 {detail.attempt.areaLabel ? ` · ${detail.attempt.areaLabel}` : ''}
                 {detail.attempt.companyName ? ` · ${detail.attempt.companyName}` : ''}
               </div>
-              <div style={{ fontSize: '11px', color: C.faint, marginTop: '4px', fontFamily: 'monospace' }}>
+              <div className="mt-1 font-mono text-[11px] text-ink-faint">
                 {t(locale, 'panel.motivatorsAdmin.results.completedAt', {
                   date: detail.attempt.completedAt
                     ? new Date(detail.attempt.completedAt).toLocaleString(dateLocale(locale))
@@ -420,13 +418,16 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 })}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <div className="flex shrink-0 gap-2">
               {allScoresZero ? (
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => rescoreAttempt(detail.attempt.id)}
-                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.purple}44`, background: `${C.purple}10`, color: C.purple, cursor: busy ? 'not-allowed' : 'pointer' }}
+                  className={cn(
+                    'rounded-lg border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-500',
+                    busy ? 'cursor-not-allowed' : 'cursor-pointer'
+                  )}
                 >
                   {t(locale, 'panel.motivatorsAdmin.results.rescore')}
                 </button>
@@ -435,7 +436,10 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 type="button"
                 disabled={busy}
                 onClick={() => removeAttempt(detail.attempt.id)}
-                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: `${C.tension}10`, color: C.tension, cursor: busy ? 'not-allowed' : 'pointer' }}
+                className={cn(
+                  'rounded-lg border border-danger/25 bg-danger/10 px-2.5 py-1 text-[11px] text-danger',
+                  busy ? 'cursor-not-allowed' : 'cursor-pointer'
+                )}
               >
                 {t(locale, 'panel.motivatorsAdmin.results.deleteResult')}
               </button>
@@ -443,10 +447,10 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           </div>
 
           {detail.rescore?.ok === false && detail.rescore.error ? (
-            <div style={{ marginBottom: '14px', padding: '10px 12px', borderRadius: '10px', background: `${C.tension}10`, border: `1px solid ${C.tension}33`, fontSize: '12px', color: C.tension }}>
+            <div className="mb-3.5 rounded-control border border-danger/20 bg-danger/10 px-3 py-2.5 text-xs text-danger">
               <div>{detail.rescore.error}</div>
               {detail.rescore.diagnostics ? (
-                <div style={{ marginTop: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', lineHeight: 1.5 }}>
+                <div className="mt-2 font-mono text-[11px] leading-snug text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.results.rescoreDiag', {
                     loaded: detail.rescore.diagnostics.questionsLoaded,
                     answers: detail.rescore.diagnostics.answersCount,
@@ -459,52 +463,56 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           ) : null}
 
           {detail.hrInsights?.topMotivators?.length > 0 ? (
-            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', background: `${C.purple}08`, border: `1px solid ${C.purple}22` }}>
-              <div style={{ fontSize: '10px', color: C.purple, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+            <div className="mb-5 rounded-xl border border-brand-500/15 bg-brand-500/[0.03] p-3.5">
+              <div className="mb-2.5 font-mono text-[10px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
+              <div className="mb-2.5 flex flex-wrap gap-2">
                 {detail.hrInsights.topMotivators.map((d) => (
-                  <span key={d.key} style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '12px', background: `${d.color || C.purple}18`, color: d.color || C.purple }}>
+                  <span
+                    key={d.key}
+                    className="rounded-full px-3 py-1.5 text-xs"
+                    style={{ background: `${d.color || C.purple}18`, color: d.color || C.purple }}
+                  >
                     {d.label} · {d.score}
                   </span>
                 ))}
               </div>
               {detail.hrInsights.summaryNote ? (
-                <p style={{ margin: 0, fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>{detail.hrInsights.summaryNote}</p>
+                <p className="m-0 text-[13px] leading-relaxed text-ink-muted">{detail.hrInsights.summaryNote}</p>
               ) : null}
             </div>
           ) : null}
 
-          <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6, marginBottom: '16px' }}>{detail.attempt.profileSummary}</p>
+          <p className="mb-4 text-sm leading-relaxed text-ink">{detail.attempt.profileSummary}</p>
 
-          <div style={{ fontSize: '10px', color: C.muted, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
+          <div className="mb-2.5 font-mono text-[10px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
           {(detail.attempt.ranking || []).map((dim) => (
-            <div key={dim.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ width: '110px', fontSize: '11px', color: dim.color }}>{dim.label}</span>
-              <div style={{ flex: 1 }}><Bar value={dim.score} max={100} color={dim.color} h={6} /></div>
-              <span style={{ fontSize: '11px', color: C.muted, width: '24px', textAlign: 'right' }}>{dim.score}</span>
+            <div key={dim.key} className="mb-2 flex items-center gap-2.5">
+              <span className="w-[110px] text-[11px]" style={{ color: dim.color }}>{dim.label}</span>
+              <div className="flex-1"><Bar value={dim.score} max={100} color={dim.color} h={6} /></div>
+              <span className="w-6 text-right text-[11px] text-ink-muted">{dim.score}</span>
             </div>
           ))}
 
           {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
-              <div style={{ padding: '14px', borderRadius: '12px', background: `${C.synergy}0a`, border: `1px solid ${C.synergy}33` }}>
-                <div style={{ fontSize: '10px', color: C.synergy, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
-                <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
+            <div className="mt-5 grid grid-cols-1 gap-4 border-t border-ink/12 pt-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-success/20 bg-success/[0.04] p-3.5">
+                <div className="mb-2.5 font-mono text-[10px] text-success">{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
+                <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.do.map((item) => (
-                    <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
-                      <span style={{ fontSize: '10px', color: C.synergy, fontFamily: 'monospace' }}>{item.dimension}</span>
-                      <div style={{ marginTop: '2px' }}>{item.text}</div>
+                    <li key={item.dimensionKey} className="mb-2.5">
+                      <span className="font-mono text-[10px] text-success">{item.dimension}</span>
+                      <div className="mt-0.5">{item.text}</div>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div style={{ padding: '14px', borderRadius: '12px', background: `${C.tension}08`, border: `1px solid ${C.tension}33` }}>
-                <div style={{ fontSize: '10px', color: C.tension, marginBottom: '10px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
-                <ul style={{ margin: 0, paddingLeft: '0', listStyle: 'none', fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>
+              <div className="rounded-xl border border-danger/20 bg-danger/[0.03] p-3.5">
+                <div className="mb-2.5 font-mono text-[10px] text-danger">{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
+                <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.avoid.map((item) => (
-                    <li key={item.dimensionKey} style={{ marginBottom: '10px' }}>
-                      <span style={{ fontSize: '10px', color: C.tension, fontFamily: 'monospace' }}>{item.dimension}</span>
-                      <div style={{ marginTop: '2px' }}>{item.text}</div>
+                    <li key={item.dimensionKey} className="mb-2.5">
+                      <span className="font-mono text-[10px] text-danger">{item.dimension}</span>
+                      <div className="mt-0.5">{item.text}</div>
                     </li>
                   ))}
                 </ul>
@@ -513,10 +521,10 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           ) : null}
 
           {detail.history?.length > 1 ? (
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
-              <div style={{ fontSize: '11px', color: C.muted, marginBottom: '8px', fontFamily: 'monospace' }}>{t(locale, 'panel.motivatorsAdmin.results.evolution', { count: detail.history.length })}</div>
+            <div className="mt-5 border-t border-ink/12 pt-4">
+              <div className="mb-2 font-mono text-[11px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.evolution', { count: detail.history.length })}</div>
               {detail.history.map((h) => (
-                <div key={h.id} style={{ fontSize: '12px', color: C.muted, marginBottom: '4px' }}>
+                <div key={h.id} className="mb-1 text-xs text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.results.historyTop', {
                     date: h.completedAt
                       ? new Date(h.completedAt).toLocaleDateString(dateLocale(locale))
@@ -544,36 +552,36 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
       .then(setData);
   }, [isAdmin, companyFilter]);
 
-  if (!data) return <div style={S.card}><p style={{ color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.analytics.loading')}</p></div>;
+  if (!data) return <div className={S.card}><p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.analytics.loading')}</p></div>;
 
   const maxAvg = Math.max(...(data.distribution || []).map((d) => d.average), 1);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.avgDistribution')}</span>
-        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '16px' }}>{t(locale, 'panel.motivatorsAdmin.analytics.completedCount', { count: data.totalAttempts })}</p>
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.avgDistribution')}</span>
+        <p className="mb-4 text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.analytics.completedCount', { count: data.totalAttempts })}</p>
         {(data.distribution || []).slice(0, 8).map((d) => (
-          <div key={d.key} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ width: '100px', fontSize: '11px', fontFamily: 'monospace' }}>{d.key}</span>
-            <div style={{ flex: 1 }}><Bar value={d.average} max={maxAvg} color={C.purple} h={6} /></div>
-            <span style={{ fontSize: '11px', color: C.muted }}>{d.average}</span>
+          <div key={d.key} className="mb-2.5 flex items-center gap-2.5">
+            <span className="w-[100px] font-mono text-[11px]">{d.key}</span>
+            <div className="flex-1"><Bar value={d.average} max={maxAvg} color={C.purple} h={6} /></div>
+            <span className="text-[11px] text-ink-muted">{d.average}</span>
           </div>
         ))}
       </div>
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.topMotivators')}</span>
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.topMotivators')}</span>
         {(data.topMotivators || []).slice(0, 6).map((row) => (
-          <div key={row.key} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+          <div key={row.key} className="mb-2.5 flex justify-between text-[13px]">
             <span>{row.key}</span>
-            <span style={{ color: C.muted }}>{row.pct}% ({row.count})</span>
+            <span className="text-ink-muted">{row.pct}% ({row.count})</span>
           </div>
         ))}
       </div>
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.invitesByStatus')}</span>
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.invitesByStatus')}</span>
         {(data.inviteStats || []).map((s) => (
-          <div key={s.status} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+          <div key={s.status} className="mb-2 flex justify-between text-[13px]">
             <span>{statusBadge(locale, s.status)}</span>
             <span>{s.count}</span>
           </div>
@@ -639,7 +647,7 @@ function ConfigPanel({ locale }) {
   };
 
   return (
-    <div style={{ display: 'grid', gap: '20px' }}>
+    <div className="grid gap-5">
       <SystemNoticeModal
         open={Boolean(notice)}
         locale={locale}
@@ -649,16 +657,16 @@ function ConfigPanel({ locale }) {
         onClose={() => setNotice(null)}
       />
       {definitions.length > 0 ? (
-        <div style={S.card}>
-          <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.definitionsTitle')}</span>
-          <p style={{ fontSize: '12px', color: C.muted, margin: '0 0 12px' }}>
+        <div className={S.card}>
+          <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.definitionsTitle')}</span>
+          <p className="mb-3 mt-0 text-xs text-ink-muted">
             {t(locale, 'panel.motivatorsAdmin.config.definitionsIntro')}
           </p>
           {definitions.map((def) => (
-            <div key={def.id} style={{ padding: '12px 0', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
+            <div key={def.id} className="flex items-start justify-between gap-3 border-t border-ink/12 py-3">
               <div>
-                <div style={{ fontSize: '14px', color: C.text }}>{def.name}</div>
-                <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '4px' }}>
+                <div className="text-sm text-ink">{def.name}</div>
+                <div className="mt-1 font-mono text-[11px] text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.config.defMeta', {
                     slug: def.slug,
                     version: def.version,
@@ -672,7 +680,10 @@ function ConfigPanel({ locale }) {
                 type="button"
                 disabled={deleteBusy === def.id}
                 onClick={() => removeDefinition(def)}
-                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.tension}44`, background: 'transparent', color: C.tension, cursor: deleteBusy === def.id ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+                className={cn(
+                  'shrink-0 rounded-lg border border-danger/25 bg-transparent px-2.5 py-1 text-[11px] text-danger',
+                  deleteBusy === def.id ? 'cursor-not-allowed' : 'cursor-pointer'
+                )}
               >
                 {deleteBusy === def.id ? t(locale, 'panel.motivatorsAdmin.config.deleting') : t(locale, 'panel.motivatorsAdmin.config.delete')}
               </button>
@@ -680,27 +691,38 @@ function ConfigPanel({ locale }) {
           ))}
         </div>
       ) : null}
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsTitle', { count: dims.length })}</span>
-        <p style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsHint')}</p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsTitle', { count: dims.length })}</span>
+        <p className="text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.config.dimensionsHint')}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
           {dims.map((d) => (
-            <span key={d.id} style={{ padding: '4px 10px', borderRadius: '16px', fontSize: '11px', background: `${d.color || C.purple}18`, color: d.color || C.purple, opacity: d.active ? 1 : 0.4 }}>
+            <span
+              key={d.id}
+              className={cn('rounded-2xl px-2.5 py-1 text-[11px]', !d.active && 'opacity-40')}
+              style={{ background: `${d.color || C.purple}18`, color: d.color || C.purple }}
+            >
               {d.label}
             </span>
           ))}
         </div>
       </div>
-      <div style={S.card}>
-        <span style={S.label}>{t(locale, 'panel.motivatorsAdmin.config.questionBankTitle')}</span>
-        <p style={{ fontSize: '12px', color: C.muted, marginBottom: '12px' }}>{t(locale, 'panel.motivatorsAdmin.config.questionBankIntro')}</p>
+      <div className={S.card}>
+        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.questionBankTitle')}</span>
+        <p className="mb-3 text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.config.questionBankIntro')}</p>
         {questions.map((q) => (
-          <div key={q.id} style={{ padding: '10px 0', borderTop: `1px solid ${C.border}`, display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-            <button type="button" onClick={() => toggleQuestion(q.id, q.active)} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', border: `1px solid ${C.border}`, background: q.active ? `${C.synergy}18` : 'transparent', cursor: 'pointer' }}>
+          <div key={q.id} className="flex items-start gap-3 border-t border-ink/12 py-2.5">
+            <button
+              type="button"
+              onClick={() => toggleQuestion(q.id, q.active)}
+              className={cn(
+                'cursor-pointer rounded-lg border border-ink/12 px-2 py-0.5 text-[10px]',
+                q.active ? 'bg-success/10' : 'bg-transparent'
+              )}
+            >
               {q.active ? t(locale, 'panel.motivatorsAdmin.config.questionActive') : t(locale, 'panel.motivatorsAdmin.config.questionInactive')}
             </button>
-            <div style={{ flex: 1, fontSize: '12px', color: q.active ? C.text : C.muted, lineHeight: 1.5 }}>
-              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: C.faint }}>{q.questionType} · {q.key}</span>
+            <div className={cn('flex-1 text-xs leading-snug', q.active ? 'text-ink' : 'text-ink-muted')}>
+              <span className="font-mono text-[10px] text-ink-faint">{q.questionType} · {q.key}</span>
               <div>{q.text.length > 120 ? `${q.text.slice(0, 120)}…` : q.text}</div>
             </div>
           </div>
@@ -770,21 +792,21 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         message={notice?.message || ''}
         onClose={() => setNotice(null)}
       />
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 'normal', color: C.text }}>{t(locale, 'panel.motivatorsAdmin.title')}</h2>
-        <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{t(locale, 'panel.motivatorsAdmin.intro')}</p>
+      <div className="mb-5">
+        <h2 className="mb-2 mt-0 text-[22px] font-normal text-ink">{t(locale, 'panel.motivatorsAdmin.title')}</h2>
+        <p className="m-0 text-[13px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.intro')}</p>
       </div>
 
       {moduleStatus && !moduleStatus.ready ? (
-        <div style={{ ...S.card, marginBottom: '20px', borderColor: `${C.tension}44`, background: `${C.tension}08` }}>
-          <span style={{ ...S.label, color: C.tension }}>{t(locale, 'panel.motivatorsAdmin.setup.pendingTitle')}</span>
-          <p style={{ fontSize: '13px', color: C.muted, margin: '0 0 12px', lineHeight: 1.6 }}>
+        <div className={cn(S.card, 'mb-5 border-danger/25 bg-danger/[0.03]')}>
+          <span className={cn(S.label, 'text-danger')}>{t(locale, 'panel.motivatorsAdmin.setup.pendingTitle')}</span>
+          <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
             {moduleStatus.reason === 'schema_missing'
               ? t(locale, 'panel.motivatorsAdmin.setup.schemaMissing')
               : t(locale, 'panel.motivatorsAdmin.setup.notInitialized')}
           </p>
           {moduleStatus.reason !== 'schema_missing' ? (
-            <button type="button" disabled={setupBusy} onClick={runSetup} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: C.purple, color: '#fff', cursor: 'pointer' }}>
+            <button type="button" disabled={setupBusy} onClick={runSetup} className="cursor-pointer rounded-lg border-none bg-brand-500 px-4 py-2 text-white disabled:cursor-not-allowed">
               {setupBusy ? t(locale, 'panel.motivatorsAdmin.setup.initializing') : t(locale, 'panel.motivatorsAdmin.setup.initializeNow')}
             </button>
           ) : null}

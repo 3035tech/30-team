@@ -1,7 +1,8 @@
 'use client';
 
 import { localeHtmlLang, t } from '../../lib/i18n';
-import { C, FONTS, PIPELINE_STAGE_COLORS } from '../../lib/theme';
+import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { rejectionReasonLabel } from '../dashboard/pipeline-prompts';
 
 /** Funil principal (ordem). Rejeitado/arquivado entram como desvio visual. */
@@ -204,24 +205,12 @@ function statusStyles(status, color) {
 
 function LegendDot({ color, label, hollow }) {
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px',
-        fontSize: '11px',
-        color: C.muted,
-        fontFamily: FONTS.mono,
-      }}
-    >
+    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-ink-muted">
       <span
+        className="box-border h-2.5 w-2.5 rounded-full border-2"
         style={{
-          width: '10px',
-          height: '10px',
-          borderRadius: '50%',
           background: hollow ? '#fff' : color,
-          border: `2px solid ${color}`,
-          boxSizing: 'border-box',
+          borderColor: color,
         }}
       />
       {label}
@@ -250,7 +239,7 @@ export function CandidateTimeline({
   loading = false,
 }) {
   if (loading) {
-    return <p style={{ margin: 0, fontSize: '12px', color: C.muted }}>…</p>;
+    return <p className="m-0 text-xs text-ink-muted">…</p>;
   }
 
   const stage = resolveCurrentStage(currentStage, events);
@@ -260,16 +249,8 @@ export function CandidateTimeline({
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px 16px',
-          marginBottom: '14px',
-          justifyContent: 'center',
-        }}
-      >
+    <div className="flex flex-col items-center">
+      <div className="mb-3.5 flex flex-wrap justify-center gap-x-4 gap-y-3">
         <LegendDot color={C.success} label={t(locale, 'recruiting.timelineLegendDone')} />
         <LegendDot
           color={PIPELINE_STAGE_COLORS[stage] || C.purple}
@@ -282,28 +263,8 @@ export function CandidateTimeline({
         )}
       </div>
 
-      <div
-        style={{
-          overflowX: 'auto',
-          padding: '10px 4px 4px',
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
-        <ol
-          style={{
-            listStyle: 'none',
-            margin: 0,
-            padding: '4px 0 0',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            minWidth: 'min-content',
-            maxWidth: '920px',
-            width: '100%',
-          }}
-        >
+      <div className="flex w-full justify-center overflow-x-auto px-1 pb-1 pt-2.5">
+        <ol className="m-0 flex w-full min-w-min max-w-[920px] list-none items-start justify-center p-0 pt-1">
           {steps.map((step, i) => {
             const color = PIPELINE_STAGE_COLORS[step.id] || C.muted;
             const styles = statusStyles(step.status, color);
@@ -318,11 +279,9 @@ export function CandidateTimeline({
               && to
               && (to.status === 'done' || to.status === 'current');
 
-            // Cor da meia-linha à esquerda (vem do passo anterior → este)
             const leftLineColor = segmentDone(prev, step)
               ? (PIPELINE_STAGE_COLORS[prev.id] || C.border)
               : C.border;
-            // Cor da meia-linha à direita (este → próximo)
             const rightLineColor = segmentDone(step, next)
               ? color
               : C.border;
@@ -330,36 +289,14 @@ export function CandidateTimeline({
             return (
               <li
                 key={`${step.id}-${i}`}
-                style={{
-                  flex: '1 1 0',
-                  minWidth: '96px',
-                  maxWidth: '140px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'stretch',
-                  opacity: styles.opacity,
-                }}
+                className="flex min-w-24 max-w-[140px] flex-1 flex-col items-stretch"
+                style={{ opacity: styles.opacity }}
               >
-                {/*
-                  Linha | bolinha | linha — a linha NUNCA fica atrás do círculo.
-                */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    height: '40px',
-                    marginBottom: '8px',
-                  }}
-                >
+                <div className="mb-2 flex h-10 w-full items-center">
                   <div
                     aria-hidden
-                    style={{
-                      flex: 1,
-                      height: '3px',
-                      background: isFirst ? 'transparent' : leftLineColor,
-                      borderRadius: '2px',
-                    }}
+                    className="h-[3px] flex-1 rounded-sm"
+                    style={{ background: isFirst ? 'transparent' : leftLineColor }}
                   />
                   <div
                     title={
@@ -371,17 +308,11 @@ export function CandidateTimeline({
                             ? t(locale, 'recruiting.timelineLegendSkipped')
                             : t(locale, 'recruiting.timelineLegendTodo')
                     }
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[2.5px]"
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       background: styles.nodeBg,
                       color: styles.nodeColor,
-                      border: `2.5px solid ${styles.nodeBorder}`,
+                      borderColor: styles.nodeBorder,
                       boxShadow: styles.ring,
                     }}
                   >
@@ -395,44 +326,28 @@ export function CandidateTimeline({
                   </div>
                   <div
                     aria-hidden
-                    style={{
-                      flex: 1,
-                      height: '3px',
-                      background: isLast ? 'transparent' : rightLineColor,
-                      borderRadius: '2px',
-                    }}
+                    className="h-[3px] flex-1 rounded-sm"
+                    style={{ background: isLast ? 'transparent' : rightLineColor }}
                   />
                 </div>
                 <div
+                  className="px-1 text-center font-mono text-[11px] leading-tight"
                   style={{
-                    fontSize: '11px',
                     fontWeight: styles.labelWeight,
                     color: styles.labelColor,
-                    textAlign: 'center',
-                    lineHeight: 1.3,
-                    padding: '0 4px',
-                    fontFamily: FONTS.mono,
                   }}
                 >
                   {pipelineLabel(locale, step.id)}
                 </div>
                 {step.status === 'current' ? (
                   <div
-                    style={{
-                      marginTop: '6px',
-                      fontSize: '9px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color,
-                      fontFamily: FONTS.mono,
-                      fontWeight: 700,
-                      textAlign: 'center',
-                    }}
+                    className="mt-1.5 text-center font-mono text-[9px] font-bold uppercase tracking-wider"
+                    style={{ color }}
                   >
                     {t(locale, 'recruiting.timelineNow')}
                   </div>
                 ) : (
-                  <div style={{ height: '18px' }} aria-hidden />
+                  <div className="h-[18px]" aria-hidden />
                 )}
               </li>
             );
@@ -441,28 +356,17 @@ export function CandidateTimeline({
       </div>
 
       {stage === 'rejected' && rejectionEv?.reason ? (
-        <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.tension, textAlign: 'center', width: '100%' }}>
+        <p className="mt-3 mb-0 w-full text-center text-xs text-danger">
           {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, rejectionEv.reason)}
         </p>
       ) : null}
 
       {events.length > 0 ? (
-        <details style={{ marginTop: '14px', width: '100%', maxWidth: '520px' }}>
-          <summary
-            style={{
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontFamily: FONTS.mono,
-              color: C.muted,
-              letterSpacing: '0.04em',
-              userSelect: 'none',
-              textAlign: 'center',
-              listStylePosition: 'inside',
-            }}
-          >
+        <details className="mt-3.5 w-full max-w-[520px]">
+          <summary className="cursor-pointer select-none text-center font-mono text-[11px] tracking-wide text-ink-muted [list-style-position:inside]">
             {t(locale, 'recruiting.timelineHistory', { n: events.length })}
           </summary>
-          <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, textAlign: 'left' }}>
+          <ul className="mb-0 mt-2.5 list-none p-0 text-left">
             {[...events]
               .reverse()
               .slice(0, 12)
@@ -480,20 +384,16 @@ export function CandidateTimeline({
                 return (
                   <li
                     key={`${ev.type}-${ev.at}-${i}`}
-                    style={{
-                      fontSize: '12px',
-                      color: C.muted,
-                      padding: '4px 0',
-                      borderBottom:
-                        i < Math.min(events.length, 12) - 1 ? `1px solid ${C.border}` : 'none',
-                      lineHeight: 1.45,
-                    }}
+                    className={cn(
+                      'py-1 text-xs leading-[1.45] text-ink-muted',
+                      i < Math.min(events.length, 12) - 1 && 'border-b border-ink/12'
+                    )}
                   >
-                    <span style={{ fontFamily: FONTS.mono, color: C.faint }}>
+                    <span className="font-mono text-ink-faint">
                       {formatAt(ev.at, locale) || '—'}
                     </span>
                     {' · '}
-                    <span style={{ color: C.text }}>{bits.join(' · ')}</span>
+                    <span className="text-ink">{bits.join(' · ')}</span>
                   </li>
                 );
               })}

@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { cn } from '../../lib/cn';
 import { errorMessage, t } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
-import { C } from '../../lib/theme';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { useAppFeedback } from '../_components/AppFeedback';
@@ -654,86 +654,45 @@ export function VacancyClientReportBlock({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        style={{
-          background: `${C.purple}18`,
-          border: `1px solid ${C.purple}55`,
-          borderRadius: '10px',
-          padding: '8px 10px',
-          color: C.purple,
-          fontSize: '12px',
-          cursor: 'pointer',
-          fontFamily: 'monospace',
-        }}
+        className="min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-2 font-mono text-xs text-brand-500"
       >
         {open ? t(locale, 'panel.report.hidePanel') : t(locale, 'panel.report.openPanel')}
       </button>
 
       {open ? (
         <div
-          style={{
-            marginTop: '12px',
-            padding: '16px',
-            borderRadius: '12px',
-            border: `1px solid ${C.border}`,
-            background: C.surface || C.card,
-          }}
+          className="mt-3 rounded-xl border border-ink/12 bg-white p-4"
         >
-          <span style={S.label}>{t(locale, 'panel.report.title')}</span>
-          <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+          <span className={S.label}>{t(locale, 'panel.report.title')}</span>
+          <p className="mt-[8px] mx-[0] mb-[0] text-xs text-ink-muted leading-[1.55]">
             {t(locale, 'panel.report.intro')}
           </p>
 
           {lastUrl ? (
             <div
-              style={{
-                marginTop: '12px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: `1px solid ${C.purple}40`,
-                background: `${C.purple}0a`,
-                display: 'flex',
-                gap: '8px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className="mt-3 flex flex-wrap items-center gap-2 rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2.5"
             >
-              <code style={{ fontSize: '11px', color: C.purple, wordBreak: 'break-all', flex: 1 }}>{lastUrl}</code>
-              <button type="button" onClick={() => copyUrl(lastUrl)} style={btnPurple()}>
+              <code className="text-[11px] text-brand-500 break-all flex-1">{lastUrl}</code>
+              <button type="button" onClick={() => copyUrl(lastUrl)} className={btnPurpleClass()}>
                 {t(locale, 'panel.report.copyLink')}
               </button>
             </div>
           ) : null}
 
           <div
-            style={{
-              marginTop: '14px',
-              padding: '12px 14px',
-              borderRadius: '10px',
-              border: `1px solid ${C.border}`,
-              background: 'rgba(26,22,37,.02)',
-            }}
+            className="mt-3.5 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3"
           >
             <button
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: C.muted,
-              }}
+              className="p-0 text-[11px] font-mono text-ink-muted bg-transparent border-none cursor-pointer uppercase tracking-[0.08em]"
             >
               {previewOpen ? t(locale, 'panel.report.previewHide') : t(locale, 'panel.report.previewShow')}
             </button>
             {previewOpen ? (
-              <div style={{ marginTop: '10px', fontSize: '12px', color: C.text, lineHeight: 1.55 }}>
-                <p style={{ margin: '0 0 8px', color: C.muted }}>{t(locale, 'panel.report.previewHint')}</p>
-                <ol style={{ margin: 0, paddingLeft: '18px' }}>
+              <div className="mt-2.5 text-xs text-ink leading-[1.55]">
+                <p className="mt-[0] mx-[0] mb-[8px] text-ink-muted">{t(locale, 'panel.report.previewHint')}</p>
+                <ol className="m-0">
                   <li>
                     {t(locale, 'panel.report.previewSeeks')}
                     {rubricMeta?.hasRubric && rubricTypesLabel
@@ -743,7 +702,7 @@ export function VacancyClientReportBlock({
                     {rubricMeta?.hasNotes ? ` · ${t(locale, 'panel.report.previewHasRubricNotes')}` : ''}
                   </li>
                   {!rubricMeta?.hasRubric ? (
-                    <li style={{ color: C.danger || C.tension }}>{t(locale, 'panel.report.previewNoRubricWarn')}</li>
+                    <li className="text-danger">{t(locale, 'panel.report.previewNoRubricWarn')}</li>
                   ) : null}
                   <li>
                     {t(locale, 'panel.report.previewNote')}
@@ -769,46 +728,38 @@ export function VacancyClientReportBlock({
           </div>
 
           <label
-            style={{
-              marginTop: '12px',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'flex-start',
-              fontSize: '12px',
-              color: C.muted,
-              lineHeight: 1.45,
-            }}
+            className="flex items-start gap-2.5 mt-3 text-xs text-ink-muted leading-[1.45]"
           >
             <input
               type="checkbox"
               checked={showSalary}
               disabled={salaryBusy || busy}
               onChange={(e) => persistShowSalary(e.target.checked)}
-              style={{ marginTop: '2px', accentColor: C.purple }}
+              className="mt-[2px] accent-brand-500"
             />
             <span>
-              <strong style={{ color: C.text }}>{t(locale, 'panel.report.showSalaryLabel')}</strong>
+              <strong className="text-ink">{t(locale, 'panel.report.showSalaryLabel')}</strong>
               <br />
               {t(locale, 'panel.report.showSalaryHelp')}
             </span>
           </label>
 
-          <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={S.select}>
+          <div className="flex flex-wrap items-center gap-2 mt-3.5">
+            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={S.select}>
               <option value="shortlist">{t(locale, 'panel.report.filterShortlist')}</option>
               <option value="interview_plus">{t(locale, 'panel.report.filterInterviewPlus')}</option>
               <option value="all">{t(locale, 'panel.report.filterAllTested')}</option>
             </select>
-            <button type="button" onClick={selectVisible} style={btnGhost()} disabled={loading || !visible.length}>
+            <button type="button" onClick={selectVisible} className={btnGhostClass()} disabled={loading || !visible.length}>
               {t(locale, 'panel.report.selectVisible')}
             </button>
-            <button type="button" onClick={clearSelected} style={btnGhost()} disabled={!selected.size}>
+            <button type="button" onClick={clearSelected} className={btnGhostClass()} disabled={!selected.size}>
               {t(locale, 'panel.report.clearSelection')}
             </button>
             <button
               type="button"
               onClick={suggestShortlistWithAi}
-              style={btnGhost({ busy: aiBusy === 'shortlist', locked: actionsLocked && aiBusy !== 'shortlist' })}
+              className={btnGhostClass({ busy: aiBusy === 'shortlist', locked: actionsLocked && aiBusy !== 'shortlist' })}
               disabled={loading || actionsLocked}
               aria-busy={aiBusy === 'shortlist' || undefined}
               title={t(locale, 'panel.report.suggestShortlistAi')}
@@ -822,7 +773,7 @@ export function VacancyClientReportBlock({
             <select
               value={String(expiresInDays)}
               onChange={(e) => setExpiresInDays(Number(e.target.value))}
-              style={S.select}
+              className={S.select}
             >
               {REPORT_EXPIRY_DAYS.map((d) => (
                 <option key={d} value={d}>
@@ -832,13 +783,13 @@ export function VacancyClientReportBlock({
             </select>
           </div>
 
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.noteRequiredLabel')}</span>
+          <div className="mt-3">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="text-xs text-ink-muted">{t(locale, 'panel.report.noteRequiredLabel')}</span>
               <button
                 type="button"
                 onClick={applyNoteTemplate}
-                style={btnGhost({ busy: noteActionBusy === 'template', locked: actionsLocked && noteActionBusy !== 'template' })}
+                className={btnGhostClass({ busy: noteActionBusy === 'template', locked: actionsLocked && noteActionBusy !== 'template' })}
                 disabled={actionsLocked}
                 aria-busy={noteActionBusy === 'template' || undefined}
               >
@@ -851,7 +802,7 @@ export function VacancyClientReportBlock({
               <button
                 type="button"
                 onClick={generateNoteFromShortlist}
-                style={btnGhost({
+                className={btnGhostClass({
                   busy: noteActionBusy === 'shortlist',
                   locked: actionsLocked && noteActionBusy !== 'shortlist',
                 })}
@@ -868,7 +819,7 @@ export function VacancyClientReportBlock({
               <button
                 type="button"
                 onClick={generateNoteWithAi}
-                style={btnGhost({ busy: aiBusy === 'note', locked: actionsLocked && aiBusy !== 'note' })}
+                className={btnGhostClass({ busy: aiBusy === 'note', locked: actionsLocked && aiBusy !== 'note' })}
                 disabled={actionsLocked}
                 aria-busy={aiBusy === 'note' || undefined}
                 title={t(locale, 'panel.report.generateNoteAi')}
@@ -882,7 +833,7 @@ export function VacancyClientReportBlock({
               <button
                 type="button"
                 onClick={fillFieldsWithAi}
-                style={btnGhost({ busy: aiBusy === 'fields', locked: actionsLocked && aiBusy !== 'fields' })}
+                className={btnGhostClass({ busy: aiBusy === 'fields', locked: actionsLocked && aiBusy !== 'fields' })}
                 disabled={actionsLocked}
                 aria-busy={aiBusy === 'fields' || undefined}
                 title={t(locale, 'panel.report.fillFieldsAi')}
@@ -894,11 +845,7 @@ export function VacancyClientReportBlock({
                 )}
               </button>
               <span
-                style={{
-                  fontSize: '11px',
-                  fontFamily: 'monospace',
-                  color: noteOk ? C.muted : C.danger || C.tension,
-                }}
+                className={cn('font-mono text-[11px]', noteOk ? 'text-ink-muted' : 'text-danger')}
               >
                 {t(locale, 'panel.report.noteCharCount', { n: notePlainLen, min: REPORT_NOTE_MIN_CHARS })}
               </span>
@@ -922,27 +869,21 @@ export function VacancyClientReportBlock({
           </div>
 
           <div
-            style={{
-              marginTop: '12px',
-              maxHeight: '360px',
-              overflow: 'auto',
-              border: `1px solid ${C.border}`,
-              borderRadius: '10px',
-            }}
+            className="mt-3 max-h-[360px] overflow-auto rounded-control border border-ink/12"
           >
             {loading ? (
-              <p style={{ padding: '12px', fontSize: '12px', color: C.muted }}>{t(locale, 'panel.common.loading')}</p>
+              <p className="p-3 text-xs text-ink-muted">{t(locale, 'panel.common.loading')}</p>
             ) : visible.length === 0 ? (
-              <p style={{ padding: '12px', fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.noCandidates')}</p>
+              <p className="p-3 text-xs text-ink-muted">{t(locale, 'panel.report.noCandidates')}</p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <table className="text-xs w-full border-collapse">
                 <thead>
-                  <tr style={{ textAlign: 'left', color: C.muted, fontFamily: 'monospace' }}>
-                    <th style={{ padding: '8px 10px', width: '36px' }} />
-                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colName')}</th>
-                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colRec')}</th>
-                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colFit')}</th>
-                    <th style={{ padding: '8px 10px' }}>{t(locale, 'panel.report.colType')}</th>
+                  <tr className="font-mono text-ink-muted text-left">
+                    <th className="py-2 px-2.5 w-[36px]" />
+                    <th className="py-2 px-2.5">{t(locale, 'panel.report.colName')}</th>
+                    <th className="py-2 px-2.5">{t(locale, 'panel.report.colRec')}</th>
+                    <th className="py-2 px-2.5">{t(locale, 'panel.report.colFit')}</th>
+                    <th className="py-2 px-2.5">{t(locale, 'panel.report.colType')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -950,31 +891,31 @@ export function VacancyClientReportBlock({
                     const isOn = selected.has(c.candidateId);
                     const rec = effectiveRec(c);
                     return (
-                      <tr key={c.candidateId} style={{ borderTop: `1px solid ${C.border}`, verticalAlign: 'top' }}>
-                        <td style={{ padding: '8px 10px' }}>
+                      <tr key={c.candidateId} className="border-t border-ink/12 align-top">
+                        <td className="py-2 px-2.5">
                           <input
                             type="checkbox"
                             checked={isOn}
                             onChange={() => toggle(c)}
-                            style={{ accentColor: C.purple }}
+                            className="accent-brand-500"
                           />
                         </td>
-                        <td style={{ padding: '8px 10px', color: C.text }}>
+                        <td className="py-2 px-2.5 text-ink">
                           <div>{c.name}</div>
                           {c.hasMotivators ? (
-                            <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px', fontFamily: 'monospace' }}>
+                            <div className="mt-[2px] text-[10px] font-mono text-ink-muted">
                               {t(locale, 'panel.report.hasMotivatorsBadge')}
                             </div>
                           ) : null}
                           {isOn ? (
-                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div className="flex flex-col gap-1.5 mt-2">
                               <input
                                 type="text"
                                 value={overrides[c.candidateId]?.why || ''}
                                 onChange={(e) => setStructured(c.candidateId, 'why', e.target.value)}
                                 placeholder={t(locale, 'panel.report.fieldWhyPh')}
                                 maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                style={fieldInputStyle()}
+                                className={fieldInputClass()}
                               />
                               <input
                                 type="text"
@@ -982,7 +923,7 @@ export function VacancyClientReportBlock({
                                 onChange={(e) => setStructured(c.candidateId, 'watchOut', e.target.value)}
                                 placeholder={t(locale, 'panel.report.fieldWatchPh')}
                                 maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                style={fieldInputStyle()}
+                                className={fieldInputClass()}
                               />
                               <input
                                 type="text"
@@ -990,17 +931,17 @@ export function VacancyClientReportBlock({
                                 onChange={(e) => setStructured(c.candidateId, 'interviewProbe', e.target.value)}
                                 placeholder={t(locale, 'panel.report.fieldProbePh')}
                                 maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                style={fieldInputStyle()}
+                                className={fieldInputClass()}
                               />
                             </div>
                           ) : null}
                         </td>
-                        <td style={{ padding: '8px 10px' }}>
+                        <td className="py-2 px-2.5">
                           {isOn ? (
                             <select
                               value={rec}
                               onChange={(e) => setRec(c.candidateId, e.target.value)}
-                              style={{ ...S.select, fontSize: '11px', padding: '4px 6px' }}
+                              className="py-1 px-1.5 text-[11px]"
                             >
                               {REPORT_RECOMMENDATIONS.map((r) => (
                                 <option key={r} value={r}>
@@ -1009,14 +950,14 @@ export function VacancyClientReportBlock({
                               ))}
                             </select>
                           ) : (
-                            <span style={{ color: C.muted, fontFamily: 'monospace' }}>{recommendationLabel(rec)}</span>
+                            <span className="font-mono text-ink-muted">{recommendationLabel(rec)}</span>
                           )}
                         </td>
-                        <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>
+                        <td className="py-2 px-2.5 font-mono">
                           {c.vacancyFitScore010 != null ? c.vacancyFitScore010.toFixed(1) : '—'}
                         </td>
                         <td
-                          style={{ padding: '8px 10px', fontFamily: 'monospace' }}
+                          className="py-2 px-2.5 font-mono"
                           title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
                         >
                           {c.topType != null ? `T${c.topType}` : '—'}
@@ -1029,37 +970,33 @@ export function VacancyClientReportBlock({
             )}
           </div>
 
-          <div style={{ marginTop: '12px' }}>
+          <div className="mt-3">
             <button
               type="button"
               onClick={generate}
               disabled={!canGenerate}
-              style={{
-                background: canGenerate ? `${C.purple}18` : 'transparent',
-                border: `1px solid ${canGenerate ? `${C.purple}55` : C.border}`,
-                borderRadius: '10px',
-                padding: '10px 14px',
-                color: canGenerate ? C.purple : C.faint,
-                fontSize: '12px',
-                cursor: canGenerate ? 'pointer' : 'default',
-                fontFamily: 'monospace',
-              }}
+              className={cn(
+                'min-h-touch rounded-control border px-3.5 py-2.5 font-mono text-xs',
+                canGenerate
+                  ? 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                  : 'cursor-default border-ink/12 bg-transparent text-ink-muted'
+              )}
             >
               {busy ? t(locale, 'panel.common.loading') : t(locale, 'panel.report.generate', { n: selected.size })}
             </button>
             {!noteOk && selected.size > 0 ? (
-              <p style={{ margin: '8px 0 0', fontSize: '11px', color: C.muted, lineHeight: 1.45 }}>
+              <p className="mt-[8px] mx-[0] mb-[0] text-[11px] text-ink-muted leading-[1.45]">
                 {t(locale, 'panel.report.noteGateHint', { n: REPORT_NOTE_MIN_CHARS })}
               </p>
             ) : null}
           </div>
 
-          <div style={{ marginTop: '20px' }}>
-            <span style={{ ...S.label, marginBottom: '8px' }}>{t(locale, 'panel.report.historyTitle')}</span>
+          <div className="mt-5">
+            <span className={S.label}>{t(locale, 'panel.report.historyTitle')}</span>
             {reports.length === 0 ? (
-              <p style={{ fontSize: '12px', color: C.muted }}>{t(locale, 'panel.report.historyEmpty')}</p>
+              <p className="text-xs text-ink-muted">{t(locale, 'panel.report.historyEmpty')}</p>
             ) : (
-              <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
+              <ul className="mt-[8px] mx-[0] mb-[0] p-0">
                 {reports.map((r) => {
                   const url = r.url || (appUrl ? `${appUrl}/r/${r.token}` : `/r/${r.token}`);
                   const exp = r.expiresAt ? new Date(r.expiresAt) : null;
@@ -1067,48 +1004,36 @@ export function VacancyClientReportBlock({
                   return (
                     <li
                       key={r.id}
-                      style={{
-                        padding: '10px 0',
-                        borderTop: `1px solid ${C.border}`,
-                      }}
+                      className="border-t border-ink/12 py-2.5"
                     >
                       <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
+                        className="flex flex-wrap items-center justify-between gap-2"
                       >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '12px', color: C.text }}>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-ink">
                             {r.candidateCount != null
                               ? t(locale, 'panel.report.historyItem', { n: r.candidateCount })
                               : r.title}
                             {' · '}
                             <span
-                              style={{
-                                color: r.isLive ? C.success || C.synergy : C.faint,
-                                fontFamily: 'monospace',
-                              }}
+                              className={cn('font-mono', r.isLive ? 'text-success' : 'text-ink-faint')}
                             >
                               {r.isLive ? t(locale, 'panel.report.statusLive') : t(locale, 'panel.report.statusDead')}
                             </span>
                           </div>
-                          <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace', marginTop: '2px' }}>
+                          <div className="mt-[2px] text-[11px] font-mono text-ink-muted">
                             {exp ? t(locale, 'panel.report.expiresAt', { date: exp.toLocaleString(locale) }) : ''}
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          <button type="button" onClick={() => copyUrl(url)} style={btnGhost()} disabled={!r.isLive}>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button type="button" onClick={() => copyUrl(url)} className={btnGhostClass()} disabled={!r.isLive}>
                             {t(locale, 'panel.report.copyLink')}
                           </button>
                           {r.isLive ? (
                             <button
                               type="button"
                               onClick={() => (isEditing ? cancelEditReport() : startEditReport(r))}
-                              style={btnGhost()}
+                              className={btnGhostClass()}
                               disabled={busy || editBusy}
                             >
                               {isEditing ? t(locale, 'panel.report.editNoteCancel') : t(locale, 'panel.report.editNote')}
@@ -1117,11 +1042,7 @@ export function VacancyClientReportBlock({
                           <button
                             type="button"
                             onClick={() => revoke(r.id)}
-                            style={{
-                              ...btnGhost(),
-                              color: C.danger || C.tension,
-                              borderColor: 'rgba(220,38,38,.35)',
-                            }}
+                            className={cn(btnGhostClass(), 'border-danger/35 text-danger')}
                             disabled={busy || !r.active}
                           >
                             {t(locale, 'panel.report.revoke')}
@@ -1129,8 +1050,8 @@ export function VacancyClientReportBlock({
                         </div>
                       </div>
                       {isEditing ? (
-                        <div style={{ marginTop: '10px' }}>
-                          <p style={{ margin: '0 0 6px', fontSize: '11px', color: C.muted }}>
+                        <div className="mt-2.5">
+                          <p className="mt-[0] mx-[0] mb-[6px] text-[11px] text-ink-muted">
                             {t(locale, 'panel.report.editNoteHint')}
                           </p>
                           <RichTextEditor
@@ -1139,16 +1060,16 @@ export function VacancyClientReportBlock({
                             minHeight={90}
                             locale={locale}
                           />
-                          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                          <div className="flex gap-2 mt-2">
                             <button
                               type="button"
                               onClick={() => saveReportNote(r.id)}
                               disabled={editBusy}
-                              style={btnPurple()}
+                              className={btnPurpleClass()}
                             >
                               {editBusy ? t(locale, 'panel.common.loading') : t(locale, 'panel.report.saveNote')}
                             </button>
-                            <button type="button" onClick={cancelEditReport} style={btnGhost()} disabled={editBusy}>
+                            <button type="button" onClick={cancelEditReport} className={btnGhostClass()} disabled={editBusy}>
                               {t(locale, 'panel.report.editNoteCancel')}
                             </button>
                           </div>
@@ -1166,47 +1087,18 @@ export function VacancyClientReportBlock({
   );
 }
 
-function fieldInputStyle() {
-  return {
-    width: '100%',
-    boxSizing: 'border-box',
-    background: C.inputBg,
-    border: `1px solid ${C.border}`,
-    borderRadius: '8px',
-    padding: '6px 8px',
-    fontSize: '11px',
-    color: C.text,
-    fontFamily: 'inherit',
-  };
+function fieldInputClass() {
+  return 'rounded-lg border border-ink/12 bg-ink/[0.05] px-2 py-1.5 font-ui text-[11px] text-ink';
 }
 
-function btnGhost({ busy = false, locked = false } = {}) {
+function btnGhostClass({ busy = false, locked = false } = {}) {
   const inactive = busy || locked;
-  return {
-    background: 'transparent',
-    border: `1px solid ${C.border}`,
-    borderRadius: '8px',
-    padding: '6px 10px',
-    color: C.muted,
-    fontSize: '11px',
-    cursor: inactive ? 'wait' : 'pointer',
-    fontFamily: 'monospace',
-    opacity: inactive ? 0.65 : 1,
-    minHeight: '32px',
-    display: 'inline-flex',
-    alignItems: 'center',
-  };
+  return cn(
+    'inline-flex min-h-[32px] items-center rounded-lg border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-ink-muted',
+    inactive ? 'cursor-wait opacity-65' : 'cursor-pointer'
+  );
 }
 
-function btnPurple() {
-  return {
-    background: `${C.purple}18`,
-    border: `1px solid ${C.purple}55`,
-    borderRadius: '8px',
-    padding: '6px 10px',
-    color: C.purple,
-    fontSize: '11px',
-    cursor: 'pointer',
-    fontFamily: 'monospace',
-  };
+function btnPurpleClass() {
+  return 'inline-flex min-h-[32px] cursor-pointer items-center rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-[11px] text-brand-500';
 }

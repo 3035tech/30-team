@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { BrStateSelect } from '../_components/BrStateSelect';
 import { BrCitySelect } from '../_components/BrCitySelect';
@@ -12,18 +12,8 @@ import { S } from './dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
 
-const inputStyle = {
-  flex: '1 1 180px',
-  background: 'rgba(255,255,255,.8)',
-  border: `1px solid ${C.border}`,
-  borderRadius: '10px',
-  padding: '10px 12px',
-  color: C.text,
-  fontSize: '13px',
-  fontFamily: 'monospace',
-};
-
-const selectStyle = { ...inputStyle, cursor: 'pointer' };
+const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
+const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
 
 function inviteStatusLabel(locale, status) {
   const s = String(status || '');
@@ -227,97 +217,71 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
   return (
     <div
-      style={{
-        border: `1px solid ${C.border}`,
-        borderRadius: '12px',
-        padding: '14px',
-        background: 'rgba(26,22,37,.02)',
-      }}
+      className="rounded-xl border border-ink/12 bg-ink/[0.02] p-3.5"
     >
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '14px', color: C.text }}>
-            <strong style={{ fontWeight: 600 }}>{titleCasePersonName(row.fullName)}</strong>
+      <div className="flex flex-wrap items-start justify-between gap-2.5">
+        <div className="min-w-0">
+          <div className="text-sm text-ink">
+            <strong className="font-semibold">{titleCasePersonName(row.fullName)}</strong>
           </div>
-          <div style={{ marginTop: '4px', fontSize: '12px', fontFamily: 'monospace', color: C.muted }}>
+          <div className="mt-1 text-xs font-mono text-ink-muted">
             {row.email}
             {row.phone ? ` · ${formatPhoneBr(row.phone)}` : ''}
           </div>
           {(locBits || row.linkedinUrl) ? (
-            <div style={{ marginTop: '4px', fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+            <div className="mt-1 text-[11px] font-mono text-ink-faint">
               {locBits || null}
               {locBits && row.linkedinUrl ? ' · ' : null}
               {row.linkedinUrl ? (
-                <a href={row.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: C.purpleLight }}>
+                <a href={row.linkedinUrl} target="_blank" rel="noreferrer" className="text-brand-500">
                   LinkedIn
                 </a>
               ) : null}
             </div>
           ) : null}
-          <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5">
             <span
-              style={{
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                padding: '2px 8px',
-                borderRadius: '8px',
-                border: `1px solid ${C.border}`,
-                color: C.muted,
-              }}
+              className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-[11px] text-ink-muted"
               title={t(locale, 'recruiting.enneagramBadgeTitle')}
             >
               {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
             </span>
             <span
-              style={{
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                padding: '2px 8px',
-                borderRadius: '8px',
-                border: `1px solid ${motivatorsDone ? `${C.synergy}55` : C.border}`,
-                color: motivatorsDone ? C.synergy : C.muted,
-                background: motivatorsDone ? `${C.synergy}12` : 'transparent',
-              }}
+              className={cn(
+                  'rounded-lg border px-2 py-0.5 font-mono text-[11px]',
+                  motivatorsDone ? 'border-success/35 text-success' : 'border-ink/12 text-ink-muted'
+                )}
               title={t(locale, 'recruiting.motivatorsBadgeTitle')}
             >
               {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
             </span>
             {row.topType != null && (
-              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.purpleLight }}>
+              <span className="text-[11px] font-mono text-brand-500">
                 {t(locale, 'recruiting.typeShort', { type: row.topType })}
               </span>
             )}
             {availabilityLabel(locale, row.availability) ? (
-              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+              <span className="text-[11px] font-mono text-ink-faint">
                 {availabilityLabel(locale, row.availability)}
               </span>
             ) : null}
             {sourceLabel(locale, row.source) ? (
-              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+              <span className="text-[11px] font-mono text-ink-faint">
                 {sourceLabel(locale, row.source)}
               </span>
             ) : null}
             {row.salaryExpectation ? (
-              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+              <span className="text-[11px] font-mono text-ink-faint">
                 {formatSalaryBr(row.salaryExpectation)}
               </span>
             ) : null}
           </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setExpanded((x) => !x)}
-            style={{
-              background: 'transparent',
-              border: `1px solid ${C.border}`,
-              borderRadius: '10px',
-              padding: '8px 10px',
-              color: C.muted,
-              fontSize: '12px',
-              cursor: 'pointer',
-              fontFamily: 'monospace',
-            }}
+            className="min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-xs text-ink-muted"
           >
             {expanded ? t(locale, 'recruiting.hideNotes') : t(locale, 'recruiting.notesActions')}
           </button>
@@ -330,18 +294,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 ? t(locale, 'recruiting.testAlreadyDone')
                 : t(locale, 'recruiting.sendEnneagramTitle')
             }
-            style={{
-              background: alreadyCompleted ? 'transparent' : `${C.synergy}18`,
-              border: `1px solid ${alreadyCompleted ? C.border : `${C.synergy}55`}`,
-              borderRadius: '10px',
-              padding: '8px 10px',
-              color: alreadyCompleted ? C.faint : C.synergy,
-              fontSize: '12px',
-              cursor: alreadyCompleted || anyInviteBusy ? 'default' : 'pointer',
-              fontFamily: 'monospace',
-              opacity: inviteBusy ? 0.6 : 1,
-              minHeight: '40px',
-            }}
+            className={cn(
+                  'min-h-touch rounded-control border px-2.5 py-2 font-mono text-xs',
+                  alreadyCompleted
+                    ? 'cursor-default border-ink/12 bg-transparent text-ink-muted'
+                    : 'border-success/35 bg-success/[0.09] text-success',
+                  inviteBusy ? 'cursor-default opacity-60' : !alreadyCompleted && 'cursor-pointer'
+                )}
           >
             {inviteBusy
               ? t(locale, 'recruiting.inviteSending')
@@ -360,18 +319,13 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                   ? t(locale, 'recruiting.motivatorsNeedEmail')
                   : t(locale, 'recruiting.sendMotivatorsTitle')
             }
-            style={{
-              background: motivatorsDone ? 'transparent' : `${C.purple}14`,
-              border: `1px solid ${motivatorsDone ? C.border : `${C.purple}44`}`,
-              borderRadius: '10px',
-              padding: '8px 10px',
-              color: motivatorsDone ? C.faint : C.purpleDeep,
-              fontSize: '12px',
-              cursor: anyInviteBusy || !row.email || motivatorsDone ? 'default' : 'pointer',
-              fontFamily: 'monospace',
-              opacity: motivatorsBusy || !row.email ? 0.6 : 1,
-              minHeight: '40px',
-            }}
+            className={cn(
+                  'min-h-touch rounded-control border px-2.5 py-2 font-mono text-xs',
+                  motivatorsDone
+                    ? 'cursor-default border-ink/12 bg-transparent text-ink-muted'
+                    : 'border-brand-500/25 bg-brand-500/[0.08] text-brand-500',
+                  motivatorsBusy ? 'cursor-default opacity-60' : !motivatorsDone && 'cursor-pointer'
+                )}
           >
             {motivatorsBusy
               ? t(locale, 'recruiting.inviteSending')
@@ -383,16 +337,16 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       </div>
 
       {expanded && (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+        <div className="mt-3 border-t border-ink/12 pt-3">
+          <div className="flex flex-wrap gap-2.5 mb-2.5">
             <input
               value={formatPhoneBr(phone)}
               onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
               placeholder={t(locale, 'recruiting.phonePh')}
               inputMode="tel"
-              style={inputStyle}
+              className={FIELD}
             />
-            <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
+            <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} className={FIELD} />
             <BrStateSelect
               value={stateUf}
               onChange={(uf) => {
@@ -400,23 +354,23 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 setCity('');
               }}
               locale={locale}
-              style={{ ...selectStyle, flex: '0 1 160px' }}
+              className={cn(FIELD_SELECT, 'flex-[0_1_160px]')}
             />
             <BrCitySelect
               uf={stateUf}
               value={city}
               onChange={setCity}
               locale={locale}
-              style={{ ...selectStyle, flex: '1 1 180px' }}
+              className={cn(FIELD_SELECT, 'flex-[1_1_180px]')}
             />
             <input
               value={formatSalaryBr(salaryExpectation)}
               onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
               placeholder={t(locale, 'recruiting.salaryPh')}
               inputMode="numeric"
-              style={inputStyle}
+              className={FIELD}
             />
-            <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.availabilityLabel')}>
+            <select value={availability} onChange={(e) => setAvailability(e.target.value)} className={FIELD_SELECT} aria-label={t(locale, 'recruiting.availabilityLabel')}>
               <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
               <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
               <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
@@ -424,7 +378,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
               <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
             </select>
-            <select value={source} onChange={(e) => setSource(e.target.value)} style={selectStyle} aria-label={t(locale, 'recruiting.sourceLabel')}>
+            <select value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_SELECT} aria-label={t(locale, 'recruiting.sourceLabel')}>
               <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
               <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
               <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
@@ -437,56 +391,30 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
             type="button"
             onClick={saveProfile}
             disabled={profileBusy}
-            style={{
-              background: `${C.purple}12`,
-              border: `1px solid ${C.purple}44`,
-              borderRadius: '10px',
-              padding: '8px 14px',
-              color: C.purple,
-              fontSize: '12px',
-              cursor: 'pointer',
-              fontFamily: 'monospace',
-              opacity: profileBusy ? 0.6 : 1,
-              marginBottom: '14px',
-            }}
+            className={cn(
+              'mb-3.5 min-h-touch cursor-pointer rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3.5 py-2 font-mono text-xs text-brand-500',
+              profileBusy && 'opacity-60'
+            )}
           >
             {profileBusy ? t(locale, 'recruiting.savingNotes') : t(locale, 'recruiting.saveProfile')}
           </button>
 
           <span
-            style={{
-              fontSize: '11px',
-              color: C.muted,
-              fontFamily: 'monospace',
-              display: 'block',
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-            }}
+            className="block mb-2 text-[11px] font-mono text-ink-muted uppercase tracking-[0.6px]"
           >
             {t(locale, 'recruiting.interviewNotesTitle')}
           </span>
           <RichTextEditor value={notes} onChange={setNotes} locale={locale} disabled={busy || notesAiBusy} />
-          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+          <div className="flex gap-2 mt-2.5">
             <button
               type="button"
               onClick={summarizeNotesWithAi}
               disabled={busy || notesAiBusy}
               aria-busy={notesAiBusy || undefined}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${C.purple}55`,
-                borderRadius: '10px',
-                padding: '8px 14px',
-                color: C.purple,
-                fontSize: '12px',
-                cursor: busy || notesAiBusy ? 'wait' : 'pointer',
-                fontFamily: 'monospace',
-                opacity: busy || notesAiBusy ? 0.6 : 1,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
+              className={cn(
+                'min-h-touch rounded-control border border-brand-500/35 bg-transparent px-3.5 py-2 font-mono text-xs text-brand-500',
+                busy || notesAiBusy ? 'cursor-default opacity-60' : 'cursor-pointer'
+              )}
             >
               {notesAiBusy ? (
                 <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.summarizeNotesAiWorking')} />
@@ -499,20 +427,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               onClick={saveNotes}
               disabled={busy || notesAiBusy}
               aria-busy={busy || undefined}
-              style={{
-                background: `${C.purple}18`,
-                border: `1px solid ${C.purple}55`,
-                borderRadius: '10px',
-                padding: '8px 14px',
-                color: C.purple,
-                fontSize: '12px',
-                cursor: busy || notesAiBusy ? 'wait' : 'pointer',
-                fontFamily: 'monospace',
-                opacity: busy || notesAiBusy ? 0.6 : 1,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
+              className={cn(
+                'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500',
+                busy || notesAiBusy ? 'cursor-default opacity-60' : 'cursor-pointer'
+              )}
             >
               {busy ? (
                 <AppLoading locale={locale} variant="button" label={t(locale, 'recruiting.savingNotes')} />
@@ -654,50 +572,36 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
 
   return (
     <div>
-      <span style={S.label}>{t(locale, 'recruiting.interviewCandidatesTitle')}</span>
-      <p style={{ fontSize: '12px', color: C.muted, marginTop: '8px', lineHeight: 1.55, marginBottom: '12px' }}>
+      <span className={S.label}>{t(locale, 'recruiting.interviewCandidatesTitle')}</span>
+      <p className="mt-2 mb-3 text-xs text-ink-muted leading-[1.55]">
         {t(locale, 'recruiting.interviewCandidatesIntro')}
       </p>
 
       <div
-        style={{
-          padding: '14px',
-          borderRadius: '12px',
-          border: `1px solid ${C.purple}33`,
-          background: `${C.purple}08`,
-          marginBottom: '14px',
-        }}
+        className="mb-3.5 rounded-xl border border-brand-500/20 bg-brand-500/[0.03] p-3.5"
       >
         <span
-          style={{
-            fontSize: '11px',
-            color: C.purpleLight,
-            fontFamily: 'monospace',
-            textTransform: 'uppercase',
-            letterSpacing: '0.6px',
-            display: 'block',
-            marginBottom: '10px',
-          }}
+          className="block mb-2.5 text-[11px] font-mono text-brand-500 uppercase tracking-[0.6px]"
         >
           {t(locale, 'recruiting.newCandidate')}
         </span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+        <div className="flex flex-wrap gap-2.5 mb-2.5">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => setName(titleCasePersonName(name))}
             placeholder={t(locale, 'recruiting.fullNamePh')}
-            style={inputStyle}
+            className={FIELD}
           />
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} style={{ ...inputStyle, flex: '1 1 220px' }} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} className={FIELD} />
           <input
             value={formatPhoneBr(phone)}
             onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
             placeholder={t(locale, 'recruiting.phonePh')}
             inputMode="tel"
-            style={inputStyle}
+            className={FIELD}
           />
-          <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} style={{ ...inputStyle, flex: '2 1 220px' }} />
+          <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} className={FIELD} />
           <BrStateSelect
             value={stateUf}
             onChange={(uf) => {
@@ -705,23 +609,23 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               setCity('');
             }}
             locale={locale}
-            style={{ ...selectStyle, flex: '0 1 160px' }}
+            className={cn(FIELD_SELECT, 'flex-[0_1_160px]')}
           />
           <BrCitySelect
             uf={stateUf}
             value={city}
             onChange={setCity}
             locale={locale}
-            style={{ ...selectStyle, flex: '1 1 180px' }}
+            className={cn(FIELD_SELECT, 'flex-[1_1_180px]')}
           />
           <input
             value={formatSalaryBr(salaryExpectation)}
             onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
             placeholder={t(locale, 'recruiting.salaryPh')}
             inputMode="numeric"
-            style={inputStyle}
+            className={FIELD}
           />
-          <select value={availability} onChange={(e) => setAvailability(e.target.value)} style={selectStyle}>
+          <select value={availability} onChange={(e) => setAvailability(e.target.value)} className={FIELD_SELECT}>
             <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
             <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
             <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
@@ -729,7 +633,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
             <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
           </select>
-          <select value={source} onChange={(e) => setSource(e.target.value)} style={selectStyle}>
+          <select value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_SELECT}>
             <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
             <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
             <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
@@ -745,49 +649,42 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           minHeight={100}
           locale={locale}
         />
-        <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '12px 18px' }}>
-          <label htmlFor="create-send-enneagram" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.muted, cursor: 'pointer' }}>
+        <div className="flex flex-wrap gap-[12px 18px] mt-2.5">
+          <label htmlFor="create-send-enneagram" className="flex items-center gap-2 text-xs text-ink-muted cursor-pointer">
             <input
               id="create-send-enneagram"
               name="sendEnneagramInvite"
               type="checkbox"
               checked={sendEnneagramInvite}
               onChange={(e) => setSendEnneagramInvite(e.target.checked)}
-              style={{ accentColor: C.purple }}
+              className="accent-brand-500"
             />
             {t(locale, 'recruiting.createSendEnneagram')}
           </label>
-          <label htmlFor="create-send-motivators" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.muted, cursor: 'pointer' }}>
+          <label htmlFor="create-send-motivators" className="flex items-center gap-2 text-xs text-ink-muted cursor-pointer">
             <input
               id="create-send-motivators"
               name="sendMotivatorsInvite"
               type="checkbox"
               checked={sendMotivatorsInvite}
               onChange={(e) => setSendMotivatorsInvite(e.target.checked)}
-              style={{ accentColor: C.purple }}
+              className="accent-brand-500"
             />
             {t(locale, 'recruiting.createSendMotivators')}
           </label>
-          <span style={{ flexBasis: '100%', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+          <span className="text-[11px] font-mono text-ink-faint">
             {t(locale, 'recruiting.createInvitesHint')}
           </span>
         </div>
-        <div style={{ marginTop: '10px' }}>
+        <div className="mt-2.5">
           <button
             type="button"
             onClick={create}
             disabled={creating || !name.trim() || !email.trim()}
-            style={{
-              background: `${C.purple}18`,
-              border: `1px solid ${C.purple}55`,
-              borderRadius: '10px',
-              padding: '9px 16px',
-              color: C.purple,
-              fontSize: '13px',
-              cursor: 'pointer',
-              fontFamily: 'monospace',
-              opacity: creating || !name.trim() || !email.trim() ? 0.55 : 1,
-            }}
+            className={cn(
+              'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-4 py-[9px] font-mono text-[13px] text-brand-500',
+              (creating || !name.trim() || !email.trim()) && 'opacity-55'
+            )}
           >
             {creating
               ? t(locale, 'recruiting.registeringCandidate')
@@ -795,26 +692,26 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           </button>
         </div>
         {createMsg ? (
-          <p style={{ marginTop: '8px', marginBottom: 0, color: C.synergy, fontSize: '11px', fontFamily: 'monospace' }}>
+          <p className="mb-0 mt-2 font-mono text-[11px] text-success">
             {createMsg}
           </p>
         ) : null}
       </div>
 
       {err ? (
-        <p style={{ marginBottom: '10px', color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{err}</p>
+        <p className="mb-2.5 text-xs font-mono text-danger">{err}</p>
       ) : null}
 
       {loading ? (
-        <p style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+        <p className="font-mono text-xs text-ink-muted">
           {t(locale, 'recruiting.loadingCandidates')}
         </p>
       ) : items.length === 0 ? (
-        <p style={{ fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
+        <p className="font-mono text-xs text-ink-faint">
           {t(locale, 'recruiting.noCandidatesYet')}
         </p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="flex flex-col gap-2.5">
           {items.map((row) => (
             <CandidateCard
               key={row.candidateId}

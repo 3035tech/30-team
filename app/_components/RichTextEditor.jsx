@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { t } from '../../lib/i18n';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 const FONT_SIZES = [
   { value: '12px', key: 'fontSizeSm' },
@@ -12,7 +13,10 @@ const FONT_SIZES = [
   { value: '18px', key: 'fontSizeXl' },
 ];
 
-function ToolbarButton({ label, title, onClick, style: extraStyle }) {
+const toolbarBtnClass =
+  'cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] px-2 py-1 font-mono text-[11px] leading-tight text-ink';
+
+function ToolbarButton({ label, title, onClick, className }) {
   return (
     <button
       type="button"
@@ -21,18 +25,7 @@ function ToolbarButton({ label, title, onClick, style: extraStyle }) {
         e.preventDefault();
         onClick();
       }}
-      style={{
-        background: 'rgba(26,22,37,.04)',
-        border: `1px solid ${C.border}`,
-        borderRadius: '6px',
-        padding: '4px 8px',
-        fontSize: '11px',
-        fontFamily: 'monospace',
-        color: C.text,
-        cursor: 'pointer',
-        lineHeight: 1.2,
-        ...extraStyle,
-      }}
+      className={cn(toolbarBtnClass, className)}
     >
       {label}
     </button>
@@ -46,17 +39,7 @@ function ToolbarSelect({ value, onChange, title, children }) {
       value={value}
       onMouseDown={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
-      style={{
-        background: 'rgba(26,22,37,.04)',
-        border: `1px solid ${C.border}`,
-        borderRadius: '6px',
-        padding: '4px 6px',
-        fontSize: '11px',
-        fontFamily: 'monospace',
-        color: C.text,
-        cursor: 'pointer',
-        maxWidth: '110px',
-      }}
+      className="max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] px-1.5 py-1 font-mono text-[11px] text-ink"
     >
       {children}
     </select>
@@ -66,6 +49,7 @@ function ToolbarSelect({ value, onChange, title, children }) {
 /**
  * Editor rico leve para notas livres.
  * Valor em HTML; onChange recebe HTML.
+ * Chrome (toolbar/shell) em Tailwind; body may keep minHeight style.
  */
 export function RichTextEditor({
   value,
@@ -117,7 +101,6 @@ export function RichTextEditor({
     document.execCommand('styleWithCSS', false, true);
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      // Sem seleção: aplica ao bloco atual via fontSize legado e troca o span
       document.execCommand('fontSize', false, '3');
     } else {
       document.execCommand('fontSize', false, '7');
@@ -152,36 +135,26 @@ export function RichTextEditor({
 
   return (
     <div
-      style={{
-        border: `1px solid ${C.border}`,
-        borderRadius: '10px',
-        overflow: 'hidden',
-        background: 'rgba(255,255,255,.85)',
-        opacity: disabled ? 0.72 : 1,
-        position: 'relative',
-      }}
+      className={cn(
+        'relative overflow-hidden rounded-control border border-ink/12 bg-white/85',
+        disabled && 'opacity-70'
+      )}
       aria-busy={disabled || undefined}
     >
       <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '8px',
-          borderBottom: `1px solid ${C.border}`,
-          background: 'rgba(26,22,37,.04)',
-          pointerEvents: disabled ? 'none' : 'auto',
-        }}
+        className={cn(
+          'flex flex-wrap items-center gap-1.5 border-b border-ink/12 bg-ink/[0.04] p-2',
+          disabled && 'pointer-events-none'
+        )}
       >
-        <ToolbarButton label="B" title={t(locale, 'editor.bold')} onClick={() => run('bold')} style={{ fontWeight: 700 }} />
-        <ToolbarButton label="I" title={t(locale, 'editor.italic')} onClick={() => run('italic')} style={{ fontStyle: 'italic' }} />
-        <ToolbarButton label="U" title={t(locale, 'editor.underline')} onClick={() => run('underline')} style={{ textDecoration: 'underline' }} />
+        <ToolbarButton label="B" title={t(locale, 'editor.bold')} onClick={() => run('bold')} className="font-bold" />
+        <ToolbarButton label="I" title={t(locale, 'editor.italic')} onClick={() => run('italic')} className="italic" />
+        <ToolbarButton label="U" title={t(locale, 'editor.underline')} onClick={() => run('underline')} className="underline" />
         <ToolbarButton
           label="S"
           title={t(locale, 'editor.strike')}
           onClick={() => run('strikeThrough')}
-          style={{ textDecoration: 'line-through' }}
+          className="line-through"
         />
         <ToolbarSelect
           value=""
@@ -215,19 +188,9 @@ export function RichTextEditor({
           onClick={() => run('removeFormat')}
         />
       </div>
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {isEmpty ? (
-          <span
-            style={{
-              position: 'absolute',
-              left: '14px',
-              top: '12px',
-              color: C.faint,
-              fontSize: '13px',
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              pointerEvents: 'none',
-            }}
-          >
+          <span className="pointer-events-none absolute left-3.5 top-3 font-display text-[13px] text-ink-faint">
             {ph}
           </span>
         ) : null}
@@ -241,17 +204,11 @@ export function RichTextEditor({
           onInput={emit}
           onBlur={emit}
           onKeyDown={onKeyDown}
-          className="rich-text-body"
-          style={{
-            minHeight,
-            padding: '12px 14px',
-            outline: 'none',
-            fontSize: '14px',
-            lineHeight: 1.55,
-            color: C.text,
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            cursor: disabled ? 'wait' : 'text',
-          }}
+          className={cn(
+            'rich-text-body px-3.5 py-3 font-display text-sm leading-[1.55] text-ink outline-none',
+            disabled ? 'cursor-wait' : 'cursor-text'
+          )}
+          style={{ minHeight }}
           suppressContentEditableWarning
         />
       </div>

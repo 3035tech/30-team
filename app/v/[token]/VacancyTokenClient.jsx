@@ -61,16 +61,7 @@ function VacancyEntryInner({ token, initial }) {
   return (
     <div>
       {isClosed ? (
-        <div
-          style={{
-            maxWidth: '660px',
-            margin: '24px auto 0',
-            padding: '0 24px',
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 2,
-          }}
-        >
+        <div className="relative z-[2] mx-auto mt-6 max-w-[660px] px-6 text-center">
           <a
             href="/j"
             className="mb-2 inline-block font-display text-[15px] text-brand-500"

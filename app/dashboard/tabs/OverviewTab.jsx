@@ -6,6 +6,7 @@ import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
+import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
 const FUNNEL_LABEL_KEYS = {
@@ -21,10 +22,19 @@ const FUNNEL_LABEL_KEYS = {
 
 const FUNNEL_COLORS = { ...PIPELINE_STAGE_COLORS };
 
-const PRIORITY_STYLE = {
-  high: { color: C.danger, bg: 'rgba(220,38,38,.08)', border: 'rgba(220,38,38,.25)' },
-  medium: { color: C.warning, bg: 'rgba(217,119,6,.08)', border: 'rgba(217,119,6,.25)' },
-  low: { color: C.muted, bg: 'rgba(26,22,37,.04)', border: C.border },
+const PRIORITY_CLASS = {
+  high: {
+    card: 'border-danger/25 bg-danger/[0.08]',
+    label: 'text-danger',
+  },
+  medium: {
+    card: 'border-warning/25 bg-warning/[0.08]',
+    label: 'text-warning',
+  },
+  low: {
+    card: 'border-ink/12 bg-ink/[0.04]',
+    label: 'text-ink-muted',
+  },
 };
 
 function filterChips(locale, filters = {}) {
@@ -50,29 +60,19 @@ function StatTile({ value, label, color, onClick }) {
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      style={{
-        textAlign: 'left',
-        background: C.card,
-        border: `1px solid ${color ? `${color}35` : C.border}`,
-        borderRadius: '14px',
-        padding: '16px 18px',
-        cursor: onClick ? 'pointer' : 'default',
-        minWidth: 0,
-      }}
+      className={cn(
+        'min-w-0 rounded-[14px] border border-ink/12 bg-white px-[18px] py-4 text-left',
+        onClick ? 'cursor-pointer' : 'cursor-default'
+      )}
+      style={color ? { borderColor: `${color}35` } : undefined}
     >
-      <div style={{ fontSize: '26px', color: color || C.text, fontFamily: "'Georgia',serif", lineHeight: 1.1 }}>
+      <div
+        className="font-display text-[26px] leading-tight text-ink"
+        style={color ? { color } : undefined}
+      >
         {value}
       </div>
-      <div
-        style={{
-          marginTop: '6px',
-          fontSize: '11px',
-          color: C.muted,
-          fontFamily: 'monospace',
-          textTransform: 'uppercase',
-          letterSpacing: '0.8px',
-        }}
-      >
+      <div className="mt-1.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
         {label}
       </div>
     </button>
@@ -120,93 +120,76 @@ export function OverviewTab({
   const maxReason = Math.max(...reasons.map((r) => r.n), 1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       {data.error ? (
-        <p style={{ ...S.muted, color: '#b91c1c', margin: 0 }}>{t(locale, 'panel.overview.loadError')}</p>
+        <p className="m-0 text-danger">{t(locale, 'panel.overview.loadError')}</p>
       ) : null}
-      <div className="rounded-card border border-ink/12 bg-white p-5 sm:px-6">
-        <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.15em] text-ink-label">
+      <div className={cn(S.card, 'p-5 sm:px-6')}>
+        <span className={S.label}>
           {t(locale, 'dashboard.overview')}
         </span>
         <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
           {t(locale, 'panel.overview.intro')}
         </p>
         {chips.length > 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+          <div className="mt-3 flex flex-wrap gap-2">
             {chips.map((c) => (
               <span
                 key={c}
-                style={{
-                  fontSize: '11px',
-                  fontFamily: 'monospace',
-                  padding: '4px 10px',
-                  borderRadius: '999px',
-                  border: `1px solid ${C.border}`,
-                  color: C.muted,
-                  background: 'rgba(26,22,37,.03)',
-                }}
+                className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-[11px] text-ink-muted"
               >
                 {c}
               </span>
             ))}
           </div>
         ) : (
-          <p style={{ margin: '10px 0 0', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
+          <p className="mt-2.5 mb-0 font-mono text-xs text-ink-faint">
             {t(locale, 'panel.overview.noFilterChip')}
           </p>
         )}
       </div>
 
-      <div style={S.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <span style={S.label}>{t(locale, 'panel.overview.attentionTitle')}</span>
-          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+      <div className={S.card}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className={cn(S.label, 'mb-0')}>
+            {t(locale, 'panel.overview.attentionTitle')}
+          </span>
+          <span className="font-mono text-[11px] text-ink-muted">
             {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
           </span>
         </div>
         {(data.attention || []).length === 0 ? (
-          <p style={{ margin: 0, fontSize: '13px', color: C.muted, fontStyle: 'italic' }}>
+          <p className="m-0 text-[13px] italic text-ink-muted">
             {t(locale, 'panel.overview.attentionEmpty')}
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="flex flex-col gap-2">
             {(data.attention || []).map((item) => {
-              const pr = PRIORITY_STYLE[item.priority] || PRIORITY_STYLE.low;
+              const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => item.nav && go(item.nav)}
-                  style={{
-                    textAlign: 'left',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    border: `1px solid ${pr.border}`,
-                    background: pr.bg,
-                    cursor: item.nav ? 'pointer' : 'default',
-                  }}
+                  className={cn(
+                    'flex flex-wrap items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left',
+                    pr.card,
+                    item.nav ? 'cursor-pointer' : 'cursor-default'
+                  )}
                 >
                   <span
-                    style={{
-                      fontSize: '10px',
-                      fontFamily: 'monospace',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.8px',
-                      color: pr.color,
-                      minWidth: '52px',
-                    }}
+                    className={cn(
+                      'min-w-[52px] font-mono text-[10px] uppercase tracking-wide',
+                      pr.label
+                    )}
                   >
                     {t(locale, `panel.overview.priority.${item.priority}`)}
                   </span>
-                  <span style={{ fontSize: '13px', color: C.text, flex: '1 1 180px' }}>
+                  <span className="min-w-0 flex-[1_1_180px] text-[13px] text-ink">
                     {t(locale, item.titleKey)}
                   </span>
-                  <span style={{ fontSize: '12px', color: C.muted, flex: '1 1 160px' }}>{item.context}</span>
-                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.faint }}>
+                  <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
+                  <span className="font-mono text-[11px] text-ink-faint">
                     {t(locale, 'panel.overview.daysAgo', { n: item.days ?? 0 })}
                   </span>
                 </button>
@@ -217,16 +200,10 @@ export function OverviewTab({
       </div>
 
       <div>
-        <span style={{ ...S.label, marginBottom: '10px', display: 'block' }}>
+        <span className={cn(S.label, 'mb-2.5')}>
           {t(locale, 'panel.overview.funnelTitle')}
         </span>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '10px',
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5">
           {OVERVIEW_FUNNEL_STAGES.filter((s) => s !== 'archived' || (data.funnel.archived || 0) > 0).map((stage) => (
             <StatTile
               key={stage}
@@ -238,16 +215,9 @@ export function OverviewTab({
           ))}
         </div>
         {funnelActive.length > 0 ? (
-          <div style={{ marginTop: '12px' }}>
+          <div className="mt-3">
             <div
-              style={{
-                display: 'flex',
-                height: '10px',
-                borderRadius: '999px',
-                overflow: 'hidden',
-                border: `1px solid ${C.border}`,
-                background: 'rgba(26,22,37,.04)',
-              }}
+              className="flex h-2.5 overflow-hidden rounded-full border border-ink/12 bg-ink/[0.04]"
               title={t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
             >
               {funnelActive.map((stage) => (
@@ -261,79 +231,72 @@ export function OverviewTab({
                 />
               ))}
             </div>
-            <p style={{ margin: '8px 0 0', fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>
+            <p className="mt-2 mb-0 font-mono text-[11px] text-ink-faint">
               {t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
             </p>
           </div>
         ) : null}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-        <div style={S.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={S.label}>{t(locale, 'panel.overview.vacanciesTitle')}</span>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5">
+        <div className={S.card}>
+          <div className="mb-3 flex items-center justify-between">
+            <span className={cn(S.label, 'mb-0')}>
+              {t(locale, 'panel.overview.vacanciesTitle')}
+            </span>
             <button
               type="button"
               onClick={() => go({ tab: 'vacancies' })}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: C.purple,
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                cursor: 'pointer',
-              }}
+              className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
             >
               {t(locale, 'panel.overview.openVacancies')}
             </button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '14px' }}>
+          <div className="mb-3.5 flex flex-wrap gap-4">
             <div>
-              <div style={{ fontSize: '22px', color: C.text }}>{data.vacancies?.openCount ?? 0}</div>
-              <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="text-[22px] text-ink">{data.vacancies?.openCount ?? 0}</div>
+              <div className="font-mono text-[11px] text-ink-muted">
                 {t(locale, 'panel.overview.vacanciesOpen')}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '22px', color: '#d97706' }}>{data.vacancies?.positionsOpen ?? 0}</div>
-              <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="text-[22px] text-warning">{data.vacancies?.positionsOpen ?? 0}</div>
+              <div className="font-mono text-[11px] text-ink-muted">
                 {t(locale, 'panel.overview.positionsLeft')}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '22px', color: C.tension }}>{data.vacancies?.staleCount ?? 0}</div>
-              <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="text-[22px] text-danger">{data.vacancies?.staleCount ?? 0}</div>
+              <div className="font-mono text-[11px] text-ink-muted">
                 {t(locale, 'panel.overview.staleVacancies')}
               </div>
             </div>
           </div>
           {(data.vacancies?.items || []).length === 0 ? (
-            <p style={{ margin: 0, fontSize: '13px', color: C.faint, fontStyle: 'italic' }}>
+            <p className="m-0 text-[13px] italic text-ink-faint">
               {t(locale, 'panel.overview.vacanciesEmpty')}
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="flex flex-col gap-2">
               {(data.vacancies.items || []).map((v) => (
                 <button
                   key={v.id}
                   type="button"
                   onClick={() => go({ tab: 'vacancies', vacancyDetail: String(v.id) })}
-                  style={{
-                    textAlign: 'left',
-                    background: 'rgba(26,22,37,.03)',
-                    border: `1px solid ${C.border}`,
-                    borderRadius: '10px',
-                    padding: '10px 12px',
-                    cursor: 'pointer',
-                  }}
+                  className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5 text-left"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '13px', color: C.text }}>{v.title}</span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted }}>
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <span className="text-[13px] text-ink">{v.title}</span>
+                    <span className="font-mono text-[11px] text-ink-muted">
                       {v.hired}/{v.positionsCount} · {t(locale, 'panel.overview.inFunnel', { n: v.inFunnel })}
                     </span>
                   </div>
-                  <div style={{ marginTop: '4px', fontSize: '11px', color: v.stale ? C.tension : C.faint, fontFamily: 'monospace' }}>
+                  <div
+                    className={cn(
+                      'mt-1 font-mono text-[11px]',
+                      v.stale ? 'text-danger' : 'text-ink-faint'
+                    )}
+                  >
                     {v.targetDate
                       ? t(locale, 'panel.overview.targetDate', { date: v.targetDate })
                       : t(locale, 'panel.overview.noTarget')}
@@ -345,49 +308,47 @@ export function OverviewTab({
           )}
         </div>
 
-        <div style={S.card}>
-          <span style={{ ...S.label, marginBottom: '12px', display: 'block' }}>
+        <div className={S.card}>
+          <span className={S.label}>
             {t(locale, 'panel.overview.decisionsTitle')}
           </span>
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div className="mb-4 flex flex-wrap gap-5">
             <div>
-              <div style={{ fontSize: '22px', color: C.synergy }}>{data.hiredLast7d}</div>
-              <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="text-[22px] text-success">{data.hiredLast7d}</div>
+              <div className="font-mono text-[11px] text-ink-muted">
                 {t(locale, 'panel.overview.hired7d')}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '22px', color: C.tension }}>{data.rejectedLast7d}</div>
-              <div style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="text-[22px] text-danger">{data.rejectedLast7d}</div>
+              <div className="font-mono text-[11px] text-ink-muted">
                 {t(locale, 'panel.overview.rejected7d')}
               </div>
             </div>
           </div>
-          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: C.muted, letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
             {t(locale, 'panel.overview.topRejectReasons')}
           </span>
           {reasons.length === 0 ? (
-            <p style={{ margin: '10px 0 0', fontSize: '13px', color: C.faint, fontStyle: 'italic' }}>
+            <p className="mt-2.5 mb-0 text-[13px] italic text-ink-faint">
               {t(locale, 'panel.overview.noRejectReasons')}
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+            <div className="mt-2.5 flex flex-col gap-2.5">
               {reasons.map((r) => (
-                <div key={r.reason} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '120px', fontSize: '12px', color: C.muted, flexShrink: 0 }}>
+                <div key={r.reason} className="flex items-center gap-2.5">
+                  <span className="w-[120px] shrink-0 text-xs text-ink-muted">
                     {rejectionReasonLabel(locale, r.reason)}
                   </span>
-                  <div style={{ flex: 1, height: '8px', borderRadius: '999px', background: 'rgba(26,22,37,.06)', overflow: 'hidden' }}>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
                     <div
+                      className="h-full rounded-full bg-danger"
                       style={{
                         width: `${Math.round((r.n / maxReason) * 100)}%`,
-                        height: '100%',
-                        background: C.tension,
-                        borderRadius: '999px',
                       }}
                     />
                   </div>
-                  <span style={{ fontSize: '12px', fontFamily: 'monospace', color: C.faint, width: '24px', textAlign: 'right' }}>
+                  <span className="w-6 text-right font-mono text-xs text-ink-faint">
                     {r.n}
                   </span>
                 </div>
@@ -397,40 +358,26 @@ export function OverviewTab({
         </div>
       </div>
 
-      <div style={{ ...S.card, background: `${C.purple}0A`, border: `1px solid ${C.purple}22` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <span style={S.label}>{t(locale, 'panel.overview.typeMixTitle')}</span>
+      <div className={cn(S.card, 'border-brand-500/15 bg-brand-500/[0.04]')}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className={cn(S.label, 'mb-0')}>
+            {t(locale, 'panel.overview.typeMixTitle')}
+          </span>
           <button
             type="button"
             onClick={() => go({ tab: 'compatibility' })}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: C.purple,
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              cursor: 'pointer',
-            }}
+            className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
           >
             {t(locale, 'panel.overview.openCompat')}
           </button>
         </div>
         {mixEntries.length === 0 ? (
-          <p style={{ margin: 0, fontSize: '13px', color: C.faint, fontStyle: 'italic' }}>
+          <p className="m-0 text-[13px] italic text-ink-faint">
             {t(locale, 'panel.overview.typeMixEmpty')}
           </p>
         ) : (
           <>
-            <div
-              style={{
-                display: 'flex',
-                height: '12px',
-                borderRadius: '999px',
-                overflow: 'hidden',
-                border: `1px solid ${C.border}`,
-                marginBottom: '12px',
-              }}
-            >
+            <div className="mb-3 flex h-3 overflow-hidden rounded-full border border-ink/12">
               {mixEntries.map((e) => (
                 <div
                   key={e.type}
@@ -442,12 +389,12 @@ export function OverviewTab({
                 />
               ))}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center' }}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
               {mixEntries.slice(0, 5).map((e) => (
                 <span
                   key={e.type}
                   title={typeHintTooltip(e.type, locale)}
-                  style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace', cursor: 'help' }}
+                  className="cursor-help font-mono text-xs text-ink-muted"
                 >
                   <span style={{ color: TYPE_DATA[e.type]?.color }}>T{e.type}</span>
                   {' · '}
@@ -456,7 +403,7 @@ export function OverviewTab({
               ))}
             </div>
             {dominant ? (
-              <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.5 }}>
+              <p className="mt-3 mb-0 text-xs leading-snug text-ink-muted">
                 {t(locale, 'panel.overview.dominantHint', {
                   type: typeFullName(dominant, locale),
                   n: mixCount[dominant] || mixCount[String(dominant)] || 0,

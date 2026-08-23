@@ -1,16 +1,183 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { publicCompanyPath } from '../../../lib/public-job-url';
 import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { EmptyState } from '../../_components/EmptyState';
+import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
+
+const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
+const FIELD_INPUT =
+  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
+const BTN_PRIMARY =
+  'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
+const BTN_GHOST =
+  'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
+const BTN_ROW =
+  'rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
+const BTN_PAGER = 'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
+const DIALOG_BTN_GHOST =
+  'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted disabled:cursor-default disabled:opacity-60';
+const DIALOG_BTN_PRIMARY =
+  'inline-flex cursor-pointer items-center gap-2 rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-[13px] text-white disabled:cursor-default disabled:opacity-60';
+
+/** Minimal logo upload/preview for company drawer (create = local file; edit = POST/DELETE). */
+function CompanyLogoField({
+  locale,
+  previewUrl,
+  storageConfigured,
+  uploadUrl,
+  busy,
+  error,
+  disabled,
+  onLocalFile,
+  onPreviewUrl,
+  onBusy,
+  onError,
+}) {
+  const blobUrlsRef = useRef([]);
+
+  useEffect(() => () => {
+    for (const u of blobUrlsRef.current) {
+      try { URL.revokeObjectURL(u); } catch { /* ignore */ }
+    }
+    blobUrlsRef.current = [];
+  }, []);
+
+  const off = storageConfigured === false;
+  const preview = String(previewUrl || '').trim();
+
+  const onFile = async (file) => {
+    if (!file) return;
+    onError?.('');
+    if (uploadUrl && storageConfigured !== false) {
+      onBusy?.(true);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(uploadUrl, { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
+        onLocalFile?.(null);
+        onPreviewUrl?.(data.logoUrl || data.url || '');
+      } catch (e) {
+        onError?.(e?.message || t(locale, 'panel.common.error'));
+      } finally {
+        onBusy?.(false);
+      }
+      return;
+    }
+    const localUrl = URL.createObjectURL(file);
+    blobUrlsRef.current.push(localUrl);
+    onLocalFile?.(file);
+    onPreviewUrl?.(localUrl);
+  };
+
+  const onRemove = async () => {
+    onError?.('');
+    if (uploadUrl && storageConfigured !== false) {
+      onBusy?.(true);
+      try {
+        const res = await fetch(uploadUrl, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+        onLocalFile?.(null);
+        onPreviewUrl?.('');
+      } catch (e) {
+        onError?.(e?.message || t(locale, 'panel.common.error'));
+      } finally {
+        onBusy?.(false);
+      }
+      return;
+    }
+    onLocalFile?.(null);
+    onPreviewUrl?.('');
+  };
+
+  const blocked = off || busy || disabled;
+
+  return (
+    <div>
+      <span className="font-mono text-[11px] text-ink-faint">
+        {t(locale, 'panel.admin.companyLogoUpload')}
+      </span>
+      <div className="mt-1.5 flex flex-wrap items-center gap-3">
+        <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-ink/12 bg-ink/[0.03]">
+          {preview ? (
+            <img src={preview} alt="" width={72} height={72} className="object-contain" />
+          ) : (
+            <span className="font-mono text-[10px] text-ink-faint">—</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <label
+            className={cn(
+              DIALOG_BTN_GHOST,
+              'm-0 inline-flex min-h-touch items-center justify-center px-3 py-2',
+              blocked ? 'cursor-not-allowed opacity-55' : 'cursor-pointer'
+            )}
+          >
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={blocked}
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) void onFile(file);
+              }}
+            />
+            {busy
+              ? t(locale, 'panel.admin.companyLogoUploading')
+              : t(locale, 'panel.admin.companyLogoChoose')}
+          </label>
+          {preview ? (
+            <button
+              type="button"
+              disabled={blocked}
+              onClick={() => void onRemove()}
+              className={cn(DIALOG_BTN_GHOST, 'min-h-touch', blocked && 'opacity-55')}
+            >
+              {t(locale, 'panel.admin.companyLogoRemove')}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {off ? (
+        <p className="mb-0 mt-2 text-xs leading-snug text-ink-muted">
+          {t(locale, 'panel.admin.companyLogoStorageOff')}
+        </p>
+      ) : (
+        <p className="mb-0 mt-2 text-xs leading-snug text-ink-muted">
+          {t(locale, 'panel.admin.companyLogoHint')}
+        </p>
+      )}
+      {error ? (
+        <p className="mb-0 mt-2 text-xs leading-snug text-danger">{error}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function emptyCompanyForm() {
+  return {
+    name: '',
+    slug: '',
+    website: '',
+    aboutHtml: '',
+    publicProfileEnabled: false,
+    active: true,
+  };
+}
 
 export function CompaniesAdminTab({ navigateDashboard, locale }) {
-  const { confirm, promptForm } = useAppFeedback();
+  const { confirm } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
@@ -25,6 +192,15 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [logoStorageConfigured, setLogoStorageConfigured] = useState(false);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+
+  const [drawerMode, setDrawerMode] = useState(null); // null | 'create' | 'edit'
+  const [editingCompany, setEditingCompany] = useState(null);
+  const [form, setForm] = useState(emptyCompanyForm);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
+  const [pendingLogoFile, setPendingLogoFile] = useState(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const [formSaving, setFormSaving] = useState(false);
 
   const toggleCompanySort = (col) => {
     if (!navigateDashboard) return;
@@ -66,98 +242,108 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     loadCompanies();
   }, [spKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const openCreateCompany = async () => {
-    const values = await promptForm({
-      title: t(locale, 'panel.admin.createCompanyTitle'),
-      message: t(locale, 'panel.admin.createCompanyHelp'),
-      confirmLabel: t(locale, 'panel.admin.create'),
-      fields: [
-        {
-          key: 'name',
-          label: t(locale, 'panel.admin.editCompanyName'),
-          placeholder: t(locale, 'panel.admin.companiesNamePlaceholder'),
-          defaultValue: '',
-        },
-        {
-          key: 'slug',
-          label: t(locale, 'panel.admin.editCompanySlug'),
-          placeholder: t(locale, 'panel.admin.companySlugPlaceholder'),
-          help: t(locale, 'panel.admin.companySlugHelp'),
-          defaultValue: '',
-        },
-        {
-          key: 'website',
-          label: t(locale, 'panel.admin.editCompanyWebsite'),
-          placeholder: t(locale, 'panel.admin.editCompanyWebsitePh'),
-          defaultValue: '',
-        },
-        {
-          key: 'logo',
-          type: 'imageUpload',
-          label: t(locale, 'panel.admin.companyLogoUpload'),
-          help: t(locale, 'panel.admin.companyLogoHint'),
-          defaultValue: '',
-          storageConfigured: logoStorageConfigured,
-          storageOffHelp: t(locale, 'panel.admin.companyLogoStorageOff'),
-          uploadLabel: t(locale, 'panel.admin.companyLogoChoose'),
-          removeLabel: t(locale, 'panel.admin.companyLogoRemove'),
-          uploadingLabel: t(locale, 'panel.admin.companyLogoUploading'),
-        },
-        {
-          key: 'publicProfileEnabled',
-          type: 'boolean',
-          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
-          help: t(locale, 'panel.admin.editCompanyPublicProfileHelp'),
-          defaultValue: false,
-        },
-        {
-          key: 'aboutHtml',
-          type: 'textarea',
-          label: t(locale, 'panel.admin.editCompanyAbout'),
-          placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
-          help: t(locale, 'panel.admin.editCompanyAboutHelp'),
-          rows: 3,
-          defaultValue: '',
-        },
-      ],
+
+  const setFormField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const closeDrawer = () => {
+    setDrawerMode(null);
+    setEditingCompany(null);
+    setForm(emptyCompanyForm());
+    setLogoPreviewUrl('');
+    setPendingLogoFile(null);
+    setLogoBusy(false);
+    setLogoError('');
+    setFormSaving(false);
+  };
+
+  const openCreateCompany = () => {
+    setEditingCompany(null);
+    setForm(emptyCompanyForm());
+    setLogoPreviewUrl('');
+    setPendingLogoFile(null);
+    setLogoError('');
+    setDrawerMode('create');
+  };
+
+  const editCompany = (c) => {
+    setEditingCompany(c);
+    setForm({
+      name: c?.name ?? '',
+      slug: c?.slug ?? '',
+      website: c?.website ?? '',
+      aboutHtml: c?.aboutHtml ?? '',
+      publicProfileEnabled: Boolean(c?.publicProfileEnabled),
+      active: Boolean(c?.active),
     });
-    if (!values) return;
-    const nextName = String(values.name || '').trim();
+    setLogoPreviewUrl(c?.logoUrl ?? '');
+    setPendingLogoFile(null);
+    setLogoError('');
+    setDrawerMode('edit');
+  };
+
+  const submitCompanyForm = async () => {
+    const nextName = String(form.name || '').trim();
     if (!nextName) return;
-    setLoading(true);
+
+    setFormSaving(true);
     setError('');
+    setMsg('');
     try {
-      const res = await fetch('/api/admin/companies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: nextName,
-          slug: String(values.slug || '').trim() || undefined,
-          website: String(values.website || '').trim() || null,
-          aboutHtml: String(values.aboutHtml || '').trim() || null,
-          publicProfileEnabled: values.publicProfileEnabled === true || values.publicProfileEnabled === 'true',
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
-      const pendingLogo = values.logo?.file;
-      if (pendingLogo && data?.id && logoStorageConfigured) {
-        const fd = new FormData();
-        fd.append('file', pendingLogo);
-        const up = await fetch(`/api/admin/companies/${encodeURIComponent(data.id)}/logo`, {
+      if (drawerMode === 'create') {
+        const res = await fetch('/api/admin/companies', {
           method: 'POST',
-          body: fd,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nextName,
+            slug: String(form.slug || '').trim() || undefined,
+            website: String(form.website || '').trim() || null,
+            aboutHtml: String(form.aboutHtml || '').trim() || null,
+            publicProfileEnabled: form.publicProfileEnabled === true,
+          }),
         });
-        const upData = await up.json().catch(() => ({}));
-        if (!up.ok) throw new Error(upData?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
+        if (pendingLogoFile && data?.id && logoStorageConfigured) {
+          const fd = new FormData();
+          fd.append('file', pendingLogoFile);
+          const up = await fetch(`/api/admin/companies/${encodeURIComponent(data.id)}/logo`, {
+            method: 'POST',
+            body: fd,
+          });
+          const upData = await up.json().catch(() => ({}));
+          if (!up.ok) throw new Error(upData?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
+        }
+        setMsg(t(locale, 'panel.admin.companyCreated'));
+        closeDrawer();
+        await loadCompanies();
+        setTimeout(() => setMsg(''), 1600);
+        return;
       }
-      setMsg(t(locale, 'panel.admin.companyCreated'));
-      await loadCompanies();
-      setTimeout(() => setMsg(''), 1600);
+
+      if (drawerMode === 'edit' && editingCompany?.id) {
+        const res = await fetch(`/api/admin/companies/${encodeURIComponent(editingCompany.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nextName,
+            slug: String(form.slug || '').trim(),
+            active: form.active === true,
+            website: String(form.website || '').trim() || null,
+            aboutHtml: String(form.aboutHtml || '').trim() || null,
+            publicProfileEnabled: form.publicProfileEnabled === true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));
+        setMsg(t(locale, 'panel.admin.companyUpdated'));
+        closeDrawer();
+        await loadCompanies();
+        setTimeout(() => setMsg(''), 1600);
+      }
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
-      setLoading(false);
+      setFormSaving(false);
     }
   };
 
@@ -199,99 +385,6 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
     }
   };
 
-  const editCompany = async (c) => {
-    const values = await promptForm({
-      title: t(locale, 'panel.admin.editCompanyTitle'),
-      message: t(locale, 'panel.admin.editCompanyHelp'),
-      confirmLabel: t(locale, 'panel.common.save'),
-      fields: [
-        { key: 'name', label: t(locale, 'panel.admin.editCompanyName'), defaultValue: c?.name ?? '' },
-        {
-          key: 'slug',
-          label: t(locale, 'panel.admin.editCompanySlug'),
-          placeholder: t(locale, 'panel.admin.companySlugPlaceholder'),
-          help: t(locale, 'panel.admin.companySlugHelp'),
-          defaultValue: c?.slug ?? '',
-        },
-        {
-          key: 'website',
-          label: t(locale, 'panel.admin.editCompanyWebsite'),
-          placeholder: t(locale, 'panel.admin.editCompanyWebsitePh'),
-          defaultValue: c?.website ?? '',
-        },
-        {
-          key: 'logo',
-          type: 'imageUpload',
-          label: t(locale, 'panel.admin.companyLogoUpload'),
-          help: t(locale, 'panel.admin.companyLogoHint'),
-          defaultValue: c?.logoUrl ?? '',
-          uploadUrl: `/api/admin/companies/${encodeURIComponent(c.id)}/logo`,
-          storageConfigured: logoStorageConfigured,
-          storageOffHelp: t(locale, 'panel.admin.companyLogoStorageOff'),
-          uploadLabel: t(locale, 'panel.admin.companyLogoChoose'),
-          removeLabel: t(locale, 'panel.admin.companyLogoRemove'),
-          uploadingLabel: t(locale, 'panel.admin.companyLogoUploading'),
-        },
-        {
-          key: 'publicProfileEnabled',
-          type: 'boolean',
-          label: t(locale, 'panel.admin.editCompanyPublicProfile'),
-          help: t(locale, 'panel.admin.editCompanyPublicProfileHelp'),
-          defaultValue: Boolean(c?.publicProfileEnabled),
-        },
-        {
-          key: 'aboutHtml',
-          type: 'textarea',
-          label: t(locale, 'panel.admin.editCompanyAbout'),
-          placeholder: t(locale, 'panel.admin.editCompanyAboutPh'),
-          help: t(locale, 'panel.admin.editCompanyAboutHelp'),
-          rows: 3,
-          defaultValue: c?.aboutHtml ?? '',
-        },
-        {
-          key: 'active',
-          type: 'boolean',
-          label: t(locale, 'panel.admin.editCompanyActive'),
-          defaultValue: Boolean(c?.active),
-        },
-      ],
-    });
-    if (!values) return;
-    const nextName = String(values.name || '').trim();
-    const nextSlug = String(values.slug || '').trim();
-    const nextActive = values.active === true || values.active === 'true';
-    const nextPublicProfile =
-      values.publicProfileEnabled === true || values.publicProfileEnabled === 'true';
-
-    setLoading(true);
-    setError('');
-    setMsg('');
-    try {
-      const res = await fetch(`/api/admin/companies/${encodeURIComponent(c.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: nextName,
-          slug: nextSlug,
-          active: nextActive,
-          website: String(values.website || '').trim() || null,
-          aboutHtml: String(values.aboutHtml || '').trim() || null,
-          publicProfileEnabled: nextPublicProfile,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));
-      setMsg(t(locale, 'panel.admin.companyUpdated'));
-      await loadCompanies();
-      setTimeout(() => setMsg(''), 1600);
-    } catch (e) {
-      setError(e?.message || t(locale, 'panel.common.error'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -306,37 +399,35 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       {error ? (
-        <div style={{ ...S.card, padding: '14px 18px' }}>
-          <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
+        <div className={cn(S.card, 'px-[18px] py-3.5')}>
+          <p className="m-0 font-mono text-xs text-danger">{error}</p>
         </div>
       ) : null}
       {msg ? (
-        <div style={{ ...S.card, padding: '14px 18px' }}>
-          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{msg}</p>
+        <div className={cn(S.card, 'px-[18px] py-3.5')}>
+          <p className="m-0 font-mono text-xs text-success">{msg}</p>
         </div>
       ) : null}
 
-      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>{t(locale, 'panel.admin.companiesTitle')}</span>
-      <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>{t(locale, 'panel.admin.companiesRegister')}</span>
-        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.companiesTitle')}</span>
+      <div className={cn(S.card, 'px-7 py-[22px]')}>
+        <span className={S.label}>{t(locale, 'panel.admin.companiesRegister')}</span>
+        <p className="mb-0 mt-2.5 text-[13px] leading-relaxed text-ink-muted">
           {t(locale, 'panel.admin.companiesRegisterDesc')}
         </p>
       </div>
 
-      <div style={{ ...S.card }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.admin.companiesList')}</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className={S.card}>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.companiesList')}</span>
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={openCreateCompany}
               disabled={loading}
-              style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+              className={cn(BTN_PRIMARY, loading && 'opacity-60')}
             >
               {t(locale, 'panel.admin.newCompanyBtn')}
             </button>
@@ -344,29 +435,32 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               type="button"
               onClick={loadCompanies}
               disabled={loading}
-              style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+              className={cn(BTN_GHOST, loading && 'opacity-60')}
             >
               {t(locale, 'panel.admin.refresh')}
             </button>
           </div>
         </div>
         {companiesTotal === 0 ? (
-          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            {t(locale, 'panel.admin.noCompaniesYet')}
-          </p>
+          <div className="mt-3">
+            <EmptyState
+              message={t(locale, 'panel.admin.noCompaniesYet')}
+              actionLabel={t(locale, 'panel.admin.createCompanyTitle')}
+              onAction={openCreateCompany}
+              actionDisabled={loading}
+            />
+          </div>
         ) : (
-          <div style={{ marginTop: '10px', overflowX: 'auto' }} className="db-table-scroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '720px' }}>
+          <div className="db-table-scroll mt-2.5 overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-xs">
               <thead>
-                <tr style={{ background: 'rgba(26,22,37,.02)' }}>
+                <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
                   <SortableTh columnKey="name" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colName')}</SortableTh>
                   <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
-                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>{t(locale, 'panel.admin.colLinkActions')}</th>
+                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">{t(locale, 'panel.admin.colLinkActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -379,53 +473,51 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
                   const createdAt = c.createdAt ? new Date(c.createdAt) : null;
                   return (
-                    <tr key={c.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)', verticalAlign: 'top' }}>
-                      <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{c.id}</td>
-                      <td style={{ padding: '12px', color: C.text }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <tr key={c.id} className="align-top border-b border-ink/[0.07]">
+                      <td className="px-3 py-3 font-mono text-ink-faint">#{c.id}</td>
+                      <td className="px-3 py-3 text-ink">
+                        <div className="flex items-center gap-2.5">
                           {c.logoUrl ? (
                             <img
                               src={c.logoUrl}
                               alt=""
                               width={28}
                               height={28}
-                              style={{ objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }}
+                              className="shrink-0 rounded-md object-contain"
                             />
                           ) : null}
                           <span>{c.name}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.slug}</td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
-                      <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                      <td className="px-3 py-3 font-mono text-ink-muted">{c.slug}</td>
+                      <td className="px-3 py-3 font-mono text-ink-muted">{c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
+                      <td className="whitespace-nowrap px-3 py-3 font-mono text-ink-faint">
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <div style={{ marginBottom: '8px', fontSize: '11px', color: C.muted, fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'left' }}>
+                      <td className="px-3 py-3 text-right">
+                        <div className="mb-2 break-all text-left font-mono text-[11px] text-ink-muted">
                           {token ? link : t(locale, 'panel.admin.noLink')}
                           {token && exp ? (
-                            <div style={{ marginTop: '4px', fontSize: '10px', color: C.faint }}>
+                            <div className="mt-1 text-[10px] text-ink-faint">
                               {t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}
                             </div>
                           ) : null}
                           {publicOn && careersUrl ? (
-                            <div style={{ marginTop: '6px', fontSize: '10px', color: C.faint }}>
+                            <div className="mt-1.5 text-[10px] text-ink-faint">
                               {t(locale, 'panel.admin.companyPublicPageLabel')}: {careersUrl}
                             </div>
                           ) : (
-                            <div style={{ marginTop: '6px', fontSize: '10px', color: C.faint }}>
+                            <div className="mt-1.5 text-[10px] text-ink-faint">
                               {t(locale, 'panel.admin.companyPublicPageOff')}
                             </div>
                           )}
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                        <div className="flex flex-wrap justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => editCompany(c)}
                             disabled={loading}
-                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.edit')}
                           </button>
@@ -433,9 +525,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             type="button"
                             onClick={() => rotateLink(c.id)}
                             disabled={loading}
-                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.rotateLink')}
                           </button>
@@ -443,9 +533,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             type="button"
                             onClick={() => token && copy(link)}
                             disabled={loading || !token}
-                            style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                              borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: (loading || !token) ? 0.6 : 1 }}
+                            className={cn(BTN_ROW, 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500', (loading || !token) && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.copyLink')}
                           </button>
@@ -454,9 +542,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                               type="button"
                               onClick={() => copy(careersUrl)}
                               disabled={loading}
-                              style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                                borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                              className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
                             >
                               {t(locale, 'panel.admin.copyPublicPage')}
                             </button>
@@ -465,9 +551,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             type="button"
                             onClick={() => deleteCompany(c.id, c.name)}
                             disabled={loading}
-                            style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                              borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1 }}
+                            className={cn(BTN_ROW, 'border-danger/35 bg-danger/[0.08] text-danger', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.archive')}
                           </button>
@@ -479,18 +563,15 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               </tbody>
             </table>
             {navigateDashboard && companiesTotal > 0 ? (
-              <div style={{
-                display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
-                marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
-              }}>
-                <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3">
+                <span className="font-mono text-[11px] text-ink-muted">
                   {t(locale, 'panel.admin.companyCount', {
                     total: companiesTotal,
                     page: companiesPage,
                     totalPages: companiesTotalPages,
                   })}
                 </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={String(companiesPageSize)}
                     onChange={(e) => {
@@ -498,9 +579,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                       navigateDashboard({ companiesPage: 1, companiesPageSize: ps, tab: 'companies' });
                     }}
                     disabled={loading}
-                    style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
-                      cursor: 'pointer', fontFamily: 'monospace' }}
+                    className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
                   >
                     {PAGE_SIZE_OPTIONS.map((n) => (
                       <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
@@ -510,10 +589,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                     type="button"
                     disabled={loading || companiesPage <= 1}
                     onClick={() => navigateDashboard({ companiesPage: Math.max(1, companiesPage - 1), tab: 'companies' })}
-                    style={{ background: companiesPage <= 1 ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${companiesPage <= 1 ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '6px 12px', color: companiesPage <= 1 ? C.faint : C.purple,
-                      fontSize: '11px', cursor: companiesPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                    className={cn(
+                      BTN_PAGER,
+                      companiesPage <= 1
+                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                    )}
                   >
                     {t(locale, 'panel.admin.prev')}
                   </button>
@@ -521,11 +602,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                     type="button"
                     disabled={loading || companiesPage >= companiesTotalPages}
                     onClick={() => navigateDashboard({ companiesPage: Math.min(companiesTotalPages, companiesPage + 1), tab: 'companies' })}
-                    style={{ background: companiesPage >= companiesTotalPages ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${companiesPage >= companiesTotalPages ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '6px 12px',
-                      color: companiesPage >= companiesTotalPages ? C.faint : C.purple,
-                      fontSize: '11px', cursor: companiesPage >= companiesTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                    className={cn(
+                      BTN_PAGER,
+                      companiesPage >= companiesTotalPages
+                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                    )}
                   >
                     {t(locale, 'panel.admin.next')}
                   </button>
@@ -535,6 +617,156 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           </div>
         )}
       </div>
+
+      <AdminRichFormDrawer
+        open={drawerMode === 'create' || drawerMode === 'edit'}
+        title={
+          drawerMode === 'edit'
+            ? t(locale, 'panel.admin.editCompanyTitle')
+            : t(locale, 'panel.admin.createCompanyTitle')
+        }
+        locale={locale}
+        onClose={() => {
+          if (!formSaving && !logoBusy) closeDrawer();
+        }}
+        maxWidth="640px"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={closeDrawer}
+              disabled={formSaving || logoBusy}
+              className={DIALOG_BTN_GHOST}
+            >
+              {t(locale, 'panel.admin.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void submitCompanyForm()}
+              disabled={formSaving || logoBusy || loading || !String(form.name || '').trim()}
+              className={cn(
+                DIALOG_BTN_PRIMARY,
+                (formSaving || logoBusy || loading || !String(form.name || '').trim()) && 'opacity-60'
+              )}
+            >
+              {formSaving ? <span className="spinner" /> : null}
+              {drawerMode === 'edit'
+                ? t(locale, 'panel.common.save')
+                : t(locale, 'panel.admin.create')}
+            </button>
+          </>
+        )}
+      >
+        <div className="flex flex-col gap-3.5">
+          <p className="m-0 text-[13px] leading-snug text-ink-muted">
+            {drawerMode === 'edit'
+              ? t(locale, 'panel.admin.editCompanyHelp')
+              : t(locale, 'panel.admin.createCompanyHelp')}
+          </p>
+          <label className={FIELD_LABEL}>
+            {t(locale, 'panel.admin.editCompanyName')}
+            <input
+              value={form.name}
+              onChange={(e) => setFormField('name', e.target.value)}
+              placeholder={t(locale, 'panel.admin.companiesNamePlaceholder')}
+              disabled={formSaving}
+              className={FIELD_INPUT}
+            />
+          </label>
+          <label className={FIELD_LABEL}>
+            {t(locale, 'panel.admin.editCompanySlug')}
+            <input
+              value={form.slug}
+              onChange={(e) => setFormField('slug', e.target.value)}
+              placeholder={t(locale, 'panel.admin.companySlugPlaceholder')}
+              disabled={formSaving}
+              className={FIELD_INPUT}
+            />
+            <span className="text-[11px] leading-snug text-ink-muted">
+              {t(locale, 'panel.admin.companySlugHelp')}
+            </span>
+          </label>
+          <label className={FIELD_LABEL}>
+            {t(locale, 'panel.admin.editCompanyWebsite')}
+            <input
+              value={form.website}
+              onChange={(e) => setFormField('website', e.target.value)}
+              placeholder={t(locale, 'panel.admin.editCompanyWebsitePh')}
+              disabled={formSaving}
+              className={FIELD_INPUT}
+            />
+          </label>
+          <CompanyLogoField
+            locale={locale}
+            previewUrl={logoPreviewUrl}
+            storageConfigured={logoStorageConfigured}
+            uploadUrl={
+              drawerMode === 'edit' && editingCompany?.id
+                ? `/api/admin/companies/${encodeURIComponent(editingCompany.id)}/logo`
+                : undefined
+            }
+            busy={logoBusy}
+            error={logoError}
+            disabled={formSaving}
+            onLocalFile={setPendingLogoFile}
+            onPreviewUrl={setLogoPreviewUrl}
+            onBusy={setLogoBusy}
+            onError={setLogoError}
+          />
+          <label
+            className={cn(
+              'flex items-start gap-2.5 font-mono text-xs text-ink',
+              formSaving ? 'cursor-default' : 'cursor-pointer'
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={form.publicProfileEnabled === true}
+              disabled={formSaving}
+              onChange={(e) => setFormField('publicProfileEnabled', e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-brand-500"
+            />
+            <span>
+              {t(locale, 'panel.admin.editCompanyPublicProfile')}
+              <span className="mt-1 block text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.admin.editCompanyPublicProfileHelp')}
+              </span>
+            </span>
+          </label>
+          <label className={FIELD_LABEL}>
+            {t(locale, 'panel.admin.editCompanyAbout')}
+            <textarea
+              value={form.aboutHtml}
+              onChange={(e) => setFormField('aboutHtml', e.target.value)}
+              placeholder={t(locale, 'panel.admin.editCompanyAboutPh')}
+              rows={4}
+              disabled={formSaving}
+              className={cn(FIELD_INPUT, 'min-h-[88px] resize-y')}
+            />
+            <span className="text-[11px] leading-snug text-ink-muted">
+              {t(locale, 'panel.admin.editCompanyAboutHelp')}
+            </span>
+          </label>
+          {drawerMode === 'edit' ? (
+            <label
+              className={cn(
+                'flex items-center gap-2.5 font-mono text-xs text-ink',
+                formSaving ? 'cursor-default' : 'cursor-pointer'
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={form.active === true}
+                disabled={formSaving}
+                onChange={(e) => setFormField('active', e.target.checked)}
+                className="h-4 w-4 accent-brand-500"
+              />
+              {t(locale, 'panel.admin.editCompanyActive')}
+            </label>
+          ) : null}
+        </div>
+      </AdminRichFormDrawer>
+
     </div>
   );
 }

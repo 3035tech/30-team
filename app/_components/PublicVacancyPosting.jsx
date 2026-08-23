@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { t } from '../../lib/i18n';
-import { C, FONTS, GRADIENT, RADIAL_GLOW, SHADOW } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { brandMarkSrc } from '../../lib/brand';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
 import { formatWorkplaceLabel } from '../../lib/vacancy-workplace';
@@ -40,54 +40,17 @@ function trackJobFunnel(eventType, vacancyId) {
   }).catch(() => {});
 }
 
-const shell = {
-  minHeight: '100vh',
-  background: C.bg,
-  fontFamily: FONTS.serif,
-  color: C.text,
-  position: 'relative',
-  boxSizing: 'border-box',
-};
-
-const glow = {
-  position: 'fixed',
-  inset: 0,
-  pointerEvents: 'none',
-  background: RADIAL_GLOW,
-};
-
-const wrap = {
-  position: 'relative',
-  zIndex: 1,
-  maxWidth: '760px',
-  margin: '0 auto',
-  padding: '40px 20px 64px',
-};
-
-const card = {
-  background: C.card,
-  border: `1px solid ${C.border}`,
-  borderRadius: '20px',
-  padding: '36px 40px',
-  boxShadow: SHADOW.cardElevated,
-  boxSizing: 'border-box',
+const SC = {
+  shell: 'relative box-border min-h-screen bg-canvas font-display text-ink',
+  glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
+  wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
+  card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
+  input: 'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
 };
 
 function MetaChip({ children }) {
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        fontSize: '11px',
-        fontFamily: FONTS.mono,
-        letterSpacing: '0.04em',
-        color: C.muted,
-        border: `1px solid ${C.border}`,
-        borderRadius: '999px',
-        padding: '6px 12px',
-        background: C.inputBg,
-      }}
-    >
+    <span className="inline-block rounded-full border border-ink/12 bg-ink/[0.05] px-3 py-1.5 font-mono text-[11px] tracking-wide text-ink-muted">
       {children}
     </span>
   );
@@ -96,54 +59,28 @@ function MetaChip({ children }) {
 function RelatedVacanciesList({ locale, items, heading }) {
   if (!items?.length) return null;
   return (
-    <section aria-labelledby="public-related-heading" style={{ marginTop: '28px' }}>
+    <section aria-labelledby="public-related-heading" className="mt-7">
       <h2
         id="public-related-heading"
-        style={{
-          margin: '0 0 14px',
-          fontSize: '18px',
-          fontWeight: 'normal',
-          fontFamily: FONTS.serif,
-        }}
+className="mb-3.5 mt-0 font-display text-lg font-normal"
       >
         {heading}
       </h2>
       <ul
-        style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
+className="m-0 flex list-none flex-col gap-2.5 p-0"
       >
         {items.map((item) => (
           <li key={item.vacancyId}>
             <Link
               href={item.path}
-              style={{
-                display: 'block',
-                textDecoration: 'none',
-                color: C.text,
-                border: `1px solid ${C.border}`,
-                borderRadius: '12px',
-                padding: '14px 16px',
-                background: C.surface,
-              }}
+className="block rounded-xl border border-ink/12 bg-white px-4 py-3.5 text-ink no-underline"
             >
-              <span style={{ display: 'block', fontSize: '16px', lineHeight: 1.35 }}>
+              <span className="block text-base leading-[1.35]">
                 {item.title}
               </span>
               {item.companyName ? (
                 <span
-                  style={{
-                    display: 'block',
-                    marginTop: '4px',
-                    fontSize: '12px',
-                    fontFamily: FONTS.mono,
-                    color: C.muted,
-                  }}
+className="mt-1 block font-mono text-xs text-ink-muted"
                 >
                   {item.companyName}
                 </span>
@@ -152,10 +89,10 @@ function RelatedVacanciesList({ locale, items, heading }) {
           </li>
         ))}
       </ul>
-      <p style={{ margin: '16px 0 0' }}>
+      <p className="mb-0 mt-4">
         <Link
           href="/j"
-          style={{ color: C.purple, fontSize: '14px', fontFamily: FONTS.mono }}
+          className="font-mono text-sm text-brand-500"
         >
           {t(locale, 'publicVacancy.seeAllOpen')}
         </Link>
@@ -205,55 +142,32 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   };
 
   return (
-    <div style={shell}>
-      <div style={glow} aria-hidden />
-      <div style={wrap}>
-        <header style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div className={SC.shell}>
+      <div className={SC.glow} aria-hidden />
+      <div className={SC.wrap}>
+        <header className="mb-5 flex items-center gap-3">
           <img src={brandMarkSrc(64)} alt="" width={40} height={40} />
-          <span
-            style={{
-              fontSize: '11px',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              fontFamily: FONTS.mono,
-              color: C.faint,
-            }}
-          >
+          <span className="font-mono text-[11px] uppercase tracking-[2px] text-ink-faint">
             30Team
           </span>
         </header>
 
-        <article style={card}>
+        <article className={SC.card}>
           {closed ? (
             <>
               <p
-                style={{
-                  margin: '0 0 8px',
-                  fontSize: '11px',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                  fontFamily: FONTS.mono,
-                  color: C.warning,
-                }}
+className="mb-2 mt-0 font-mono text-[11px] uppercase tracking-[2px] text-warning"
               >
                 {closedReason === 'expired'
                   ? t(locale, 'publicVacancy.expiredBadge')
                   : t(locale, 'publicVacancy.closedBadge')}
               </p>
               <h1
-                style={{
-                  margin: '0 0 12px',
-                  fontSize: 'clamp(26px, 5vw, 36px)',
-                  fontWeight: 'normal',
-                  lineHeight: 1.2,
-                  background: GRADIENT.title,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
+                className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,5vw,36px)] font-normal text-transparent"
               >
                 {t(locale, 'publicVacancy.closedTitle')}
               </h1>
-              <p style={{ margin: '0 0 8px', fontSize: '16px', color: C.muted, lineHeight: 1.65 }}>
+              <p className="mb-2 mt-0 text-base leading-[1.65] text-ink-muted">
                 {closedReason === 'expired'
                   ? t(locale, 'publicVacancy.expiredThanks', {
                       title: posting?.title || t(locale, 'publicVacancy.thisRole'),
@@ -262,36 +176,22 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                       title: posting?.title || t(locale, 'publicVacancy.thisRole'),
                     })}
               </p>
-              <p style={{ margin: '0 0 20px', fontSize: '15px', color: C.muted, lineHeight: 1.65 }}>
+              <p className="mb-5 mt-0 text-[15px] leading-[1.65] text-ink-muted">
                 {t(locale, 'publicVacancy.closedMessage')}
               </p>
               {posting?.title ? (
                 <p
-                  style={{
-                    margin: '0 0 8px',
-                    fontSize: '13px',
-                    fontFamily: FONTS.mono,
-                    color: C.faint,
-                  }}
+className="mb-2 mt-0 font-mono text-[13px] text-ink-faint"
                 >
                   {t(locale, 'publicVacancy.closedWas')}:{' '}
-                  <strong style={{ color: C.text }}>{posting.title}</strong>
+                  <strong className="text-ink">{posting.title}</strong>
                   {companyName ? ` · ${companyName}` : ''}
                 </p>
               ) : null}
-              <p style={{ margin: '20px 0 0' }}>
+              <p className="mb-0 mt-5">
                 <Link
                   href="/j"
-                  style={{
-                    display: 'inline-block',
-                    background: GRADIENT.primaryBtn(C.purple, C.purpleDark),
-                    color: '#fff',
-                    textDecoration: 'none',
-                    borderRadius: '10px',
-                    padding: '14px 28px',
-                    fontSize: '14px',
-                    fontFamily: FONTS.serif,
-                  }}
+                  className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
                 >
                   {t(locale, 'publicVacancy.browseOpenCta')}
                 </Link>
@@ -307,13 +207,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
               <header>
                 {companyName ? (
                   <p
-                    style={{
-                      margin: '0 0 10px',
-                      fontSize: '12px',
-                      fontFamily: FONTS.mono,
-                      color: C.muted,
-                      letterSpacing: '0.02em',
-                    }}
+className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                   >
                     <span>{companyName}</span>
                     {companyWebsite ? (
@@ -323,7 +217,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                           href={companyWebsite}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ color: C.purple }}
+                          className="text-brand-500"
                         >
                           {t(locale, 'publicVacancy.companySite')}
                         </a>
@@ -332,19 +226,11 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                   </p>
                 ) : null}
                 <h1
-                  style={{
-                    margin: '0 0 14px',
-                    fontSize: 'clamp(28px, 5vw, 40px)',
-                    fontWeight: 'normal',
-                    lineHeight: 1.15,
-                    background: GRADIENT.title,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
+                  className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(28px,5vw,40px)] font-normal text-transparent"
                 >
                   {posting.title}
                 </h1>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '22px' }}>
+                <div className="mb-[22px] flex flex-wrap gap-2">
                   {empKey ? <MetaChip>{t(locale, empKey)}</MetaChip> : null}
                   {workplaceLabel ? <MetaChip>{workplaceLabel}</MetaChip> : null}
                   {salary ? (
@@ -369,24 +255,19 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                 <section aria-labelledby="public-desc-heading">
                   <h2
                     id="public-desc-heading"
-                    style={{
-                      margin: '0 0 12px',
-                      fontSize: '18px',
-                      fontWeight: 'normal',
-                      fontFamily: FONTS.serif,
-                    }}
+                    className="mb-3 mt-0 font-display text-lg font-normal"
                   >
                     {t(locale, 'publicVacancy.descriptionHeading')}
                   </h2>
                   <div>
                     <RichTextView
                       html={posting.description}
-                      style={{ fontSize: '15px', lineHeight: 1.7, color: C.text }}
+                      className="text-[15px] leading-[1.7] text-ink"
                     />
                   </div>
                 </section>
               ) : (
-                <p style={{ margin: 0, color: C.muted, fontStyle: 'italic' }}>
+                <p className="m-0 italic text-ink-muted">
                   {t(locale, 'publicVacancy.noDescription')}
                 </p>
               )}
@@ -394,15 +275,11 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
               {companyAbout && !isRichTextEmpty(companyAbout) ? (
                 <section
                   aria-labelledby="public-company-heading"
-                  style={{
-                    marginTop: '28px',
-                    paddingTop: '22px',
-                    borderTop: `1px solid ${C.border}`,
-                  }}
+                  className="mt-7 border-t border-ink/12 pt-[22px]"
                 >
                   <h2
                     id="public-company-heading"
-                    style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: 'normal' }}
+                    className="mb-3 mt-0 text-lg font-normal"
                   >
                     {t(locale, 'publicVacancy.aboutCompany', {
                       name: companyName || t(locale, 'publicVacancy.companyFallback'),
@@ -414,68 +291,46 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
                       alt=""
                       width={72}
                       height={72}
-                      style={{
-                        display: 'block',
-                        marginBottom: '12px',
-                        objectFit: 'contain',
-                        borderRadius: '10px',
-                        background: C.bg,
-                      }}
+                      className="mb-3 block rounded-control bg-canvas object-contain"
                     />
                   ) : null}
                   <RichTextView
                     html={companyAbout}
-                    style={{ fontSize: '14px', lineHeight: 1.65, color: C.muted }}
+                    className="text-sm leading-[1.65] text-ink-muted"
                   />
                 </section>
               ) : companyLogoUrl && companyName ? (
                 <section
-                  style={{
-                    marginTop: '28px',
-                    paddingTop: '22px',
-                    borderTop: `1px solid ${C.border}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}
+                  className="mt-7 flex items-center gap-3 border-t border-ink/12 pt-[22px]"
                 >
                   <img
                     src={companyLogoUrl}
                     alt=""
                     width={48}
                     height={48}
-                    style={{ objectFit: 'contain', borderRadius: '8px' }}
+                    className="rounded-lg object-contain"
                   />
-                  <span style={{ fontSize: '15px', color: C.text }}>{companyName}</span>
+                  <span className="text-[15px] text-ink">{companyName}</span>
                 </section>
               ) : null}
 
-              <footer style={{ marginTop: '32px' }}>
+              <footer className="mt-8">
                 {canApply ? (
                   <a
                     href={posting.applyPath}
                     onClick={onApplyClick}
-                    style={{
-                      display: 'inline-block',
-                      background: GRADIENT.primaryBtn(C.purple, C.purpleDark),
-                      color: '#fff',
-                      textDecoration: 'none',
-                      borderRadius: '10px',
-                      padding: '14px 28px',
-                      fontSize: '14px',
-                      fontFamily: FONTS.serif,
-                    }}
+                    className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
                   >
                     {t(locale, 'publicVacancy.applyCta')}
                   </a>
                 ) : (
-                  <p style={{ margin: 0, fontSize: '14px', color: C.muted }}>
+                  <p className="m-0 text-sm text-ink-muted">
                     {t(locale, 'publicVacancy.applyUnavailable')}
                   </p>
                 )}
                 <PublicVacancyShareBar locale={locale} posting={posting} />
-                <p style={{ margin: '16px 0 0', fontSize: '12px', fontFamily: FONTS.mono }}>
-                  <Link href="/j" style={{ color: C.purple }}>
+                <p className="mb-0 mt-4 font-mono text-xs">
+                  <Link href="/j" className="text-brand-500">
                     {t(locale, 'publicVacancy.seeAllOpen')}
                   </Link>
                 </p>
@@ -524,18 +379,6 @@ export function PublicVacanciesIndexView({
     return qs ? `${listBase}?${qs}` : listBase;
   }
 
-  const inputStyle = {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: '12px 14px',
-    borderRadius: '10px',
-    border: `1px solid ${C.border}`,
-    background: C.bg,
-    color: C.text,
-    fontFamily: FONTS.serif,
-    fontSize: '15px',
-  };
-
   const [alertName, setAlertName] = useState('');
   const [alertEmail, setAlertEmail] = useState('');
   const [alertStatus, setAlertStatus] = useState(''); // '' | 'loading' | 'ok' | 'err'
@@ -568,31 +411,24 @@ export function PublicVacanciesIndexView({
   }
 
   return (
-    <div style={shell}>
-      <div style={glow} aria-hidden />
-      <div style={wrap}>
-        <header style={{ marginBottom: '24px' }}>
-          <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+    <div className={SC.shell}>
+      <div className={SC.glow} aria-hidden />
+      <div className={SC.wrap}>
+        <header className="mb-6">
+          <img src={brandMarkSrc(64)} alt="" width={40} height={40} className="mb-3" />
           {listBase !== '/j' ? (
-            <p style={{ margin: '0 0 8px', fontSize: '12px', fontFamily: FONTS.mono }}>
-              <Link href="/j" style={{ color: C.muted }}>
+            <p className="mb-2 mt-0 font-mono text-xs">
+              <Link href="/j" className="text-ink-muted">
                 {t(locale, 'publicVacancy.browseOpenCta')}
               </Link>
             </p>
           ) : null}
           <h1
-            style={{
-              margin: 0,
-              fontSize: 'clamp(28px, 5vw, 40px)',
-              fontWeight: 'normal',
-              background: GRADIENT.title,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+            className="m-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-normal text-transparent text-[clamp(26px,4vw,36px)]"
           >
             {heading}
           </h1>
-          <p style={{ margin: '10px 0 0', color: C.muted, fontSize: '15px', lineHeight: 1.6 }}>
+          <p className="mb-0 mt-2.5 text-[15px] leading-relaxed text-ink-muted">
             {lead}
           </p>
         </header>
@@ -601,23 +437,11 @@ export function PublicVacanciesIndexView({
         <form
           method="get"
           action="/j"
-          style={{
-            ...card,
-            marginBottom: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-          }}
+          className={cn(SC.card, 'mb-4 flex flex-col gap-3')}
         >
-          <label style={{ display: 'block' }}>
+          <label className="block">
             <span
-              style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '12px',
-                fontFamily: FONTS.mono,
-                color: C.muted,
-              }}
+className="mb-1.5 block font-mono text-xs text-ink-muted"
             >
               {t(locale, 'publicVacancy.indexSearchLabel')}
             </span>
@@ -626,31 +450,20 @@ export function PublicVacanciesIndexView({
               name="q"
               defaultValue={q}
               placeholder={t(locale, 'publicVacancy.indexSearchPlaceholder')}
-              style={inputStyle}
+              className={SC.input}
               autoComplete="off"
             />
           </label>
           <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '12px',
-              alignItems: 'flex-end',
-            }}
+className="flex flex-wrap items-end gap-3"
           >
-            <label style={{ flex: '1 1 180px', minWidth: 0 }}>
+            <label className="min-w-0 flex-[1_1_180px]">
               <span
-                style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontSize: '12px',
-                  fontFamily: FONTS.mono,
-                  color: C.muted,
-                }}
+className="mb-1.5 block font-mono text-xs text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexEmploymentLabel')}
               </span>
-              <select name="employmentType" defaultValue={employmentType} style={inputStyle}>
+              <select name="employmentType" defaultValue={employmentType} className={SC.input}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
                 <option value="clt">{t(locale, 'recruiting.employmentType_clt')}</option>
                 <option value="pj">{t(locale, 'recruiting.employmentType_pj')}</option>
@@ -660,33 +473,14 @@ export function PublicVacanciesIndexView({
             </label>
             <button
               type="submit"
-              style={{
-                flex: '0 0 auto',
-                minHeight: '44px',
-                padding: '0 20px',
-                borderRadius: '10px',
-                border: 'none',
-                background: C.purple,
-                color: '#fff',
-                fontFamily: FONTS.serif,
-                fontSize: '15px',
-                cursor: 'pointer',
-              }}
+className="min-h-[44px] shrink-0 cursor-pointer rounded-control border-none bg-brand-500 px-5 font-display text-[15px] text-white"
             >
               {t(locale, 'publicVacancy.indexSearchSubmit')}
             </button>
             {hasFilters ? (
               <Link
                 href="/j"
-                style={{
-                  flex: '0 0 auto',
-                  minHeight: '44px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '0 14px',
-                  color: C.muted,
-                  fontSize: '14px',
-                }}
+className="inline-flex min-h-[44px] shrink-0 items-center px-3.5 text-sm text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexClearFilters')}
               </Link>
@@ -695,40 +489,26 @@ export function PublicVacanciesIndexView({
         </form>
         ) : null}
 
-        <main style={card}>
+        <main className={SC.card}>
           {total > 0 ? (
             <p
-              style={{
-                margin: '0 0 14px',
-                fontSize: '12px',
-                fontFamily: FONTS.mono,
-                color: C.muted,
-              }}
+className="mb-3.5 mt-0 font-mono text-xs text-ink-muted"
             >
               {t(locale, 'publicVacancy.indexResultCount', { count: String(total) })}
             </p>
           ) : null}
           {!items.length ? (
-            <p style={{ margin: 0, color: C.muted }}>{emptyMsg}</p>
+            <p className="m-0 text-ink-muted">{emptyMsg}</p>
           ) : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {items.map((item) => (
                 <li key={item.vacancyId}>
                   <div
-                    style={{
-                      border: `1px solid ${C.border}`,
-                      borderRadius: '12px',
-                      padding: '16px 18px',
-                    }}
+className="rounded-xl border border-ink/12 px-[18px] py-4"
                   >
                     <Link
                       href={item.path}
-                      style={{
-                        display: 'block',
-                        textDecoration: 'none',
-                        color: C.text,
-                        fontSize: '17px',
-                      }}
+className="block text-[17px] text-ink no-underline"
                     >
                       {item.title}
                     </Link>
@@ -738,17 +518,12 @@ export function PublicVacanciesIndexView({
                       if (!item.companyName && !empLabel) return null;
                       return (
                         <div
-                          style={{
-                            marginTop: '6px',
-                            fontSize: '12px',
-                            fontFamily: FONTS.mono,
-                            color: C.muted,
-                          }}
+className="mt-1.5 font-mono text-xs text-ink-muted"
                         >
                           {item.companyName && item.companySlug ? (
                             <Link
                               href={publicCompanyPath(item.companySlug)}
-                              style={{ color: C.muted }}
+                              className="text-ink-muted"
                             >
                               {item.companyName}
                             </Link>
@@ -769,62 +544,49 @@ export function PublicVacanciesIndexView({
           {totalPages > 1 ? (
             <nav
               aria-label={t(locale, 'publicVacancy.indexPagination')}
-              style={{
-                marginTop: '20px',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+className="mt-5 flex flex-wrap items-center justify-between gap-3"
             >
               {page > 1 ? (
-                <Link href={hrefForPage(page - 1)} style={{ color: C.purple, minHeight: '40px', display: 'inline-flex', alignItems: 'center' }}>
+                <Link href={hrefForPage(page - 1)} className="inline-flex min-h-touch items-center text-brand-500">
                   {t(locale, 'publicVacancy.indexPrev')}
                 </Link>
               ) : (
-                <span style={{ color: C.faint }}>{t(locale, 'publicVacancy.indexPrev')}</span>
+                <span className="text-ink-faint">{t(locale, 'publicVacancy.indexPrev')}</span>
               )}
-              <span style={{ fontSize: '12px', fontFamily: FONTS.mono, color: C.muted }}>
+              <span className="font-mono text-xs text-ink-muted">
                 {t(locale, 'publicVacancy.indexPageOf', { page: String(page), pages: String(totalPages) })}
               </span>
               {page < totalPages ? (
-                <Link href={hrefForPage(page + 1)} style={{ color: C.purple, minHeight: '40px', display: 'inline-flex', alignItems: 'center' }}>
+                <Link href={hrefForPage(page + 1)} className="inline-flex min-h-touch items-center text-brand-500">
                   {t(locale, 'publicVacancy.indexNext')}
                 </Link>
               ) : (
-                <span style={{ color: C.faint }}>{t(locale, 'publicVacancy.indexNext')}</span>
+                <span className="text-ink-faint">{t(locale, 'publicVacancy.indexNext')}</span>
               )}
             </nav>
           ) : null}
         </main>
 
         {showJobAlert ? (
-        <section style={{ ...card, marginTop: '16px' }}>
-          <h2 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600 }}>
+        <section className={cn(SC.card, 'mt-4')}>
+          <h2 className="mb-2 mt-0 text-lg font-semibold">
             {t(locale, 'publicVacancy.alertTitle')}
           </h2>
-          <p style={{ margin: '0 0 14px', color: C.muted, fontSize: '14px', lineHeight: 1.55 }}>
+          <p className="mb-3.5 mt-0 text-sm leading-[1.55] text-ink-muted">
             {t(locale, 'publicVacancy.alertIntro')}
           </p>
           {alertStatus === 'ok' ? (
-            <p style={{ margin: 0, color: C.synergy, fontSize: '14px' }}>
+            <p className="m-0 text-sm text-success">
               {t(locale, 'publicVacancy.alertSuccess')}
             </p>
           ) : (
             <form
               onSubmit={submitJobAlert}
-              style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+              className="flex flex-col gap-3"
             >
-              <label style={{ display: 'block' }}>
+              <label className="block">
                 <span
-                  style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontSize: '12px',
-                    fontFamily: FONTS.mono,
-                    color: C.muted,
-                  }}
+                  className="mb-1.5 block font-mono text-xs text-ink-muted"
                 >
                   {t(locale, 'publicVacancy.alertNameLabel')}
                 </span>
@@ -834,19 +596,13 @@ export function PublicVacanciesIndexView({
                   value={alertName}
                   onChange={(ev) => setAlertName(ev.target.value)}
                   placeholder={t(locale, 'publicVacancy.alertNamePlaceholder')}
-                  style={inputStyle}
+                  className={SC.input}
                   autoComplete="name"
                 />
               </label>
-              <label style={{ display: 'block' }}>
+              <label className="block">
                 <span
-                  style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontSize: '12px',
-                    fontFamily: FONTS.mono,
-                    color: C.muted,
-                  }}
+                  className="mb-1.5 block font-mono text-xs text-ink-muted"
                 >
                   {t(locale, 'publicVacancy.alertEmailLabel')}
                 </span>
@@ -857,31 +613,22 @@ export function PublicVacanciesIndexView({
                   value={alertEmail}
                   onChange={(ev) => setAlertEmail(ev.target.value)}
                   placeholder={t(locale, 'publicVacancy.alertEmailPlaceholder')}
-                  style={inputStyle}
+                  className={SC.input}
                   autoComplete="email"
                 />
               </label>
               {alertStatus === 'err' ? (
-                <p style={{ margin: 0, color: C.tension, fontSize: '13px' }}>
+                <p className="m-0 text-[13px] text-danger">
                   {t(locale, 'publicVacancy.alertError')}
                 </p>
               ) : null}
               <button
                 type="submit"
                 disabled={alertStatus === 'loading'}
-                style={{
-                  alignSelf: 'flex-start',
-                  minHeight: '44px',
-                  padding: '0 20px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: C.purple,
-                  color: '#fff',
-                  fontFamily: FONTS.serif,
-                  fontSize: '15px',
-                  cursor: alertStatus === 'loading' ? 'default' : 'pointer',
-                  opacity: alertStatus === 'loading' ? 0.7 : 1,
-                }}
+                className={cn(
+                  'min-h-[44px] self-start rounded-control border-none bg-brand-500 px-5 font-display text-[15px] text-white',
+                  alertStatus === 'loading' ? 'cursor-default opacity-70' : 'cursor-pointer'
+                )}
               >
                 {alertStatus === 'loading'
                   ? t(locale, 'publicVacancy.alertSubmitting')
@@ -904,41 +651,34 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
   const logoUrl = String(company?.logoUrl || '').trim();
 
   return (
-    <div style={shell}>
-      <div style={glow} aria-hidden />
-      <div style={wrap}>
-        <header style={{ marginBottom: '24px' }}>
+    <div className={SC.shell}>
+      <div className={SC.glow} aria-hidden />
+      <div className={SC.wrap}>
+        <header className="mb-6">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt=""
               width={56}
               height={56}
-              style={{ marginBottom: '12px', objectFit: 'contain', borderRadius: '10px' }}
+              className="mb-3 rounded-control object-contain"
             />
           ) : (
-            <img src={brandMarkSrc(64)} alt="" width={40} height={40} style={{ marginBottom: '12px' }} />
+            <img src={brandMarkSrc(64)} alt="" width={40} height={40} className="mb-3" />
           )}
-          <p style={{ margin: '0 0 8px', fontSize: '12px', fontFamily: FONTS.mono }}>
-            <Link href="/j" style={{ color: C.muted }}>
+          <p className="mb-2 mt-0 font-mono text-xs">
+            <Link href="/j" className="text-ink-muted">
               {t(locale, 'publicVacancy.browseOpenCta')}
             </Link>
           </p>
           <h1
-            style={{
-              margin: 0,
-              fontSize: 'clamp(28px, 5vw, 40px)',
-              fontWeight: 'normal',
-              background: GRADIENT.title,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+            className="m-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-normal text-transparent text-[clamp(26px,4vw,36px)]"
           >
             {name}
           </h1>
           {website ? (
-            <p style={{ margin: '10px 0 0', fontSize: '14px' }}>
-              <a href={website} target="_blank" rel="noopener noreferrer" style={{ color: C.purple }}>
+            <p className="mb-0 mt-2.5 text-sm">
+              <a href={website} target="_blank" rel="noopener noreferrer" className="text-brand-500">
                 {t(locale, 'publicVacancy.companySite')}
               </a>
             </p>
@@ -946,48 +686,35 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
         </header>
 
         {!isRichTextEmpty(aboutHtml) ? (
-          <section style={{ ...card, marginBottom: '16px' }}>
-            <h2 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 600 }}>
+          <section className={cn(SC.card, 'mb-4')}>
+            <h2 className="mb-3 mt-0 text-base font-semibold">
               {t(locale, 'publicVacancy.aboutCompany', { name })}
             </h2>
             <RichTextView html={aboutHtml} />
           </section>
         ) : null}
 
-        <main style={card}>
-          <h2 style={{ margin: '0 0 14px', fontSize: '16px', fontWeight: 600 }}>
+        <main className={SC.card}>
+          <h2 className="mb-3.5 mt-0 text-base font-semibold">
             {t(locale, 'publicVacancy.companyOpenRoles')}
           </h2>
           {!items.length ? (
-            <p style={{ margin: 0, color: C.muted }}>{t(locale, 'publicVacancy.companyNoOpenRoles')}</p>
+            <p className="m-0 text-ink-muted">{t(locale, 'publicVacancy.companyNoOpenRoles')}</p>
           ) : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {items.map((item) => (
                 <li key={item.vacancyId}>
                   <Link
                     href={item.path}
-                    style={{
-                      display: 'block',
-                      textDecoration: 'none',
-                      color: C.text,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: '12px',
-                      padding: '16px 18px',
-                    }}
+                    className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline"
                   >
-                    <span style={{ fontSize: '17px', display: 'block' }}>{item.title}</span>
+                    <span className="block text-[17px]">{item.title}</span>
                     {(() => {
                       const empKey = employmentTypeLabelKey(item.employmentType);
                       if (!empKey) return null;
                       return (
                         <span
-                          style={{
-                            display: 'block',
-                            marginTop: '6px',
-                            fontSize: '12px',
-                            fontFamily: FONTS.mono,
-                            color: C.muted,
-                          }}
+                          className="mt-1.5 block font-mono text-xs text-ink-muted"
                         >
                           {t(locale, empKey)}
                         </span>
@@ -999,8 +726,8 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
             </ul>
           )}
           {total > items.length ? (
-            <p style={{ margin: '14px 0 0', fontSize: '12px', color: C.muted }}>
-              <Link href="/j" style={{ color: C.purple }}>
+            <p className="mb-0 mt-3.5 text-xs text-ink-muted">
+              <Link href="/j" className="text-brand-500">
                 {t(locale, 'publicVacancy.seeAllOpen')}
               </Link>
             </p>

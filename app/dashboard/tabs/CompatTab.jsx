@@ -6,49 +6,26 @@ import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { t } from '../../../lib/i18n';
 import { personListName } from '../../../lib/person-name';
 import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 
 function PersonCard({ person, locale }) {
   const d = TYPE_DATA[person.topType] || {};
   return (
-    <div
-      style={{
-        background: 'rgba(26,22,37,.03)',
-        border: `1px solid ${C.border}`,
-        borderRadius: '12px',
-        padding: '14px',
-        minWidth: 0,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-        <div style={{ fontSize: '22px', flexShrink: 0 }}>{d.emoji || '·'}</div>
-        <div style={{ minWidth: 0 }}>
+    <div className="min-w-0 rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5">
+      <div className="mb-2 flex items-center gap-2.5">
+        <div className="shrink-0 text-[22px]">{d.emoji || '·'}</div>
+        <div className="min-w-0">
           <div
-            style={{
-              fontSize: '13px',
-              color: C.text,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-ink"
             title={person.name}
           >
             {personListName(person.name)}
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <TypeBadge type={person.topType} locale={locale} compact />
             {person.areaLabel ? (
-              <span
-                style={{
-                  padding: '2px 8px',
-                  fontSize: '11px',
-                  borderRadius: '20px',
-                  background: 'rgba(26,22,37,.04)',
-                  border: `1px solid ${C.border}`,
-                  color: C.muted,
-                  fontFamily: 'monospace',
-                }}
-              >
+              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[11px] text-ink-muted">
                 {person.areaLabel}
               </span>
             ) : null}
@@ -56,7 +33,7 @@ function PersonCard({ person, locale }) {
         </div>
       </div>
       {d.team ? (
-        <p style={{ fontSize: '12px', color: C.faint, lineHeight: 1.55, margin: 0 }}>{d.team}</p>
+        <p className="m-0 text-xs leading-snug text-ink-faint">{d.team}</p>
       ) : null}
     </div>
   );
@@ -69,53 +46,38 @@ function Glossary({ locale, open, onToggle }) {
     { level: 'neutral', color: C.neutral, titleKey: 'panel.compat.glossNeutralTitle', bodyKey: 'panel.compat.glossNeutralBody' },
   ];
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div className="mb-4">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        style={{
-          background: 'transparent',
-          border: `1px solid ${C.border}`,
-          borderRadius: '10px',
-          padding: '8px 12px',
-          color: C.muted,
-          fontSize: '12px',
-          fontFamily: 'monospace',
-          cursor: 'pointer',
-          minHeight: '40px',
-          marginBottom: open ? '10px' : 0,
-        }}
+        className={cn(
+          'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-xs text-ink-muted',
+          open && 'mb-2.5'
+        )}
       >
         {open ? t(locale, 'panel.compat.glossaryHide') : t(locale, 'panel.compat.glossaryShow')}
         {' '}
         {open ? '▲' : '▼'}
       </button>
       {open ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '10px',
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           {items.map((item) => (
             <div
               key={item.level}
+              className="rounded-xl px-3.5 py-3"
               style={{
-                padding: '12px 14px',
-                borderRadius: '12px',
                 border: `1px solid ${item.color}35`,
                 background: `${item.color}0a`,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div className="mb-1.5 flex items-center gap-2">
                 <CompatBadge level={item.level} locale={locale} />
-                <span style={{ fontSize: '12px', color: item.color, fontFamily: 'monospace' }}>
+                <span className="font-mono text-xs" style={{ color: item.color }}>
                   {t(locale, item.titleKey)}
                 </span>
               </div>
-              <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
+              <p className="m-0 text-xs leading-snug text-ink-muted">
                 {t(locale, item.bodyKey)}
               </p>
             </div>
@@ -188,35 +150,29 @@ export function CompatTab({
 
   return (
     <div>
-      <div style={{ ...S.card, padding: '22px 28px', marginBottom: '14px' }}>
-        <span style={S.label}>{t(locale, 'dashboard.compatibility')}</span>
-        <h2
-          style={{
-            margin: '8px 0 0',
-            fontSize: '22px',
-            fontWeight: 'normal',
-            fontFamily: "'Georgia',serif",
-            color: C.text,
-            lineHeight: 1.25,
-          }}
-        >
+      <div className={cn(S.card, 'mb-3.5 px-7 py-[22px]')}>
+        <span className={S.label}>{t(locale, 'dashboard.compatibility')}</span>
+        <h2 className="mt-2 mb-0 font-display text-[22px] font-normal leading-tight text-ink">
           {t(locale, 'panel.compat.headline')}
         </h2>
-        <p style={{ fontSize: '14px', color: C.muted, margin: '10px 0 0', lineHeight: 1.65, maxWidth: '64ch' }}>
+        <p className="mt-2.5 mb-0 max-w-[64ch] text-sm leading-relaxed text-ink-muted">
           {t(locale, 'panel.compat.intro')}
         </p>
-        <p style={{ fontSize: '12px', color: C.faint, margin: '12px 0 0', lineHeight: 1.55 }}>
+        <p className="mt-2 mb-0 max-w-[64ch] text-xs leading-snug text-ink-faint">
+          {t(locale, 'panel.compat.whyTeam')}
+        </p>
+        <p className="mt-3 mb-0 text-xs leading-snug text-ink-faint">
           {t(locale, 'panel.compat.methodologyBody')}
         </p>
       </div>
 
       <Glossary locale={locale} open={glossaryOpen} onToggle={() => setGlossaryOpen((v) => !v)} />
 
-      <p style={{ margin: '0 0 10px', fontSize: '12px', color: C.faint, fontFamily: 'monospace' }}>
+      <p className="mb-2.5 mt-0 font-mono text-xs text-ink-faint">
         {t(locale, 'panel.compat.filterByCardsHint')}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         {summaryCards.map((x) => {
           const active = section === x.id;
           return (
@@ -224,74 +180,45 @@ export function CompatTab({
               key={x.id}
               type="button"
               onClick={() => goSection(x.id)}
+              className="cursor-pointer rounded-[14px] border bg-white px-5 py-[18px] text-left"
               style={{
-                textAlign: 'left',
-                background: C.card,
-                border: `1px solid ${active ? x.c : `${x.c}25`}`,
-                borderRadius: '14px',
-                padding: '18px 20px',
-                cursor: 'pointer',
+                borderColor: active ? x.c : `${x.c}25`,
                 boxShadow: active ? `0 0 0 2px ${x.c}22` : 'none',
               }}
             >
-              <div style={{ fontSize: '28px', color: x.c, marginBottom: '4px', fontFamily: "'Georgia',serif" }}>{x.n}</div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: C.muted,
-                  fontFamily: 'monospace',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  marginBottom: '6px',
-                }}
-              >
+              <div className="mb-1 font-display text-[28px]" style={{ color: x.c }}>{x.n}</div>
+              <div className="mb-1.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
                 {x.l}
               </div>
-              <div style={{ fontSize: '12px', color: C.faint, marginBottom: '10px' }}>{x.d}</div>
-              <div style={{ fontSize: '11px', color: x.c, fontFamily: 'monospace' }}>{x.action}</div>
+              <div className="mb-2.5 text-xs text-ink-faint">{x.d}</div>
+              <div className="font-mono text-[11px]" style={{ color: x.c }}>{x.action}</div>
             </button>
           );
         })}
       </div>
 
       {section === 'tensions' && topRisks.length > 0 ? (
-        <div
-          style={{
-            ...S.card,
-            marginBottom: '14px',
-            border: `1px solid ${C.tension}30`,
-            background: 'rgba(232,71,71,.04)',
-          }}
-        >
-          <span style={{ ...S.label, color: C.tension }}>{t(locale, 'panel.compat.topRisksTitle')}</span>
-          <p style={{ fontSize: '13px', color: C.muted, margin: '8px 0 14px', lineHeight: 1.55 }}>
+        <div className={cn(S.card, 'mb-3.5 border-danger/30 bg-danger/[0.04]')}>
+          <span className={cn(S.label, 'text-danger')}>{t(locale, 'panel.compat.topRisksTitle')}</span>
+          <p className="mb-3.5 mt-2 text-[13px] leading-snug text-ink-muted">
             {t(locale, 'panel.compat.topRisksIntro')}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-2.5">
             {topRisks.map((pair, i) => (
               <div
                 key={`risk-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                }}
+                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-white px-3 py-2.5"
               >
-                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: C.tension, minWidth: '18px' }}>
+                <span className="min-w-[18px] font-mono text-[11px] text-danger">
                   {i + 1}.
                 </span>
-                <span style={{ fontSize: '13px', color: C.text }}>
+                <span className="text-[13px] text-ink">
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
                 <TypeBadge type={pair.a.topType} locale={locale} compact />
                 <TypeBadge type={pair.b.topType} locale={locale} compact />
-                <span style={{ fontSize: '12px', color: C.muted, flex: '1 1 160px' }}>{pair.compat.title}</span>
-                <span style={{ fontSize: '12px', color: C.tension, fontFamily: 'monospace' }}>
+                <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{pair.compat.title}</span>
+                <span className="font-mono text-xs text-danger">
                   {t(locale, 'panel.compat.topRiskNext')}
                 </span>
               </div>
@@ -301,42 +228,26 @@ export function CompatTab({
       ) : null}
 
       {section === 'synergies' && topWins.length > 0 ? (
-        <div
-          style={{
-            ...S.card,
-            marginBottom: '14px',
-            border: `1px solid ${C.synergy}30`,
-            background: 'rgba(71,232,123,.04)',
-          }}
-        >
-          <span style={{ ...S.label, color: C.synergy }}>{t(locale, 'panel.compat.topWinsTitle')}</span>
-          <p style={{ fontSize: '13px', color: C.muted, margin: '8px 0 14px', lineHeight: 1.55 }}>
+        <div className={cn(S.card, 'mb-3.5 border-success/30 bg-success/[0.04]')}>
+          <span className={cn(S.label, 'text-success')}>{t(locale, 'panel.compat.topWinsTitle')}</span>
+          <p className="mb-3.5 mt-2 text-[13px] leading-snug text-ink-muted">
             {t(locale, 'panel.compat.topWinsIntro')}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-2.5">
             {topWins.map((pair, i) => (
               <div
                 key={`win-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                }}
+                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-white px-3 py-2.5"
               >
-                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: C.synergy, minWidth: '18px' }}>
+                <span className="min-w-[18px] font-mono text-[11px] text-success">
                   {i + 1}.
                 </span>
-                <span style={{ fontSize: '13px', color: C.text }}>
+                <span className="text-[13px] text-ink">
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
                 <TypeBadge type={pair.a.topType} locale={locale} compact />
                 <TypeBadge type={pair.b.topType} locale={locale} compact />
-                <span style={{ fontSize: '12px', color: C.muted, flex: '1 1 160px' }}>{pair.compat.title}</span>
+                <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{pair.compat.title}</span>
               </div>
             ))}
           </div>
@@ -345,51 +256,38 @@ export function CompatTab({
 
       {playbook ? (
         <div
+          className="mb-3.5 overflow-hidden rounded-xl"
           style={{
-            marginBottom: '14px',
-            borderRadius: '12px',
             border: `1px solid ${playbook.color}30`,
             background: `${playbook.color}08`,
-            overflow: 'hidden',
           }}
         >
           <button
             type="button"
             onClick={() => setAdviceOpen((v) => !v)}
-            style={{
-              width: '100%',
-              textAlign: 'left',
-              background: 'transparent',
-              border: 'none',
-              padding: '12px 16px',
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '12px',
-            }}
+            className="flex w-full cursor-pointer items-center justify-between gap-3 border-none bg-transparent px-4 py-3 text-left"
           >
-            <span style={{ fontSize: '12px', color: playbook.color, fontFamily: 'monospace' }}>
+            <span className="font-mono text-xs" style={{ color: playbook.color }}>
               {playbook.title} — {t(locale, 'panel.compat.playbookToggle')}
             </span>
-            <span style={{ fontFamily: 'monospace', fontSize: '11px', color: C.muted }}>{adviceOpen ? '▲' : '▼'}</span>
+            <span className="font-mono text-[11px] text-ink-muted">{adviceOpen ? '▲' : '▼'}</span>
           </button>
           {adviceOpen ? (
-            <p style={{ margin: '0 16px 14px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>{playbook.body}</p>
+            <p className="mx-4 mb-3.5 mt-0 text-[13px] leading-relaxed text-ink-muted">{playbook.body}</p>
           ) : null}
         </div>
       ) : null}
 
       {display.length === 0 ? (
-        <div style={{ ...S.card, textAlign: 'center', padding: '40px' }}>
-          <p style={{ color: C.muted, fontStyle: 'italic', margin: 0 }}>{t(locale, 'panel.compat.emptyCategory')}</p>
-          <p style={{ color: C.faint, fontSize: '13px', margin: '10px 0 0', lineHeight: 1.55 }}>
+        <div className={cn(S.card, 'p-10 text-center')}>
+          <p className="m-0 italic text-ink-muted">{t(locale, 'panel.compat.emptyCategory')}</p>
+          <p className="mt-2.5 mb-0 text-[13px] leading-snug text-ink-faint">
             {t(locale, 'panel.compat.emptyHint')}
           </p>
         </div>
       ) : (
         <>
-          <p style={{ fontSize: '12px', color: C.faint, margin: '0 0 12px', fontFamily: 'monospace' }}>
+          <p className="mb-3 mt-0 font-mono text-xs text-ink-faint">
             {t(locale, 'panel.compat.listHint')}
           </p>
           {sliced.map((pair, i) => {
@@ -400,105 +298,49 @@ export function CompatTab({
             return (
               <div
                 key={pairKey}
-                style={{
-                  background: C.card,
-                  border: `1px solid ${lc}30`,
-                  borderRadius: '14px',
-                  padding: '18px',
-                  marginBottom: '12px',
-                }}
+                className="mb-3 rounded-[14px] border bg-white p-[18px]"
+                style={{ borderColor: `${lc}30` }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    marginBottom: '14px',
-                  }}
-                >
+                <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div
-                      style={{
-                        fontSize: '13px',
-                        color: lc,
-                        fontFamily: 'monospace',
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase',
-                        marginBottom: '4px',
-                      }}
+                      className="mb-1 font-mono text-[13px] uppercase tracking-wide"
+                      style={{ color: lc }}
                     >
                       {compat.title}
                     </div>
-                    <div style={{ fontSize: '11px', color: C.faint }}>
+                    <div className="text-[11px] text-ink-faint">
                       {t(locale, 'panel.compat.whyLabel')}
                     </div>
                   </div>
                   <CompatBadge level={compat.level} locale={locale} />
                 </div>
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 40px 1fr',
-                    gap: '10px',
-                    alignItems: 'stretch',
-                  }}
-                >
+                <div className="grid grid-cols-[1fr_40px_1fr] items-stretch gap-2.5">
                   <PersonCard person={a} locale={locale} />
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: C.faint,
-                      fontFamily: 'monospace',
-                      fontSize: '16px',
-                    }}
-                  >
+                  <div className="flex items-center justify-center font-mono text-base text-ink-faint">
                     ×
                   </div>
                   <PersonCard person={b} locale={locale} />
                 </div>
 
-                <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.65, margin: '14px 0 0' }}>{compat.desc}</p>
+                <p className="mt-3.5 mb-0 text-[13px] leading-relaxed text-ink-muted">{compat.desc}</p>
               </div>
             );
           })}
           {onCompatPagination && listLen > 0 ? (
-            <div
-              style={{
-                ...S.card,
-                padding: '12px 18px',
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: '12px',
-                justifyContent: 'space-between',
-                marginTop: '8px',
-              }}
-            >
-              <span style={{ fontSize: '12px', color: C.muted, fontFamily: 'monospace' }}>
+            <div className={cn(S.card, 'mt-2 flex flex-wrap items-center justify-between gap-3 px-[18px] py-3')}>
+              <span className="font-mono text-xs text-ink-muted">
                 {t(locale, 'panel.compat.pairsPage', { page: pg, total: totalPg })}
               </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={String(compatPageSize)}
                   onChange={(e) => {
                     const ps = parseInt(e.target.value, 10);
                     onCompatPagination({ page: 1, pageSize: ps });
                   }}
-                  style={{
-                    background: 'rgba(26,22,37,.05)',
-                    border: `1px solid ${C.border}`,
-                    borderRadius: '10px',
-                    padding: '6px 10px',
-                    color: C.muted,
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    fontFamily: 'monospace',
-                  }}
+                  className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => (
                     <option key={n} value={String(n)}>
@@ -510,16 +352,12 @@ export function CompatTab({
                   type="button"
                   disabled={pg <= 1}
                   onClick={() => onCompatPagination({ page: pg - 1, pageSize: compatPageSize })}
-                  style={{
-                    background: pg <= 1 ? 'transparent' : `${C.purple}18`,
-                    border: `1px solid ${pg <= 1 ? C.border : `${C.purple}55`}`,
-                    borderRadius: '10px',
-                    padding: '6px 12px',
-                    color: pg <= 1 ? C.faint : C.purple,
-                    fontSize: '11px',
-                    cursor: pg <= 1 ? 'default' : 'pointer',
-                    fontFamily: 'monospace',
-                  }}
+                  className={cn(
+                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    pg <= 1
+                      ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                      : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'
+                  )}
                 >
                   {t(locale, 'dashboard.previous')}
                 </button>
@@ -527,16 +365,12 @@ export function CompatTab({
                   type="button"
                   disabled={pg >= totalPg}
                   onClick={() => onCompatPagination({ page: pg + 1, pageSize: compatPageSize })}
-                  style={{
-                    background: pg >= totalPg ? 'transparent' : `${C.purple}18`,
-                    border: `1px solid ${pg >= totalPg ? C.border : `${C.purple}55`}`,
-                    borderRadius: '10px',
-                    padding: '6px 12px',
-                    color: pg >= totalPg ? C.faint : C.purple,
-                    fontSize: '11px',
-                    cursor: pg >= totalPg ? 'default' : 'pointer',
-                    fontFamily: 'monospace',
-                  }}
+                  className={cn(
+                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    pg >= totalPg
+                      ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                      : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'
+                  )}
                 >
                   {t(locale, 'dashboard.next')}
                 </button>

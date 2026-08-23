@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import {
-  dialogBtnGhost,
-  dialogBtnPrimary,
-  dialogCardStyle,
-  dialogFieldStyle,
-  dialogOverlayStyle,
+  dialogBtnGhostClass,
+  dialogBtnPrimaryClass,
+  dialogCardClass,
+  dialogFieldClass,
+  dialogOverlayClass,
 } from './app-dialog-styles';
 
 /**
@@ -173,47 +173,28 @@ export function PromptFormDialog({
       const busy = uploadBusyKey === f.key;
       const off = f.storageConfigured === false;
       return (
-        <div style={{ marginTop: '6px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                width: '72px',
-                height: '72px',
-                borderRadius: '12px',
-                border: `1px solid ${C.border}`,
-                background: 'rgba(26,22,37,.03)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
+        <div className="mt-1.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-ink/12 bg-ink/[0.03]">
               {preview ? (
-                <img src={preview} alt="" width={72} height={72} style={{ objectFit: 'contain' }} />
+                <img src={preview} alt="" width={72} height={72} className="object-contain" />
               ) : (
-                <span style={{ fontSize: '10px', color: C.faint, fontFamily: 'monospace' }}>—</span>
+                <span className="font-mono text-[10px] text-ink-faint">—</span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="flex flex-col gap-2">
               <label
-                style={{
-                  ...dialogBtnGhost,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: '40px',
-                  padding: '8px 12px',
-                  cursor: off || busy ? 'not-allowed' : 'pointer',
-                  opacity: off || busy ? 0.55 : 1,
-                  margin: 0,
-                }}
+                className={cn(
+                  dialogBtnGhostClass,
+                  'm-0 inline-flex min-h-touch items-center justify-center px-3 py-2',
+                  off || busy ? 'cursor-not-allowed opacity-55' : 'cursor-pointer'
+                )}
               >
                 <input
                   type="file"
                   accept={f.accept || 'image/png,image/jpeg,image/webp'}
                   disabled={off || busy}
-                  style={{ display: 'none' }}
+                  className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     e.target.value = '';
@@ -229,11 +210,7 @@ export function PromptFormDialog({
                   type="button"
                   disabled={off || busy}
                   onClick={() => void onImageRemove(f)}
-                  style={{
-                    ...dialogBtnGhost,
-                    minHeight: '40px',
-                    opacity: off || busy ? 0.55 : 1,
-                  }}
+                  className={cn(dialogBtnGhostClass, 'min-h-touch', (off || busy) && 'opacity-55')}
                 >
                   {f.removeLabel || t(locale, 'panel.admin.companyLogoRemove')}
                 </button>
@@ -241,12 +218,12 @@ export function PromptFormDialog({
             </div>
           </div>
           {off && f.storageOffHelp ? (
-            <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>
+            <p className="mb-0 mt-2 text-xs leading-[1.45] text-ink-muted">
               {f.storageOffHelp}
             </p>
           ) : null}
           {uploadError ? (
-            <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.tension, lineHeight: 1.45 }}>
+            <p className="mb-0 mt-2 text-xs leading-[1.45] text-danger">
               {uploadError}
             </p>
           ) : null}
@@ -259,40 +236,20 @@ export function PromptFormDialog({
         <div
           role="group"
           aria-label={f.label}
-          className="prompt-checkbox-grid"
-          style={{
-            marginTop: '8px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '8px 12px',
-            maxHeight: '220px',
-            overflowY: 'auto',
-            padding: '10px 12px',
-            borderRadius: '10px',
-            border: `1px solid ${C.border}`,
-            background: 'rgba(26,22,37,.03)',
-          }}
+          className="prompt-checkbox-grid mt-2 grid max-h-[220px] grid-cols-2 gap-x-3 gap-y-2 overflow-y-auto rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5"
         >
           {(f.options || []).map((opt) => {
             const checked = Array.isArray(values[f.key]) && values[f.key].includes(opt.value);
             return (
               <label
                 key={opt.value}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: C.text,
-                  cursor: 'pointer',
-                  fontFamily: 'Georgia, serif',
-                }}
+                className="flex cursor-pointer items-center gap-2 font-display text-[13px] text-ink"
               >
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleCheck(f.key, opt.value)}
-                  style={{ width: '16px', height: '16px', accentColor: C.purple }}
+                  className="h-4 w-4 accent-brand-500"
                 />
                 {opt.label}
               </label>
@@ -308,7 +265,7 @@ export function PromptFormDialog({
           value={values[f.key] ?? ''}
           onChange={(e) => setField(f.key, e.target.value)}
           disabled={Boolean(f.disabled)}
-          style={{ ...dialogFieldStyle, cursor: f.disabled ? 'default' : 'pointer', opacity: f.disabled ? 0.6 : 1 }}
+          className={cn(dialogFieldClass, f.disabled ? 'cursor-default opacity-60' : 'cursor-pointer')}
         >
           {(f.options || []).map((opt) => (
             <option key={String(opt.value)} value={String(opt.value)}>
@@ -323,23 +280,16 @@ export function PromptFormDialog({
       const checked = values[f.key] === true || values[f.key] === 'true';
       return (
         <label
-          style={{
-            marginTop: f.help ? 0 : '4px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: C.text,
-            fontFamily: 'Georgia, serif',
-            lineHeight: 1.45,
-          }}
+          className={cn(
+            'flex cursor-pointer items-start gap-2.5 font-display text-sm leading-[1.45] text-ink',
+            !f.help && 'mt-1'
+          )}
         >
           <input
             type="checkbox"
             checked={checked}
             onChange={(e) => setField(f.key, e.target.checked)}
-            style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, accentColor: C.purple }}
+            className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-brand-500"
           />
           <span>{f.label}</span>
         </label>
@@ -353,7 +303,7 @@ export function PromptFormDialog({
           onChange={(e) => setField(f.key, e.target.value)}
           placeholder={f.placeholder || ''}
           rows={f.rows || 4}
-          style={{ ...dialogFieldStyle, resize: 'vertical', minHeight: '88px', fontFamily: 'Georgia, serif' }}
+          className={cn(dialogFieldClass, 'min-h-[88px] resize-y font-display')}
         />
       );
     }
@@ -364,7 +314,7 @@ export function PromptFormDialog({
         value={values[f.key] ?? ''}
         onChange={(e) => setField(f.key, e.target.value)}
         placeholder={f.placeholder || ''}
-        style={dialogFieldStyle}
+        className={dialogFieldClass}
         autoComplete={f.type === 'password' ? 'new-password' : 'off'}
       />
     );
@@ -372,8 +322,7 @@ export function PromptFormDialog({
 
   return createPortal(
     <div
-      className="app-dialog-overlay"
-      style={dialogOverlayStyle}
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel?.();
@@ -383,71 +332,53 @@ export function PromptFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="prompt-form-title"
-        className="prompt-form-card"
-        style={{ ...dialogCardStyle, maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }}
+        className={cn('prompt-form-card', dialogCardClass, 'max-h-[90vh] max-w-[520px] overflow-y-auto')}
         onClick={(e) => e.stopPropagation()}
       >
-        <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            color: C.purple,
-            fontFamily: 'monospace',
-          }}
-        >
+        <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
           30Team
         </span>
         <h2
           id="prompt-form-title"
-          style={{
-            margin: '8px 0 0',
-            fontSize: '20px',
-            fontWeight: 'normal',
-            fontFamily: 'Georgia, serif',
-            color: C.text,
-            lineHeight: 1.25,
-          }}
+          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
         >
           {heading}
         </h2>
         {message ? (
-          <p style={{ margin: '12px 0 0', fontSize: '14px', color: C.muted, lineHeight: 1.55 }}>{message}</p>
+          <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
         ) : null}
-        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="mt-4 flex flex-col gap-3">
           {visibleFields.map((f) => (
-            <div key={f.key} style={{ display: 'block' }}>
+            <div key={f.key} className="block">
               {f.type !== 'boolean' ? (
-                <span style={{ fontSize: '11px', color: C.faint, fontFamily: 'monospace' }}>{f.label}</span>
+                <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
               ) : null}
               {renderControl(f)}
               {f.help && f.type !== 'imageUpload' ? (
                 <p
-                  style={{
-                    margin: f.type === 'boolean' ? '6px 0 0 28px' : '6px 0 0',
-                    fontSize: '12px',
-                    color: C.muted,
-                    lineHeight: 1.45,
-                  }}
+                  className={cn(
+                    'text-xs leading-[1.45] text-ink-muted',
+                    f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
+                  )}
                 >
                   {f.help}
                 </p>
               ) : null}
               {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
-                <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>{f.help}</p>
+                <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
               ) : null}
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '22px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-          <button type="button" onClick={onCancel} style={dialogBtnGhost} disabled={Boolean(uploadBusyKey)}>
+        <div className="mt-[22px] flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>
             {cancelLabel || t(locale, 'panel.common.cancel')}
           </button>
           <button
             type="button"
             onClick={() => onSubmit?.(values)}
             disabled={Boolean(uploadBusyKey)}
-            style={{ ...dialogBtnPrimary(C.purple), opacity: uploadBusyKey ? 0.6 : 1 }}
+            className={cn(dialogBtnPrimaryClass, uploadBusyKey && 'opacity-60')}
           >
             {confirmLabel || t(locale, 'panel.common.save')}
           </button>

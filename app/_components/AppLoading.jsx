@@ -1,34 +1,26 @@
 'use client';
 
 import { t } from '../../lib/i18n';
-import { C, FONTS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 /**
- * Spinner animado — bordas/tamanho inline; keyframes em globals.css (`team30spin`).
- * Não injeta <style> (inválido dentro de <button>).
- * @param {{ size?: number, color?: string, style?: object }} props
+ * Spinner animado — reusa `.spinner` em globals.css; size/color só via style quando dinâmico.
+ * @param {{ size?: number, color?: string, style?: object, className?: string }} props
  */
-export function Spinner({ size = 14, color, style }) {
-  const stroke = color || 'currentColor';
+export function Spinner({ size = 14, color, style, className }) {
+  const sizeOverride =
+    size !== 14
+      ? { width: size, height: size, minWidth: size, minHeight: size }
+      : null;
+  const colorOverride = color
+    ? { color, borderColor: color, borderTopColor: 'transparent' }
+    : null;
+  const merged =
+    sizeOverride || colorOverride || style
+      ? { ...sizeOverride, ...colorOverride, ...style }
+      : undefined;
   return (
-    <span
-      aria-hidden="true"
-      style={{
-        display: 'inline-block',
-        boxSizing: 'border-box',
-        width: size,
-        height: size,
-        minWidth: size,
-        minHeight: size,
-        border: `2.5px solid ${stroke}`,
-        borderTopColor: 'transparent',
-        borderRadius: '50%',
-        animation: 'team30spin 0.65s linear infinite',
-        flexShrink: 0,
-        verticalAlign: 'middle',
-        ...style,
-      }}
-    />
+    <span aria-hidden="true" className={cn('spinner', className)} style={merged} />
   );
 }
 
@@ -54,19 +46,9 @@ export function AppLoading({
       <div
         role="status"
         aria-live="polite"
-        style={{
-          minHeight: '120px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          color: C.muted,
-          fontFamily: FONTS.serif,
-          fontSize: 15,
-          padding: '24px',
-        }}
+        className="flex min-h-[120px] items-center justify-center gap-2.5 p-6 font-display text-[15px] text-ink-muted"
       >
-        {withSpinner ? <Spinner size={20} color={C.purple} /> : null}
+        {withSpinner ? <Spinner size={20} className="text-brand-500" /> : null}
         {text}
       </div>
     );
@@ -77,23 +59,9 @@ export function AppLoading({
       <div
         role="status"
         aria-live="polite"
-        style={{
-          marginTop: '8px',
-          marginBottom: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '10px 12px',
-          borderRadius: '10px',
-          background: `${C.purple}12`,
-          border: `1px solid ${C.purple}40`,
-          color: C.purple,
-          fontFamily: FONTS.mono,
-          fontSize: 12,
-          lineHeight: 1.4,
-        }}
+        className="mb-1 mt-2 flex items-center gap-2.5 rounded-control border border-brand-500/25 bg-brand-500/10 px-3 py-2.5 font-mono text-xs leading-snug text-brand-500"
       >
-        {withSpinner ? <Spinner size={16} color={C.purple} /> : null}
+        {withSpinner ? <Spinner size={16} className="text-brand-500" /> : null}
         <span>{text}</span>
       </div>
     );
@@ -104,17 +72,9 @@ export function AppLoading({
       <p
         role="status"
         aria-live="polite"
-        style={{
-          margin: '10px 0 4px',
-          color: C.muted,
-          fontFamily: 'monospace',
-          fontSize: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}
+        className="mb-1 mt-2.5 flex items-center gap-2 font-mono text-xs text-ink-muted"
       >
-        {withSpinner ? <Spinner size={14} color={C.purple} /> : null}
+        {withSpinner ? <Spinner size={14} className="text-brand-500" /> : null}
         {text}
       </p>
     );
@@ -125,14 +85,9 @@ export function AppLoading({
       <span
         role="status"
         aria-live="polite"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          verticalAlign: 'middle',
-        }}
+        className="inline-flex items-center gap-2 align-middle"
       >
-        {withSpinner ? <Spinner size={14} color={C.purple} /> : null}
+        {withSpinner ? <Spinner size={14} className="text-brand-500" /> : null}
         <span>{text}</span>
       </span>
     );
@@ -142,16 +97,9 @@ export function AppLoading({
     <span
       role="status"
       aria-live="polite"
-      style={{
-        color: C.muted,
-        fontFamily: 'monospace',
-        fontSize: 13,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}
+      className="inline-flex items-center gap-2 font-mono text-[13px] text-ink-muted"
     >
-      {withSpinner ? <Spinner size={14} color={C.purple} /> : null}
+      {withSpinner ? <Spinner size={14} className="text-brand-500" /> : null}
       {text}
     </span>
   );

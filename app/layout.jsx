@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#8930B8" />
       </head>
-      <body style={{ margin: 0, padding: 0, background: '#ffffff' }}>
+      <body className="m-0 p-0 bg-white">
         {children}
       </body>
     </html>

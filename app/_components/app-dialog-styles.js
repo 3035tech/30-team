@@ -1,59 +1,19 @@
-import { C } from '../../lib/theme';
+/** Shared overlay / card class strings for in-app dialogs (confirm, notice, prompt). */
+export const dialogOverlayClass =
+  'fixed inset-0 z-[10060] box-border flex items-center justify-center bg-ink/45 p-6';
 
-/** Shared overlay / card styles for in-app dialogs (confirm, notice, prompt). */
-export const dialogOverlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 10060,
-  background: 'rgba(26,22,37,.45)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '24px',
-  boxSizing: 'border-box',
-};
+export const dialogCardClass =
+  'w-full max-w-[420px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog';
 
-export const dialogCardStyle = {
-  width: '100%',
-  maxWidth: '420px',
-  background: '#fff',
-  border: `1px solid ${C.border}`,
-  borderRadius: '16px',
-  padding: '24px 26px',
-  boxShadow: '0 24px 64px rgba(26,22,37,.18)',
-};
+export const dialogBtnPrimaryClass =
+  'cursor-pointer rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-[13px] text-white';
 
-export const dialogBtnPrimary = (accent = C.purple) => ({
-  background: accent,
-  border: 'none',
-  borderRadius: '10px',
-  padding: '10px 20px',
-  color: '#fff',
-  fontSize: '13px',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-});
+/** Primary button without brand fill — pair with `bg-brand-500` | `bg-danger` | `bg-success`. */
+export const dialogBtnSolidClass =
+  'cursor-pointer rounded-control border-none px-5 py-2.5 font-mono text-[13px] text-white';
 
-export const dialogBtnGhost = {
-  background: 'transparent',
-  border: `1px solid ${C.border}`,
-  borderRadius: '10px',
-  padding: '10px 20px',
-  color: C.muted,
-  fontSize: '13px',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-};
+export const dialogBtnGhostClass =
+  'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted';
 
-export const dialogFieldStyle = {
-  width: '100%',
-  boxSizing: 'border-box',
-  background: C.inputBg || 'rgba(26,22,37,.04)',
-  border: `1px solid ${C.border}`,
-  borderRadius: '10px',
-  padding: '10px 12px',
-  color: C.text,
-  fontSize: '13px',
-  fontFamily: 'monospace',
-  marginTop: '6px',
-};
+export const dialogFieldClass =
+  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-mono text-[13px] text-ink';

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { getTypeData } from '../../../lib/i18n-data';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
-import { C, FONTS } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
 const SECTIONS = [
@@ -28,75 +28,62 @@ const SECTIONS = [
 function TypeCatalog({ locale }) {
   const typeData = getTypeData(locale);
   return (
-    <div style={{ marginTop: '18px' }}>
-      <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
+    <div className="mt-[18px]">
+      <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
         {t(locale, 'panel.help.typesCatalogIntro')}
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="flex flex-col gap-3">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
           const d = typeData[n];
           if (!d) return null;
           return (
             <article
               key={n}
+              className="rounded-xl px-4 py-3.5"
               style={{
                 border: `1px solid ${d.color}33`,
                 borderLeft: `4px solid ${d.color}`,
-                borderRadius: '12px',
-                padding: '14px 16px',
                 background: `${d.color}08`,
               }}
             >
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'baseline', marginBottom: '8px' }}>
-                <span style={{ fontSize: '18px', lineHeight: 1 }}>{d.emoji}</span>
-                <span style={{ fontSize: '15px', color: C.text, fontFamily: "'Georgia',serif" }}>
+              <div className="mb-2 flex flex-wrap items-baseline gap-2">
+                <span className="text-lg leading-none">{d.emoji}</span>
+                <span className="font-display text-[15px] text-ink">
                   T{n} · {typeFullName(n, locale)}
                 </span>
-                <span style={{
-                  fontSize: '11px',
-                  fontFamily: FONTS.mono,
-                  color: d.color,
-                  padding: '2px 8px',
-                  borderRadius: '999px',
-                  border: `1px solid ${d.color}44`,
-                  background: `${d.color}14`,
-                }}
+                <span
+                  className="rounded-full border px-2 py-0.5 font-mono text-[11px]"
+                  style={{
+                    color: d.color,
+                    borderColor: `${d.color}44`,
+                    background: `${d.color}14`,
+                  }}
                 >
                   {typeShortLabel(n, locale)}
                 </span>
               </div>
-              <p style={{ margin: '0 0 10px', fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{d.desc}</p>
-              <p style={{ margin: '0 0 10px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
-                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesAtWork')}.</strong>
+              <p className="mb-2.5 mt-0 text-[13px] leading-relaxed text-ink">{d.desc}</p>
+              <p className="mb-2.5 mt-0 text-[13px] leading-relaxed text-ink-muted">
+                <strong className="font-semibold text-ink">{t(locale, 'panel.help.typesAtWork')}.</strong>
                 {' '}
                 {t(locale, `panel.help.typeAtWork${n}`)}
               </p>
-              <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
-                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesWatch')}.</strong>
+              <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
+                <strong className="font-semibold text-ink">{t(locale, 'panel.help.typesWatch')}.</strong>
                 {' '}
                 {t(locale, `panel.help.typeWatch${n}`)}
               </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                <span style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  fontFamily: FONTS.mono,
-                  color: C.faint,
-                  width: '100%',
-                }}
-                >
+              <div className="mb-2.5 flex flex-wrap gap-1.5">
+                <span className="w-full font-mono text-[10px] uppercase tracking-wider text-ink-faint">
                   {t(locale, 'panel.help.typesStrengths')}
                 </span>
                 {d.strengths.map((s) => (
                   <span
                     key={s}
+                    className="rounded-full border px-2.5 py-0.5 text-[11px]"
                     style={{
-                      padding: '3px 10px',
-                      fontSize: '11px',
-                      borderRadius: '20px',
                       background: `${d.color}18`,
-                      border: `1px solid ${d.color}35`,
+                      borderColor: `${d.color}35`,
                       color: d.color,
                     }}
                   >
@@ -104,11 +91,11 @@ function TypeCatalog({ locale }) {
                   </span>
                 ))}
               </div>
-              <p style={{ margin: '0 0 6px', fontSize: '12px', color: C.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+              <p className="mb-1.5 mt-0 text-xs italic leading-snug text-ink-muted">
                 {t(locale, 'panel.help.typesChallenge')}: {d.challenge}
               </p>
-              <p style={{ margin: 0, fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>
-                <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.help.typesTeam')}.</strong>
+              <p className="m-0 text-xs leading-snug text-ink-muted">
+                <strong className="font-semibold text-ink">{t(locale, 'panel.help.typesTeam')}.</strong>
                 {' '}
                 {d.team}
               </p>
@@ -126,9 +113,9 @@ function StepList({ locale, sectionKey, count }) {
     items.push(t(locale, `panel.help.${sectionKey}Step${i}`));
   }
   return (
-    <ol style={{ margin: '12px 0 0', paddingLeft: '20px', color: C.muted, fontSize: '13px', lineHeight: 1.7 }}>
+    <ol className="mt-3 mb-0 list-decimal pl-5 text-[13px] leading-relaxed text-ink-muted">
       {items.map((text) => (
-        <li key={text} style={{ marginBottom: '6px' }}>{text}</li>
+        <li key={text} className="mb-1.5">{text}</li>
       ))}
     </ol>
   );
@@ -145,30 +132,14 @@ function FlowStrip({ locale }) {
     t(locale, 'panel.help.flowChip7'),
   ];
   return (
-    <div style={{
-      marginTop: '14px',
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '8px',
-      alignItems: 'center',
-    }}
-    >
+    <div className="mt-3.5 flex flex-wrap items-center gap-2">
       {steps.map((label, i) => (
-        <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            fontSize: '11px',
-            fontFamily: 'monospace',
-            padding: '6px 10px',
-            borderRadius: '999px',
-            border: `1px solid ${C.border}`,
-            background: 'rgba(26,22,37,.03)',
-            color: C.text,
-          }}
-          >
+        <span key={label} className="inline-flex items-center gap-2">
+          <span className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1.5 font-mono text-[11px] text-ink">
             {label}
           </span>
           {i < steps.length - 1 ? (
-            <span style={{ color: C.faint, fontFamily: 'monospace', fontSize: '12px' }}>→</span>
+            <span className="font-mono text-xs text-ink-faint">→</span>
           ) : null}
         </span>
       ))}
@@ -181,16 +152,7 @@ function LinkBtn({ label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      style={{
-        background: `${C.purple}12`,
-        border: `1px solid ${C.purple}44`,
-        borderRadius: '10px',
-        padding: '8px 12px',
-        color: C.purple,
-        fontSize: '12px',
-        cursor: 'pointer',
-        fontFamily: 'monospace',
-      }}
+      className="cursor-pointer rounded-control border border-brand-500/30 bg-brand-500/[0.07] px-3 py-2 font-mono text-xs text-brand-500"
     >
       {label}
     </button>
@@ -223,50 +185,64 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>{t(locale, 'panel.help.title')}</span>
-        <p style={{ margin: '10px 0 0', fontSize: '14px', color: C.muted, lineHeight: 1.65 }}>
+    <div className="flex flex-col gap-3.5">
+      <div className={cn(S.card, 'px-7 py-[22px]')}>
+        <span className={S.label}>
+          {t(locale, 'panel.help.title')}
+        </span>
+        <p className="mt-2.5 mb-0 text-sm leading-relaxed text-ink-muted">
           {t(locale, 'panel.help.intro')}
         </p>
-        <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="mt-3.5 flex flex-wrap gap-2">
           <LinkBtn label={t(locale, 'panel.help.linkOverview')} onClick={() => go('overview')} />
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />
         </div>
+        <nav
+          aria-label={t(locale, 'panel.help.tocAria')}
+          className="mt-4 flex flex-wrap gap-1.5 border-t border-ink/12 pt-3.5"
+        >
+          {SECTIONS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setOpen(key)}
+              className={cn(
+                'min-h-9 cursor-pointer rounded-full border px-3 py-1.5 font-mono text-[11px]',
+                open === key
+                  ? 'border-brand-500/30 bg-brand-500/[0.07] text-brand-600'
+                  : 'border-ink/12 bg-transparent text-ink-muted'
+              )}
+            >
+              {t(locale, `panel.help.${key}Title`)}
+            </button>
+          ))}
+        </nav>
       </div>
 
       {SECTIONS.map((key) => {
         const isOpen = open === key;
         return (
-          <div key={key} style={{ ...S.card, padding: 0, overflow: 'hidden' }}>
+          <div key={key} className={cn(S.card, 'overflow-hidden p-0')}>
             <button
               type="button"
               onClick={() => setOpen(isOpen ? '' : key)}
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                background: isOpen ? `${C.purple}0a` : 'transparent',
-                border: 'none',
-                padding: '16px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
-              }}
+              className={cn(
+                'flex w-full cursor-pointer items-center justify-between gap-3 border-none px-5 py-4 text-left',
+                isOpen ? 'bg-brand-500/[0.04]' : 'bg-transparent'
+              )}
             >
-              <span style={{ fontSize: '15px', color: C.text, fontFamily: "'Georgia',serif" }}>
+              <span className="font-display text-[15px] text-ink">
                 {t(locale, `panel.help.${key}Title`)}
               </span>
-              <span style={{ fontFamily: 'monospace', fontSize: '12px', color: C.muted }}>
+              <span className="font-mono text-xs text-ink-muted">
                 {isOpen ? '▲' : '▼'}
               </span>
             </button>
             {isOpen ? (
-              <div style={{ padding: '0 20px 18px', borderTop: `1px solid ${C.border}` }}>
-                <p style={{ margin: '14px 0 0', fontSize: '13px', color: C.muted, lineHeight: 1.65 }}>
+              <div className="border-t border-ink/12 px-5 pb-[18px]">
+                <p className="mt-3.5 mb-0 text-[13px] leading-relaxed text-ink-muted">
                   {t(locale, `panel.help.${key}Body`)}
                 </p>
                 {key === 'flow' ? <FlowStrip locale={locale} /> : null}
@@ -275,7 +251,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
                 ) : null}
                 {key === 'enneagram' ? <TypeCatalog locale={locale} /> : null}
                 {key === 'flow' ? (
-                  <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.faint, fontFamily: 'monospace', lineHeight: 1.6 }}>
+                  <p className="mt-3 mb-0 font-mono text-xs leading-relaxed text-ink-faint">
                     {t(locale, 'panel.help.flowAlt')}
                   </p>
                 ) : null}

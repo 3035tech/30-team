@@ -2,12 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
 import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { EmptyState } from '../../_components/EmptyState';
+
+const BTN_PRIMARY =
+  'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
+const BTN_GHOST =
+  'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
+const BTN_ROW =
+  'min-h-touch rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
+const BTN_PAGER =
+  'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
 
 function moduleOptions(locale) {
   return ASSIGNABLE_MODULE_CAPS.map((cap) => ({
@@ -149,10 +159,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
 
   const openCreateUser = async () => {
     const defaultCompanyId = companyOptions[0] ? String(companyOptions[0].id) : '';
-    const values = await promptForm({
-      title: t(locale, 'panel.admin.createUserTitle'),
-      message: `${t(locale, 'panel.admin.passwordOptionalHelp')} ${t(locale, 'panel.admin.userModulesHint')}`,
-      confirmLabel: t(locale, 'panel.admin.createUserBtn'),
+
+    // Step 1: identity only (email, optional password, role, company).
+    const step1 = await promptForm({
+      title: t(locale, 'panel.admin.createUserStep1Title'),
+      message: t(locale, 'panel.admin.passwordOptionalHelp'),
+      confirmLabel: t(locale, 'panel.admin.createUserContinue'),
       fields: [
         {
           key: 'email',
@@ -182,6 +194,17 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           defaultValue: defaultCompanyId,
           showWhen: (v) => v.role !== 'admin',
         },
+      ],
+    });
+    if (!step1) return;
+
+    // Step 2: optional module overrides. Cancel here aborts create entirely (safer than
+    // creating with role defaults after the admin already dismissed module choice).
+    const step2 = await promptForm({
+      title: t(locale, 'panel.admin.createUserStep2Title'),
+      message: t(locale, 'panel.admin.createUserStep2Help'),
+      confirmLabel: t(locale, 'panel.admin.createUserBtn'),
+      fields: [
         {
           key: 'modules',
           type: 'checkboxGroup',
@@ -191,21 +214,21 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         },
       ],
     });
-    if (!values) return;
+    if (!step2) return;
 
-    const email = String(values.email || '').trim();
-    const password = String(values.password || '');
-    const role = String(values.role || '').trim();
+    const email = String(step1.email || '').trim();
+    const password = String(step1.password || '');
+    const role = String(step1.role || '').trim();
     if (!email) return;
 
     const body = {
       email,
       role,
-      companyId: role === 'admin' ? null : (values.companyId ? parseInt(String(values.companyId), 10) : null),
+      companyId: role === 'admin' ? null : (step1.companyId ? parseInt(String(step1.companyId), 10) : null),
     };
     if (password.trim()) body.password = password;
     else body.sendInvite = true;
-    if (Array.isArray(values.modules)) body.modules = values.modules;
+    if (Array.isArray(step2.modules)) body.modules = step2.modules;
 
     setLoading(true);
     setError('');
@@ -357,39 +380,37 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       {error ? (
-        <div style={{ ...S.card, padding: '14px 18px' }}>
-          <p style={{ margin: 0, color: C.tension, fontSize: '12px', fontFamily: 'monospace' }}>{error}</p>
+        <div className={cn(S.card, 'px-[18px] py-3.5')}>
+          <p className="m-0 font-mono text-xs text-danger">{error}</p>
         </div>
       ) : null}
       {msg ? (
-        <div style={{ ...S.card, padding: '14px 18px' }}>
-          <p style={{ margin: 0, color: C.synergy, fontSize: '12px', fontFamily: 'monospace' }}>{msg}</p>
+        <div className={cn(S.card, 'px-[18px] py-3.5')}>
+          <p className="m-0 font-mono text-xs text-success">{msg}</p>
         </div>
       ) : null}
 
-      <span style={{ ...S.label, display: 'block', marginBottom: '2px' }}>{t(locale, 'panel.admin.usersTitle')}</span>
-      <div style={{ ...S.card, padding: '22px 28px' }}>
-        <span style={S.label}>{t(locale, 'panel.admin.usersAccounts')}</span>
-        <p style={{ fontSize: '13px', color: C.muted, marginTop: '10px', lineHeight: 1.65, marginBottom: 0 }}>
+      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.usersTitle')}</span>
+      <div className={cn(S.card, 'px-7 py-[22px]')}>
+        <span className={S.label}>{t(locale, 'panel.admin.usersAccounts')}</span>
+        <p className="mb-0 mt-2.5 text-[13px] leading-relaxed text-ink-muted">
           {t(locale, 'panel.admin.usersIntro')}
-          <strong style={{ color: C.text, fontWeight: 600 }}>{t(locale, 'panel.admin.companiesTitle')}</strong>
+          <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
           {t(locale, 'panel.admin.usersIntroSuffix')}
         </p>
       </div>
 
-      <div style={{ ...S.card }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ ...S.label, marginBottom: 0 }}>{t(locale, 'panel.admin.usersList')}</span>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className={S.card}>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.usersList')}</span>
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={openCreateUser}
               disabled={loading}
-              style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}55`,
-                borderRadius: '10px', padding: '10px 14px', color: C.purple, fontSize: '12px',
-                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+              className={cn(BTN_PRIMARY, loading && 'opacity-60')}
             >
               {t(locale, 'panel.admin.newUserBtn')}
             </button>
@@ -400,30 +421,33 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                 loadUsersOnly();
               }}
               disabled={loading}
-              style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                borderRadius: '10px', padding: '10px 14px', color: C.muted, fontSize: '12px',
-                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+              className={cn(BTN_GHOST, loading && 'opacity-60')}
             >
               {t(locale, 'panel.admin.refresh')}
             </button>
           </div>
         </div>
         {usersTotal === 0 ? (
-          <p style={{ color: C.muted, fontStyle: 'italic', marginTop: '10px' }}>
-            {t(locale, 'panel.admin.noUsersYet')}
-          </p>
+          <div className="mt-3">
+            <EmptyState
+              message={t(locale, 'panel.admin.noUsersYet')}
+              actionLabel={t(locale, 'panel.admin.createUserBtn')}
+              onAction={openCreateUser}
+              actionDisabled={loading}
+            />
+          </div>
         ) : (
-          <div style={{ marginTop: '10px', overflowX: 'auto' }} className="db-table-scroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '640px' }}>
+          <div className="db-table-scroll mt-2.5 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-xs">
               <thead>
-                <tr style={{ background: 'rgba(26,22,37,.02)' }}>
+                <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
                   <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
-                  <th scope="col" style={{ textAlign: 'right', padding: '10px 12px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, fontFamily: 'monospace', borderBottom: `1px solid ${C.border}` }}>{t(locale, 'panel.admin.colActions')}</th>
+                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">{t(locale, 'panel.admin.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -431,28 +455,17 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   const companyLabel = u.role === 'admin' ? t(locale, 'panel.common.notApplicable') : (u.companyName || `#${u.companyId || t(locale, 'panel.common.notApplicable')}`);
                   const createdAt = u.createdAt ? new Date(u.createdAt) : null;
                   return (
-                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(26,22,37,.07)' }}>
-                      <td style={{ padding: '12px', fontFamily: 'monospace', color: C.faint }}>#{u.id}</td>
-                      <td style={{ padding: '12px', color: C.text }}>{u.email}</td>
-                      <td style={{ padding: '12px' }}>
-                        <span style={{ padding: '2px 8px', fontSize: '10px', borderRadius: '20px',
-                          background: 'rgba(26,22,37,.04)', border: `1px solid ${C.border}`,
-                          color: C.muted, fontFamily: 'monospace' }}>
+                    <tr key={u.id} className="border-b border-ink/[0.07]">
+                      <td className="px-3 py-3 font-mono text-ink-faint">#{u.id}</td>
+                      <td className="px-3 py-3 text-ink">{u.email}</td>
+                      <td className="px-3 py-3">
+                        <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
                           {u.role}
                         </span>
                         {u.capabilitiesCustomized ? (
                           <span
                             title={t(locale, 'panel.admin.userModulesHint')}
-                            style={{
-                              marginLeft: '6px',
-                              padding: '2px 8px',
-                              fontSize: '10px',
-                              borderRadius: '20px',
-                              background: `${C.purple}12`,
-                              border: `1px solid ${C.purple}40`,
-                              color: C.purpleDeep,
-                              fontFamily: 'monospace',
-                            }}
+                            className="ml-1.5 rounded-full border border-brand-500/25 bg-brand-500/[0.07] px-2 py-0.5 font-mono text-[10px] text-brand-600"
                           >
                             {t(locale, 'panel.admin.userModulesCustom')}
                           </span>
@@ -460,37 +473,26 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                         {u.passwordSetupPending ? (
                           <span
                             title={t(locale, 'panel.admin.passwordSetupPendingHint')}
-                            style={{
-                              marginLeft: '6px',
-                              padding: '2px 8px',
-                              fontSize: '10px',
-                              borderRadius: '20px',
-                              background: 'rgba(26,22,37,.04)',
-                              border: `1px solid ${C.border}`,
-                              color: C.muted,
-                              fontFamily: 'monospace',
-                            }}
+                            className="ml-1.5 rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted"
                           >
                             {t(locale, 'panel.admin.passwordSetupPending')}
                           </span>
                         ) : null}
                       </td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{companyLabel}</td>
-                      <td style={{ padding: '12px', color: C.muted, fontFamily: 'monospace' }}>{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
-                      <td style={{ padding: '12px', color: C.faint, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                      <td className="px-3 py-3 font-mono text-ink-muted">{companyLabel}</td>
+                      <td className="px-3 py-3 font-mono text-ink-muted">{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
+                      <td className="whitespace-nowrap px-3 py-3 font-mono text-ink-faint">
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <td className="px-3 py-3 text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
                           {u.passwordSetupPending ? (
                             <button
                               type="button"
                               onClick={() => resendInvite(u.id, u.email)}
                               disabled={loading}
                               title={t(locale, 'panel.admin.resendInvite')}
-                              style={{ background: `${C.purple}12`, border: `1px solid ${C.purple}40`,
-                                borderRadius: '10px', padding: '8px 10px', color: C.purple, fontSize: '11px',
-                                cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+                              className={cn(BTN_ROW, 'border-brand-500/25 bg-brand-500/[0.07] text-brand-500', loading && 'opacity-60')}
                             >
                               {t(locale, 'panel.admin.resendInvite')}
                             </button>
@@ -499,9 +501,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                             type="button"
                             onClick={() => editUser(u)}
                             disabled={loading}
-                            style={{ background: 'transparent', border: `1px solid ${C.border}`,
-                              borderRadius: '10px', padding: '8px 10px', color: C.muted, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.editUser')}
                           </button>
@@ -510,9 +510,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                             onClick={() => deleteUser(u.id)}
                             disabled={loading}
                             title={t(locale, 'panel.admin.deactivateTitle')}
-                            style={{ background: 'rgba(232,71,71,.08)', border: '1px solid rgba(232,71,71,.35)',
-                              borderRadius: '10px', padding: '8px 10px', color: C.tension, fontSize: '11px',
-                              cursor: 'pointer', fontFamily: 'monospace', opacity: loading ? 0.6 : 1, minHeight: '40px' }}
+                            className={cn(BTN_ROW, 'border-danger/35 bg-danger/[0.08] text-danger', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.deactivate')}
                           </button>
@@ -524,18 +522,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
               </tbody>
             </table>
             {navigateDashboard && usersTotal > 0 ? (
-              <div style={{
-                display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', justifyContent: 'space-between',
-                marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.border}`,
-              }}>
-                <span style={{ fontSize: '11px', color: C.muted, fontFamily: 'monospace' }}>
+              <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3">
+                <span className="font-mono text-[11px] text-ink-muted">
                   {t(locale, 'panel.admin.userCount', {
                     total: usersTotal,
                     page: usersPage,
                     totalPages: usersTotalPages,
                   })}
                 </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={String(usersPageSize)}
                     onChange={(e) => {
@@ -543,9 +538,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       navigateDashboard({ usersPage: 1, usersPageSize: ps, tab: 'users' });
                     }}
                     disabled={loading}
-                    style={{ background: 'rgba(26,22,37,.05)', border: `1px solid ${C.border}`,
-                      borderRadius: '10px', padding: '6px 10px', color: C.muted, fontSize: '11px',
-                      cursor: 'pointer', fontFamily: 'monospace' }}
+                    className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
                   >
                     {PAGE_SIZE_OPTIONS.map((n) => (
                       <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
@@ -555,10 +548,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                     type="button"
                     disabled={loading || usersPage <= 1}
                     onClick={() => navigateDashboard({ usersPage: Math.max(1, usersPage - 1), tab: 'users' })}
-                    style={{ background: usersPage <= 1 ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${usersPage <= 1 ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '6px 12px', color: usersPage <= 1 ? C.faint : C.purple,
-                      fontSize: '11px', cursor: usersPage <= 1 ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                    className={cn(
+                      BTN_PAGER,
+                      usersPage <= 1
+                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                    )}
                   >
                     {t(locale, 'panel.admin.prev')}
                   </button>
@@ -566,11 +561,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                     type="button"
                     disabled={loading || usersPage >= usersTotalPages}
                     onClick={() => navigateDashboard({ usersPage: Math.min(usersTotalPages, usersPage + 1), tab: 'users' })}
-                    style={{ background: usersPage >= usersTotalPages ? 'transparent' : `${C.purple}18`,
-                      border: `1px solid ${usersPage >= usersTotalPages ? C.border : `${C.purple}55`}`,
-                      borderRadius: '10px', padding: '6px 12px',
-                      color: usersPage >= usersTotalPages ? C.faint : C.purple,
-                      fontSize: '11px', cursor: usersPage >= usersTotalPages ? 'default' : 'pointer', fontFamily: 'monospace' }}
+                    className={cn(
+                      BTN_PAGER,
+                      usersPage >= usersTotalPages
+                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+                    )}
                   >
                     {t(locale, 'panel.admin.next')}
                   </button>

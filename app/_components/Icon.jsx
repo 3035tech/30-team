@@ -2,7 +2,7 @@
  * Shared stroke icons for dashboard chrome (sidebar, toggles, KPIs).
  * viewBox 24×24, rendered 18×18 — matches former NavIcon.
  */
-export function Icon({ name }) {
+export function Icon({ name, className }) {
   const props = {
     width: 18,
     height: 18,
@@ -13,7 +13,7 @@ export function Icon({ name }) {
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     'aria-hidden': true,
-    style: { flexShrink: 0 },
+    className: className || 'shrink-0',
   };
   switch (name) {
     case 'overview':

@@ -3,76 +3,17 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { REJECTION_REASONS, normalizeStartDate } from '../../lib/pipeline';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import { rejectionReasonLabel } from './pipeline-prompts';
 
 const PipelineExtrasContext = createContext(null);
 
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 10050,
-  background: 'rgba(26,22,37,.45)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '24px',
-  boxSizing: 'border-box',
-};
-
-const cardStyle = {
-  width: '100%',
-  maxWidth: '440px',
-  background: '#fff',
-  border: `1px solid ${C.border}`,
-  borderRadius: '16px',
-  padding: '24px 26px',
-  boxShadow: '0 24px 64px rgba(26,22,37,.18)',
-};
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '11px',
-  fontFamily: 'monospace',
-  letterSpacing: '1.5px',
-  textTransform: 'uppercase',
-  color: C.muted,
-  marginBottom: '8px',
-};
-
-const fieldStyle = {
-  width: '100%',
-  boxSizing: 'border-box',
-  background: C.inputBg,
-  border: `1px solid ${C.border}`,
-  borderRadius: '10px',
-  padding: '12px 14px',
-  color: C.text,
-  fontSize: '14px',
-  fontFamily: 'Georgia, serif',
-};
-
-const btnPrimary = {
-  background: C.purple,
-  border: 'none',
-  borderRadius: '10px',
-  padding: '10px 16px',
-  color: '#fff',
-  fontSize: '13px',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-};
-
-const btnGhost = {
-  background: 'transparent',
-  border: `1px solid ${C.border}`,
-  borderRadius: '10px',
-  padding: '10px 16px',
-  color: C.muted,
-  fontSize: '13px',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-};
+const FIELD =
+  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3.5 py-3 font-display text-sm text-ink';
+const BTN_PRIMARY =
+  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-[13px] text-white';
+const BTN_GHOST =
+  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-4 py-2.5 font-mono text-[13px] text-ink-muted';
 
 function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -109,7 +50,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
 
   return (
     <div
-      style={overlayStyle}
+      className="fixed inset-0 z-[10050] box-border flex items-center justify-center bg-ink/45 p-6"
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
@@ -122,46 +63,34 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="pipeline-extras-title"
-        style={cardStyle}
+        className="w-full max-w-[440px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog"
         onClick={(e) => e.stopPropagation()}
       >
-        <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            color: C.purple,
-            fontFamily: 'monospace',
-          }}
-        >
+        <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
           {t(locale, 'recruiting.pipelineShort')}
         </span>
         <h2
           id="pipeline-extras-title"
-          style={{
-            margin: '8px 0 0',
-            fontSize: '22px',
-            fontWeight: 'normal',
-            fontFamily: 'Georgia, serif',
-            color: C.text,
-            lineHeight: 1.25,
-          }}
+          className="mb-0 mt-2 font-display text-[22px] font-normal leading-[1.25] text-ink"
         >
           {title}
         </h2>
-        <p style={{ margin: '10px 0 0', fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{body}</p>
+        <p className="mb-0 mt-2.5 text-[13px] leading-[1.55] text-ink-muted">{body}</p>
 
-        <div style={{ marginTop: '20px' }}>
+        <div className="mt-5">
           {mode === 'rejected' ? (
             <>
-              <label htmlFor="pipeline-reject-reason" style={labelStyle}>
+              <label
+                htmlFor="pipeline-reject-reason"
+                className="mb-2 block font-mono text-[11px] uppercase tracking-[1.5px] text-ink-muted"
+              >
                 {t(locale, 'recruiting.rejectionReasonLabel')}
               </label>
               <select
                 id="pipeline-reject-reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                style={{ ...fieldStyle, cursor: 'pointer' }}
+                className={cn(FIELD, 'cursor-pointer')}
               >
                 {REJECTION_REASONS.map((code) => (
                   <option key={code} value={code}>
@@ -172,7 +101,10 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
             </>
           ) : (
             <>
-              <label htmlFor="pipeline-hire-date" style={labelStyle}>
+              <label
+                htmlFor="pipeline-hire-date"
+                className="mb-2 block font-mono text-[11px] uppercase tracking-[1.5px] text-ink-muted"
+              >
                 {t(locale, 'recruiting.startDateLabel')}
               </label>
               <input
@@ -180,9 +112,9 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                style={{ ...fieldStyle, cursor: 'pointer' }}
+                className={cn(FIELD, 'cursor-pointer')}
               />
-              <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.faint, lineHeight: 1.5 }}>
+              <p className="mb-0 mt-2 text-xs leading-normal text-ink-faint">
                 {t(locale, 'recruiting.hireDateHint')}
               </p>
             </>
@@ -190,16 +122,14 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
         </div>
 
         {error ? (
-          <p style={{ margin: '12px 0 0', fontSize: '12px', color: C.tension, fontFamily: 'monospace' }}>
-            {error}
-          </p>
+          <p className="mb-0 mt-3 font-mono text-xs text-danger">{error}</p>
         ) : null}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '22px' }}>
-          <button type="button" onClick={onCancel} style={btnGhost}>
+        <div className="mt-[22px] flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel} className={BTN_GHOST}>
             {t(locale, 'recruiting.modalCancel')}
           </button>
-          <button type="button" onClick={submit} style={btnPrimary}>
+          <button type="button" onClick={submit} className={BTN_PRIMARY}>
             {t(locale, 'recruiting.modalConfirm')}
           </button>
         </div>

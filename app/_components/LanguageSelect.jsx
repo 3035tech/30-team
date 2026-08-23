@@ -1,7 +1,7 @@
 'use client';
 
 import { LOCALES, LOCALE_COOKIE, localeLabel, normalizeLocale, t } from '../../lib/i18n';
-import { C, FONTS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 export default function LanguageSelect({ locale, onChange, persistUser = false, compact = false }) {
   const current = normalizeLocale(locale);
@@ -24,22 +24,20 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
   };
 
   return (
-    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: compact ? '11px' : '12px', color: 'rgba(82,74,102,.72)' }}>
-      <span style={{ fontFamily: FONTS.mono, textTransform: 'uppercase', letterSpacing: '1px' }}>{t(current, 'common.language')}</span>
+    <label
+      className={cn(
+        'inline-flex items-center gap-2 text-ink-muted',
+        compact ? 'text-[11px]' : 'text-xs'
+      )}
+    >
+      <span className="font-mono uppercase tracking-wide">{t(current, 'common.language')}</span>
       <select
         value={current}
         onChange={(e) => changeLocale(e.target.value)}
-        style={{
-          background: 'rgba(26,22,37,.05)',
-          border: `1px solid ${C.purple}29`,
-          borderRadius: '10px',
-          padding: compact ? '10px 12px' : '9px 12px',
-          minHeight: compact ? '40px' : undefined,
-          color: 'rgba(52,44,70,.8)',
-          fontSize: compact ? '12px' : '12px',
-          cursor: 'pointer',
-          fontFamily: FONTS.serif,
-        }}
+        className={cn(
+          'cursor-pointer rounded-control border border-brand-500/16 bg-ink/[0.05] font-display text-xs text-ink-muted',
+          compact ? 'min-h-touch px-3 py-2.5' : 'px-3 py-[9px]'
+        )}
       >
         {LOCALES.map((loc) => (
           <option key={loc} value={loc}>

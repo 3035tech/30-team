@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useLocale } from '../../lib/useLocale';
-import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../lib/theme';
 import { PublicFunnyError } from '../_components/PublicStatusScreens';
 
 /**
@@ -16,16 +15,9 @@ export default function VacancyReportError({ error, reset }) {
   }, [error]);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: C.bg,
-        color: C.text,
-        fontFamily: FONTS.serif,
-      }}
-    >
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', background: RADIAL_GLOW_SINGLE }} />
-      <main style={{ position: 'relative', maxWidth: '880px', margin: '0 auto', padding: '40px 20px 64px' }}>
+    <div className="relative min-h-screen bg-canvas font-display text-ink">
+      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
+      <main className="relative mx-auto max-w-[880px] px-5 pb-16 pt-10">
         <PublicFunnyError locale={locale} onRetry={typeof reset === 'function' ? reset : undefined} />
       </main>
     </div>

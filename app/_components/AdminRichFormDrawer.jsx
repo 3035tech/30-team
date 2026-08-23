@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
-import { C, FONTS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import {
-  dialogBtnGhost,
-  dialogBtnPrimary,
-  dialogOverlayStyle,
+  dialogBtnGhostClass,
+  dialogOverlayClass,
 } from './app-dialog-styles';
 
 /**
@@ -47,8 +46,7 @@ export function AdminRichFormDrawer({
 
   return createPortal(
     <div
-      className="app-dialog-overlay"
-      style={dialogOverlayStyle}
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
@@ -58,54 +56,18 @@ export function AdminRichFormDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="rich-form-drawer-title"
-        className="admin-rich-drawer-panel"
-        style={{
-          width: 'min(100%, ' + maxWidth + ')',
-          maxHeight: '92vh',
-          margin: '24px auto',
-          background: C.surface,
-          border: `1px solid ${C.border}`,
-          borderRadius: '18px',
-          boxShadow: '0 24px 64px rgba(26,22,37,.18)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        className="admin-rich-drawer-panel mx-6 my-6 flex max-h-[92vh] flex-col overflow-hidden rounded-[18px] border border-ink/12 bg-white shadow-dialog"
+        style={{ width: `min(100%, ${maxWidth})` }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            padding: '18px 22px 14px',
-            borderBottom: `1px solid ${C.border}`,
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: '12px',
-            flexShrink: 0,
-          }}
-        >
+        <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]">
           <div>
-            <span
-              style={{
-                fontSize: '10px',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                color: C.purple,
-                fontFamily: 'monospace',
-              }}
-            >
+            <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
               30Team
             </span>
             <h2
               id="rich-form-drawer-title"
-              style={{
-                margin: '6px 0 0',
-                fontSize: '22px',
-                fontWeight: 'normal',
-                fontFamily: FONTS.serif,
-                color: C.text,
-                lineHeight: 1.25,
-              }}
+              className="mb-0 mt-1.5 font-display text-[22px] font-normal leading-tight text-ink"
             >
               {title}
             </h2>
@@ -114,29 +76,14 @@ export function AdminRichFormDrawer({
             type="button"
             onClick={onClose}
             aria-label={t(locale, 'panel.common.cancel')}
-            style={{
-              ...dialogBtnGhost,
-              minWidth: '40px',
-              minHeight: '40px',
-              padding: '8px 12px',
-            }}
+            className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2')}
           >
             ×
           </button>
         </div>
-        <div style={{ padding: '18px 22px', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div className="flex-1 overflow-y-auto px-[22px] py-[18px]">{children}</div>
         {footer ? (
-          <div
-            style={{
-              padding: '14px 22px 18px',
-              borderTop: `1px solid ${C.border}`,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '10px',
-              flexShrink: 0,
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="flex flex-shrink-0 flex-wrap justify-end gap-2.5 border-t border-ink/12 px-[22px] pb-[18px] pt-3.5">
             {footer}
           </div>
         ) : null}
@@ -146,4 +93,4 @@ export function AdminRichFormDrawer({
   );
 }
 
-export { dialogBtnGhost, dialogBtnPrimary };
+export { dialogBtnGhostClass, dialogBtnPrimaryClass } from './app-dialog-styles';

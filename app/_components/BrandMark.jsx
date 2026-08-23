@@ -1,7 +1,7 @@
 'use client';
 
 import { brandMarkSrc } from '../../lib/brand';
-import { C, FONTS } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 
 /**
  * Official 30Team mark (person + petals).
@@ -11,6 +11,7 @@ import { C, FONTS } from '../../lib/theme';
  *   withWordmark?: boolean,
  *   wordmark?: string,
  *   style?: object,
+ *   className?: string,
  *   href?: string,
  *   onClick?: Function,
  *   title?: string,
@@ -22,6 +23,7 @@ export function BrandMark({
   withWordmark = false,
   wordmark = '30Team',
   style,
+  className,
   href,
   onClick,
   title,
@@ -30,6 +32,7 @@ export function BrandMark({
   const src = brandMarkSrc(size);
   const radius = Math.max(6, Math.round(size * 0.22));
   const interactive = Boolean(href || onClick);
+  const gap = withWordmark ? Math.max(8, Math.round(size * 0.28)) : 0;
 
   const inner = (
     <>
@@ -38,24 +41,17 @@ export function BrandMark({
         width={size}
         height={size}
         alt={interactive ? '' : wordmark}
+        className="block shrink-0 object-cover"
         style={{
-          display: 'block',
           width: size,
           height: size,
           borderRadius: radius,
-          objectFit: 'cover',
-          flexShrink: 0,
         }}
       />
       {withWordmark ? (
         <span
-          style={{
-            fontFamily: FONTS.serif,
-            fontSize: Math.max(14, Math.round(size * 0.55)),
-            color: C.text,
-            letterSpacing: '-0.02em',
-            lineHeight: 1,
-          }}
+          className="font-display leading-none tracking-[-0.02em] text-ink"
+          style={{ fontSize: Math.max(14, Math.round(size * 0.55)) }}
         >
           {wordmark}
         </span>
@@ -63,12 +59,8 @@ export function BrandMark({
     </>
   );
 
-  const layoutStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: withWordmark ? Math.max(8, Math.round(size * 0.28)) : 0,
-    ...style,
-  };
+  const layoutClass = cn('inline-flex items-center', className);
+  const layoutStyle = { gap, ...style };
 
   if (href) {
     return (
@@ -77,12 +69,8 @@ export function BrandMark({
         onClick={onClick}
         title={title}
         aria-label={ariaLabel || wordmark}
-        style={{
-          ...layoutStyle,
-          textDecoration: 'none',
-          color: 'inherit',
-          cursor: 'pointer',
-        }}
+        className={cn(layoutClass, 'cursor-pointer text-inherit no-underline')}
+        style={layoutStyle}
       >
         {inner}
       </a>
@@ -96,21 +84,17 @@ export function BrandMark({
         onClick={onClick}
         title={title}
         aria-label={ariaLabel || wordmark}
-        style={{
-          ...layoutStyle,
-          margin: 0,
-          padding: 0,
-          border: 'none',
-          background: 'transparent',
-          cursor: 'pointer',
-          font: 'inherit',
-          color: 'inherit',
-        }}
+        className={cn(layoutClass, 'm-0 cursor-pointer border-none bg-transparent p-0 font-inherit text-inherit')}
+        style={layoutStyle}
       >
         {inner}
       </button>
     );
   }
 
-  return <span style={layoutStyle}>{inner}</span>;
+  return (
+    <span className={layoutClass} style={layoutStyle}>
+      {inner}
+    </span>
+  );
 }

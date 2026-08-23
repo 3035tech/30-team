@@ -6,7 +6,8 @@ import { TYPE_DATA } from '../../../lib/data';
 import { getTypeData } from '../../../lib/i18n-data';
 import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
-import { C, FONTS, RADIAL_GLOW_SINGLE } from '../../../lib/theme';
+import { C } from '../../../lib/theme';
+import { cn } from '../../../lib/cn';
 import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { RichTextView } from '../../_components/RichTextView';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
@@ -14,6 +15,10 @@ import { motivatorDimensionLabel } from '../../../lib/ae/motivators-dimensions';
 import { recommendationFromStage } from '../../../lib/vacancy-report-shared';
 import { formatSalaryBr } from '../../../lib/br-masks';
 import { BrandPulseLoading, PublicFunnyError } from '../../_components/PublicStatusScreens';
+import { S } from '../../dashboard/dashboard-shared';
+
+const miniLabelClass =
+  'mb-0.5 mt-0 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint';
 
 function ScoreBars({ scores, locale }) {
   const entries = [];
@@ -23,25 +28,20 @@ function ScoreBars({ scores, locale }) {
   }
   const max = Math.max(...entries.map((e) => e.v), 1);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div className="flex flex-col gap-1">
       {entries.map((e) => (
-        <div key={e.t} style={{ display: 'flex', alignItems: 'center', gap: '8px' }} title={typeHintTooltip(e.t, locale)}>
-          <span style={{ width: '28px', fontSize: '10px', fontFamily: FONTS.mono, color: C.muted, cursor: 'help' }}>
-            T{e.t}
-          </span>
-          <div style={{ flex: 1, height: '6px', background: 'rgba(26,22,37,.08)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div key={e.t} className="flex items-center gap-2" title={typeHintTooltip(e.t, locale)}>
+          <span className="w-7 cursor-help font-mono text-[10px] text-ink-faint">T{e.t}</span>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-ink/[0.08]">
             <div
+              className="h-full rounded-sm"
               style={{
-                height: '100%',
                 width: `${(e.v / max) * 100}%`,
                 background: TYPE_DATA[e.t]?.color || C.purple,
-                borderRadius: '3px',
               }}
             />
           </div>
-          <span style={{ width: '28px', textAlign: 'right', fontSize: '10px', fontFamily: FONTS.mono, color: C.faint }}>
-            {e.v}
-          </span>
+          <span className="w-7 text-right font-mono text-[10px] text-ink-faint">{e.v}</span>
         </div>
       ))}
     </div>
@@ -123,26 +123,16 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
       : null;
 
   return (
-    <article
-      style={{
-        padding: '20px',
-        borderRadius: '12px',
-        border: `1px solid ${C.border}`,
-        background: '#fff',
-      }}
-    >
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontFamily: FONTS.serif, color: C.text }}>{c.name}</h3>
-        <span style={{ fontSize: '11px', fontFamily: FONTS.mono, color: C.purple }}>{recommendationLabel(locale, rec)}</span>
+    <article className="rounded-xl border border-ink/12 bg-white p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="m-0 font-display text-base text-ink">{c.name}</h3>
+        <span className="font-mono text-[11px] text-brand-500">{recommendationLabel(locale, rec)}</span>
       </div>
       <p
-        style={{
-          margin: '8px 0 0',
-          fontSize: '12px',
-          color: C.muted,
-          fontFamily: FONTS.mono,
-          cursor: c.topType != null ? 'help' : undefined,
-        }}
+        className={cn(
+          'mb-0 mt-2 font-mono text-xs text-ink-muted',
+          c.topType != null && 'cursor-help'
+        )}
         title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
       >
         {c.topType != null ? typeFullName(c.topType, locale) : '—'}
@@ -151,47 +141,40 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
           : ''}
       </p>
       {meta.length ? (
-        <p style={{ margin: '6px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>{meta.join(' · ')}</p>
+        <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{meta.join(' · ')}</p>
       ) : null}
 
-      {(why || c.watchOut || c.interviewProbe) ? (
-        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {why || c.watchOut || c.interviewProbe ? (
+        <div className="mt-3.5 flex flex-col gap-2.5">
           {why ? (
-            <div style={{ minHeight: '46px' }}>
-              <div style={miniLabel()}>{t(locale, 'panel.report.fieldWhy')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{why}</p>
+            <div className="min-h-[46px]">
+              <div className={miniLabelClass}>{t(locale, 'panel.report.fieldWhy')}</div>
+              <p className="m-0 text-[13px] leading-[1.55] text-ink">{why}</p>
             </div>
           ) : null}
           {c.watchOut ? (
-            <div style={{ minHeight: '46px' }}>
-              <div style={miniLabel()}>{t(locale, 'panel.report.fieldWatch')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{c.watchOut}</p>
+            <div className="min-h-[46px]">
+              <div className={miniLabelClass}>{t(locale, 'panel.report.fieldWatch')}</div>
+              <p className="m-0 text-[13px] leading-[1.55] text-ink">{c.watchOut}</p>
             </div>
           ) : null}
           {c.interviewProbe ? (
-            <div style={{ minHeight: '46px' }}>
-              <div style={miniLabel()}>{t(locale, 'panel.report.fieldProbe')}</div>
-              <p style={{ margin: 0, fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{c.interviewProbe}</p>
+            <div className="min-h-[46px]">
+              <div className={miniLabelClass}>{t(locale, 'panel.report.fieldProbe')}</div>
+              <p className="m-0 text-[13px] leading-[1.55] text-ink">{c.interviewProbe}</p>
             </div>
           ) : null}
         </div>
       ) : null}
 
       {motivators.length ? (
-        <div style={{ marginTop: '12px' }}>
-          <div style={miniLabel()}>{t(locale, 'panel.report.motivatorsTitle')}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+        <div className="mt-3">
+          <div className={miniLabelClass}>{t(locale, 'panel.report.motivatorsTitle')}</div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
             {motivators.map((m) => (
               <span
                 key={m.key}
-                style={{
-                  fontSize: '11px',
-                  fontFamily: FONTS.mono,
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  border: `1px solid ${C.border}`,
-                  color: C.muted,
-                }}
+                className="rounded-full border border-ink/12 px-2 py-1 font-mono text-[11px] text-ink-muted"
               >
                 {motivatorDimensionLabel(m.key, locale)}
                 {m.score != null ? ` ${m.score}` : ''}
@@ -202,40 +185,30 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
       ) : null}
 
       {roleReading ? (
-        <p style={{ margin: '10px 0 0', fontSize: '13px', color: C.text, lineHeight: 1.55 }}>{roleReading}</p>
+        <p className="mb-0 mt-2.5 text-[13px] leading-[1.55] text-ink">{roleReading}</p>
       ) : null}
       {d?.desc ? (
-        <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.55 }}>{d.desc}</p>
+        <p className="mb-0 mt-2 text-xs leading-[1.55] text-ink-muted">{d.desc}</p>
       ) : null}
       {aligned ? (
-        <p style={{ margin: '10px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.5 }}>
+        <p className="mb-0 mt-2.5 text-xs leading-normal text-ink-muted">
           {t(locale, 'panel.report.fitAligned', { types: aligned })}
         </p>
       ) : null}
       {gaps ? (
-        <p style={{ margin: '4px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.5 }}>
+        <p className="mb-0 mt-1 text-xs leading-normal text-ink-muted">
           {t(locale, 'panel.report.fitGaps', { types: gaps })}
         </p>
       ) : null}
       <button
         type="button"
         onClick={() => setOpenBars((v) => !v)}
-        style={{
-          marginTop: '12px',
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
-          color: C.purple,
-          fontSize: '12px',
-          fontFamily: FONTS.mono,
-          cursor: 'pointer',
-          textDecoration: 'underline',
-        }}
+        className="mt-3 cursor-pointer border-none bg-transparent p-0 font-mono text-xs text-brand-500 underline"
       >
         {openBars ? t(locale, 'panel.report.hideScoreMap') : t(locale, 'panel.report.showScoreMap')}
       </button>
       {openBars ? (
-        <div style={{ marginTop: '10px' }}>
+        <div className="mt-2.5">
           <ScoreBars scores={c.scores} locale={locale} />
         </div>
       ) : null}
@@ -243,15 +216,66 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
   );
 }
 
-function miniLabel() {
-  return {
-    margin: '0 0 2px',
-    fontSize: '10px',
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    fontFamily: FONTS.mono,
-    color: C.faint,
-  };
+function FitCompareChart({ candidates, locale }) {
+  const ranked = (Array.isArray(candidates) ? candidates : [])
+    .filter((c) => c.vacancyFitScore010 != null)
+    .slice()
+    .sort((a, b) => Number(b.vacancyFitScore010) - Number(a.vacancyFitScore010))
+    .slice(0, 6);
+  if (ranked.length < 2) return null;
+  const max = Math.max(...ranked.map((c) => Number(c.vacancyFitScore010) || 0), 1);
+  return (
+    <section className="mb-5 rounded-xl border border-ink/12 bg-ink/[0.02] px-4 py-3.5">
+      <p className="mb-3 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
+        {t(locale, 'panel.report.fitCompareTitle')}
+      </p>
+      <div className="flex flex-col gap-2">
+        {ranked.map((c, i) => {
+          const score = Number(c.vacancyFitScore010) || 0;
+          const pct = Math.round((score / 10) * 100);
+          return (
+            <div key={`${c.name}-${i}`} className="flex items-center gap-2.5">
+              <span
+                className="w-[120px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-ink"
+                title={c.name}
+              >
+                {c.name}
+              </span>
+              <div className="h-2.5 flex-1 overflow-hidden rounded-[5px] bg-ink/[0.08]">
+                <div
+                  className={cn('h-full rounded-[5px]', i === 0 ? 'bg-success' : 'bg-brand-500')}
+                  style={{
+                    width: `${Math.min(100, Math.round((score / max) * 100))}%`,
+                    minWidth: score > 0 ? '4px' : 0,
+                  }}
+                />
+              </div>
+              <span className="w-[52px] text-right font-mono text-xs text-ink-muted">
+                {score.toFixed(1)}
+                <span className="text-[10px] text-ink-faint"> ({pct}%)</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function Shell({ children }) {
+  return (
+    <div className="min-h-screen bg-canvas font-display text-ink">
+      <style>{`
+        @media print {
+          .r-no-print { display: none !important; }
+          body { background: #fff !important; }
+          .r-glow { display: none !important; }
+        }
+      `}</style>
+      <div className="r-glow pointer-events-none fixed inset-0 bg-radial-glow-single" />
+      <main className="relative mx-auto max-w-[880px] px-5 pb-16 pt-10">{children}</main>
+    </div>
+  );
 }
 
 function ReportInner() {
@@ -376,193 +400,102 @@ function ReportInner() {
 
   return (
     <Shell>
-      <header style={{ marginBottom: '28px' }}>
-        <p
-          style={{
-            margin: '0 0 8px',
-            fontSize: '11px',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: C.purple,
-            fontFamily: FONTS.mono,
-            fontWeight: 600,
-          }}
-        >
+      <header className="mb-7">
+        <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-500">
           30Team
         </p>
-        <h1 style={{ margin: '0 0 6px', fontFamily: FONTS.serif, fontSize: '28px', color: C.text, fontWeight: 600 }}>
+        <h1 className="mb-1.5 mt-0 font-display text-[28px] font-semibold text-ink">
           {state.data.title || vacancy.title || t(locale, 'panel.report.publicTitle')}
         </h1>
-        <p style={{ margin: 0, fontSize: '14px', color: C.muted }}>
+        <p className="m-0 text-sm text-ink-muted">
           {vacancy.companyName}
           {vacancy.positionsCount ? ` · ${t(locale, 'panel.report.positions', { n: vacancy.positionsCount })}` : ''}
         </p>
-        <p style={{ margin: '10px 0 0', fontSize: '12px', color: C.faint, fontFamily: FONTS.mono }}>
+        <p className="mb-0 mt-2.5 font-mono text-xs text-ink-faint">
           {generatedAt ? t(locale, 'panel.report.generatedAt', { date: generatedAt.toLocaleString(locale) }) : ''}
           {expiresAt ? ` · ${t(locale, 'panel.report.expiresAt', { date: expiresAt.toLocaleString(locale) })}` : ''}
         </p>
-        <button
-          type="button"
-          className="r-no-print"
-          onClick={() => window.print()}
-          style={{
-            marginTop: '14px',
-            background: 'transparent',
-            border: `1px solid ${C.border}`,
-            borderRadius: '10px',
-            padding: '8px 12px',
-            color: C.muted,
-            fontSize: '12px',
-            cursor: 'pointer',
-            fontFamily: FONTS.mono,
-            minHeight: '40px',
-          }}
-        >
+        <button type="button" className={cn('r-no-print', S.btnGhost, 'mt-3.5')} onClick={() => window.print()}>
           {t(locale, 'panel.report.printPdf')}
         </button>
       </header>
 
-      {!(rubricSummary?.hasRubric) ? (
-        <section
-          style={{
-            marginBottom: '20px',
-            padding: '14px 16px',
-            borderRadius: '12px',
-            border: '1px solid rgba(220,38,38,.28)',
-            background: 'rgba(220,38,38,.05)',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.55 }}>
-            {t(locale, 'panel.report.noRubricBanner')}
-          </p>
+      {!rubricSummary?.hasRubric ? (
+        <section className="mb-5 rounded-xl border border-danger/30 bg-danger/[0.05] px-4 py-3.5">
+          <p className="m-0 text-[13px] leading-[1.55] text-danger">{t(locale, 'panel.report.noRubricBanner')}</p>
         </section>
       ) : null}
 
-      {(rubricSummary?.hasRubric && rubricTypesLabel) ||
-      vacancy.description ||
-      rubricSummary?.notes ? (
-        <section
-          style={{
-            marginBottom: '20px',
-            padding: '14px 16px',
-            borderRadius: '12px',
-            border: `1px solid ${C.border}`,
-            background: 'rgba(26,22,37,.02)',
-          }}
-        >
-          <p
-            style={{
-              margin: '0 0 6px',
-              fontSize: '11px',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.sectionLabel,
-              fontFamily: FONTS.mono,
-            }}
-          >
+      {(rubricSummary?.hasRubric && rubricTypesLabel) || vacancy.description || rubricSummary?.notes ? (
+        <section className="mb-5 rounded-xl border border-ink/12 bg-ink/[0.02] px-4 py-3.5">
+          <p className="mb-1.5 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
             {t(locale, 'panel.report.vacancySeeksTitle')}
           </p>
           {rubricSummary?.hasRubric && rubricTypesLabel ? (
-            <p style={{ margin: '0 0 8px', fontSize: '14px', color: C.text, lineHeight: 1.55 }}>
+            <p className="mb-2 mt-0 text-sm leading-[1.55] text-ink">
               {t(locale, 'panel.report.vacancySeeksBody', { types: rubricTypesLabel })}
             </p>
           ) : null}
           {rubricSummary?.notes ? (
-            <p style={{ margin: '0 0 8px', fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{rubricSummary.notes}</p>
+            <p className="mb-2 mt-0 text-[13px] leading-[1.55] text-ink-muted">{rubricSummary.notes}</p>
           ) : null}
           {!isRichTextEmpty(vacancy.description) ? (
-            <div style={{ marginTop: '4px' }}>
-              <p
-                style={{
-                  margin: '0 0 4px',
-                  fontSize: '11px',
-                  fontFamily: FONTS.mono,
-                  color: C.faint,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                {t(locale, 'panel.report.vacancyDescLabel')}
-              </p>
-              <RichTextView html={vacancy.description} style={{ fontSize: '13px', margin: 0, color: C.muted }} />
+            <div className="mt-1">
+              <p className={miniLabelClass}>{t(locale, 'panel.report.vacancyDescLabel')}</p>
+              <RichTextView html={vacancy.description} className="m-0 text-[13px]" />
             </div>
           ) : null}
           {rubricSummary?.hasRubric ? (
-            <p style={{ margin: '8px 0 0', fontSize: '12px', color: C.muted, lineHeight: 1.45 }}>
-              {t(locale, 'panel.report.fitExplain')}
-            </p>
+            <p className="mb-0 mt-2 text-xs leading-[1.45] text-ink-muted">{t(locale, 'panel.report.fitExplain')}</p>
           ) : null}
         </section>
       ) : null}
 
       {!isRichTextEmpty(note) ? (
-        <section
-          style={{
-            marginBottom: '24px',
-            padding: '16px 18px',
-            borderRadius: '12px',
-            border: `1px solid ${C.border}`,
-            background: C.surface || '#fff',
-          }}
-        >
-          <p
-            style={{
-              margin: '0 0 6px',
-              fontSize: '11px',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: C.sectionLabel,
-              fontFamily: FONTS.mono,
-            }}
-          >
+        <section className={cn(S.cardTight, 'mb-6 px-[18px] py-4')}>
+          <p className="mb-1.5 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
             {t(locale, 'panel.report.executiveNote')}
           </p>
-          <RichTextView html={note} style={{ fontSize: '14px', margin: 0 }} />
+          <RichTextView html={note} className="m-0 text-sm" />
         </section>
       ) : null}
 
       {compareLine ? (
-        <p style={{ margin: '0 0 12px', fontSize: '13px', color: C.muted, lineHeight: 1.55 }}>{compareLine}</p>
+        <p className="mb-3 mt-0 text-[13px] leading-[1.55] text-ink-muted">{compareLine}</p>
       ) : null}
 
       {rubricSummary?.hasRubric ? <FitCompareChart candidates={candidates} locale={locale} /> : null}
 
-      <section style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontFamily: FONTS.serif, fontSize: '18px', color: C.text, margin: '0 0 12px' }}>
+      <section className="mb-7">
+        <h2 className="mb-3 mt-0 font-display text-lg text-ink">
           {t(locale, 'panel.report.shortlistTitle', { n: candidates.length })}
         </h2>
-        <div style={{ overflowX: 'auto', border: `1px solid ${C.border}`, borderRadius: '12px', background: '#fff' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+        <div className="overflow-x-auto rounded-xl border border-ink/12 bg-white">
+          <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr style={{ textAlign: 'left', color: C.muted, fontFamily: FONTS.mono, fontSize: '11px' }}>
-                <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colName')}</th>
-                <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colRec')}</th>
+              <tr className="text-left font-mono text-[11px] text-ink-muted">
+                <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colName')}</th>
+                <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colRec')}</th>
                 {rubricSummary?.hasRubric ? (
-                  <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colFit')}</th>
+                  <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colFit')}</th>
                 ) : null}
-                <th style={{ padding: '10px 14px' }}>{t(locale, 'panel.report.colType')}</th>
+                <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colType')}</th>
               </tr>
             </thead>
             <tbody>
               {candidates.map((c, i) => {
                 const rec = c.recommendation || recommendationFromStage(c.pipelineStage);
                 return (
-                  <tr key={`${c.name}-${i}`} style={{ borderTop: `1px solid ${C.border}` }}>
-                    <td style={{ padding: '10px 14px', color: C.text }}>{c.name}</td>
-                    <td style={{ padding: '10px 14px', color: C.muted, fontFamily: FONTS.mono }}>
-                      {recommendationLabel(locale, rec)}
-                    </td>
+                  <tr key={`${c.name}-${i}`} className="border-t border-ink/12">
+                    <td className="px-3.5 py-2.5 text-ink">{c.name}</td>
+                    <td className="px-3.5 py-2.5 font-mono text-ink-muted">{recommendationLabel(locale, rec)}</td>
                     {rubricSummary?.hasRubric ? (
-                      <td style={{ padding: '10px 14px', fontFamily: FONTS.mono, fontWeight: 600 }}>
+                      <td className="px-3.5 py-2.5 font-mono font-semibold">
                         {c.vacancyFitScore010 != null ? `${Number(c.vacancyFitScore010).toFixed(1)}/10` : '—'}
                       </td>
                     ) : null}
                     <td
-                      style={{
-                        padding: '10px 14px',
-                        fontFamily: FONTS.mono,
-                        cursor: c.topType != null ? 'help' : undefined,
-                      }}
+                      className={cn('px-3.5 py-2.5 font-mono', c.topType != null && 'cursor-help')}
                       title={c.topType != null ? typeHintTooltip(c.topType, locale) : undefined}
                     >
                       {c.topType != null ? `T${c.topType} · ${typeShortLabel(c.topType, locale)}` : '—'}
@@ -576,10 +509,8 @@ function ReportInner() {
       </section>
 
       <section>
-        <h2 style={{ fontFamily: FONTS.serif, fontSize: '18px', color: C.text, margin: '0 0 14px' }}>
-          {t(locale, 'panel.report.profilesTitle')}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <h2 className="mb-3.5 mt-0 font-display text-lg text-ink">{t(locale, 'panel.report.profilesTitle')}</h2>
+        <div className="flex flex-col gap-[18px]">
           {candidates.map((c, i) => (
             <CandidateCard
               key={`card-${c.name}-${i}`}
@@ -592,118 +523,10 @@ function ReportInner() {
         </div>
       </section>
 
-      <footer style={{ marginTop: '36px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
-        <p style={{ margin: 0, fontSize: '11px', color: C.faint, lineHeight: 1.55 }}>
-          {t(locale, 'panel.report.disclaimer')}
-        </p>
+      <footer className="mt-9 border-t border-ink/12 pt-4">
+        <p className="m-0 text-[11px] leading-[1.55] text-ink-faint">{t(locale, 'panel.report.disclaimer')}</p>
       </footer>
     </Shell>
-  );
-}
-
-function FitCompareChart({ candidates, locale }) {
-  const ranked = (Array.isArray(candidates) ? candidates : [])
-    .filter((c) => c.vacancyFitScore010 != null)
-    .slice()
-    .sort((a, b) => Number(b.vacancyFitScore010) - Number(a.vacancyFitScore010))
-    .slice(0, 6);
-  if (ranked.length < 2) return null;
-  const max = Math.max(...ranked.map((c) => Number(c.vacancyFitScore010) || 0), 1);
-  return (
-    <section
-      style={{
-        marginBottom: '20px',
-        padding: '14px 16px',
-        borderRadius: '12px',
-        border: `1px solid ${C.border}`,
-        background: 'rgba(26,22,37,.02)',
-      }}
-    >
-      <p
-        style={{
-          margin: '0 0 12px',
-          fontSize: '11px',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: C.sectionLabel,
-          fontFamily: FONTS.mono,
-        }}
-      >
-        {t(locale, 'panel.report.fitCompareTitle')}
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {ranked.map((c, i) => {
-          const score = Number(c.vacancyFitScore010) || 0;
-          const pct = Math.round((score / 10) * 100);
-          return (
-            <div key={`${c.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span
-                style={{
-                  width: '120px',
-                  flexShrink: 0,
-                  fontSize: '12px',
-                  color: C.text,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                title={c.name}
-              >
-                {c.name}
-              </span>
-              <div
-                style={{
-                  flex: 1,
-                  height: '10px',
-                  background: 'rgba(26,22,37,.08)',
-                  borderRadius: '5px',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${Math.min(100, Math.round((score / max) * 100))}%`,
-                    height: '100%',
-                    background: i === 0 ? C.synergy || '#16a34a' : C.purple,
-                    borderRadius: '5px',
-                    minWidth: score > 0 ? '4px' : 0,
-                  }}
-                />
-              </div>
-              <span style={{ width: '52px', textAlign: 'right', fontFamily: FONTS.mono, fontSize: '12px', color: C.muted }}>
-                {score.toFixed(1)}
-                <span style={{ color: C.faint, fontSize: '10px' }}> ({pct}%)</span>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function Shell({ children }) {
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: C.bg,
-        color: C.text,
-        fontFamily: FONTS.serif,
-      }}
-    >
-      <style>{`
-        @media print {
-          .r-no-print { display: none !important; }
-          body { background: #fff !important; }
-          [style*="position: fixed"] { display: none !important; }
-        }
-      `}</style>
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', background: RADIAL_GLOW_SINGLE }} />
-      <main style={{ position: 'relative', maxWidth: '880px', margin: '0 auto', padding: '40px 20px 64px' }}>
-        {children}
-      </main>
-    </div>
   );
 }
 

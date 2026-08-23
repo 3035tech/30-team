@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
-import { C } from '../../lib/theme';
+import { cn } from '../../lib/cn';
 import {
-  dialogBtnGhost,
-  dialogBtnPrimary,
-  dialogCardStyle,
-  dialogOverlayStyle,
+  dialogBtnGhostClass,
+  dialogBtnSolidClass,
+  dialogCardClass,
+  dialogOverlayClass,
 } from './app-dialog-styles';
 
 /**
@@ -48,13 +48,11 @@ export function ConfirmDialog({
 
   if (!mounted || !open || !message) return null;
 
-  const accent = danger ? C.tension : C.purple;
   const heading = title || t(locale, 'panel.common.confirmTitle');
 
   return createPortal(
     <div
-      className="app-dialog-overlay"
-      style={dialogOverlayStyle}
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel?.();
@@ -64,39 +62,34 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
-        style={dialogCardStyle}
+        className={dialogCardClass}
         onClick={(e) => e.stopPropagation()}
       >
         <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            color: accent,
-            fontFamily: 'monospace',
-          }}
+          className={cn(
+            'font-mono text-[10px] uppercase tracking-[2px]',
+            danger ? 'text-danger' : 'text-brand-500'
+          )}
         >
           30Team
         </span>
         <h2
           id="confirm-dialog-title"
-          style={{
-            margin: '8px 0 0',
-            fontSize: '20px',
-            fontWeight: 'normal',
-            fontFamily: 'Georgia, serif',
-            color: C.text,
-            lineHeight: 1.25,
-          }}
+          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
         >
           {heading}
         </h2>
-        <p style={{ margin: '12px 0 0', fontSize: '14px', color: C.muted, lineHeight: 1.55 }}>{message}</p>
-        <div style={{ marginTop: '22px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-          <button type="button" onClick={onCancel} style={dialogBtnGhost}>
+        <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+        <div className="mt-[22px] flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel} className={dialogBtnGhostClass}>
             {cancelLabel || t(locale, 'panel.common.cancel')}
           </button>
-          <button type="button" onClick={onConfirm} autoFocus style={dialogBtnPrimary(accent)}>
+          <button
+            type="button"
+            onClick={onConfirm}
+            autoFocus
+            className={cn(dialogBtnSolidClass, danger ? 'bg-danger' : 'bg-brand-500')}
+          >
             {confirmLabel || t(locale, 'panel.common.confirmAction')}
           </button>
         </div>
