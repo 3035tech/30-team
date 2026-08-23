@@ -44,25 +44,7 @@ _(entregue — B-401–B-412: print briefing, kit hire, fit vs núcleo, grupos s
 
 ## Aberto — Epic B-500 (PDI + clima)
 
-Estrutura inicial entregue (migration `042`, libs, APIs, PDI na Equipe, aba Clima, `/clima/[token]`). Próximos:
-
-### B-501 — PDI: editar objetivo/status em massa + arquivar plano
-UI completa no detalhe (hoje: criar + status de item).
-
-### B-502 — PDI: vincular item a 1:1 / follow-up
-Opcional: `one_on_one_id` ou nota de progresso.
-
-### B-503 — Clima: editar perguntas no painel
-CRUD de perguntas além do seed padrão.
-
-### B-504 — Clima: convites em lote / e-mail
-Gerar N links ou enviar por SMTP (ainda anônimo).
-
-### B-505 — Clima: série temporal e benchmark interno
-Comparar campanhas da mesma empresa (médias por pergunta).
-
-### B-506 — Clima: mínimo de respostas antes de mostrar agregados
-Evitar reidentificação em times pequenos (k-anonimidade leve).
+_(entregue — estrutura 042 + B-501 editar/arquivar PDI, B-502 vínculo item↔1:1, B-503 CRUD perguntas, B-504 lote/e-mail de links, B-505 benchmark, B-506 mínimo de respostas.)_
 
 ---
 
@@ -103,4 +85,4 @@ _(vazio)_
 - Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
 - Epic **B-300** fechado.
-- Epic **B-400** fechado (ago/2026).
+- Epic **B-500** fechado (PDI + clima: estrutura + B-501–B-506).

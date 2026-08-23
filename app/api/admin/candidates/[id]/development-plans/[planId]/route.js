@@ -77,6 +77,7 @@ export async function PATCH(request, { params }) {
         notes: body.item.notes,
         status: body.item.status,
         dueDate: body.item.dueDate,
+        oneOnOneId: body.item.oneOnOneId,
       });
       if (!updItem.ok) return apiError(request, updItem.errorCode || 'INVALID_DATA', 400);
       await audit({
@@ -104,6 +105,7 @@ export async function PATCH(request, { params }) {
         status: body.addItem.status,
         source: body.addItem.source,
         dueDate: body.addItem.dueDate,
+        oneOnOneId: body.addItem.oneOnOneId,
       });
       if (!added.ok) return apiError(request, added.errorCode || 'INVALID_DATA', 400);
       await audit({

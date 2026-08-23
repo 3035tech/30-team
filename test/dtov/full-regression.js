@@ -205,24 +205,33 @@ async function runOfflineLibs() {
     const { dirname, join } = await import('node:path');
     const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
     const pdi = await readFile(join(root, 'lib', 'people', 'development-plans.js'), 'utf8');
-    for (const name of ['listDevelopmentPlans', 'createDevelopmentPlan', 'addDevelopmentPlanItem']) {
+    for (const name of ['listDevelopmentPlans', 'createDevelopmentPlan', 'addDevelopmentPlanItem', 'updateDevelopmentPlan']) {
       if (!pdi.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
     }
     const clima = await readFile(join(root, 'lib', 'people', 'climate-surveys.js'), 'utf8');
     for (const name of [
       'createClimateSurvey',
       'createClimateSurveyInvite',
+      'createClimateSurveyInviteBatch',
+      'addClimateSurveyQuestion',
+      'emailClimateSurveyInvites',
       'resolveClimateInviteByToken',
       'submitClimateResponse',
       'getClimateSurveyAggregate',
+      'getClimateCompanyBenchmark',
+      'climateMinResponses',
     ]) {
-      if (!clima.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
+      if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {
+        throw new Error(`missing ${name}`);
+      }
     }
     const mig = await readFile(join(root, 'migrations', '042_pdi_and_climate.sql'), 'utf8');
     if (!mig.includes('development_plans') || !mig.includes('climate_surveys')) {
       throw new Error('migration 042 missing tables');
     }
-    return 'pdi + climate structure ok';
+    const mig43 = await readFile(join(root, 'migrations', '043_pdi_item_one_on_one.sql'), 'utf8');
+    if (!mig43.includes('one_on_one_id')) throw new Error('migration 043 missing');
+    return 'pdi + climate B-501..506 ok';
   });
 
   await check('lib', 'vacancy-clone-and-aging', async () => {

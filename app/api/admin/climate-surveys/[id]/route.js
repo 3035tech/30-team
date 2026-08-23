@@ -4,11 +4,15 @@ import { apiError } from '../../../../../lib/api-error';
 import { audit } from '../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
 import {
+  addClimateSurveyQuestion,
   createClimateSurveyInvite,
+  createClimateSurveyInviteBatch,
+  emailClimateSurveyInvites,
   getClimateSurvey,
   getClimateSurveyAggregate,
   softDeleteClimateSurvey,
   updateClimateSurvey,
+  updateClimateSurveyQuestion,
 } from '../../../../../lib/people/climate-surveys';
 
 async function loadScopedSurvey(surveyId, scope) {
@@ -74,12 +78,13 @@ export async function PATCH(request, { params }) {
 
     const loaded = await loadScopedSurvey(surveyId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
+    const companyId = loaded.survey.companyId;
 
     const body = await request.json().catch(() => ({}));
 
     if (body.createInvite) {
       const inv = await createClimateSurveyInvite(query, {
-        companyId: loaded.survey.companyId,
+        companyId,
         surveyId,
         ttlDays: body.ttlDays,
       });
@@ -94,8 +99,84 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ ok: true, invite: inv.invite });
     }
 
+    if (body.createInviteBatch) {
+      const batch = await createClimateSurveyInviteBatch(query, {
+        companyId,
+        surveyId,
+        count: body.count,
+        ttlDays: body.ttlDays,
+      });
+      if (!batch.ok) return apiError(request, batch.errorCode || 'INVALID_DATA', 400);
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'climate_survey.invite_batch',
+        targetType: 'climate_survey',
+        targetId: surveyId,
+        metadata: { n: batch.invites.length },
+      });
+      return NextResponse.json({ ok: true, invites: batch.invites });
+    }
+
+    if (body.emailInvites) {
+      const origin =
+        body.appOrigin ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        new URL(request.url).origin;
+      const mailed = await emailClimateSurveyInvites(query, {
+        companyId,
+        surveyId,
+        emails: body.emails,
+        appOrigin: origin,
+        locale: body.locale || payload.locale || 'pt-BR',
+        ttlDays: body.ttlDays,
+      });
+      if (!mailed.ok) {
+        const status = mailed.errorCode === 'MAIL_NOT_CONFIGURED' ? 503 : 400;
+        return apiError(request, mailed.errorCode || 'INVALID_DATA', status);
+      }
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'climate_survey.invite_email',
+        targetType: 'climate_survey',
+        targetId: surveyId,
+        metadata: { sent: mailed.sent },
+      });
+      return NextResponse.json({
+        ok: true,
+        sent: mailed.sent,
+        skipped: mailed.skipped,
+        invites: mailed.invites,
+      });
+    }
+
+    if (body.addQuestion) {
+      const added = await addClimateSurveyQuestion(query, {
+        companyId,
+        surveyId,
+        prompt: body.addQuestion.prompt,
+        sortOrder: body.addQuestion.sortOrder,
+      });
+      if (!added.ok) return apiError(request, added.errorCode || 'INVALID_DATA', 400);
+      const survey = await getClimateSurvey(query, { companyId, surveyId });
+      return NextResponse.json({ ok: true, question: added.question, survey });
+    }
+
+    if (body.updateQuestion && body.updateQuestion.id) {
+      const upd = await updateClimateSurveyQuestion(query, {
+        companyId,
+        surveyId,
+        questionId: body.updateQuestion.id,
+        prompt: body.updateQuestion.prompt,
+        sortOrder: body.updateQuestion.sortOrder,
+        active: body.updateQuestion.active,
+      });
+      if (!upd.ok) return apiError(request, upd.errorCode || 'INVALID_DATA', 400);
+      const survey = await getClimateSurvey(query, { companyId, surveyId });
+      return NextResponse.json({ ok: true, question: upd.question, survey });
+    }
+
     const updated = await updateClimateSurvey(query, {
-      companyId: loaded.survey.companyId,
+      companyId,
       surveyId,
       title: body.title,
       description: body.description,

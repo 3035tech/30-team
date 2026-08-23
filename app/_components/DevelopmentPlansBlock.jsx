@@ -9,15 +9,16 @@ import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
 
 /**
- * PDI block — list + create plan (optional seed from synthesis ideas).
+ * PDI — create/edit plan, archive, items + optional 1:1 link (B-501 / B-502).
  */
-export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
-  const { toast, promptForm } = useAppFeedback();
+export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], oneOnOnes = [] }) {
+  const { toast, promptForm, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const load = useCallback(async () => {
     if (!candidateId) return;
@@ -41,8 +42,8 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
     load();
   }, [load]);
 
-  const openDetail = async (planId) => {
-    if (expandedId === planId) {
+  const openDetail = async (planId, force = false) => {
+    if (!force && expandedId === planId) {
       setExpandedId(null);
       setDetail(null);
       return;
@@ -63,6 +64,20 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
     }
   };
 
+  const patchPlan = async (planId, body) => {
+    const res = await fetch(
+      `/api/admin/candidates/${encodeURIComponent(candidateId)}/development-plans/${encodeURIComponent(planId)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || 'patch');
+    return data;
+  };
+
   const createPlan = async () => {
     const ideas = Array.isArray(seedIdeas) ? seedIdeas.filter(Boolean).slice(0, 4) : [];
     const values = await promptForm({
@@ -70,20 +85,20 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
       confirmLabel: t(locale, 'panel.pdi.createConfirm'),
       fields: [
         {
-          name: 'title',
+          key: 'title',
           label: t(locale, 'panel.pdi.titleLabel'),
           placeholder: t(locale, 'panel.pdi.titlePh'),
           required: true,
         },
         {
-          name: 'objective',
+          key: 'objective',
           label: t(locale, 'panel.pdi.objectiveLabel'),
           placeholder: t(locale, 'panel.pdi.objectivePh'),
         },
         ...(ideas.length
           ? [
               {
-                name: 'seed',
+                key: 'seed',
                 type: 'boolean',
                 label: t(locale, 'panel.pdi.seedFromSynthesis'),
                 defaultValue: true,
@@ -109,10 +124,77 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
         }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'create');
+      if (!res.ok) throw new Error(data?.error || data?.errorCode || 'create');
       toast(t(locale, 'panel.pdi.created'), 'ok');
       await load();
-      if (data.plan?.id) await openDetail(data.plan.id);
+      if (data.plan?.id) await openDetail(data.plan.id, true);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editPlan = async () => {
+    if (!detail) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.pdi.editTitle'),
+      confirmLabel: t(locale, 'panel.pdi.savePlan'),
+      fields: [
+        {
+          key: 'title',
+          label: t(locale, 'panel.pdi.titleLabel'),
+          defaultValue: detail.title || '',
+          required: true,
+        },
+        {
+          key: 'objective',
+          label: t(locale, 'panel.pdi.objectiveLabel'),
+          defaultValue: detail.objective || '',
+        },
+        {
+          key: 'status',
+          type: 'select',
+          label: t(locale, 'panel.pdi.statusLabel'),
+          defaultValue: detail.status || 'draft',
+          options: ['draft', 'active', 'completed', 'archived'].map((s) => ({
+            value: s,
+            label: t(locale, `panel.pdi.status.${s}`),
+          })),
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patchPlan(detail.id, {
+        title: values.title,
+        objective: values.objective,
+        status: values.status,
+      });
+      setDetail(data.plan);
+      toast(t(locale, 'panel.pdi.planUpdated'), 'ok');
+      await load();
+    } catch {
+      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const archivePlan = async () => {
+    if (!detail) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.pdi.archiveConfirm'),
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const data = await patchPlan(detail.id, { status: 'archived' });
+      setDetail(data.plan);
+      toast(t(locale, 'panel.pdi.archived'), 'ok');
+      await load();
     } catch {
       toast(t(locale, 'panel.pdi.saveError'), 'error');
     } finally {
@@ -124,16 +206,51 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
     if (!expandedId) return;
     setBusy(true);
     try {
-      const res = await fetch(
-        `/api/admin/candidates/${encodeURIComponent(candidateId)}/development-plans/${encodeURIComponent(expandedId)}`,
+      const data = await patchPlan(expandedId, { item: { id: item.id, status } });
+      setDetail(data.plan);
+      toast(t(locale, 'panel.pdi.itemUpdated'), 'ok');
+      await load();
+    } catch {
+      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const linkOneOnOne = async (item, oneOnOneId) => {
+    if (!expandedId) return;
+    setBusy(true);
+    try {
+      const data = await patchPlan(expandedId, {
+        item: { id: item.id, oneOnOneId: oneOnOneId || null },
+      });
+      setDetail(data.plan);
+      toast(t(locale, 'panel.pdi.itemUpdated'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addItem = async () => {
+    if (!expandedId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.pdi.addItemTitle'),
+      confirmLabel: t(locale, 'panel.pdi.addItemConfirm'),
+      fields: [
         {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ item: { id: item.id, status } }),
-        }
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'patch');
+          key: 'title',
+          label: t(locale, 'panel.pdi.itemTitleLabel'),
+          placeholder: t(locale, 'panel.pdi.itemTitlePh'),
+          required: true,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patchPlan(expandedId, { addItem: { title: values.title } });
       setDetail(data.plan);
       toast(t(locale, 'panel.pdi.itemUpdated'), 'ok');
       await load();
@@ -146,6 +263,9 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
 
   if (loading) return <AppLoading variant="inline" />;
 
+  const visible = showArchived ? items : items.filter((p) => p.status !== 'archived');
+  const ooOpts = Array.isArray(oneOnOnes) ? oneOnOnes : [];
+
   return (
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.pdi.sectionAria')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -153,24 +273,33 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
           <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.pdi.title')}</h3>
           <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'panel.pdi.hint')}</p>
         </div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={createPlan}
-          className={cn(S.btnBrandSoft, 'min-h-touch')}
-        >
-          {t(locale, 'panel.pdi.createBtn')}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+            onClick={() => setShowArchived((v) => !v)}
+          >
+            {showArchived ? t(locale, 'panel.pdi.hideArchived') : t(locale, 'panel.pdi.showArchived')}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={createPlan}
+            className={cn(S.btnBrandSoft, 'min-h-touch')}
+          >
+            {t(locale, 'panel.pdi.createBtn')}
+          </button>
+        </div>
       </div>
 
-      {items.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           title={t(locale, 'panel.pdi.emptyTitle')}
           message={t(locale, 'panel.pdi.emptyHint')}
         />
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {items.map((p) => (
+          {visible.map((p) => (
             <li key={p.id} className="rounded-control border border-ink/12 bg-canvas/40 px-3 py-2">
               <button
                 type="button"
@@ -185,6 +314,24 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
               </button>
               {expandedId === p.id && detail ? (
                 <div className="mt-2 border-t border-ink/10 pt-2">
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    <button type="button" disabled={busy} className={S.btnGhost} onClick={editPlan}>
+                      {t(locale, 'panel.pdi.editBtn')}
+                    </button>
+                    {detail.status !== 'archived' ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'text-danger')}
+                        onClick={archivePlan}
+                      >
+                        {t(locale, 'panel.pdi.archiveBtn')}
+                      </button>
+                    ) : null}
+                    <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={addItem}>
+                      {t(locale, 'panel.pdi.addItemBtn')}
+                    </button>
+                  </div>
                   {detail.objective ? (
                     <p className={cn(S.muted, 'mb-2 text-xs')}>{detail.objective}</p>
                   ) : null}
@@ -195,20 +342,40 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [] }) {
                       {detail.items.map((it) => (
                         <li
                           key={it.id}
-                          className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-white/50 px-2 py-1.5"
+                          className="flex flex-col gap-1.5 rounded-md bg-white/50 px-2 py-1.5"
                         >
-                          <span className="min-w-0 flex-1 text-xs text-ink">{it.title}</span>
-                          <select
-                            className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
-                            value={it.status}
-                            disabled={busy}
-                            aria-label={t(locale, 'panel.pdi.itemStatusAria')}
-                            onChange={(e) => setItemStatus(it, e.target.value)}
-                          >
-                            <option value="todo">{t(locale, 'panel.pdi.itemStatus.todo')}</option>
-                            <option value="doing">{t(locale, 'panel.pdi.itemStatus.doing')}</option>
-                            <option value="done">{t(locale, 'panel.pdi.itemStatus.done')}</option>
-                          </select>
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <span className="min-w-0 flex-1 text-xs text-ink">{it.title}</span>
+                            <select
+                              className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
+                              value={it.status}
+                              disabled={busy}
+                              aria-label={t(locale, 'panel.pdi.itemStatusAria')}
+                              onChange={(e) => setItemStatus(it, e.target.value)}
+                            >
+                              <option value="todo">{t(locale, 'panel.pdi.itemStatus.todo')}</option>
+                              <option value="doing">{t(locale, 'panel.pdi.itemStatus.doing')}</option>
+                              <option value="done">{t(locale, 'panel.pdi.itemStatus.done')}</option>
+                            </select>
+                          </div>
+                          {ooOpts.length > 0 ? (
+                            <label className="flex flex-wrap items-center gap-2 text-[11px] text-ink-muted">
+                              <span>{t(locale, 'panel.pdi.linkOo')}</span>
+                              <select
+                                className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-[11px]')}
+                                value={it.oneOnOneId != null ? String(it.oneOnOneId) : ''}
+                                disabled={busy}
+                                onChange={(e) => linkOneOnOne(it, e.target.value)}
+                              >
+                                <option value="">{t(locale, 'panel.pdi.linkOoNone')}</option>
+                                {ooOpts.map((oo) => (
+                                  <option key={oo.id} value={oo.id}>
+                                    {String(oo.meetingDate || '').slice(0, 10)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

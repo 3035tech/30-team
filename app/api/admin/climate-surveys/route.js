@@ -3,7 +3,7 @@ import { query } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
-import { createClimateSurvey, listClimateSurveys } from '../../../../lib/people/climate-surveys';
+import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys } from '../../../../lib/people/climate-surveys';
 
 function resolveCompanyId(scope, bodyCompanyId) {
   if (scope.isAdmin) {
@@ -27,6 +27,11 @@ export async function GET(request) {
       : Number(scope.companyId);
     if (!Number.isFinite(companyId) || companyId <= 0) {
       return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
+    if (url.searchParams.get('benchmark') === '1') {
+      const bench = await getClimateCompanyBenchmark(query, { companyId });
+      return NextResponse.json(bench);
     }
 
     const items = await listClimateSurveys(query, { companyId });

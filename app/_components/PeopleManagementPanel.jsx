@@ -322,7 +322,12 @@ export function PeopleManagementPanel({
       </div>
 
       {candidateId ? (
-        <DevelopmentPlansBlock locale={locale} candidateId={candidateId} seedIdeas={pdiSeedIdeas} />
+        <DevelopmentPlansBlock
+          locale={locale}
+          candidateId={candidateId}
+          seedIdeas={pdiSeedIdeas}
+          oneOnOnes={oneOnOnes}
+        />
       ) : null}
     </div>
   );

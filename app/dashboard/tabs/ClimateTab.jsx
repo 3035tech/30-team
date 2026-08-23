@@ -10,7 +10,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
 
 /**
- * Climate surveys — list / create / open / invite link / aggregate (estrutura B-500).
+ * Climate surveys — B-503 questions, B-504 batch/email, B-505 benchmark, B-506 k-min.
  */
 export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const { toast, promptForm, confirm } = useAppFeedback();
@@ -20,27 +20,31 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [aggregate, setAggregate] = useState(null);
-  const [inviteUrl, setInviteUrl] = useState('');
+  const [benchmark, setBenchmark] = useState(null);
+  const [inviteUrls, setInviteUrls] = useState([]);
   const [companyId, setCompanyId] = useState(companies[0]?.id || '');
+
+  const companyQs =
+    isAdmin && companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const q =
-        isAdmin && companyId
-          ? `?companyId=${encodeURIComponent(companyId)}`
-          : '';
-      const res = await fetch(`/api/admin/climate-surveys${q}`);
+      const res = await fetch(`/api/admin/climate-surveys${companyQs}`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'load');
+      if (!res.ok) throw new Error(data?.error || data?.errorCode || 'load');
       setItems(Array.isArray(data.items) ? data.items : []);
-    } catch {
-      toast(t(locale, 'panel.climate.loadError'), 'error');
+      const bq = companyQs ? `${companyQs}&benchmark=1` : '?benchmark=1';
+      const br = await fetch(`/api/admin/climate-surveys${bq}`);
+      const bd = await br.json().catch(() => ({}));
+      if (br.ok) setBenchmark(bd);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.climate.loadError'), 'error');
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [companyId, isAdmin, locale, toast]);
+  }, [companyQs, locale, toast]);
 
   useEffect(() => {
     load();
@@ -48,7 +52,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
 
   const loadDetail = async (id) => {
     setBusy(true);
-    setInviteUrl('');
+    setInviteUrls([]);
     setAggregate(null);
     try {
       const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`);
@@ -56,13 +60,11 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       if (!res.ok) throw new Error(data?.error || 'load');
       setSelectedId(id);
       setDetail(data.survey);
-      if (data.survey?.responseCount > 0) {
-        const ag = await fetch(
-          `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
-        );
-        const agData = await ag.json().catch(() => ({}));
-        if (ag.ok) setAggregate(agData);
-      }
+      const ag = await fetch(
+        `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
+      );
+      const agData = await ag.json().catch(() => ({}));
+      if (ag.ok) setAggregate(agData);
     } catch {
       toast(t(locale, 'panel.climate.loadError'), 'error');
     } finally {
@@ -70,23 +72,34 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     }
   };
 
+  const patch = async (id, body) => {
+    const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || 'patch');
+    return data;
+  };
+
   const createSurvey = async () => {
     const fields = [
       {
-        name: 'title',
+        key: 'title',
         label: t(locale, 'panel.climate.titleLabel'),
         placeholder: t(locale, 'panel.climate.titlePh'),
         required: true,
       },
       {
-        name: 'description',
+        key: 'description',
         label: t(locale, 'panel.climate.descLabel'),
         placeholder: t(locale, 'panel.climate.descPh'),
       },
     ];
     if (isAdmin && companies.length) {
       fields.unshift({
-        name: 'companyId',
+        key: 'companyId',
         type: 'select',
         label: t(locale, 'panel.climate.companyLabel'),
         options: companies.map((c) => ({ value: String(c.id), label: c.name || c.id })),
@@ -112,13 +125,13 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'create');
+      if (!res.ok) throw new Error(data?.error || data?.errorCode || 'create');
       toast(t(locale, 'panel.climate.created'), 'ok');
       if (values.companyId) setCompanyId(values.companyId);
       await load();
       if (data.survey?.id) await loadDetail(data.survey.id);
-    } catch {
-      toast(t(locale, 'panel.climate.saveError'), 'error');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.climate.saveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -128,13 +141,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(selectedId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'patch');
+      const data = await patch(selectedId, { status });
       setDetail(data.survey);
       toast(t(locale, 'panel.climate.statusUpdated'), 'ok');
       await load();
@@ -153,17 +160,162 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     }
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(selectedId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ createInvite: true }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'invite');
+      const data = await patch(selectedId, { createInvite: true });
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const url = `${origin}/clima/${data.invite.token}`;
-      setInviteUrl(url);
+      setInviteUrls([`${origin}/clima/${data.invite.token}`]);
       toast(t(locale, 'panel.climate.inviteOk'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createInviteBatch = async () => {
+    if (!selectedId || detail?.status !== 'open') {
+      toast(t(locale, 'panel.climate.needOpen'), 'info');
+      return;
+    }
+    const values = await promptForm({
+      title: t(locale, 'panel.climate.batchTitle'),
+      confirmLabel: t(locale, 'panel.climate.batchConfirm'),
+      fields: [
+        {
+          key: 'count',
+          label: t(locale, 'panel.climate.batchCount'),
+          placeholder: '10',
+          defaultValue: '5',
+          required: true,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, {
+        createInviteBatch: true,
+        count: Number(values.count) || 5,
+      });
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      setInviteUrls((data.invites || []).map((i) => `${origin}/clima/${i.token}`));
+      toast(t(locale, 'panel.climate.batchOk', { n: data.invites?.length || 0 }), 'ok');
+    } catch {
+      toast(t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const emailInvites = async () => {
+    if (!selectedId || detail?.status !== 'open') {
+      toast(t(locale, 'panel.climate.needOpen'), 'info');
+      return;
+    }
+    const values = await promptForm({
+      title: t(locale, 'panel.climate.emailTitle'),
+      confirmLabel: t(locale, 'panel.climate.emailConfirm'),
+      fields: [
+        {
+          key: 'emails',
+          label: t(locale, 'panel.climate.emailList'),
+          placeholder: t(locale, 'panel.climate.emailPh'),
+          required: true,
+        },
+      ],
+    });
+    if (!values) return;
+    const emails = String(values.emails || '')
+      .split(/[\s,;]+/)
+      .map((e) => e.trim())
+      .filter(Boolean);
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, {
+        emailInvites: true,
+        emails,
+        locale,
+        appOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+      });
+      toast(t(locale, 'panel.climate.emailOk', { n: data.sent || 0 }), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addQuestion = async () => {
+    if (!selectedId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.climate.addQuestionTitle'),
+      confirmLabel: t(locale, 'panel.climate.addQuestionConfirm'),
+      fields: [
+        {
+          key: 'prompt',
+          label: t(locale, 'panel.climate.questionLabel'),
+          placeholder: t(locale, 'panel.climate.questionPh'),
+          required: true,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, { addQuestion: { prompt: values.prompt } });
+      setDetail(data.survey);
+      toast(t(locale, 'panel.climate.questionSaved'), 'ok');
+      await load();
+    } catch {
+      toast(t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editQuestion = async (q) => {
+    if (!selectedId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.climate.editQuestionTitle'),
+      confirmLabel: t(locale, 'panel.climate.saveQuestion'),
+      fields: [
+        {
+          key: 'prompt',
+          label: t(locale, 'panel.climate.questionLabel'),
+          defaultValue: q.prompt,
+          required: true,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, {
+        updateQuestion: { id: q.id, prompt: values.prompt },
+      });
+      setDetail(data.survey);
+      toast(t(locale, 'panel.climate.questionSaved'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deactivateQuestion = async (q) => {
+    if (!selectedId) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.climate.deactivateQuestionConfirm'),
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, {
+        updateQuestion: { id: q.id, active: false },
+      });
+      setDetail(data.survey);
+      toast(t(locale, 'panel.climate.questionSaved'), 'ok');
+      await load();
     } catch {
       toast(t(locale, 'panel.climate.saveError'), 'error');
     } finally {
@@ -231,6 +383,29 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         </label>
       ) : null}
 
+      {benchmark?.prompts?.length > 0 ? (
+        <div className={cn(S.cardTight)}>
+          <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkTitle')}</div>
+          <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
+            {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
+          </p>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {benchmark.prompts.slice(0, 6).map((row) => (
+              <li key={row.key} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
+                <div className="text-ink-muted">{row.prompt}</div>
+                <div className="mt-1 flex flex-wrap gap-2 font-mono text-ink">
+                  {row.means.map((m) => (
+                    <span key={m.surveyId}>
+                      {m.title}: {m.mean != null ? m.mean : '—'}
+                    </span>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {loading ? (
         <AppLoading variant="panel" />
       ) : items.length === 0 ? (
@@ -287,28 +462,79 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </button>
                   ) : null}
                   {detail.status === 'open' ? (
-                    <button type="button" disabled={busy} className={S.btnPrimary} onClick={createInvite}>
-                      {t(locale, 'panel.climate.inviteBtn')}
+                    <>
+                      <button type="button" disabled={busy} className={S.btnPrimary} onClick={createInvite}>
+                        {t(locale, 'panel.climate.inviteBtn')}
+                      </button>
+                      <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={createInviteBatch}>
+                        {t(locale, 'panel.climate.batchBtn')}
+                      </button>
+                      <button type="button" disabled={busy} className={S.btnGhost} onClick={emailInvites}>
+                        {t(locale, 'panel.climate.emailBtn')}
+                      </button>
+                    </>
+                  ) : null}
+                  {detail.status !== 'closed' ? (
+                    <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
+                      {t(locale, 'panel.climate.addQuestionBtn')}
                     </button>
                   ) : null}
                   <button type="button" disabled={busy} className={cn(S.btnGhost, 'text-danger')} onClick={removeSurvey}>
                     {t(locale, 'panel.climate.deleteBtn')}
                   </button>
                 </div>
-                {inviteUrl ? (
-                  <div>
-                    <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.inviteLink')}</div>
-                    <CopyableLink url={inviteUrl} locale={locale} />
+                {inviteUrls.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    <div className={cn(S.label, 'mb-0')}>{t(locale, 'panel.climate.inviteLink')}</div>
+                    {inviteUrls.slice(0, 20).map((url) => (
+                      <CopyableLink key={url} url={url} locale={locale} />
+                    ))}
+                    {inviteUrls.length > 20 ? (
+                      <p className={cn(S.faint, 'm-0 text-xs')}>
+                        {t(locale, 'panel.climate.batchMore', { n: inviteUrls.length - 20 })}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 <div>
                   <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.questions')}</div>
-                  <ol className="m-0 list-decimal space-y-1 pl-4 text-xs text-ink-muted">
-                    {(detail.questions || []).map((q) => (
-                      <li key={q.id}>{q.prompt}</li>
+                  <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                    {(detail.questions || []).map((q, idx) => (
+                      <li
+                        key={q.id}
+                        className="flex flex-wrap items-start justify-between gap-2 rounded-md border border-ink/10 px-2 py-1.5 text-xs"
+                      >
+                        <span className="min-w-0 flex-1 text-ink-muted">
+                          <span className="font-mono text-ink-faint">{idx + 1}. </span>
+                          {q.prompt}
+                        </span>
+                        {detail.status !== 'closed' ? (
+                          <span className="flex gap-1">
+                            <button type="button" className={S.btnGhost} disabled={busy} onClick={() => editQuestion(q)}>
+                              {t(locale, 'panel.climate.editQuestionBtn')}
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(S.btnGhost, 'text-danger')}
+                              disabled={busy}
+                              onClick={() => deactivateQuestion(q)}
+                            >
+                              {t(locale, 'panel.climate.deactivateQuestionBtn')}
+                            </button>
+                          </span>
+                        ) : null}
+                      </li>
                     ))}
-                  </ol>
+                  </ul>
                 </div>
+                {aggregate?.suppressed ? (
+                  <p className={cn(S.muted, 'm-0 text-sm')}>
+                    {t(locale, 'panel.climate.aggregateSuppressed', {
+                      n: aggregate.responseCount || 0,
+                      min: aggregate.minResponses || 5,
+                    })}
+                  </p>
+                ) : null}
                 {aggregate?.byQuestion?.length ? (
                   <div>
                     <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.aggregate')}</div>

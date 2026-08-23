@@ -706,12 +706,29 @@ export async function runHttpSmoke(baseUrl) {
       ok('climate', 'create-id', String(surveyId || ''));
     }
     if (surveyId) {
+      const { res: qAdd } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { addQuestion: { prompt: 'DTOV pergunta extra' } },
+      });
+      await expectStatus('climate', 'add-question', qAdd.status, 200);
+
       const { res: openRes } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
         method: 'PATCH',
         cookie: hrCookie,
         body: { status: 'open' },
       });
       await expectStatus('climate', 'open', openRes.status, 200);
+
+      const { res: batchRes, data: batchData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { createInviteBatch: true, count: 2 },
+      });
+      if (await expectStatus('climate', 'invite-batch', batchRes.status, 200)) {
+        ok('climate', 'invite-batch-n', String(batchData?.invites?.length || 0));
+      }
+
       const { res: invRes, data: invData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
         method: 'PATCH',
         cookie: hrCookie,
@@ -730,14 +747,25 @@ export async function runHttpSmoke(baseUrl) {
             body: { answers },
           });
           await expectStatus('climate', 'public-post', pubPost.status, 200);
-          const { res: aggRes } = await req(
+          const { res: aggRes, data: aggData } = await req(
             base,
             `/api/admin/climate-surveys/${surveyId}?aggregate=1`,
             { cookie: hrCookie }
           );
-          await expectStatus('climate', 'aggregate', aggRes.status, 200);
+          if (await expectStatus('climate', 'aggregate', aggRes.status, 200)) {
+            ok(
+              'climate',
+              'aggregate-suppressed',
+              aggData?.suppressed ? `yes n=${aggData.responseCount}` : 'no'
+            );
+          }
         }
       }
+      const { res: benchRes } = await req(base, '/api/admin/climate-surveys?benchmark=1', {
+        cookie: hrCookie,
+      });
+      await expectStatus('climate', 'benchmark', benchRes.status, 200);
+
       const { res: delRes } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
         method: 'DELETE',
         cookie: hrCookie,

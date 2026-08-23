@@ -15,7 +15,7 @@ import {
 /**
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
- *   key, label, defaultValue?,
+ *   key (or legacy name), label, defaultValue?,
  *   type?: 'text'|'password'|'textarea'|'select'|'boolean'|'checkboxGroup'|'imageUpload',
  *   options?: [{value,label}],
  *   showWhen?: (values) => boolean,
@@ -32,6 +32,10 @@ import {
  *   storageOffHelp?: string,
  * }]
  */
+function fieldKeyOf(f) {
+  return f?.key || f?.name || '';
+}
+
 export function PromptFormDialog({
   open,
   title,
@@ -57,18 +61,20 @@ export function PromptFormDialog({
     if (!open) return;
     const init = {};
     for (const f of fields) {
+      const fieldKey = fieldKeyOf(f);
+      if (!fieldKey) continue;
       if (f.type === 'checkboxGroup') {
-        init[f.key] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
+        init[fieldKey] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
       } else if (f.type === 'boolean') {
-        init[f.key] = f.defaultValue === true || f.defaultValue === 'true' || f.defaultValue === true;
+        init[fieldKey] = f.defaultValue === true || f.defaultValue === 'true' || f.defaultValue === true;
       } else if (f.type === 'imageUpload') {
-        init[f.key] = {
+        init[fieldKey] = {
           url: f.defaultValue ? String(f.defaultValue) : '',
           file: null,
           removed: false,
         };
       } else {
-        init[f.key] = f.defaultValue != null ? String(f.defaultValue) : '';
+        init[fieldKey] = f.defaultValue != null ? String(f.defaultValue) : '';
       }
     }
     setValues(init);
@@ -125,16 +131,17 @@ export function PromptFormDialog({
 
   const onImageFile = async (f, file) => {
     if (!file) return;
+    const fk = fieldKeyOf(f);
     setUploadError('');
     if (f.uploadUrl && f.storageConfigured !== false) {
-      setUploadBusyKey(f.key);
+      setUploadBusyKey(fk);
       try {
         const fd = new FormData();
         fd.append('file', file);
         const res = await fetch(f.uploadUrl, { method: 'POST', body: fd });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-        setField(f.key, { url: data.logoUrl || data.url || '', file: null, removed: false });
+        setField(fk, { url: data.logoUrl || data.url || '', file: null, removed: false });
       } catch (e) {
         setUploadError(e?.message || t(locale, 'panel.common.error'));
       } finally {
@@ -144,18 +151,19 @@ export function PromptFormDialog({
     }
     const localUrl = URL.createObjectURL(file);
     blobUrlsRef.current.push(localUrl);
-    setField(f.key, { url: localUrl, file, removed: false });
+    setField(fk, { url: localUrl, file, removed: false });
   };
 
   const onImageRemove = async (f) => {
+    const fk = fieldKeyOf(f);
     setUploadError('');
     if (f.uploadUrl && f.storageConfigured !== false) {
-      setUploadBusyKey(f.key);
+      setUploadBusyKey(fk);
       try {
         const res = await fetch(f.uploadUrl, { method: 'DELETE' });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-        setField(f.key, { url: '', file: null, removed: true });
+        setField(fk, { url: '', file: null, removed: true });
       } catch (e) {
         setUploadError(e?.message || t(locale, 'panel.common.error'));
       } finally {
@@ -163,14 +171,15 @@ export function PromptFormDialog({
       }
       return;
     }
-    setField(f.key, { url: '', file: null, removed: true });
+    setField(fk, { url: '', file: null, removed: true });
   };
 
   const renderControl = (f) => {
+    const fk = fieldKeyOf(f);
     if (f.type === 'imageUpload') {
-      const cur = values[f.key] && typeof values[f.key] === 'object' ? values[f.key] : { url: '', file: null };
+      const cur = values[fk] && typeof values[fk] === 'object' ? values[fk] : { url: '', file: null };
       const preview = String(cur.url || '').trim();
-      const busy = uploadBusyKey === f.key;
+      const busy = uploadBusyKey === fk;
       const off = f.storageConfigured === false;
       return (
         <div className="mt-1.5">
@@ -239,7 +248,7 @@ export function PromptFormDialog({
           className="prompt-checkbox-grid mt-2 grid max-h-[220px] grid-cols-2 gap-x-3 gap-y-2 overflow-y-auto rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5"
         >
           {(f.options || []).map((opt) => {
-            const checked = Array.isArray(values[f.key]) && values[f.key].includes(opt.value);
+            const checked = Array.isArray(values[fk]) && values[fk].includes(opt.value);
             return (
               <label
                 key={opt.value}
@@ -248,7 +257,7 @@ export function PromptFormDialog({
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => toggleCheck(f.key, opt.value)}
+                  onChange={() => toggleCheck(fk, opt.value)}
                   className="h-4 w-4 accent-brand-500"
                 />
                 {opt.label}
@@ -262,8 +271,8 @@ export function PromptFormDialog({
     if (f.type === 'select') {
       return (
         <select
-          value={values[f.key] ?? ''}
-          onChange={(e) => setField(f.key, e.target.value)}
+          value={values[fk] ?? ''}
+          onChange={(e) => setField(fk, e.target.value)}
           disabled={Boolean(f.disabled)}
           className={cn(dialogFieldClass, f.disabled ? 'cursor-default opacity-60' : 'cursor-pointer')}
         >
@@ -277,7 +286,7 @@ export function PromptFormDialog({
     }
 
     if (f.type === 'boolean') {
-      const checked = values[f.key] === true || values[f.key] === 'true';
+      const checked = values[fk] === true || values[fk] === 'true';
       return (
         <label
           className={cn(
@@ -288,7 +297,7 @@ export function PromptFormDialog({
           <input
             type="checkbox"
             checked={checked}
-            onChange={(e) => setField(f.key, e.target.checked)}
+            onChange={(e) => setField(fk, e.target.checked)}
             className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-brand-500"
           />
           <span>{f.label}</span>
@@ -299,8 +308,8 @@ export function PromptFormDialog({
     if (f.type === 'textarea') {
       return (
         <textarea
-          value={values[f.key] ?? ''}
-          onChange={(e) => setField(f.key, e.target.value)}
+          value={values[fk] ?? ''}
+          onChange={(e) => setField(fk, e.target.value)}
           placeholder={f.placeholder || ''}
           rows={f.rows || 4}
           className={cn(dialogFieldClass, 'min-h-[88px] resize-y font-display')}
@@ -311,8 +320,8 @@ export function PromptFormDialog({
     return (
       <input
         type={f.type === 'password' ? 'password' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'}
-        value={values[f.key] ?? ''}
-        onChange={(e) => setField(f.key, e.target.value)}
+        value={values[fk] ?? ''}
+        onChange={(e) => setField(fk, e.target.value)}
         placeholder={f.placeholder || ''}
         className={dialogFieldClass}
         autoComplete={f.type === 'password' ? 'new-password' : 'off'}
@@ -349,7 +358,7 @@ export function PromptFormDialog({
         ) : null}
         <div className="mt-4 flex flex-col gap-3">
           {visibleFields.map((f) => (
-            <div key={f.key} className="block">
+            <div key={fieldKeyOf(f)} className="block">
               {f.type !== 'boolean' ? (
                 <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
               ) : null}
