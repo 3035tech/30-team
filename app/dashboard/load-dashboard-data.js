@@ -91,7 +91,7 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
   // Compare/group/leadership não precisam desse par de queries pesadas no SSR.
   const needListMetrics = needTeam || needCompatPairs || needOverview;
   const needAreas = needCohortChrome;
-  const needCompaniesFilter = isAdmin && (needCohortChrome || activeTab === 'motivators');
+  const needCompaniesFilter = isAdmin && (needCohortChrome || activeTab === 'motivators' || activeTab === 'climate');
 
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();

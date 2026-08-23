@@ -124,6 +124,10 @@ const VacanciesAdminTab = dynamic(
 const MotivatorsAdminTab = dynamic(() => import('./tabs/MotivatorsAdminTab'), {
   loading: () => <TabLoadingFallback />,
 });
+const ClimateTab = dynamic(
+  () => import('./tabs/ClimateTab').then((m) => ({ default: m.ClimateTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const HelpTab = dynamic(
   () => import('./tabs/HelpTab').then((m) => ({ default: m.HelpTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -216,6 +220,7 @@ export default function DashboardClient({
   const showGlobalSearch = showsCohortChrome && tab !== 'team' && tab !== 'leadership';
   const showVacancies = can(sessionAuth, CAP.VACANCIES_VIEW);
   const showMotivators = can(sessionAuth, CAP.MOTIVATORS_VIEW);
+  const showClimate = can(sessionAuth, CAP.CLIMATE_VIEW);
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
   const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
   const showManagement = canSeeManagementSection(sessionAuth);
@@ -657,14 +662,22 @@ export default function DashboardClient({
                 {showMotivators ? (
                   <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
                 ) : null}
+                {showClimate ? (
+                  <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
+                ) : null}
                 {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
                 {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
               </>
-            ) : showMotivators ? (
+            ) : showMotivators || showClimate ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
-                <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
+                {showMotivators ? (
+                  <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
+                ) : null}
+                {showClimate ? (
+                  <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
+                ) : null}
               </>
             ) : null}
             <div className="my-2 h-px bg-ink/[0.08]" />
@@ -1114,6 +1127,9 @@ export default function DashboardClient({
               {tab === 'vacancies' && showVacancies && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'motivators' && showMotivators && (
                 <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
+              )}
+              {tab === 'climate' && showClimate && (
+                <ClimateTab isAdmin={isAdmin} companies={companies} locale={locale} />
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}

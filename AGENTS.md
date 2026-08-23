@@ -245,9 +245,10 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Dashboard | `app/dashboard/page.jsx`, `tabs/*`, `lib/overview-metrics.js`, `lib/compat-bundles.js` |
 | Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
 | Motivadores | `lib/ae/*` (incl. `create-motivators-invite`, `batch-motivators-invites`), `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
-| People (1:1 / hipóteses / briefing / grupos salvos / scorecard) | `lib/people/*` (`decision-brief.js`, `team-groups.js`, `interview-scorecard.js`), `app/_components/PeopleManagementPanel.jsx`, `HrActionBrief.jsx`, Equipe (`TeamTab`), Grupos, `InterviewScorecardBlock`, `migrations/022_one_on_ones.sql`, `040_team_groups.sql`, `041_interview_scorecards.sql` |
+| People (1:1 / hipóteses / briefing / grupos salvos / scorecard / PDI) | `lib/people/*` (`decision-brief.js`, `team-groups.js`, `interview-scorecard.js`, `development-plans.js`), `PeopleManagementPanel`, `HrActionBrief`, Equipe, Grupos, `InterviewScorecardBlock`, `DevelopmentPlansBlock`, `migrations/022`, `040`, `041`, `042` |
 | Overview mix T1–T9 | `lib/overview-type-mix.js`, Overview heat grid |
 | Relatório cliente print | `lib/client-report-print.js`, `/r/[token]` |
+| Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042_pdi_and_climate.sql` |
 | Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js` (incl. `retention_watch`, `hire_onboarding_kit`, `manager_weekly_digest`), `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications`, `notification-retention`, `manager-weekly-digest` |
 | Export CSV | `lib/export-assessments-csv.js`, `GET /api/admin/export` (cap `EXPORT_MAX_ROWS` + stream) |
 | Retenção LGPD | `lib/retention.js`, `POST /api/admin/retention/purge` (lotes) |

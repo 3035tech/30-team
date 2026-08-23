@@ -33,12 +33,13 @@ Hub = tabela candidates (company_id + e-mail). O mesmo candidate_id une:
 | /j/remoto , /j/cidade/{slug} | Agregadores públicos (massa mínima) |
 | /c/{companySlug} | Carreiras da empresa (opt-in) |
 | /r/{token} | Relatório shortlist para o cliente |
+| /clima/{token} | Pesquisa de clima anônima (um uso por convite) |
 | /a/set-password , /a/unsubscribe | Setup de senha / cancelar job alert |
 
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
 
 ## Painel — abas / módulos (CAP)
-Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Empresas (admin) · Usuários (admin) · Guia · Meu perfil.
+Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · Guia · Meu perfil.
 Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃO são invalidados ao revogar CAP do gestor.
 
 ## Funcionalidades entregues (por área)
@@ -68,6 +69,10 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Hipóteses de gestão (tom “tende a”) + registro de 1:1 (data, notas ricas, próximos passos) — separado de hr_notes de triagem.
 - Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe.
 - Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
+- **PDI (estrutura B-500):** planos + itens no detalhe da Equipe; seed opcional das ideias leves da síntese.
+
+### Clima (estrutura B-500)
+- Aba **Clima** (`climate.view`): campanhas anônimas por empresa; perguntas Likert; abrir/encerrar; link `/clima/{token}` (um uso); médias agregadas por pergunta (sem PII).
 
 ### Análises de perfil
 - Compatibilidade: pares / matriz de sinergia–tensão–neutro (com caps).

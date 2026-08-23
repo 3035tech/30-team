@@ -19,6 +19,7 @@ const SECTIONS = [
   'pipeline',
   'team',
   'people',
+  'climate',
   'report',
   'motivators',
   'access',
@@ -177,7 +178,8 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     candidates: 6,
     pipeline: 6,
     team: 6,
-    people: 7,
+    people: 8,
+    climate: 4,
     report: 8,
     motivators: 7,
     access: 9,
@@ -198,6 +200,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />
+          <LinkBtn label={t(locale, 'panel.help.linkClimate')} onClick={() => go('climate')} />
         </div>
         <nav
           aria-label={t(locale, 'panel.help.tocAria')}

@@ -199,6 +199,32 @@ async function runOfflineLibs() {
     return 'overview heat + scorecard + /r print ok';
   });
 
+  await check('lib', 'b500-pdi-climate-helpers', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+    const pdi = await readFile(join(root, 'lib', 'people', 'development-plans.js'), 'utf8');
+    for (const name of ['listDevelopmentPlans', 'createDevelopmentPlan', 'addDevelopmentPlanItem']) {
+      if (!pdi.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
+    }
+    const clima = await readFile(join(root, 'lib', 'people', 'climate-surveys.js'), 'utf8');
+    for (const name of [
+      'createClimateSurvey',
+      'createClimateSurveyInvite',
+      'resolveClimateInviteByToken',
+      'submitClimateResponse',
+      'getClimateSurveyAggregate',
+    ]) {
+      if (!clima.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
+    }
+    const mig = await readFile(join(root, 'migrations', '042_pdi_and_climate.sql'), 'utf8');
+    if (!mig.includes('development_plans') || !mig.includes('climate_surveys')) {
+      throw new Error('migration 042 missing tables');
+    }
+    return 'pdi + climate structure ok';
+  });
+
   await check('lib', 'vacancy-clone-and-aging', async () => {
     const { readFile } = await import('node:fs/promises');
     const { fileURLToPath } = await import('node:url');
@@ -247,6 +273,7 @@ async function runOfflineLibs() {
     const { can, CAP } = await import('../../lib/permissions.js');
     const hr = { role: 'hr', companyId: 1 };
     if (!can(hr, CAP.VACANCIES_VIEW)) throw new Error('hr should view vacancies');
+    if (!can(hr, CAP.CLIMATE_VIEW)) throw new Error('hr should view climate');
     if (can(hr, CAP.USERS_MANAGE)) throw new Error('hr must not manage users');
     return 'hr ACL ok';
   });

@@ -665,8 +665,85 @@ export async function runHttpSmoke(baseUrl) {
       cookie: hrCookie,
     });
     await expectStatus('people', 'one-on-ones', r2.status, 200);
+    const { res: pdiList } = await req(
+      base,
+      `/api/admin/candidates/${peopleCandidateId}/development-plans`,
+      { cookie: hrCookie }
+    );
+    await expectStatus('people', 'pdi-list', pdiList.status, 200);
+    const { res: pdiCreate, data: pdiBody } = await req(
+      base,
+      `/api/admin/candidates/${peopleCandidateId}/development-plans`,
+      {
+        method: 'POST',
+        cookie: hrCookie,
+        body: {
+          title: 'DTOV PDI',
+          objective: 'Smoke',
+          seedIdeas: ['Testar um comportamento em situação real'],
+        },
+      }
+    );
+    if (await expectStatus('people', 'pdi-create', pdiCreate.status, [201, 200])) {
+      ok('people', 'pdi-create-id', String(pdiBody?.plan?.id || ''));
+    }
   } else {
     fail('people', 'fixture-candidate', 'no candidate in HR company (demo seed missing?)');
+  }
+
+  // Climate surveys (anonymous structure)
+  {
+    const { res: listRes } = await req(base, '/api/admin/climate-surveys', { cookie: hrCookie });
+    await expectStatus('climate', 'list', listRes.status, 200);
+    const { res: createRes, data: createData } = await req(base, '/api/admin/climate-surveys', {
+      method: 'POST',
+      cookie: hrCookie,
+      body: { title: 'DTOV Climate' },
+    });
+    let surveyId = null;
+    if (await expectStatus('climate', 'create', createRes.status, [201, 200])) {
+      surveyId = createData?.survey?.id || null;
+      ok('climate', 'create-id', String(surveyId || ''));
+    }
+    if (surveyId) {
+      const { res: openRes } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { status: 'open' },
+      });
+      await expectStatus('climate', 'open', openRes.status, 200);
+      const { res: invRes, data: invData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { createInvite: true },
+      });
+      if (await expectStatus('climate', 'invite', invRes.status, 200)) {
+        const token = invData?.invite?.token;
+        ok('climate', 'invite-token', token ? 'ok' : 'missing');
+        if (token) {
+          const { res: pubGet, data: pubMeta } = await req(base, `/api/public/climate/${token}`);
+          await expectStatus('climate', 'public-get', pubGet.status, 200);
+          const answers = {};
+          for (const q of pubMeta?.questions || []) answers[q.id] = q.scaleMin;
+          const { res: pubPost } = await req(base, `/api/public/climate/${token}`, {
+            method: 'POST',
+            body: { answers },
+          });
+          await expectStatus('climate', 'public-post', pubPost.status, 200);
+          const { res: aggRes } = await req(
+            base,
+            `/api/admin/climate-surveys/${surveyId}?aggregate=1`,
+            { cookie: hrCookie }
+          );
+          await expectStatus('climate', 'aggregate', aggRes.status, 200);
+        }
+      }
+      const { res: delRes } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'DELETE',
+        cookie: hrCookie,
+      });
+      await expectStatus('climate', 'delete', delRes.status, 200);
+    }
   }
 
   // Companies/users — usually admin-only; HR should get 401/403

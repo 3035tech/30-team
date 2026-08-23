@@ -7,6 +7,7 @@ import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
+import { DevelopmentPlansBlock } from './DevelopmentPlansBlock';
 import { useAppFeedback } from './AppFeedback';
 
 function todayIso() {
@@ -57,6 +58,7 @@ export function PeopleManagementPanel({
   const prompts = management?.oneOnOnePrompts || [];
   const signals = management?.retentionSignals || [];
   const topMot = management?.motivators?.top || [];
+  const pdiSeedIdeas = management?.synthesis?.pdiIdeas || [];
 
   const save = async () => {
     if (!candidateId || isRichTextEmpty(notes)) return;
@@ -318,6 +320,10 @@ export function PeopleManagementPanel({
           </div>
         )}
       </div>
+
+      {candidateId ? (
+        <DevelopmentPlansBlock locale={locale} candidateId={candidateId} seedIdeas={pdiSeedIdeas} />
+      ) : null}
     </div>
   );
 }

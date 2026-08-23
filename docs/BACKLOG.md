@@ -42,6 +42,30 @@ _(entregue — B-401–B-412: print briefing, kit hire, fit vs núcleo, grupos s
 
 ---
 
+## Aberto — Epic B-500 (PDI + clima)
+
+Estrutura inicial entregue (migration `042`, libs, APIs, PDI na Equipe, aba Clima, `/clima/[token]`). Próximos:
+
+### B-501 — PDI: editar objetivo/status em massa + arquivar plano
+UI completa no detalhe (hoje: criar + status de item).
+
+### B-502 — PDI: vincular item a 1:1 / follow-up
+Opcional: `one_on_one_id` ou nota de progresso.
+
+### B-503 — Clima: editar perguntas no painel
+CRUD de perguntas além do seed padrão.
+
+### B-504 — Clima: convites em lote / e-mail
+Gerar N links ou enviar por SMTP (ainda anônimo).
+
+### B-505 — Clima: série temporal e benchmark interno
+Comparar campanhas da mesma empresa (médias por pergunta).
+
+### B-506 — Clima: mínimo de respostas antes de mostrar agregados
+Evitar reidentificação em times pequenos (k-anonimidade leve).
+
+---
+
 ## Aberto — qualidade / testes
 
 _(vazio — B-001–B-006 entregues)_

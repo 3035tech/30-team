@@ -80,6 +80,20 @@ export function Icon({ name, className }) {
           <path d="M12 3c2.5 3.5 6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 3.5-6.5 6-10Z" />
         </svg>
       );
+    case 'climate':
+      return (
+        <svg {...props}>
+          <path d="M12 3v2" />
+          <path d="M12 19v2" />
+          <path d="M5 12H3" />
+          <path d="M21 12h-2" />
+          <circle cx="12" cy="12" r="4" />
+          <path d="M8.5 8.5 7 7" />
+          <path d="M17 17l-1.5-1.5" />
+          <path d="M15.5 8.5 17 7" />
+          <path d="M7 17l1.5-1.5" />
+        </svg>
+      );
     case 'companies':
     case 'building':
       return (

@@ -201,6 +201,7 @@ const DASHBOARD_TAB_NAV = {
   leadership: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.leadership' },
   vacancies: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.vacancies' },
   motivators: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.motivators' },
+  climate: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.climate' },
   companies: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.companies' },
   users: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.users' },
   help: { sectionKey: 'dashboard.sectionHelp', labelKey: 'dashboard.help' },
