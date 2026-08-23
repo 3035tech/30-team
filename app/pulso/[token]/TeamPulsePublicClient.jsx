@@ -99,7 +99,7 @@ export default function TeamPulsePublicClient({ token, locale = 'pt-BR' }) {
         {(meta?.questions || []).map((q) => (
           <li key={q.id} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
             <p className="m-0 mb-2 text-sm text-ink">{q.prompt}</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
               {Array.from(
                 { length: (q.scaleMax || 5) - (q.scaleMin || 1) + 1 },
                 (_, i) => (q.scaleMin || 1) + i

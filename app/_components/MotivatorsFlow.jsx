@@ -18,13 +18,14 @@ const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
 const SC = {
   app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
-  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[660px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl',
+  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-[20px] border border-ink/12 bg-white px-7 py-9 shadow-card backdrop-blur-3xl sm:px-9 sm:py-10',
   label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-brand-500/55',
-  h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,5vw,40px)] font-normal leading-[1.15] text-transparent',
-  p: 'mb-7 text-[15px] italic leading-[1.75] text-ink-muted',
+  h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
+  p: 'mb-7 text-[15px] italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink',
+  input: 'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
   fieldLabel: 'mb-2 block text-xs text-ink-muted',
+  fields: 'cand-flow-fields',
 };
 
 
@@ -126,15 +127,16 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           </div>
         ) : null}
 
-        <div className="mb-7 flex flex-wrap gap-6">
+        <div className="mb-7 flex flex-wrap gap-x-5 gap-y-3">
           {stats.map(([n, l]) => (
             <div key={l}>
-              <div className="text-[22px] text-brand-600">{n}</div>
+              <div className="text-xl text-brand-600 sm:text-[22px]">{n}</div>
               <div className="font-mono text-[10px] uppercase tracking-[2px] text-ink-muted">{l}</div>
             </div>
           ))}
         </div>
 
+        <div className={SC.fields}>
         {identityLocked ? (
           <div className="mb-[18px] rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-4 py-3.5">
             <div className="mb-1.5 text-base text-ink">
@@ -182,6 +184,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         <button type="button" disabled={!ready || busy} className={cn(SC.btn, !ready && 'opacity-45')} onClick={submit}>
           {busy ? t(locale, 'motivators.starting') : t(locale, 'motivators.startAssessment')}
         </button>
+        </div>
 
         <p className="mt-5 text-[11px] text-ink-faint">
           {t(locale, 'candidate.manager')}{' '}

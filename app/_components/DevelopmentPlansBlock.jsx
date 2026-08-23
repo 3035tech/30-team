@@ -507,7 +507,13 @@ export function DevelopmentPlansBlock({
                       <p className={cn(S.muted, 'mb-2 text-xs')}>{detail.objective}</p>
                     ) : null}
                     {(detail.items || []).length === 0 ? (
-                      <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.pdi.noItems')}</p>
+                      <EmptyState
+                        title={t(locale, 'panel.pdi.noItems')}
+                        message={t(locale, 'panel.pdi.noItemsHint')}
+                        actionLabel={t(locale, 'panel.pdi.addItemBtn')}
+                        onAction={addItem}
+                        actionDisabled={busy}
+                      />
                     ) : (
                       <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                         {detail.items.map((it) => {
@@ -515,10 +521,10 @@ export function DevelopmentPlansBlock({
                           return (
                             <li
                               key={it.id}
-                              className="flex flex-col gap-1.5 rounded-md bg-white/50 px-2 py-1.5"
+                              className="flex flex-col gap-1.5 rounded-md bg-white/50 px-2.5 py-2"
                             >
-                              <div className="flex flex-wrap items-start gap-2">
-                                <label className="mt-0.5 flex min-h-touch min-w-touch cursor-pointer items-center justify-center">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                                <label className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
                                   <input
                                     type="checkbox"
                                     className="h-4 w-4 accent-success"
@@ -528,57 +534,58 @@ export function DevelopmentPlansBlock({
                                     onChange={() => toggleItemDone(it)}
                                   />
                                 </label>
-                                <span
-                                  className={cn(
-                                    'min-w-0 flex-1 text-xs text-ink',
-                                    it.status === 'done' && 'text-ink-muted line-through'
-                                  )}
-                                >
-                                  {it.title}
-                                  {it.ownerLabel ? (
-                                    <span className="ml-1 font-mono text-[10px] text-ink-muted">
-                                      · {it.ownerLabel}
-                                    </span>
+                                <div className="min-w-0 flex-1">
+                                  <div
+                                    className={cn(
+                                      'text-sm leading-snug text-ink',
+                                      it.status === 'done' && 'text-ink-muted line-through'
+                                    )}
+                                  >
+                                    {it.title}
+                                  </div>
+                                  {it.ownerLabel || it.dueDate || (it.source && it.source !== 'manual') ? (
+                                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-mono text-[10px] leading-tight text-ink-muted">
+                                      {it.ownerLabel ? <span>{it.ownerLabel}</span> : null}
+                                      {it.dueDate ? (
+                                        <span className={itemOver ? 'text-warning' : 'text-ink-faint'}>
+                                          {it.ownerLabel ? '· ' : ''}
+                                          {String(it.dueDate).slice(0, 10)}
+                                          {itemOver ? ` ${t(locale, 'panel.pdi.overdue')}` : ''}
+                                        </span>
+                                      ) : null}
+                                      {it.source && it.source !== 'manual' ? (
+                                        <span className="text-ink-faint">
+                                          {(it.ownerLabel || it.dueDate) ? '· ' : ''}
+                                          {t(locale, `panel.pdi.source.${it.source}`)}
+                                        </span>
+                                      ) : null}
+                                    </div>
                                   ) : null}
-                                  {it.dueDate ? (
-                                    <span
-                                      className={cn(
-                                        'ml-1 font-mono text-[10px]',
-                                        itemOver ? 'text-warning' : 'text-ink-faint'
-                                      )}
-                                    >
-                                      · {String(it.dueDate).slice(0, 10)}
-                                      {itemOver ? ` ${t(locale, 'panel.pdi.overdue')}` : ''}
-                                    </span>
-                                  ) : null}
-                                  {it.source && it.source !== 'manual' ? (
-                                    <span className="ml-1 font-mono text-[10px] text-ink-faint">
-                                      · {t(locale, `panel.pdi.source.${it.source}`)}
-                                    </span>
-                                  ) : null}
-                                </span>
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
-                                  onClick={() => editItem(it)}
-                                >
-                                  {t(locale, 'panel.pdi.editItemBtn')}
-                                </button>
-                                <select
-                                  className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
-                                  value={it.status}
-                                  disabled={busy}
-                                  aria-label={t(locale, 'panel.pdi.itemStatusAria')}
-                                  onChange={(e) => setItemStatus(it, e.target.value)}
-                                >
-                                  <option value="todo">{t(locale, 'panel.pdi.itemStatus.todo')}</option>
-                                  <option value="doing">{t(locale, 'panel.pdi.itemStatus.doing')}</option>
-                                  <option value="done">{t(locale, 'panel.pdi.itemStatus.done')}</option>
-                                </select>
+                                </div>
+                                <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    onClick={() => editItem(it)}
+                                  >
+                                    {t(locale, 'panel.pdi.editItemBtn')}
+                                  </button>
+                                  <select
+                                    className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
+                                    value={it.status}
+                                    disabled={busy}
+                                    aria-label={t(locale, 'panel.pdi.itemStatusAria')}
+                                    onChange={(e) => setItemStatus(it, e.target.value)}
+                                  >
+                                    <option value="todo">{t(locale, 'panel.pdi.itemStatus.todo')}</option>
+                                    <option value="doing">{t(locale, 'panel.pdi.itemStatus.doing')}</option>
+                                    <option value="done">{t(locale, 'panel.pdi.itemStatus.done')}</option>
+                                  </select>
+                                </div>
                               </div>
                               {ooOpts.length > 0 ? (
-                                <label className="flex flex-wrap items-center gap-2 pl-7 text-[11px] text-ink-muted">
+                                <label className="flex flex-wrap items-center gap-2 pl-10 text-[11px] text-ink-muted">
                                   <span>{t(locale, 'panel.pdi.linkOo')}</span>
                                   <select
                                     className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-[11px]')}

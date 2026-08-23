@@ -106,7 +106,7 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
               <span className="font-mono text-[11px] text-ink-faint">{idx + 1}. </span>
               {q.prompt}
             </div>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={q.prompt}>
+            <div className="flex flex-wrap justify-center gap-2" role="radiogroup" aria-label={q.prompt}>
               {Array.from({ length: q.scaleMax - q.scaleMin + 1 }, (_, i) => q.scaleMin + i).map((n) => {
                 const on = Number(answers[q.id]) === n;
                 return (
