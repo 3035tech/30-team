@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
@@ -50,7 +50,40 @@ export function PeopleManagementPanel({
   const [msgError, setMsgError] = useState(false);
   const [pdiRefresh, setPdiRefresh] = useState(0);
   const [portalUrl, setPortalUrl] = useState('');
+  const [followUps, setFollowUps] = useState([]);
+  const [portalTokens, setPortalTokens] = useState([]);
   const { confirm, notice, toast, promptForm } = useAppFeedback();
+
+  const loadFollowUps = useCallback(async () => {
+    if (!candidateId) return;
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/retention-followups`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setFollowUps(Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setFollowUps([]);
+    }
+  }, [candidateId]);
+
+  const loadPortalTokens = useCallback(async () => {
+    if (!candidateId) return;
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/employee-portal`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setPortalTokens(Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setPortalTokens([]);
+    }
+  }, [candidateId]);
+
+  useEffect(() => {
+    void loadFollowUps();
+    void loadPortalTokens();
+  }, [loadFollowUps, loadPortalTokens]);
 
   if (!management && !people) {
     return null;
@@ -165,6 +198,42 @@ export function PeopleManagementPanel({
       if (!res.ok) throw new Error(data?.error || 'retention');
       toast(t(locale, 'panel.team.retentionOpened'), 'ok');
       setPdiRefresh((k) => k + 1);
+      await loadFollowUps();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const markFollowUpReviewed = async (followUpId) => {
+    if (!candidateId || !followUpId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.team.retentionReviewTitle'),
+      confirmLabel: t(locale, 'panel.team.retentionReviewConfirm'),
+      fields: [
+        {
+          key: 'reviewNotes',
+          label: t(locale, 'panel.team.retentionReviewNotes'),
+          placeholder: t(locale, 'panel.team.retentionReviewNotesPh'),
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/retention-followups/${encodeURIComponent(followUpId)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewed: true, reviewNotes: values.reviewNotes }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'review');
+      toast(t(locale, 'panel.team.retentionReviewed'), 'ok');
+      await loadFollowUps();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.common.error'), 'error');
     } finally {
@@ -190,6 +259,7 @@ export function PeopleManagementPanel({
       const url = `${origin}/e/${data.invite?.token}`;
       setPortalUrl(url);
       toast(t(locale, 'panel.employeePortal.created'), 'ok');
+      await loadPortalTokens();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.common.error'), 'error');
     } finally {
@@ -263,6 +333,25 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
+      {portalTokens.some((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim())) ? (
+        <div className="mb-3 rounded-control border border-success/25 bg-success/[0.05] px-3 py-2">
+          <span className={cn(S.label, 'mb-1')}>{t(locale, 'panel.employeePortal.managerFeedbackTitle')}</span>
+          {portalTokens
+            .filter((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim()))
+            .slice(0, 2)
+            .map((tok) => (
+              <div key={tok.id} className="mt-1 text-xs text-ink-muted">
+                {tok.preparedAt ? (
+                  <span className="font-mono text-[11px] text-success">
+                    {t(locale, 'panel.employeePortal.managerPrepared')}
+                  </span>
+                ) : null}
+                {tok.noteToManager ? <p className="mb-0 mt-1">{tok.noteToManager}</p> : null}
+              </div>
+            ))}
+        </div>
+      ) : null}
+
       {topMot.length > 0 ? (
         <div className="mb-3">
           <span className="font-mono text-[11px] text-ink-muted">
@@ -310,6 +399,53 @@ export function PeopleManagementPanel({
           >
             {t(locale, 'panel.team.retentionOpenBtn')}
           </button>
+        </div>
+      ) : null}
+
+      {followUps.length > 0 ? (
+        <div className="mb-3 rounded-control border border-ink/12 bg-white/40 px-3 py-2.5">
+          <span className={cn(S.label, 'mb-1.5')}>
+            {t(locale, 'panel.team.retentionFollowUpsTitle')}
+          </span>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {followUps.slice(0, 5).map((fu) => {
+              const open = !fu.reviewedAt;
+              return (
+                <li key={fu.id} className="rounded-md border border-ink/10 px-2.5 py-2">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1 text-xs text-ink-muted">
+                      <div className="font-mono text-[11px] text-ink-faint">
+                        {fu.reviewDue
+                          ? t(locale, 'panel.team.retentionDue', {
+                              d: String(fu.reviewDue).slice(0, 10),
+                            })
+                          : '—'}
+                        {open
+                          ? ` · ${t(locale, 'panel.team.retentionOpenStatus')}`
+                          : ` · ${t(locale, 'panel.team.retentionClosedStatus')}`}
+                      </div>
+                      {fu.suggestedQuestion ? (
+                        <p className="mb-0 mt-1 italic text-ink">{fu.suggestedQuestion}</p>
+                      ) : null}
+                      {fu.reviewNotes ? (
+                        <p className="mb-0 mt-1 text-[11px]">{fu.reviewNotes}</p>
+                      ) : null}
+                    </div>
+                    {open ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+                        onClick={() => markFollowUpReviewed(fu.id)}
+                      >
+                        {t(locale, 'panel.team.retentionMarkReviewed')}
+                      </button>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
 

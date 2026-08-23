@@ -41,7 +41,11 @@ export async function GET(request) {
       if (!pulse) return apiError(request, 'NOT_FOUND', 404);
       const aggregate =
         url.searchParams.get('aggregate') === '1'
-          ? await getTeamPulseAggregate(query, { companyId, pulseId })
+          ? await getTeamPulseAggregate(query, {
+              companyId,
+              pulseId,
+              locale: url.searchParams.get('locale') || payload.locale || 'pt-BR',
+            })
           : null;
       return NextResponse.json({ pulse, aggregate });
     }

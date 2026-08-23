@@ -83,7 +83,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
     setBusy(true);
     try {
       const res = await fetch(
-        `/api/admin/team-pulses?companyId=${encodeURIComponent(companyId)}&id=${encodeURIComponent(pulseId)}&aggregate=1`
+          `/api/admin/team-pulses?companyId=${encodeURIComponent(companyId)}&id=${encodeURIComponent(pulseId)}&aggregate=1&locale=${encodeURIComponent(locale)}`
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'load');
@@ -209,6 +209,16 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
                   r: aggregate.responseCount,
                 })}
               </p>
+              {aggregate.reading?.overallText ? (
+                <p className="mb-0 mt-2 text-xs leading-snug text-ink-muted">
+                  {aggregate.reading.overallText}
+                </p>
+              ) : null}
+              {aggregate.reading?.mixText ? (
+                <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-faint">
+                  {aggregate.reading.mixText}
+                </p>
+              ) : null}
               <ul className="mt-2 m-0 list-none space-y-1 p-0">
                 {(aggregate.questions || []).map((q) => (
                   <li key={q.questionId} className="text-xs text-ink-muted">

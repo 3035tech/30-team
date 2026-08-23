@@ -6,11 +6,15 @@ import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
+  const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [data, setData] = useState(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +29,10 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
           if (!cancelled) setError(json?.error || t(locale, 'panel.employeePortal.unavailable'));
           return;
         }
-        if (!cancelled) setData(json);
+        if (!cancelled) {
+          setData(json);
+          setNote(json.noteToManager || '');
+        }
       } catch {
         if (!cancelled) setError(t(locale, 'panel.employeePortal.unavailable'));
       } finally {
@@ -36,6 +43,29 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       cancelled = true;
     };
   }, [token, locale]);
+
+  const markPrepared = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/public/employee-portal/${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prepared: true, noteToManager: note }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'save');
+      setData((prev) => ({
+        ...prev,
+        preparedAt: json.preparedAt,
+        noteToManager: json.noteToManager || note,
+      }));
+      toast(t(locale, 'panel.employeePortal.prepSaved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.employeePortal.prepError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (loading) return <AppLoading variant="panel" />;
   if (error) {
@@ -115,6 +145,39 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
           </ol>
         </section>
       ) : null}
+
+      <section className="mt-8 rounded-control border border-ink/12 bg-canvas/40 p-3">
+        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h2>
+        <p className={cn(S.muted, 'mb-2 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
+        <label className="block text-xs text-ink-muted">
+          {t(locale, 'panel.employeePortal.noteLabel')}
+          <textarea
+            className={cn(S.input, 'mt-1 min-h-[80px] w-full')}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={2000}
+            placeholder={t(locale, 'panel.employeePortal.notePh')}
+            disabled={busy}
+          />
+        </label>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={markPrepared}
+            className={cn(S.btnPrimary, 'min-h-touch')}
+          >
+            {data?.preparedAt
+              ? t(locale, 'panel.employeePortal.prepUpdate')
+              : t(locale, 'panel.employeePortal.prepConfirm')}
+          </button>
+          {data?.preparedAt ? (
+            <span className="font-mono text-[11px] text-success">
+              {t(locale, 'panel.employeePortal.prepDone')}
+            </span>
+          ) : null}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { apiError } from '../../../../../lib/api-error';
-import { getEmployeePortalView } from '../../../../../lib/people/employee-portal';
+import {
+  getEmployeePortalView,
+  submitEmployeePortalPrep,
+} from '../../../../../lib/people/employee-portal';
 
 /** GET /api/public/employee-portal/[token] */
 export async function GET(request, { params }) {
@@ -22,10 +25,46 @@ export async function GET(request, { params }) {
       recentAgreements: view.recentAgreements,
       oneOnOnePrompts: view.oneOnOnePrompts,
       expiresAt: view.expiresAt,
+      preparedAt: view.preparedAt,
+      noteToManager: view.noteToManager,
     });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01' || err?.code === '42703') {
+      return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    }
     console.error('GET public employee-portal', err);
+    return apiError(request, 'INTERNAL', 500);
+  }
+}
+
+/** POST /api/public/employee-portal/[token] — mark prep + optional note */
+export async function POST(request, { params }) {
+  try {
+    const token = params?.token;
+    if (!token) return apiError(request, 'NOT_FOUND', 404);
+    const body = await request.json().catch(() => ({}));
+    if (!body.prepared && body.noteToManager == null) {
+      return apiError(request, 'INVALID_DATA', 400);
+    }
+    const saved = await submitEmployeePortalPrep(query, {
+      token,
+      noteToManager: body.noteToManager,
+    });
+    if (!saved.ok) {
+      const code = saved.errorCode || 'NOT_FOUND';
+      const status = code === 'NOT_FOUND' ? 404 : 410;
+      return apiError(request, code, status);
+    }
+    return NextResponse.json({
+      ok: true,
+      preparedAt: saved.preparedAt,
+      noteToManager: saved.noteToManager,
+    });
+  } catch (err) {
+    if (err?.code === '42P01' || err?.code === '42703') {
+      return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    }
+    console.error('POST public employee-portal', err);
     return apiError(request, 'INTERNAL', 500);
   }
 }

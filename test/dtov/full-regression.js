@@ -123,6 +123,9 @@ async function runOfflineLibs() {
     );
     if (typeof createTeamPulse !== 'function') throw new Error('missing createTeamPulse');
     if (DEFAULT_TEAM_PULSE_PROMPTS.length < 3) throw new Error('pulse prompts');
+    const { buildTeamPulseReading } = await import('../../lib/people/team-pulses.js');
+    const reading = buildTeamPulseReading({ overallMean: 4.2, locale: 'pt-BR', typeMix: [{ type: 5, n: 2 }] });
+    if (!reading?.overallText || !reading?.mixText) throw new Error('pulse reading');
     const fs = await import('node:fs/promises');
     const portalSrc = await fs.readFile(
       new URL('../../lib/people/employee-portal.js', import.meta.url),

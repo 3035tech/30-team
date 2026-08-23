@@ -136,6 +136,8 @@ function FlowStrip({ locale }) {
     t(locale, 'panel.help.flowChip5'),
     t(locale, 'panel.help.flowChip6'),
     t(locale, 'panel.help.flowChip7'),
+    t(locale, 'panel.help.flowChip8'),
+    t(locale, 'panel.help.flowChip9'),
   ];
   return (
     <div className="mt-3.5 flex flex-wrap items-center gap-2">
@@ -183,8 +185,13 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     candidates: 6,
     pipeline: 6,
     team: 6,
-    people: 8,
+    people: 10,
     climate: 4,
+    b600Pdi: 6,
+    b600Retention: 6,
+    b600Pulse: 6,
+    b600Employee: 5,
+    b600Fit: 4,
     report: 8,
     motivators: 7,
     access: 9,
@@ -204,6 +211,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
           <LinkBtn label={t(locale, 'panel.help.linkOverview')} onClick={() => go('overview')} />
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
+          <LinkBtn label={t(locale, 'panel.help.linkGroup')} onClick={() => go('group')} />
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />
           <LinkBtn label={t(locale, 'panel.help.linkClimate')} onClick={() => go('climate')} />
         </div>

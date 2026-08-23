@@ -73,8 +73,10 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
 - **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo; **ciclo** (período); **responsável**; **converter próximos passos do 1:1**.
 - **Pulso de grupo:** Grupos → grupo salvo → `/pulso/{token}` (curto, anônimo; não substitui Clima).
-- **Link do colaborador:** `/e/{token}` (sem conta) — PDI, combinados, prep 1:1.
+- **Link do colaborador:** `/e/{token}` (sem conta) — PDI, combinados, prep 1:1 (**marcar preparação** + nota ao gestor).
 - Ranking: **explicar Fit** (pesos × T1–T9; exclusões).
+- Retenção: lista de acompanhamentos + **marcar revisão** com nota.
+- Pulso: interpretação hedged + mix T1–T9 do grupo.
 - **Clima:** perguntas editáveis; links em lote / e-mail; médias só após mínimo de respostas; barras por pergunta; benchmark com média geral e Δ; pulse na Visão geral.
 
 ### Clima (estrutura B-500)

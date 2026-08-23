@@ -10,7 +10,7 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 
 - Instrumento principal: avaliação inspirada no Eneagrama, tipos **T1–T9** (estilo de trabalho). **Não** é diagnóstico clínico nem substituto de entrevista técnica.
 - Instrumento secundário: **Motivadores** (Assessment Engine em `lib/ae/`).
-- Candidatos **não têm conta**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente).
+- Candidatos **não têm conta**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente), `/clima/<token>` (clima), `/pulso/<token>` (pulso de grupo), `/e/<token>` (espaço mínimo do colaborador pós-hire).
 - Gestores: `/login` → `/dashboard` (roles `admin` | `direction` | `hr`).
 
 ## Stack (obrigatória)
@@ -249,6 +249,10 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Overview mix T1–T9 | `lib/overview-type-mix.js`, Overview heat grid |
 | Relatório cliente print | `lib/client-report-print.js`, `/r/[token]` |
 | Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042_pdi_and_climate.sql` |
+| Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
+| Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
+| PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |
+| Explicabilidade Fit | `lib/area-fit.js` (`withBreakdown`), ranking da vaga |
 | Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js` (incl. `retention_watch`, `hire_onboarding_kit`, `manager_weekly_digest`), `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications`, `notification-retention`, `manager-weekly-digest` |
 | Export CSV | `lib/export-assessments-csv.js`, `GET /api/admin/export` (cap `EXPORT_MAX_ROWS` + stream) |
 | Retenção LGPD | `lib/retention.js`, `POST /api/admin/retention/purge` (lotes) |

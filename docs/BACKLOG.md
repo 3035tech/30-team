@@ -50,7 +50,7 @@ _(entregue — estrutura 042 + B-501–B-506 + polish UX/indicadores/visões: pr
 
 ## Aberto — Epic B-600 (assessment → ação)
 
-_(entregue — B-601–B-605: ciclo PDI pós-1:1, retention acionável, pulso de grupo, link `/e`, explicabilidade Fit.)_
+_(entregue — B-601–B-605 + polish: revisão retenção na UI, leitura hedged do pulso, prep `/e`, Guia passo a passo.)_
 
 ---
 
@@ -92,3 +92,4 @@ _(vazio)_
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
 - Epic **B-300** fechado.
 - Epic **B-500** fechado (PDI + clima: estrutura + B-501–B-506).
+- Epic **B-600** fechado (assessment → ação + polish de revisão/pulso/`/e`/Guia).
