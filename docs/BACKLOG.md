@@ -38,7 +38,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 ## Aberto — Epic B-400 (empacotar perfil + fechar gaps)
 
-_(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-403** fit vs núcleo no ranking · **B-404** grupos salvos · **B-405** digest semanal · **B-406** aging no pipeline · **B-409** clonar vaga.)_
+_(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-403** fit vs núcleo no ranking · **B-404** grupos salvos · **B-405** digest semanal · **B-406** aging no pipeline · **B-409** clonar vaga · **B-411** convite em lote Motivadores.)_
 
 ### B-407 — Scorecard de entrevista estruturado (leve)
 **Por quê:** Notes ricas existem; falta checklist alinhado ao briefing (perguntas do `buildInterviewQuestions`).  
@@ -57,12 +57,6 @@ _(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-4
 **O quê:** Bloco na Visão geral: distribuição T1–T9 do coorte filtrado + 1 frase hedged (ex. concentração / lacunas). Reusar métricas/overview + `TYPE_DATA`.  
 **Onde:** `OverviewTab` + `lib/overview-metrics.js`.  
 **Não fazer:** dashboard BI pesado.
-
-### B-411 — Convite em lote Motivadores (time interno)
-**Por quê:** Convite AE é 1 a 1; assessment vendors fazem campanha.  
-**O quê:** Selecionar N pessoas da Equipe (time interno) → criar convites AE com cap + dedupe e-mail. Reusar `create-motivators-invite`.  
-**Onde:** MotivatorsAdminTab ou Equipe.  
-**Não fazer:** SMS/WhatsApp gateway.
 
 ### B-412 — (opcional) PDF do relatório cliente `/r`
 **Por quê:** Cliente recebe link; reunião presencial pede anexo.  
@@ -109,4 +103,4 @@ _(vazio)_
 - Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
 - Epic **B-300** fechado.
-- Epic **B-400:** B-401–B-406 e B-409 entregues (ago/2026); próximos: **B-407**, **B-408**, **B-410+**.
+- Epic **B-400:** B-401–B-406, B-409 e B-411 entregues (ago/2026); próximos: **B-407**, **B-408**, **B-410**, **B-412**.

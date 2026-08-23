@@ -54,7 +54,7 @@ function statusBadge(locale, status) {
 }
 
 function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
-  const { promptForm } = useAppFeedback();
+  const { promptForm, toast } = useAppFeedback();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -142,21 +142,146 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
     }
   };
 
+  const openBatchInvite = async () => {
+    setErr('');
+    setMsg('');
+
+    let targetCompanyId = !isAdmin ? null : defaultCompanyId;
+    if (isAdmin && !targetCompanyId) {
+      const companyPick = await promptForm({
+        title: t(locale, 'panel.motivatorsAdmin.invite.batchTitle'),
+        confirmLabel: t(locale, 'panel.motivatorsAdmin.invite.batchContinue'),
+        fields: [
+          {
+            key: 'companyId',
+            type: 'select',
+            label: t(locale, 'panel.motivatorsAdmin.invite.companyPh'),
+            options: [
+              { value: '', label: t(locale, 'panel.motivatorsAdmin.invite.companyPh') },
+              ...companies.map((c) => ({ value: String(c.id), label: c.name })),
+            ],
+            defaultValue: '',
+          },
+        ],
+      });
+      if (!companyPick) return;
+      targetCompanyId = String(companyPick.companyId || '');
+      if (!targetCompanyId || !Number.isFinite(Number(targetCompanyId))) {
+        setErr(t(locale, 'panel.motivatorsAdmin.invite.needCompany'));
+        return;
+      }
+    }
+
+    setBusy(true);
+    try {
+      const q = new URLSearchParams();
+      if (isAdmin && targetCompanyId) q.set('companyId', String(targetCompanyId));
+      const res = await fetch(`/api/admin/ae/invites/batch?${q}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.invite.batchLoadError'));
+
+      const eligible = Array.isArray(data.eligible) ? data.eligible : [];
+      const cap = Number(data.cap) || 25;
+      if (eligible.length === 0) {
+        setErr(t(locale, 'panel.motivatorsAdmin.invite.batchEmpty', {
+          total: data.total || 0,
+        }));
+        return;
+      }
+
+      const defaultSelected = eligible.slice(0, Math.min(cap, eligible.length)).map((p) => String(p.candidateId));
+      const values = await promptForm({
+        title: t(locale, 'panel.motivatorsAdmin.invite.batchTitle'),
+        confirmLabel: t(locale, 'panel.motivatorsAdmin.invite.batchSend'),
+        fields: [
+          {
+            key: 'people',
+            type: 'checkboxGroup',
+            label: t(locale, 'panel.motivatorsAdmin.invite.batchPickLabel', {
+              n: eligible.length,
+              cap,
+              skipped: Math.max(0, (data.total || 0) - eligible.length),
+            }),
+            options: eligible.map((p) => ({
+              value: String(p.candidateId),
+              label: `${p.name || '—'} · ${p.email}`,
+            })),
+            defaultValue: defaultSelected,
+          },
+        ],
+      });
+      if (!values) return;
+
+      const selected = (Array.isArray(values.people) ? values.people : [])
+        .map((x) => Number(x))
+        .filter((n) => Number.isFinite(n));
+      if (selected.length === 0) {
+        setErr(t(locale, 'panel.motivatorsAdmin.invite.batchNeedPeople'));
+        return;
+      }
+
+      const body = { candidateIds: selected.slice(0, cap) };
+      if (isAdmin && targetCompanyId) body.companyId = Number(targetCompanyId);
+
+      const sendRes = await fetch('/api/admin/ae/invites/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const sendData = await sendRes.json().catch(() => ({}));
+      if (!sendRes.ok) {
+        throw new Error(sendData.error || t(locale, 'panel.motivatorsAdmin.invite.batchSendError'));
+      }
+
+      const summary = t(locale, 'panel.motivatorsAdmin.invite.batchSendOk', {
+        sent: sendData.sentCount || 0,
+        skipped: sendData.skippedCount || 0,
+        failed: sendData.failedCount || 0,
+      });
+      setMsg(summary);
+      toast(summary, sendData.failedCount > 0 ? 'error' : 'ok');
+      onSent?.();
+      setTimeout(() => setMsg(''), 10000);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className={cn(S.card, 'mb-5')}>
       <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
-        <button
-          type="button"
-          onClick={openInvite}
-          disabled={busy}
-          className={cn(
-            'min-h-touch rounded-lg border-none bg-brand-500 px-4 py-2 font-mono text-xs text-white',
-            busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-          )}
-        >
-          {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')}
-        </button>
+        <div className="min-w-0">
+          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
+          <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">
+            {t(locale, 'panel.motivatorsAdmin.invite.batchHint')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={openBatchInvite}
+            disabled={busy}
+            className={cn(
+              'min-h-touch rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500',
+              busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            )}
+          >
+            {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.batchOpenBtn')}
+          </button>
+          <button
+            type="button"
+            onClick={openInvite}
+            disabled={busy}
+            className={cn(
+              'min-h-touch rounded-lg border-none bg-brand-500 px-4 py-2 font-mono text-xs text-white',
+              busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            )}
+          >
+            {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')}
+          </button>
+        </div>
       </div>
       {err ? <p className="mt-2 text-xs text-danger">{err}</p> : null}
       {msg ? <p className="mt-2 text-xs text-success">{msg}</p> : null}

@@ -136,6 +136,26 @@ async function runOfflineLibs() {
     return 'retention_watch + hire_kit + weekly_digest ok';
   });
 
+  await check('lib', 'batch-motivators-invites', async () => {
+    const {
+      BATCH_INVITE_CAP,
+      listInternalMotivatorsInviteRoster,
+      batchCreateMotivatorsInvites,
+    } = await import('../../lib/ae/batch-motivators-invites.js');
+    if (BATCH_INVITE_CAP !== 25) throw new Error(`cap ${BATCH_INVITE_CAP}`);
+    if (typeof listInternalMotivatorsInviteRoster !== 'function') throw new Error('list missing');
+    if (typeof batchCreateMotivatorsInvites !== 'function') throw new Error('batch missing');
+    const empty = await batchCreateMotivatorsInvites(async () => ({ rowCount: 0, rows: [] }), {
+      companyId: 1,
+      candidateIds: [],
+      appBaseUrl: 'http://localhost',
+    });
+    if (empty.ok || empty.errorCode !== 'NO_CANDIDATES') {
+      throw new Error(`expected NO_CANDIDATES got ${JSON.stringify(empty)}`);
+    }
+    return 'batch motivators helpers ok';
+  });
+
   await check('lib', 'vacancy-clone-and-aging', async () => {
     const { readFile } = await import('node:fs/promises');
     const { fileURLToPath } = await import('node:url');

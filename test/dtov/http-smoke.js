@@ -554,6 +554,46 @@ export async function runHttpSmoke(baseUrl) {
     await expectStatus('ae', 'invites', res.status, [200, 401, 403]);
   }
   {
+    const { res: batchGet, data: batchData } = await req(base, '/api/admin/ae/invites/batch', {
+      cookie: hrCookie,
+    });
+    if (await expectStatus('ae', 'invites-batch-roster', batchGet.status, [200, 401, 403])) {
+      if (batchGet.status === 200) {
+        if (!Array.isArray(batchData?.items) && !Array.isArray(batchData?.eligible)) {
+          fail('ae', 'invites-batch-shape', JSON.stringify(batchData).slice(0, 120));
+        } else {
+          ok(
+            'ae',
+            'invites-batch-eligible',
+            `total=${batchData.total ?? 0} eligible=${batchData.eligibleCount ?? batchData.eligible?.length ?? 0}`
+          );
+          if ((batchData.total || 0) < 1) {
+            fail('ae', 'invites-batch-roster-empty', 'expected internal roster rows');
+          }
+        }
+        const pick = (batchData.eligible || []).slice(0, 1).map((p) => p.candidateId);
+        if (pick.length > 0) {
+          const { res: batchPost, data: batchPostData } = await req(base, '/api/admin/ae/invites/batch', {
+            method: 'POST',
+            cookie: hrCookie,
+            body: { candidateIds: pick },
+          });
+          if (await expectStatus('ae', 'invites-batch-post', batchPost.status, [200, 400, 502, 503])) {
+            if (batchPost.status === 200) {
+              ok(
+                'ae',
+                'invites-batch-post-counts',
+                `sent=${batchPostData.sentCount || 0} failed=${batchPostData.failedCount || 0}`
+              );
+            }
+          }
+        } else {
+          ok('ae', 'invites-batch-post-skipped', 'no eligible');
+        }
+      }
+    }
+  }
+  {
     const { res } = await req(base, '/api/admin/ae/analytics', { cookie: hrCookie });
     await expectStatus('ae', 'analytics', res.status, [200, 401, 403]);
   }

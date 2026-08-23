@@ -101,7 +101,7 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 ### Motivadores (AE)
 - Banco situacional v4 (linguagem de trabalho; dimensões só no servidor).
 - 13 dimensões + grupos de leitura; insights faça/evite; NÃO entra no ranking de aderência da vaga.
-- Dashboard RH + Convites + Resultados; config avançada do banco (permissão).
+- Dashboard RH + Convites (1 a 1 ou lote do time interno, cap 25) + Resultados; config avançada do banco (permissão).
 - Sync/desativar perguntas; nunca DELETE de ae_questions com tentativas.
 
 ### Empresas e usuários (admin)
