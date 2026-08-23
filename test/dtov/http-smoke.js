@@ -693,8 +693,9 @@ export async function runHttpSmoke(baseUrl) {
 
   // Climate surveys (anonymous structure)
   {
-    const { res: listRes } = await req(base, '/api/admin/climate-surveys', { cookie: hrCookie });
+    const { res: listRes, data: listData } = await req(base, '/api/admin/climate-surveys', { cookie: hrCookie });
     await expectStatus('climate', 'list', listRes.status, 200);
+    if (listData?.minResponses != null) ok('climate', 'min-responses', String(listData.minResponses));
     const { res: createRes, data: createData } = await req(base, '/api/admin/climate-surveys', {
       method: 'POST',
       cookie: hrCookie,

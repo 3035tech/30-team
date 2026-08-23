@@ -3,7 +3,7 @@ import { query } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
-import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys } from '../../../../lib/people/climate-surveys';
+import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys, climateMinResponses } from '../../../../lib/people/climate-surveys';
 
 function resolveCompanyId(scope, bodyCompanyId) {
   if (scope.isAdmin) {
@@ -35,7 +35,7 @@ export async function GET(request) {
     }
 
     const items = await listClimateSurveys(query, { companyId });
-    return NextResponse.json({ items });
+    return NextResponse.json({ items, minResponses: climateMinResponses() });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
     console.error('GET climate-surveys', err);

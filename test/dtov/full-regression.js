@@ -205,7 +205,7 @@ async function runOfflineLibs() {
     const { dirname, join } = await import('node:path');
     const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
     const pdi = await readFile(join(root, 'lib', 'people', 'development-plans.js'), 'utf8');
-    for (const name of ['listDevelopmentPlans', 'createDevelopmentPlan', 'addDevelopmentPlanItem', 'updateDevelopmentPlan']) {
+    for (const name of ['listDevelopmentPlans', 'createDevelopmentPlan', 'addDevelopmentPlanItem', 'updateDevelopmentPlan', 'getCompanyPdiPulse']) {
       if (!pdi.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
     }
     const clima = await readFile(join(root, 'lib', 'people', 'climate-surveys.js'), 'utf8');
@@ -219,6 +219,7 @@ async function runOfflineLibs() {
       'submitClimateResponse',
       'getClimateSurveyAggregate',
       'getClimateCompanyBenchmark',
+      'getCompanyClimatePulse',
       'climateMinResponses',
     ]) {
       if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {

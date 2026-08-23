@@ -23,6 +23,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [benchmark, setBenchmark] = useState(null);
   const [inviteUrls, setInviteUrls] = useState([]);
   const [companyId, setCompanyId] = useState(companies[0]?.id || '');
+  const [minResponses, setMinResponses] = useState(5);
 
   const companyQs =
     isAdmin && companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
@@ -34,6 +35,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || data?.errorCode || 'load');
       setItems(Array.isArray(data.items) ? data.items : []);
+      if (data.minResponses != null) setMinResponses(Number(data.minResponses) || 5);
       const bq = companyQs ? `${companyQs}&benchmark=1` : '?benchmark=1';
       const br = await fetch(`/api/admin/climate-surveys${bq}`);
       const bd = await br.json().catch(() => ({}));
@@ -145,8 +147,20 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       setDetail(data.survey);
       toast(t(locale, 'panel.climate.statusUpdated'), 'ok');
       await load();
-    } catch {
-      toast(t(locale, 'panel.climate.saveError'), 'error');
+      if (status === 'open') {
+        try {
+          const inv = await patch(selectedId, { createInvite: true });
+          const origin = typeof window !== 'undefined' ? window.location.origin : '';
+          if (inv?.invite?.token) {
+            setInviteUrls([`${origin}/clima/${inv.invite.token}`]);
+            toast(t(locale, 'panel.climate.inviteOk'), 'ok');
+          }
+        } catch {
+          /* open succeeded; invite is optional follow-up */
+        }
+      }
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.climate.saveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -383,26 +397,61 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         </label>
       ) : null}
 
-      {benchmark?.prompts?.length > 0 ? (
+      {benchmark?.surveys?.length > 0 ? (
         <div className={cn(S.cardTight)}>
           <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkTitle')}</div>
           <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
             {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
           </p>
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {benchmark.prompts.slice(0, 6).map((row) => (
-              <li key={row.key} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
-                <div className="text-ink-muted">{row.prompt}</div>
-                <div className="mt-1 flex flex-wrap gap-2 font-mono text-ink">
-                  {row.means.map((m) => (
-                    <span key={m.surveyId}>
-                      {m.title}: {m.mean != null ? m.mean : '—'}
+          <ul className="m-0 mb-3 flex list-none flex-col gap-1.5 p-0">
+            {(benchmark.surveys || []).map((s) => (
+              <li
+                key={s.surveyId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ink/10 px-2 py-1.5 text-xs"
+              >
+                <span className="text-ink">{s.title}</span>
+                <span className="font-mono text-ink-muted">
+                  {s.overallMean != null
+                    ? t(locale, 'panel.climate.overallMeanShort', { n: s.overallMean })
+                    : '—'}
+                  {s.deltaVsPrevious != null ? (
+                    <span
+                      className={cn(
+                        'ml-2',
+                        s.deltaVsPrevious > 0 ? 'text-success' : s.deltaVsPrevious < 0 ? 'text-danger' : ''
+                      )}
+                    >
+                      {t(locale, 'panel.climate.deltaVsPrev', {
+                        n: s.deltaVsPrevious > 0 ? `+${s.deltaVsPrevious}` : String(s.deltaVsPrevious),
+                      })}
                     </span>
-                  ))}
-                </div>
+                  ) : null}
+                  <span className="ml-2 text-ink-faint">
+                    {t(locale, 'panel.climate.rCount', { n: s.responseCount || 0 })}
+                  </span>
+                </span>
               </li>
             ))}
           </ul>
+          {(benchmark.prompts || []).length > 0 ? (
+            <>
+              <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkByQuestion')}</div>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {benchmark.prompts.slice(0, 6).map((row) => (
+                  <li key={row.key} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
+                    <div className="text-ink-muted">{row.prompt}</div>
+                    <div className="mt-1 flex flex-wrap gap-2 font-mono text-ink">
+                      {row.means.map((m) => (
+                        <span key={m.surveyId}>
+                          {m.title}: {m.mean != null ? m.mean : '—'}
+                        </span>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       ) : null}
 
@@ -412,11 +461,18 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         <EmptyState
           title={t(locale, 'panel.climate.emptyTitle')}
           message={t(locale, 'panel.climate.emptyHint')}
+          actionLabel={t(locale, 'panel.climate.createBtn')}
+          onAction={createSurvey}
+          actionDisabled={busy}
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {items.map((s) => (
+            {items.map((s) => {
+              const min = minResponses || 5;
+              const resp = Number(s.responseCount) || 0;
+              const unlockPct = Math.min(100, Math.round((resp / min) * 100));
+              return (
               <li key={s.id}>
                 <button
                   type="button"
@@ -432,11 +488,26 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                   <div className={cn(S.faint, 'mt-1 font-mono text-[11px]')}>
                     {t(locale, `panel.climate.status.${s.status}`)} ·{' '}
                     {t(locale, 'panel.climate.qCount', { n: s.questionCount || 0 })} ·{' '}
-                    {t(locale, 'panel.climate.rCount', { n: s.responseCount || 0 })}
+                    {t(locale, 'panel.climate.rCount', { n: resp })}
                   </div>
+                  {s.status === 'open' || s.status === 'closed' ? (
+                    <div className="mt-2">
+                      <div className="mb-0.5 flex justify-between font-mono text-[10px] text-ink-faint">
+                        <span>{t(locale, 'panel.climate.responseProgress', { n: resp, min })}</span>
+                        <span>{unlockPct}%</span>
+                      </div>
+                      <div className="h-1 overflow-hidden rounded-full bg-ink/10">
+                        <div
+                          className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
+                          style={{ width: `${unlockPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
 
           <div className={cn(S.card, 'min-h-[200px]')}>
@@ -452,7 +523,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {detail.status === 'draft' ? (
-                    <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={() => setStatus('open')}>
+                    <button type="button" disabled={busy} className={S.btnPrimary} onClick={() => setStatus('open')}>
                       {t(locale, 'panel.climate.openBtn')}
                     </button>
                   ) : null}
@@ -463,10 +534,10 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                   ) : null}
                   {detail.status === 'open' ? (
                     <>
-                      <button type="button" disabled={busy} className={S.btnPrimary} onClick={createInvite}>
+                      <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={createInvite}>
                         {t(locale, 'panel.climate.inviteBtn')}
                       </button>
-                      <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={createInviteBatch}>
+                      <button type="button" disabled={busy} className={S.btnGhost} onClick={createInviteBatch}>
                         {t(locale, 'panel.climate.batchBtn')}
                       </button>
                       <button type="button" disabled={busy} className={S.btnGhost} onClick={emailInvites}>
@@ -483,14 +554,51 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     {t(locale, 'panel.climate.deleteBtn')}
                   </button>
                 </div>
+                {detail.status === 'open' || detail.status === 'closed' ? (
+                  <div className="rounded-control border border-ink/10 bg-canvas/50 px-3 py-2">
+                    {(() => {
+                      const min = aggregate?.minResponses || minResponses || 5;
+                      const resp = aggregate?.responseCount ?? detail.responseCount ?? 0;
+                      const pct = Math.min(100, Math.round((resp / min) * 100));
+                      return (
+                        <>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-mono text-[11px] text-ink-muted">
+                              {t(locale, 'panel.climate.responseProgress', { n: resp, min })}
+                            </span>
+                            {aggregate?.overallMean != null ? (
+                              <span className="font-mono text-[12px] text-ink">
+                                {t(locale, 'panel.climate.overallMeanShort', { n: aggregate.overallMean })}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                            <div
+                              className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : null}
+                {detail.status === 'open' && inviteUrls.length === 0 ? (
+                  <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-3 py-3">
+                    <p className={cn(S.muted, 'm-0 mb-2 text-sm')}>{t(locale, 'panel.climate.invitePrimaryHint')}</p>
+                    <button type="button" disabled={busy} className={S.btnPrimary} onClick={createInvite}>
+                      {t(locale, 'panel.climate.inviteBtn')}
+                    </button>
+                  </div>
+                ) : null}
                 {inviteUrls.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    <div className={cn(S.label, 'mb-0')}>{t(locale, 'panel.climate.inviteLink')}</div>
+                  <div className="rounded-card border border-brand-500/30 bg-brand-500/[0.07] px-3 py-3">
+                    <div className={cn(S.label, 'mb-2')}>{t(locale, 'panel.climate.inviteLink')}</div>
                     {inviteUrls.slice(0, 20).map((url) => (
                       <CopyableLink key={url} url={url} locale={locale} />
                     ))}
                     {inviteUrls.length > 20 ? (
-                      <p className={cn(S.faint, 'm-0 text-xs')}>
+                      <p className={cn(S.faint, 'm-0 mt-2 text-xs')}>
                         {t(locale, 'panel.climate.batchMore', { n: inviteUrls.length - 20 })}
                       </p>
                     ) : null}
@@ -538,17 +646,38 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                 {aggregate?.byQuestion?.length ? (
                   <div>
                     <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.aggregate')}</div>
-                    <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                      {aggregate.byQuestion.map((row) => (
-                        <li key={row.questionId} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
-                          <span className="text-ink-muted">{row.prompt}</span>
-                          <span className="ml-2 font-mono text-ink">
-                            {row.mean != null
-                              ? t(locale, 'panel.climate.mean', { n: row.mean, r: row.responses })
-                              : t(locale, 'panel.climate.noResponses')}
-                          </span>
-                        </li>
-                      ))}
+                    {aggregate.overallMean != null ? (
+                      <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
+                        {t(locale, 'panel.climate.overallMean', { n: aggregate.overallMean })}
+                      </p>
+                    ) : null}
+                    <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                      {aggregate.byQuestion.map((row) => {
+                        const scaleMax = Number(row.scaleMax) || 5;
+                        const scaleMin = Number(row.scaleMin) || 1;
+                        const span = Math.max(1, scaleMax - scaleMin);
+                        const barPct =
+                          row.mean != null
+                            ? Math.min(100, Math.max(0, ((row.mean - scaleMin) / span) * 100))
+                            : 0;
+                        return (
+                          <li key={row.questionId} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <span className="min-w-0 flex-1 text-ink-muted">{row.prompt}</span>
+                              <span className="shrink-0 font-mono text-ink">
+                                {row.mean != null
+                                  ? t(locale, 'panel.climate.mean', { n: row.mean, r: row.responses })
+                                  : t(locale, 'panel.climate.noResponses')}
+                              </span>
+                            </div>
+                            {row.mean != null ? (
+                              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                                <div className="h-full rounded-full bg-info" style={{ width: `${barPct}%` }} />
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 ) : null}

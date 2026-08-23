@@ -69,8 +69,8 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Hipóteses de gestão (tom “tende a”) + registro de 1:1 (data, notas ricas, próximos passos) — separado de hr_notes de triagem.
 - Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe.
 - Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
-- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1.
-- **Clima:** perguntas editáveis; links em lote / e-mail; médias só após mínimo de respostas; benchmark entre campanhas.
+- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo.
+- **Clima:** perguntas editáveis; links em lote / e-mail; médias só após mínimo de respostas; barras por pergunta; benchmark com média geral e Δ; pulse na Visão geral.
 
 ### Clima (estrutura B-500)
 - Aba **Clima** (`climate.view`): campanhas anônimas por empresa; perguntas Likert; abrir/encerrar; link `/clima/{token}` (um uso); médias agregadas por pergunta (sem PII) com mínimo de respostas; lote/e-mail; comparativo.

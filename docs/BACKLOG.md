@@ -44,7 +44,7 @@ _(entregue — B-401–B-412: print briefing, kit hire, fit vs núcleo, grupos s
 
 ## Aberto — Epic B-500 (PDI + clima)
 
-_(entregue — estrutura 042 + B-501 editar/arquivar PDI, B-502 vínculo item↔1:1, B-503 CRUD perguntas, B-504 lote/e-mail de links, B-505 benchmark, B-506 mínimo de respostas.)_
+_(entregue — estrutura 042 + B-501–B-506 + polish UX/indicadores/visões: progresso PDI, barras clima, pulse Overview, benchmark com Δ.)_
 
 ---
 

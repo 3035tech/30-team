@@ -118,7 +118,7 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
           body: JSON.stringify({
             title: values.title,
             objective: values.objective,
-            status: 'draft',
+            status: 'active',
             seedIdeas: values.seed ? ideas : undefined,
           }),
         }
@@ -210,8 +210,64 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
       setDetail(data.plan);
       toast(t(locale, 'panel.pdi.itemUpdated'), 'ok');
       await load();
-    } catch {
-      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleItemDone = async (item) => {
+    const next = item.status === 'done' ? 'todo' : 'done';
+    await setItemStatus(item, next);
+  };
+
+  const editItem = async (item) => {
+    if (!expandedId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.pdi.editItemTitle'),
+      confirmLabel: t(locale, 'panel.pdi.saveItem'),
+      fields: [
+        {
+          key: 'title',
+          label: t(locale, 'panel.pdi.itemTitleLabel'),
+          defaultValue: item.title || '',
+          required: true,
+        },
+        {
+          key: 'dueDate',
+          type: 'date',
+          label: t(locale, 'panel.pdi.itemDueLabel'),
+          defaultValue: item.dueDate ? String(item.dueDate).slice(0, 10) : '',
+        },
+        {
+          key: 'status',
+          type: 'select',
+          label: t(locale, 'panel.pdi.itemStatusAria'),
+          defaultValue: item.status || 'todo',
+          options: ['todo', 'doing', 'done'].map((s) => ({
+            value: s,
+            label: t(locale, `panel.pdi.itemStatus.${s}`),
+          })),
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const data = await patchPlan(expandedId, {
+        item: {
+          id: item.id,
+          title: values.title,
+          dueDate: values.dueDate || null,
+          status: values.status,
+        },
+      });
+      setDetail(data.plan);
+      toast(t(locale, 'panel.pdi.itemUpdated'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -265,6 +321,10 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
 
   const visible = showArchived ? items : items.filter((p) => p.status !== 'archived');
   const ooOpts = Array.isArray(oneOnOnes) ? oneOnOnes : [];
+  const activePlans = items.filter((p) => p.status === 'active');
+  const sumDone = activePlans.reduce((a, p) => a + (Number(p.doneCount) || 0), 0);
+  const sumItems = activePlans.reduce((a, p) => a + (Number(p.itemCount) || 0), 0);
+  const overallPct = sumItems > 0 ? Math.round((sumDone / sumItems) * 100) : null;
 
   return (
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.pdi.sectionAria')}>
@@ -292,6 +352,34 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
         </div>
       </div>
 
+      {overallPct != null || activePlans.length > 0 ? (
+        <div className="mb-3 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-mono text-[11px] text-ink-muted">
+              {t(locale, 'panel.pdi.progressSummary', {
+                done: sumDone,
+                total: sumItems,
+                plans: activePlans.length,
+              })}
+            </span>
+            {overallPct != null ? (
+              <span className="font-mono text-[11px] text-ink">{overallPct}%</span>
+            ) : null}
+          </div>
+          {sumItems > 0 ? (
+            <div
+              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10"
+              role="progressbar"
+              aria-valuenow={overallPct || 0}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="h-full rounded-full bg-success" style={{ width: `${overallPct || 0}%` }} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {visible.length === 0 ? (
         <EmptyState
           title={t(locale, 'panel.pdi.emptyTitle')}
@@ -299,7 +387,10 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
         />
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {visible.map((p) => (
+          {visible.map((p) => {
+            const pct =
+              p.itemCount > 0 ? Math.round(((Number(p.doneCount) || 0) / p.itemCount) * 100) : 0;
+            return (
             <li key={p.id} className="rounded-control border border-ink/12 bg-canvas/40 px-3 py-2">
               <button
                 type="button"
@@ -307,8 +398,18 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
                 onClick={() => openDetail(p.id)}
                 aria-expanded={expandedId === p.id}
               >
-                <span className="font-ui text-sm text-ink">{p.title}</span>
-                <span className={cn(S.faint, 'font-mono text-[11px]')}>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-ui text-sm text-ink">{p.title}</span>
+                  {p.itemCount > 0 ? (
+                    <span
+                      className="mt-1 block h-1 max-w-[140px] overflow-hidden rounded-full bg-ink/10"
+                      aria-hidden
+                    >
+                      <span className="block h-full rounded-full bg-success/80" style={{ width: `${pct}%` }} />
+                    </span>
+                  ) : null}
+                </span>
+                <span className={cn(S.faint, 'shrink-0 font-mono text-[11px]')}>
                   {t(locale, `panel.pdi.status.${p.status}`)} · {p.doneCount}/{p.itemCount}
                 </span>
               </button>
@@ -344,8 +445,38 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
                           key={it.id}
                           className="flex flex-col gap-1.5 rounded-md bg-white/50 px-2 py-1.5"
                         >
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <span className="min-w-0 flex-1 text-xs text-ink">{it.title}</span>
+                          <div className="flex flex-wrap items-start gap-2">
+                            <label className="mt-0.5 flex min-h-touch min-w-touch cursor-pointer items-center justify-center">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-success"
+                                checked={it.status === 'done'}
+                                disabled={busy}
+                                aria-label={t(locale, 'panel.pdi.markDoneAria')}
+                                onChange={() => toggleItemDone(it)}
+                              />
+                            </label>
+                            <span
+                              className={cn(
+                                'min-w-0 flex-1 text-xs text-ink',
+                                it.status === 'done' && 'text-ink-muted line-through'
+                              )}
+                            >
+                              {it.title}
+                              {it.dueDate ? (
+                                <span className="ml-1 font-mono text-[10px] text-ink-faint">
+                                  · {String(it.dueDate).slice(0, 10)}
+                                </span>
+                              ) : null}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                              onClick={() => editItem(it)}
+                            >
+                              {t(locale, 'panel.pdi.editItemBtn')}
+                            </button>
                             <select
                               className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
                               value={it.status}
@@ -359,7 +490,7 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
                             </select>
                           </div>
                           {ooOpts.length > 0 ? (
-                            <label className="flex flex-wrap items-center gap-2 text-[11px] text-ink-muted">
+                            <label className="flex flex-wrap items-center gap-2 pl-7 text-[11px] text-ink-muted">
                               <span>{t(locale, 'panel.pdi.linkOo')}</span>
                               <select
                                 className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-[11px]')}
@@ -383,7 +514,8 @@ export function DevelopmentPlansBlock({ locale, candidateId, seedIdeas = [], one
                 </div>
               ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>

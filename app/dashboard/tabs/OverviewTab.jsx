@@ -168,6 +168,93 @@ export function OverviewTab({
         )}
       </div>
 
+      {data.peopleOps ? (
+        <div className={S.card}>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                onClick={() => go({ tab: 'team' })}
+              >
+                {t(locale, 'panel.overview.openTeam')}
+              </button>
+              <button
+                type="button"
+                className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                onClick={() => go({ tab: 'climate' })}
+              >
+                {t(locale, 'panel.overview.openClimate')}
+              </button>
+            </div>
+          </div>
+          <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
+          {(() => {
+            const pdi = data.peopleOps.pdi;
+            const clima = data.peopleOps.climate;
+            const hasPdi = pdi && (pdi.activePlans > 0 || pdi.activeItems > 0);
+            const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
+            if (!hasPdi && !hasClima) {
+              return (
+                <p className="m-0 text-[13px] italic text-ink-muted">
+                  {t(locale, 'panel.overview.peopleOpsEmpty')}
+                </p>
+              );
+            }
+            return (
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {hasPdi ? (
+                  <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                    {pdi.donePct != null
+                      ? t(locale, 'panel.overview.peopleOpsPdi', {
+                          plans: pdi.activePlans,
+                          pct: pdi.donePct,
+                          people: pdi.peopleWithActive,
+                        })
+                      : t(locale, 'panel.overview.peopleOpsPdiNoPct', {
+                          plans: pdi.activePlans,
+                          people: pdi.peopleWithActive,
+                        })}
+                    {pdi.itemsWithoutOneOnOne > 0 ? (
+                      <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                        {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
+                          n: pdi.itemsWithoutOneOnOne,
+                        })}
+                      </span>
+                    ) : null}
+                    {pdi.activeItems > 0 ? (
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                        <div
+                          className="h-full rounded-full bg-success"
+                          style={{ width: `${pdi.donePct || 0}%` }}
+                        />
+                      </div>
+                    ) : null}
+                  </li>
+                ) : null}
+                {hasClima ? (
+                  <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                    {t(locale, 'panel.overview.peopleOpsClimate', {
+                      open: clima.openSurveys,
+                      resp: clima.openResponses,
+                      min: clima.minResponses,
+                    })}
+                    {clima.draftSurveys > 0 ? (
+                      <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                        {t(locale, 'panel.overview.peopleOpsClimateDraft', {
+                          n: clima.draftSurveys,
+                        })}
+                      </span>
+                    ) : null}
+                  </li>
+                ) : null}
+              </ul>
+            );
+          })()}
+        </div>
+      ) : null}
+
       <div className={S.card}>
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>
