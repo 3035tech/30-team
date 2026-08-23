@@ -210,6 +210,14 @@ export function Icon({ name, className }) {
           <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
         </svg>
       );
+    case 'print':
+      return (
+        <svg {...props}>
+          <path d="M6 9V3h12v6" />
+          <path d="M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+          <rect x="6" y="13" width="12" height="8" rx="1" />
+        </svg>
+      );
     default:
       return null;
   }

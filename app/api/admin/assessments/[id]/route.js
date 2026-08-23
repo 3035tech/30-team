@@ -13,6 +13,7 @@ import {
 import { markCandidateHired, maybeCloseVacancyIfFilled } from '../../../../../lib/hire';
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../lib/job-funnel';
+import { notifyCompanyManagers, NOTIF } from '../../../../../lib/manager-notifications';
 
 export async function PATCH(request, { params }) {
   try {
@@ -52,8 +53,12 @@ export async function PATCH(request, { params }) {
               ass.attr_medium AS "attrMedium",
               ass.attr_campaign AS "attrCampaign",
               ass.attr_ref AS "attrRef",
-              ass.attr_session_id AS "attrSessionId"
+              ass.attr_session_id AS "attrSessionId",
+              c.full_name AS "candidateName",
+              v.title AS "vacancyTitle"
        FROM assessments ass
+       LEFT JOIN candidates c ON c.id = ass.candidate_id
+       LEFT JOIN vacancies v ON v.id = ass.vacancy_id AND v.deleted = FALSE
        WHERE ass.id = $1 ${!isAdmin ? 'AND ass.company_id = $2' : ''}
        LIMIT 1`,
       !isAdmin ? [id, companyId] : [id]
@@ -123,6 +128,22 @@ export async function PATCH(request, { params }) {
           [vacancyId, candidateId, startDate]
         ).catch(() => {});
         await maybeCloseVacancyIfFilled(vacancyId);
+      }
+      if (assCompanyId) {
+        await notifyCompanyManagers(query, {
+          companyId: assCompanyId,
+          type: NOTIF.HIRE_ONBOARDING_KIT,
+          entityType: 'candidate',
+          entityId: Number(candidateId),
+          dedupeKey: `hire_kit:assessment:${id}:candidate:${candidateId}`,
+          payload: {
+            candidateId: Number(candidateId),
+            vacancyId: vacancyId != null ? Number(vacancyId) : null,
+            candidateName: own.rows[0]?.candidateName || null,
+            vacancyTitle: own.rows[0]?.vacancyTitle || null,
+            startDate: startDate || null,
+          },
+        });
       }
     }
 

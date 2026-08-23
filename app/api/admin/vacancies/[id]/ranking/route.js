@@ -6,6 +6,8 @@ import { queryRead } from '../../../../../../lib/db';
 import { computeAreaScore010 } from '../../../../../../lib/area-fit';
 import { apiError } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
+import { loadCompanyInternalNucleus } from '../../../../../../lib/people/company-nucleus';
+import { scorePersonAgainstNucleus } from '../../../../../../lib/people/decision-brief';
 
 
 export async function GET(request, { params }) {
@@ -31,11 +33,21 @@ export async function GET(request, { params }) {
     );
     if (own.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
 
+    const vacCompanyId = Number(own.rows[0].companyId);
+
     const rub = await queryRead(
       `SELECT desired_type_weights AS weights FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
       [vacancyId]
     );
     const weights = rub.rows?.[0]?.weights && Object.keys(rub.rows[0].weights).length ? rub.rows[0].weights : {};
+
+    const url = new URL(request.url);
+    const qLocale = url.searchParams.get('locale');
+    const briefLocale = qLocale === 'en' || qLocale === 'pt-BR' ? qLocale : 'pt-BR';
+
+    const nucleus = Number.isFinite(vacCompanyId)
+      ? await loadCompanyInternalNucleus(queryRead, { companyId: vacCompanyId })
+      : [];
 
     const rows = await queryRead(
       `SELECT * FROM (
@@ -131,10 +143,27 @@ export async function GET(request, { params }) {
 
     const ranked = rows.rows.map((r) => {
       const fit = computeAreaScore010(r.scores, weights);
+      let nucleusFit = null;
+      if (r.topType != null && nucleus.length > 0) {
+        const scored = scorePersonAgainstNucleus({
+          locale: briefLocale,
+          person: { id: r.candidateId, topType: r.topType },
+          nucleus,
+        });
+        nucleusFit = {
+          synergy: scored.synergy,
+          tension: scored.tension,
+          net: scored.net,
+          summary: scored.summary,
+          highlights: scored.highlights,
+          empty: scored.empty,
+        };
+      }
       return {
         ...r,
         vacancyFitScore010: fit.score010,
         vacancyFitLabel: fit.label,
+        nucleusFit,
       };
     });
 
@@ -147,7 +176,11 @@ export async function GET(request, { params }) {
       return bv - av;
     });
 
-    return NextResponse.json({ vacancyId: Number(vacancyId), ranking: ranked });
+    return NextResponse.json({
+      vacancyId: Number(vacancyId),
+      ranking: ranked,
+      nucleusSize: nucleus.length,
+    });
   } catch (e) {
     console.error(e);
     return apiError(request, 'INTERNAL', 500);

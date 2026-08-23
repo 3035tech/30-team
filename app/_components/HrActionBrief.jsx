@@ -2,13 +2,18 @@
 
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { printDecisionBrief } from '../../lib/people/brief-print';
+import { useAppFeedbackOptional } from './AppFeedback';
+import { Icon } from './Icon';
 import { S } from '../dashboard/dashboard-shared';
 
 /**
- * Briefing acionável (Equipe): síntese + faça/evite + entrevista + time + alertas.
- * Dados vêm de people.decisionBrief (servidor).
+ * Briefing acionável (Equipe / vaga): síntese + faça/evite + entrevista + time + alertas.
+ * Dados vêm de people.decisionBrief (servidor). Print/PDF via one-pager (B-401).
  */
-export function HrActionBrief({ locale = 'pt-BR', brief, dense = false }) {
+export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personName = '' }) {
+  const feedback = useAppFeedbackOptional();
+
   if (!brief?.hasAny) {
     return (
       <div className={cn(S.cardTight, dense ? 'mb-3 p-3' : 'mb-4')}>
@@ -28,9 +33,47 @@ export function HrActionBrief({ locale = 'pt-BR', brief, dense = false }) {
   const actionsAvoid = brief.actionsAvoid || [];
   const hypotheses = brief.hypotheses || [];
 
+  const onPrint = () => {
+    const ok = printDecisionBrief({
+      locale,
+      personName,
+      brief,
+      labels: {
+        product: '30Team',
+        title: t(locale, 'panel.team.briefTitle'),
+        hint: t(locale, 'panel.team.briefHint'),
+        alerts: t(locale, 'panel.team.briefAlerts'),
+        do: t(locale, 'panel.team.briefDo'),
+        avoid: t(locale, 'panel.team.briefAvoid'),
+        interview: t(locale, 'panel.team.briefInterview'),
+        team: t(locale, 'panel.team.briefTeam'),
+        hypotheses: t(locale, 'panel.team.briefHypotheses'),
+        footer: t(locale, 'panel.team.briefPrintFooter'),
+        generatedAt: t(locale, 'panel.team.briefPrintGenerated', {
+          date: new Date().toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+        }),
+      },
+    });
+    if (!ok && typeof feedback?.toast === 'function') {
+      feedback.toast(t(locale, 'panel.team.briefPrintBlocked'), 'error');
+    }
+  };
+
   return (
     <div className={cn('mb-4 rounded-control border border-brand-500/20 bg-brand-500/[0.03]', dense ? 'p-3' : 'p-3.5')}>
-      <span className={cn(S.label, 'mb-1')}>{t(locale, 'panel.team.briefTitle')}</span>
+      <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+        <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.briefTitle')}</span>
+        <button
+          type="button"
+          onClick={onPrint}
+          className={cn(S.btnGhost, 'inline-flex min-h-touch items-center gap-1.5 px-2.5 py-1.5 text-[11px]')}
+          title={t(locale, 'panel.team.briefPrint')}
+          aria-label={t(locale, 'panel.team.briefPrint')}
+        >
+          <Icon name="print" />
+          <span>{t(locale, 'panel.team.briefPrint')}</span>
+        </button>
+      </div>
       <p className="mb-3 mt-0 text-[11px] leading-snug text-ink-faint">
         {t(locale, 'panel.team.briefHint')}
       </p>

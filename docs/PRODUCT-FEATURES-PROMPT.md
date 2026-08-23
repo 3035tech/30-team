@@ -61,16 +61,18 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Marcar funcionário / status de pipeline na Equipe.
 
 ### People (gestão) — epic B-300
-- Briefing de decisão (HrActionBrief): alertas, faça/evite, perguntas de entrevista, dicas de composição com o time — a partir de Eneagrama + Motivadores.
+- Briefing de decisão (HrActionBrief): alertas, faça/evite, perguntas de entrevista, dicas de composição com o time — a partir de Eneagrama + Motivadores. **Imprimir / PDF** (one-pager).
 - Mesmo briefing no detalhe do candidato na vaga (“Notas / ações”).
 - Hipóteses de gestão (tom “tende a”) + registro de 1:1 (data, notas ricas, próximos passos) — separado de hr_notes de triagem.
 - Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe.
+- Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
 
 ### Análises de perfil
 - Compatibilidade: pares / matriz de sinergia–tensão–neutro (com caps).
 - Comparativo: lado a lado de perfis.
 - Grupos: base + membros; tensões internas; composição do núcleo (completers vs riscos fora do grupo — B-304).
 - Liderança: analytics de liderança (caps).
+- Ranking da vaga: aderência rubrica + coluna vs time interno (sinergia/tensão — B-403).
 
 ### Vagas e recrutamento
 - CRUD em drawer (lista primeiro): título, status, posições, data-alvo, contrato, modalidade/UF/cidade IBGE, faixa salarial, descrição rica.

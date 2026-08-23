@@ -947,6 +947,7 @@ export function TeamTab({
                     <HrActionBrief
                       locale={locale}
                       brief={detail.people?.decisionBrief}
+                      personName={openRow.name}
                     />
                     <PeopleManagementPanel
                       locale={locale}

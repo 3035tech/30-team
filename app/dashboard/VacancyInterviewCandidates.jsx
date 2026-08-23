@@ -374,7 +374,12 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               <span>{t(locale, 'common.loading')}</span>
             </div>
           ) : (
-            <HrActionBrief locale={locale} brief={decisionBrief} dense />
+            <HrActionBrief
+              locale={locale}
+              brief={decisionBrief}
+              dense
+              personName={row.fullName || row.name || ''}
+            />
           )}
 
           <div className="flex flex-wrap gap-2.5 mb-2.5">

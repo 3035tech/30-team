@@ -13,6 +13,7 @@ import {
 } from '../../../../../../../lib/pipeline';
 import { markCandidateHired, maybeCloseVacancyIfFilled } from '../../../../../../../lib/hire';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../../../lib/job-funnel';
+import { notifyCompanyManagers, NOTIF } from '../../../../../../../lib/manager-notifications';
 
 
 async function loadLink(request, vacancyId, candidateId, payload) {
@@ -153,6 +154,20 @@ export async function PATCH(request, { params }) {
     if (stage === 'hired') {
       await markCandidateHired({ candidateId, vacancyId, startDate });
       await maybeCloseVacancyIfFilled(vacancyId);
+      await notifyCompanyManagers(query, {
+        companyId: loaded.link.companyId,
+        type: NOTIF.HIRE_ONBOARDING_KIT,
+        entityType: 'candidate',
+        entityId: Number(candidateId),
+        dedupeKey: `hire_kit:vacancy:${vacancyId}:candidate:${candidateId}`,
+        payload: {
+          candidateId: Number(candidateId),
+          vacancyId: Number(vacancyId),
+          candidateName: loaded.link.fullName || null,
+          vacancyTitle: loaded.link.vacancyTitle || null,
+          startDate: startDate || null,
+        },
+      });
     }
 
     return NextResponse.json({

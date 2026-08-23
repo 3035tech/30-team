@@ -81,7 +81,7 @@ async function runOfflineLibs() {
     const { dirname, join } = await import('node:path');
     const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
     const src = await readFile(join(root, 'lib', 'people', 'decision-brief.js'), 'utf8');
-    for (const name of ['buildDecisionBrief', 'buildInterviewQuestions', 'buildTeamCompositionHints', 'buildNucleusCompositionAdvice']) {
+    for (const name of ['buildDecisionBrief', 'buildInterviewQuestions', 'buildTeamCompositionHints', 'buildNucleusCompositionAdvice', 'scorePersonAgainstNucleus']) {
       if (!src.includes(`export function ${name}`)) throw new Error(`missing ${name}`);
     }
     const wire = await readFile(join(root, 'lib', 'people', 'candidate-people-brief.js'), 'utf8');
@@ -97,8 +97,11 @@ async function runOfflineLibs() {
       notificationCopySpec,
     } = await import('../../lib/manager-notification-catalog.js');
     if (!NOTIF_TYPES.has(NOTIF.RETENTION_WATCH)) throw new Error('RETENTION_WATCH not in catalog');
+    if (!NOTIF_TYPES.has(NOTIF.HIRE_ONBOARDING_KIT)) throw new Error('HIRE_ONBOARDING_KIT not in catalog');
     const href = notificationHref(NOTIF.RETENTION_WATCH, { candidateId: 42 });
     if (!String(href).includes('candidate=42')) throw new Error(`bad href ${href}`);
+    const hireHref = notificationHref(NOTIF.HIRE_ONBOARDING_KIT, { candidateId: 7 });
+    if (!String(hireHref).includes('candidate=7')) throw new Error(`bad hire href ${hireHref}`);
     const spec = notificationCopySpec(NOTIF.RETENTION_WATCH, {
       candidateName: 'Ana',
       signalLabels: 'Equilíbrio',
@@ -107,7 +110,14 @@ async function runOfflineLibs() {
       throw new Error(`bad spec ${JSON.stringify(spec)}`);
     }
     if (spec.titleKey !== 'dashboard.notifRetentionTitle') throw new Error('bad title key');
-    return 'retention_watch ok';
+    const hireSpec = notificationCopySpec(NOTIF.HIRE_ONBOARDING_KIT, {
+      candidateName: 'Bob',
+      vacancyTitle: 'Dev',
+    });
+    if (hireSpec.titleKey !== 'dashboard.notifHireKitTitle' || hireSpec.tone !== 'success') {
+      throw new Error(`bad hire spec ${JSON.stringify(hireSpec)}`);
+    }
+    return 'retention_watch + hire_kit ok';
   });
 
   await check('lib', 'assessment-score-export', async () => {

@@ -9,6 +9,7 @@ import { fitBandLabel, pipelineStageLabel } from './vacancy-admin-shared';
 
 export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
+  const [nucleusSize, setNucleusSize] = useState(0);
   const [hasCompletedTests, setHasCompletedTests] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -19,7 +20,8 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
       setLoading(true);
       setErr('');
       try {
-        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking`);
+        const qs = locale ? `?locale=${encodeURIComponent(locale)}` : '';
+        const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/ranking${qs}`);
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
         const all = Array.isArray(data.ranking) ? data.ranking : [];
@@ -35,6 +37,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
         if (!cancelled) {
           setHasCompletedTests(completed.length > 0);
           setRows(scored);
+          setNucleusSize(Number(data.nucleusSize) || 0);
         }
       } catch (e) {
         if (!cancelled) setErr(e?.message || t(locale, 'panel.common.error'));
@@ -58,9 +61,20 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
           </span>
         ) : null}
       </div>
-      <p className="mb-3.5 mt-0 text-xs leading-[1.55] text-ink-muted">
+      <p className="mb-2 mt-0 text-xs leading-[1.55] text-ink-muted">
         {t(locale, 'recruiting.rankingIntro')}
       </p>
+      {!loading && nucleusSize > 0 ? (
+        <p className="mb-3.5 mt-0 text-[11px] leading-snug text-ink-faint">
+          {t(locale, 'recruiting.rankingNucleusHint', { n: nucleusSize })}
+        </p>
+      ) : !loading && rows.length > 0 ? (
+        <p className="mb-3.5 mt-0 text-[11px] leading-snug text-ink-faint">
+          {t(locale, 'recruiting.rankingNucleusEmpty')}
+        </p>
+      ) : (
+        <div className="mb-3.5" />
+      )}
 
       {err ? (
         <p className="mb-2.5 mt-0 font-mono text-xs text-danger">{err}</p>
@@ -84,6 +98,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                   'recruiting.rankingColCandidate',
                   'recruiting.rankingColType',
                   'recruiting.rankingColFit',
+                  'recruiting.rankingColTeam',
                   'recruiting.rankingColStage',
                 ].map((key) => (
                   <th
@@ -98,6 +113,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
             <tbody>
               {rows.map((r, idx) => {
                 const band = fitBandLabel(locale, r.vacancyFitLabel);
+                const nf = r.nucleusFit;
                 return (
                   <tr
                     key={r.assessmentId != null ? `a:${r.assessmentId}` : `c:${r.candidateId}`}
@@ -135,6 +151,31 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       {band ? (
                         <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
                       ) : null}
+                    </td>
+                    <td className="p-2.5">
+                      {nf && (nf.synergy > 0 || nf.tension > 0) ? (
+                        <div className="max-w-[220px]">
+                          <div className="flex flex-wrap gap-1.5 font-mono text-[11px]">
+                            {nf.synergy > 0 ? (
+                              <span className="rounded-full border border-success/30 bg-success/[0.08] px-1.5 py-0.5 text-success">
+                                {t(locale, 'recruiting.rankingNucleusSynergy', { n: nf.synergy })}
+                              </span>
+                            ) : null}
+                            {nf.tension > 0 ? (
+                              <span className="rounded-full border border-warning/30 bg-warning/[0.08] px-1.5 py-0.5 text-warning">
+                                {t(locale, 'recruiting.rankingNucleusTension', { n: nf.tension })}
+                              </span>
+                            ) : null}
+                          </div>
+                          {nf.summary ? (
+                            <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-faint">{nf.summary}</p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="font-mono text-[11px] text-ink-faint">
+                          {t(locale, 'panel.common.notApplicable')}
+                        </span>
+                      )}
                     </td>
                     <td className="p-2.5 font-mono text-xs text-ink-muted">
                       {pipelineStageLabel(locale, r.pipelineStage || 'new')}
