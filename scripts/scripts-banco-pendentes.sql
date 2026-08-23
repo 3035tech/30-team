@@ -855,3 +855,19 @@ COMMENT ON COLUMN employee_portal_tokens.note_to_manager IS
 
 INSERT INTO schema_migrations (name) VALUES ('047_employee_portal_prep.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 048 — Overview PDI work-queue indexes
+CREATE INDEX IF NOT EXISTS idx_development_plan_items_company_due
+  ON development_plan_items (company_id, due_date ASC, id ASC)
+  WHERE status <> 'done' AND due_date IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_development_plan_items_company_unlinked
+  ON development_plan_items (company_id, updated_at DESC, id DESC)
+  WHERE status <> 'done' AND one_on_one_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_candidates_company_employee
+  ON candidates (company_id, full_name ASC NULLS LAST, id ASC)
+  WHERE employment_status = 'employee';
+
+INSERT INTO schema_migrations (name) VALUES ('048_pdi_overview_queue_indexes.sql')
+ON CONFLICT (name) DO NOTHING;

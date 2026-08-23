@@ -194,7 +194,22 @@ export function OverviewTab({
             const pdi = data.peopleOps.pdi;
             const clima = data.peopleOps.climate;
             const ret = data.peopleOps.retention;
-            const hasPdi = pdi && (pdi.activePlans > 0 || pdi.activeItems > 0);
+            const queue = pdi?.queue || {};
+            const overdueN = Number(pdi?.overdueItemCount) || 0;
+            const overduePlansN = Number(pdi?.overduePlanCount) || 0;
+            const noPlanN = Number(pdi?.noPlanEmployeeCount) || 0;
+            const unlinkedN = Number(pdi?.itemsWithoutOneOnOne) || 0;
+            const hasPdiQueue =
+              overdueN > 0 ||
+              overduePlansN > 0 ||
+              noPlanN > 0 ||
+              unlinkedN > 0 ||
+              (queue.overdue || []).length > 0 ||
+              (queue.unlinked || []).length > 0 ||
+              (queue.noPlan || []).length > 0;
+            const hasPdi =
+              pdi &&
+              (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue);
             const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
             const hasRet = ret && ret.count > 0;
             if (!hasPdi && !hasClima && !hasRet) {
@@ -227,19 +242,114 @@ export function OverviewTab({
                           plans: pdi.activePlans,
                           people: pdi.peopleWithActive,
                         })}
-                    {pdi.itemsWithoutOneOnOne > 0 ? (
-                      <span className="mt-1 block font-mono text-[11px] text-ink-muted">
-                        {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
-                          n: pdi.itemsWithoutOneOnOne,
-                        })}
-                      </span>
-                    ) : null}
                     {pdi.activeItems > 0 ? (
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
                         <div
                           className="h-full rounded-full bg-success"
                           style={{ width: `${pdi.donePct || 0}%` }}
                         />
+                      </div>
+                    ) : null}
+                    {hasPdiQueue ? (
+                      <div className="mt-3 flex flex-col gap-2.5 border-t border-ink/10 pt-2.5">
+                        <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                          {t(locale, 'panel.overview.peopleOpsPdiQueueTitle')}
+                        </div>
+                        {overdueN > 0 || overduePlansN > 0 || (queue.overdue || []).length > 0 ? (
+                          <div>
+                            <div className="mb-1 font-mono text-[11px] text-warning">
+                              {overdueN > 0 || (queue.overdue || []).length > 0
+                                ? t(locale, 'panel.overview.peopleOpsPdiOverdue', {
+                                    n: overdueN || (queue.overdue || []).length,
+                                  })
+                                : null}
+                              {overduePlansN > 0 ? (
+                                <span className={overdueN > 0 || (queue.overdue || []).length > 0 ? 'ml-1 text-ink-muted' : ''}>
+                                  {overdueN > 0 || (queue.overdue || []).length > 0 ? ' · ' : null}
+                                  {t(locale, 'panel.overview.peopleOpsPdiOverduePlans', {
+                                    n: overduePlansN,
+                                  })}
+                                </span>
+                              ) : null}
+                            </div>
+                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                              {(queue.overdue || []).map((row) => (
+                                <li key={`ov-${row.itemId}`}>
+                                  <button
+                                    type="button"
+                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                    onClick={() => go(row.nav)}
+                                  >
+                                    <span className="block text-[12px] text-ink">
+                                      {row.candidateName}
+                                    </span>
+                                    <span className="block font-mono text-[10px] text-ink-muted">
+                                      {row.itemTitle}
+                                      {row.dueDate ? ` · ${row.dueDate}` : ''}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {unlinkedN > 0 || (queue.unlinked || []).length > 0 ? (
+                          <div>
+                            <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                              {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
+                                n: unlinkedN || (queue.unlinked || []).length,
+                              })}
+                            </div>
+                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                              {(queue.unlinked || []).map((row) => (
+                                <li key={`ul-${row.itemId}`}>
+                                  <button
+                                    type="button"
+                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                    onClick={() => go(row.nav)}
+                                  >
+                                    <span className="block text-[12px] text-ink">
+                                      {row.candidateName}
+                                    </span>
+                                    <span className="block font-mono text-[10px] text-ink-muted">
+                                      {row.itemTitle}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {noPlanN > 0 || (queue.noPlan || []).length > 0 ? (
+                          <div>
+                            <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                              {t(locale, 'panel.overview.peopleOpsPdiNoPlan', {
+                                n: noPlanN || (queue.noPlan || []).length,
+                              })}
+                            </div>
+                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                              {(queue.noPlan || []).map((row) => (
+                                <li key={`np-${row.candidateId}`}>
+                                  <button
+                                    type="button"
+                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                    onClick={() => go(row.nav)}
+                                  >
+                                    <span className="block text-[12px] text-ink">
+                                      {row.candidateName}
+                                    </span>
+                                    <span className="block font-mono text-[10px] text-ink-faint">
+                                      {t(locale, 'panel.overview.peopleOpsPdiNoPlanCta')}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        <p className={cn(S.faint, 'm-0 text-[10px]')}>
+                          {t(locale, 'panel.overview.peopleOpsPdiQueueHint')}
+                        </p>
                       </div>
                     ) : null}
                   </li>

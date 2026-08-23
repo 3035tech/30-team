@@ -114,8 +114,19 @@ async function runOfflineLibs() {
       throw new Error('fit breakdown missing');
     }
     if (!fit.breakdown.excludes?.includes('motivators')) throw new Error('excludes missing');
-    const { importItemsFromOneOnOne } = await import('../../lib/people/development-plans.js');
+    const { importItemsFromOneOnOne, getCompanyPdiPulse } = await import(
+      '../../lib/people/development-plans.js'
+    );
     if (typeof importItemsFromOneOnOne !== 'function') throw new Error('missing importItemsFromOneOnOne');
+    if (typeof getCompanyPdiPulse !== 'function') throw new Error('missing getCompanyPdiPulse');
+    const fs = await import('node:fs/promises');
+    const pulseSrc = await fs.readFile(
+      new URL('../../lib/people/development-plans.js', import.meta.url),
+      'utf8'
+    );
+    for (const marker of ['overdueItemCount', 'noPlanEmployeeCount', 'itemsWithoutOneOnOne', 'queue:']) {
+      if (!pulseSrc.includes(marker)) throw new Error(`pdi pulse missing ${marker}`);
+    }
     const { openRetentionFollowUp } = await import('../../lib/people/retention-followups.js');
     if (typeof openRetentionFollowUp !== 'function') throw new Error('missing openRetentionFollowUp');
     const { createTeamPulse, DEFAULT_TEAM_PULSE_PROMPTS } = await import(
@@ -126,7 +137,6 @@ async function runOfflineLibs() {
     const { buildTeamPulseReading } = await import('../../lib/people/team-pulses.js');
     const reading = buildTeamPulseReading({ overallMean: 4.2, locale: 'pt-BR', typeMix: [{ type: 5, n: 2 }] });
     if (!reading?.overallText || !reading?.mixText) throw new Error('pulse reading');
-    const fs = await import('node:fs/promises');
     const portalSrc = await fs.readFile(
       new URL('../../lib/people/employee-portal.js', import.meta.url),
       'utf8'
