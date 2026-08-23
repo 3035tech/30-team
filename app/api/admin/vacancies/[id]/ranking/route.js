@@ -63,6 +63,7 @@ export async function GET(request, { params }) {
            ass.rejection_reason AS "rejectionReason",
            ass.start_date AS "startDate",
            ass.created_at AS "createdAt",
+           COALESCE(stg.changed_at, ass.created_at) AS "stageEnteredAt",
            FALSE AS "pendingTest",
            inv.status AS "inviteStatus",
            inv.sent_at AS "inviteSentAt",
@@ -75,6 +76,13 @@ export async function GET(request, { params }) {
          JOIN candidates c ON c.id = ass.candidate_id
          LEFT JOIN vacancy_candidates vc
            ON vc.vacancy_id = ass.vacancy_id AND vc.candidate_id = ass.candidate_id
+         LEFT JOIN LATERAL (
+           SELECT h.changed_at
+           FROM assessment_pipeline_history h
+           WHERE h.assessment_id = ass.id
+           ORDER BY h.changed_at DESC NULLS LAST, h.id DESC
+           LIMIT 1
+         ) stg ON TRUE
          LEFT JOIN LATERAL (
            SELECT ci.status, ci.sent_at
            FROM candidate_invites ci
@@ -103,6 +111,7 @@ export async function GET(request, { params }) {
            vc.rejection_reason AS "rejectionReason",
            vc.start_date AS "startDate",
            vc.created_at AS "createdAt",
+           COALESCE(stg.changed_at, vc.created_at) AS "stageEnteredAt",
            TRUE AS "pendingTest",
            inv.status AS "inviteStatus",
            inv.sent_at AS "inviteSentAt",
@@ -113,6 +122,13 @@ export async function GET(request, { params }) {
            END AS "hasNotes"
          FROM vacancy_candidates vc
          JOIN candidates c ON c.id = vc.candidate_id
+         LEFT JOIN LATERAL (
+           SELECT h.changed_at
+           FROM vacancy_candidate_pipeline_history h
+           WHERE h.vacancy_candidate_id = vc.id
+           ORDER BY h.changed_at DESC NULLS LAST, h.id DESC
+           LIMIT 1
+         ) stg ON TRUE
          LEFT JOIN LATERAL (
            SELECT ci.status, ci.sent_at
            FROM candidate_invites ci

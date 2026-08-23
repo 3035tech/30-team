@@ -7,7 +7,7 @@ import { titleCasePersonName } from '../../../lib/person-name';
 import { getKanbanStages } from '../dashboard-shared';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
-import { formatRelativeAgo, inviteStatusShort } from './vacancy-admin-shared';
+import { formatRelativeAgo, inviteStatusShort, daysInStage, stageAgingTone } from './vacancy-admin-shared';
 
 export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
@@ -189,6 +189,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                       const isBusy = moving === rid;
                       const inviteLabel = inviteStatusShort(locale, r.inviteStatus);
                       const ago = formatRelativeAgo(r.inviteSentAt, locale);
+                      const days = daysInStage(r.stageEnteredAt || r.createdAt);
+                      const aging = stageAgingTone(days, r.pipelineStage || 'new');
                       return (
                         <div
                           key={rid}
@@ -206,8 +208,30 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                             draggingId && !isDragging && 'pointer-events-none'
                           )}
                         >
-                          <div className="mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] text-ink">
-                            {titleCasePersonName(r.name)}
+                          <div className="mb-[3px] flex items-start justify-between gap-1">
+                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] text-ink">
+                              {titleCasePersonName(r.name)}
+                            </div>
+                            {days != null && aging ? (
+                              <span
+                                className={cn(
+                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px]',
+                                  aging === 'danger'
+                                    ? 'border-danger/30 bg-danger/[0.09] text-danger'
+                                    : 'border-warning/30 bg-warning/[0.1] text-warning'
+                                )}
+                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
+                              >
+                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
+                              </span>
+                            ) : days != null && days > 0 ? (
+                              <span
+                                className="shrink-0 font-mono text-[10px] text-ink-faint"
+                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
+                              >
+                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
+                              </span>
+                            ) : null}
                           </div>
                           {r.email ? (
                             <div

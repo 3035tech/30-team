@@ -47,6 +47,24 @@ export function formatRelativeAgo(dateLike, locale = 'pt-BR') {
   return d.toLocaleDateString(localeHtmlLang(locale), { day: '2-digit', month: '2-digit' });
 }
 
+/** Days in current pipeline stage (B-406). */
+export function daysInStage(dateLike) {
+  if (!dateLike) return null;
+  const t0 = new Date(dateLike).getTime();
+  if (!Number.isFinite(t0)) return null;
+  return Math.max(0, Math.floor((Date.now() - t0) / 86400000));
+}
+
+/** Aging tone for open stages: warn ≥7d, danger ≥14d. */
+export function stageAgingTone(days, pipelineStage) {
+  if (days == null) return null;
+  const s = String(pipelineStage || '');
+  if (s === 'hired' || s === 'rejected' || s === 'archived') return null;
+  if (days >= 14) return 'danger';
+  if (days >= 7) return 'warning';
+  return null;
+}
+
 export function inviteStatusShort(locale, status) {
   const s = String(status || '');
   if (s === 'opened') return t(locale, 'recruiting.inviteOpened');

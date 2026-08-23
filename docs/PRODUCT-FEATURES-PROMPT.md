@@ -70,7 +70,7 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 ### Análises de perfil
 - Compatibilidade: pares / matriz de sinergia–tensão–neutro (com caps).
 - Comparativo: lado a lado de perfis.
-- Grupos: base + membros; tensões internas; composição do núcleo (completers vs riscos fora do grupo — B-304).
+- Grupos: base + membros; tensões internas; composição do núcleo; **grupos salvos** por empresa (B-404).
 - Liderança: analytics de liderança (caps).
 - Ranking da vaga: aderência rubrica + coluna vs time interno (sinergia/tensão — B-403).
 
@@ -81,12 +81,13 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Links: /v (teste) e /j (página pública, flags: ativar, indexar, mostrar empresa, salário).
 - Score de completude SEO no drawer.
 - Cadastro de candidatos (e-mail = chave); convite eneagrama por e-mail; notes ricas de triagem.
-- Pipeline kanban: new → interview → test_completed → screening → approved → hired | rejected | archived (drag-and-drop; rejeição com motivo; hire com data de início; auto-close ao preencher posições).
-- Ranking de fit / aderência na vaga.
+- Pipeline kanban: new → interview → test_completed → screening → approved → hired | rejected | archived (drag-and-drop; rejeição com motivo; hire com data de início; auto-close ao preencher posições). Badge “N d” (aging ≥7/≥14) no kanban da vaga e da Equipe.
+- Clonar vaga (cópia de campos + rubrica; sem candidatos; página pública off).
+- Ranking de fit / aderência na vaga (+ coluna vs time interno quando houver núcleo).
 - Funil analytics (views → apps → entrevistas → hires; UTM/ref) — precisa página pública.
 - Indicação: códigos ?ref= (escopo vaga ou empresa).
 - Relatório cliente /r: shortlist + parecer (≥80 chars); modelos / IA opcional; validade 7/14/30 dias; revogar; editar parecer de link ativo.
-- Notificações: prazo da vaga, vaga fechada, teste concluído, etc.
+- Notificações: prazo da vaga, vaga fechada, teste concluído, kit pós-hire, digest semanal, etc.
 
 ### Página pública / SEO (epic B-100)
 - Índice /j (busca, filtro contrato, paginação); JobPosting JSON-LD; sitemap/robots.
@@ -108,8 +109,8 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Usuários: criar em 2 passos (identidade → módulos); editar; reenviar convite; soft delete.
 
 ### Notificações e ops
-- Sino in-app (Eneagrama/Motivadores concluídos, retention_watch, prazo, vaga fechada).
-- Crons: lembretes de convite, deadline de vaga, retenção de notificações (CRON_SECRET).
+- Sino in-app (Eneagrama/Motivadores concluídos, retention_watch, kit pós-hire, digest semanal, prazo, vaga fechada).
+- Crons: lembretes de convite, deadline de vaga, retenção de notificações, digest semanal do gestor (CRON_SECRET).
 - Retenção LGPD: purge em lotes (admin).
 - Health endpoints; audit de ações sensíveis.
 - Feedback UI: confirm/notice/promptForm/toast (nunca window.confirm/alert).

@@ -38,25 +38,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 ## Aberto — Epic B-400 (empacotar perfil + fechar gaps)
 
-_(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-403** fit vs núcleo no ranking.)_
-
-### B-404 — Grupos salvos (squads)
-**Por quê:** Aba Grupos é sessão efêmera; tools de team design salvam “squads”.  
-**O quê:** Persistir núcleos nomeados por `company_id` (base + membros por `candidate_id`/`assessment_id`), listar/abrir/editar. Reusar UI de GroupTab. Migration + tenant + soft delete.  
-**Onde:** `lib/people/` ou `lib/` + API admin fina + GroupTab.  
-**Não fazer:** org chart completo.
-
-### B-405 — Digest semanal do gestor (retenção + 1:1 em atraso)
-**Por quê:** Culture Amp etc. empurram ação por e-mail; `retention_watch` só no sino.  
-**O quê:** Cron opcional: resumo semanal (e-mail e/ou notif agregada) com pessoas em `retention_watch` recentes + candidatos sem 1:1 há N dias (cap por empresa). Reusar catalog de notifs + mail.  
-**Onde:** `app/api/cron/…` + flags env.  
-**Não fazer:** spam diário; fan-out O(sistema).
-
-### B-406 — SLA / aging no pipeline
-**Por quê:** ATS mostram “dias no estágio”; 30Team tem kanban sem alerta de envelhecimento.  
-**O quê:** Badge “N dias” no card; filtro/ordenação; opcional notif se staging > limiar configurável (default por stage). Dados já na timeline/`pipeline`.  
-**Onde:** kanban vaga + Equipe; i18n.  
-**Não fazer:** BPM/workflow engine.
+_(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-403** fit vs núcleo no ranking · **B-404** grupos salvos · **B-405** digest semanal · **B-406** aging no pipeline · **B-409** clonar vaga.)_
 
 ### B-407 — Scorecard de entrevista estruturado (leve)
 **Por quê:** Notes ricas existem; falta checklist alinhado ao briefing (perguntas do `buildInterviewQuestions`).  
@@ -69,12 +51,6 @@ _(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-4
 **O quê:** Ação “adicionar à vaga X” a partir da Equipe / busca por e-mail na empresa; preservar assessments. Upsert já existe por e-mail.  
 **Onde:** API candidates + UI Equipe/Vagas.  
 **Não fazer:** marketplace cross-tenant.
-
-### B-409 — Clonar vaga
-**Por quê:** Fricção operacional óbvia vs ATS.  
-**O quê:** Duplicar vaga (título “(cópia)”, rubrica, flags públicas off por default, sem candidatos). Drawer ou ação “Mais…”.  
-**Onde:** `POST` admin vacancies clone.  
-**Não fazer:** clonar pipeline/candidatos.
 
 ### B-410 — Overview: mapa de tipos do time (heat)
 **Por quê:** Visão geral ainda é snapshot genérico; o diferencial T1–T9 não aparece como “saúde de composição”.  
@@ -133,4 +109,4 @@ _(vazio)_
 - Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
 - Epic **B-300** fechado.
-- Epic **B-400:** B-401–B-403 entregues (ago/2026); próximos: **B-404 → B-405** ou funil **B-406–B-409**.
+- Epic **B-400:** B-401–B-406 e B-409 entregues (ago/2026); próximos: **B-407**, **B-408**, **B-410+**.

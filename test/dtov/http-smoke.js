@@ -354,10 +354,101 @@ export async function runHttpSmoke(baseUrl) {
       candidateId = arr[0]?.candidateId || arr[0]?.candidate_id || arr[0]?.id || null;
       if (candidateId) ok('vacancies', 'candidate-id', String(candidateId));
     }
-    const { res: r4 } = await req(base, `/api/admin/vacancies/${vacancyId}/ranking`, {
+    const { res: r4, data: d4 } = await req(base, `/api/admin/vacancies/${vacancyId}/ranking`, {
       cookie: hrCookie,
     });
     await expectStatus('vacancies', 'ranking', r4.status, [200, 404]);
+    if (r4.status === 200) {
+      const first = Array.isArray(d4?.ranking) ? d4.ranking[0] : null;
+      if (first && first.stageEnteredAt == null && first.createdAt == null) {
+        fail('vacancies', 'ranking-aging', 'missing stageEnteredAt/createdAt');
+      } else if (first) {
+        ok('vacancies', 'ranking-aging', 'stageEnteredAt present');
+      } else {
+        ok('vacancies', 'ranking-aging-empty', 'no rows');
+      }
+    }
+
+    // Clone vacancy (B-409)
+    {
+      const { res: cloneRes, data: cloneData } = await req(
+        base,
+        `/api/admin/vacancies/${vacancyId}/clone`,
+        { method: 'POST', cookie: hrCookie }
+      );
+      if (await expectStatus('vacancies', 'clone', cloneRes.status, [201])) {
+        const cid = cloneData?.id;
+        if (cid) {
+          ok('vacancies', 'clone-id', String(cid));
+          const { res: delClone } = await req(base, `/api/admin/vacancies/${cid}`, {
+            method: 'DELETE',
+            cookie: hrCookie,
+          });
+          await expectStatus('vacancies', 'clone-cleanup', delClone.status, [200, 204]);
+        } else {
+          fail('vacancies', 'clone-shape', JSON.stringify(cloneData).slice(0, 160));
+        }
+      }
+    }
+
+    // Saved groups (B-404) — list + create + delete against demo company
+    {
+      const { res: tgList, data: tgData } = await req(base, '/api/admin/team-groups', {
+        cookie: hrCookie,
+      });
+      // HR has company on session — no query needed
+      if (await expectStatus('groups', 'list', tgList.status, [200, 400])) {
+        if (tgList.status === 200 && !Array.isArray(tgData?.items)) {
+          fail('groups', 'list-shape', 'items missing');
+        } else if (tgList.status === 200) {
+          ok('groups', 'list', `n=${tgData.items.length}`);
+        }
+      }
+      const { res: rowsRes, data: rowsData } = await req(
+        base,
+        '/api/admin/assessment-rows?page=1&pageSize=5&roster=all',
+        { cookie: hrCookie }
+      );
+      const rows = Array.isArray(rowsData?.rows)
+        ? rowsData.rows
+        : Array.isArray(rowsData?.items)
+          ? rowsData.items
+          : Array.isArray(rowsData)
+            ? rowsData
+            : [];
+      const withType = rows.filter((r) => r.assessmentId != null && r.topType != null);
+      if (rowsRes.status === 200 && withType.length >= 2) {
+        const baseId = withType[0].assessmentId;
+        const memberId = withType[1].assessmentId;
+        const { res: createRes, data: createData } = await req(base, '/api/admin/team-groups', {
+          method: 'POST',
+          cookie: hrCookie,
+          body: {
+            name: 'DTOV Squad',
+            baseAssessmentId: baseId,
+            memberAssessmentIds: [memberId],
+          },
+        });
+        if (await expectStatus('groups', 'create', createRes.status, 201)) {
+          const gid = createData?.item?.id;
+          if (gid) {
+            ok('groups', 'create-id', String(gid));
+            const { res: delRes } = await req(base, `/api/admin/team-groups/${gid}`, {
+              method: 'DELETE',
+              cookie: hrCookie,
+            });
+            await expectStatus('groups', 'delete', delRes.status, 200);
+          } else {
+            fail('groups', 'create-shape', JSON.stringify(createData).slice(0, 160));
+          }
+        } else if (createData?.errorCode) {
+          fail('groups', 'create-error', createData.errorCode);
+        }
+      } else {
+        ok('groups', 'create-skipped', 'need 2 assessments');
+      }
+    }
+
     const { res: r5 } = await req(base, `/api/admin/vacancies/${vacancyId}/invites`, {
       cookie: hrCookie,
     });
@@ -581,12 +672,13 @@ export async function runHttpSmoke(baseUrl) {
         '/api/cron/invite-reminders',
         '/api/cron/notification-retention',
         '/api/cron/vacancy-deadline-notifications',
+        '/api/cron/manager-weekly-digest?email=0',
       ]) {
         const { res } = await req(base, path, {
           method: 'POST',
           headers: { Authorization: `Bearer ${secret}` },
         });
-        await expectStatus('cron', path.split('/').pop(), res.status, [200, 500]);
+        await expectStatus('cron', path.split('/').pop().split('?')[0], res.status, [200, 500]);
       }
     } else {
       ok('cron', 'secret-skipped', 'CRON_SECRET not set');

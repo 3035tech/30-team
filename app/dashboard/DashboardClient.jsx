@@ -1145,6 +1145,11 @@ export default function DashboardClient({
                   suggestions={suggestions}
                   groupTensions={groupTensions}
                   locale={locale}
+                  companyId={
+                    isAdmin
+                      ? (company !== 'all' ? company : null)
+                      : (sessionAuth?.companyId ?? null)
+                  }
                 />
               )}
             </>

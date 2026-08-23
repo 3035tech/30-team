@@ -454,9 +454,17 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
              ass.top_type AS "topType",
              ass.scores,
              ass.created_at AS "createdAt",
+             COALESCE(stg.changed_at, ass.created_at) AS "stageEnteredAt",
              ass.pipeline_stage AS "pipelineStage",
              ass.invite_id AS "inviteId"
            ${BASE_JOIN_LIST}
+           LEFT JOIN LATERAL (
+             SELECT h.changed_at
+             FROM assessment_pipeline_history h
+             WHERE h.assessment_id = ass.id
+             ORDER BY h.changed_at DESC NULLS LAST, h.id DESC
+             LIMIT 1
+           ) stg ON TRUE
            ${candidateWhere}
            ${teamOrderSql}
            LIMIT $${limIx} OFFSET $${offIx}`,

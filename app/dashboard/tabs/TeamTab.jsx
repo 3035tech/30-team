@@ -13,6 +13,7 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
+import { daysInStage, stageAgingTone } from '../vacancies/vacancy-admin-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
@@ -647,6 +648,8 @@ export function TeamTab({
                       const d = TYPE_DATA[r.topType];
                       const fitScore = r.vacancyFitScore010 ?? r.areaFitScore010;
                       const isDragging = draggingId === rid;
+                      const days = daysInStage(r.stageEnteredAt || r.createdAt);
+                      const aging = stageAgingTone(days, r.pipelineStage || 'new');
                       return (
                         <div
                           key={rid}
@@ -677,6 +680,26 @@ export function TeamTab({
                             <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] leading-snug text-ink">
                               {titleCasePersonName(r.name)}
                             </span>
+                            {days != null && aging ? (
+                              <span
+                                className={cn(
+                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px]',
+                                  aging === 'danger'
+                                    ? 'border-danger/30 bg-danger/[0.09] text-danger'
+                                    : 'border-warning/30 bg-warning/[0.1] text-warning'
+                                )}
+                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
+                              >
+                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
+                              </span>
+                            ) : days != null && days > 0 ? (
+                              <span
+                                className="shrink-0 font-mono text-[10px] text-ink-faint"
+                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
+                              >
+                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
+                              </span>
+                            ) : null}
                           </div>
                           <div className="mb-1.5 flex flex-wrap gap-1">
                             <TypeBadge type={r.topType} locale={locale} compact />

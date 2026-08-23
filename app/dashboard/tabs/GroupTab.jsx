@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCompat } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { buildNucleusCompositionAdvice } from '../../../lib/people/decision-brief';
+import { useAppFeedback } from '../../_components/AppFeedback';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 
 export function GroupTab({
@@ -19,10 +20,50 @@ export function GroupTab({
   suggestions,
   groupTensions,
   locale = 'pt-BR',
+  companyId = null,
 }) {
+  const { promptForm, confirm, toast } = useAppFeedback();
   const [search, setSearch] = useState('');
   const [baseSearch, setBaseSearch] = useState('');
   const [showAllBase, setShowAllBase] = useState(false);
+  const [savedGroups, setSavedGroups] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [activeSavedId, setActiveSavedId] = useState(null);
+  const [savedBusy, setSavedBusy] = useState(false);
+
+  const resolvedCompanyId = useMemo(() => {
+    if (companyId != null && companyId !== '' && companyId !== 'all') {
+      const n = Number(companyId);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    }
+    const fromResults = (results || []).find((r) => r.companyId != null)?.companyId;
+    const n = Number(fromResults);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [companyId, results]);
+
+  const reloadSaved = useCallback(async () => {
+    if (!resolvedCompanyId) {
+      setSavedGroups([]);
+      return;
+    }
+    setSavedLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/team-groups?companyId=${encodeURIComponent(resolvedCompanyId)}`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      setSavedGroups(Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setSavedGroups([]);
+    } finally {
+      setSavedLoading(false);
+    }
+  }, [resolvedCompanyId, locale]);
+
+  useEffect(() => {
+    void reloadSaved();
+  }, [reloadSaved]);
 
   const nucleusAdvice = useMemo(() => {
     if (!groupBase) return null;
@@ -62,20 +103,125 @@ export function GroupTab({
     const id = String(assessmentId);
     if (groupIds.includes(id)) return;
     setGroupIds([...groupIds, id]);
+    setActiveSavedId(null);
   };
   const removeFromGroup = (assessmentId) => {
     const id = String(assessmentId);
-    setGroupIds(groupIds.filter(x => x !== id));
+    setGroupIds(groupIds.filter((x) => x !== id));
+    setActiveSavedId(null);
   };
   const clearGroup = () => {
     setGroupBaseId(null);
     setGroupIds([]);
+    setActiveSavedId(null);
   };
 
   const dismissSuggestion = (assessmentId) => {
     const id = String(assessmentId);
     if (dismissedIds.includes(id)) return;
     setDismissedIds([...dismissedIds, id]);
+  };
+
+  const loadSaved = (item) => {
+    if (!item?.baseAssessmentId) return;
+    setGroupBaseId(String(item.baseAssessmentId));
+    setGroupIds((item.memberAssessmentIds || []).map(String));
+    setActiveSavedId(item.id);
+    setDismissedIds([]);
+  };
+
+  const saveCurrent = async ({ asUpdate = false } = {}) => {
+    if (!resolvedCompanyId) {
+      toast(t(locale, 'panel.group.saveNeedCompany'), 'error');
+      return;
+    }
+    if (!groupBase || !(groupIds || []).length) {
+      toast(t(locale, 'panel.group.saveNeedBase'), 'error');
+      return;
+    }
+
+    let name = null;
+    if (asUpdate && activeSavedId) {
+      const current = savedGroups.find((g) => String(g.id) === String(activeSavedId));
+      name = current?.name || null;
+    }
+    if (!name) {
+      const values = await promptForm({
+        title: t(locale, 'panel.group.saveCurrent'),
+        fields: [
+          {
+            key: 'name',
+            label: t(locale, 'panel.group.saveNameLabel'),
+            placeholder: t(locale, 'panel.group.saveNamePh'),
+            defaultValue: '',
+          },
+        ],
+        confirmLabel: t(locale, 'panel.group.saveCurrent'),
+      });
+      if (!values) return;
+      name = String(values.name || '').trim();
+    }
+    if (!name) return;
+
+    setSavedBusy(true);
+    try {
+      const body = {
+        companyId: resolvedCompanyId,
+        name,
+        baseAssessmentId: groupBase.assessmentId,
+        memberAssessmentIds: groupIds,
+      };
+      let res;
+      if (asUpdate && activeSavedId) {
+        res = await fetch(`/api/admin/team-groups/${encodeURIComponent(activeSavedId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } else {
+        res = await fetch('/api/admin/team-groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.errorCode ? t(locale, `errors.${data.errorCode}`) : data?.error || t(locale, 'panel.common.error')
+        );
+      }
+      if (data.item?.id) setActiveSavedId(data.item.id);
+      toast(t(locale, asUpdate ? 'panel.group.saveUpdateOk' : 'panel.group.saveOk'), 'ok');
+      await reloadSaved();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setSavedBusy(false);
+    }
+  };
+
+  const deleteSaved = async (item) => {
+    const ok = await confirm({
+      message: t(locale, 'panel.group.confirmDelete', { name: item.name }),
+      danger: true,
+      confirmLabel: t(locale, 'panel.group.deleteSaved'),
+    });
+    if (!ok) return;
+    setSavedBusy(true);
+    try {
+      const res = await fetch(`/api/admin/team-groups/${encodeURIComponent(item.id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      if (String(activeSavedId) === String(item.id)) setActiveSavedId(null);
+      await reloadSaved();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setSavedBusy(false);
+    }
   };
 
   /** Mesmo padrão visual dos cards de sugestão: emoji só no TypeBadge; nome ao lado; × no canto se onRemove. */
@@ -99,45 +245,41 @@ export function GroupTab({
             ×
           </button>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <TypeBadge type={person.topType} locale={locale} compact />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-ink">
-              {person.name}
-            </span>
-            {baseCompat && (
-              <>
-                <CompatBadge level={baseCompat.level} locale={locale}/>
-                {baseCompat.level === 'tension' && (
-                  <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-[10px] text-danger">
-                    {t(locale, 'panel.group.tensionWithBase')}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-          {!showX && <div className="shrink-0">{right}</div>}
+        <div className="flex flex-wrap items-center gap-2">
+          <TypeBadge type={person.topType} locale={locale} compact />
+          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium text-ink">
+            {person.name}
+          </span>
+          {baseCompat ? (
+            <>
+              <CompatBadge level={baseCompat.level} locale={locale} />
+              {baseCompat.level === 'tension' ? (
+                <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-[10px] text-danger">
+                  {t(locale, 'panel.group.tensionWithBase')}
+                </span>
+              ) : null}
+            </>
+          ) : null}
+          {!showX ? <div className="shrink-0">{right}</div> : null}
         </div>
-        {(person.areaLabel || (person.areaFitScore010 !== null && person.areaFitScore010 !== undefined)) ? (
+        {(person.areaLabel || (person.areaFitScore010 != null)) ? (
           <div className="flex flex-wrap items-center gap-2">
-            {person.areaLabel && (
+            {person.areaLabel ? (
               <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
                 {person.areaLabel}
               </span>
-            )}
-            {person.areaFitScore010 !== null && person.areaFitScore010 !== undefined && (
+            ) : null}
+            {person.areaFitScore010 != null ? (
               <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-0.5 font-mono text-[10px] text-success">
                 {person.areaFitScore010}/10
               </span>
-            )}
+            ) : null}
           </div>
         ) : null}
         {baseCompat ? (
           <div className="text-xs leading-snug text-ink-muted">
             {baseCompat.title ? (
-              <span className="mb-1 block font-mono text-[11px] text-ink-faint">
-                {baseCompat.title}
-              </span>
+              <span className="mb-1 block font-mono text-[11px] text-ink-faint">{baseCompat.title}</span>
             ) : null}
             {baseCompat.desc || ''}
           </div>
@@ -151,13 +293,36 @@ export function GroupTab({
       <div className={S.card}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.title')}</span>
-          <button
-            type="button"
-            onClick={clearGroup}
-            className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-[11px] text-ink-muted"
-          >
-            {t(locale, 'panel.group.clear')}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={savedBusy || !groupBase || !(groupIds || []).length}
+              onClick={() => void saveCurrent({ asUpdate: false })}
+              className={cn(
+                S.btnBrandSoft,
+                'px-3 py-2 font-mono text-[11px] disabled:cursor-not-allowed disabled:opacity-50'
+              )}
+            >
+              {t(locale, 'panel.group.saveCurrent')}
+            </button>
+            {activeSavedId ? (
+              <button
+                type="button"
+                disabled={savedBusy}
+                onClick={() => void saveCurrent({ asUpdate: true })}
+                className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-[11px] text-ink-muted disabled:opacity-50"
+              >
+                {t(locale, 'panel.group.overwrite')}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={clearGroup}
+              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-[11px] text-ink-muted"
+            >
+              {t(locale, 'panel.group.clear')}
+            </button>
+          </div>
         </div>
 
         <p className="mt-2.5 text-xs leading-relaxed text-ink-faint">
@@ -167,6 +332,64 @@ export function GroupTab({
           {t(locale, 'panel.group.whyTeam')}
         </p>
 
+        <div className="mt-3.5 rounded-control border border-ink/10 bg-ink/[0.02] px-3 py-2.5">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.savedTitle')}</span>
+            {savedLoading ? <span className="font-mono text-[10px] text-ink-faint">…</span> : null}
+          </div>
+          <p className="mb-2 mt-0 text-[11px] leading-snug text-ink-faint">
+            {t(locale, 'panel.group.savedHint')}
+          </p>
+          {!resolvedCompanyId ? (
+            <p className="m-0 text-xs text-ink-muted">{t(locale, 'panel.group.saveNeedCompany')}</p>
+          ) : savedGroups.length === 0 ? (
+            <p className="m-0 text-xs italic text-ink-faint">{t(locale, 'panel.group.savedEmpty')}</p>
+          ) : (
+            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+              {savedGroups.map((g) => {
+                const n = 1 + (g.memberAssessmentIds?.length || 0);
+                const active = String(activeSavedId) === String(g.id);
+                return (
+                  <li
+                    key={g.id}
+                    className={cn(
+                      'flex flex-wrap items-center justify-between gap-2 rounded-control border px-2.5 py-2',
+                      active ? 'border-brand-500/35 bg-brand-500/[0.06]' : 'border-ink/10 bg-white/70'
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-medium text-ink">{g.name}</div>
+                      <div className="font-mono text-[10px] text-ink-faint">
+                        {t(locale, 'panel.group.membersCount', { n })}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={savedBusy}
+                        onClick={() => loadSaved(g)}
+                        className="cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-[11px] text-brand-600"
+                      >
+                        {t(locale, 'panel.group.load')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={savedBusy}
+                        onClick={() => void deleteSaved(g)}
+                        className="cursor-pointer rounded-control border border-danger/25 bg-transparent px-2 py-1.5 font-mono text-[11px] text-danger"
+                        aria-label={t(locale, 'panel.group.deleteSaved')}
+                        title={t(locale, 'panel.group.deleteSaved')}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
         <span className={cn(S.label, 'mt-[18px]')}>{t(locale, 'panel.group.basePerson')}</span>
         {groupBase ? (
           <PersonMini
@@ -174,7 +397,10 @@ export function GroupTab({
             right={
               <button
                 type="button"
-                onClick={()=>setGroupBaseId(null)}
+                onClick={() => {
+                  setGroupBaseId(null);
+                  setActiveSavedId(null);
+                }}
                 className="cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-[11px] text-ink-muted"
               >
                 {t(locale, 'panel.group.swap')}
@@ -199,7 +425,7 @@ export function GroupTab({
                 right={
                   <button
                     type="button"
-                    onClick={()=>setGroupBaseId(String(r.assessmentId))}
+                    onClick={()=>{ setGroupBaseId(String(r.assessmentId)); setActiveSavedId(null); }}
                     className="cursor-pointer rounded-control border border-brand-500/40 bg-brand-500/[0.13] px-2.5 py-2 font-mono text-[11px] text-brand-600"
                   >
                     {t(locale, 'panel.group.select')}

@@ -382,6 +382,31 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     });
   };
 
+  const cloneVacancyAction = async (v) => {
+    if (!v?.id) return;
+    const ok = await confirm({
+      title: t(locale, 'recruiting.cloneVacancyConfirmTitle'),
+      message: t(locale, 'recruiting.cloneVacancyConfirmBody', { title: v.title || '' }),
+      confirmLabel: t(locale, 'recruiting.cloneVacancy'),
+    });
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(v.id)}/clone`, {
+        method: 'POST',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      toast(t(locale, 'recruiting.cloneVacancyDone', { title: data.title || '' }), 'ok');
+      openVacancyDetail(data.id);
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const saveVacancyEdit = async () => {
     if (!editingVacancy) return;
     const {
@@ -1046,6 +1071,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </button>
                 <button
                   type="button"
+                  onClick={() => cloneVacancyAction(v)}
+                  disabled={loading}
+                  className={cn(BTN_GHOST, loading && "opacity-60")}
+                >
+                  {t(locale, 'recruiting.cloneVacancy')}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setDetailSection('config')}
                   className={BTN_GHOST}
                 >
@@ -1452,6 +1485,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         className={cn(BTN_GHOST, loading && "opacity-60")}
                       >
                         {t(locale, 'recruiting.editVacancy')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cloneVacancyAction(v)}
+                        disabled={loading}
+                        className={cn(BTN_GHOST, loading && "opacity-60")}
+                      >
+                        {t(locale, 'recruiting.cloneVacancy')}
                       </button>
                       <button
                         type="button"

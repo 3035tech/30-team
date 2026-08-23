@@ -86,6 +86,10 @@ async function runOfflineLibs() {
     }
     const wire = await readFile(join(root, 'lib', 'people', 'candidate-people-brief.js'), 'utf8');
     if (!wire.includes('decisionBrief')) throw new Error('candidate brief missing decisionBrief');
+    const groups = await readFile(join(root, 'lib', 'people', 'team-groups.js'), 'utf8');
+    for (const name of ['listTeamGroups', 'createTeamGroup', 'updateTeamGroup', 'softDeleteTeamGroup']) {
+      if (!groups.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
+    }
     return 'exports wired';
   });
 
@@ -98,10 +102,13 @@ async function runOfflineLibs() {
     } = await import('../../lib/manager-notification-catalog.js');
     if (!NOTIF_TYPES.has(NOTIF.RETENTION_WATCH)) throw new Error('RETENTION_WATCH not in catalog');
     if (!NOTIF_TYPES.has(NOTIF.HIRE_ONBOARDING_KIT)) throw new Error('HIRE_ONBOARDING_KIT not in catalog');
+    if (!NOTIF_TYPES.has(NOTIF.MANAGER_WEEKLY_DIGEST)) throw new Error('MANAGER_WEEKLY_DIGEST not in catalog');
     const href = notificationHref(NOTIF.RETENTION_WATCH, { candidateId: 42 });
     if (!String(href).includes('candidate=42')) throw new Error(`bad href ${href}`);
     const hireHref = notificationHref(NOTIF.HIRE_ONBOARDING_KIT, { candidateId: 7 });
     if (!String(hireHref).includes('candidate=7')) throw new Error(`bad hire href ${hireHref}`);
+    const digestHref = notificationHref(NOTIF.MANAGER_WEEKLY_DIGEST, {});
+    if (!String(digestHref).includes('tab=team')) throw new Error(`bad digest href ${digestHref}`);
     const spec = notificationCopySpec(NOTIF.RETENTION_WATCH, {
       candidateName: 'Ana',
       signalLabels: 'Equilíbrio',
@@ -117,7 +124,48 @@ async function runOfflineLibs() {
     if (hireSpec.titleKey !== 'dashboard.notifHireKitTitle' || hireSpec.tone !== 'success') {
       throw new Error(`bad hire spec ${JSON.stringify(hireSpec)}`);
     }
-    return 'retention_watch + hire_kit ok';
+    const digestSpec = notificationCopySpec(NOTIF.MANAGER_WEEKLY_DIGEST, {
+      retentionCount: 2,
+      staleCount: 1,
+      retentionNames: 'A',
+      staleNames: 'B',
+    });
+    if (digestSpec.titleKey !== 'dashboard.notifWeeklyDigestTitle') {
+      throw new Error(`bad digest spec ${JSON.stringify(digestSpec)}`);
+    }
+    return 'retention_watch + hire_kit + weekly_digest ok';
+  });
+
+  await check('lib', 'vacancy-clone-and-aging', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+    const cloneSrc = await readFile(join(root, 'lib', 'vacancy-clone.js'), 'utf8');
+    if (!cloneSrc.includes('export async function cloneVacancy')) throw new Error('missing cloneVacancy');
+    const digestSrc = await readFile(join(root, 'lib', 'manager-weekly-digest.js'), 'utf8');
+    if (!digestSrc.includes('export async function runManagerWeeklyDigest')) {
+      throw new Error('missing runManagerWeeklyDigest');
+    }
+    const shared = await readFile(
+      join(root, 'app', 'dashboard', 'vacancies', 'vacancy-admin-shared.js'),
+      'utf8'
+    );
+    if (!shared.includes('export function daysInStage')) throw new Error('missing daysInStage');
+    if (!shared.includes('export function stageAgingTone')) throw new Error('missing stageAgingTone');
+    // Mirror stageAgingTone thresholds (B-406)
+    const tone = (days, stage) => {
+      if (days == null) return null;
+      if (stage === 'hired' || stage === 'rejected' || stage === 'archived') return null;
+      if (days >= 14) return 'danger';
+      if (days >= 7) return 'warning';
+      return null;
+    };
+    if (tone(3, 'interview') != null) throw new Error('aging young');
+    if (tone(7, 'interview') !== 'warning') throw new Error('aging warn');
+    if (tone(14, 'interview') !== 'danger') throw new Error('aging danger');
+    if (tone(20, 'hired') != null) throw new Error('aging terminal');
+    return 'clone + digest + aging helpers ok';
   });
 
   await check('lib', 'assessment-score-export', async () => {
