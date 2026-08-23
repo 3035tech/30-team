@@ -163,27 +163,67 @@ export async function POST(request, { params }) {
     const { vacancy } = loaded;
 
     const body = await request.json().catch(() => ({}));
-    const fullName = String(body.fullName || body.name || body.candidateName || '').trim();
-    const email = String(body.email || body.candidateEmail || '').trim().toLowerCase();
+    const existingCandidateId =
+      body.candidateId != null && Number.isFinite(Number(body.candidateId))
+        ? Number(body.candidateId)
+        : null;
+
+    let up;
+    if (existingCandidateId) {
+      const existing = await query(
+        `SELECT id, full_name AS "fullName", email, phone, linkedin_url AS "linkedinUrl",
+                city, state, salary_expectation AS "salaryExpectation",
+                availability, source
+         FROM candidates
+         WHERE id = $1 AND company_id = $2
+         LIMIT 1`,
+        [existingCandidateId, vacancy.companyId]
+      );
+      if (!existing.rowCount) return apiError(request, 'NOT_FOUND', 404);
+      const row = existing.rows[0];
+      up = {
+        ok: true,
+        candidateId: row.id,
+        fullName: row.fullName,
+        email: row.email,
+        phone: row.phone,
+        linkedinUrl: row.linkedinUrl,
+        city: row.city,
+        state: row.state,
+        salaryExpectation: row.salaryExpectation,
+        availability: row.availability,
+        source: row.source,
+      };
+    } else {
+      const fullName = String(body.fullName || body.name || body.candidateName || '').trim();
+      const email = String(body.email || body.candidateEmail || '').trim().toLowerCase();
+
+      if (!fullName || fullName.length > 200) {
+        return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
+      }
+      if (!email || !EMAIL_RE.test(email)) {
+        return apiError(request, 'INVALID_CANDIDATE_EMAIL', 400);
+      }
+
+      up = await upsertCandidatePreInterview({
+        companyId: vacancy.companyId,
+        fullName,
+        email,
+        profile: normalizeCandidateProfile(body),
+      });
+      if (!up.ok) return apiError(request, up.errorCode || 'INTERNAL', 400);
+    }
+
     const notes = sanitizeInterviewNotesHtml(body.interviewNotes ?? body.notes ?? null);
-
-    if (!fullName || fullName.length > 200) {
-      return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
-    }
-    if (!email || !EMAIL_RE.test(email)) {
-      return apiError(request, 'INVALID_CANDIDATE_EMAIL', 400);
-    }
-
-    const up = await upsertCandidatePreInterview({
-      companyId: vacancy.companyId,
-      fullName,
-      email,
-      profile: normalizeCandidateProfile(body),
-    });
-    if (!up.ok) return apiError(request, up.errorCode || 'INTERNAL', 400);
 
     const createdBy = payload?.userId != null ? Number(payload.userId) : null;
     const createdBySql = Number.isFinite(createdBy) ? createdBy : null;
+
+    const prior = await query(
+      `SELECT id FROM vacancy_candidates WHERE vacancy_id = $1 AND candidate_id = $2 LIMIT 1`,
+      [vacancy.id, up.candidateId]
+    );
+    const alreadyLinked = prior.rowCount > 0;
 
     const link = await query(
       `INSERT INTO vacancy_candidates (
@@ -203,6 +243,7 @@ export async function POST(request, { params }) {
     return NextResponse.json(
       {
         ...link.rows[0],
+        alreadyLinked,
         fullName: up.fullName,
         email: up.email,
         phone: up.phone,
@@ -213,7 +254,7 @@ export async function POST(request, { params }) {
         availability: up.availability,
         source: up.source,
       },
-      { status: 201 }
+      { status: alreadyLinked ? 200 : 201 }
     );
   } catch (error) {
     console.error(error);

@@ -12,6 +12,7 @@ import { S } from './dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, Spinner } from '../_components/AppLoading';
 import { HrActionBrief } from '../_components/HrActionBrief';
+import { InterviewScorecardBlock } from './vacancies/InterviewScorecardBlock';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
 const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
@@ -381,6 +382,14 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               personName={row.fullName || row.name || ''}
             />
           )}
+
+          {row.candidateId ? (
+            <InterviewScorecardBlock
+              vacancyId={vacancyId}
+              candidateId={row.candidateId}
+              locale={locale}
+            />
+          ) : null}
 
           <div className="flex flex-wrap gap-2.5 mb-2.5">
             <input

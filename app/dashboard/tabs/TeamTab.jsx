@@ -207,7 +207,7 @@ export function TeamTab({
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
   const { requestPipelineExtras } = usePipelineExtras();
-  const { confirm, notice } = useAppFeedback();
+  const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -280,6 +280,65 @@ export function TeamTab({
       setDetailLoading(false);
     }
   }, [locale]);
+
+  const addToVacancy = async (candidateId, personName) => {
+    const cid = Number(candidateId);
+    if (!Number.isFinite(cid)) return;
+    try {
+      const res = await fetch('/api/admin/vacancies?status=open&pageSize=50&page=1');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
+      const items = Array.isArray(data.items) ? data.items : Array.isArray(data.vacancies) ? data.vacancies : [];
+      const open = items.filter((v) => String(v.status || 'open') === 'open');
+      if (!open.length) {
+        await notice({
+          message: t(locale, 'panel.team.addToVacancyEmpty'),
+          tone: 'info',
+        });
+        return;
+      }
+      const values = await promptForm({
+        title: t(locale, 'panel.team.addToVacancyTitle', { name: personName || '' }),
+        confirmLabel: t(locale, 'panel.team.addToVacancyConfirm'),
+        fields: [
+          {
+            key: 'vacancyId',
+            type: 'select',
+            label: t(locale, 'panel.team.addToVacancyPick'),
+            options: [
+              { value: '', label: t(locale, 'panel.team.addToVacancyPick') },
+              ...open.map((v) => ({
+                value: String(v.id),
+                label: v.title || `#${v.id}`,
+              })),
+            ],
+            defaultValue: '',
+          },
+        ],
+      });
+      if (!values) return;
+      const vacancyId = String(values.vacancyId || '').trim();
+      if (!vacancyId) {
+        toast(t(locale, 'panel.team.addToVacancyNeedVacancy'), 'error');
+        return;
+      }
+      const post = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId: cid }),
+      });
+      const postData = await post.json().catch(() => ({}));
+      if (!post.ok) throw new Error(postData?.error || t(locale, 'panel.common.error'));
+      toast(
+        postData.alreadyLinked
+          ? t(locale, 'panel.team.addToVacancyAlready')
+          : t(locale, 'panel.team.addToVacancyOk'),
+        'ok'
+      );
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    }
+  };
 
   const deleteCandidate = async (candidateId, name) => {
     const id = String(candidateId || '').trim();
@@ -967,6 +1026,15 @@ export function TeamTab({
                   <p className="m-0 font-mono text-xs text-ink-muted">…</p>
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
                   <>
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => addToVacancy(detail.candidate.id, openRow.name)}
+                        className={cn(S.btnBrandSoft)}
+                      >
+                        {t(locale, 'panel.team.addToVacancyBtn')}
+                      </button>
+                    </div>
                     <HrActionBrief
                       locale={locale}
                       brief={detail.people?.decisionBrief}

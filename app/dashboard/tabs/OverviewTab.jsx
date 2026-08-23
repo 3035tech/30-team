@@ -106,18 +106,37 @@ export function OverviewTab({
   const funnelActive = OVERVIEW_FUNNEL_STAGES.filter((s) => (data.funnel[s] || 0) > 0);
   const funnelSum = Math.max(data.funnelTotal || 1, 1);
   const mixCount = data.typeMix?.typeCount || typeCount || {};
-  const mixTotal = Math.max(
-    data.typeMix?.total || 0,
-    Object.values(mixCount).reduce((a, b) => a + (Number(b) || 0), 0),
-    1
-  );
+  const mixTotalRaw = Object.values(mixCount).reduce((a, b) => a + (Number(b) || 0), 0);
+  const mixTotal = Math.max(data.typeMix?.total || 0, mixTotalRaw, 1);
   const mixEntries = Object.entries(mixCount)
     .map(([k, v]) => ({ type: parseInt(k, 10), n: Number(v) || 0 }))
     .filter((x) => x.n > 0 && x.type >= 1 && x.type <= 9)
     .sort((a, b) => b.n - a.n);
+  const heatCells = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((type) => ({
+    type,
+    n: Number(mixCount[type] ?? mixCount[String(type)] ?? 0) || 0,
+  }));
+  const heatMax = Math.max(...heatCells.map((c) => c.n), 1);
   const dominant = data.typeMix?.dominantType || mixEntries[0]?.type || null;
+  const advice = data.typeMix?.advice || null;
   const reasons = data.rejectionReasons || [];
   const maxReason = Math.max(...reasons.map((r) => r.n), 1);
+
+  const compositionLine = (() => {
+    if (!advice || advice.kind === 'empty' || mixTotalRaw === 0) return null;
+    if (advice.kind === 'concentrated' && advice.dominantType) {
+      return t(locale, 'panel.overview.compositionConcentrated', {
+        type: typeFullName(advice.dominantType, locale),
+        pct: advice.pct,
+      });
+    }
+    if (advice.kind === 'gap' && advice.missingTypes?.length) {
+      return t(locale, 'panel.overview.compositionGaps', {
+        types: advice.missingTypes.map((x) => `T${x}`).join(', '),
+      });
+    }
+    return t(locale, 'panel.overview.compositionBalanced');
+  })();
 
   return (
     <div className="flex flex-col gap-4">
@@ -371,12 +390,40 @@ export function OverviewTab({
             {t(locale, 'panel.overview.openCompat')}
           </button>
         </div>
-        {mixEntries.length === 0 ? (
+        {mixTotalRaw === 0 ? (
           <p className="m-0 text-[13px] italic text-ink-faint">
             {t(locale, 'panel.overview.typeMixEmpty')}
           </p>
         ) : (
           <>
+            <div
+              className="mb-3 grid grid-cols-3 gap-1.5"
+              role="img"
+              aria-label={t(locale, 'panel.overview.typeHeatAria')}
+            >
+              {heatCells.map((cell) => {
+                const intensity = cell.n === 0 ? 0 : 0.18 + (cell.n / heatMax) * 0.72;
+                const hex = String(TYPE_DATA[cell.type]?.color || C.purple).replace('#', '');
+                const r = parseInt(hex.slice(0, 2), 16);
+                const g = parseInt(hex.slice(2, 4), 16);
+                const b = parseInt(hex.slice(4, 6), 16);
+                const bg =
+                  cell.n === 0 || !Number.isFinite(r)
+                    ? 'rgba(15, 23, 42, 0.04)'
+                    : `rgba(${r}, ${g}, ${b}, ${intensity})`;
+                return (
+                  <div
+                    key={cell.type}
+                    title={typeHintTooltip(cell.type, locale)}
+                    className="flex min-h-[44px] flex-col items-center justify-center rounded-control border border-ink/10 px-1 py-1.5"
+                    style={{ background: bg }}
+                  >
+                    <span className="font-mono text-[11px] font-semibold text-ink">T{cell.type}</span>
+                    <span className="font-mono text-[10px] text-ink-muted">{cell.n}</span>
+                  </div>
+                );
+              })}
+            </div>
             <div className="mb-3 flex h-3 overflow-hidden rounded-full border border-ink/12">
               {mixEntries.map((e) => (
                 <div
@@ -410,6 +457,9 @@ export function OverviewTab({
                   pct: Math.round(((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100),
                 })}
               </p>
+            ) : null}
+            {compositionLine ? (
+              <p className="mt-2 mb-0 text-xs leading-snug text-ink-muted">{compositionLine}</p>
             ) : null}
           </>
         )}

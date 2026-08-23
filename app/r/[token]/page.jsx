@@ -16,6 +16,7 @@ import { recommendationFromStage } from '../../../lib/vacancy-report-shared';
 import { formatSalaryBr } from '../../../lib/br-masks';
 import { BrandPulseLoading, PublicFunnyError } from '../../_components/PublicStatusScreens';
 import { S } from '../../dashboard/dashboard-shared';
+import { printClientReport } from '../../../lib/client-report-print';
 
 const miniLabelClass =
   'mb-0.5 mt-0 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint';
@@ -415,7 +416,42 @@ function ReportInner() {
           {generatedAt ? t(locale, 'panel.report.generatedAt', { date: generatedAt.toLocaleString(locale) }) : ''}
           {expiresAt ? ` · ${t(locale, 'panel.report.expiresAt', { date: expiresAt.toLocaleString(locale) })}` : ''}
         </p>
-        <button type="button" className={cn('r-no-print', S.btnGhost, 'mt-3.5')} onClick={() => window.print()}>
+        <button
+          type="button"
+          className={cn('r-no-print', S.btnGhost, 'mt-3.5')}
+          onClick={() => {
+            const cands = state.data.candidates || [];
+            const ok = printClientReport({
+              locale,
+              data: {
+                ...state.data,
+                executiveNote: state.data.note || state.data.executiveNote,
+                candidates: cands.map((c) => ({
+                  ...c,
+                  recommendation: recommendationLabel(
+                    locale,
+                    c.recommendation || recommendationFromStage(c.pipelineStage)
+                  ),
+                  fitScore010: c.vacancyFitScore010,
+                  whyFit: c.why || c.consultantNote || '',
+                })),
+              },
+              labels: {
+                publicTitle: t(locale, 'panel.report.publicTitle'),
+                executiveNote: t(locale, 'panel.report.executiveNote'),
+                shortlistTitle: t(locale, 'panel.report.shortlistTitle', { n: cands.length }),
+                colName: t(locale, 'panel.report.colName'),
+                colRec: t(locale, 'panel.report.colRec'),
+                colFit: t(locale, 'panel.report.colFit'),
+                colType: t(locale, 'panel.report.colType'),
+                colWhy: t(locale, 'panel.report.colWhy'),
+                footer: t(locale, 'panel.report.printFooter'),
+                empty: '—',
+              },
+            });
+            if (!ok) window.print();
+          }}
+        >
           {t(locale, 'panel.report.printPdf')}
         </button>
       </header>

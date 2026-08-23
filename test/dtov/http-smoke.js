@@ -331,12 +331,15 @@ export async function runHttpSmoke(baseUrl) {
   // Recruiting APIs
   let vacancyId = null;
   let candidateId = null;
+  let vacancyList = [];
   {
     const { res, data } = await req(base, '/api/admin/vacancies?page=1&pageSize=20', { cookie: hrCookie });
     if (await expectStatus('vacancies', 'list', res.status, 200)) {
-      const items = data?.items || data || [];
-      vacancyId = items[0]?.id || null;
-      ok('vacancies', 'has-rows', `n=${items.length}`);
+      vacancyList = data?.items || data || [];
+      // Prefer open vacancy (closed often has empty pipeline; scorecard needs a link).
+      const open = vacancyList.find((v) => String(v?.status || '').toLowerCase() === 'open');
+      vacancyId = open?.id || vacancyList[0]?.id || null;
+      ok('vacancies', 'has-rows', `n=${vacancyList.length}`);
     }
   }
   if (vacancyId) {
@@ -353,6 +356,36 @@ export async function runHttpSmoke(baseUrl) {
       const arr = Array.isArray(d3?.items) ? d3.items : [];
       candidateId = arr[0]?.candidateId || arr[0]?.candidate_id || arr[0]?.id || null;
       if (candidateId) ok('vacancies', 'candidate-id', String(candidateId));
+    }
+    if (!candidateId && vacancyList.length > 1) {
+      for (const v of vacancyList) {
+        if (!v?.id || v.id === vacancyId) continue;
+        const { res: rx, data: dx } = await req(base, `/api/admin/vacancies/${v.id}/candidates`, {
+          cookie: hrCookie,
+        });
+        if (rx.status !== 200) continue;
+        const arr = Array.isArray(dx?.items) ? dx.items : [];
+        const cid = arr[0]?.candidateId || arr[0]?.candidate_id || arr[0]?.id || null;
+        if (cid) {
+          vacancyId = v.id;
+          candidateId = cid;
+          ok('vacancies', 'candidate-id-fallback', String(candidateId));
+          break;
+        }
+      }
+    }
+    if (vacancyId && candidateId) {
+      const { res: scRes, data: scData } = await req(
+        base,
+        `/api/admin/vacancies/${vacancyId}/candidates/${candidateId}/scorecard`,
+        { cookie: hrCookie }
+      );
+      if (await expectStatus('vacancies', 'scorecard-get', scRes.status, [200])) {
+        const items = scData?.scorecard?.items;
+        ok('vacancies', 'scorecard-items', Array.isArray(items) ? `n=${items.length}` : 'missing');
+      }
+    } else {
+      fail('vacancies', 'scorecard-get', 'no vacancy candidate for scorecard');
     }
     const { res: r4, data: d4 } = await req(base, `/api/admin/vacancies/${vacancyId}/ranking`, {
       cookie: hrCookie,

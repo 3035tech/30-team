@@ -23,14 +23,14 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 | Família de produto | O que costumam ter | 30Team hoje | Gap / oportunidade |
 |--------------------|--------------------|-------------|--------------------|
-| **ATS** (Gupy, Greenhouse, Lever) | Pipeline custom, CV/LinkedIn, scorecards, calendário, oferta | Pipeline fixo + kanban + notes + /j SEO + relatório /r | SLA por estágio, scorecard estruturado, pool/banco de talentos, clonar vaga — **sem** virar ATS genérico |
-| **Assessment puro** (DISC, Big Five vendors) | Bateria própria + PDF + benchmarks | Eneagrama T1–T9 + Motivadores v4 + rubrica + PDF briefing | Empacotar resultado — **não** novo instrumento DISC |
-| **People / engajamento** (Lattice, Culture Amp) | Ciclos de review, engajamento contínuo, goals | 1:1 + hipóteses + `retention_watch` + briefing + kit hire | Digest gestor, lembrete de 1:1 |
-| **Team analytics** | Heatmaps, org chart, “ideal team” | Compat / Comparativo / Grupos / Liderança + núcleo + fit vs time no ranking | Grupos salvos, overview com mapa de tipos |
-| **Carreiras / employer brand** | Portal rico, blog, employee stories | `/j` + `/c` + funil + indicação | OK por enquanto; só polish se métricas pedirem |
-| **Cliente / consultoria** | Portais white-label | `/r` shortlist + parecer | One-pager imprimível / PDF do `/r` |
+| **ATS** (Gupy, Greenhouse, Lever) | Pipeline custom, CV/LinkedIn, scorecards, calendário, oferta | Pipeline + kanban + notes + scorecard leve + pool + /j SEO + /r | Fechado no escopo B-400 (sem virar ATS genérico) |
+| **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Empacotar — **não** DISC |
+| **People / engajamento** | Ciclos de review, engajamento | 1:1 + hipóteses + retention + digest + kit hire | OK no escopo atual |
+| **Team analytics** | Heatmaps, org chart | Compat / Grupos / Overview heat T1–T9 | OK no escopo B-400 |
+| **Carreiras / employer brand** | Portal rico | `/j` + `/c` + funil | OK |
+| **Cliente / consultoria** | Portais white-label | `/r` + print/PDF | OK |
 
-**Princípio de prioridade:** empacotar o que já medimos (acionar perfil) > fechar fricção no funil RH > novos scores ou instrumentos.
+**Princípio de prioridade:** empacotar o que já medimos > fechar fricção no funil RH > novos scores ou instrumentos.
 
 **Explicitamente fora (não abrir item):** segundo instrumento tipo DISC; conta de candidato; merge por nome; segundo hub paralelo a `candidates`.
 
@@ -38,31 +38,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 ## Aberto — Epic B-400 (empacotar perfil + fechar gaps)
 
-_(entregues: **B-401** print/PDF do briefing · **B-402** kit pós-hire · **B-403** fit vs núcleo no ranking · **B-404** grupos salvos · **B-405** digest semanal · **B-406** aging no pipeline · **B-409** clonar vaga · **B-411** convite em lote Motivadores.)_
-
-### B-407 — Scorecard de entrevista estruturado (leve)
-**Por quê:** Notes ricas existem; falta checklist alinhado ao briefing (perguntas do `buildInterviewQuestions`).  
-**O quê:** Template por vaga ou por pessoa: perguntas do briefing + nota 1–5 + comentário curto; grava em tabela ligada a `candidate_id` + `vacancy_id`. Aparece no expand.  
-**Onde:** reutilizar perguntas do decision-brief; RichText só no comentário se precisar.  
-**Não fazer:** formulário de 40 critérios; integração calendário.
-
-### B-408 — Banco / pool de talentos (reuso de candidatos)
-**Por quê:** ATS têm talent pool; hoje candidato vive na vaga — reabrir em outra vaga é manual.  
-**O quê:** Ação “adicionar à vaga X” a partir da Equipe / busca por e-mail na empresa; preservar assessments. Upsert já existe por e-mail.  
-**Onde:** API candidates + UI Equipe/Vagas.  
-**Não fazer:** marketplace cross-tenant.
-
-### B-410 — Overview: mapa de tipos do time (heat)
-**Por quê:** Visão geral ainda é snapshot genérico; o diferencial T1–T9 não aparece como “saúde de composição”.  
-**O quê:** Bloco na Visão geral: distribuição T1–T9 do coorte filtrado + 1 frase hedged (ex. concentração / lacunas). Reusar métricas/overview + `TYPE_DATA`.  
-**Onde:** `OverviewTab` + `lib/overview-metrics.js`.  
-**Não fazer:** dashboard BI pesado.
-
-### B-412 — (opcional) PDF do relatório cliente `/r`
-**Por quê:** Cliente recebe link; reunião presencial pede anexo.  
-**O quê:** Botão “versão para imprimir/PDF” na página `/r` (CSS print) ou generate no painel.  
-**Onde:** `app/r/[token]`.  
-**Não fazer:** white-label multi-marca complexo.
+_(entregue — B-401–B-412: print briefing, kit hire, fit vs núcleo, grupos salvos, digest, aging, scorecard, pool, clonar vaga, overview heat, lote Motivadores, print `/r`.)_
 
 ---
 
@@ -103,4 +79,4 @@ _(vazio)_
 - Epic **B-100** fechado (SEO, funil, referral, job alerts, agregadores, logo S3).
 - **Logo S3:** código pronto; falta só credenciais de produção (`S3_BUCKET` + chaves — ver `.env.example`).
 - Epic **B-300** fechado.
-- Epic **B-400:** B-401–B-406, B-409 e B-411 entregues (ago/2026); próximos: **B-407**, **B-408**, **B-410**, **B-412**.
+- Epic **B-400** fechado (ago/2026).

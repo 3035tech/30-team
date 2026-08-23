@@ -156,6 +156,49 @@ async function runOfflineLibs() {
     return 'batch motivators helpers ok';
   });
 
+  await check('lib', 'b400-remaining-helpers', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+    const { buildTypeMixCompositionAdvice } = await import('../../lib/overview-type-mix.js');
+    const empty = buildTypeMixCompositionAdvice({});
+    if (empty.kind !== 'empty') throw new Error('expected empty');
+    const conc = buildTypeMixCompositionAdvice({ 3: 10, 1: 1, 2: 1 });
+    if (conc.kind !== 'concentrated' || conc.dominantType !== 3) {
+      throw new Error(`expected concentrated got ${JSON.stringify(conc)}`);
+    }
+
+    const scoreSrc = await readFile(join(root, 'lib', 'people', 'interview-scorecard.js'), 'utf8');
+    for (const name of ['draftScorecardItemsFromBrief', 'getInterviewScorecard', 'upsertInterviewScorecard']) {
+      if (!scoreSrc.includes(`export function ${name}`) && !scoreSrc.includes(`export async function ${name}`)) {
+        throw new Error(`missing ${name}`);
+      }
+    }
+
+    const { buildClientReportPrintHtml } = await import('../../lib/client-report-print.js');
+    const html = buildClientReportPrintHtml({
+      data: {
+        title: 'Dev',
+        vacancy: { companyName: 'Acme' },
+        candidates: [{ name: 'Ana', topType: 2, recommendation: 'Hire', whyFit: 'fit' }],
+        note: 'ok',
+      },
+      labels: {
+        executiveNote: 'Note',
+        shortlistTitle: 'List {n}',
+        colName: 'N',
+        colRec: 'R',
+        colFit: 'F',
+        colType: 'T',
+        colWhy: 'W',
+      },
+    });
+    if (!html.includes('Ana') || !html.includes('Acme')) throw new Error('print html missing');
+    return 'overview heat + scorecard + /r print ok';
+  });
+
   await check('lib', 'vacancy-clone-and-aging', async () => {
     const { readFile } = await import('node:fs/promises');
     const { fileURLToPath } = await import('node:url');

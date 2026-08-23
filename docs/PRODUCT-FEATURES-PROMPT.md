@@ -52,10 +52,12 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 
 ### Visão geral
 - Snapshot / métricas da empresa (coorte filtrável).
+- Mapa heat T1–T9 + frase hedged de composição (concentração / lacunas).
 
 ### Equipe
 - Lista + kanban de roster; filtros Time interno / Candidatos de vaga / Todos + área, vaga, T1–T9, pipeline, busca.
 - Detalhe da pessoa: Briefing e 1:1 · Estilo · Histórico · Cadastro.
+- **Adicionar à vaga** (pool): vincula candidato existente a outra vaga aberta.
 - Timeline do candidato (cadastro, convites, testes, estágios).
 - Export CSV de avaliações (cap de linhas + stream).
 - Marcar funcionário / status de pipeline na Equipe.
@@ -80,13 +82,13 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Rubrica por vaga: pesos T1–T9 (não muda o teste); aderência 0–10; sugestão/geração com IA opcional.
 - Links: /v (teste) e /j (página pública, flags: ativar, indexar, mostrar empresa, salário).
 - Score de completude SEO no drawer.
-- Cadastro de candidatos (e-mail = chave); convite eneagrama por e-mail; notes ricas de triagem.
+- Cadastro de candidatos (e-mail = chave); convite eneagrama por e-mail; notes ricas de triagem; **scorecard 1–5** (perguntas do briefing).
 - Pipeline kanban: new → interview → test_completed → screening → approved → hired | rejected | archived (drag-and-drop; rejeição com motivo; hire com data de início; auto-close ao preencher posições). Badge “N d” (aging ≥7/≥14) no kanban da vaga e da Equipe.
 - Clonar vaga (cópia de campos + rubrica; sem candidatos; página pública off).
 - Ranking de fit / aderência na vaga (+ coluna vs time interno quando houver núcleo).
 - Funil analytics (views → apps → entrevistas → hires; UTM/ref) — precisa página pública.
 - Indicação: códigos ?ref= (escopo vaga ou empresa).
-- Relatório cliente /r: shortlist + parecer (≥80 chars); modelos / IA opcional; validade 7/14/30 dias; revogar; editar parecer de link ativo.
+- Relatório cliente /r: shortlist + parecer (≥80 chars); modelos / IA opcional; validade 7/14/30 dias; revogar; editar parecer de link ativo; **Imprimir / PDF** (versão limpa).
 - Notificações: prazo da vaga, vaga fechada, teste concluído, kit pós-hire, digest semanal, etc.
 
 ### Página pública / SEO (epic B-100)
