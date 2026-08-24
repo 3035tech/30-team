@@ -9,6 +9,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  GITOPS_REPO: 3035tech/gitops
+  GITOPS_IMAGE_VALUES: dublin/team/helm-values.yaml
 
 permissions:
   contents: read
@@ -62,3 +64,46 @@ jobs:
           echo "image_tag=${{ steps.meta.outputs.version }}" >> "$GITHUB_OUTPUT"
           echo "image_id=${{ steps.push.outputs.imageid }}"
           echo "image_id=${{ steps.push.outputs.imageid }}" >> "$GITHUB_OUTPUT"
+          echo "digest=${{ steps.push.outputs.digest }}"
+          echo "digest=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+      # ArgoCD só reconcilia Git — grava digest em gitops para o deploy automático.
+      # Secret no repo 30-team: GITOPS_DEPLOY_TOKEN (PAT/fine-grained com contents:write em 3035tech/gitops).
+      - name: Pin digest in gitops
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_DEPLOY_TOKEN }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GITOPS_TOKEN:-}" ]; then
+            echo "::error::GITOPS_DEPLOY_TOKEN secret missing — add a token with contents:write on ${GITOPS_REPO}"
+            exit 1
+          fi
+          if [ -z "${DIGEST:-}" ]; then
+            echo "::error::build-push did not return digest"
+            exit 1
+          fi
+          # image ref: ghcr.io/3035tech/30-team:latest@sha256:...
+          NEW_TAG="latest@${DIGEST}"
+          rm -rf /tmp/gitops
+          git clone --depth=1 \
+            "https://x-access-token:${GITOPS_TOKEN}@github.com/${GITOPS_REPO}.git" \
+            /tmp/gitops
+          cd /tmp/gitops
+          FILE="${GITOPS_IMAGE_VALUES}"
+          if ! grep -qE '^  tag:' "$FILE"; then
+            echo "::error::no '  tag:' line in ${FILE}"
+            exit 1
+          fi
+          sed -i -E "s|^(  tag:).*|\1 ${NEW_TAG}|" "$FILE"
+          if git diff --quiet -- "$FILE"; then
+            echo "gitops already at ${NEW_TAG}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          git commit -m "chore(team): pin 30-team image to ${NEW_TAG}"
+          git push origin HEAD:main
+          echo "Updated ${FILE} -> tag: ${NEW_TAG}"
