@@ -65,16 +65,20 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 
 ---
 
-## Self-Service Signup (Early Access)
+## Self-Service Signup + Onboarding (Early Access)
 
-A partir da versão com migrations `051` e `052`:
+A partir da versão com migrations `051`, `052` e `053`:
 
 - **Landpage** (`/`) → CTA direto para `/signup` (sem `mailto`)
 - **Signup** cria automaticamente:
-  - User pendente (`signup_pending = TRUE`, role `direction`)
+  - User pendente (`signup_pending = TRUE`, `onboarding_completed = FALSE`, role `direction`)
   - Company nova (ou associa a existente por `@domain` se `SIGNUP_DOMAIN_MATCH=true`)
   - Token de ativação (72h) enviado por e-mail
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
+- **Wizard de onboarding** (primeiro acesso):
+  - 4 steps guiados: boas-vindas, criar vaga, convidar pessoas, recursos
+  - Dismissível a qualquer momento (nunca mais aparece após completar/pular)
+  - Marca `users.onboarding_completed = TRUE`
 - **Trial limits** (soft caps via env):
   - `TRIAL_MAX_VACANCIES` (default 2)
   - `TRIAL_MAX_CANDIDATES` (default 50)
@@ -84,7 +88,7 @@ A partir da versão com migrations `051` e `052`:
 - **Analytics** de landpage: `landing_analytics` table + tracking de conversão (pageview → signup → ativação)
 
 Tabelas novas:
-- `users.signup_pending`, `users.signup_source`, `users.signup_metadata`
+- `users.signup_pending`, `users.signup_source`, `users.signup_metadata`, `users.onboarding_completed`
 - `companies.signup_auto_created`, `companies.signup_creator_user_id`
 - `landing_analytics` (events: pageview, cta_click, signup_start, signup_complete, login)
 
