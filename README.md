@@ -102,8 +102,8 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 docker compose up -d
 ```
 
-- App: http://localhost:3000  
-- Login: http://localhost:3000/login (link “Esqueceu a senha?” → e-mail `/a/set-password`, 72h; requer SMTP)  
+- App (landpage): http://localhost:3000 — CTA **Acessar o sistema** → `/login`; early access via `contact@3035tech.com`
+- Login: http://localhost:3000/login (link “Esqueceu a senha?” → e-mail `/a/set-password`, 72h; requer SMTP)
 - Teste público: criar empresa no dashboard → link `/t/<token>`
 
 ### 3. Desenvolvimento (hot reload)

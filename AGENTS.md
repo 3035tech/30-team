@@ -30,7 +30,8 @@ Não instale pacotes novos sem necessidade clara. Não introduza TypeScript nem 
 ## Arquitetura
 
 ```
-app/page.jsx, app/t, app/v, app/r, app/assessment  → UI pública (token)
+app/page.jsx                                       → landpage de produto (CTA → /login)
+app/t, app/v, app/r, app/assessment                → UI pública (token)
 app/login, app/dashboard                           → painel (JWT + SSR por aba)
 app/api                                            → rotas finas
 lib/                                               → regras de negócio

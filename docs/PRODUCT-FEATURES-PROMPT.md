@@ -26,6 +26,7 @@ Hub = tabela candidates (company_id + e-mail). O mesmo candidate_id une:
 ## Links públicos (token; fora do ACL do gestor)
 | URL | Uso |
 |-----|-----|
+| `/` | Landpage de produto (early access + CTA Acessar o sistema → `/login`) |
 | /t/{token} | Assessment Eneagrama da empresa (time interno; noindex) |
 | /v/{token} | Assessment Eneagrama da vaga (candidato; noindex) |
 | /assessment/motivators/{token} | Motivadores |
