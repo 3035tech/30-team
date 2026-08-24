@@ -21,9 +21,9 @@ alwaysApply: true
 
 3. **Cores de marca** = `brand-*` — só CTA / nav ativa / focus. Nunca status de pipeline.
 
-4. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*`.
+4. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*`. Toast `info` → `border-l-info` (não `brand`). Labels de seção (`S.label`) → `text-ink-label` (não lilás).
 
-5. **Dinâmico** (T1–T9 `TYPE_DATA`, width %) → `style={{}}` pontual; sem hex solto.
+5. **Dinâmico** (T1–T9 `TYPE_DATA`, width %) → `style={{}}` pontual; sem hex solto. T4/T8 não devem colidir com brand/danger.
 
 6. Ao migrar: trocar `style={{}}` estático por `className={S.x}` / tokens TW.
 

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>30Team — samples da identidade / paleta</title>
+  <style>
+    :root {
+      /* A · Brand (logo) */
+      --brand-50: #FAF5FF;
+      --brand-100: #F3E8FF;
+      --brand-200: #E9D5FF;
+      --brand-400: #AD5DCD;
+      --brand-500: #8930B8;
+      --brand-600: #76339B;
+      --brand-700: #502574;
+      --brand-800: #3B0764;
+
+      /* B · Neutros (alvo) */
+      --canvas: #F5F4F7;
+      --surface: #ffffff;
+      --ink: #1a1625;
+      --ink-muted: rgba(26, 22, 37, 0.62);
+      --ink-faint: rgba(26, 22, 37, 0.38);
+      --ink-label: rgba(26, 22, 37, 0.28);
+      --border: rgba(26, 22, 37, 0.12);
+      --soft: #64748b;
+      --input: rgba(26, 22, 37, 0.05);
+
+      /* C · Semântica */
+      --success: #15803d;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --info: #0284c7;
+
+      /* D · Pipeline */
+      --p-new: rgba(26, 22, 37, 0.5);
+      --p-test: #6366f1;
+      --p-screening: #0284c7;
+      --p-interview: #d97706;
+      --p-approved: #15803d;
+      --p-hired: #0f766e;
+      --p-rejected: #dc2626;
+      --p-archived: rgba(26, 22, 37, 0.3);
+
+      /* E · Tipos recalibrados (proposta) */
+      --t1: #c9a227;
+      --t4: #7c5cff;
+      --t8: #b54a3a;
+
+      --radius-card: 16px;
+      --radius-control: 10px;
+      --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --font-display: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-ui);
+      background: var(--canvas);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-family: var(--font-display); font-weight: 400; font-size: 28px; margin: 0 0 8px; color: var(--ink); }
+    h2 { font-size: 15px; font-weight: 600; margin: 0 0 12px; letter-spacing: 0.01em; }
+    h3 { font-size: 13px; font-weight: 600; margin: 0 0 10px; color: var(--ink); }
+    .lede { color: var(--ink-muted); font-size: 14px; max-width: 62ch; margin: 0 0 28px; }
+    .section { margin-top: 36px; }
+    .label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-label);
+      margin-bottom: 10px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 840px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+    }
+    .card.muted-note { background: var(--canvas); }
+
+    /* Swatches */
+    .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .swatch {
+      width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--border);
+      display: flex; align-items: flex-end; justify-content: center; padding: 4px;
+      font-family: var(--font-mono); font-size: 8px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    }
+    .swatch.light { color: var(--ink); text-shadow: none; }
+
+    /* Buttons */
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 40px; padding: 8px 16px; border-radius: var(--radius-control);
+      font-family: var(--font-mono); font-size: 13px; cursor: default; border: 0;
+    }
+    .btn-primary { background: var(--brand-500); color: #fff; }
+    .btn-soft { background: rgba(137,48,184,.1); color: var(--brand-600); border: 1px solid rgba(137,48,184,.35); }
+    .btn-ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(220,38,38,.35); }
+
+    /* Chips */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 8px; font-family: var(--font-mono); font-size: 11px;
+      border: 1px solid transparent;
+    }
+    .chip-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .chip-open { background: rgba(21,128,61,.1); color: var(--success); border-color: rgba(21,128,61,.25); }
+    .chip-draft { background: var(--input); color: var(--ink-muted); border-color: var(--border); }
+    .chip-closed { background: rgba(2,132,199,.1); color: var(--info); border-color: rgba(2,132,199,.25); }
+
+    /* Pipeline */
+    .pipe {
+      display: inline-flex; padding: 5px 10px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 11px; color: #fff;
+    }
+
+    /* Toasts */
+    .toast {
+      background: #fff; border: 1px solid var(--border); border-left-width: 4px;
+      border-radius: 12px; padding: 12px 14px; font-size: 13px; max-width: 320px;
+    }
+    .toast-ok { border-left-color: var(--success); }
+    .toast-err { border-left-color: var(--danger); }
+    .toast-info { border-left-color: var(--info); }
+    .toast-info-bad { border-left-color: var(--brand-500); }
+    .toast-warn { border-left-color: var(--warning); }
+
+    /* Compare columns */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 840px) { .compare { grid-template-columns: 1fr; } }
+    .tag {
+      display: inline-block; font-family: var(--font-mono); font-size: 10px;
+      padding: 2px 8px; border-radius: 6px; margin-bottom: 10px;
+    }
+    .tag-before { background: rgba(220,38,38,.1); color: var(--danger); }
+    .tag-after { background: rgba(21,128,61,.1); color: var(--success); }
+
+    /* Mini dashboard */
+    .dash {
+      display: grid; grid-template-columns: 200px 1fr; gap: 0;
+      border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden;
+      background: var(--surface); min-height: 320px;
+    }
+    @media (max-width: 720px) { .dash { grid-template-columns: 1fr; } }
+    .side {
+      border-right: 1px solid var(--border); padding: 16px 10px; background: rgba(255,255,255,.95);
+    }
+    .brand-mark {
+      font-family: var(--font-display); font-size: 18px; padding: 8px 10px 16px;
+      color: var(--ink);
+    }
+    .brand-mark span { color: var(--brand-500); }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: 8px; font-size: 13px; color: var(--ink-muted);
+      border-left: 3px solid transparent; margin-bottom: 2px;
+    }
+    .nav-item.active {
+      background: rgba(137,48,184,.08); color: var(--brand-700);
+      border-left-color: var(--brand-500);
+    }
+    .main { padding: 20px; background: var(--canvas); }
+    .page-title { font-family: var(--font-ui); font-size: 22px; font-weight: 600; margin: 0 0 4px; color: var(--ink); }
+    .page-title.bad {
+      font-family: var(--font-display); font-weight: 400; font-size: 26px;
+      background: linear-gradient(135deg, var(--brand-200), var(--brand-500));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hint { font-size: 13px; color: var(--ink-muted); margin: 0 0 16px; }
+
+    .score {
+      border: 1px solid rgba(217,119,6,.25); background: rgba(217,119,6,.1);
+      border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px;
+    }
+    .score-num { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; }
+    .score-num span { font-size: 14px; color: var(--ink-faint); font-weight: 500; }
+    .meter { height: 10px; background: rgba(26,22,37,.1); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+    .meter > i { display: block; height: 100%; width: 42%; background: var(--warning); border-radius: 999px; }
+
+    .q {
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 12px;
+      font-size: 13px;
+    }
+    .q strong { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .bar { height: 8px; background: rgba(26,22,37,.08); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; border-radius: 999px; }
+
+    .type-badge {
+      display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 11px; border: 1px solid;
+    }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab {
+      font-family: var(--font-mono); font-size: 12px; padding: 8px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer;
+    }
+    .tab.on { background: rgba(137,48,184,.1); border-color: rgba(137,48,184,.35); color: var(--brand-600); }
+
+    footer { margin-top: 40px; font-size: 12px; color: var(--ink-faint); }
+    code { font-family: var(--font-mono); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="label">Preview estático · não é o app</p>
+    <h1>Samples — identidade e paleta 30Team</h1>
+    <p class="lede">
+      Proposta do estudo: marca só em CTA/nav; semântica para status; funil e tipos fora do roxo.
+      Compare “antes” (atmosfera lilás + toast brand) com “depois” (neutro sério + info azul).
+    </p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab on" data-panel="after">Depois (proposta)</button>
+      <button type="button" class="tab" data-panel="before">Antes (hábitos a cortar)</button>
+      <button type="button" class="tab" data-panel="tokens">Tokens</button>
+    </div>
+
+    <!-- AFTER -->
+    <div id="panel-after">
+      <div class="section">
+        <p class="label">Dashboard Clima · proposta</p>
+        <div class="dash">
+          <aside class="side">
+            <div class="brand-mark">◈ <span>30</span>Team</div>
+            <div class="nav-item">Visão geral</div>
+            <div class="nav-item">Equipe</div>
+            <div class="nav-item active">Clima</div>
+            <div class="nav-item">Vagas</div>
+          </aside>
+          <div class="main">
+            <div class="row" style="justify-content:space-between;margin-bottom:4px">
+              <h2 class="page-title" style="margin:0">Pesquisa de clima</h2>
+              <button class="btn btn-primary" type="button">Nova pesquisa</button>
+            </div>
+            <p class="hint">Campanhas anônimas. Lista à esquerda · detalhe à direita.</p>
+            <div class="score">
+              <div class="label" style="margin:0">Leitura geral</div>
+              <div class="score-num">2.7 <span>/ 5</span></div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--warning);margin-top:4px">Leitura intermediária</div>
+              <div class="meter"><i></i></div>
+            </div>
+            <div class="q">
+              <div style="flex:1">
+                <div>Em geral, sinto que posso contribuir…</div>
+                <div class="bar"><i style="width:65%;background:var(--success)"></i></div>
+              </div>
+              <strong>3.6</strong>
+            </div>
+            <div class="q">
+              <div style="flex:1">
+                <div>Sinto que há espaço para falar…</div>
+                <div class="bar"><i style="width:35%;background:var(--danger)"></i></div>
+              </div>
+              <strong>2.4</strong>
+            </div>
+            <div class="row" style="margin-top:14px">
+              <span class="chip chip-open"><span class="chip-dot" style="background:var(--success)"></span>Aberta</span>
+              <button class="btn btn-ghost" type="button">Encerrar</button>
+              <button class="btn btn-soft" type="button">Gerar link</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section grid-2">
+        <div class="card">
+          <h3>Botões (1 CTA brand)</h3>
+          <div class="row">
+            <button class="btn btn-primary" type="button">Abrir respostas</button>
+            <button class="btn btn-soft" type="button">Secundário</button>
+            <button class="btn btn-ghost" type="button">Ghost</button>
+            <button class="btn btn-danger" type="button">Arquivar</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Toasts — info = azul (não brand)</h3>
+          <div class="row" style="flex-direction:column;align-items:stretch">
+            <div class="toast toast-ok">Pesquisa criada.</div>
+            <div class="toast toast-info">Abra a pesquisa antes de gerar o link.</div>
+            <div class="toast toast-err">Não foi possível salvar.</div>
+            <div class="toast toast-warn">Mínimo de respostas ainda não atingido.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section card">
+        <h3>Funil (camada D — zero brand)</h3>
+        <div class="row">
+          <span class="pipe" style="background:var(--p-new)">Novo</span>
+          <span class="pipe" style="background:var(--p-test)">Teste feito</span>
+          <span class="pipe" style="background:var(--p-screening)">Triagem</span>
+          <span class="pipe" style="background:var(--p-interview)">Entrevista</span>
+          <span class="pipe" style="background:var(--p-approved)">Aprovado</span>
+          <span class="pipe" style="background:var(--p-hired)">Contratado</span>
+          <span class="pipe" style="background:var(--p-rejected)">Rejeitado</span>
+          <span class="pipe" style="background:var(--p-archived)">Arquivado</span>
+        </div>
+      </div>
+
+      <div class="section card">
+        <h3>Tipos (camada E — recalibrados vs colisão)</h3>
+        <div class="row">
+          <span class="type-badge" style="color:var(--t1);border-color:rgba(201,162,39,.45);background:rgba(201,162,39,.12)">T1 Perfeccionista</span>
+          <span class="type-badge" style="color:var(--t4);border-color:rgba(124,92,255,.4);background:rgba(124,92,255,.1)">T4 Individualista</span>
+          <span class="type-badge" style="color:var(--t8);border-color:rgba(181,74,58,.4);background:rgba(181,74,58,.1)">T8 Desafiador</span>
+          <span style="font-size:12px;color:var(--ink-faint)">T4 ≠ brand · T8 ≠ danger puro</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEFORE -->
+    <div id="panel-before" hidden>
+      <div class="section compare">
+        <div class="card" style="background:#fff;box-shadow:0 20px 50px rgba(137,48,184,.12)">
+          <span class="tag tag-before">Antes</span>
+          <h2 class="page-title bad">Pesquisa de clima</h2>
+          <p class="hint">Título em gradient lilás · card com glow purple · label brand</p>
+          <p class="label" style="color:rgba(137,48,184,.55)">Comparativo entre pesquisas</p>
+          <div class="toast toast-info-bad" style="margin-top:12px">Aviso “info” com barra da marca — parece CTA.</div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-primary" type="button">Primário</button>
+            <button class="btn btn-primary" type="button">Outro primário</button>
+            <button class="btn btn-soft" type="button">Mais roxo</button>
+          </div>
+        </div>
+        <div class="card">
+          <span class="tag tag-after">Depois</span>
+          <h2 class="page-title">Pesquisa de clima</h2>
+          <p class="hint">Título ink · sem glow · um CTA · info = azul</p>
+          <p class="label">Campanhas</p>
+          <div class="toast toast-info" style="margin-top:12px">Aviso informativo com barra info (#0284c7).</div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-primary" type="button">Primário</button>
+            <button class="btn btn-ghost" type="button">Secundário</button>
+            <button class="btn btn-ghost" type="button">Ghost</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOKENS -->
+    <div id="panel-tokens" hidden>
+      <div class="section card">
+        <h3>Brand scale</h3>
+        <div class="swatch-row">
+          <div class="swatch light" style="background:var(--brand-50)">50</div>
+          <div class="swatch light" style="background:var(--brand-100)">100</div>
+          <div class="swatch light" style="background:var(--brand-200)">200</div>
+          <div class="swatch" style="background:var(--brand-400)">400</div>
+          <div class="swatch" style="background:var(--brand-500)">500</div>
+          <div class="swatch" style="background:var(--brand-600)">600</div>
+          <div class="swatch" style="background:var(--brand-700)">700</div>
+          <div class="swatch" style="background:var(--brand-800)">800</div>
+        </div>
+      </div>
+      <div class="section grid-2">
+        <div class="card">
+          <h3>Semântica</h3>
+          <div class="swatch-row">
+            <div class="swatch" style="background:var(--success)">ok</div>
+            <div class="swatch" style="background:var(--warning)">warn</div>
+            <div class="swatch" style="background:var(--danger)">err</div>
+            <div class="swatch" style="background:var(--info)">info</div>
+            <div class="swatch" style="background:var(--soft)">soft</div>
+          </div>
+        </div>
+        <div class="card muted-note">
+          <h3>Regra de ouro</h3>
+          <p style="margin:0;font-size:13px;color:var(--ink-muted)">
+            Roxo = identidade e ação.<br />
+            Verde/vermelho/âmbar/azul = significado.<br />
+            Índigo/teal do funil = estágio.<br />
+            Cores T1–T9 = perfil — nunca botão.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Arquivo: <code>docs/palette-identity-samples.html</code> ·
+      Tokens aplicados no produto (dashboard sem glow/gradient de título; toast info = azul) ·
+      Estudo: canvas <code>30team-palette-deep-study</code>.
+    </footer>
+  </div>
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = {
+      after: document.getElementById('panel-after'),
+      before: document.getElementById('panel-before'),
+      tokens: document.getElementById('panel-tokens'),
+    };
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('on'));
+        tab.classList.add('on');
+        const id = tab.getAttribute('data-panel');
+        Object.entries(panels).forEach(([key, el]) => {
+          el.hidden = key !== id;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

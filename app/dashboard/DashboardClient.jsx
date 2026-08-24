@@ -573,7 +573,6 @@ export default function DashboardClient({
     <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
     <div className="relative min-h-screen bg-canvas font-display text-ink">
-      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
 
       <button
         type="button"
@@ -751,7 +750,7 @@ export default function DashboardClient({
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              <h2 className="db-page-title mb-1 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[32px] font-normal text-transparent">
+              <h2 className="db-page-title mb-1 font-ui text-[28px] font-semibold tracking-tight text-ink">
                 {t(locale, getDashboardTabNav(tab).labelKey)}
               </h2>
               <span className="text-[13px] text-ink-muted">

@@ -46,9 +46,21 @@ export function SystemNoticeModal({
 
   const heading = title || t(locale, 'panel.common.noticeTitle');
   const accentClass =
-    tone === 'ok' ? 'text-success' : tone === 'error' ? 'text-danger' : 'text-brand-500';
+    tone === 'ok'
+      ? 'text-success'
+      : tone === 'error'
+        ? 'text-danger'
+        : tone === 'warning'
+          ? 'text-warning'
+          : 'text-info';
   const btnBgClass =
-    tone === 'ok' ? 'bg-success' : tone === 'error' ? 'bg-danger' : 'bg-brand-500';
+    tone === 'ok'
+      ? 'bg-success'
+      : tone === 'error'
+        ? 'bg-danger'
+        : tone === 'warning'
+          ? 'bg-warning'
+          : 'bg-info';
 
   return createPortal(
     <div

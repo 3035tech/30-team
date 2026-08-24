@@ -75,6 +75,7 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 | Helpers em `lib/` | Duplicar SQL, filtros ou cores em várias tabs |
 | `t(locale, 'key')` | String de UI hardcoded |
 | Tokens `C` / `FONTS` em `lib/theme.js` **e** classes Tailwind do `tailwind.config.js` (`brand-*`, `pipeline-*`) | Hex solto; roxo da marca como cor de status; `bg-purple-*` genérico do default |
+| **Camadas de cor:** A brand (CTA/nav/focus) · B neutros (canvas/ink) · C semântica (success/danger/warning/info) · D funil/clima · E T1–T9/Motivadores | Toast `info` em brand; label de seção em lilás; glow/gradient no dashboard; T4/T8 iguais a brand/danger |
 | **Tailwind `className`** em UI nova / bloco em edição; `style={{}}` só para dinâmico (T1–T9, widths) | Big-bang rewrite; segundo kit (MUI etc.); CSS module por tela sem necessidade |
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |

@@ -25,14 +25,14 @@
   flex-shrink: 0;
 }
 
-/* Auth / marketing canvas atmosphere (aligned to lib/theme.js RADIAL_GLOW*) */
+/* Auth / marketing canvas atmosphere (aligned to lib/theme.js RADIAL_GLOW*) — not used on dashboard */
 .bg-radial-glow {
   background:
-    radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.07) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 75%, rgba(71, 168, 232, 0.04) 0%, transparent 55%);
+    radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.045) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(71, 168, 232, 0.03) 0%, transparent 55%);
 }
 .bg-radial-glow-single {
-  background: radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.07) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 15% 25%, rgba(137, 48, 184, 0.045) 0%, transparent 55%);
 }
 
 :root {

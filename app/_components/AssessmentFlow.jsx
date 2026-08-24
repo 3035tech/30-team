@@ -18,7 +18,7 @@ const SC = {
   app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-[20px] border border-ink/12 bg-white px-7 py-9 shadow-card backdrop-blur-3xl sm:px-9 sm:py-10',
-  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-brand-500/55',
+  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-ink-label',
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
   p: 'mb-7 text-[15px] italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',

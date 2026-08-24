@@ -90,7 +90,7 @@ function LoginForm() {
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <p className="mb-3 mt-0 block font-mono text-[10px] uppercase tracking-[3px] text-brand-500/55">
+        <p className="mb-3 mt-0 block font-mono text-[10px] uppercase tracking-[3px] text-ink-label">
           {t(locale, 'login.restricted')}
         </p>
         <h2 className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[32px] font-normal leading-tight text-transparent">

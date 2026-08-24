@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        canvas: '#F7F6F9',
+        canvas: '#F5F4F7',
         ink: {
           DEFAULT: '#1a1625',
           muted: 'rgba(26,22,37,0.62)',
@@ -32,7 +32,7 @@ module.exports = {
         danger: '#dc2626',
         warning: '#d97706',
         info: '#0284c7',
-        soft: '#6B7280',
+        soft: '#64748B',
         pipeline: {
           new: 'rgba(26,22,37,0.5)',
           test: '#6366F1',
@@ -55,14 +55,21 @@ module.exports = {
           'sans-serif',
         ],
         display: ['Georgia', 'Times New Roman', 'serif'],
-        mono: ['Courier New', 'monospace'],
+        mono: [
+          'ui-monospace',
+          'SF Mono',
+          'Menlo',
+          'Consolas',
+          'Liberation Mono',
+          'monospace',
+        ],
       },
       borderRadius: {
         card: '16px',
         control: '10px',
       },
       boxShadow: {
-        card: '0 20px 50px rgba(137,48,184,.10), 0 4px 24px rgba(0,0,0,.04)',
+        card: '0 12px 40px rgba(26,22,37,.08), 0 4px 16px rgba(26,22,37,.04)',
         dialog: '0 24px 64px rgba(26,22,37,0.18)',
         toast: '0 12px 32px rgba(26,22,37,.14)',
         menu: '0 8px 24px rgba(26,22,37,.12)',

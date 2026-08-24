@@ -9,7 +9,7 @@ import { cn } from '../../lib/cn';
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
   label:
-    'mb-3 block font-mono text-[11px] uppercase tracking-[2.5px] text-brand-500/55',
+    'mb-3 block font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label',
   card: 'rounded-card border border-ink/12 bg-white p-7 backdrop-blur-[16px]',
   cardTight: 'rounded-card border border-ink/12 bg-white p-5',
   select:
@@ -231,18 +231,18 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
         type="button"
         onClick={onHome}
         title={t(locale, 'dashboard.homeAria')}
-        className="m-0 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] uppercase tracking-[2.5px] text-brand-500/55"
+        className="m-0 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label"
       >
         {t(locale, 'dashboard.panel')}
       </button>
       {sectionLabel ? (
         <>
           {sep}
-          <span className="text-brand-500/45">{sectionLabel}</span>
+          <span className="text-ink-faint">{sectionLabel}</span>
         </>
       ) : null}
       {sep}
-      <span className="text-brand-600" aria-current="page">
+      <span className="text-ink" aria-current="page">
         {screenLabel}
       </span>
     </nav>

@@ -149,8 +149,12 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
                   className={cn(
                     'pointer-events-auto rounded-xl border border-l-4 bg-white px-3.5 py-3 font-display text-[13px] leading-snug text-ink shadow-toast',
                     item.tone === 'error' && 'border-danger/33 border-l-danger',
-                    item.tone === 'info' && 'border-brand-500/33 border-l-brand-500',
-                    item.tone !== 'error' && item.tone !== 'info' && 'border-success/33 border-l-success'
+                    item.tone === 'info' && 'border-info/33 border-l-info',
+                    item.tone === 'warning' && 'border-warning/33 border-l-warning',
+                    item.tone !== 'error' &&
+                      item.tone !== 'info' &&
+                      item.tone !== 'warning' &&
+                      'border-success/33 border-l-success'
                   )}
                 >
                   {item.message}
