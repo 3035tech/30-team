@@ -5,12 +5,7 @@ import { BrandMark } from './BrandMark';
 import LanguageSelect from './LanguageSelect';
 import { PRODUCT_LANDING_CONTACT_EMAIL } from '../../lib/product-landing-seo';
 import { useLocale } from '../../lib/useLocale';
-
-function earlyMailto(copy) {
-  const subject = encodeURIComponent(copy.earlyMailSubject);
-  const body = encodeURIComponent(copy.earlyMailBody);
-  return `mailto:${PRODUCT_LANDING_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-}
+import LandingAnalytics from './LandingAnalytics';
 
 function SectionLabel({ children }) {
   return (
@@ -18,16 +13,16 @@ function SectionLabel({ children }) {
   );
 }
 
-/** CTA primário = early access (venda). Login = secundário (já cliente). */
-function Ctas({ copy, mail }) {
+/** CTA primário = signup (early access). Login = secundário (já cliente). */
+function Ctas({ copy }) {
   return (
     <div className="flex flex-wrap gap-3">
-      <a
-        href={mail}
+      <Link
+        href="/signup"
         className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
       >
         {copy.ctaEarly}
-      </a>
+      </Link>
       <Link
         href="/login"
         className="inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
@@ -41,7 +36,6 @@ function Ctas({ copy, mail }) {
 export default function ProductLandingClient({ copyByLocale, locale: initialLocale }) {
   const [locale, setLocale] = useLocale(initialLocale);
   const copy = copyByLocale[locale === 'en' ? 'en' : 'pt-BR'] || copyByLocale['pt-BR'];
-  const mail = earlyMailto(copy);
 
   const toc = [
     { href: '#dor', label: copy.problemLabel },
@@ -54,6 +48,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
 
   return (
     <div className="min-h-screen bg-canvas font-display text-ink" lang={locale === 'en' ? 'en' : 'pt-BR'}>
+      <LandingAnalytics />
       <div className="pointer-events-none fixed inset-0 bg-radial-glow opacity-80" aria-hidden />
 
       <a
@@ -76,12 +71,12 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
             >
               {copy.navLogin}
             </Link>
-            <a
-              href={mail}
+            <Link
+              href="/signup"
               className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-3.5 py-2 text-sm text-white no-underline"
             >
               {copy.navEarly}
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -96,7 +91,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           </h1>
           <p className="mb-3 max-w-2xl text-lg leading-relaxed text-ink">{copy.heroLead}</p>
           <p className="mb-6 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{copy.heroBody}</p>
-          <Ctas copy={copy} mail={mail} />
+          <Ctas copy={copy} />
           <p className="mt-4 text-sm text-ink-faint">{copy.heroFoot}</p>
           <nav aria-label={copy.tocLabel} className="mt-8 flex flex-wrap gap-2">
             {toc.map((item) => (
@@ -258,20 +253,20 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
                   key={p}
                   className="rounded-control border border-success/20 bg-success/10 px-3 py-1.5 text-xs text-success"
                 >
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <Ctas copy={copy} mail={mail} />
-            <p className="mt-3 text-xs text-ink-faint">
-              {copy.earlyContact}{' '}
-              <a
-                href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}`}
-                className="text-brand-600 underline-offset-2 hover:underline"
-              >
-                {PRODUCT_LANDING_CONTACT_EMAIL}
-              </a>
-            </p>
+              {p}
+            </li>
+          ))}
+        </ul>
+        <Ctas copy={copy} />
+        <p className="mt-3 text-xs text-ink-faint">
+          {copy.earlyContact}{' '}
+          <a
+            href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}`}
+            className="text-brand-600 underline-offset-2 hover:underline"
+          >
+            {PRODUCT_LANDING_CONTACT_EMAIL}
+          </a>
+        </p>
           </div>
         </section>
 
@@ -298,12 +293,12 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
         <section className="mx-auto max-w-5xl px-5 pb-16 pt-4 sm:px-8">
           <h2 className="mb-3 mt-0 text-2xl font-normal text-ink">{copy.closeTitle}</h2>
           <p className="mb-8 max-w-xl text-sm leading-relaxed text-ink-muted">{copy.closeBody}</p>
-          <a
-            href={mail}
+          <Link
+            href="/signup"
             className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
           >
             {copy.ctaEarly}
-          </a>
+          </Link>
         </section>
       </main>
 
