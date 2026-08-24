@@ -7,6 +7,8 @@ import { S } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
+import { RichTextView } from './RichTextView';
+import { isRichTextEmpty } from '../../lib/sanitize-html';
 
 /**
  * Post-hire check-ins D30/D60/D90 — B-701 (light, not AVD).
@@ -65,9 +67,10 @@ export function OnboardingCheckinsBlock({
       },
       {
         key: 'notes',
-        type: 'textarea',
+        type: 'richText',
         label: t(locale, 'panel.onboarding.notesLabel'),
         placeholder: t(locale, 'panel.onboarding.notesPh'),
+        minHeight: 110,
       },
     ];
     const values = await promptForm({
@@ -156,6 +159,11 @@ export function OnboardingCheckinsBlock({
                       : ''}
                     {done ? ` · ${t(locale, `panel.onboarding.status.${row.status}`)}` : ''}
                   </div>
+                  {done && !isRichTextEmpty(row.notes) ? (
+                    <div className="mt-1.5 text-xs text-ink-muted">
+                      <RichTextView html={row.notes} className="text-xs leading-snug text-ink-muted" />
+                    </div>
+                  ) : null}
                 </div>
                 {!done ? (
                   <div className="flex flex-wrap gap-1.5">

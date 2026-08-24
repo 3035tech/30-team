@@ -7,9 +7,7 @@ import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
-import { DevelopmentPlansBlock } from './DevelopmentPlansBlock';
-import { OnboardingCheckinsBlock } from './OnboardingCheckinsBlock';
-import { PreOnboardingChecklistBlock } from './PreOnboardingChecklistBlock';
+import { HireJourneyBlock } from './HireJourneyBlock';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 
@@ -618,29 +616,14 @@ export function PeopleManagementPanel({
       </div>
 
       {candidateId ? (
-        <PreOnboardingChecklistBlock
-          locale={locale}
-          candidateId={candidateId}
-          employmentStatus={employmentStatus}
-        />
-      ) : null}
-
-      {candidateId ? (
-        <OnboardingCheckinsBlock
+        <HireJourneyBlock
           locale={locale}
           candidateId={candidateId}
           employmentStatus={employmentStatus}
           onPdiChanged={() => setPdiRefresh((n) => n + 1)}
-        />
-      ) : null}
-
-      {candidateId ? (
-        <DevelopmentPlansBlock
-          locale={locale}
-          candidateId={candidateId}
-          seedIdeas={pdiSeedIdeas}
+          pdiSeedIdeas={pdiSeedIdeas}
           oneOnOnes={oneOnOnes}
-          refreshKey={pdiRefresh}
+          pdiRefresh={pdiRefresh}
         />
       ) : null}
     </div>

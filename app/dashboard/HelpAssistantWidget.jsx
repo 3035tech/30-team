@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
-import { S } from '../dashboard-shared';
-import { Icon } from '../../_components/Icon';
+import { cn } from '../../lib/cn';
+import { t } from '../../lib/i18n';
+import { S } from './dashboard-shared';
+import { Icon } from '../_components/Icon';
 
 const SUGGESTIONS = [
   'panel.helpAssist.suggestCreateVacancy',

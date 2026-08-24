@@ -402,15 +402,42 @@ function ReportInner() {
   return (
     <Shell>
       <header className="mb-7">
-        <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-500">
-          30Team
-        </p>
+        {vacancy.companyLogoUrl ? (
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <img
+              src={vacancy.companyLogoUrl}
+              alt=""
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-control object-contain"
+            />
+            {vacancy.companyName ? (
+              <p className="m-0 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-label">
+                {vacancy.companyName}
+              </p>
+            ) : null}
+          </div>
+        ) : vacancy.companyName ? (
+          <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-label">
+            {vacancy.companyName}
+          </p>
+        ) : (
+          <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-500">
+            30Team
+          </p>
+        )}
         <h1 className="mb-1.5 mt-0 font-display text-[28px] font-semibold text-ink">
           {state.data.title || vacancy.title || t(locale, 'panel.report.publicTitle')}
         </h1>
         <p className="m-0 text-sm text-ink-muted">
-          {vacancy.companyName}
-          {vacancy.positionsCount ? ` · ${t(locale, 'panel.report.positions', { n: vacancy.positionsCount })}` : ''}
+          {[
+            vacancy.companyLogoUrl ? vacancy.companyName : null,
+            vacancy.positionsCount != null
+              ? t(locale, 'panel.report.positions', { n: vacancy.positionsCount })
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
         <p className="mb-0 mt-2.5 font-mono text-xs text-ink-faint">
           {generatedAt ? t(locale, 'panel.report.generatedAt', { date: generatedAt.toLocaleString(locale) }) : ''}
@@ -437,6 +464,7 @@ function ReportInner() {
                 })),
               },
               labels: {
+                product: '30Team',
                 publicTitle: t(locale, 'panel.report.publicTitle'),
                 executiveNote: t(locale, 'panel.report.executiveNote'),
                 shortlistTitle: t(locale, 'panel.report.shortlistTitle', { n: cands.length }),
@@ -445,7 +473,7 @@ function ReportInner() {
                 colFit: t(locale, 'panel.report.colFit'),
                 colType: t(locale, 'panel.report.colType'),
                 colWhy: t(locale, 'panel.report.colWhy'),
-                footer: t(locale, 'panel.report.printFooter'),
+                footer: t(locale, 'panel.report.printFooterPowered'),
                 empty: '—',
               },
             });
@@ -561,6 +589,9 @@ function ReportInner() {
 
       <footer className="mt-9 border-t border-ink/12 pt-4">
         <p className="m-0 text-[11px] leading-[1.55] text-ink-faint">{t(locale, 'panel.report.disclaimer')}</p>
+        <p className="mb-0 mt-2 font-mono text-[10px] text-ink-faint">
+          {t(locale, 'panel.report.poweredBy')}
+        </p>
       </footer>
     </Shell>
   );

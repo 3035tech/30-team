@@ -11,17 +11,19 @@ import {
   dialogFieldClass,
   dialogOverlayClass,
 } from './app-dialog-styles';
+import { RichTextEditor } from './RichTextEditor';
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key (or legacy name), label, defaultValue?,
- *   type?: 'text'|'password'|'textarea'|'select'|'boolean'|'checkboxGroup'|'imageUpload',
+ *   type?: 'text'|'password'|'textarea'|'richText'|'select'|'boolean'|'checkboxGroup'|'imageUpload',
  *   options?: [{value,label}],
  *   showWhen?: (values) => boolean,
  *   placeholder?: string,
  *   help?: string,
  *   rows?: number,
+ *   minHeight?: number, // richText
  *   // imageUpload:
  *   uploadUrl?: string,
  *   storageConfigured?: boolean,
@@ -109,6 +111,7 @@ export function PromptFormDialog({
   if (!mounted || !open) return null;
 
   const heading = title || t(locale, 'panel.common.editTitle');
+  const hasRichText = fields.some((f) => f.type === 'richText');
 
   const toggleCheck = (key, value) => {
     setValues((prev) => {
@@ -305,6 +308,21 @@ export function PromptFormDialog({
       );
     }
 
+    if (f.type === 'richText') {
+      return (
+        <div className="mt-1.5">
+          <RichTextEditor
+            value={values[fk] ?? ''}
+            onChange={(html) => setField(fk, html)}
+            placeholder={f.placeholder || ''}
+            minHeight={f.minHeight || 100}
+            locale={locale}
+            aria-label={f.label}
+          />
+        </div>
+      );
+    }
+
     if (f.type === 'textarea') {
       return (
         <textarea
@@ -341,7 +359,12 @@ export function PromptFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="prompt-form-title"
-        className={cn('prompt-form-card', dialogCardClass, 'max-h-[90vh] max-w-[520px] overflow-y-auto')}
+        className={cn(
+          'prompt-form-card',
+          dialogCardClass,
+          'max-h-[90vh] overflow-y-auto',
+          hasRichText ? 'max-w-[560px]' : 'max-w-[520px]'
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">

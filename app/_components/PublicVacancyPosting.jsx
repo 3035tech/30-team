@@ -46,6 +46,8 @@ const SC = {
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
   card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
   input: 'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
+  btnPrimary:
+    'min-h-touch items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-xs font-medium text-white',
 };
 
 function MetaChip({ children }) {
@@ -685,37 +687,70 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
   const website = String(company?.website || '').trim();
   const aboutHtml = company?.aboutHtml || '';
   const logoUrl = String(company?.logoUrl || '').trim();
+  const openCount = Number(total) > 0 ? Number(total) : items.length;
 
   return (
     <div className={SC.shell}>
       <div className={SC.glow} aria-hidden />
       <div className={SC.wrap}>
-        <header className="mb-6">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt=""
-              width={56}
-              height={56}
-              className="mb-3 rounded-control object-contain"
-            />
-          ) : (
-            <img src={brandMarkSrc(64)} alt="" width={40} height={40} className="mb-3" />
-          )}
-          <p className="mb-2 mt-0 font-mono text-xs">
-            <Link href="/j" className="text-ink-muted">
-              {t(locale, 'publicVacancy.browseOpenCta')}
-            </Link>
-          </p>
-          <h1
-            className="m-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-normal text-transparent text-[clamp(26px,4vw,36px)]"
-          >
-            {name}
-          </h1>
-          {website ? (
-            <p className="mb-0 mt-2.5 text-sm">
-              <a href={website} target="_blank" rel="noopener noreferrer" className="text-brand-500">
-                {t(locale, 'publicVacancy.companySite')}
+        <nav className="mb-4 font-mono text-xs text-ink-muted" aria-label={t(locale, 'publicVacancy.breadcrumbAria')}>
+          <Link href="/j" className="text-ink-muted no-underline hover:text-brand-500">
+            {t(locale, 'publicVacancy.browseOpenCta')}
+          </Link>
+          <span className="mx-1.5 text-ink-faint" aria-hidden>
+            /
+          </span>
+          <span className="text-ink">{name}</span>
+        </nav>
+
+        <header className="relative mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-brand-500/[0.12] via-ink/[0.03] to-transparent px-5 py-6 sm:px-7 sm:py-8">
+          <div className="flex flex-wrap items-center gap-4">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                width={72}
+                height={72}
+                className="h-[72px] w-[72px] shrink-0 rounded-control bg-white/80 object-contain p-1.5 shadow-sm"
+              />
+            ) : (
+              <img
+                src={brandMarkSrc(72)}
+                alt=""
+                width={56}
+                height={56}
+                className="shrink-0 rounded-control bg-white/70 p-2"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 mt-0 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-label">
+                {t(locale, 'publicVacancy.companyCareersEyebrow')}
+              </p>
+              <h1 className="m-0 font-display text-[clamp(26px,4vw,36px)] font-semibold leading-tight text-ink">
+                {name}
+              </h1>
+              <p className="mb-0 mt-2 text-sm text-ink-muted">
+                {t(locale, 'publicVacancy.companyOpenCount', { n: openCount })}
+                {website ? (
+                  <>
+                    {' · '}
+                    <a
+                      href={website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-500 no-underline hover:underline"
+                    >
+                      {t(locale, 'publicVacancy.companySite')}
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            </div>
+          </div>
+          {items.length > 0 ? (
+            <p className="mb-0 mt-5">
+              <a href="#company-open-roles" className={cn(SC.btnPrimary, 'inline-flex no-underline')}>
+                {t(locale, 'publicVacancy.companySeeRolesCta')}
               </a>
             </p>
           ) : null}
@@ -730,7 +765,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
           </section>
         ) : null}
 
-        <main className={SC.card}>
+        <main id="company-open-roles" className={SC.card}>
           <h2 className="mb-3.5 mt-0 text-base font-semibold">
             {t(locale, 'publicVacancy.companyOpenRoles')}
           </h2>
@@ -753,23 +788,27 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
                   item.showSalary && (item.salaryMin || item.salaryMax)
                     ? formatVacancySalaryRangeDisplay(item.salaryMin, item.salaryMax)
                     : null;
-                const meta = [empKey ? t(locale, empKey) : null, workplaceLabel, salary]
+                const target =
+                  item.targetDate
+                    ? t(locale, 'publicVacancy.targetDateLabel') +
+                      ': ' +
+                      String(item.targetDate).slice(0, 10)
+                    : null;
+                const meta = [empKey ? t(locale, empKey) : null, workplaceLabel, salary, target]
                   .filter(Boolean)
                   .join(' · ');
                 return (
-                <li key={item.vacancyId}>
-                  <Link
-                    href={item.path}
-                    className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.03]"
-                  >
-                    <span className="block text-[17px] font-medium">{item.title}</span>
-                    {meta ? (
-                      <span className="mt-1.5 block font-mono text-xs text-ink-muted">
-                        {meta}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
+                  <li key={item.vacancyId}>
+                    <Link
+                      href={item.path}
+                      className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.03]"
+                    >
+                      <span className="block text-[17px] font-medium">{item.title}</span>
+                      {meta ? (
+                        <span className="mt-1.5 block font-mono text-xs text-ink-muted">{meta}</span>
+                      ) : null}
+                    </Link>
+                  </li>
                 );
               })}
             </ul>

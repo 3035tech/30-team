@@ -65,12 +65,7 @@ _(vazio — B-001–B-006 entregues)_
 _(entregue — ver `docs/job-seo-and-distribution.md`. Inclui agregadores B-119 e logo empresa via S3.)_
 
 ### B-120 — Página `/c` mais rica (carreiras da empresa)
-Hoje: logo, sobre, lista de vagas (título + meta básica). Melhorar employer brand sem virar portal completo.
-- Hero com logo + nome + CTA claro; breadcrumb `/j` ↔ `/c` ↔ `/j/{vaga}` (voltar à empresa já existe na vaga quando perfil público está on)
-- Cards de vaga: modalidade/local, faixa (se flag), prazo; filtros leves (remoto/cidade/tipo) se volume ≥ N
-- Bloco “como é trabalhar aqui” reusando `about_html` + campos futuros opcionais (benefícios curtos, áreas)
-- SEO: meta description mais rica; JSON-LD Organization se fizer sentido
-- **Fora:** blog, login de candidato, ATS full
+_(entregue — hero logo+nome+CTA, breadcrumb `/j` → empresa, meta local/faixa/prazo nos cards, “sobre” com RichTextEditor no admin. Filtros leves / JSON-LD Organization ficam fora deste corte.)_
 
 ---
 
@@ -91,7 +86,7 @@ _(entregue — B-301 briefing Equipe, B-302 briefing na vaga, B-303 notif `reten
 
 Escopo **deliberadamente estreito** vs “jornada completa” (LMS/AVD/desligamento ficam fora).
 
-_(entregue — B-701 check-ins D30/D60/D90; B-702 checklist D1; B-703 proposta/aceite mínimo no funil.)_  
+_(entregue — B-701 check-ins D30/D60/D90; B-702 checklist D1; B-703 proposta/aceite mínimo no funil; jornada contínua na Equipe via `HireJourneyBlock`.)_  
 **Fora deste epic:** trilhas LMS, avaliação 360/AVD, desligamento formal, portal colaborador full.
 
 ---

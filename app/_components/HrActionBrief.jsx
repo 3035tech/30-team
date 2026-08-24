@@ -48,6 +48,10 @@ export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personNa
         interview: t(locale, 'panel.team.briefInterview'),
         team: t(locale, 'panel.team.briefTeam'),
         hypotheses: t(locale, 'panel.team.briefHypotheses'),
+        synthesisConvergences: t(locale, 'panel.team.synthesisConvergences'),
+        synthesisTensions: t(locale, 'panel.team.synthesisTensions'),
+        synthesisHowToLead: t(locale, 'panel.team.synthesisHowToLead'),
+        synthesisPdiIdeas: t(locale, 'panel.team.synthesisPdiIdeas'),
         footer: t(locale, 'panel.team.briefPrintFooter'),
         generatedAt: t(locale, 'panel.team.briefPrintGenerated', {
           date: new Date().toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
@@ -83,6 +87,35 @@ export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personNa
           {syn.headline}
         </p>
       ) : null}
+
+      {(() => {
+        const synSections = [
+          ['convergences', 'panel.team.synthesisConvergences'],
+          ['tensions', 'panel.team.synthesisTensions'],
+          ['howToLead', 'panel.team.synthesisHowToLead'],
+          ['pdiIdeas', 'panel.team.synthesisPdiIdeas'],
+        ].filter(([key]) => syn[key]?.length);
+        if (!synSections.length) return null;
+        return (
+          <section className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {synSections.map(([key, labelKey]) => (
+              <div
+                key={key}
+                className="rounded-control border border-ink/10 bg-white/70 px-2.5 py-2"
+              >
+                <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+                  {t(locale, labelKey)}
+                </div>
+                <ul className="m-0 list-disc space-y-1 pl-4 text-xs leading-snug text-ink">
+                  {syn[key].map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </section>
+        );
+      })()}
 
       {alerts.length > 0 ? (
         <section className="mb-3">

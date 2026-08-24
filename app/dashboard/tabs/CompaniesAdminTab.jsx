@@ -11,6 +11,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { RichTextEditor } from '../../_components/RichTextEditor';
 
 const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
 const FIELD_INPUT =
@@ -720,20 +721,20 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               </span>
             </span>
           </label>
-          <label className={FIELD_LABEL}>
+          <div className={FIELD_LABEL}>
             {t(locale, 'panel.admin.editCompanyAbout')}
-            <textarea
+            <RichTextEditor
               value={form.aboutHtml}
-              onChange={(e) => setFormField('aboutHtml', e.target.value)}
+              onChange={(html) => setFormField('aboutHtml', html)}
               placeholder={t(locale, 'panel.admin.editCompanyAboutPh')}
-              rows={4}
+              minHeight={120}
+              locale={locale}
               disabled={formSaving}
-              className={cn(FIELD_INPUT, 'min-h-[88px] resize-y')}
             />
             <span className="text-[11px] leading-snug text-ink-muted">
               {t(locale, 'panel.admin.editCompanyAboutHelp')}
             </span>
-          </label>
+          </div>
           {drawerMode === 'edit' ? (
             <label
               className={cn(

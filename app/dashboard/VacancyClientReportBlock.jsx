@@ -976,7 +976,27 @@ export function VacancyClientReportBlock({
           </div>
 
           <div className="mt-5">
-            <span className={S.label}>{t(locale, 'panel.report.historyTitle')}</span>
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+              <span className={S.label}>{t(locale, 'panel.report.historyTitle')}</span>
+              {reports.some((r) => r.isLive) ? (
+                <button
+                  type="button"
+                  className={cn(S.btnGhost, 'px-2.5 py-1.5 text-[11px]')}
+                  disabled={busy}
+                  onClick={async () => {
+                    const urls = reports
+                      .filter((r) => r.isLive)
+                      .map((r) => r.url || (appUrl ? `${appUrl}/r/${r.token}` : `/r/${r.token}`));
+                    if (!urls.length) return;
+                    const ok = await copyToClipboard(urls.join('\n'));
+                    if (ok) showOk(t(locale, 'panel.report.copyAllLinksDone', { n: urls.length }));
+                    else void showError(t(locale, 'panel.common.copyFailed'));
+                  }}
+                >
+                  {t(locale, 'panel.report.copyAllLinks')}
+                </button>
+              ) : null}
+            </div>
             {reports.length === 0 ? (
               <p className="text-xs text-ink-muted">{t(locale, 'panel.report.historyEmpty')}</p>
             ) : (

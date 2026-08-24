@@ -479,6 +479,20 @@ export function OverviewTab({
             {compositionLine ? (
               <p className="mt-1 mb-0 text-[11px] leading-snug text-ink-faint">{compositionLine}</p>
             ) : null}
+            {data.typeMix?.windowDelta?.available ? (
+              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.overview.typeMixWindowDelta', {
+                  recent: typeFullName(data.typeMix.windowDelta.recentDominant, locale),
+                  recentPct: data.typeMix.windowDelta.recentPct,
+                  prior: typeFullName(data.typeMix.windowDelta.priorDominant, locale),
+                  priorPct: data.typeMix.windowDelta.priorPct,
+                  delta:
+                    data.typeMix.windowDelta.pctDelta > 0
+                      ? `+${data.typeMix.windowDelta.pctDelta}`
+                      : String(data.typeMix.windowDelta.pctDelta),
+                })}
+              </p>
+            ) : null}
           </>
         )}
       </div>
@@ -514,7 +528,12 @@ export function OverviewTab({
             (onb.dueSoonCount || 0) > 0 ||
             (onb.overdue || []).length > 0 ||
             (onb.dueSoon || []).length > 0);
-        const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
+        const hasClima =
+          clima &&
+          (clima.openSurveys > 0 ||
+            clima.draftSurveys > 0 ||
+            clima.deltaVsPrevious != null ||
+            clima.latestMean != null);
         const hasRet = ret && ret.count > 0;
         const signalN =
           overdueN +
@@ -847,15 +866,33 @@ export function OverviewTab({
                     ) : null}
                     {hasClima ? (
                       <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
-                        {t(locale, 'panel.overview.peopleOpsClimate', {
-                          open: clima.openSurveys,
-                          resp: clima.openResponses,
-                          min: clima.minResponses,
-                        })}
+                        {clima.openSurveys > 0 || clima.draftSurveys > 0
+                          ? t(locale, 'panel.overview.peopleOpsClimate', {
+                              open: clima.openSurveys,
+                              resp: clima.openResponses,
+                              min: clima.minResponses,
+                            })
+                          : t(locale, 'panel.overview.peopleOpsClimateClosed')}
                         {clima.draftSurveys > 0 ? (
                           <span className="mt-1 block font-mono text-[11px] text-ink-muted">
                             {t(locale, 'panel.overview.peopleOpsClimateDraft', {
                               n: clima.draftSurveys,
+                            })}
+                          </span>
+                        ) : null}
+                        {clima.latestMean != null || clima.deltaVsPrevious != null ? (
+                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                            {t(locale, 'panel.overview.peopleOpsClimateDelta', {
+                              mean:
+                                clima.latestMean != null
+                                  ? String(clima.latestMean)
+                                  : '—',
+                              delta:
+                                clima.deltaVsPrevious == null
+                                  ? '—'
+                                  : clima.deltaVsPrevious > 0
+                                    ? `+${clima.deltaVsPrevious}`
+                                    : String(clima.deltaVsPrevious),
                             })}
                           </span>
                         ) : null}
