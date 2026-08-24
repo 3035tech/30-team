@@ -1,15 +1,39 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
-import { climateMeanLevel, buildClimateTrendChart } from '../../../lib/people/climate-viz';
+import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
 import { C } from '../../../lib/theme';
+
+function dateLocale(locale) {
+  return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
+}
+
+/** Short date for list / chart (dd/mm/yyyy or locale). */
+function formatClimateDate(raw, locale) {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(dateLocale(locale), { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+/** Prefer open date; show range when closed. */
+function formatClimateSurveyWhen(survey, locale) {
+  if (!survey) return '';
+  const open = formatClimateDate(survey.opensAt || climateSurveyAnchorDate(survey), locale);
+  const close = formatClimateDate(survey.closesAt, locale);
+  if (open && close && survey.closesAt) {
+    return t(locale, 'panel.climate.dateRange', { from: open, to: close });
+  }
+  if (open) return t(locale, 'panel.climate.dateOpened', { d: open });
+  return '';
+}
 
 const TONE_BAR = {
   success: 'bg-success',
@@ -162,9 +186,9 @@ function ClimateTrendChart({ surveys, locale }) {
               className="fill-ink-muted"
               style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
             >
-              {(p.title || '—').slice(0, 10)}
+              {formatClimateDate(p.at, locale) || (p.title || '—').slice(0, 8)}
             </text>
-            <title>{`${p.title}: ${p.mean}`}</title>
+            <title>{`${p.title}${p.at ? ` · ${formatClimateDate(p.at, locale)}` : ''}: ${p.mean}`}</title>
           </g>
         ))}
         <text
@@ -216,8 +240,11 @@ function ClimateCompareBars({ surveys, locale }) {
                   title={`${s.title}: ${s.overallMean}`}
                 />
               </div>
-              <span className="w-full truncate text-center font-mono text-[9px] text-ink-faint" title={s.title}>
-                {(s.title || '—').slice(0, 12)}
+              <span
+                className="w-full truncate text-center font-mono text-[9px] text-ink-faint"
+                title={`${s.title}${formatClimateSurveyWhen(s, locale) ? ` · ${formatClimateSurveyWhen(s, locale)}` : ''}`}
+              >
+                {formatClimateDate(climateSurveyAnchorDate(s), locale) || (s.title || '—').slice(0, 12)}
               </span>
             </li>
           );
@@ -480,6 +507,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     if (!selectedId) return;
     const values = await promptForm({
       title: t(locale, 'panel.climate.addQuestionTitle'),
+      message: t(locale, 'panel.climate.addQuestionHint'),
       confirmLabel: t(locale, 'panel.climate.addQuestionConfirm'),
       fields: [
         {
@@ -487,6 +515,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           type: 'select',
           label: t(locale, 'panel.climate.questionKindLabel'),
           defaultValue: 'likert',
+          help: t(locale, 'panel.climate.questionKindHelp'),
           options: [
             { value: 'likert', label: t(locale, 'panel.climate.questionKind.likert') },
             { value: 'text', label: t(locale, 'panel.climate.questionKind.text') },
@@ -645,7 +674,14 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                 className="rounded-md border border-ink/10 px-2.5 py-2 text-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-ink">{s.title}</span>
+                  <span className="text-ink">
+                    {s.title}
+                    {formatClimateSurveyWhen(s, locale) ? (
+                      <span className="ml-2 font-mono text-[10px] text-ink-faint">
+                        {formatClimateSurveyWhen(s, locale)}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="font-mono text-ink-muted">
                     {s.overallMean != null
                       ? t(locale, 'panel.climate.overallMeanShort', { n: s.overallMean })
@@ -742,6 +778,9 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     {t(locale, `panel.climate.status.${s.status}`)} ·{' '}
                     {t(locale, 'panel.climate.qCount', { n: s.questionCount || 0 })} ·{' '}
                     {t(locale, 'panel.climate.rCount', { n: resp })}
+                    {formatClimateSurveyWhen(s, locale)
+                      ? ` · ${formatClimateSurveyWhen(s, locale)}`
+                      : ''}
                   </div>
                   {s.status === 'open' || s.status === 'closed' ? (
                     <div className="mt-2">
@@ -770,6 +809,11 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
               <div className="flex flex-col gap-3">
                 <div>
                   <h3 className="m-0 font-display text-lg text-ink">{detail.title}</h3>
+                  {formatClimateSurveyWhen(detail, locale) ? (
+                    <p className={cn(S.faint, 'm-0 mt-1 font-mono text-[11px]')}>
+                      {formatClimateSurveyWhen(detail, locale)}
+                    </p>
+                  ) : null}
                   {detail.description ? (
                     <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>{detail.description}</p>
                   ) : null}
