@@ -71,7 +71,7 @@ function StatTile({ value, label, color, onClick }) {
       style={color ? { borderColor: `${color}35` } : undefined}
     >
       <div
-        className="font-display text-[26px] leading-tight text-ink"
+        className="font-ui text-[26px] font-semibold leading-tight text-ink"
         style={color ? { color } : undefined}
       >
         {value}

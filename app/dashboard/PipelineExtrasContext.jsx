@@ -9,7 +9,7 @@ import { rejectionReasonLabel } from './pipeline-prompts';
 const PipelineExtrasContext = createContext(null);
 
 const FIELD =
-  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3.5 py-3 font-display text-sm text-ink';
+  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3.5 py-3 font-ui text-sm text-ink';
 const BTN_PRIMARY =
   'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-[13px] text-white';
 const BTN_GHOST =
@@ -71,7 +71,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
         </span>
         <h2
           id="pipeline-extras-title"
-          className="mb-0 mt-2 font-display text-[22px] font-normal leading-[1.25] text-ink"
+          className="mb-0 mt-2 font-ui text-[22px] font-semibold leading-[1.25] text-ink"
         >
           {title}
         </h2>

@@ -740,7 +740,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     <div className={S.stack}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-2xl">
-          <h2 className="m-0 font-display text-xl text-ink">{t(locale, 'panel.climate.pageTitle')}</h2>
+          <h2 className="m-0 font-ui text-xl font-semibold text-ink">{t(locale, 'panel.climate.pageTitle')}</h2>
           <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>{t(locale, 'panel.climate.pageHint')}</p>
         </div>
         <button type="button" disabled={busy} onClick={createSurvey} className={cn(S.btnPrimary, 'min-h-touch shrink-0')}>
@@ -874,7 +874,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                             </span>
                           ) : null}
                         </div>
-                        <h3 className="m-0 font-display text-2xl leading-tight text-ink">{detail.title}</h3>
+                        <h3 className="m-0 font-ui text-2xl font-semibold leading-tight text-ink">{detail.title}</h3>
                         {detail.description ? (
                           <p className={cn(S.muted, 'm-0 mt-2 text-sm')}>{detail.description}</p>
                         ) : null}
@@ -1016,7 +1016,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                                 <span className="min-w-0 flex-1 text-sm leading-snug text-ink">
                                   {row.prompt}
                                 </span>
-                                <span className="shrink-0 font-display text-xl tabular-nums text-ink">
+                                <span className="shrink-0 font-ui text-xl tabular-nums text-ink">
                                   {row.mean != null ? row.mean : '—'}
                                 </span>
                               </div>

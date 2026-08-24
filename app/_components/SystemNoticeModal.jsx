@@ -9,7 +9,14 @@ import {
   dialogCardClass,
   dialogOverlayClass,
 } from './app-dialog-styles';
+import { Icon } from './Icon';
 
+function noticeIconName(tone) {
+  if (tone === 'error') return 'feedbackError';
+  if (tone === 'warning') return 'feedbackWarning';
+  if (tone === 'ok') return 'feedbackOk';
+  return 'feedbackInfo';
+}
 /**
  * In-app notice dialog (replaces browser alert).
  * Portaled to document.body so the backdrop covers the full viewport.
@@ -77,16 +84,23 @@ export function SystemNoticeModal({
         className={dialogCardClass}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className={cn('font-mono text-[10px] uppercase tracking-[2px]', accentClass)}>
-          30Team
-        </span>
-        <h2
-          id="system-notice-title"
-          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
-        >
-          {heading}
-        </h2>
-        <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+        <div className="flex items-start gap-3">
+          <span className={cn('mt-1 shrink-0', accentClass)} aria-hidden>
+            <Icon name={noticeIconName(tone)} className="h-5 w-5 shrink-0" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <span className={cn('font-mono text-[10px] uppercase tracking-[2px]', accentClass)}>
+              30Team
+            </span>
+            <h2
+              id="system-notice-title"
+              className="mb-0 mt-2 font-ui text-xl font-semibold leading-tight text-ink"
+            >
+              {heading}
+            </h2>
+            <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+          </div>
+        </div>
         <div className="mt-[22px] flex justify-end">
           <button
             type="button"

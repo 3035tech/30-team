@@ -210,7 +210,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           )}
                         >
                           <div className="mb-[3px] flex items-start justify-between gap-1">
-                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] text-ink">
+                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-[13px] text-ink">
                               {titleCasePersonName(r.name)}
                             </div>
                             {days != null && aging ? (

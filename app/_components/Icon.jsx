@@ -232,6 +232,40 @@ export function Icon({ name, className }) {
           <rect x="6" y="13" width="12" height="8" rx="1" />
         </svg>
       );
+    case 'check':
+    case 'feedbackOk':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8.5 12.5 2.2 2.2 4.8-5.2" />
+        </svg>
+      );
+    case 'alert':
+    case 'feedbackWarning':
+      return (
+        <svg {...props}>
+          <path d="M12 3.5 21 19.5H3Z" />
+          <path d="M12 10v4" />
+          <path d="M12 17h.01" />
+        </svg>
+      );
+    case 'infoCircle':
+    case 'feedbackInfo':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5" />
+          <path d="M12 8h.01" />
+        </svg>
+      );
+    case 'feedbackError':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m9 9 6 6" />
+          <path d="m15 9-6 6" />
+        </svg>
+      );
     default:
       return null;
   }

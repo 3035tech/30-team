@@ -152,7 +152,7 @@ export function CompatTab({
     <div>
       <div className={cn(S.card, 'mb-3.5 px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'dashboard.compatibility')}</span>
-        <h2 className="mt-2 mb-0 font-display text-[22px] font-normal leading-tight text-ink">
+        <h2 className="mt-2 mb-0 font-ui text-[22px] font-semibold font-normal leading-tight text-ink">
           {t(locale, 'panel.compat.headline')}
         </h2>
         <p className="mt-2.5 mb-0 max-w-[64ch] text-sm leading-relaxed text-ink-muted">

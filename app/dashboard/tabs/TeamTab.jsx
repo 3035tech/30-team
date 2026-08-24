@@ -50,7 +50,7 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
   return (
     <section className="mb-4 rounded-control border border-ink/12 bg-brand-500/[0.06] p-3.5">
       <span className={cn(S.label, 'mb-2')}>{t(locale, 'panel.team.synthesisTitle')}</span>
-      <p className="mb-3 mt-0 font-display text-sm leading-snug text-ink">
+      <p className="mb-3 mt-0 font-ui text-sm leading-snug text-ink">
         {synthesis.headline}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
@@ -569,7 +569,7 @@ export function TeamTab({
           onBlur={commitSearch}
           placeholder={t(locale, 'dashboard.searchPlaceholder')}
           aria-label={t(locale, 'panel.team.searchAriaLabel')}
-          className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-10 pr-4 font-display text-sm text-ink outline-none"
+          className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-10 pr-4 font-ui text-sm text-ink outline-none"
         />
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-faint">
           ⌕
@@ -736,7 +736,7 @@ export function TeamTab({
                         >
                           <div className="mb-2 flex items-center gap-2">
                             <span className="shrink-0 text-xl leading-none">{d.emoji}</span>
-                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-display text-[13px] leading-snug text-ink">
+                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-[13px] leading-snug text-ink">
                               {titleCasePersonName(r.name)}
                             </span>
                             {days != null && aging ? (

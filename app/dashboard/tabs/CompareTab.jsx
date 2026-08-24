@@ -177,7 +177,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
     <div className="flex flex-col gap-3.5">
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'panel.compare.title')}</span>
-        <h2 className="mt-2 mb-0 font-display text-[22px] font-normal leading-tight text-ink">
+        <h2 className="mt-2 mb-0 font-ui text-[22px] font-semibold font-normal leading-tight text-ink">
           {t(locale, 'panel.compare.headline')}
         </h2>
         <p className="mt-2.5 mb-0 max-w-[62ch] text-sm leading-relaxed text-ink-muted">

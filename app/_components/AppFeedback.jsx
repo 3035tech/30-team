@@ -13,6 +13,21 @@ import { cn } from '../../lib/cn';
 import { ConfirmDialog } from './ConfirmDialog';
 import { PromptFormDialog } from './PromptFormDialog';
 import { SystemNoticeModal } from './SystemNoticeModal';
+import { Icon } from './Icon';
+
+function toastIconName(tone) {
+  if (tone === 'error') return 'feedbackError';
+  if (tone === 'warning') return 'feedbackWarning';
+  if (tone === 'info') return 'feedbackInfo';
+  return 'feedbackOk';
+}
+
+function toastIconClass(tone) {
+  if (tone === 'error') return 'text-danger';
+  if (tone === 'warning') return 'text-warning';
+  if (tone === 'info') return 'text-info';
+  return 'text-success';
+}
 
 const AppFeedbackContext = createContext(null);
 
@@ -147,7 +162,7 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
                   key={item.id}
                   role="status"
                   className={cn(
-                    'pointer-events-auto rounded-xl border border-l-4 bg-white px-3.5 py-3 font-display text-[13px] leading-snug text-ink shadow-toast',
+                    'pointer-events-auto flex items-start gap-2.5 rounded-xl border border-l-4 bg-white px-3.5 py-3 font-ui text-[13px] leading-snug text-ink shadow-toast',
                     item.tone === 'error' && 'border-danger/33 border-l-danger',
                     item.tone === 'info' && 'border-info/33 border-l-info',
                     item.tone === 'warning' && 'border-warning/33 border-l-warning',
@@ -157,7 +172,10 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
                       'border-success/33 border-l-success'
                   )}
                 >
-                  {item.message}
+                  <span className={cn('mt-0.5 shrink-0', toastIconClass(item.tone))} aria-hidden>
+                    <Icon name={toastIconName(item.tone)} className="h-4 w-4 shrink-0" />
+                  </span>
+                  <span className="min-w-0 flex-1">{item.message}</span>
                 </div>
               ))}
             </div>,

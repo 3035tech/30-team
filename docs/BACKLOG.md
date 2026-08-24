@@ -88,19 +88,6 @@ _(entregue — B-701 check-ins D30/D60/D90; B-702 checklist D1; B-703 proposta/a
 
 ---
 
-## Aberto — Epic B-800 (assistente de ajuda no painel)
-
-Widget no canto do dashboard para gestores tirarem dúvida de **como usar o 30Team** (onde ir, como fazer) — não chat genérico nem análise de candidato.
-
-### B-801 — Assistente de ajuda (RAG + custo controlado)
-- **UX:** botão/widget flutuante no dashboard; sugestões prontas (“como criar vaga?”, “onde marcar contratado?”); respostas com deep link (`?tab=…`) + apontar seção do Guia; copy hedged; pt-BR + en.
-- **Escopo da IA:** só produto 30Team (Guia `panel.help.*` / HelpTab + docs de uso). Recusar fora de escopo (folha, clínica, dados de pessoa).
-- **Custo:** não mandar o Guia inteiro no prompt. Chunks por seção + retrieval (top-k curto) → modelo barato (`gpt-4o-mini` via `lib/openai-chat.js`). Fallback **0 token** para FAQ/atalhos óbvios. Cap de histórico (poucos turns). Rate limit / orçamento por user ou `company_id`.
-- **API:** rota admin fina (ex. `/api/admin/help-chat`); sem PII de candidatos no contexto; audit opcional de uso.
-- **Fora:** segunda LLM genérica; misturar com rubrica/descrição de vaga; substituir o Guia (IA é atalho).
-
----
-
 ## Em andamento
 
 _(vazio)_
@@ -115,3 +102,5 @@ _(vazio)_
 - Epic **B-300** fechado.
 - Epic **B-500** fechado (PDI + clima: estrutura + B-501–B-506).
 - Epic **B-600** fechado (assessment → ação + polish de revisão/pulso/`/e`/Guia).
+- Epic **B-800** / **B-801** entregue (assistente de ajuda no painel — FAQ + retrieval + LLM barato).
+- Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).

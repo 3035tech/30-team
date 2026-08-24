@@ -27,6 +27,7 @@ import { PipelineExtrasProvider } from './PipelineExtrasContext';
 import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
+import { HelpAssistantWidget } from './HelpAssistantWidget';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -79,7 +80,7 @@ function ExportCsvButton({ href, locale }) {
       onClick={onExport}
       disabled={busy}
       className={cn(
-        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-display text-[13px] text-brand-500',
+        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-ui text-[13px] text-brand-500',
         busy ? 'cursor-wait opacity-70' : 'cursor-pointer'
       )}
     >
@@ -572,7 +573,7 @@ export default function DashboardClient({
   return (
     <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
-    <div className="relative min-h-screen bg-canvas font-display text-ink">
+    <div className="relative min-h-screen bg-canvas font-ui text-ink">
 
       <button
         type="button"
@@ -708,7 +709,7 @@ export default function DashboardClient({
               }}
               placeholder={t(locale, 'dashboard.searchPlaceholder')}
               aria-label={t(locale, 'dashboard.searchAriaLabel')}
-              className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-[42px] pr-4 font-display text-sm text-ink"
+              className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-[42px] pr-4 font-ui text-sm text-ink"
             />
             <span className="pointer-events-none absolute left-[15px] top-1/2 inline-flex -translate-y-1/2 text-ink-faint"><Icon name="search" /></span>
             {selectedSearch && (
@@ -1155,6 +1156,9 @@ export default function DashboardClient({
         </div>
       </div>
     </div>
+    {can(sessionAuth, CAP.HELP_VIEW) ? (
+      <HelpAssistantWidget locale={locale} navigateDashboard={navigateWithOpts} />
+    ) : null}
     </PipelineExtrasProvider>
     </AppFeedbackProvider>
   );

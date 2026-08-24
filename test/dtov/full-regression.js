@@ -495,6 +495,27 @@ async function runOfflineLibs() {
     return `empty=${empty.readyCount} ready=${ready.readyCount}/${ready.total}`;
   });
 
+  await check('lib', 'help-assistant', async () => {
+    const {
+      matchHelpFaq,
+      retrieveHelpChunks,
+      buildHelpChunks,
+      isHelpOutOfScope,
+      answerHelpQuestion,
+    } = await import('../../lib/help-assistant.js');
+    if (!isHelpOutOfScope('diagnóstico clínico')) throw new Error('scope');
+    const faq = matchHelpFaq('como criar uma vaga?', 'pt-BR');
+    if (!faq || faq.source !== 'faq') throw new Error('faq miss');
+    const chunks = buildHelpChunks('pt-BR');
+    if (chunks.length < 10) throw new Error(`chunks ${chunks.length}`);
+    const top = retrieveHelpChunks('kanban pipeline contratação', chunks, 3);
+    if (!top.length) throw new Error('retrieve empty');
+    process.env.OPENAI_MOCK = '1';
+    const ans = await answerHelpQuestion({ question: 'como criar uma vaga?', locale: 'pt-BR' });
+    if (ans.source !== 'faq' || !ans.answer) throw new Error('answer');
+    return `faq=${faq.id} chunks=${chunks.length} top=${top[0].section}`;
+  });
+
   await check('lib', 'slugify-accents-specials', async () => {
     const { slugify } = await import('../../lib/slugify.js');
     if (slugify('São Paulo') !== 'sao-paulo') throw new Error(`São Paulo → ${slugify('São Paulo')}`);

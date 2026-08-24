@@ -184,7 +184,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     vacancies: 12,
     publicVacancy: 12,
     candidates: 6,
-    pipeline: 7,
+    pipeline: 8,
     team: 6,
     people: 10,
     climate: 5,
