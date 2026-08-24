@@ -427,6 +427,80 @@ export function VacancyClientReportBlock({
     }
   };
 
+  const fillFieldsFromBrief = async () => {
+    if (actionsLocked) return;
+    const eligible = selectedPeople.filter(
+      (c) => !c.excludedFromClient && c.recommendation !== 'exclude'
+    );
+    if (!eligible.length) {
+      void showError(t(locale, 'panel.report.fillFromBriefNeedSelection'));
+      return;
+    }
+    setNoteActionBusy('fromBrief');
+    try {
+      const loc = locale === 'en' ? 'en' : 'pt-BR';
+      const results = await Promise.all(
+        eligible.map(async (c) => {
+          const res = await fetch(
+            `/api/admin/candidates/${encodeURIComponent(c.candidateId)}?locale=${encodeURIComponent(loc)}`
+          );
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) return { id: c.candidateId, ok: false };
+          const brief = data?.people?.decisionBrief || null;
+          const why =
+            String(brief?.synthesis?.headline || '').trim() ||
+            String(brief?.actionsDo?.[0]?.text || '').trim();
+          const watchOut = String(brief?.alerts?.[0]?.text || '').trim();
+          const interviewProbe = String(brief?.interviewQuestions?.[0]?.text || '').trim();
+          return {
+            id: c.candidateId,
+            ok: Boolean(why || watchOut || interviewProbe),
+            why,
+            watchOut,
+            interviewProbe,
+            recommendation: normalizeRecommendation(
+              overrides[c.candidateId]?.recommendation,
+              c.recommendation || 'bank'
+            ),
+          };
+        })
+      );
+      let filled = 0;
+      const patch = {};
+      for (const row of results) {
+        if (!row.ok) continue;
+        filled += 1;
+        patch[row.id] = {
+          recommendation: row.recommendation,
+          why: String(row.why || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+          watchOut: String(row.watchOut || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+          interviewProbe: String(row.interviewProbe || '').slice(0, STRUCTURED_FIELD_MAX_CHARS),
+        };
+      }
+      if (filled === 0) {
+        void showError(t(locale, 'panel.report.fillFromBriefEmpty'));
+      } else {
+        setOverrides((prev) => {
+          const next = { ...prev };
+          for (const [id, fields] of Object.entries(patch)) {
+            next[id] = {
+              recommendation: fields.recommendation,
+              why: fields.why || prev[id]?.why || '',
+              watchOut: fields.watchOut || prev[id]?.watchOut || '',
+              interviewProbe: fields.interviewProbe || prev[id]?.interviewProbe || '',
+            };
+          }
+          return next;
+        });
+        showOk(t(locale, 'panel.report.fillFromBriefDone', { n: filled }));
+      }
+    } catch (e) {
+      void showError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setNoteActionBusy('');
+    }
+  };
+
   const suggestShortlistWithAi = async () => {
     if (actionsLocked) return;
     const eligibleCandidates = candidates
@@ -826,6 +900,23 @@ export function VacancyClientReportBlock({
                   <AppLoading locale={locale} variant="button" label={t(locale, 'panel.report.aiWorking')} />
                 ) : (
                   t(locale, 'panel.report.fillFieldsAi')
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={fillFieldsFromBrief}
+                className={btnGhostClass({
+                  busy: noteActionBusy === 'fromBrief',
+                  locked: actionsLocked && noteActionBusy !== 'fromBrief',
+                })}
+                disabled={actionsLocked}
+                aria-busy={noteActionBusy === 'fromBrief' || undefined}
+                title={t(locale, 'panel.report.fillFromBrief')}
+              >
+                {noteActionBusy === 'fromBrief' ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'panel.common.loading')} />
+                ) : (
+                  t(locale, 'panel.report.fillFromBrief')
                 )}
               </button>
               <span

@@ -200,7 +200,7 @@ async function runOfflineLibs() {
     const hireHref = notificationHref(NOTIF.HIRE_ONBOARDING_KIT, { candidateId: 7 });
     if (!String(hireHref).includes('candidate=7')) throw new Error(`bad hire href ${hireHref}`);
     const digestHref = notificationHref(NOTIF.MANAGER_WEEKLY_DIGEST, {});
-    if (!String(digestHref).includes('tab=team')) throw new Error(`bad digest href ${digestHref}`);
+    if (!String(digestHref).includes('tab=overview')) throw new Error(`bad digest href ${digestHref}`);
     const spec = notificationCopySpec(NOTIF.RETENTION_WATCH, {
       candidateName: 'Ana',
       signalLabels: 'Equilíbrio',
@@ -221,9 +221,14 @@ async function runOfflineLibs() {
       staleCount: 1,
       retentionNames: 'A',
       staleNames: 'B',
+      attentionTotal: 3,
+      attentionSummary: '2 hire gaps',
     });
     if (digestSpec.titleKey !== 'dashboard.notifWeeklyDigestTitle') {
       throw new Error(`bad digest spec ${JSON.stringify(digestSpec)}`);
+    }
+    if (Number(digestSpec.values?.attention) !== 3) {
+      throw new Error(`digest missing attention ${JSON.stringify(digestSpec.values)}`);
     }
     return 'retention_watch + hire_kit + weekly_digest ok';
   });
@@ -254,12 +259,23 @@ async function runOfflineLibs() {
     const { dirname, join } = await import('node:path');
     const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-    const { buildTypeMixCompositionAdvice } = await import('../../lib/overview-type-mix.js');
+    const { buildTypeMixCompositionAdvice, buildMixVsRubricAdvice } = await import('../../lib/overview-type-mix.js');
     const empty = buildTypeMixCompositionAdvice({});
     if (empty.kind !== 'empty') throw new Error('expected empty');
     const conc = buildTypeMixCompositionAdvice({ 3: 10, 1: 1, 2: 1 });
     if (conc.kind !== 'concentrated' || conc.dominantType !== 3) {
       throw new Error(`expected concentrated got ${JSON.stringify(conc)}`);
+    }
+    const rubric = buildMixVsRubricAdvice({ 3: 10, 1: 1 }, [{ 5: 2, 6: 2 }]);
+    if (rubric.kind !== 'scarce_sought' || !rubric.scarceTypes?.includes(5)) {
+      throw new Error(`expected scarce_sought got ${JSON.stringify(rubric)}`);
+    }
+    const { extractClimateThemes } = await import('../../lib/people/climate-themes.js');
+    const themed = extractClimateThemes([
+      { prompt: 'x', answers: ['muita carga de trabalho', 'falta reconhecimento'] },
+    ]);
+    if (!(themed.themes || []).some((t) => t.key === 'workload')) {
+      throw new Error(`themes missing workload ${JSON.stringify(themed)}`);
     }
 
     const scoreSrc = await readFile(join(root, 'lib', 'people', 'interview-scorecard.js'), 'utf8');

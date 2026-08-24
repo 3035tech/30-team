@@ -1048,6 +1048,29 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                         {t(locale, 'panel.climate.textAnswersTitle')}
                       </h4>
                       <p className={cn(S.faint, 'm-0 mb-3')}>{t(locale, 'panel.climate.textAnswersHint')}</p>
+                      {aggregate.themes?.length ? (
+                        <div className="mb-3 rounded-control border border-ink/10 bg-canvas/50 px-3 py-2.5">
+                          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+                            {t(locale, 'panel.climate.themesTitle')}
+                          </div>
+                          <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'panel.climate.themesHint')}</p>
+                          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                            {aggregate.themes.map((th) => (
+                              <li key={th.key} className="text-[12px] leading-snug text-ink-muted">
+                                <span className="font-medium text-ink">
+                                  {t(locale, `panel.climate.theme.${th.key}`)}
+                                </span>
+                                <span className="font-mono text-ink-faint"> · {th.count}</span>
+                                {th.sample ? (
+                                  <span className="mt-0.5 block text-[11px] italic text-ink-faint">
+                                    “{th.sample}”
+                                  </span>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                       <ul className="m-0 flex list-none flex-col gap-3 p-0">
                         {aggregate.textByQuestion.map((block) => (
                           <li key={block.questionId} className="rounded-control border border-ink/10 px-3.5 py-3">

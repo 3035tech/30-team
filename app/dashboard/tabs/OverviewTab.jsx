@@ -151,6 +151,7 @@ export function OverviewTab({
   const advice = data.typeMix?.advice || null;
   const reasons = data.rejectionReasons || [];
   const maxReason = Math.max(...reasons.map((r) => r.n), 1);
+  const rejectPatterns = data.rejectionPatterns || [];
 
   const compositionLine = (() => {
     if (!advice || advice.kind === 'empty' || mixTotalRaw === 0) return null;
@@ -166,6 +167,22 @@ export function OverviewTab({
       });
     }
     return t(locale, 'panel.overview.compositionBalanced');
+  })();
+
+  const rubricDeltaLine = (() => {
+    const rd = data.typeMix?.rubricDelta;
+    if (!rd || rd.kind === 'empty' || rd.kind === 'aligned') return null;
+    if (rd.kind === 'scarce_sought' && rd.scarceTypes?.length) {
+      return t(locale, 'panel.overview.rubricDeltaScarce', {
+        types: rd.scarceTypes.map((x) => `T${x}`).join(', '),
+      });
+    }
+    if (rd.kind === 'surplus_unweighted' && rd.surplusType) {
+      return t(locale, 'panel.overview.rubricDeltaSurplus', {
+        type: typeFullName(rd.surplusType, locale),
+      });
+    }
+    return null;
   })();
 
   return (
@@ -407,6 +424,30 @@ export function OverviewTab({
               ))}
             </div>
           )}
+          {rejectPatterns.length > 0 ? (
+            <div className="mt-3 border-t border-ink/10 pt-3">
+              <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                {t(locale, 'panel.overview.rejectPatternsTitle')}
+              </span>
+              <ul className="mt-2 mb-0 flex list-none flex-col gap-1.5 p-0">
+                {rejectPatterns.slice(0, 4).map((p) => (
+                  <li
+                    key={`${p.reason}-${p.topType}`}
+                    className="text-[12px] leading-snug text-ink-muted"
+                  >
+                    {t(locale, 'panel.overview.rejectPatternRow', {
+                      reason: rejectionReasonLabel(locale, p.reason),
+                      type: `T${p.topType}`,
+                      n: p.n,
+                    })}
+                  </li>
+                ))}
+              </ul>
+              <p className="mb-0 mt-1.5 text-[10px] leading-snug text-ink-faint">
+                {t(locale, 'panel.overview.rejectPatternsHint')}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -495,6 +536,9 @@ export function OverviewTab({
                       : String(data.typeMix.windowDelta.pctDelta),
                 })}
               </p>
+            ) : null}
+            {rubricDeltaLine ? (
+              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">{rubricDeltaLine}</p>
             ) : null}
           </>
         )}

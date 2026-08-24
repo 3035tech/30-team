@@ -15,6 +15,7 @@ import { HrActionBrief } from '../_components/HrActionBrief';
 import { InterviewScorecardBlock } from './vacancies/InterviewScorecardBlock';
 import { VacancyOfferBlock } from './vacancies/VacancyOfferBlock';
 import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
+import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
 const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
@@ -76,6 +77,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
   const [motivatorsBusy, setMotivatorsBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [decisionBrief, setDecisionBrief] = useState(null);
+  const [fitScores, setFitScores] = useState(null);
   const [briefLoading, setBriefLoading] = useState(false);
 
   const showError = async (message) => {
@@ -110,11 +112,20 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
         if (cancelled) return;
         if (!res.ok) {
           setDecisionBrief(null);
+          setFitScores(null);
           return;
         }
         setDecisionBrief(data?.people?.decisionBrief || null);
+        const assessments = Array.isArray(data?.assessments) ? data.assessments : [];
+        const forVac = assessments.find(
+          (a) => a.scores && String(a.vacancyId) === String(vacancyId)
+        );
+        setFitScores(forVac?.scores || assessments.find((a) => a.scores)?.scores || null);
       } catch {
-        if (!cancelled) setDecisionBrief(null);
+        if (!cancelled) {
+          setDecisionBrief(null);
+          setFitScores(null);
+        }
       } finally {
         if (!cancelled) setBriefLoading(false);
       }
@@ -122,7 +133,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
     return () => {
       cancelled = true;
     };
-  }, [expanded, row.candidateId, locale]);
+  }, [expanded, row.candidateId, locale, vacancyId]);
 
   const saveNotes = async () => {
     setBusy(true);
@@ -377,6 +388,14 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               candidateId={row.candidateId}
               locale={locale}
               row={row}
+            />
+          ) : null}
+
+          {row.candidateId ? (
+            <VacancyFitDecisionStrip
+              vacancyId={vacancyId}
+              locale={locale}
+              scores={fitScores}
             />
           ) : null}
 

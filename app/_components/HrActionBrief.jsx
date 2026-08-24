@@ -11,7 +11,7 @@ import { S } from '../dashboard/dashboard-shared';
  * Briefing acionável (Equipe / vaga): síntese + faça/evite + entrevista + time + alertas.
  * Dados vêm de people.decisionBrief (servidor). Print/PDF via one-pager (B-401).
  */
-export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personName = '' }) {
+export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personName = '', nucleusFit: nucleusFitProp = null }) {
   const feedback = useAppFeedbackOptional();
 
   if (!brief?.hasAny) {
@@ -32,6 +32,11 @@ export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personNa
   const actionsDo = brief.actionsDo || [];
   const actionsAvoid = brief.actionsAvoid || [];
   const hypotheses = brief.hypotheses || [];
+  const nucleusFit = nucleusFitProp || brief.nucleusFit || null;
+  const showNucleus =
+    nucleusFit &&
+    !nucleusFit.empty &&
+    (nucleusFit.summary || (nucleusFit.highlights || []).length > 0);
 
   const onPrint = () => {
     const ok = printDecisionBrief({
@@ -205,6 +210,42 @@ export function HrActionBrief({ locale = 'pt-BR', brief, dense = false, personNa
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {showNucleus ? (
+        <section className="mb-3">
+          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+            {t(locale, 'panel.team.briefNucleusFit')}
+          </div>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-xs leading-snug text-ink-muted">
+            {nucleusFit.summary ? (
+              <li className="rounded-control border border-ink/10 bg-white/60 px-2.5 py-2 text-ink">
+                {nucleusFit.summary}
+              </li>
+            ) : null}
+            {(nucleusFit.highlights || []).slice(0, 2).map((h) => (
+              <li
+                key={`nf-${h.withId || h.withName}-${h.level}`}
+                className={cn(
+                  'rounded-control px-2.5 py-2 text-ink',
+                  h.level === 'synergy'
+                    ? 'border border-success/20 bg-success/[0.05]'
+                    : 'border border-warning/25 bg-warning/[0.06]'
+                )}
+              >
+                {h.withName
+                  ? t(locale, 'panel.team.briefNucleusFitWith', {
+                      name: h.withName,
+                      title: h.title || '',
+                    })
+                  : h.title}
+              </li>
+            ))}
+          </ul>
+          <p className="mb-0 mt-1.5 text-[10px] leading-snug text-ink-faint">
+            {t(locale, 'panel.team.briefNucleusFitHint')}
+          </p>
         </section>
       ) : null}
 

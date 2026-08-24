@@ -91,6 +91,16 @@ _(entregue — B-701 check-ins D30/D60/D90; B-702 checklist D1; B-703 proposta/a
 
 ---
 
+## Aberto — Epic B-900 (Overview → decisão)
+
+Sprint **A** entregue (atenção scorecard + hire gaps, digest, hireGapsChip).  
+Sprint **B** entregue (B2 Fit na vaga, B8 nucleus fit no briefing, B9 preencher /r do briefing).  
+Sprint **C** entregue (C1 mix×rubrica, C4 motivo×tipo, C5 temas clima, C10 concern∩retenção).
+
+_(epic fechado — itens A/B/C entregues.)_
+
+---
+
 ## Em andamento
 
 _(vazio)_
@@ -106,4 +116,5 @@ _(vazio)_
 - Epic **B-500** fechado (PDI + clima: estrutura + B-501–B-506).
 - Epic **B-600** fechado (assessment → ação + polish de revisão/pulso/`/e`/Guia).
 - Epic **B-800** / **B-801** entregue (assistente de ajuda no painel — FAQ + retrieval + LLM barato).
+- Epic **B-900** entregue (Sprint A/B/C — Overview atenção + Fit/briefing/report + mix/rubrica/clima).
 - Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).
