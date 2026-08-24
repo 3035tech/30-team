@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS employee_pre_onboarding_items (
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT employee_pre_onboarding_item_key_chk
-    CHECK (item_key IN ('email_access', 'tools_access', 'equipment', 'd1_welcome')),
+    CHECK (item_key IN ('welcome_kit', 'rh_onboarding_call', 'manager_onboarding')),
   CONSTRAINT employee_pre_onboarding_status_chk
     CHECK (status IN ('pending', 'done', 'skipped')),
   CONSTRAINT employee_pre_onboarding_notes_len
@@ -31,7 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_pre_onboarding_candidate
   ON employee_pre_onboarding_items (candidate_id, item_key ASC);
 
 COMMENT ON TABLE employee_pre_onboarding_items IS
-  'Light pre-onboarding checklist at hire (accesses / D1). B-702 — not admissions LMS.';
+  'Day-1 checklist: welcome kit + access sheet, RH Meet, manager onboarding (B-702).';
 
 -- ── B-703 ──────────────────────────────────────────────────────────────────
 ALTER TABLE vacancy_candidates

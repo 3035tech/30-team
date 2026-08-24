@@ -193,7 +193,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     b600Pulse: 6,
     b600Employee: 5,
     b600Fit: 4,
-    b700Onboarding: 5,
+    b700Onboarding: 6,
     report: 8,
     motivators: 7,
     access: 9,
