@@ -126,6 +126,13 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const companyWebsite = posting?.showCompany ? posting.company?.website : null;
   const companyAbout = posting?.showCompany ? posting.company?.aboutHtml : '';
   const companyLogoUrl = posting?.showCompany ? posting.company?.logoUrl : null;
+  const companyProfileOn = Boolean(
+    posting?.companyPublicProfileEnabled ?? posting?.company?.publicProfileEnabled
+  );
+  const companyCareersPath =
+    companyProfileOn && posting?.companySlug
+      ? publicCompanyPath(posting.companySlug)
+      : null;
   const hasDesc = !isRichTextEmpty(posting?.description);
   const publishedLabel = formatPublicVacancyDate(posting?.createdAt, locale);
   const targetLabel = formatPublicVacancyDate(posting?.targetDate, locale);
@@ -188,7 +195,17 @@ className="mb-2 mt-0 font-mono text-[13px] text-ink-faint"
                   {companyName ? ` · ${companyName}` : ''}
                 </p>
               ) : null}
-              <p className="mb-0 mt-5">
+              <p className="mb-0 mt-5 flex flex-wrap gap-3">
+                {companyCareersPath ? (
+                  <Link
+                    href={companyCareersPath}
+                    className="inline-block cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-3 font-ui text-sm text-ink no-underline"
+                  >
+                    {companyName
+                      ? t(locale, 'publicVacancy.backToCompanyRoles', { name: companyName })
+                      : t(locale, 'publicVacancy.backToCompanyRolesGeneric')}
+                  </Link>
+                ) : null}
                 <Link
                   href="/j"
                   className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
@@ -205,11 +222,30 @@ className="mb-2 mt-0 font-mono text-[13px] text-ink-faint"
           ) : (
             <>
               <header>
+                {companyCareersPath ? (
+                  <p className="mb-3 mt-0">
+                    <Link
+                      href={companyCareersPath}
+                      className="inline-flex min-h-touch items-center font-mono text-xs text-ink-muted no-underline hover:text-brand-600"
+                    >
+                      ←{' '}
+                      {companyName
+                        ? t(locale, 'publicVacancy.backToCompanyRoles', { name: companyName })
+                        : t(locale, 'publicVacancy.backToCompanyRolesGeneric')}
+                    </Link>
+                  </p>
+                ) : null}
                 {companyName ? (
                   <p
 className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                   >
-                    <span>{companyName}</span>
+                    {companyCareersPath ? (
+                      <Link href={companyCareersPath} className="text-ink-muted no-underline hover:text-brand-600">
+                        {companyName}
+                      </Link>
+                    ) : (
+                      <span>{companyName}</span>
+                    )}
                     {companyWebsite ? (
                       <>
                         {' · '}
@@ -702,27 +738,40 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
             <p className="m-0 text-ink-muted">{t(locale, 'publicVacancy.companyNoOpenRoles')}</p>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {items.map((item) => (
+              {items.map((item) => {
+                const empKey = employmentTypeLabelKey(item.employmentType);
+                const workplaceLabel = formatWorkplaceLabel(
+                  {
+                    workplaceModality: item.workplaceModality,
+                    workplaceCity: item.workplaceCity,
+                    workplaceState: item.workplaceState,
+                  },
+                  locale,
+                  t
+                );
+                const salary =
+                  item.showSalary && (item.salaryMin || item.salaryMax)
+                    ? formatVacancySalaryRangeDisplay(item.salaryMin, item.salaryMax)
+                    : null;
+                const meta = [empKey ? t(locale, empKey) : null, workplaceLabel, salary]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
                 <li key={item.vacancyId}>
                   <Link
                     href={item.path}
-                    className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline"
+                    className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.03]"
                   >
-                    <span className="block text-[17px]">{item.title}</span>
-                    {(() => {
-                      const empKey = employmentTypeLabelKey(item.employmentType);
-                      if (!empKey) return null;
-                      return (
-                        <span
-                          className="mt-1.5 block font-mono text-xs text-ink-muted"
-                        >
-                          {t(locale, empKey)}
-                        </span>
-                      );
-                    })()}
+                    <span className="block text-[17px] font-medium">{item.title}</span>
+                    {meta ? (
+                      <span className="mt-1.5 block font-mono text-xs text-ink-muted">
+                        {meta}
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           {total > items.length ? (

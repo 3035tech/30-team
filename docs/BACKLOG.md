@@ -64,6 +64,14 @@ _(vazio — B-001–B-006 entregues)_
 
 _(entregue — ver `docs/job-seo-and-distribution.md`. Inclui agregadores B-119 e logo empresa via S3.)_
 
+### B-120 — Página `/c` mais rica (carreiras da empresa)
+Hoje: logo, sobre, lista de vagas (título + meta básica). Melhorar employer brand sem virar portal completo.
+- Hero com logo + nome + CTA claro; breadcrumb `/j` ↔ `/c` ↔ `/j/{vaga}` (voltar à empresa já existe na vaga quando perfil público está on)
+- Cards de vaga: modalidade/local, faixa (se flag), prazo; filtros leves (remoto/cidade/tipo) se volume ≥ N
+- Bloco “como é trabalhar aqui” reusando `about_html` + campos futuros opcionais (benefícios curtos, áreas)
+- SEO: meta description mais rica; JSON-LD Organization se fizer sentido
+- **Fora:** blog, login de candidato, ATS full
+
 ---
 
 ## Aberto — performance (audit dashboard)
