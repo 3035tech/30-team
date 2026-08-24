@@ -71,7 +71,11 @@ export async function GET(request, { params }) {
              WHEN vc.interview_notes IS NULL THEN FALSE
              WHEN TRIM(regexp_replace(vc.interview_notes, '<[^>]*>', '', 'g')) = '' THEN FALSE
              ELSE TRUE
-           END AS "hasNotes"
+           END AS "hasNotes",
+           COALESCE(NULLIF(vc.offer_status, ''), NULLIF(ass.offer_status, ''), 'none') AS "offerStatus",
+           COALESCE(NULLIF(vc.offer_salary, ''), ass.offer_salary, '') AS "offerSalary",
+           COALESCE(vc.offer_start_date, ass.offer_start_date) AS "offerStartDate",
+           COALESCE(NULLIF(vc.offer_notes, ''), ass.offer_notes, '') AS "offerNotes"
          FROM assessments ass
          JOIN candidates c ON c.id = ass.candidate_id
          LEFT JOIN vacancy_candidates vc
@@ -119,7 +123,11 @@ export async function GET(request, { params }) {
              WHEN vc.interview_notes IS NULL THEN FALSE
              WHEN TRIM(regexp_replace(vc.interview_notes, '<[^>]*>', '', 'g')) = '' THEN FALSE
              ELSE TRUE
-           END AS "hasNotes"
+           END AS "hasNotes",
+           COALESCE(NULLIF(vc.offer_status, ''), 'none') AS "offerStatus",
+           COALESCE(vc.offer_salary, '') AS "offerSalary",
+           vc.offer_start_date AS "offerStartDate",
+           COALESCE(vc.offer_notes, '') AS "offerNotes"
          FROM vacancy_candidates vc
          JOIN candidates c ON c.id = vc.candidate_id
          LEFT JOIN LATERAL (

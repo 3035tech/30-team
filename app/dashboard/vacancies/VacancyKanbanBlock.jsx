@@ -8,6 +8,7 @@ import { getKanbanStages } from '../dashboard-shared';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { formatRelativeAgo, inviteStatusShort, daysInStage, stageAgingTone } from './vacancy-admin-shared';
+import { VacancyOfferBlock } from './VacancyOfferBlock';
 
 export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
@@ -260,6 +261,36 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                             <div className="mt-1 font-mono text-[10px] text-success">
                               {t(locale, 'recruiting.startDateLabel')}: {r.startDate}
                             </div>
+                          ) : null}
+                          {r.candidateId ? (
+                            <VacancyOfferBlock
+                              vacancyId={vacancyId}
+                              candidateId={r.candidateId}
+                              assessmentId={r.assessmentId}
+                              locale={locale}
+                              compact
+                              initialOffer={{
+                                offerSalary: r.offerSalary,
+                                offerStartDate: r.offerStartDate,
+                                offerStatus: r.offerStatus || 'none',
+                                offerNotes: r.offerNotes,
+                              }}
+                              onSaved={(next) => {
+                                setRows((prev) =>
+                                  prev.map((x) =>
+                                    cardKey(x) === rid
+                                      ? {
+                                          ...x,
+                                          offerSalary: next.offerSalary,
+                                          offerStartDate: next.offerStartDate,
+                                          offerStatus: next.offerStatus,
+                                          offerNotes: next.offerNotes,
+                                        }
+                                      : x
+                                  )
+                                );
+                              }}
+                            />
                           ) : null}
                           {(inviteLabel || ago) ? (
                             <div className="mt-[5px] font-mono text-[10px] leading-[1.35] text-ink-muted">

@@ -83,12 +83,21 @@ _(entregue — B-301 briefing Equipe, B-302 briefing na vaga, B-303 notif `reten
 
 Escopo **deliberadamente estreito** vs “jornada completa” (LMS/AVD/desligamento ficam fora).
 
-| Id | Item | Notas |
-|----|------|-------|
-| B-703 | Proposta/aceite mínimo (salário/data/aceite) no funil | só se doer no fechamento comercial |
-
-**Entregue:** B-701 (check-ins D30/D60/D90); B-702 (checklist D1: kit + folha de acessos, Meet RH, onboarding gestor).  
+_(entregue — B-701 check-ins D30/D60/D90; B-702 checklist D1; B-703 proposta/aceite mínimo no funil.)_  
 **Fora deste epic:** trilhas LMS, avaliação 360/AVD, desligamento formal, portal colaborador full.
+
+---
+
+## Aberto — Epic B-800 (assistente de ajuda no painel)
+
+Widget no canto do dashboard para gestores tirarem dúvida de **como usar o 30Team** (onde ir, como fazer) — não chat genérico nem análise de candidato.
+
+### B-801 — Assistente de ajuda (RAG + custo controlado)
+- **UX:** botão/widget flutuante no dashboard; sugestões prontas (“como criar vaga?”, “onde marcar contratado?”); respostas com deep link (`?tab=…`) + apontar seção do Guia; copy hedged; pt-BR + en.
+- **Escopo da IA:** só produto 30Team (Guia `panel.help.*` / HelpTab + docs de uso). Recusar fora de escopo (folha, clínica, dados de pessoa).
+- **Custo:** não mandar o Guia inteiro no prompt. Chunks por seção + retrieval (top-k curto) → modelo barato (`gpt-4o-mini` via `lib/openai-chat.js`). Fallback **0 token** para FAQ/atalhos óbvios. Cap de histórico (poucos turns). Rate limit / orçamento por user ou `company_id`.
+- **API:** rota admin fina (ex. `/api/admin/help-chat`); sem PII de candidatos no contexto; audit opcional de uso.
+- **Fora:** segunda LLM genérica; misturar com rubrica/descrição de vaga; substituir o Guia (IA é atalho).
 
 ---
 

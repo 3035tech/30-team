@@ -29,6 +29,7 @@ import { formatPublicVacancyDate } from '../../../lib/public-vacancy-lifecycle';
 import { formatVacancySalaryRange, toDatetimeLocalValue } from '../vacancies/vacancy-admin-shared';
 import { VacancyDescriptionHtml } from '../vacancies/VacancyDescriptionHtml';
 import { VacancyPublicFlagsFields } from '../vacancies/VacancyPublicFlagsFields';
+import { VacancyFormSection } from '../vacancies/VacancyFormSection';
 import { VacancyDescriptionAssistBar } from '../vacancies/VacancyDescriptionAssistBar';
 import { VacancyInviteByEmail } from '../vacancies/VacancyInviteByEmail';
 import { VacancyInvitesBlock } from '../vacancies/VacancyInvitesBlock';
@@ -532,169 +533,170 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         )}
       >
         <div className="flex flex-col gap-3">
-          {isAdmin ? (
-            <select
-              value={companyId}
-              onChange={(e) => setCompanyId(e.target.value)}
-              aria-label={t(locale, 'dashboard.allCompanies')}
-              className={cn(FIELD_SELECT, "max-w-[420px]")}
-            >
-              {companies.length === 0 ? (
-                <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
-              ) : companies.map((c) => (
-                <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-              ))}
-            </select>
-          ) : null}
-
-          <div className={GRID_AUTO_LG}>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t(locale, 'recruiting.createTitlePh')}
-              aria-label={t(locale, 'recruiting.createTitlePh')}
-              className={FIELD}
-            />
-            <input
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder={t(locale, 'recruiting.createSlugPh')}
-              aria-label={t(locale, 'recruiting.createSlugPh')}
-              className={cn(FIELD, "max-w-[320px]")}
-            />
-          </div>
-
-          <div className={cn(GRID_AUTO, 'items-end')}>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.sortStatus')}
+          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
+            {isAdmin ? (
               <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className={FIELD_SELECT}
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                aria-label={t(locale, 'dashboard.allCompanies')}
+                className={cn(FIELD_SELECT, "max-w-[420px]")}
               >
-                <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-              </select>
-            </label>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.positionsLabel')}
-              <input
-                type="number"
-                min="1"
-                value={positionsCount}
-                onChange={(e) => setPositionsCount(e.target.value)}
-                aria-label={t(locale, 'recruiting.positionsLabel')}
-                className={cn(FIELD, "min-w-[72px] px-2")}
-              />
-            </label>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.targetDateLabel')}
-              <input
-                type="date"
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                aria-label={t(locale, 'recruiting.targetDateLabel')}
-                className={cn(FIELD, "px-2 py-[9px]")}
-              />
-            </label>
-          </div>
-
-          <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.employmentTypeLabel')}
-              <select
-                value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                className={FIELD_SELECT}
-              >
-                <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
-                {VACANCY_EMPLOYMENT_TYPES.map((type) => (
-                  <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                {companies.length === 0 ? (
+                  <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
+                ) : companies.map((c) => (
+                  <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
                 ))}
               </select>
-            </label>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.salaryMinPh')}
+            ) : null}
+
+            <div className={GRID_AUTO_LG}>
               <input
-                value={formatSalaryBr(salaryMin)}
-                onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
-                placeholder={t(locale, 'recruiting.salaryMinPh')}
-                inputMode="numeric"
-                aria-label={t(locale, 'recruiting.salaryMinPh')}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t(locale, 'recruiting.createTitlePh')}
+                aria-label={t(locale, 'recruiting.createTitlePh')}
                 className={FIELD}
               />
-            </label>
-            <label className={FIELD_LABEL}>
-              {t(locale, 'recruiting.salaryMaxPh')}
               <input
-                value={formatSalaryBr(salaryMax)}
-                onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
-                placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                inputMode="numeric"
-                aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                className={FIELD}
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder={t(locale, 'recruiting.createSlugPh')}
+                aria-label={t(locale, 'recruiting.createSlugPh')}
+                className={cn(FIELD, "max-w-[320px]")}
               />
-            </label>
-          </div>
+            </div>
 
-          <VacancyWorkplaceFields
-            locale={locale}
-            workplaceModality={workplaceModality}
-            workplaceState={workplaceState}
-            workplaceCity={workplaceCity}
-            onChange={(patch) => {
-              if (patch.workplaceModality !== undefined) setWorkplaceModality(patch.workplaceModality);
-              if (patch.workplaceState !== undefined) setWorkplaceState(patch.workplaceState);
-              if (patch.workplaceCity !== undefined) setWorkplaceCity(patch.workplaceCity);
-            }}
-          />
+            <div className={cn(GRID_AUTO, 'items-end')}>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.sortStatus')}
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className={FIELD_SELECT}
+                >
+                  <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                  <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
+                </select>
+              </label>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.positionsLabel')}
+                <input
+                  type="number"
+                  min="1"
+                  value={positionsCount}
+                  onChange={(e) => setPositionsCount(e.target.value)}
+                  aria-label={t(locale, 'recruiting.positionsLabel')}
+                  className={cn(FIELD, "min-w-[72px] px-2")}
+                />
+              </label>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.targetDateLabel')}
+                <input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  aria-label={t(locale, 'recruiting.targetDateLabel')}
+                  className={cn(FIELD, "px-2 py-[9px]")}
+                />
+              </label>
+            </div>
+          </VacancyFormSection>
 
-          <label
-            className={CHECK_LABEL}
-          >
-            <input
-              type="checkbox"
-              checked={clientReportShowSalary}
-              onChange={(e) => setClientReportShowSalary(e.target.checked)}
-              className="mt-0.5 accent-brand-500"
+          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
+            <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.employmentTypeLabel')}
+                <select
+                  value={employmentType}
+                  onChange={(e) => setEmploymentType(e.target.value)}
+                  className={FIELD_SELECT}
+                >
+                  <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
+                  {VACANCY_EMPLOYMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.salaryMinPh')}
+                <input
+                  value={formatSalaryBr(salaryMin)}
+                  onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
+                  placeholder={t(locale, 'recruiting.salaryMinPh')}
+                  inputMode="numeric"
+                  aria-label={t(locale, 'recruiting.salaryMinPh')}
+                  className={FIELD}
+                />
+              </label>
+              <label className={FIELD_LABEL}>
+                {t(locale, 'recruiting.salaryMaxPh')}
+                <input
+                  value={formatSalaryBr(salaryMax)}
+                  onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
+                  placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                  inputMode="numeric"
+                  aria-label={t(locale, 'recruiting.salaryMaxPh')}
+                  className={FIELD}
+                />
+              </label>
+            </div>
+
+            <VacancyWorkplaceFields
+              locale={locale}
+              workplaceModality={workplaceModality}
+              workplaceState={workplaceState}
+              workplaceCity={workplaceCity}
+              onChange={(patch) => {
+                if (patch.workplaceModality !== undefined) setWorkplaceModality(patch.workplaceModality);
+                if (patch.workplaceState !== undefined) setWorkplaceState(patch.workplaceState);
+                if (patch.workplaceCity !== undefined) setWorkplaceCity(patch.workplaceCity);
+              }}
             />
-            <span>
-              <strong className="text-ink">{t(locale, 'recruiting.clientReportShowSalary')}</strong>
-              <br />
-              {t(locale, 'recruiting.clientReportShowSalaryHelp')}
-            </span>
-          </label>
 
-          <VacancyPublicFlagsFields
-            locale={locale}
-            values={{
-              publicPageEnabled,
-              publicAllowIndex,
-              publicShowCompanyInfo,
-              publicShowSalary,
-            }}
-            seoContext={{
-              title,
-              description,
-              employmentType,
-              salaryMin,
-              salaryMax,
-              workplaceModality,
-              workplaceCity,
-              workplaceState,
-            }}
-            onChange={(patch) => {
-              if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
-              if (patch.publicAllowIndex != null) setPublicAllowIndex(patch.publicAllowIndex);
-              if (patch.publicShowCompanyInfo != null) setPublicShowCompanyInfo(patch.publicShowCompanyInfo);
-              if (patch.publicShowSalary != null) setPublicShowSalary(patch.publicShowSalary);
-            }}
-          />
-
-          <div>
-            <label className="mb-1.5 block font-mono text-[11px] text-ink-faint">
-              {t(locale, 'recruiting.vacancyDescriptionLabel')}
+            <label className={CHECK_LABEL}>
+              <input
+                type="checkbox"
+                checked={clientReportShowSalary}
+                onChange={(e) => setClientReportShowSalary(e.target.checked)}
+                className="mt-0.5 accent-brand-500"
+              />
+              <span>
+                <strong className="text-ink">{t(locale, 'recruiting.clientReportShowSalary')}</strong>
+                <br />
+                {t(locale, 'recruiting.clientReportShowSalaryHelp')}
+              </span>
             </label>
+          </VacancyFormSection>
+
+          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionPublic" defaultOpen={false}>
+            <VacancyPublicFlagsFields
+              locale={locale}
+              values={{
+                publicPageEnabled,
+                publicAllowIndex,
+                publicShowCompanyInfo,
+                publicShowSalary,
+              }}
+              seoContext={{
+                title,
+                description,
+                employmentType,
+                salaryMin,
+                salaryMax,
+                workplaceModality,
+                workplaceCity,
+                workplaceState,
+              }}
+              onChange={(patch) => {
+                if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
+                if (patch.publicAllowIndex != null) setPublicAllowIndex(patch.publicAllowIndex);
+                if (patch.publicShowCompanyInfo != null) setPublicShowCompanyInfo(patch.publicShowCompanyInfo);
+                if (patch.publicShowSalary != null) setPublicShowSalary(patch.publicShowSalary);
+              }}
+            />
+          </VacancyFormSection>
+
+          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionDescription" defaultOpen>
             <VacancyDescriptionAssistBar
               locale={locale}
               busy={descAiBusy}
@@ -714,7 +716,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               locale={locale}
               disabled={descAiBusy}
             />
-          </div>
+          </VacancyFormSection>
         </div>
       </AdminRichFormDrawer>
 
@@ -746,132 +748,136 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       >
         {editingVacancy ? (
           <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2.5">
-              <input
-                value={editingVacancy.title}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                placeholder={t(locale, 'recruiting.vacancyTitlePh')}
-                aria-label={t(locale, 'recruiting.vacancyTitlePh')}
-                className={cn(FIELD, "flex-[2_1_280px] text-[13px]")}
-              />
-              <input
-                value={editingVacancy.slug}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                placeholder={t(locale, 'recruiting.vacancySlugPh')}
-                aria-label={t(locale, 'recruiting.vacancySlugPh')}
-                className={cn(FIELD, "flex-[1_1_200px] text-[13px]")}
-              />
-              <select
-                value={editingVacancy.status}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                aria-label={t(locale, 'recruiting.sortStatus')}
-                className={cn(FIELD_SELECT, "flex-[0_0_140px] text-[13px] text-ink")}
-              >
-                <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-              </select>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              <label className={FIELD_LABEL_INLINE}>
-                {t(locale, 'recruiting.positionsLabel')}
+            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
+              <div className="flex flex-wrap gap-2.5">
                 <input
-                  type="number"
-                  min="1"
-                  value={editingVacancy.positionsCount}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
-                  aria-label={t(locale, 'recruiting.positionsLabel')}
-                  className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                  value={editingVacancy.title}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
+                  placeholder={t(locale, 'recruiting.vacancyTitlePh')}
+                  aria-label={t(locale, 'recruiting.vacancyTitlePh')}
+                  className={cn(FIELD, "flex-[2_1_280px] text-[13px]")}
                 />
-              </label>
-              <label className={FIELD_LABEL_INLINE}>
-                {t(locale, 'recruiting.targetDateLabel')}
                 <input
-                  type="date"
-                  value={editingVacancy.targetDate}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
-                  aria-label={t(locale, 'recruiting.targetDateLabel')}
-                  className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                  value={editingVacancy.slug}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
+                  placeholder={t(locale, 'recruiting.vacancySlugPh')}
+                  aria-label={t(locale, 'recruiting.vacancySlugPh')}
+                  className={cn(FIELD, "flex-[1_1_200px] text-[13px]")}
                 />
+                <select
+                  value={editingVacancy.status}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
+                  aria-label={t(locale, 'recruiting.sortStatus')}
+                  className={cn(FIELD_SELECT, "flex-[0_0_140px] text-[13px] text-ink")}
+                >
+                  <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                  <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <label className={FIELD_LABEL_INLINE}>
+                  {t(locale, 'recruiting.positionsLabel')}
+                  <input
+                    type="number"
+                    min="1"
+                    value={editingVacancy.positionsCount}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
+                    aria-label={t(locale, 'recruiting.positionsLabel')}
+                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                  />
+                </label>
+                <label className={FIELD_LABEL_INLINE}>
+                  {t(locale, 'recruiting.targetDateLabel')}
+                  <input
+                    type="date"
+                    value={editingVacancy.targetDate}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
+                    aria-label={t(locale, 'recruiting.targetDateLabel')}
+                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                  />
+                </label>
+              </div>
+            </VacancyFormSection>
+
+            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
+              <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
+                <select
+                  value={editingVacancy.employmentType}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
+                  aria-label={t(locale, 'recruiting.employmentTypeLabel')}
+                  className={cn(FIELD_SELECT, "px-2.5 py-2 text-[13px]")}
+                >
+                  <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
+                  {VACANCY_EMPLOYMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                  ))}
+                </select>
+                <input
+                  value={formatSalaryBr(editingVacancy.salaryMin)}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
+                  placeholder={t(locale, 'recruiting.salaryMinPh')}
+                  inputMode="numeric"
+                  aria-label={t(locale, 'recruiting.salaryMinPh')}
+                  className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
+                />
+                <input
+                  value={formatSalaryBr(editingVacancy.salaryMax)}
+                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
+                  placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                  inputMode="numeric"
+                  aria-label={t(locale, 'recruiting.salaryMaxPh')}
+                  className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
+                />
+              </div>
+              <VacancyWorkplaceFields
+                locale={locale}
+                compact
+                workplaceModality={editingVacancy.workplaceModality}
+                workplaceState={editingVacancy.workplaceState}
+                workplaceCity={editingVacancy.workplaceCity}
+                onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
+              />
+              <label className={CHECK_LABEL}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(editingVacancy.clientReportShowSalary)}
+                  onChange={(e) =>
+                    setEditingVacancy((cur) => ({ ...cur, clientReportShowSalary: e.target.checked }))
+                  }
+                  className="mt-0.5 accent-brand-500"
+                />
+                <span>
+                  <strong className="text-ink">{t(locale, 'recruiting.clientReportShowSalary')}</strong>
+                  <br />
+                  {t(locale, 'recruiting.clientReportShowSalaryHelp')}
+                </span>
               </label>
-            </div>
-            <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
-              <select
-                value={editingVacancy.employmentType}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
-                aria-label={t(locale, 'recruiting.employmentTypeLabel')}
-                className={cn(FIELD_SELECT, "px-2.5 py-2 text-[13px]")}
-              >
-                <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
-                {VACANCY_EMPLOYMENT_TYPES.map((type) => (
-                  <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
-                ))}
-              </select>
-              <input
-                value={formatSalaryBr(editingVacancy.salaryMin)}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
-                placeholder={t(locale, 'recruiting.salaryMinPh')}
-                inputMode="numeric"
-                aria-label={t(locale, 'recruiting.salaryMinPh')}
-                className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
+            </VacancyFormSection>
+
+            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionPublic" defaultOpen={false}>
+              <VacancyPublicFlagsFields
+                locale={locale}
+                values={{
+                  publicPageEnabled: editingVacancy.publicPageEnabled,
+                  publicAllowIndex: editingVacancy.publicAllowIndex,
+                  publicShowCompanyInfo: editingVacancy.publicShowCompanyInfo,
+                  publicShowSalary: editingVacancy.publicShowSalary,
+                }}
+                seoContext={{
+                  title: editingVacancy.title,
+                  description: editingVacancy.description,
+                  employmentType: editingVacancy.employmentType,
+                  salaryMin: editingVacancy.salaryMin,
+                  salaryMax: editingVacancy.salaryMax,
+                  workplaceModality: editingVacancy.workplaceModality,
+                  workplaceCity: editingVacancy.workplaceCity,
+                  workplaceState: editingVacancy.workplaceState,
+                }}
+                onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
               />
-              <input
-                value={formatSalaryBr(editingVacancy.salaryMax)}
-                onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
-                placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                inputMode="numeric"
-                aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
-              />
-            </div>
-            <VacancyWorkplaceFields
-              locale={locale}
-              compact
-              workplaceModality={editingVacancy.workplaceModality}
-              workplaceState={editingVacancy.workplaceState}
-              workplaceCity={editingVacancy.workplaceCity}
-              onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
-            />
-            <label
-              className={CHECK_LABEL}
-            >
-              <input
-                type="checkbox"
-                checked={Boolean(editingVacancy.clientReportShowSalary)}
-                onChange={(e) =>
-                  setEditingVacancy((cur) => ({ ...cur, clientReportShowSalary: e.target.checked }))
-                }
-                className="mt-0.5 accent-brand-500"
-              />
-              <span>
-                <strong className="text-ink">{t(locale, 'recruiting.clientReportShowSalary')}</strong>
-                <br />
-                {t(locale, 'recruiting.clientReportShowSalaryHelp')}
-              </span>
-            </label>
-            <VacancyPublicFlagsFields
-              locale={locale}
-              values={{
-                publicPageEnabled: editingVacancy.publicPageEnabled,
-                publicAllowIndex: editingVacancy.publicAllowIndex,
-                publicShowCompanyInfo: editingVacancy.publicShowCompanyInfo,
-                publicShowSalary: editingVacancy.publicShowSalary,
-              }}
-              seoContext={{
-                title: editingVacancy.title,
-                description: editingVacancy.description,
-                employmentType: editingVacancy.employmentType,
-                salaryMin: editingVacancy.salaryMin,
-                salaryMax: editingVacancy.salaryMax,
-                workplaceModality: editingVacancy.workplaceModality,
-                workplaceCity: editingVacancy.workplaceCity,
-                workplaceState: editingVacancy.workplaceState,
-              }}
-              onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
-            />
-            <div>
-              <label className="mb-1.5 block font-mono text-xs text-ink-muted">
-                {t(locale, 'recruiting.vacancyDescriptionLabel')}
-              </label>
+            </VacancyFormSection>
+
+            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionDescription" defaultOpen>
               <VacancyDescriptionAssistBar
                 locale={locale}
                 busy={descAiBusy}
@@ -894,7 +900,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 locale={locale}
                 disabled={descAiBusy}
               />
-            </div>
+            </VacancyFormSection>
           </div>
         ) : null}
       </AdminRichFormDrawer>

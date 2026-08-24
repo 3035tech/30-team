@@ -468,6 +468,33 @@ async function runOfflineLibs() {
     return 'modes ok';
   });
 
+  await check('lib', 'hire-readiness', async () => {
+    const { computeHireReadiness } = await import('../../lib/hire-readiness.js');
+    const empty = computeHireReadiness({});
+    if (empty.ready || empty.readyCount !== 0) throw new Error('empty should not be ready');
+    const partial = computeHireReadiness({
+      assessmentId: 1,
+      motivatorsAttemptId: 2,
+      pipelineStage: 'interview',
+      offerStatus: 'none',
+    });
+    if (partial.readyCount !== 2) throw new Error(`expected 2 got ${partial.readyCount}`);
+    const ready = computeHireReadiness(
+      {
+        assessmentId: 1,
+        motivatorsInviteStatus: 'completed',
+        pipelineStage: 'approved',
+        offerStatus: 'proposed',
+      },
+      { scorecardComplete: true }
+    );
+    if (!ready.ready) throw new Error('should be ready');
+    if (!ready.checks.some((c) => c.id === 'SCORECARD' && c.ok)) {
+      throw new Error('scorecard check missing');
+    }
+    return `empty=${empty.readyCount} ready=${ready.readyCount}/${ready.total}`;
+  });
+
   await check('lib', 'slugify-accents-specials', async () => {
     const { slugify } = await import('../../lib/slugify.js');
     if (slugify('São Paulo') !== 'sao-paulo') throw new Error(`São Paulo → ${slugify('São Paulo')}`);

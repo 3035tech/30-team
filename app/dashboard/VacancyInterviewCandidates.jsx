@@ -13,6 +13,8 @@ import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, Spinner } from '../_components/AppLoading';
 import { HrActionBrief } from '../_components/HrActionBrief';
 import { InterviewScorecardBlock } from './vacancies/InterviewScorecardBlock';
+import { VacancyOfferBlock } from './vacancies/VacancyOfferBlock';
+import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
 const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
@@ -369,6 +371,15 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
 
       {expanded && (
         <div className="mt-3 border-t border-ink/12 pt-3">
+          {row.candidateId ? (
+            <HireReadinessBlock
+              vacancyId={vacancyId}
+              candidateId={row.candidateId}
+              locale={locale}
+              row={row}
+            />
+          ) : null}
+
           {briefLoading ? (
             <div className="mb-3 flex items-center gap-2 text-[13px] text-ink-muted">
               <Spinner size={16} />
@@ -382,6 +393,22 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               personName={row.fullName || row.name || ''}
             />
           )}
+
+          {row.candidateId ? (
+            <VacancyOfferBlock
+              vacancyId={vacancyId}
+              candidateId={row.candidateId}
+              assessmentId={row.assessmentId}
+              locale={locale}
+              initialOffer={{
+                offerSalary: row.offerSalary,
+                offerStartDate: row.offerStartDate,
+                offerStatus: row.offerStatus || 'none',
+                offerNotes: row.offerNotes,
+              }}
+              onSaved={() => onChanged?.()}
+            />
+          ) : null}
 
           {row.candidateId ? (
             <InterviewScorecardBlock

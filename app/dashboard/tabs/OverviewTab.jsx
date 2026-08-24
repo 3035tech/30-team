@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
@@ -8,6 +9,9 @@ import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
+
+const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
+const NO_PLAN_PREVIEW = 3;
 
 const FUNNEL_LABEL_KEYS = {
   new: 'recruiting.pipelineNew',
@@ -87,6 +91,32 @@ export function OverviewTab({
   filters = {},
   navigateDashboard,
 }) {
+  const [peopleOpsOpen, setPeopleOpsOpen] = useState(false);
+  const [noPlanExpanded, setNoPlanExpanded] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem(PEOPLE_OPS_OPEN_KEY) === '1') {
+        setPeopleOpsOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const togglePeopleOps = () => {
+    setPeopleOpsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(PEOPLE_OPS_OPEN_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      if (!next) setNoPlanExpanded(false);
+      return next;
+    });
+  };
+
   const data = overview || {
     funnel: Object.fromEntries(OVERVIEW_FUNNEL_STAGES.map((s) => [s, 0])),
     funnelTotal: 0,
@@ -167,338 +197,6 @@ export function OverviewTab({
           </p>
         )}
       </div>
-
-      {data.peopleOps ? (
-        <div className={S.card}>
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
-                onClick={() => go({ tab: 'team' })}
-              >
-                {t(locale, 'panel.overview.openTeam')}
-              </button>
-              <button
-                type="button"
-                className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
-                onClick={() => go({ tab: 'climate' })}
-              >
-                {t(locale, 'panel.overview.openClimate')}
-              </button>
-            </div>
-          </div>
-          <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
-          {(() => {
-            const pdi = data.peopleOps.pdi;
-            const clima = data.peopleOps.climate;
-            const ret = data.peopleOps.retention;
-            const onb = data.peopleOps.onboarding;
-            const queue = pdi?.queue || {};
-            const plans = pdi?.plans || [];
-            const overdueN = Number(pdi?.overdueItemCount) || 0;
-            const overduePlansN = Number(pdi?.overduePlanCount) || 0;
-            const noPlanN = Number(pdi?.noPlanEmployeeCount) || 0;
-            const unlinkedN = Number(pdi?.itemsWithoutOneOnOne) || 0;
-            const hasPdiQueue =
-              overdueN > 0 ||
-              overduePlansN > 0 ||
-              noPlanN > 0 ||
-              unlinkedN > 0 ||
-              (queue.overdue || []).length > 0 ||
-              (queue.unlinked || []).length > 0 ||
-              (queue.noPlan || []).length > 0;
-            const hasPdiPlans = plans.length > 0;
-            const hasPdi =
-              pdi &&
-              (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue || hasPdiPlans);
-            const hasOnb =
-              onb &&
-              ((onb.overdueCount || 0) > 0 ||
-                (onb.dueSoonCount || 0) > 0 ||
-                (onb.overdue || []).length > 0 ||
-                (onb.dueSoon || []).length > 0);
-            const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
-            const hasRet = ret && ret.count > 0;
-            if (!hasPdi && !hasClima && !hasRet && !hasOnb) {
-              return (
-                <p className="m-0 text-[13px] italic text-ink-muted">
-                  {t(locale, 'panel.overview.peopleOpsEmpty')}
-                </p>
-              );
-            }
-            return (
-              <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                {hasRet ? (
-                  <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-[13px] text-ink">
-                    {t(locale, 'panel.overview.peopleOpsRetention', {
-                      n: ret.count,
-                      days: ret.lookbackDays || 14,
-                      min: ret.minScore ?? 55,
-                    })}
-                  </li>
-                ) : null}
-                {hasOnb ? (
-                  <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-[13px] text-ink">
-                    <div className={cn(S.label, 'mb-1.5 text-[10px]')}>
-                      {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
-                    </div>
-                    {(onb.overdueCount || 0) > 0 ? (
-                      <div className="mb-1 font-mono text-[11px] text-warning">
-                        {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
-                          n: onb.overdueCount,
-                        })}
-                      </div>
-                    ) : null}
-                    {(onb.dueSoonCount || 0) > 0 ? (
-                      <div className="mb-1.5 font-mono text-[11px] text-ink-muted">
-                        {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
-                          n: onb.dueSoonCount,
-                        })}
-                      </div>
-                    ) : null}
-                    <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                      {[...(onb.overdue || []), ...(onb.dueSoon || [])]
-                        .slice(0, 8)
-                        .map((row) => (
-                          <li key={`onb-${row.checkinId}`}>
-                            <button
-                              type="button"
-                              className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
-                              onClick={() => go(row.nav)}
-                            >
-                              <span className="block text-[12px] text-ink">{row.candidateName}</span>
-                              <span className="block font-mono text-[10px] text-ink-muted">
-                                {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
-                                  days: row.milestoneDays,
-                                  date: row.dueDate || '—',
-                                })}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                    </ul>
-                  </li>
-                ) : null}
-                {hasPdi ? (
-                  <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
-                    {pdi.donePct != null
-                      ? t(locale, 'panel.overview.peopleOpsPdi', {
-                          plans: pdi.activePlans,
-                          pct: pdi.donePct,
-                          people: pdi.peopleWithActive,
-                        })
-                      : t(locale, 'panel.overview.peopleOpsPdiNoPct', {
-                          plans: pdi.activePlans,
-                          people: pdi.peopleWithActive,
-                        })}
-                    {pdi.activeItems > 0 ? (
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                        <div
-                          className="h-full rounded-full bg-success"
-                          style={{ width: `${pdi.donePct || 0}%` }}
-                        />
-                      </div>
-                    ) : null}
-                    {hasPdiPlans ? (
-                      <div className="mt-3 flex flex-col gap-2 border-t border-ink/10 pt-2.5">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className={cn(S.label, 'mb-0 text-[10px]')}>
-                            {t(locale, 'panel.overview.peopleOpsPdiPlansTitle')}
-                          </div>
-                          {Number(pdi.activePlans) > plans.length ? (
-                            <span className="font-mono text-[10px] text-ink-faint">
-                              {t(locale, 'panel.overview.peopleOpsPdiPlansMore', {
-                                shown: plans.length,
-                                total: pdi.activePlans,
-                              })}
-                            </span>
-                          ) : null}
-                        </div>
-                        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-                          {plans.map((row) => {
-                            const pct = row.donePct != null ? row.donePct : 0;
-                            const flagged = row.periodOverdue || (row.overdueItemCount || 0) > 0;
-                            return (
-                              <li key={`plan-${row.planId}`}>
-                                <button
-                                  type="button"
-                                  className={cn(
-                                    'w-full cursor-pointer rounded-control border px-2.5 py-2 text-left',
-                                    flagged
-                                      ? 'border-warning/25 bg-warning/[0.04]'
-                                      : 'border-ink/10 bg-ink/[0.02] hover:border-ink/16'
-                                  )}
-                                  onClick={() => go(row.nav)}
-                                >
-                                  <div className="flex flex-wrap items-start justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                      <span className="block text-[12px] font-medium text-ink">
-                                        {row.candidateName}
-                                      </span>
-                                      <span className="mt-0.5 block truncate text-[11px] text-ink-muted">
-                                        {row.planTitle}
-                                      </span>
-                                    </div>
-                                    <span className="shrink-0 font-mono text-[10px] text-ink-faint">
-                                      {t(locale, 'panel.overview.peopleOpsPdiPlanProgress', {
-                                        done: row.doneCount,
-                                        total: row.itemCount,
-                                      })}
-                                      {flagged ? (
-                                        <span className="ml-1 text-warning">
-                                          {t(locale, 'panel.overview.peopleOpsPdiPlanFlag')}
-                                        </span>
-                                      ) : null}
-                                    </span>
-                                  </div>
-                                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink/10">
-                                    <div
-                                      className={cn(
-                                        'h-full rounded-full',
-                                        flagged ? 'bg-warning' : 'bg-success'
-                                      )}
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  </div>
-                                  {row.periodStart || row.periodEnd ? (
-                                    <span className="mt-1 block font-mono text-[10px] text-ink-faint">
-                                      {[row.periodStart, row.periodEnd].filter(Boolean).join(' → ')}
-                                    </span>
-                                  ) : null}
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    ) : null}
-                    {hasPdiQueue ? (
-                      <div className="mt-3 flex flex-col gap-2.5 border-t border-ink/10 pt-2.5">
-                        <div className={cn(S.label, 'mb-0 text-[10px]')}>
-                          {t(locale, 'panel.overview.peopleOpsPdiQueueTitle')}
-                        </div>
-                        {overdueN > 0 || overduePlansN > 0 || (queue.overdue || []).length > 0 ? (
-                          <div>
-                            <div className="mb-1 font-mono text-[11px] text-warning">
-                              {overdueN > 0 || (queue.overdue || []).length > 0
-                                ? t(locale, 'panel.overview.peopleOpsPdiOverdue', {
-                                    n: overdueN || (queue.overdue || []).length,
-                                  })
-                                : null}
-                              {overduePlansN > 0 ? (
-                                <span className={overdueN > 0 || (queue.overdue || []).length > 0 ? 'ml-1 text-ink-muted' : ''}>
-                                  {overdueN > 0 || (queue.overdue || []).length > 0 ? ' · ' : null}
-                                  {t(locale, 'panel.overview.peopleOpsPdiOverduePlans', {
-                                    n: overduePlansN,
-                                  })}
-                                </span>
-                              ) : null}
-                            </div>
-                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                              {(queue.overdue || []).map((row) => (
-                                <li key={`ov-${row.itemId}`}>
-                                  <button
-                                    type="button"
-                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
-                                    onClick={() => go(row.nav)}
-                                  >
-                                    <span className="block text-[12px] text-ink">
-                                      {row.candidateName}
-                                    </span>
-                                    <span className="block font-mono text-[10px] text-ink-muted">
-                                      {row.itemTitle}
-                                      {row.dueDate ? ` · ${row.dueDate}` : ''}
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        {unlinkedN > 0 || (queue.unlinked || []).length > 0 ? (
-                          <div>
-                            <div className="mb-1 font-mono text-[11px] text-ink-muted">
-                              {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
-                                n: unlinkedN || (queue.unlinked || []).length,
-                              })}
-                            </div>
-                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                              {(queue.unlinked || []).map((row) => (
-                                <li key={`ul-${row.itemId}`}>
-                                  <button
-                                    type="button"
-                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
-                                    onClick={() => go(row.nav)}
-                                  >
-                                    <span className="block text-[12px] text-ink">
-                                      {row.candidateName}
-                                    </span>
-                                    <span className="block font-mono text-[10px] text-ink-muted">
-                                      {row.itemTitle}
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        {noPlanN > 0 || (queue.noPlan || []).length > 0 ? (
-                          <div>
-                            <div className="mb-1 font-mono text-[11px] text-ink-muted">
-                              {t(locale, 'panel.overview.peopleOpsPdiNoPlan', {
-                                n: noPlanN || (queue.noPlan || []).length,
-                              })}
-                            </div>
-                            <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                              {(queue.noPlan || []).map((row) => (
-                                <li key={`np-${row.candidateId}`}>
-                                  <button
-                                    type="button"
-                                    className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
-                                    onClick={() => go(row.nav)}
-                                  >
-                                    <span className="block text-[12px] text-ink">
-                                      {row.candidateName}
-                                    </span>
-                                    <span className="block font-mono text-[10px] text-ink-faint">
-                                      {t(locale, 'panel.overview.peopleOpsPdiNoPlanCta')}
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        <p className={cn(S.faint, 'm-0 text-[10px]')}>
-                          {t(locale, 'panel.overview.peopleOpsPdiQueueHint')}
-                        </p>
-                      </div>
-                    ) : null}
-                  </li>
-                ) : null}
-                {hasClima ? (
-                  <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
-                    {t(locale, 'panel.overview.peopleOpsClimate', {
-                      open: clima.openSurveys,
-                      resp: clima.openResponses,
-                      min: clima.minResponses,
-                    })}
-                    {clima.draftSurveys > 0 ? (
-                      <span className="mt-1 block font-mono text-[11px] text-ink-muted">
-                        {t(locale, 'panel.overview.peopleOpsClimateDraft', {
-                          n: clima.draftSurveys,
-                        })}
-                      </span>
-                    ) : null}
-                  </li>
-                ) : null}
-              </ul>
-            );
-          })()}
-        </div>
-      ) : null}
 
       <div className={S.card}>
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -784,6 +482,392 @@ export function OverviewTab({
           </>
         )}
       </div>
+
+      {data.peopleOps ? (() => {
+        const pdi = data.peopleOps.pdi;
+        const clima = data.peopleOps.climate;
+        const ret = data.peopleOps.retention;
+        const onb = data.peopleOps.onboarding;
+        const queue = pdi?.queue || {};
+        const plans = pdi?.plans || [];
+        const overdueN = Number(pdi?.overdueItemCount) || 0;
+        const overduePlansN = Number(pdi?.overduePlanCount) || 0;
+        const noPlanN = Number(pdi?.noPlanEmployeeCount) || 0;
+        const unlinkedN = Number(pdi?.itemsWithoutOneOnOne) || 0;
+        const noPlanRows = queue.noPlan || [];
+        const noPlanShown = noPlanExpanded ? noPlanRows : noPlanRows.slice(0, NO_PLAN_PREVIEW);
+        const hasPdiQueue =
+          overdueN > 0 ||
+          overduePlansN > 0 ||
+          noPlanN > 0 ||
+          unlinkedN > 0 ||
+          (queue.overdue || []).length > 0 ||
+          (queue.unlinked || []).length > 0 ||
+          noPlanRows.length > 0;
+        const hasPdiPlans = plans.length > 0;
+        const hasPdi =
+          pdi &&
+          (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue || hasPdiPlans);
+        const hasOnb =
+          onb &&
+          ((onb.overdueCount || 0) > 0 ||
+            (onb.dueSoonCount || 0) > 0 ||
+            (onb.overdue || []).length > 0 ||
+            (onb.dueSoon || []).length > 0);
+        const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
+        const hasRet = ret && ret.count > 0;
+        const signalN =
+          overdueN +
+          overduePlansN +
+          unlinkedN +
+          noPlanN +
+          (Number(onb?.overdueCount) || 0) +
+          (Number(ret?.count) || 0);
+        const summary = t(locale, 'panel.overview.peopleOpsSummary', {
+          signals: signalN,
+          plans: pdi?.activePlans || 0,
+          climate: clima?.openSurveys || 0,
+        });
+
+        return (
+          <div className={S.cardTight}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <button
+                type="button"
+                className="flex min-h-touch min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 border-none bg-transparent p-0 text-left"
+                onClick={togglePeopleOps}
+                aria-expanded={peopleOpsOpen}
+              >
+                <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
+                <span className="shrink-0 font-mono text-[11px] text-ink-muted">
+                  {peopleOpsOpen
+                    ? t(locale, 'panel.overview.peopleOpsCollapse')
+                    : t(locale, 'panel.overview.peopleOpsExpand')}
+                </span>
+              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                  onClick={() => go({ tab: 'team' })}
+                >
+                  {t(locale, 'panel.overview.openTeam')}
+                </button>
+                <button
+                  type="button"
+                  className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                  onClick={() => go({ tab: 'climate' })}
+                >
+                  {t(locale, 'panel.overview.openClimate')}
+                </button>
+              </div>
+            </div>
+            <p className={cn(S.muted, 'm-0 mt-2 text-xs')}>{summary}</p>
+            {!peopleOpsOpen ? (
+              <p className={cn(S.faint, 'm-0 mt-1.5 text-[11px]')}>
+                {t(locale, 'panel.overview.peopleOpsCollapsedHint')}
+              </p>
+            ) : null}
+
+            {peopleOpsOpen ? (
+              <div className="mt-3 border-t border-ink/10 pt-3">
+                <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
+                {!hasPdi && !hasClima && !hasRet && !hasOnb ? (
+                  <p className="m-0 text-[13px] italic text-ink-muted">
+                    {t(locale, 'panel.overview.peopleOpsEmpty')}
+                  </p>
+                ) : (
+                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {hasRet ? (
+                      <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-[13px] text-ink">
+                        {t(locale, 'panel.overview.peopleOpsRetention', {
+                          n: ret.count,
+                          days: ret.lookbackDays || 14,
+                          min: ret.minScore ?? 55,
+                        })}
+                      </li>
+                    ) : null}
+                    {hasOnb ? (
+                      <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-[13px] text-ink">
+                        <div className={cn(S.label, 'mb-1.5 text-[10px]')}>
+                          {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
+                        </div>
+                        {(onb.overdueCount || 0) > 0 ? (
+                          <div className="mb-1 font-mono text-[11px] text-warning">
+                            {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
+                              n: onb.overdueCount,
+                            })}
+                          </div>
+                        ) : null}
+                        {(onb.dueSoonCount || 0) > 0 ? (
+                          <div className="mb-1.5 font-mono text-[11px] text-ink-muted">
+                            {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
+                              n: onb.dueSoonCount,
+                            })}
+                          </div>
+                        ) : null}
+                        <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                          {[...(onb.overdue || []), ...(onb.dueSoon || [])]
+                            .slice(0, 8)
+                            .map((row) => (
+                              <li key={`onb-${row.checkinId}`}>
+                                <button
+                                  type="button"
+                                  className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                  onClick={() => go(row.nav)}
+                                >
+                                  <span className="block text-[12px] text-ink">{row.candidateName}</span>
+                                  <span className="block font-mono text-[10px] text-ink-muted">
+                                    {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
+                                      days: row.milestoneDays,
+                                      date: row.dueDate || '—',
+                                    })}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                        </ul>
+                      </li>
+                    ) : null}
+                    {hasPdi ? (
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                        {pdi.donePct != null
+                          ? t(locale, 'panel.overview.peopleOpsPdi', {
+                              plans: pdi.activePlans,
+                              pct: pdi.donePct,
+                              people: pdi.peopleWithActive,
+                            })
+                          : t(locale, 'panel.overview.peopleOpsPdiNoPct', {
+                              plans: pdi.activePlans,
+                              people: pdi.peopleWithActive,
+                            })}
+                        {pdi.activeItems > 0 ? (
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                            <div
+                              className="h-full rounded-full bg-success"
+                              style={{ width: `${pdi.donePct || 0}%` }}
+                            />
+                          </div>
+                        ) : null}
+                        {hasPdiPlans ? (
+                          <div className="mt-3 flex flex-col gap-2 border-t border-ink/10 pt-2.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                                {t(locale, 'panel.overview.peopleOpsPdiPlansTitle')}
+                              </div>
+                              {Number(pdi.activePlans) > plans.length ? (
+                                <span className="font-mono text-[10px] text-ink-faint">
+                                  {t(locale, 'panel.overview.peopleOpsPdiPlansMore', {
+                                    shown: plans.length,
+                                    total: pdi.activePlans,
+                                  })}
+                                </span>
+                              ) : null}
+                            </div>
+                            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                              {plans.map((row) => {
+                                const pct = row.donePct != null ? row.donePct : 0;
+                                const flagged = row.periodOverdue || (row.overdueItemCount || 0) > 0;
+                                return (
+                                  <li key={`plan-${row.planId}`}>
+                                    <button
+                                      type="button"
+                                      className={cn(
+                                        'w-full cursor-pointer rounded-control border px-2.5 py-2 text-left',
+                                        flagged
+                                          ? 'border-warning/25 bg-warning/[0.04]'
+                                          : 'border-ink/10 bg-ink/[0.02] hover:border-ink/16'
+                                      )}
+                                      onClick={() => go(row.nav)}
+                                    >
+                                      <div className="flex flex-wrap items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                          <span className="block text-[12px] font-medium text-ink">
+                                            {row.candidateName}
+                                          </span>
+                                          <span className="mt-0.5 block truncate text-[11px] text-ink-muted">
+                                            {row.planTitle}
+                                          </span>
+                                        </div>
+                                        <span className="shrink-0 font-mono text-[10px] text-ink-faint">
+                                          {t(locale, 'panel.overview.peopleOpsPdiPlanProgress', {
+                                            done: row.doneCount,
+                                            total: row.itemCount,
+                                          })}
+                                          {flagged ? (
+                                            <span className="ml-1 text-warning">
+                                              {t(locale, 'panel.overview.peopleOpsPdiPlanFlag')}
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                      </div>
+                                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink/10">
+                                        <div
+                                          className={cn(
+                                            'h-full rounded-full',
+                                            flagged ? 'bg-warning' : 'bg-success'
+                                          )}
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
+                                      {row.periodStart || row.periodEnd ? (
+                                        <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                                          {[row.periodStart, row.periodEnd].filter(Boolean).join(' → ')}
+                                        </span>
+                                      ) : null}
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {hasPdiQueue ? (
+                          <div className="mt-3 flex flex-col gap-2.5 border-t border-ink/10 pt-2.5">
+                            <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                              {t(locale, 'panel.overview.peopleOpsPdiQueueTitle')}
+                            </div>
+                            {overdueN > 0 || overduePlansN > 0 || (queue.overdue || []).length > 0 ? (
+                              <div>
+                                <div className="mb-1 font-mono text-[11px] text-warning">
+                                  {overdueN > 0 || (queue.overdue || []).length > 0
+                                    ? t(locale, 'panel.overview.peopleOpsPdiOverdue', {
+                                        n: overdueN || (queue.overdue || []).length,
+                                      })
+                                    : null}
+                                  {overduePlansN > 0 ? (
+                                    <span
+                                      className={
+                                        overdueN > 0 || (queue.overdue || []).length > 0
+                                          ? 'ml-1 text-ink-muted'
+                                          : ''
+                                      }
+                                    >
+                                      {overdueN > 0 || (queue.overdue || []).length > 0 ? ' · ' : null}
+                                      {t(locale, 'panel.overview.peopleOpsPdiOverduePlans', {
+                                        n: overduePlansN,
+                                      })}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                                  {(queue.overdue || []).map((row) => (
+                                    <li key={`ov-${row.itemId}`}>
+                                      <button
+                                        type="button"
+                                        className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                        onClick={() => go(row.nav)}
+                                      >
+                                        <span className="block text-[12px] text-ink">
+                                          {row.candidateName}
+                                        </span>
+                                        <span className="block font-mono text-[10px] text-ink-muted">
+                                          {row.itemTitle}
+                                          {row.dueDate ? ` · ${row.dueDate}` : ''}
+                                        </span>
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            {unlinkedN > 0 || (queue.unlinked || []).length > 0 ? (
+                              <div>
+                                <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                                  {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
+                                    n: unlinkedN || (queue.unlinked || []).length,
+                                  })}
+                                </div>
+                                <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                                  {(queue.unlinked || []).map((row) => (
+                                    <li key={`ul-${row.itemId}`}>
+                                      <button
+                                        type="button"
+                                        className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                        onClick={() => go(row.nav)}
+                                      >
+                                        <span className="block text-[12px] text-ink">
+                                          {row.candidateName}
+                                        </span>
+                                        <span className="block font-mono text-[10px] text-ink-muted">
+                                          {row.itemTitle}
+                                        </span>
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            {noPlanN > 0 || noPlanRows.length > 0 ? (
+                              <div>
+                                <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                                  {t(locale, 'panel.overview.peopleOpsPdiNoPlan', {
+                                    n: noPlanN || noPlanRows.length,
+                                  })}
+                                </div>
+                                <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                                  {noPlanShown.map((row) => (
+                                    <li key={`np-${row.candidateId}`}>
+                                      <button
+                                        type="button"
+                                        className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                                        onClick={() => go(row.nav)}
+                                      >
+                                        <span className="block text-[12px] text-ink">
+                                          {row.candidateName}
+                                        </span>
+                                        <span className="block font-mono text-[10px] text-ink-faint">
+                                          {t(locale, 'panel.overview.peopleOpsPdiNoPlanCta')}
+                                        </span>
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {noPlanRows.length > NO_PLAN_PREVIEW ? (
+                                  <button
+                                    type="button"
+                                    className={cn(S.btnGhost, 'mt-1.5 min-h-touch')}
+                                    onClick={() => setNoPlanExpanded((v) => !v)}
+                                  >
+                                    {noPlanExpanded
+                                      ? t(locale, 'panel.overview.peopleOpsShowLess')
+                                      : t(locale, 'panel.overview.peopleOpsShowMore', {
+                                          n: noPlanRows.length - NO_PLAN_PREVIEW,
+                                        })}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            <p className={cn(S.faint, 'm-0 text-[10px]')}>
+                              {t(locale, 'panel.overview.peopleOpsPdiQueueHint')}
+                            </p>
+                          </div>
+                        ) : null}
+                      </li>
+                    ) : null}
+                    {hasClima ? (
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                        {t(locale, 'panel.overview.peopleOpsClimate', {
+                          open: clima.openSurveys,
+                          resp: clima.openResponses,
+                          min: clima.minResponses,
+                        })}
+                        {clima.draftSurveys > 0 ? (
+                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                            {t(locale, 'panel.overview.peopleOpsClimateDraft', {
+                              n: clima.draftSurveys,
+                            })}
+                          </span>
+                        ) : null}
+                      </li>
+                    ) : null}
+                  </ul>
+                )}
+              </div>
+            ) : null}
+          </div>
+        );
+      })() : null}
     </div>
   );
 }
