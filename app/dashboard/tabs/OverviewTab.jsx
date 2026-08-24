@@ -338,6 +338,9 @@ export function OverviewTab({
                     <span className="text-[13px] text-ink">{v.title}</span>
                     <span className="font-mono text-[11px] text-ink-muted">
                       {v.hired}/{v.positionsCount} · {t(locale, 'panel.overview.inFunnel', { n: v.inFunnel })}
+                      {(v.approvedGaps || 0) > 0
+                        ? ` · ${t(locale, 'panel.overview.hireGapsChip', { n: v.approvedGaps })}`
+                        : ''}
                     </span>
                   </div>
                   <div
