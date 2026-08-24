@@ -313,19 +313,36 @@ async function runOfflineLibs() {
       'getClimateCompanyBenchmark',
       'getCompanyClimatePulse',
       'climateMinResponses',
-      'climateMeanLevel',
     ]) {
       if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {
         throw new Error(`missing ${name}`);
       }
     }
-    const { climateMeanLevel } = await import('../../lib/people/climate-surveys.js');
+    const viz = await readFile(join(root, 'lib', 'people', 'climate-viz.js'), 'utf8');
+    for (const name of ['climateMeanLevel', 'buildClimateTrendChart']) {
+      if (!viz.includes(`export function ${name}`)) throw new Error(`missing viz ${name}`);
+    }
+    const { climateMeanLevel, buildClimateTrendChart } = await import('../../lib/people/climate-viz.js');
     const low = climateMeanLevel(2.0, 1, 5);
     const mid = climateMeanLevel(3.0, 1, 5);
     const high = climateMeanLevel(4.5, 1, 5);
     if (low?.level !== 'low' || mid?.level !== 'mid' || high?.level !== 'high') {
       throw new Error(`climateMeanLevel levels ${low?.level}/${mid?.level}/${high?.level}`);
     }
+    const trend = buildClimateTrendChart([
+      { surveyId: 1, title: 'A', overallMean: 2.5 },
+      { surveyId: 2, title: 'B', overallMean: 3.5 },
+      { surveyId: 3, title: 'C', overallMean: 4.0 },
+    ]);
+    if (!trend?.path || trend.points.length !== 3) throw new Error('trend chart');
+    if (buildClimateTrendChart([{ surveyId: 1, title: 'A', overallMean: 3 }]) != null) {
+      throw new Error('trend should need 2+');
+    }
+    if (!clima.includes('DEFAULT_CLIMATE_TEXT_PROMPTS_PT') || !clima.includes('textByQuestion')) {
+      throw new Error('climate text questions missing');
+    }
+    const mig050 = await readFile(join(root, 'migrations', '050_climate_text_questions.sql'), 'utf8');
+    if (!mig050.includes('question_kind')) throw new Error('mig 050 missing kind');
     const mig = await readFile(join(root, 'migrations', '042_pdi_and_climate.sql'), 'utf8');
     if (!mig.includes('development_plans') || !mig.includes('climate_surveys')) {
       throw new Error('migration 042 missing tables');

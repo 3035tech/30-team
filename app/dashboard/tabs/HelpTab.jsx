@@ -187,7 +187,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     pipeline: 6,
     team: 6,
     people: 10,
-    climate: 4,
+    climate: 5,
     b600Pdi: 7,
     b600Retention: 6,
     b600Pulse: 6,

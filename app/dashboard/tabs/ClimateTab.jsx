@@ -8,7 +8,8 @@ import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
-import { climateMeanLevel } from '../../../lib/people/climate-surveys';
+import { climateMeanLevel, buildClimateTrendChart } from '../../../lib/people/climate-viz';
+import { C } from '../../../lib/theme';
 
 const TONE_BAR = {
   success: 'bg-success',
@@ -22,6 +23,13 @@ const TONE_TEXT = {
   warning: 'text-warning',
   danger: 'text-danger',
   info: 'text-ink-muted',
+};
+
+const TONE_STROKE = {
+  success: C.success,
+  warning: C.warning,
+  danger: C.danger,
+  info: C.info,
 };
 
 /** Compact satisfaction meter for climate Likert means (1–5 default). */
@@ -64,6 +72,157 @@ function ClimateMeanMeter({
       >
         <div className={cn('h-full rounded-full transition-[width]', barClass)} style={{ width: `${level.pct}%` }} />
       </div>
+    </div>
+  );
+}
+
+/** SVG trend of overall means across campaigns (oldest → newest). */
+function ClimateTrendChart({ surveys, locale }) {
+  const chart = buildClimateTrendChart(surveys);
+  if (!chart) {
+    return (
+      <p className={cn(S.faint, 'm-0 text-[11px]')}>{t(locale, 'panel.climate.trendNeedMore')}</p>
+    );
+  }
+  const { points, path, areaPath, w, h, pad, guides, scaleMin, scaleMax } = chart;
+  const last = points[points.length - 1];
+  const first = points[0];
+  const delta =
+    last && first ? Math.round((last.mean - first.mean) * 10) / 10 : null;
+
+  return (
+    <div className="rounded-control border border-ink/10 bg-canvas/40 px-2.5 py-2">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <span className={cn(S.label, 'mb-0 text-[10px]')}>{t(locale, 'panel.climate.trendTitle')}</span>
+        {delta != null ? (
+          <span
+            className={cn(
+              'font-mono text-[11px]',
+              delta > 0 ? 'text-success' : delta < 0 ? 'text-danger' : 'text-ink-muted'
+            )}
+          >
+            {t(locale, 'panel.climate.trendDelta', {
+              n: delta > 0 ? `+${delta}` : String(delta),
+            })}
+          </span>
+        ) : null}
+      </div>
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="h-auto w-full"
+        role="img"
+        aria-label={t(locale, 'panel.climate.trendAria')}
+      >
+        {guides.map((g) => (
+          <g key={g.value}>
+            <line
+              x1={pad.left}
+              x2={w - pad.right}
+              y1={g.y}
+              y2={g.y}
+              stroke="currentColor"
+              className="text-ink/10"
+              strokeWidth="1"
+            />
+            <text
+              x={pad.left - 6}
+              y={g.y + 3}
+              textAnchor="end"
+              className="fill-ink-faint"
+              style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace' }}
+            >
+              {g.value}
+            </text>
+          </g>
+        ))}
+        <path d={areaPath} fill="currentColor" className="text-brand-500/10" />
+        <path
+          d={path}
+          fill="none"
+          stroke="currentColor"
+          className="text-brand-600"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        {points.map((p) => (
+          <g key={p.surveyId}>
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r="4.5"
+              fill={TONE_STROKE[p.tone] || TONE_STROKE.info}
+              stroke="#fff"
+              strokeWidth="1.5"
+            />
+            <text
+              x={p.x}
+              y={h - 8}
+              textAnchor="middle"
+              className="fill-ink-muted"
+              style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+            >
+              {(p.title || '—').slice(0, 10)}
+            </text>
+            <title>{`${p.title}: ${p.mean}`}</title>
+          </g>
+        ))}
+        <text
+          x={pad.left - 6}
+          y={pad.top + 4}
+          textAnchor="end"
+          className="fill-ink-faint"
+          style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+        >
+          {scaleMax}
+        </text>
+        <text
+          x={pad.left - 6}
+          y={pad.top + (h - pad.top - pad.bottom) + 3}
+          textAnchor="end"
+          className="fill-ink-faint"
+          style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+        >
+          {scaleMin}
+        </text>
+      </svg>
+      <p className={cn(S.faint, 'm-0 mt-1 text-[10px]')}>{t(locale, 'panel.climate.trendHint')}</p>
+    </div>
+  );
+}
+
+/**
+ * Column comparison of overall means (same campaigns as trend).
+ */
+function ClimateCompareBars({ surveys, locale }) {
+  const rows = [...(surveys || [])]
+    .filter((s) => s?.overallMean != null)
+    .reverse();
+  if (rows.length < 1) return null;
+  return (
+    <div className="mt-2">
+      <div className={cn(S.label, 'mb-1.5 text-[10px]')}>{t(locale, 'panel.climate.compareBarsTitle')}</div>
+      <ul className="m-0 flex list-none items-end gap-2 p-0" style={{ minHeight: 72 }}>
+        {rows.map((s) => {
+          const level = climateMeanLevel(s.overallMean, 1, 5);
+          const pct = level?.pct ?? 0;
+          return (
+            <li key={s.surveyId} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+              <span className="font-mono text-[10px] text-ink">{s.overallMean}</span>
+              <div className="flex h-14 w-full max-w-[48px] items-end justify-center rounded-sm bg-ink/[0.06] px-1 pb-0.5 pt-1">
+                <div
+                  className={cn('w-full max-w-[28px] rounded-sm', TONE_BAR[level?.tone] || TONE_BAR.info)}
+                  style={{ height: `${Math.max(8, pct)}%` }}
+                  title={`${s.title}: ${s.overallMean}`}
+                />
+              </div>
+              <span className="w-full truncate text-center font-mono text-[9px] text-ink-faint" title={s.title}>
+                {(s.title || '—').slice(0, 12)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -324,6 +483,16 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       confirmLabel: t(locale, 'panel.climate.addQuestionConfirm'),
       fields: [
         {
+          key: 'kind',
+          type: 'select',
+          label: t(locale, 'panel.climate.questionKindLabel'),
+          defaultValue: 'likert',
+          options: [
+            { value: 'likert', label: t(locale, 'panel.climate.questionKind.likert') },
+            { value: 'text', label: t(locale, 'panel.climate.questionKind.text') },
+          ],
+        },
+        {
           key: 'prompt',
           label: t(locale, 'panel.climate.questionLabel'),
           placeholder: t(locale, 'panel.climate.questionPh'),
@@ -334,7 +503,9 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     if (!values) return;
     setBusy(true);
     try {
-      const data = await patch(selectedId, { addQuestion: { prompt: values.prompt } });
+      const data = await patch(selectedId, {
+        addQuestion: { prompt: values.prompt, questionKind: values.kind || 'likert' },
+      });
       setDetail(data.survey);
       toast(t(locale, 'panel.climate.questionSaved'), 'ok');
       await load();
@@ -462,6 +633,10 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
             {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
           </p>
+          <div className="mb-3">
+            <ClimateTrendChart surveys={benchmark.surveys} locale={locale} />
+            <ClimateCompareBars surveys={benchmark.surveys} locale={locale} />
+          </div>
           <ul className="m-0 mb-3 flex list-none flex-col gap-2 p-0">
             {(benchmark.surveys || []).map((s) => {
               return (
@@ -702,6 +877,14 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                       >
                         <span className="min-w-0 flex-1 text-ink-muted">
                           <span className="font-mono text-ink-faint">{idx + 1}. </span>
+                          <span className="mr-1.5 rounded border border-ink/10 px-1 py-0.5 font-mono text-[10px] text-ink-faint">
+                            {t(
+                              locale,
+                              `panel.climate.questionKind.${
+                                String(q.questionKind || '').toLowerCase() === 'text' ? 'text' : 'likert'
+                              }`
+                            )}
+                          </span>
                           {q.prompt}
                         </span>
                         {detail.status !== 'closed' ? (
@@ -774,6 +957,40 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           </li>
                         );
                       })}
+                    </ul>
+                  </div>
+                ) : null}
+                {aggregate?.textByQuestion?.length && !aggregate.suppressed ? (
+                  <div>
+                    <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.textAnswersTitle')}</div>
+                    <p className={cn(S.faint, 'm-0 mb-2 text-[10px]')}>
+                      {t(locale, 'panel.climate.textAnswersHint')}
+                    </p>
+                    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                      {aggregate.textByQuestion.map((block) => (
+                        <li key={block.questionId} className="rounded-md border border-ink/10 px-2.5 py-2">
+                          <div className="mb-1.5 text-xs text-ink">
+                            {block.prompt}
+                            <span className="ml-2 font-mono text-[10px] text-ink-faint">
+                              {t(locale, 'panel.climate.textAnswersCount', { n: block.responses || 0 })}
+                            </span>
+                          </div>
+                          {(block.answers || []).length ? (
+                            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                              {block.answers.map((ans, i) => (
+                                <li
+                                  key={`${block.questionId}-${i}`}
+                                  className="rounded border border-ink/8 bg-canvas/50 px-2 py-1.5 text-[12px] leading-relaxed text-ink-muted"
+                                >
+                                  {ans}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.climate.noResponses')}</p>
+                          )}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 ) : null}

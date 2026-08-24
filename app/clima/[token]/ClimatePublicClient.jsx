@@ -7,6 +7,19 @@ import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading } from '../../_components/AppLoading';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
+function isTextQuestion(q) {
+  return String(q?.questionKind || '').toLowerCase() === 'text';
+}
+
+function isAnswerComplete(q, value) {
+  if (isTextQuestion(q)) {
+    const text = String(value ?? '').trim();
+    return text.length >= 5;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) && n >= q.scaleMin && n <= q.scaleMax;
+}
+
 /**
  * Public anonymous climate survey — /clima/[token]
  */
@@ -49,10 +62,7 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
 
   const allAnswered = useMemo(() => {
     if (!meta?.questions?.length) return false;
-    return meta.questions.every((q) => {
-      const n = Number(answers[q.id]);
-      return Number.isFinite(n) && n >= q.scaleMin && n <= q.scaleMax;
-    });
+    return meta.questions.every((q) => isAnswerComplete(q, answers[q.id]));
   }, [meta, answers]);
 
   const submit = async () => {
@@ -60,7 +70,13 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
     setBusy(true);
     try {
       const payload = {};
-      for (const [k, v] of Object.entries(answers)) payload[k] = Number(v);
+      for (const q of meta.questions || []) {
+        if (isTextQuestion(q)) {
+          payload[q.id] = String(answers[q.id] ?? '').trim();
+        } else {
+          payload[q.id] = Number(answers[q.id]);
+        }
+      }
       const res = await fetch(`/api/public/climate/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,35 +116,55 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
       {meta?.description ? <p className={cn(S.muted, 'mt-2 text-sm')}>{meta.description}</p> : null}
       <p className={cn(S.faint, 'mt-2 text-xs')}>{t(locale, 'panel.climate.publicAnonymous')}</p>
       <ol className="mt-6 flex list-none flex-col gap-5 p-0">
-        {(meta?.questions || []).map((q, idx) => (
-          <li key={q.id} className="rounded-card border border-ink/12 bg-canvas/60 p-4">
-            <div className="mb-3 text-sm text-ink">
-              <span className="font-mono text-[11px] text-ink-faint">{idx + 1}. </span>
-              {q.prompt}
-            </div>
-            <div className="flex flex-wrap justify-center gap-2" role="radiogroup" aria-label={q.prompt}>
-              {Array.from({ length: q.scaleMax - q.scaleMin + 1 }, (_, i) => q.scaleMin + i).map((n) => {
-                const on = Number(answers[q.id]) === n;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    className={cn(
-                      'min-h-touch min-w-[40px] rounded-control border px-3 font-mono text-sm',
-                      on
-                        ? 'border-brand-500/40 bg-brand-500/10 text-brand-700'
-                        : 'border-ink/12 bg-transparent text-ink-muted'
-                    )}
-                    aria-pressed={on}
-                    onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: n }))}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-          </li>
-        ))}
+        {(meta?.questions || []).map((q, idx) => {
+          const textQ = isTextQuestion(q);
+          return (
+            <li key={q.id} className="rounded-card border border-ink/12 bg-canvas/60 p-4">
+              <div className="mb-3 text-sm text-ink">
+                <span className="font-mono text-[11px] text-ink-faint">{idx + 1}. </span>
+                {q.prompt}
+                {textQ ? (
+                  <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                    {t(locale, 'panel.climate.publicTextHint')}
+                  </span>
+                ) : null}
+              </div>
+              {textQ ? (
+                <textarea
+                  className={cn(S.input, 'min-h-[96px] w-full resize-y')}
+                  value={answers[q.id] ?? ''}
+                  maxLength={1500}
+                  rows={4}
+                  aria-label={q.prompt}
+                  placeholder={t(locale, 'panel.climate.publicTextPh')}
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                />
+              ) : (
+                <div className="flex flex-wrap justify-center gap-2" role="radiogroup" aria-label={q.prompt}>
+                  {Array.from({ length: q.scaleMax - q.scaleMin + 1 }, (_, i) => q.scaleMin + i).map((n) => {
+                    const on = Number(answers[q.id]) === n;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        className={cn(
+                          'min-h-touch min-w-[40px] rounded-control border px-3 font-mono text-sm',
+                          on
+                            ? 'border-brand-500/40 bg-brand-500/10 text-brand-700'
+                            : 'border-ink/12 bg-transparent text-ink-muted'
+                        )}
+                        aria-pressed={on}
+                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: n }))}
+                      >
+                        {n}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ol>
       <button
         type="button"

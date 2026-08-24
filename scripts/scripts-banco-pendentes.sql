@@ -915,3 +915,23 @@ ALTER TABLE development_plan_items
 INSERT INTO schema_migrations (name) VALUES ('049_onboarding_checkins.sql')
 ON CONFLICT (name) DO NOTHING;
 
+-- 050 — Climate open-text questions
+ALTER TABLE climate_survey_questions
+  ADD COLUMN IF NOT EXISTS question_kind TEXT NOT NULL DEFAULT 'likert';
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'climate_survey_questions_kind_chk'
+  ) THEN
+    ALTER TABLE climate_survey_questions DROP CONSTRAINT climate_survey_questions_kind_chk;
+  END IF;
+END $$;
+
+ALTER TABLE climate_survey_questions
+  ADD CONSTRAINT climate_survey_questions_kind_chk
+  CHECK (question_kind IN ('likert', 'text'));
+
+INSERT INTO schema_migrations (name) VALUES ('050_climate_text_questions.sql')
+ON CONFLICT (name) DO NOTHING;
+

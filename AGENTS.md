@@ -250,7 +250,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Overview fila PDI | `getCompanyPdiPulse` — planos ativos + fila → Equipe |
 | Pós-hire check-ins | `lib/people/onboarding-checkins.js` (D30/D60/D90), Equipe + Overview; seed PDI `onboarding` |
 | Relatório cliente print | `lib/client-report-print.js`, `/r/[token]` |
-| Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042_pdi_and_climate.sql` |
+| Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042`+`050` (Likert + texto descritivo) |
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |

@@ -28,6 +28,7 @@ export async function GET(request, { params }) {
         prompt: q.prompt,
         scaleMin: q.scaleMin,
         scaleMax: q.scaleMax,
+        questionKind: q.questionKind || 'likert',
       })),
     });
   } catch (err) {

@@ -742,7 +742,13 @@ export async function runHttpSmoke(baseUrl) {
           const { res: pubGet, data: pubMeta } = await req(base, `/api/public/climate/${token}`);
           await expectStatus('climate', 'public-get', pubGet.status, 200);
           const answers = {};
-          for (const q of pubMeta?.questions || []) answers[q.id] = q.scaleMin;
+          for (const q of pubMeta?.questions || []) {
+            if (String(q.questionKind || '').toLowerCase() === 'text') {
+              answers[q.id] = 'DTOV open text insight ok';
+            } else {
+              answers[q.id] = q.scaleMin;
+            }
+          }
           const { res: pubPost } = await req(base, `/api/public/climate/${token}`, {
             method: 'POST',
             body: { answers },
