@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
@@ -15,7 +15,6 @@ function dateLocale(locale) {
   return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
 }
 
-/** Short date for list / chart (dd/mm/yyyy or locale). */
 function formatClimateDate(raw, locale) {
   if (!raw) return '';
   const d = new Date(raw);
@@ -23,7 +22,6 @@ function formatClimateDate(raw, locale) {
   return d.toLocaleDateString(dateLocale(locale), { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-/** Prefer open date; show range when closed. */
 function formatClimateSurveyWhen(survey, locale) {
   if (!survey) return '';
   const open = formatClimateDate(survey.opensAt || climateSurveyAnchorDate(survey), locale);
@@ -49,6 +47,13 @@ const TONE_TEXT = {
   info: 'text-ink-muted',
 };
 
+const TONE_BG = {
+  success: 'bg-success/10 border-success/25',
+  warning: 'bg-warning/10 border-warning/25',
+  danger: 'bg-danger/10 border-danger/25',
+  info: 'bg-ink/[0.04] border-ink/12',
+};
+
 const TONE_STROKE = {
   success: C.success,
   warning: C.warning,
@@ -56,38 +61,56 @@ const TONE_STROKE = {
   info: C.info,
 };
 
-/** Compact satisfaction meter for climate Likert means (1–5 default). */
+const STATUS_CHIP = {
+  draft: 'border-ink/15 bg-ink/[0.05] text-ink-muted',
+  open: 'border-success/30 bg-success/10 text-success',
+  closed: 'border-info/25 bg-info/10 text-info',
+};
+
+function ClimateStatusChip({ status, locale }) {
+  const key = STATUS_CHIP[status] ? status : 'draft';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-control border px-2 py-0.5 font-mono text-[11px]',
+        STATUS_CHIP[key]
+      )}
+    >
+      {t(locale, `panel.climate.status.${key}`)}
+    </span>
+  );
+}
+
+/** Satisfaction meter — score + semantic bar (1–5 default). */
 function ClimateMeanMeter({
   mean,
   scaleMin = 1,
   scaleMax = 5,
   locale,
-  compact = false,
+  size = 'md',
   showLabel = true,
 }) {
   const level = climateMeanLevel(mean, scaleMin, scaleMax);
   if (mean == null || !level) return null;
   const barClass = TONE_BAR[level.tone] || TONE_BAR.info;
   const textClass = TONE_TEXT[level.tone] || TONE_TEXT.info;
+  const compact = size === 'sm';
   return (
-    <div className={cn('w-full', compact ? 'mt-1' : 'mt-1.5')}>
-      <div className="mb-0.5 flex flex-wrap items-center justify-between gap-1">
+    <div className={cn('w-full', compact ? 'mt-1' : 'mt-2')}>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
         {showLabel ? (
-          <span className={cn('font-mono text-[10px]', textClass)}>
+          <span className={cn('font-mono text-[11px]', textClass)}>
             {t(locale, `panel.climate.level.${level.level}`)}
           </span>
         ) : (
           <span />
         )}
-        <span className="font-mono text-[10px] text-ink-faint">
-          {scaleMin}–{scaleMax}
+        <span className="font-mono text-[11px] text-ink-faint">
+          {t(locale, 'panel.climate.scaleRange', { min: scaleMin, max: scaleMax })}
         </span>
       </div>
       <div
-        className={cn(
-          'overflow-hidden rounded-full bg-ink/10',
-          compact ? 'h-1.5' : 'h-2'
-        )}
+        className={cn('overflow-hidden rounded-full bg-ink/10', compact ? 'h-2' : 'h-2.5')}
         role="meter"
         aria-valuemin={scaleMin}
         aria-valuemax={scaleMax}
@@ -100,28 +123,26 @@ function ClimateMeanMeter({
   );
 }
 
-/** SVG trend of overall means across campaigns (oldest → newest). */
 function ClimateTrendChart({ surveys, locale }) {
-  const chart = buildClimateTrendChart(surveys);
+  const chart = buildClimateTrendChart(surveys, { width: 480, height: 140 });
   if (!chart) {
     return (
-      <p className={cn(S.faint, 'm-0 text-[11px]')}>{t(locale, 'panel.climate.trendNeedMore')}</p>
+      <p className={cn(S.faint, 'm-0 text-sm')}>{t(locale, 'panel.climate.trendNeedMore')}</p>
     );
   }
   const { points, path, areaPath, w, h, pad, guides, scaleMin, scaleMax } = chart;
   const last = points[points.length - 1];
   const first = points[0];
-  const delta =
-    last && first ? Math.round((last.mean - first.mean) * 10) / 10 : null;
+  const delta = last && first ? Math.round((last.mean - first.mean) * 10) / 10 : null;
 
   return (
-    <div className="rounded-control border border-ink/10 bg-canvas/40 px-2.5 py-2">
-      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0 text-[10px]')}>{t(locale, 'panel.climate.trendTitle')}</span>
+    <div className="rounded-control border border-ink/10 bg-canvas/50 px-3 py-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="font-ui text-sm text-ink">{t(locale, 'panel.climate.trendTitle')}</span>
         {delta != null ? (
           <span
             className={cn(
-              'font-mono text-[11px]',
+              'font-mono text-sm',
               delta > 0 ? 'text-success' : delta < 0 ? 'text-danger' : 'text-ink-muted'
             )}
           >
@@ -133,7 +154,7 @@ function ClimateTrendChart({ surveys, locale }) {
       </div>
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className="h-auto w-full"
+        className="h-auto w-full max-h-40"
         role="img"
         aria-label={t(locale, 'panel.climate.trendAria')}
       >
@@ -153,7 +174,7 @@ function ClimateTrendChart({ surveys, locale }) {
               y={g.y + 3}
               textAnchor="end"
               className="fill-ink-faint"
-              style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace' }}
+              style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace' }}
             >
               {g.value}
             </text>
@@ -165,7 +186,7 @@ function ClimateTrendChart({ surveys, locale }) {
           fill="none"
           stroke="currentColor"
           className="text-brand-600"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
@@ -174,19 +195,19 @@ function ClimateTrendChart({ surveys, locale }) {
             <circle
               cx={p.x}
               cy={p.y}
-              r="4.5"
+              r="5"
               fill={TONE_STROKE[p.tone] || TONE_STROKE.info}
               stroke="#fff"
-              strokeWidth="1.5"
+              strokeWidth="2"
             />
             <text
               x={p.x}
-              y={h - 8}
+              y={h - 6}
               textAnchor="middle"
               className="fill-ink-muted"
-              style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+              style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace' }}
             >
-              {formatClimateDate(p.at, locale) || (p.title || '—').slice(0, 8)}
+              {formatClimateDate(p.at, locale) || (p.title || '—').slice(0, 10)}
             </text>
             <title>{`${p.title}${p.at ? ` · ${formatClimateDate(p.at, locale)}` : ''}: ${p.mean}`}</title>
           </g>
@@ -196,7 +217,7 @@ function ClimateTrendChart({ surveys, locale }) {
           y={pad.top + 4}
           textAnchor="end"
           className="fill-ink-faint"
-          style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+          style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace' }}
         >
           {scaleMax}
         </text>
@@ -205,46 +226,53 @@ function ClimateTrendChart({ surveys, locale }) {
           y={pad.top + (h - pad.top - pad.bottom) + 3}
           textAnchor="end"
           className="fill-ink-faint"
-          style={{ fontSize: 8, fontFamily: 'ui-monospace, monospace' }}
+          style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace' }}
         >
           {scaleMin}
         </text>
       </svg>
-      <p className={cn(S.faint, 'm-0 mt-1 text-[10px]')}>{t(locale, 'panel.climate.trendHint')}</p>
+      <p className={cn(S.faint, 'm-0 mt-2')}>{t(locale, 'panel.climate.trendHint')}</p>
     </div>
   );
 }
 
-/**
- * Column comparison of overall means (same campaigns as trend).
- */
+/** Side-by-side bars — only when 2+ campaigns have means. */
 function ClimateCompareBars({ surveys, locale }) {
   const rows = [...(surveys || [])]
     .filter((s) => s?.overallMean != null)
     .reverse();
-  if (rows.length < 1) return null;
+  if (rows.length < 2) return null;
   return (
-    <div className="mt-2">
-      <div className={cn(S.label, 'mb-1.5 text-[10px]')}>{t(locale, 'panel.climate.compareBarsTitle')}</div>
-      <ul className="m-0 flex list-none items-end gap-2 p-0" style={{ minHeight: 72 }}>
+    <div className="mt-3">
+      <div className="mb-2 font-ui text-sm text-ink">{t(locale, 'panel.climate.compareBarsTitle')}</div>
+      <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4">
         {rows.map((s) => {
           const level = climateMeanLevel(s.overallMean, 1, 5);
           const pct = level?.pct ?? 0;
           return (
-            <li key={s.surveyId} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-              <span className="font-mono text-[10px] text-ink">{s.overallMean}</span>
-              <div className="flex h-14 w-full max-w-[48px] items-end justify-center rounded-sm bg-ink/[0.06] px-1 pb-0.5 pt-1">
+            <li
+              key={s.surveyId}
+              className="flex flex-col gap-2 rounded-control border border-ink/10 bg-canvas/40 px-3 py-3"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate font-ui text-xs text-ink" title={s.title}>
+                  {s.title}
+                </span>
+                <span className="shrink-0 font-display text-lg text-ink">{s.overallMean}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-ink/10">
                 <div
-                  className={cn('w-full max-w-[28px] rounded-sm', TONE_BAR[level?.tone] || TONE_BAR.info)}
-                  style={{ height: `${Math.max(8, pct)}%` }}
-                  title={`${s.title}: ${s.overallMean}`}
+                  className={cn('h-full rounded-full', TONE_BAR[level?.tone] || TONE_BAR.info)}
+                  style={{ width: `${Math.max(6, pct)}%` }}
                 />
               </div>
-              <span
-                className="w-full truncate text-center font-mono text-[9px] text-ink-faint"
-                title={`${s.title}${formatClimateSurveyWhen(s, locale) ? ` · ${formatClimateSurveyWhen(s, locale)}` : ''}`}
-              >
-                {formatClimateDate(climateSurveyAnchorDate(s), locale) || (s.title || '—').slice(0, 12)}
+              <span className="font-mono text-[11px] text-ink-faint">
+                {formatClimateDate(climateSurveyAnchorDate(s), locale) || '—'}
+                {s.deltaVsPrevious != null
+                  ? ` · ${t(locale, 'panel.climate.deltaVsPrev', {
+                      n: s.deltaVsPrevious > 0 ? `+${s.deltaVsPrevious}` : String(s.deltaVsPrevious),
+                    })}`
+                  : ''}
               </span>
             </li>
           );
@@ -254,8 +282,41 @@ function ClimateCompareBars({ surveys, locale }) {
   );
 }
 
+function OverallScoreHero({ mean, locale, responseCount, minResponses }) {
+  const level = climateMeanLevel(mean, 1, 5);
+  if (mean == null || !level) return null;
+  return (
+    <div className={cn('rounded-card border px-4 py-4', TONE_BG[level.tone] || TONE_BG.info)}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">
+            {t(locale, 'panel.climate.satisfactionTitle')}
+          </div>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="font-display text-4xl leading-none text-ink">{mean}</span>
+            <span className="font-mono text-sm text-ink-faint">/ 5</span>
+          </div>
+          <div className={cn('mt-2 font-mono text-xs', TONE_TEXT[level.tone])}>
+            {t(locale, `panel.climate.level.${level.level}`)}
+          </div>
+        </div>
+        <div className="min-w-[140px] flex-1 text-right font-mono text-[11px] text-ink-muted">
+          {t(locale, 'panel.climate.rCount', { n: responseCount || 0 })}
+          {minResponses ? (
+            <div className="mt-0.5 text-ink-faint">
+              {t(locale, 'panel.climate.minForMeans', { n: minResponses })}
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <ClimateMeanMeter mean={mean} locale={locale} showLabel={false} />
+      <p className={cn(S.faint, 'm-0 mt-2')}>{t(locale, 'panel.climate.levelHint')}</p>
+    </div>
+  );
+}
+
 /**
- * Climate surveys — B-503 questions, B-504 batch/email, B-505 benchmark, B-506 k-min.
+ * Climate surveys — list first, detail second; comparison only with 2+ unlocked means.
  */
 export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const { toast, promptForm, confirm } = useAppFeedback();
@@ -269,9 +330,26 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [inviteUrls, setInviteUrls] = useState([]);
   const [companyId, setCompanyId] = useState(companies[0]?.id || '');
   const [minResponses, setMinResponses] = useState(5);
+  const [showCompare, setShowCompare] = useState(false);
+  const [showQuestions, setShowQuestions] = useState(false);
 
   const companyQs =
     isAdmin && companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
+
+  const meanBySurveyId = useMemo(() => {
+    const map = new Map();
+    for (const s of benchmark?.surveys || []) {
+      if (s?.surveyId != null && s.overallMean != null) {
+        map.set(Number(s.surveyId), s);
+      }
+    }
+    return map;
+  }, [benchmark]);
+
+  const compareReady = useMemo(() => {
+    const withMean = (benchmark?.surveys || []).filter((s) => s?.overallMean != null);
+    return withMean.length >= 2;
+  }, [benchmark]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -279,45 +357,73 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       const res = await fetch(`/api/admin/climate-surveys${companyQs}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || data?.errorCode || 'load');
-      setItems(Array.isArray(data.items) ? data.items : []);
+      const next = Array.isArray(data.items) ? data.items : [];
+      setItems(next);
       if (data.minResponses != null) setMinResponses(Number(data.minResponses) || 5);
       const bq = companyQs ? `${companyQs}&benchmark=1` : '?benchmark=1';
       const br = await fetch(`/api/admin/climate-surveys${bq}`);
       const bd = await br.json().catch(() => ({}));
       if (br.ok) setBenchmark(bd);
+      return next;
     } catch (e) {
       toast(e?.message || t(locale, 'panel.climate.loadError'), 'error');
       setItems([]);
+      return [];
     } finally {
       setLoading(false);
     }
   }, [companyQs, locale, toast]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const loadDetail = useCallback(
+    async (id) => {
+      setBusy(true);
+      setInviteUrls([]);
+      setAggregate(null);
+      try {
+        const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'load');
+        setSelectedId(id);
+        setDetail(data.survey);
+        setShowQuestions(data.survey?.status === 'draft');
+        const ag = await fetch(
+          `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
+        );
+        const agData = await ag.json().catch(() => ({}));
+        if (ag.ok) setAggregate(agData);
+      } catch {
+        toast(t(locale, 'panel.climate.loadError'), 'error');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [locale, toast]
+  );
 
-  const loadDetail = async (id) => {
-    setBusy(true);
-    setInviteUrls([]);
-    setAggregate(null);
-    try {
-      const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'load');
-      setSelectedId(id);
-      setDetail(data.survey);
-      const ag = await fetch(
-        `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
-      );
-      const agData = await ag.json().catch(() => ({}));
-      if (ag.ok) setAggregate(agData);
-    } catch {
-      toast(t(locale, 'panel.climate.loadError'), 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next = await load();
+      if (cancelled) return;
+      setSelectedId((cur) => {
+        const stillThere = cur && next.some((s) => String(s.id) === String(cur));
+        if (stillThere) return cur;
+        const first = next[0]?.id || null;
+        if (first) {
+          queueMicrotask(() => {
+            if (!cancelled) loadDetail(first);
+          });
+        } else {
+          setDetail(null);
+          setAggregate(null);
+        }
+        return first;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [load, loadDetail]);
 
   const patch = async (id, body) => {
     const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`, {
@@ -536,6 +642,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         addQuestion: { prompt: values.prompt, questionKind: values.kind || 'likert' },
       });
       setDetail(data.survey);
+      setShowQuestions(true);
       toast(t(locale, 'panel.climate.questionSaved'), 'ok');
       await load();
     } catch {
@@ -614,8 +721,10 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       }
       setSelectedId(null);
       setDetail(null);
+      setAggregate(null);
       toast(t(locale, 'panel.climate.deleted'), 'ok');
-      await load();
+      const next = await load();
+      if (next[0]) await loadDetail(next[0].id);
     } catch {
       toast(t(locale, 'panel.climate.saveError'), 'error');
     } finally {
@@ -623,20 +732,24 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     }
   };
 
+  const min = aggregate?.minResponses || minResponses || 5;
+  const resp = aggregate?.responseCount ?? detail?.responseCount ?? 0;
+  const unlockPct = Math.min(100, Math.round((resp / min) * 100));
+
   return (
     <div className={S.stack}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 max-w-2xl">
           <h2 className="m-0 font-display text-xl text-ink">{t(locale, 'panel.climate.pageTitle')}</h2>
-          <p className={cn(S.muted, 'm-0 mt-1 max-w-xl text-sm')}>{t(locale, 'panel.climate.pageHint')}</p>
+          <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>{t(locale, 'panel.climate.pageHint')}</p>
         </div>
-        <button type="button" disabled={busy} onClick={createSurvey} className={cn(S.btnPrimary, 'min-h-touch')}>
+        <button type="button" disabled={busy} onClick={createSurvey} className={cn(S.btnPrimary, 'min-h-touch shrink-0')}>
           {t(locale, 'panel.climate.createBtn')}
         </button>
       </div>
 
       {isAdmin && companies.length > 0 ? (
-        <label className={cn(S.label, 'flex max-w-xs flex-col gap-1')}>
+        <label className={cn(S.label, 'mb-0 flex max-w-xs flex-col gap-1')}>
           {t(locale, 'panel.climate.companyLabel')}
           <select
             className={S.select}
@@ -645,6 +758,8 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
               setCompanyId(e.target.value);
               setSelectedId(null);
               setDetail(null);
+              setAggregate(null);
+              setShowCompare(false);
             }}
           >
             {companies.map((c) => (
@@ -654,94 +769,6 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
             ))}
           </select>
         </label>
-      ) : null}
-
-      {benchmark?.surveys?.length > 0 ? (
-        <div className={cn(S.cardTight)}>
-          <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkTitle')}</div>
-          <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
-            {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
-          </p>
-          <div className="mb-3">
-            <ClimateTrendChart surveys={benchmark.surveys} locale={locale} />
-            <ClimateCompareBars surveys={benchmark.surveys} locale={locale} />
-          </div>
-          <ul className="m-0 mb-3 flex list-none flex-col gap-2 p-0">
-            {(benchmark.surveys || []).map((s) => {
-              return (
-              <li
-                key={s.surveyId}
-                className="rounded-md border border-ink/10 px-2.5 py-2 text-xs"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-ink">
-                    {s.title}
-                    {formatClimateSurveyWhen(s, locale) ? (
-                      <span className="ml-2 font-mono text-[10px] text-ink-faint">
-                        {formatClimateSurveyWhen(s, locale)}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="font-mono text-ink-muted">
-                    {s.overallMean != null
-                      ? t(locale, 'panel.climate.overallMeanShort', { n: s.overallMean })
-                      : '—'}
-                    {s.deltaVsPrevious != null ? (
-                      <span
-                        className={cn(
-                          'ml-2',
-                          s.deltaVsPrevious > 0 ? 'text-success' : s.deltaVsPrevious < 0 ? 'text-danger' : ''
-                        )}
-                      >
-                        {t(locale, 'panel.climate.deltaVsPrev', {
-                          n: s.deltaVsPrevious > 0 ? `+${s.deltaVsPrevious}` : String(s.deltaVsPrevious),
-                        })}
-                      </span>
-                    ) : null}
-                    <span className="ml-2 text-ink-faint">
-                      {t(locale, 'panel.climate.rCount', { n: s.responseCount || 0 })}
-                    </span>
-                  </span>
-                </div>
-                {s.overallMean != null ? (
-                  <ClimateMeanMeter mean={s.overallMean} locale={locale} compact />
-                ) : null}
-              </li>
-              );
-            })}
-          </ul>
-          {(benchmark.prompts || []).length > 0 ? (
-            <>
-              <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkByQuestion')}</div>
-              <p className={cn(S.faint, 'm-0 mb-2 text-[10px]')}>{t(locale, 'panel.climate.levelHint')}</p>
-              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-                {benchmark.prompts.slice(0, 6).map((row) => (
-                  <li key={row.key} className="rounded-md border border-ink/10 px-2.5 py-2 text-xs">
-                    <div className="mb-1.5 text-ink-muted">{row.prompt}</div>
-                    <div className="flex flex-col gap-2">
-                      {row.means.map((m) => (
-                        <div key={m.surveyId}>
-                          <div className="flex flex-wrap items-baseline justify-between gap-2 font-mono text-ink">
-                            <span className="text-ink-muted">{m.title}</span>
-                            <span>{m.mean != null ? m.mean : '—'}</span>
-                          </div>
-                          {m.mean != null ? (
-                            <ClimateMeanMeter
-                              mean={m.mean}
-                              locale={locale}
-                              compact
-                              showLabel={false}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-        </div>
       ) : null}
 
       {loading ? (
@@ -755,293 +782,391 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           actionDisabled={busy}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {items.map((s) => {
-              const min = minResponses || 5;
-              const resp = Number(s.responseCount) || 0;
-              const unlockPct = Math.min(100, Math.round((resp / min) * 100));
-              return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => loadDetail(s.id)}
-                  className={cn(
-                    'w-full cursor-pointer rounded-card border px-3 py-3 text-left',
-                    selectedId === s.id
-                      ? 'border-brand-500/40 bg-brand-500/[0.06]'
-                      : 'border-ink/12 bg-canvas/50'
-                  )}
-                >
-                  <div className="font-ui text-sm text-ink">{s.title}</div>
-                  <div className={cn(S.faint, 'mt-1 font-mono text-[11px]')}>
-                    {t(locale, `panel.climate.status.${s.status}`)} ·{' '}
-                    {t(locale, 'panel.climate.qCount', { n: s.questionCount || 0 })} ·{' '}
-                    {t(locale, 'panel.climate.rCount', { n: resp })}
-                    {formatClimateSurveyWhen(s, locale)
-                      ? ` · ${formatClimateSurveyWhen(s, locale)}`
-                      : ''}
-                  </div>
-                  {s.status === 'open' || s.status === 'closed' ? (
-                    <div className="mt-2">
-                      <div className="mb-0.5 flex justify-between font-mono text-[10px] text-ink-faint">
-                        <span>{t(locale, 'panel.climate.responseProgress', { n: resp, min })}</span>
-                        <span>{unlockPct}%</span>
-                      </div>
-                      <div className="h-1 overflow-hidden rounded-full bg-ink/10">
-                        <div
-                          className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
-                          style={{ width: `${unlockPct}%` }}
-                        />
+        <>
+          <div className="grid gap-4 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] lg:items-start">
+            <div>
+              <div className="mb-2 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+                {t(locale, 'panel.climate.listHeading', { n: items.length })}
+              </div>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {items.map((s) => {
+                  const listResp = Number(s.responseCount) || 0;
+                  const listMin = minResponses || 5;
+                  const listPct = Math.min(100, Math.round((listResp / listMin) * 100));
+                  const bm = meanBySurveyId.get(Number(s.id));
+                  const selected = selectedId === s.id;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => loadDetail(s.id)}
+                        className={cn(
+                          'w-full cursor-pointer rounded-card border px-3.5 py-3 text-left transition-colors',
+                          selected
+                            ? 'border-brand-500/45 bg-brand-500/[0.07] shadow-sm'
+                            : 'border-ink/12 bg-white hover:border-ink/25'
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 font-ui text-sm font-medium text-ink">{s.title}</div>
+                          <ClimateStatusChip status={s.status} locale={locale} />
+                        </div>
+                        <div className={cn(S.faint, 'mt-1.5')}>
+                          {t(locale, 'panel.climate.qCount', { n: s.questionCount || 0 })}
+                          {' · '}
+                          {t(locale, 'panel.climate.rCount', { n: listResp })}
+                        </div>
+                        {formatClimateSurveyWhen(s, locale) ? (
+                          <div className="mt-0.5 font-mono text-[11px] text-ink-faint">
+                            {formatClimateSurveyWhen(s, locale)}
+                          </div>
+                        ) : null}
+                        {bm?.overallMean != null ? (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="font-display text-lg text-ink">{bm.overallMean}</span>
+                            <div className="min-w-0 flex-1">
+                              <ClimateMeanMeter
+                                mean={bm.overallMean}
+                                locale={locale}
+                                size="sm"
+                                showLabel={false}
+                              />
+                            </div>
+                          </div>
+                        ) : s.status === 'open' || s.status === 'closed' ? (
+                          <div className="mt-2">
+                            <div className="mb-0.5 font-mono text-[10px] text-ink-faint">
+                              {t(locale, 'panel.climate.responseProgress', { n: listResp, min: listMin })}
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full',
+                                  listResp >= listMin ? 'bg-success' : 'bg-info'
+                                )}
+                                style={{ width: `${listPct}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div className={cn(S.card, 'min-h-[280px] p-5 sm:p-6')}>
+              {!detail ? (
+                <div className="flex min-h-[200px] flex-col items-center justify-center px-4 text-center">
+                  <p className={cn(S.muted, 'm-0 max-w-sm text-sm')}>{t(locale, 'panel.climate.pickHint')}</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-5">
+                  <header className="border-b border-ink/10 pb-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <ClimateStatusChip status={detail.status} locale={locale} />
+                          {formatClimateSurveyWhen(detail, locale) ? (
+                            <span className="font-mono text-[11px] text-ink-faint">
+                              {formatClimateSurveyWhen(detail, locale)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <h3 className="m-0 font-display text-2xl leading-tight text-ink">{detail.title}</h3>
+                        {detail.description ? (
+                          <p className={cn(S.muted, 'm-0 mt-2 text-sm')}>{detail.description}</p>
+                        ) : null}
                       </div>
                     </div>
-                  ) : null}
-                </button>
-              </li>
-              );
-            })}
-          </ul>
 
-          <div className={cn(S.card, 'min-h-[200px]')}>
-            {!detail ? (
-              <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'panel.climate.pickHint')}</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <div>
-                  <h3 className="m-0 font-display text-lg text-ink">{detail.title}</h3>
-                  {formatClimateSurveyWhen(detail, locale) ? (
-                    <p className={cn(S.faint, 'm-0 mt-1 font-mono text-[11px]')}>
-                      {formatClimateSurveyWhen(detail, locale)}
-                    </p>
-                  ) : null}
-                  {detail.description ? (
-                    <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>{detail.description}</p>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {detail.status === 'draft' ? (
-                    <button type="button" disabled={busy} className={S.btnPrimary} onClick={() => setStatus('open')}>
-                      {t(locale, 'panel.climate.openBtn')}
-                    </button>
-                  ) : null}
-                  {detail.status === 'open' ? (
-                    <button type="button" disabled={busy} className={S.btnGhost} onClick={() => setStatus('closed')}>
-                      {t(locale, 'panel.climate.closeBtn')}
-                    </button>
-                  ) : null}
-                  {detail.status === 'open' ? (
-                    <>
-                      <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={createInvite}>
-                        {t(locale, 'panel.climate.inviteBtn')}
-                      </button>
-                      <button type="button" disabled={busy} className={S.btnGhost} onClick={createInviteBatch}>
-                        {t(locale, 'panel.climate.batchBtn')}
-                      </button>
-                      <button type="button" disabled={busy} className={S.btnGhost} onClick={emailInvites}>
-                        {t(locale, 'panel.climate.emailBtn')}
-                      </button>
-                    </>
-                  ) : null}
-                  {detail.status !== 'closed' ? (
-                    <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
-                      {t(locale, 'panel.climate.addQuestionBtn')}
-                    </button>
-                  ) : null}
-                  <button type="button" disabled={busy} className={cn(S.btnGhost, 'text-danger')} onClick={removeSurvey}>
-                    {t(locale, 'panel.climate.deleteBtn')}
-                  </button>
-                </div>
-                {detail.status === 'open' || detail.status === 'closed' ? (
-                  <div className="rounded-control border border-ink/10 bg-canvas/50 px-3 py-2">
-                    {(() => {
-                      const min = aggregate?.minResponses || minResponses || 5;
-                      const resp = aggregate?.responseCount ?? detail.responseCount ?? 0;
-                      const pct = Math.min(100, Math.round((resp / min) * 100));
-                      return (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {detail.status === 'draft' ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={S.btnPrimary}
+                          onClick={() => setStatus('open')}
+                        >
+                          {t(locale, 'panel.climate.openBtn')}
+                        </button>
+                      ) : null}
+                      {detail.status === 'open' ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={S.btnPrimary}
+                          onClick={createInvite}
+                        >
+                          {t(locale, 'panel.climate.inviteBtn')}
+                        </button>
+                      ) : null}
+                      {detail.status === 'open' ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={S.btnGhost}
+                          onClick={() => setStatus('closed')}
+                        >
+                          {t(locale, 'panel.climate.closeBtn')}
+                        </button>
+                      ) : null}
+                      {detail.status === 'open' ? (
                         <>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-mono text-[11px] text-ink-muted">
-                              {t(locale, 'panel.climate.responseProgress', { n: resp, min })}
-                            </span>
-                            {aggregate?.overallMean != null ? (
-                              <span className="font-mono text-[12px] text-ink">
-                                {t(locale, 'panel.climate.overallMeanShort', { n: aggregate.overallMean })}
-                              </span>
-                            ) : null}
-                          </div>
-                          {aggregate?.overallMean != null ? (
-                            <ClimateMeanMeter mean={aggregate.overallMean} locale={locale} />
-                          ) : (
-                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                              <div
-                                className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          )}
-                          {aggregate?.overallMean == null ? null : (
-                            <div className="mt-1.5 flex justify-between font-mono text-[10px] text-ink-faint">
-                              <span>{t(locale, 'panel.climate.responseProgress', { n: resp, min })}</span>
-                              <span>{pct}%</span>
-                            </div>
-                          )}
+                          <button type="button" disabled={busy} className={S.btnGhost} onClick={createInviteBatch}>
+                            {t(locale, 'panel.climate.batchBtn')}
+                          </button>
+                          <button type="button" disabled={busy} className={S.btnGhost} onClick={emailInvites}>
+                            {t(locale, 'panel.climate.emailBtn')}
+                          </button>
                         </>
-                      );
-                    })()}
-                  </div>
-                ) : null}
-                {detail.status === 'open' && inviteUrls.length === 0 ? (
-                  <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-3 py-3">
-                    <p className={cn(S.muted, 'm-0 mb-2 text-sm')}>{t(locale, 'panel.climate.invitePrimaryHint')}</p>
-                    <button type="button" disabled={busy} className={S.btnPrimary} onClick={createInvite}>
-                      {t(locale, 'panel.climate.inviteBtn')}
-                    </button>
-                  </div>
-                ) : null}
-                {inviteUrls.length > 0 ? (
-                  <div className="rounded-card border border-brand-500/30 bg-brand-500/[0.07] px-3 py-3">
-                    <div className={cn(S.label, 'mb-2')}>{t(locale, 'panel.climate.inviteLink')}</div>
-                    {inviteUrls.slice(0, 20).map((url) => (
-                      <CopyableLink key={url} url={url} locale={locale} />
-                    ))}
-                    {inviteUrls.length > 20 ? (
-                      <p className={cn(S.faint, 'm-0 mt-2 text-xs')}>
-                        {t(locale, 'panel.climate.batchMore', { n: inviteUrls.length - 20 })}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div>
-                  <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.questions')}</div>
-                  <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-                    {(detail.questions || []).map((q, idx) => (
-                      <li
-                        key={q.id}
-                        className="flex flex-wrap items-start justify-between gap-2 rounded-md border border-ink/10 px-2 py-1.5 text-xs"
+                      ) : null}
+                      {detail.status !== 'closed' ? (
+                        <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
+                          {t(locale, 'panel.climate.addQuestionBtn')}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'text-danger')}
+                        onClick={removeSurvey}
                       >
-                        <span className="min-w-0 flex-1 text-ink-muted">
-                          <span className="font-mono text-ink-faint">{idx + 1}. </span>
-                          <span className="mr-1.5 rounded border border-ink/10 px-1 py-0.5 font-mono text-[10px] text-ink-faint">
-                            {t(
-                              locale,
-                              `panel.climate.questionKind.${
-                                String(q.questionKind || '').toLowerCase() === 'text' ? 'text' : 'likert'
-                              }`
-                            )}
-                          </span>
-                          {q.prompt}
-                        </span>
-                        {detail.status !== 'closed' ? (
-                          <span className="flex gap-1">
-                            <button type="button" className={S.btnGhost} disabled={busy} onClick={() => editQuestion(q)}>
-                              {t(locale, 'panel.climate.editQuestionBtn')}
-                            </button>
-                            <button
-                              type="button"
-                              className={cn(S.btnGhost, 'text-danger')}
-                              disabled={busy}
-                              onClick={() => deactivateQuestion(q)}
-                            >
-                              {t(locale, 'panel.climate.deactivateQuestionBtn')}
-                            </button>
-                          </span>
+                        {t(locale, 'panel.climate.deleteBtn')}
+                      </button>
+                    </div>
+                  </header>
+
+                  {detail.status === 'open' && inviteUrls.length === 0 ? (
+                    <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-4 py-3">
+                      <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'panel.climate.invitePrimaryHint')}</p>
+                    </div>
+                  ) : null}
+
+                  {inviteUrls.length > 0 ? (
+                    <section>
+                      <h4 className="m-0 mb-2 font-ui text-sm font-medium text-ink">
+                        {t(locale, 'panel.climate.inviteLink')}
+                      </h4>
+                      <div className="rounded-card border border-brand-500/30 bg-brand-500/[0.06] px-3 py-3">
+                        {inviteUrls.slice(0, 20).map((url) => (
+                          <CopyableLink key={url} url={url} locale={locale} />
+                        ))}
+                        {inviteUrls.length > 20 ? (
+                          <p className={cn(S.faint, 'm-0 mt-2')}>
+                            {t(locale, 'panel.climate.batchMore', { n: inviteUrls.length - 20 })}
+                          </p>
                         ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {aggregate?.suppressed ? (
-                  <p className={cn(S.muted, 'm-0 text-sm')}>
-                    {t(locale, 'panel.climate.aggregateSuppressed', {
-                      n: aggregate.responseCount || 0,
-                      min: aggregate.minResponses || 5,
-                    })}
-                  </p>
-                ) : null}
-                {aggregate?.byQuestion?.length ? (
-                  <div>
-                    <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.aggregate')}</div>
-                    {aggregate.overallMean != null ? (
-                      <div className="mb-3 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2.5">
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <span className="text-xs text-ink-muted">
-                            {t(locale, 'panel.climate.satisfactionTitle')}
-                          </span>
-                          <span className="font-display text-xl text-ink">{aggregate.overallMean}</span>
-                        </div>
-                        <ClimateMeanMeter mean={aggregate.overallMean} locale={locale} />
-                        <p className={cn(S.faint, 'm-0 mt-1.5 text-[10px]')}>
-                          {t(locale, 'panel.climate.levelHint')}
-                        </p>
                       </div>
-                    ) : null}
-                    <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                      {aggregate.byQuestion.map((row) => {
-                        const scaleMax = Number(row.scaleMax) || 5;
-                        const scaleMin = Number(row.scaleMin) || 1;
-                        return (
-                          <li key={row.questionId} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                              <span className="min-w-0 flex-1 text-ink-muted">{row.prompt}</span>
-                              <span className="shrink-0 font-mono text-ink">
-                                {row.mean != null
-                                  ? t(locale, 'panel.climate.mean', { n: row.mean, r: row.responses })
-                                  : t(locale, 'panel.climate.noResponses')}
+                    </section>
+                  ) : null}
+
+                  {detail.status === 'open' || detail.status === 'closed' ? (
+                    aggregate?.overallMean != null ? (
+                      <OverallScoreHero
+                        mean={aggregate.overallMean}
+                        locale={locale}
+                        responseCount={resp}
+                        minResponses={min}
+                      />
+                    ) : (
+                      <div className="rounded-card border border-ink/12 bg-canvas/50 px-4 py-4">
+                        <div className="font-ui text-sm text-ink">{t(locale, 'panel.climate.waitingMeansTitle')}</div>
+                        {aggregate?.suppressed ? (
+                          <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>
+                            {t(locale, 'panel.climate.aggregateSuppressed', {
+                              n: resp,
+                              min,
+                            })}
+                          </p>
+                        ) : (
+                          <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>
+                            {t(locale, 'panel.climate.responseProgress', { n: resp, min })}
+                          </p>
+                        )}
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/10">
+                          <div
+                            className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
+                            style={{ width: `${unlockPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  ) : null}
+
+                  {aggregate?.byQuestion?.length && !aggregate.suppressed ? (
+                    <section>
+                      <h4 className="m-0 mb-3 font-ui text-sm font-medium text-ink">
+                        {t(locale, 'panel.climate.aggregate')}
+                      </h4>
+                      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                        {aggregate.byQuestion.map((row) => {
+                          const scaleMax = Number(row.scaleMax) || 5;
+                          const scaleMin = Number(row.scaleMin) || 1;
+                          const isText =
+                            String(row.questionKind || '').toLowerCase() === 'text' ||
+                            row.mean == null;
+                          return (
+                            <li
+                              key={row.questionId}
+                              className="rounded-control border border-ink/10 bg-white px-3.5 py-3"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <span className="min-w-0 flex-1 text-sm leading-snug text-ink">
+                                  {row.prompt}
+                                </span>
+                                <span className="shrink-0 font-display text-xl tabular-nums text-ink">
+                                  {row.mean != null ? row.mean : '—'}
+                                </span>
+                              </div>
+                              {row.mean != null ? (
+                                <ClimateMeanMeter
+                                  mean={row.mean}
+                                  scaleMin={scaleMin}
+                                  scaleMax={scaleMax}
+                                  locale={locale}
+                                  size="sm"
+                                />
+                              ) : (
+                                <p className={cn(S.faint, 'm-0 mt-1.5')}>
+                                  {isText
+                                    ? t(locale, 'panel.climate.questionKind.text')
+                                    : t(locale, 'panel.climate.noResponses')}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  {aggregate?.textByQuestion?.length && !aggregate.suppressed ? (
+                    <section>
+                      <h4 className="m-0 mb-1 font-ui text-sm font-medium text-ink">
+                        {t(locale, 'panel.climate.textAnswersTitle')}
+                      </h4>
+                      <p className={cn(S.faint, 'm-0 mb-3')}>{t(locale, 'panel.climate.textAnswersHint')}</p>
+                      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                        {aggregate.textByQuestion.map((block) => (
+                          <li key={block.questionId} className="rounded-control border border-ink/10 px-3.5 py-3">
+                            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                              <span className="text-sm text-ink">{block.prompt}</span>
+                              <span className="font-mono text-[11px] text-ink-faint">
+                                {t(locale, 'panel.climate.textAnswersCount', { n: block.responses || 0 })}
                               </span>
                             </div>
-                            {row.mean != null ? (
-                              <ClimateMeanMeter
-                                mean={row.mean}
-                                scaleMin={scaleMin}
-                                scaleMax={scaleMax}
-                                locale={locale}
-                                compact
-                              />
+                            {(block.answers || []).length ? (
+                              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                                {block.answers.map((ans, i) => (
+                                  <li
+                                    key={`${block.questionId}-${i}`}
+                                    className="rounded-control border border-ink/8 bg-canvas/60 px-3 py-2 text-sm leading-relaxed text-ink-muted"
+                                  >
+                                    {ans}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'panel.climate.noResponses')}</p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  <section className="border-t border-ink/10 pt-4">
+                    <button
+                      type="button"
+                      className={cn(S.btnGhost, 'w-full justify-between sm:w-auto')}
+                      onClick={() => setShowQuestions((v) => !v)}
+                      aria-expanded={showQuestions}
+                    >
+                      {t(locale, 'panel.climate.questions')}
+                      <span className="font-mono text-ink-faint">
+                        {showQuestions ? '−' : '+'} · {(detail.questions || []).length}
+                      </span>
+                    </button>
+                    {showQuestions ? (
+                      <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
+                        {(detail.questions || []).map((q, idx) => (
+                          <li
+                            key={q.id}
+                            className="flex flex-wrap items-start justify-between gap-2 rounded-control border border-ink/10 px-3 py-2.5 text-sm"
+                          >
+                            <span className="min-w-0 flex-1 text-ink-muted">
+                              <span className="mr-1.5 font-mono text-ink-faint">{idx + 1}.</span>
+                              <span className="mr-2 inline-block rounded border border-ink/10 px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
+                                {t(
+                                  locale,
+                                  `panel.climate.questionKind.${
+                                    String(q.questionKind || '').toLowerCase() === 'text' ? 'text' : 'likert'
+                                  }`
+                                )}
+                              </span>
+                              {q.prompt}
+                            </span>
+                            {detail.status !== 'closed' ? (
+                              <span className="flex gap-1">
+                                <button
+                                  type="button"
+                                  className={S.btnGhost}
+                                  disabled={busy}
+                                  onClick={() => editQuestion(q)}
+                                >
+                                  {t(locale, 'panel.climate.editQuestionBtn')}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={cn(S.btnGhost, 'text-danger')}
+                                  disabled={busy}
+                                  onClick={() => deactivateQuestion(q)}
+                                >
+                                  {t(locale, 'panel.climate.deactivateQuestionBtn')}
+                                </button>
+                              </span>
                             ) : null}
                           </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ) : null}
-                {aggregate?.textByQuestion?.length && !aggregate.suppressed ? (
-                  <div>
-                    <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.textAnswersTitle')}</div>
-                    <p className={cn(S.faint, 'm-0 mb-2 text-[10px]')}>
-                      {t(locale, 'panel.climate.textAnswersHint')}
-                    </p>
-                    <ul className="m-0 flex list-none flex-col gap-3 p-0">
-                      {aggregate.textByQuestion.map((block) => (
-                        <li key={block.questionId} className="rounded-md border border-ink/10 px-2.5 py-2">
-                          <div className="mb-1.5 text-xs text-ink">
-                            {block.prompt}
-                            <span className="ml-2 font-mono text-[10px] text-ink-faint">
-                              {t(locale, 'panel.climate.textAnswersCount', { n: block.responses || 0 })}
-                            </span>
-                          </div>
-                          {(block.answers || []).length ? (
-                            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-                              {block.answers.map((ans, i) => (
-                                <li
-                                  key={`${block.questionId}-${i}`}
-                                  className="rounded border border-ink/8 bg-canvas/50 px-2 py-1.5 text-[12px] leading-relaxed text-ink-muted"
-                                >
-                                  {ans}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.climate.noResponses')}</p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            )}
+                        ))}
+                      </ul>
+                    ) : null}
+                  </section>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+
+          {compareReady ? (
+            <div className={cn(S.cardTight)}>
+              <button
+                type="button"
+                className={cn(S.btnGhost, 'w-full justify-between')}
+                onClick={() => setShowCompare((v) => !v)}
+                aria-expanded={showCompare}
+              >
+                <span className="text-left font-ui text-sm text-ink">
+                  {t(locale, 'panel.climate.benchmarkTitle')}
+                </span>
+                <span className="font-mono text-ink-faint">
+                  {showCompare
+                    ? t(locale, 'panel.climate.compareHide')
+                    : t(locale, 'panel.climate.compareShow')}
+                </span>
+              </button>
+              {showCompare ? (
+                <div className="mt-4">
+                  <p className={cn(S.muted, 'm-0 mb-3 text-sm')}>
+                    {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
+                  </p>
+                  <ClimateTrendChart surveys={benchmark.surveys} locale={locale} />
+                  <ClimateCompareBars surveys={benchmark.surveys} locale={locale} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
