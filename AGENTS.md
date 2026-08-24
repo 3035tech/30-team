@@ -30,7 +30,8 @@ Não instale pacotes novos sem necessidade clara. Não introduza TypeScript nem 
 ## Arquitetura
 
 ```
-app/page.jsx                                       → landpage de produto (CTA → /login)
+app/page.jsx                                       → landpage SEO (JSON-LD + inventário; CTA → /login)
+app/llms.txt                                       → documento para crawlers de IA
 app/t, app/v, app/r, app/assessment                → UI pública (token)
 app/login, app/dashboard                           → painel (JWT + SSR por aba)
 app/api                                            → rotas finas
