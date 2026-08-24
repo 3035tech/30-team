@@ -9,6 +9,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
 import { DevelopmentPlansBlock } from './DevelopmentPlansBlock';
 import { OnboardingCheckinsBlock } from './OnboardingCheckinsBlock';
+import { PreOnboardingChecklistBlock } from './PreOnboardingChecklistBlock';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 
@@ -615,6 +616,14 @@ export function PeopleManagementPanel({
           </div>
         )}
       </div>
+
+      {candidateId ? (
+        <PreOnboardingChecklistBlock
+          locale={locale}
+          candidateId={candidateId}
+          employmentStatus={employmentStatus}
+        />
+      ) : null}
 
       {candidateId ? (
         <OnboardingCheckinsBlock
