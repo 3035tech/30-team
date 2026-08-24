@@ -33,6 +33,7 @@ function formatMeetingDate(value, locale) {
 
 /**
  * Hipóteses de gestão + registro de 1:1 (mesma pessoa = candidate_id).
+ * @param {'oneOnOne'|'journey'|'all'} [section='all'] — recorte para sub-nav do drawer Equipe.
  */
 export function PeopleManagementPanel({
   locale,
@@ -40,6 +41,7 @@ export function PeopleManagementPanel({
   people,
   onRefresh,
   employmentStatus = null,
+  section = 'all',
 }) {
   const management = people?.management;
   const oneOnOnes = people?.oneOnOnes || [];
@@ -86,7 +88,7 @@ export function PeopleManagementPanel({
     void loadPortalTokens();
   }, [loadFollowUps, loadPortalTokens]);
 
-  if (!management && !people) {
+  if (!management && !people && section !== 'journey') {
     return null;
   }
 
@@ -96,6 +98,29 @@ export function PeopleManagementPanel({
   const signals = management?.retentionSignals || [];
   const topMot = management?.motivators?.top || [];
   const pdiSeedIdeas = management?.synthesis?.pdiIdeas || [];
+  const showJourney = section === 'all' || section === 'journey';
+
+  if (section === 'journey') {
+    if (employmentStatus !== 'employee') {
+      return (
+        <p className="m-0 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3 text-xs leading-normal text-ink-muted">
+          {t(locale, 'panel.team.journeyNotEmployee')}
+        </p>
+      );
+    }
+    if (!candidateId) return null;
+    return (
+      <HireJourneyBlock
+        locale={locale}
+        candidateId={candidateId}
+        employmentStatus={employmentStatus}
+        onPdiChanged={() => setPdiRefresh((n) => n + 1)}
+        pdiSeedIdeas={pdiSeedIdeas}
+        oneOnOnes={oneOnOnes}
+        pdiRefresh={pdiRefresh}
+      />
+    );
+  }
 
   const save = async () => {
     if (!candidateId || isRichTextEmpty(notes)) return;
@@ -615,7 +640,7 @@ export function PeopleManagementPanel({
         )}
       </div>
 
-      {candidateId ? (
+      {showJourney && candidateId ? (
         <HireJourneyBlock
           locale={locale}
           candidateId={candidateId}

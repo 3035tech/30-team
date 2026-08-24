@@ -134,6 +134,7 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 ### Qualidade / provas
 - DTOV (Postgres efêmero) + HTTP smoke + Playwright; npm run test:full:offline / dtov:full-app.
 - Guia do painel (HelpTab) + README/docs atualizados com features de uso.
+- Guia → **Mapa do sistema**: diagrama BPM em faixas (interativo) + tabela de links públicos (`HelpSystemMap`, `panel.help.systemMap*`).
 
 ## Regras duras ao propor/implementar
 1. Reutilizar componentes (app/_components, dashboard-shared) e helpers (lib/) antes de criar.
@@ -146,6 +147,7 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 ## Onde olhar no código
 - Domínio / regras: AGENTS.md
 - People/briefing: lib/people/*, app/_components/HrActionBrief.jsx, PeopleManagementPanel.jsx
+  (Equipe detalhe → Briefing e 1:1 com sub-abas Briefing | 1:1 | Jornada via PanelSubNav)
 - Motivadores: lib/ae/*, app/api/ae/*, app/api/admin/ae/*
 - Vagas/pipeline: lib/pipeline.js, lib/hire.js, app/dashboard/vacancies/*, app/api/admin/vacancies/*
 - Público SEO: docs/job-seo-and-distribution.md, app/j, lib/job-*

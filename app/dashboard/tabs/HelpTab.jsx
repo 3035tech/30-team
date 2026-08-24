@@ -7,8 +7,11 @@ import { typeFullName, typeShortLabel } from '../../../lib/type-en';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
+import { HelpSystemMap } from '../../_components/HelpSystemMap';
+
 const SECTIONS = [
   'welcome',
+  'systemMap',
   'navigation',
   'links',
   'flow',
@@ -177,6 +180,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
 
   const stepCounts = {
     welcome: 5,
+    systemMap: 0,
     navigation: 7,
     links: 9,
     flow: 0,
@@ -264,6 +268,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
                   {t(locale, `panel.help.${key}Body`)}
                 </p>
                 {key === 'flow' ? <FlowStrip locale={locale} /> : null}
+                {key === 'systemMap' ? <HelpSystemMap locale={locale} /> : null}
                 {stepCounts[key] > 0 ? (
                   <StepList locale={locale} sectionKey={key} count={stepCounts[key]} />
                 ) : null}

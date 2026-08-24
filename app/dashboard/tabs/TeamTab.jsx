@@ -180,6 +180,7 @@ export function TeamTab({
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
+  const [peopleSubTab, setPeopleSubTab] = useState('briefing');
   const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -222,6 +223,7 @@ export function TeamTab({
     if (match) {
       setOpen(String(match.assessmentId));
       setPersonTab('people');
+      setPeopleSubTab('briefing');
       loadDetail(cid);
       return;
     }
@@ -235,12 +237,14 @@ export function TeamTab({
     if (match) {
       setOpen(String(match.assessmentId));
       setPersonTab('people');
+      setPeopleSubTab('briefing');
       return;
     }
     const aid = detail.assessments?.[0]?.id;
     if (aid) {
       setOpen(String(aid));
       setPersonTab('people');
+      setPeopleSubTab('briefing');
     }
   }, [detail, focusCandidateId, results]);
 
@@ -444,6 +448,7 @@ export function TeamTab({
           salaryExpectation: stripSalary(profileDraft.salaryExpectation),
           availability: profileDraft.availability || null,
           source: profileDraft.source || null,
+          hrNotes: notesDraft,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -459,10 +464,13 @@ export function TeamTab({
           salaryExpectation: data.salaryExpectation,
           availability: data.availability,
           source: data.source,
+          hrNotes: data.hrNotes !== undefined ? data.hrNotes : prev.candidate.hrNotes,
         },
       } : prev));
       setProfileDraft(profileFromCandidate(data));
+      setNotesDraft(data.hrNotes !== undefined ? (data.hrNotes || '') : notesDraft);
       setProfileEditing(false);
+      setNotesEditing(false);
       setProfileMsgIsError(false);
       setProfileMsg(t(locale, 'recruiting.profileSaved'));
       setTimeout(() => setProfileMsg(''), 3000);
@@ -723,6 +731,7 @@ export function TeamTab({
                             if (draggingId) return;
                             setOpen(rid);
                             setPersonTab('people');
+                            setPeopleSubTab('briefing');
                             if (r.candidateId) loadDetail(r.candidateId);
                           }}
                           className={cn(
@@ -894,6 +903,7 @@ export function TeamTab({
             onClick={() => {
               setOpen(id);
               setPersonTab('people');
+              setPeopleSubTab('briefing');
               if (r.candidateId) loadDetail(r.candidateId);
               else { setDetail(null); setDetailErr(''); }
             }}
@@ -988,7 +998,13 @@ export function TeamTab({
         open={Boolean(open && openRow)}
         title={openRow ? titleCasePersonName(openRow.name) : t(locale, 'panel.team.personDetailTitle')}
         locale={locale}
-        onClose={() => { setOpen(null); setDetail(null); setDetailErr(''); setPersonTab('people'); }}
+        onClose={() => {
+          setOpen(null);
+          setDetail(null);
+          setDetailErr('');
+          setPersonTab('people');
+          setPeopleSubTab('briefing');
+        }}
         maxWidth="920px"
       >
         {openRow ? (
@@ -1035,18 +1051,43 @@ export function TeamTab({
                         {t(locale, 'panel.team.addToVacancyBtn')}
                       </button>
                     </div>
-                    <HrActionBrief
-                      locale={locale}
-                      brief={detail.people?.decisionBrief}
-                      personName={openRow.name}
+                    <PanelSubNav
+                      ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}
+                      active={peopleSubTab}
+                      onChange={setPeopleSubTab}
+                      tabs={[
+                        { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabBriefing') },
+                        { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
+                        { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
+                      ]}
                     />
-                    <PeopleManagementPanel
-                      locale={locale}
-                      candidateId={detail.candidate.id}
-                      people={detail.people}
-                      employmentStatus={detail.candidate.employmentStatus}
-                      onRefresh={() => loadDetail(detail.candidate.id)}
-                    />
+                    {peopleSubTab === 'briefing' ? (
+                      <HrActionBrief
+                        locale={locale}
+                        brief={detail.people?.decisionBrief}
+                        personName={openRow.name}
+                      />
+                    ) : null}
+                    {peopleSubTab === 'oneOnOne' ? (
+                      <PeopleManagementPanel
+                        locale={locale}
+                        candidateId={detail.candidate.id}
+                        people={detail.people}
+                        employmentStatus={detail.candidate.employmentStatus}
+                        onRefresh={() => loadDetail(detail.candidate.id)}
+                        section="oneOnOne"
+                      />
+                    ) : null}
+                    {peopleSubTab === 'journey' ? (
+                      <PeopleManagementPanel
+                        locale={locale}
+                        candidateId={detail.candidate.id}
+                        people={detail.people}
+                        employmentStatus={detail.candidate.employmentStatus}
+                        onRefresh={() => loadDetail(detail.candidate.id)}
+                        section="journey"
+                      />
+                    ) : null}
                   </>
                 ) : (
                   <p className="m-0 text-xs text-ink-muted">—</p>
@@ -1168,8 +1209,11 @@ export function TeamTab({
                         type="button"
                         onClick={() => {
                           setProfileDraft(profileFromCandidate(detail?.candidate));
+                          setNotesDraft(detail?.candidate?.hrNotes || '');
                           setProfileEditing(true);
+                          setNotesEditing(false);
                           setProfileMsg('');
+                          setNotesMsg('');
                         }}
                         className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-[11px] text-ink-muted"
                       >
@@ -1229,6 +1273,8 @@ export function TeamTab({
                           value={profileDraft.linkedinUrl}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, linkedinUrl: e.target.value }))}
                           placeholder={t(locale, 'recruiting.linkedinPh')}
+                          autoComplete="off"
+                          name="linkedin-url"
                           className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[2_1_200px]"
                         />
                         <BrStateSelect
@@ -1249,6 +1295,7 @@ export function TeamTab({
                           onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: digitsOnly(e.target.value).slice(0, 15) }))}
                           placeholder={t(locale, 'recruiting.salaryPh')}
                           inputMode="numeric"
+                          autoComplete="off"
                           className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_160px]"
                         />
                         <select
@@ -1278,6 +1325,17 @@ export function TeamTab({
                           <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
                         </select>
                       </div>
+                      <div className="mb-2.5">
+                        <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.team.hrNotes')}</span>
+                        <RichTextEditor
+                          value={notesDraft}
+                          onChange={setNotesDraft}
+                          placeholder={t(locale, 'panel.team.notesPlaceholder')}
+                          aria-label={t(locale, 'panel.team.notesAria')}
+                          minHeight={120}
+                          locale={locale}
+                        />
+                      </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -1294,6 +1352,7 @@ export function TeamTab({
                           type="button"
                           onClick={() => {
                             setProfileDraft(profileFromCandidate(detail?.candidate));
+                            setNotesDraft(detail?.candidate?.hrNotes || '');
                             setProfileEditing(false);
                             setProfileMsg('');
                           }}
@@ -1312,6 +1371,7 @@ export function TeamTab({
                   ) : null}
                 </div>
 
+                {!profileEditing ? (
                 <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
                   <div className="mb-2 flex items-center gap-2.5">
                     <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.hrNotes')}</span>
@@ -1382,6 +1442,7 @@ export function TeamTab({
                     </p>
                   )}
                 </div>
+                ) : null}
               </div>
             ) : null}
           </div>
