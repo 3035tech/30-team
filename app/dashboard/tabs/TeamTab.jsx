@@ -1044,6 +1044,7 @@ export function TeamTab({
                       locale={locale}
                       candidateId={detail.candidate.id}
                       people={detail.people}
+                      employmentStatus={detail.candidate.employmentStatus}
                       onRefresh={() => loadDetail(detail.candidate.id)}
                     />
                   </>

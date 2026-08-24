@@ -79,6 +79,20 @@ _(entregue — B-301 briefing Equipe, B-302 briefing na vaga, B-303 notif `reten
 
 ---
 
+## Aberto — Epic B-700 (pós-hire leve)
+
+Escopo **deliberadamente estreito** vs “jornada completa” (LMS/AVD/desligamento ficam fora).
+
+| Id | Item | Notas |
+|----|------|-------|
+| B-702 | Checklist leve de pré-onboarding (acessos/D1) amarrado ao hire | opcional; sem documentos admissionais completos |
+| B-703 | Proposta/aceite mínimo (salário/data/aceite) no funil | só se doer no fechamento comercial |
+
+**Entregue:** B-701 (check-ins D30/D60/D90 + seed PDI + Overview).  
+**Fora deste epic:** trilhas LMS, avaliação 360/AVD, desligamento formal, portal colaborador full.
+
+---
+
 ## Em andamento
 
 _(vazio)_

@@ -71,7 +71,8 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - Hipóteses de gestão (tom “tende a”) + registro de 1:1 (data, notas ricas, próximos passos) — separado de hr_notes de triagem.
 - Notificação in-app retention_watch quando Motivadores apontam sinais de retenção; deep-link para Equipe; limiar `RETENTION_WATCH_MIN_SCORE` (padrão 55); card + Atenção na Visão geral (14d); **fluxo acionável** (pergunta + plano PDI + revisão).
 - Notificação hire_onboarding_kit ao marcar contratado (abrir briefing na Equipe).
-- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo; **ciclo** (período); **responsável**; **converter próximos passos do 1:1**.
+- **PDI:** planos + itens na Equipe; editar/arquivar; seed da síntese; vínculo opcional a 1:1; checkbox feito; barra de progresso; nasce ativo; **ciclo** (período); **responsável**; **converter próximos passos do 1:1**; Overview lista + fila.
+- **Check-ins pós-hire (D30/D60/D90):** criados no hire; bloco na Equipe; Overview atrasados/próximos 14d; outcome develop/concern → item PDI (`onboarding`).
 - **Pulso de grupo:** Grupos → grupo salvo → `/pulso/{token}` (curto, anônimo; não substitui Clima).
 - **Link do colaborador:** `/e/{token}` (sem conta) — PDI, combinados, prep 1:1 (**marcar preparação** + nota ao gestor).
 - Ranking: **explicar Fit** (pesos × T1–T9; exclusões).

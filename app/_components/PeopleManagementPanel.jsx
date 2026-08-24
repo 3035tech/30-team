@@ -8,6 +8,7 @@ import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
 import { DevelopmentPlansBlock } from './DevelopmentPlansBlock';
+import { OnboardingCheckinsBlock } from './OnboardingCheckinsBlock';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 
@@ -39,6 +40,7 @@ export function PeopleManagementPanel({
   candidateId,
   people,
   onRefresh,
+  employmentStatus = null,
 }) {
   const management = people?.management;
   const oneOnOnes = people?.oneOnOnes || [];
@@ -613,6 +615,15 @@ export function PeopleManagementPanel({
           </div>
         )}
       </div>
+
+      {candidateId ? (
+        <OnboardingCheckinsBlock
+          locale={locale}
+          candidateId={candidateId}
+          employmentStatus={employmentStatus}
+          onPdiChanged={() => setPdiRefresh((n) => n + 1)}
+        />
+      ) : null}
 
       {candidateId ? (
         <DevelopmentPlansBlock

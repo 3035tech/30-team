@@ -194,6 +194,7 @@ export function OverviewTab({
             const pdi = data.peopleOps.pdi;
             const clima = data.peopleOps.climate;
             const ret = data.peopleOps.retention;
+            const onb = data.peopleOps.onboarding;
             const queue = pdi?.queue || {};
             const plans = pdi?.plans || [];
             const overdueN = Number(pdi?.overdueItemCount) || 0;
@@ -212,9 +213,15 @@ export function OverviewTab({
             const hasPdi =
               pdi &&
               (pdi.activePlans > 0 || pdi.activeItems > 0 || hasPdiQueue || hasPdiPlans);
+            const hasOnb =
+              onb &&
+              ((onb.overdueCount || 0) > 0 ||
+                (onb.dueSoonCount || 0) > 0 ||
+                (onb.overdue || []).length > 0 ||
+                (onb.dueSoon || []).length > 0);
             const hasClima = clima && (clima.openSurveys > 0 || clima.draftSurveys > 0);
             const hasRet = ret && ret.count > 0;
-            if (!hasPdi && !hasClima && !hasRet) {
+            if (!hasPdi && !hasClima && !hasRet && !hasOnb) {
               return (
                 <p className="m-0 text-[13px] italic text-ink-muted">
                   {t(locale, 'panel.overview.peopleOpsEmpty')}
@@ -230,6 +237,48 @@ export function OverviewTab({
                       days: ret.lookbackDays || 14,
                       min: ret.minScore ?? 55,
                     })}
+                  </li>
+                ) : null}
+                {hasOnb ? (
+                  <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-[13px] text-ink">
+                    <div className={cn(S.label, 'mb-1.5 text-[10px]')}>
+                      {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
+                    </div>
+                    {(onb.overdueCount || 0) > 0 ? (
+                      <div className="mb-1 font-mono text-[11px] text-warning">
+                        {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
+                          n: onb.overdueCount,
+                        })}
+                      </div>
+                    ) : null}
+                    {(onb.dueSoonCount || 0) > 0 ? (
+                      <div className="mb-1.5 font-mono text-[11px] text-ink-muted">
+                        {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
+                          n: onb.dueSoonCount,
+                        })}
+                      </div>
+                    ) : null}
+                    <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                      {[...(onb.overdue || []), ...(onb.dueSoon || [])]
+                        .slice(0, 8)
+                        .map((row) => (
+                          <li key={`onb-${row.checkinId}`}>
+                            <button
+                              type="button"
+                              className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
+                              onClick={() => go(row.nav)}
+                            >
+                              <span className="block text-[12px] text-ink">{row.candidateName}</span>
+                              <span className="block font-mono text-[10px] text-ink-muted">
+                                {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
+                                  days: row.milestoneDays,
+                                  date: row.dueDate || '—',
+                                })}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                    </ul>
                   </li>
                 ) : null}
                 {hasPdi ? (

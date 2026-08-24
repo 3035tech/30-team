@@ -8,6 +8,65 @@ import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { climateMeanLevel } from '../../../lib/people/climate-surveys';
+
+const TONE_BAR = {
+  success: 'bg-success',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  info: 'bg-info',
+};
+
+const TONE_TEXT = {
+  success: 'text-success',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  info: 'text-ink-muted',
+};
+
+/** Compact satisfaction meter for climate Likert means (1–5 default). */
+function ClimateMeanMeter({
+  mean,
+  scaleMin = 1,
+  scaleMax = 5,
+  locale,
+  compact = false,
+  showLabel = true,
+}) {
+  const level = climateMeanLevel(mean, scaleMin, scaleMax);
+  if (mean == null || !level) return null;
+  const barClass = TONE_BAR[level.tone] || TONE_BAR.info;
+  const textClass = TONE_TEXT[level.tone] || TONE_TEXT.info;
+  return (
+    <div className={cn('w-full', compact ? 'mt-1' : 'mt-1.5')}>
+      <div className="mb-0.5 flex flex-wrap items-center justify-between gap-1">
+        {showLabel ? (
+          <span className={cn('font-mono text-[10px]', textClass)}>
+            {t(locale, `panel.climate.level.${level.level}`)}
+          </span>
+        ) : (
+          <span />
+        )}
+        <span className="font-mono text-[10px] text-ink-faint">
+          {scaleMin}–{scaleMax}
+        </span>
+      </div>
+      <div
+        className={cn(
+          'overflow-hidden rounded-full bg-ink/10',
+          compact ? 'h-1.5' : 'h-2'
+        )}
+        role="meter"
+        aria-valuemin={scaleMin}
+        aria-valuemax={scaleMax}
+        aria-valuenow={mean}
+        aria-label={t(locale, `panel.climate.level.${level.level}`)}
+      >
+        <div className={cn('h-full rounded-full transition-[width]', barClass)} style={{ width: `${level.pct}%` }} />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Climate surveys — B-503 questions, B-504 batch/email, B-505 benchmark, B-506 k-min.
@@ -403,48 +462,67 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
             {t(locale, 'panel.climate.benchmarkHint', { n: benchmark.minResponses })}
           </p>
-          <ul className="m-0 mb-3 flex list-none flex-col gap-1.5 p-0">
-            {(benchmark.surveys || []).map((s) => (
+          <ul className="m-0 mb-3 flex list-none flex-col gap-2 p-0">
+            {(benchmark.surveys || []).map((s) => {
+              return (
               <li
                 key={s.surveyId}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ink/10 px-2 py-1.5 text-xs"
+                className="rounded-md border border-ink/10 px-2.5 py-2 text-xs"
               >
-                <span className="text-ink">{s.title}</span>
-                <span className="font-mono text-ink-muted">
-                  {s.overallMean != null
-                    ? t(locale, 'panel.climate.overallMeanShort', { n: s.overallMean })
-                    : '—'}
-                  {s.deltaVsPrevious != null ? (
-                    <span
-                      className={cn(
-                        'ml-2',
-                        s.deltaVsPrevious > 0 ? 'text-success' : s.deltaVsPrevious < 0 ? 'text-danger' : ''
-                      )}
-                    >
-                      {t(locale, 'panel.climate.deltaVsPrev', {
-                        n: s.deltaVsPrevious > 0 ? `+${s.deltaVsPrevious}` : String(s.deltaVsPrevious),
-                      })}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-ink">{s.title}</span>
+                  <span className="font-mono text-ink-muted">
+                    {s.overallMean != null
+                      ? t(locale, 'panel.climate.overallMeanShort', { n: s.overallMean })
+                      : '—'}
+                    {s.deltaVsPrevious != null ? (
+                      <span
+                        className={cn(
+                          'ml-2',
+                          s.deltaVsPrevious > 0 ? 'text-success' : s.deltaVsPrevious < 0 ? 'text-danger' : ''
+                        )}
+                      >
+                        {t(locale, 'panel.climate.deltaVsPrev', {
+                          n: s.deltaVsPrevious > 0 ? `+${s.deltaVsPrevious}` : String(s.deltaVsPrevious),
+                        })}
+                      </span>
+                    ) : null}
+                    <span className="ml-2 text-ink-faint">
+                      {t(locale, 'panel.climate.rCount', { n: s.responseCount || 0 })}
                     </span>
-                  ) : null}
-                  <span className="ml-2 text-ink-faint">
-                    {t(locale, 'panel.climate.rCount', { n: s.responseCount || 0 })}
                   </span>
-                </span>
+                </div>
+                {s.overallMean != null ? (
+                  <ClimateMeanMeter mean={s.overallMean} locale={locale} compact />
+                ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
           {(benchmark.prompts || []).length > 0 ? (
             <>
               <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.benchmarkByQuestion')}</div>
-              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              <p className={cn(S.faint, 'm-0 mb-2 text-[10px]')}>{t(locale, 'panel.climate.levelHint')}</p>
+              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
                 {benchmark.prompts.slice(0, 6).map((row) => (
-                  <li key={row.key} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
-                    <div className="text-ink-muted">{row.prompt}</div>
-                    <div className="mt-1 flex flex-wrap gap-2 font-mono text-ink">
+                  <li key={row.key} className="rounded-md border border-ink/10 px-2.5 py-2 text-xs">
+                    <div className="mb-1.5 text-ink-muted">{row.prompt}</div>
+                    <div className="flex flex-col gap-2">
                       {row.means.map((m) => (
-                        <span key={m.surveyId}>
-                          {m.title}: {m.mean != null ? m.mean : '—'}
-                        </span>
+                        <div key={m.surveyId}>
+                          <div className="flex flex-wrap items-baseline justify-between gap-2 font-mono text-ink">
+                            <span className="text-ink-muted">{m.title}</span>
+                            <span>{m.mean != null ? m.mean : '—'}</span>
+                          </div>
+                          {m.mean != null ? (
+                            <ClimateMeanMeter
+                              mean={m.mean}
+                              locale={locale}
+                              compact
+                              showLabel={false}
+                            />
+                          ) : null}
+                        </div>
                       ))}
                     </div>
                   </li>
@@ -572,12 +650,22 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               </span>
                             ) : null}
                           </div>
-                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                            <div
-                              className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
+                          {aggregate?.overallMean != null ? (
+                            <ClimateMeanMeter mean={aggregate.overallMean} locale={locale} />
+                          ) : (
+                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                              <div
+                                className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          )}
+                          {aggregate?.overallMean == null ? null : (
+                            <div className="mt-1.5 flex justify-between font-mono text-[10px] text-ink-faint">
+                              <span>{t(locale, 'panel.climate.responseProgress', { n: resp, min })}</span>
+                              <span>{pct}%</span>
+                            </div>
+                          )}
                         </>
                       );
                     })()}
@@ -647,19 +735,23 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                   <div>
                     <div className={cn(S.label, 'mb-1')}>{t(locale, 'panel.climate.aggregate')}</div>
                     {aggregate.overallMean != null ? (
-                      <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>
-                        {t(locale, 'panel.climate.overallMean', { n: aggregate.overallMean })}
-                      </p>
+                      <div className="mb-3 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2.5">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="text-xs text-ink-muted">
+                            {t(locale, 'panel.climate.satisfactionTitle')}
+                          </span>
+                          <span className="font-display text-xl text-ink">{aggregate.overallMean}</span>
+                        </div>
+                        <ClimateMeanMeter mean={aggregate.overallMean} locale={locale} />
+                        <p className={cn(S.faint, 'm-0 mt-1.5 text-[10px]')}>
+                          {t(locale, 'panel.climate.levelHint')}
+                        </p>
+                      </div>
                     ) : null}
                     <ul className="m-0 flex list-none flex-col gap-2 p-0">
                       {aggregate.byQuestion.map((row) => {
                         const scaleMax = Number(row.scaleMax) || 5;
                         const scaleMin = Number(row.scaleMin) || 1;
-                        const span = Math.max(1, scaleMax - scaleMin);
-                        const barPct =
-                          row.mean != null
-                            ? Math.min(100, Math.max(0, ((row.mean - scaleMin) / span) * 100))
-                            : 0;
                         return (
                           <li key={row.questionId} className="rounded-md border border-ink/10 px-2 py-1.5 text-xs">
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -671,9 +763,13 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               </span>
                             </div>
                             {row.mean != null ? (
-                              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                                <div className="h-full rounded-full bg-info" style={{ width: `${barPct}%` }} />
-                              </div>
+                              <ClimateMeanMeter
+                                mean={row.mean}
+                                scaleMin={scaleMin}
+                                scaleMax={scaleMax}
+                                locale={locale}
+                                compact
+                              />
                             ) : null}
                           </li>
                         );

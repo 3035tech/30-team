@@ -156,6 +156,29 @@ async function runOfflineLibs() {
     return 'b600 helpers ok';
   });
 
+  await check('lib', 'b701-onboarding-checkins', async () => {
+    const fs = await import('node:fs/promises');
+    const src = await fs.readFile(
+      new URL('../../lib/people/onboarding-checkins.js', import.meta.url),
+      'utf8'
+    );
+    for (const name of [
+      'ensureOnboardingCheckins',
+      'listOnboardingCheckins',
+      'updateOnboardingCheckin',
+      'getCompanyOnboardingPulse',
+    ]) {
+      if (!src.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
+    }
+    const mig = await fs.readFile(
+      new URL('../../migrations/049_onboarding_checkins.sql', import.meta.url),
+      'utf8'
+    );
+    if (!mig.includes('employee_onboarding_checkins')) throw new Error('mig table');
+    if (!mig.includes('onboarding')) throw new Error('mig source');
+    return 'b701 onboarding ok';
+  });
+
   await check('lib', 'retention-watch-notif', async () => {
     const {
       NOTIF,
@@ -290,10 +313,18 @@ async function runOfflineLibs() {
       'getClimateCompanyBenchmark',
       'getCompanyClimatePulse',
       'climateMinResponses',
+      'climateMeanLevel',
     ]) {
       if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {
         throw new Error(`missing ${name}`);
       }
+    }
+    const { climateMeanLevel } = await import('../../lib/people/climate-surveys.js');
+    const low = climateMeanLevel(2.0, 1, 5);
+    const mid = climateMeanLevel(3.0, 1, 5);
+    const high = climateMeanLevel(4.5, 1, 5);
+    if (low?.level !== 'low' || mid?.level !== 'mid' || high?.level !== 'high') {
+      throw new Error(`climateMeanLevel levels ${low?.level}/${mid?.level}/${high?.level}`);
     }
     const mig = await readFile(join(root, 'migrations', '042_pdi_and_climate.sql'), 'utf8');
     if (!mig.includes('development_plans') || !mig.includes('climate_surveys')) {
