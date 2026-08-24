@@ -52,10 +52,10 @@ export async function POST(request) {
   }
 
   await audit({
-    actorUserId: null,
+    actorUserId: result.userId || null,
     action: 'auth.password_setup',
     targetType: 'user',
-    targetId: null,
+    targetId: result.userId || null,
     metadata: { via: 'invite_token' },
   });
 

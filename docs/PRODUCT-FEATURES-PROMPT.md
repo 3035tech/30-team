@@ -135,6 +135,7 @@ Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃ
 - DTOV (Postgres efêmero) + HTTP smoke + Playwright; npm run test:full:offline / dtov:full-app.
 - Guia do painel (HelpTab) + README/docs atualizados com features de uso.
 - Guia → **Mapa do sistema**: diagrama BPM em faixas (interativo) + tabela de links públicos (`HelpSystemMap`, `panel.help.systemMap*`).
+- Login: “Esqueceu a senha?” → e-mail com link `/a/set-password` (72h; requer SMTP).
 
 ## Regras duras ao propor/implementar
 1. Reutilizar componentes (app/_components, dashboard-shared) e helpers (lib/) antes de criar.
