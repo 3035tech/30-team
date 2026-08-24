@@ -29,12 +29,14 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 ```
 30Team/
 ├── app/
-│   ├── page.jsx                 ← Landing / teste (client)
+│   ├── page.jsx                 ← Landing / teste (client) + analytics
+│   ├── signup/                  ← Self-service signup (early access)
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
 │   ├── j/                       ← Índice + `/j/remoto` + `/j/cidade/{slug}` + página SEO `/j/{slug}-{id}`
 │   ├── c/[companySlug]/         ← Perfil público da empresa (opt-in)
 │   ├── a/unsubscribe/           ← Cancelar alerta de vagas
+│   ├── a/set-password/          ← Ativação de senha (signup + reset)
 │   ├── vagas/                   ← Legado → redirect 308 para `/j/…`
 │   ├── empresas/                ← Legado → redirect 308 para `/c/…`
 │   ├── vaga/[company]/[slug]/   ← Legado → redirect para `/j/{slug}-{id}`
@@ -60,6 +62,31 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 **SQL:** na raiz só `init.sql` (montagem Docker). Schema e deltas ficam em `migrations/` e `scripts/`. Ver [`migrations/README.md`](migrations/README.md).
 
 **Provas / regressão:** [`test/README.md`](test/README.md) — `npm run dtov:full-app` (SQL + HTTP + browser).
+
+---
+
+## Self-Service Signup (Early Access)
+
+A partir da versão com migrations `051` e `052`:
+
+- **Landpage** (`/`) → CTA direto para `/signup` (sem `mailto`)
+- **Signup** cria automaticamente:
+  - User pendente (`signup_pending = TRUE`, role `direction`)
+  - Company nova (ou associa a existente por `@domain` se `SIGNUP_DOMAIN_MATCH=true`)
+  - Token de ativação (72h) enviado por e-mail
+- **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
+- **Trial limits** (soft caps via env):
+  - `TRIAL_MAX_VACANCIES` (default 2)
+  - `TRIAL_MAX_CANDIDATES` (default 50)
+  - `TRIAL_MAX_USERS` (default 3)
+  - `TRIAL_MAX_MOTIVATORS` (default 10)
+  - `TRIAL_MAX_CLIMATE_SURVEYS` (default 2)
+- **Analytics** de landpage: `landing_analytics` table + tracking de conversão (pageview → signup → ativação)
+
+Tabelas novas:
+- `users.signup_pending`, `users.signup_source`, `users.signup_metadata`
+- `companies.signup_auto_created`, `companies.signup_creator_user_id`
+- `landing_analytics` (events: pageview, cta_click, signup_start, signup_complete, login)
 
 ---
 
