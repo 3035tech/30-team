@@ -10,7 +10,6 @@ import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { CAP, can, canSeeManagementSection, isAdminRole } from '../../lib/permissions';
 import { cn } from '../../lib/cn';
-import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
 
@@ -686,24 +685,6 @@ export default function DashboardClient({
               <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
             ) : null}
           </nav>
-          <div className={cn('flex flex-col gap-2', navCollapsed ? 'items-center' : 'items-stretch')}>
-            <button
-              type="button"
-              onClick={logout}
-              title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
-              aria-label={t(locale, 'dashboard.logout')}
-              className={cn(
-                'flex cursor-pointer items-center gap-2 rounded-control border border-danger/25 bg-transparent font-mono text-[11px] text-danger/60',
-                navCollapsed ? 'w-10 justify-center p-[9px]' : 'w-full justify-start px-3 py-[9px] text-left'
-              )}
-            >
-              <Icon name="logout" />
-              {!navCollapsed ? <span>{t(locale, 'dashboard.logout')}</span> : null}
-            </button>
-            {!navCollapsed ? (
-              <LanguageSelect locale={locale} onChange={setLocale} persistUser compact />
-            ) : null}
-          </div>
         </aside>
 
         <div className="db-main max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">

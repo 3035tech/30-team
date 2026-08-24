@@ -709,8 +709,8 @@ export function OverviewTab({
         </div>
       </div>
 
-      <div className={cn(S.card, 'border-brand-500/15 bg-brand-500/[0.04]')}>
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <div className={S.cardTight}>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>
             {t(locale, 'panel.overview.typeMixTitle')}
           </span>
@@ -723,75 +723,63 @@ export function OverviewTab({
           </button>
         </div>
         {mixTotalRaw === 0 ? (
-          <p className="m-0 text-[13px] italic text-ink-faint">
+          <p className="m-0 text-[13px] text-ink-faint">
             {t(locale, 'panel.overview.typeMixEmpty')}
           </p>
         ) : (
           <>
             <div
-              className="mb-3 grid grid-cols-3 gap-1.5"
+              className="mb-2 flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]"
               role="img"
               aria-label={t(locale, 'panel.overview.typeHeatAria')}
             >
-              {heatCells.map((cell) => {
-                const intensity = cell.n === 0 ? 0 : 0.18 + (cell.n / heatMax) * 0.72;
-                const hex = String(TYPE_DATA[cell.type]?.color || C.purple).replace('#', '');
-                const r = parseInt(hex.slice(0, 2), 16);
-                const g = parseInt(hex.slice(2, 4), 16);
-                const b = parseInt(hex.slice(4, 6), 16);
-                const bg =
-                  cell.n === 0 || !Number.isFinite(r)
-                    ? 'rgba(15, 23, 42, 0.04)'
-                    : `rgba(${r}, ${g}, ${b}, ${intensity})`;
-                return (
-                  <div
-                    key={cell.type}
-                    title={typeHintTooltip(cell.type, locale)}
-                    className="flex min-h-[44px] flex-col items-center justify-center rounded-control border border-ink/10 px-1 py-1.5"
-                    style={{ background: bg }}
-                  >
-                    <span className="font-mono text-[11px] font-semibold text-ink">T{cell.type}</span>
-                    <span className="font-mono text-[10px] text-ink-muted">{cell.n}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mb-3 flex h-3 overflow-hidden rounded-full border border-ink/12">
               {mixEntries.map((e) => (
                 <div
                   key={e.type}
                   style={{
-                    width: `${Math.max(3, (e.n / mixTotal) * 100)}%`,
+                    width: `${Math.max(2, (e.n / mixTotal) * 100)}%`,
                     background: TYPE_DATA[e.type]?.color || C.purple,
                   }}
                   title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
                 />
               ))}
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
-              {mixEntries.slice(0, 5).map((e) => (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
+              {heatCells.map((cell) => (
                 <span
-                  key={e.type}
-                  title={typeHintTooltip(e.type, locale)}
-                  className="cursor-help font-mono text-xs text-ink-muted"
+                  key={cell.type}
+                  title={typeHintTooltip(cell.type, locale)}
+                  className={cn(
+                    'cursor-help tabular-nums',
+                    cell.n > 0 ? 'text-ink' : 'text-ink-faint/70'
+                  )}
                 >
-                  <span style={{ color: TYPE_DATA[e.type]?.color }}>T{e.type}</span>
-                  {' · '}
-                  {typeShortLabel(e.type, locale)} ({e.n})
+                  <span
+                    style={
+                      cell.n > 0
+                        ? { color: TYPE_DATA[cell.type]?.color || undefined }
+                        : undefined
+                    }
+                  >
+                    T{cell.type}
+                  </span>
+                  <span className="text-ink-faint"> {cell.n}</span>
                 </span>
               ))}
             </div>
             {dominant ? (
-              <p className="mt-3 mb-0 text-xs leading-snug text-ink-muted">
+              <p className="mt-2 mb-0 text-[11px] leading-snug text-ink-muted">
                 {t(locale, 'panel.overview.dominantHint', {
                   type: typeFullName(dominant, locale),
                   n: mixCount[dominant] || mixCount[String(dominant)] || 0,
-                  pct: Math.round(((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100),
+                  pct: Math.round(
+                    ((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100
+                  ),
                 })}
               </p>
             ) : null}
             {compositionLine ? (
-              <p className="mt-2 mb-0 text-xs leading-snug text-ink-muted">{compositionLine}</p>
+              <p className="mt-1 mb-0 text-[11px] leading-snug text-ink-faint">{compositionLine}</p>
             ) : null}
           </>
         )}
