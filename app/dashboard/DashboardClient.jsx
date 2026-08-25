@@ -28,6 +28,7 @@ import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppF
 import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
+import OnboardingWizard from '../_components/OnboardingWizard';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -1159,6 +1160,15 @@ export default function DashboardClient({
     {can(sessionAuth, CAP.HELP_VIEW) ? (
       <HelpAssistantWidget locale={locale} navigateDashboard={navigateWithOpts} />
     ) : null}
+    {!sessionAuth?.onboardingCompleted && (
+      <OnboardingWizard
+        locale={locale}
+        userName={sessionAuth?.displayName || sessionAuth?.email || t(locale, 'common.user')}
+        onComplete={() => {
+          setSessionAuth((prev) => ({ ...(prev || {}), onboardingCompleted: true }));
+        }}
+      />
+    )}
     </PipelineExtrasProvider>
     </AppFeedbackProvider>
   );

@@ -81,7 +81,7 @@ Tabela `landing_analytics`:
 
 ## Schema Changes
 
-### Migration 051
+### Migration 051: Self-service signup
 
 ```sql
 ALTER TABLE users
@@ -102,7 +102,7 @@ CREATE INDEX idx_companies_signup_auto
   WHERE signup_auto_created = TRUE AND deleted = FALSE;
 ```
 
-### Migration 052
+### Migration 052: Analytics tracking
 
 ```sql
 CREATE TABLE landing_analytics (
@@ -124,6 +124,18 @@ CREATE INDEX idx_landing_analytics_event ON landing_analytics (event_type, creat
 CREATE INDEX idx_landing_analytics_session ON landing_analytics (session_id) WHERE session_id IS NOT NULL;
 ```
 
+### Migration 053: Onboarding wizard
+
+```sql
+ALTER TABLE users
+  ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN onboarding_completed_at TIMESTAMPTZ;
+
+CREATE INDEX idx_users_onboarding_pending
+  ON users (onboarding_completed)
+  WHERE onboarding_completed = FALSE AND deleted = FALSE AND active = TRUE;
+```
+
 ## Helpers
 
 | Arquivo | Função |
@@ -140,10 +152,44 @@ CREATE INDEX idx_landing_analytics_session ON landing_analytics (session_id) WHE
 - Domain match opt-in (evita takeover acidental)
 - Trial limits impedem abuso de recursos
 
+## Onboarding Wizard (Implementado)
+
+Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard quando `users.onboarding_completed = FALSE`.
+
+### Steps
+
+1. **Welcome** (👋)
+   - Boas-vindas personalizadas
+   - Explicação dos limites do trial
+   - CTA: "Começar"
+
+2. **Vacancy** (📋)
+   - Convite para criar primeira vaga
+   - Explicação dos 3 passos (nome, rubrica, link)
+   - CTAs: "Criar vaga agora" ou "Criar depois"
+
+3. **Invite** (✉️)
+   - Opção A: Convidar time (outros gestores)
+   - Opção B: Usar link público (candidatos/colaboradores)
+   - CTA: "Fazer depois"
+
+4. **Done** (🎉)
+   - Links para Overview e Guia (Help)
+   - CTA: "Começar a usar o 30Team"
+   - Marca `onboarding_completed = TRUE`
+
+### API
+
+`POST /api/admin/onboarding/complete` — marca wizard como concluído.
+
+### Skip/Dismiss
+
+Usuário pode pular a qualquer momento (botão "Pular →" no header). O wizard nunca mais aparece após completar ou pular.
+
 ## Próximos Passos (Futuro)
 
-1. **Payment gate**: adicionar step após confirmação ou ao atingir trial limit
-2. **Onboarding wizard**: `?onboarding=1` após primeiro login (passos: convite time, primeira vaga, primeiro convite)
-3. **Admin dashboard analytics**: `/dashboard/analytics` (funnel signup, conversão, trial → paid)
-4. **Rate limiting**: implementar com redis/upstash
-5. **CAPTCHA**: adicionar hCaptcha ou Turnstile no signup se houver spam
+1. **Payment gate**: adicionar Stripe/Paddle após trial limit ou após X dias
+2. **Admin dashboard analytics**: `/dashboard/analytics` (funnel signup, conversão, trial → paid, retenção)
+3. **Rate limiting**: implementar com redis/upstash
+4. **CAPTCHA**: adicionar hCaptcha ou Turnstile no signup se houver spam
+5. **Email follow-up**: sequence automática (D1: boas-vindas, D3: primeira vaga?, D7: feedback)
