@@ -444,6 +444,9 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
+                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+                    {t(locale, 'panel.admin.colOrigin')}
+                  </th>
                   <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
@@ -477,6 +480,24 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           >
                             {t(locale, 'panel.admin.passwordSetupPending')}
                           </span>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span
+                          title={t(locale, `panel.admin.originHint.${u.origin || 'admin'}`)}
+                          className={cn(
+                            'inline-block rounded-full border px-2 py-0.5 font-mono text-[10px]',
+                            u.origin === 'admin' || !u.origin
+                              ? 'border-ink/12 bg-ink/[0.04] text-ink-muted'
+                              : 'border-info/25 bg-info/10 text-info'
+                          )}
+                        >
+                          {t(locale, `panel.admin.origin.${u.origin || 'admin'}`)}
+                        </span>
+                        {u.signupPending ? (
+                          <div className="mt-1 font-mono text-[10px] text-warning">
+                            {t(locale, 'panel.admin.signupPendingBadge')}
+                          </div>
                         ) : null}
                       </td>
                       <td className="px-3 py-3 font-mono text-ink-muted">{companyLabel}</td>

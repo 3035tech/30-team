@@ -15,6 +15,7 @@ import {
   hashUnusablePassword,
   issuePasswordSetupInvite,
 } from '../../../../lib/user-password-invite';
+import { resolveUserOrigin } from '../../../../lib/user-signup-origin';
 
 const USER_SORT_KEYS = new Set(['id', 'email', 'role', 'companyName', 'active', 'createdAt']);
 
@@ -50,8 +51,11 @@ export async function GET(request) {
        u.email,
        u.role,
        u.active,
+       u.signup_pending AS "signupPending",
+       u.signup_source AS "signupSource",
        u.company_id AS "companyId",
        c.name AS "companyName",
+       c.signup_auto_created AS "companySignupAutoCreated",
        u.last_login_at AS "lastLoginAt",
        u.created_at AS "createdAt",
        (u.password_setup_token IS NOT NULL) AS "passwordSetupPending"
@@ -96,6 +100,12 @@ export async function GET(request) {
     return {
       ...row,
       passwordSetupPending: Boolean(row.passwordSetupPending),
+      signupPending: Boolean(row.signupPending),
+      origin: resolveUserOrigin({
+        signupSource: row.signupSource,
+        signupPending: row.signupPending,
+        companySignupAutoCreated: row.companySignupAutoCreated,
+      }),
       capabilitiesCustomized: customized,
       modules,
     };

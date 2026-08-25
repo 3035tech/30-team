@@ -75,6 +75,7 @@ A partir da versão com migrations `051`, `052` e `053`:
   - Company nova (ou associa a existente por `@domain` se `SIGNUP_DOMAIN_MATCH=true`)
   - Token de ativação (72h) enviado por e-mail
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
+- **Admin Leads** (`/dashboard?tab=leads`) — cohort `/signup` para contato futuro (pendentes e ativos). Em **Usuários**, cadastro normal = Origem Painel; quem veio do onboarding = Early access (também aparece em Usuários quando já está no sistema).
 - **Wizard de onboarding** (primeiro acesso):
   - 4 steps guiados: boas-vindas, criar vaga, convidar pessoas, recursos
   - Dismissível a qualquer momento (nunca mais aparece após completar/pular)

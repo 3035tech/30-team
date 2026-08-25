@@ -118,6 +118,10 @@ const UsersAdminTab = dynamic(
   () => import('./tabs/UsersAdminTab').then((m) => ({ default: m.UsersAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const LeadsAdminTab = dynamic(
+  () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const VacanciesAdminTab = dynamic(
   () => import('./tabs/VacanciesAdminTab').then((m) => ({ default: m.VacanciesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -667,6 +671,7 @@ export default function DashboardClient({
                 ) : null}
                 {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
                 {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
+                {showUsers ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
               </>
             ) : showMotivators || showClimate ? (
               <>
@@ -1115,6 +1120,7 @@ export default function DashboardClient({
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'leads' && showUsers && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (
                 <ProfileTab

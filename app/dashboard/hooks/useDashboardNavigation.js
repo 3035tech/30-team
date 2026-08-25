@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  PAGE_SIZE_OPTIONS,
   parseCompaniesPagination,
   parseCompaniesSort,
   parseCompatTabPagination,
@@ -120,6 +121,19 @@ export function useDashboardNavigation({
     const usrSortSt = parseUsersSort(merged);
     p.set('usersSort', opts.usersSort != null ? opts.usersSort : usrSortSt.sort);
     p.set('usersSortDir', opts.usersSortDir != null ? opts.usersSortDir : usrSortSt.dir);
+
+    const leadsStatus =
+      opts.leadsStatus !== undefined ? opts.leadsStatus : urlParams.get('leadsStatus') || 'all';
+    if (leadsStatus && leadsStatus !== 'all') p.set('leadsStatus', String(leadsStatus));
+    const leadsQ = opts.leadsQ !== undefined ? opts.leadsQ : urlParams.get('leadsQ') || '';
+    if (leadsQ) p.set('leadsQ', String(leadsQ));
+    const leadsPageRaw = opts.leadsPage != null ? opts.leadsPage : parseInt(urlParams.get('leadsPage') || '1', 10);
+    const leadsPage = Number.isFinite(Number(leadsPageRaw)) && Number(leadsPageRaw) >= 1 ? Number(leadsPageRaw) : 1;
+    p.set('leadsPage', String(leadsPage));
+    const leadsPsRaw =
+      opts.leadsPageSize != null ? opts.leadsPageSize : parseInt(urlParams.get('leadsPageSize') || '20', 10);
+    const leadsPageSize = PAGE_SIZE_OPTIONS.includes(Number(leadsPsRaw)) ? Number(leadsPsRaw) : 20;
+    p.set('leadsPageSize', String(leadsPageSize));
 
     const coPgSt = parseCompaniesPagination(merged);
     const coPg = opts.companiesPage != null ? opts.companiesPage : coPgSt.page;
