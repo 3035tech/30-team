@@ -1026,3 +1026,17 @@ WHERE d.definition_id = (SELECT id FROM ae_definitions WHERE LOWER(slug) = 'moti
 
 INSERT INTO schema_migrations (name) VALUES ('052_motivators_dimension_colors.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 054 — Align pre-onboarding item_key CHECK (welcome_kit…) when prod still has old keys
+ALTER TABLE employee_pre_onboarding_items
+  DROP CONSTRAINT IF EXISTS employee_pre_onboarding_item_key_chk;
+
+DELETE FROM employee_pre_onboarding_items
+WHERE item_key IN ('email_access', 'tools_access', 'equipment', 'd1_welcome');
+
+ALTER TABLE employee_pre_onboarding_items
+  ADD CONSTRAINT employee_pre_onboarding_item_key_chk
+  CHECK (item_key IN ('welcome_kit', 'rh_onboarding_call', 'manager_onboarding'));
+
+INSERT INTO schema_migrations (name) VALUES ('054_pre_onboarding_item_keys_align.sql')
+ON CONFLICT (name) DO NOTHING;
