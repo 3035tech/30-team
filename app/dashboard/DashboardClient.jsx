@@ -1166,15 +1166,19 @@ export default function DashboardClient({
     {can(sessionAuth, CAP.HELP_VIEW) ? (
       <HelpAssistantWidget locale={locale} navigateDashboard={navigateWithOpts} />
     ) : null}
-    {!sessionAuth?.onboardingCompleted && (
+    {sessionAuth?.showOnboardingWizard ? (
       <OnboardingWizard
         locale={locale}
         userName={sessionAuth?.displayName || sessionAuth?.email || t(locale, 'common.user')}
         onComplete={() => {
-          setSessionAuth((prev) => ({ ...(prev || {}), onboardingCompleted: true }));
+          setSessionAuth((prev) => ({
+            ...(prev || {}),
+            onboardingCompleted: true,
+            showOnboardingWizard: false,
+          }));
         }}
       />
-    )}
+    ) : null}
     </PipelineExtrasProvider>
     </AppFeedbackProvider>
   );

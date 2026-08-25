@@ -1040,3 +1040,17 @@ ALTER TABLE employee_pre_onboarding_items
 
 INSERT INTO schema_migrations (name) VALUES ('054_pre_onboarding_item_keys_align.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 055 — Wizard early access só para /signup; painel/legado = completed
+UPDATE users
+SET
+  onboarding_completed = TRUE,
+  onboarding_completed_at = COALESCE(onboarding_completed_at, NOW())
+WHERE deleted = FALSE
+  AND onboarding_completed = FALSE
+  AND signup_source IS NULL
+  AND signup_metadata IS NULL
+  AND signup_pending = FALSE;
+
+INSERT INTO schema_migrations (name) VALUES ('055_onboarding_wizard_panel_users.sql')
+ON CONFLICT (name) DO NOTHING;

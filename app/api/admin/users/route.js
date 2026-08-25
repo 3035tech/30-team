@@ -155,9 +155,9 @@ export async function POST(request) {
   const ins = await query(
     `INSERT INTO users (
        email, password_hash, role, active, company_id, must_change_password,
-       password_setup_token, password_setup_expires_at
+       password_setup_token, password_setup_expires_at, onboarding_completed, onboarding_completed_at
      )
-     VALUES ($1, $2, $3, TRUE, $4, FALSE, NULL, NULL)
+     VALUES ($1, $2, $3, TRUE, $4, FALSE, NULL, NULL, TRUE, NOW())
      RETURNING id, email, role, active, company_id AS "companyId", created_at AS "createdAt"`,
     [email, hash, role, companyId]
   );

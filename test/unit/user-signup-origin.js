@@ -21,4 +21,8 @@ assert.equal(isSelfServiceOrigin('admin'), false);
 assert.equal(isSelfServiceOrigin('early_access'), true);
 assert.equal(isSelfServiceOrigin('self_service'), true);
 
+// Painel/legado: sem signup → não é cohort early access (wizard não deve abrir)
+assert.equal(resolveUserOrigin({ signupPending: false }), 'admin');
+assert.equal(isSelfServiceOrigin(resolveUserOrigin({})), false);
+
 console.log('user-signup-origin: ok');

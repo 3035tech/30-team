@@ -15,8 +15,9 @@ const STEPS = [
 ];
 
 /**
- * Wizard de onboarding guiado para primeiro acesso.
- * Aparece automaticamente se user.onboarding_completed === false.
+ * Wizard de onboarding guiado — só cohort early access (/signup).
+ * O dashboard só monta este componente quando showOnboardingWizard=true
+ * (self-service + onboarding_completed=false; nunca admin/painel legado).
  */
 export default function OnboardingWizard({ locale, userName, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);

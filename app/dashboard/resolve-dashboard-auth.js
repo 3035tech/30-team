@@ -5,6 +5,7 @@ import { queryRead } from '../../lib/db';
 import { normalizeLocale } from '../../lib/i18n';
 import { isAdminRole, isManagerRole } from '../../lib/permissions';
 import { attachCapabilityOverrides } from '../../lib/user-capabilities';
+import { isSelfServiceOrigin, resolveUserOrigin } from '../../lib/user-signup-origin';
 
 /**
  * Light auth for dashboard chrome (JWT + optional display name).
@@ -29,6 +30,8 @@ export async function resolveDashboardAuth() {
     email: null,
     displayName: null,
     onboardingCompleted: true, // default true (coluna pode não existir ainda)
+    /** Wizard “Primeiros passos” — só cohort /signup; admin/painel antigo não. */
+    showOnboardingWizard: false,
     capabilitiesCustomized: Boolean(payload?.capabilitiesCustomized),
     capabilityOverrides: Array.isArray(payload?.capabilityOverrides)
       ? payload.capabilityOverrides
@@ -37,21 +40,38 @@ export async function resolveDashboardAuth() {
   try {
     if (payload?.userId) {
       const u = await queryRead(
-        `SELECT email, display_name AS "displayName", onboarding_completed AS "onboardingCompleted"
+        `SELECT email, display_name AS "displayName",
+                onboarding_completed AS "onboardingCompleted",
+                signup_source AS "signupSource",
+                signup_pending AS "signupPending",
+                signup_metadata AS "signupMetadata"
          FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
         [payload.userId]
       );
       if (u.rowCount) {
+        const row = u.rows[0];
+        const onboardingCompleted = row.onboardingCompleted !== false;
+        const origin = resolveUserOrigin({
+          signupSource: row.signupSource,
+          signupPending: row.signupPending,
+          signupMetadata: row.signupMetadata,
+        });
+        // Early-access wizard only — never for admin master or panel-created users.
+        const showOnboardingWizard =
+          !isAdmin &&
+          !onboardingCompleted &&
+          isSelfServiceOrigin(origin);
         authUser = {
           ...authUser,
-          email: u.rows[0].email,
-          displayName: u.rows[0].displayName,
-          onboardingCompleted: u.rows[0].onboardingCompleted !== false, // default true se NULL
+          email: row.email,
+          displayName: row.displayName,
+          onboardingCompleted,
+          showOnboardingWizard,
         };
       }
     }
   } catch {
-    /* display_name / onboarding_completed columns may be missing before migrations 023/053 */
+    /* display_name / onboarding / signup columns may be missing before migrations */
   }
 
   return { authUser, locale, payload, isAdmin, companyId };
