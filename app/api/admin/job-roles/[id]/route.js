@@ -1,0 +1,167 @@
+import { cookies } from 'next/headers';
+import { verifyToken } from '../../../../../lib/auth.js';
+import { apiError } from '../../../../../lib/api-error.js';
+import { hydrateSessionPayload } from '../../../../../lib/session.js';
+import { isManagerRole, isAdminRole } from '../../../../../lib/permissions.js';
+import { getJobRole, updateJobRole, deactivateJobRole } from '../../../../../lib/job-roles.js';
+
+/**
+ * GET /api/admin/job-roles/[id]
+ * Retorna detalhes de um cargo
+ */
+export async function GET(request, { params }) {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('team30_session')?.value;
+    if (!token) {
+      return apiError(request, 'REQUIRED_LOGIN', 401);
+    }
+
+    const rawPayload = verifyToken(token);
+    const payload = await hydrateSessionPayload(rawPayload);
+    if (!isManagerRole(payload)) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    const isAdmin = isAdminRole(payload);
+    const id = parseInt(params.id);
+
+    if (isNaN(id)) {
+      return apiError(request, 'INVALID_ID', 400);
+    }
+
+    const jobRole = await getJobRole(id);
+
+    if (!jobRole) {
+      return apiError(request, 'JOB_ROLE_NOT_FOUND', 404);
+    }
+
+    // Verificar se o cargo pertence à empresa do usuário
+    if (!isAdmin && jobRole.companyId !== payload.companyId) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    return Response.json(jobRole);
+  } catch (err) {
+    console.error('[job-roles] GET [id] error:', err);
+    return apiError(request, 'INTERNAL', 500);
+  }
+}
+
+/**
+ * PATCH /api/admin/job-roles/[id]
+ * Atualiza cargo existente
+ * Body: { name?, description?, rubric?, active? }
+ */
+export async function PATCH(request, { params }) {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('team30_session')?.value;
+    if (!token) {
+      return apiError(request, 'REQUIRED_LOGIN', 401);
+    }
+
+    const rawPayload = verifyToken(token);
+    const payload = await hydrateSessionPayload(rawPayload);
+    if (!isManagerRole(payload)) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    const isAdmin = isAdminRole(payload);
+    const id = parseInt(params.id);
+
+    if (isNaN(id)) {
+      return apiError(request, 'INVALID_ID', 400);
+    }
+
+    // Verificar se o cargo existe e pertence à empresa
+    const existingRole = await getJobRole(id);
+
+    if (!existingRole) {
+      return apiError(request, 'JOB_ROLE_NOT_FOUND', 404);
+    }
+
+    if (!isAdmin && existingRole.companyId !== payload.companyId) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    const body = await request.json();
+    const { name, description, rubric, active } = body;
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (rubric !== undefined) updates.rubric = rubric;
+    if (active !== undefined) updates.active = active;
+
+    if (Object.keys(updates).length === 0) {
+      return apiError(request, 'NO_UPDATES_PROVIDED', 400);
+    }
+
+    const updatedRole = await updateJobRole(id, updates);
+
+    return Response.json(updatedRole);
+  } catch (err) {
+    console.error('[job-roles] PATCH [id] error:', err);
+    
+    if (err.message === 'INVALID_RUBRIC') {
+      return apiError(request, 'INVALID_RUBRIC', 400);
+    }
+    
+    if (err.message === 'JOB_ROLE_NOT_FOUND') {
+      return apiError(request, 'JOB_ROLE_NOT_FOUND', 404);
+    }
+    
+    // Violação de UNIQUE (company_id, name)
+    if (err.code === '23505') {
+      return apiError(request, 'JOB_ROLE_NAME_EXISTS', 409);
+    }
+    
+    return apiError(request, 'INTERNAL', 500);
+  }
+}
+
+/**
+ * DELETE /api/admin/job-roles/[id]
+ * Desativa cargo (soft delete: active = false)
+ */
+export async function DELETE(request, { params }) {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('team30_session')?.value;
+    if (!token) {
+      return apiError(request, 'REQUIRED_LOGIN', 401);
+    }
+
+    const rawPayload = verifyToken(token);
+    const payload = await hydrateSessionPayload(rawPayload);
+    if (!isManagerRole(payload)) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    const isAdmin = isAdminRole(payload);
+    const id = parseInt(params.id);
+
+    if (isNaN(id)) {
+      return apiError(request, 'INVALID_ID', 400);
+    }
+
+    // Verificar se o cargo existe e pertence à empresa
+    const existingRole = await getJobRole(id);
+
+    if (!existingRole) {
+      return apiError(request, 'JOB_ROLE_NOT_FOUND', 404);
+    }
+
+    if (!isAdmin && existingRole.companyId !== payload.companyId) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    await deactivateJobRole(id);
+
+    return Response.json({ success: true, id });
+  } catch (err) {
+    console.error('[job-roles] DELETE [id] error:', err);
+    return apiError(request, 'INTERNAL', 500);
+  }
+}
