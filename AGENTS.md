@@ -250,6 +250,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Motivadores | `lib/ae/*` (incl. `create-motivators-invite`, `batch-motivators-invites`), `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
 | People (1:1 / hipóteses / briefing / grupos salvos / scorecard / PDI) | `lib/people/*` (`decision-brief.js`, `team-groups.js`, `interview-scorecard.js`, `development-plans.js`), `PeopleManagementPanel`, `HrActionBrief`, Equipe, Grupos, `InterviewScorecardBlock`, `DevelopmentPlansBlock`, `migrations/022`, `040`, `041`, `042` |
 | Overview mix T1–T9 | `lib/overview-type-mix.js`, Overview heat grid |
+| Overview inteligência comportamental | `lib/people/team-behavioral-intel.js`, `load-team-behavioral-intel.js`, `TeamBehavioralIntelBlock`, Overview (`teamGroup`) |
 | Overview fila PDI | `getCompanyPdiPulse` — planos ativos + fila → Equipe |
 | Pós-hire check-ins | `lib/people/onboarding-checkins.js` (D30/D60/D90), Equipe + Overview; seed PDI `onboarding` |
 | Relatório cliente print | `lib/client-report-print.js`, `/r/[token]` |

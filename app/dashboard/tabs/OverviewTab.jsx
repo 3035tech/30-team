@@ -9,8 +9,10 @@ import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
+import { TeamBehavioralIntelBlock } from './TeamBehavioralIntelBlock';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
+const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
 const NO_PLAN_PREVIEW = 3;
 
 const FUNNEL_LABEL_KEYS = {
@@ -92,12 +94,15 @@ export function OverviewTab({
   navigateDashboard,
 }) {
   const [peopleOpsOpen, setPeopleOpsOpen] = useState(false);
+  const [recruitingOpen, setRecruitingOpen] = useState(false);
   const [noPlanExpanded, setNoPlanExpanded] = useState(false);
 
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined' && localStorage.getItem(PEOPLE_OPS_OPEN_KEY) === '1') {
-        setPeopleOpsOpen(true);
+      if (typeof window !== 'undefined') {
+        if (localStorage.getItem(PEOPLE_OPS_OPEN_KEY) === '1') setPeopleOpsOpen(true);
+        // Default collapsed so BCI wins the first viewport; '1' opens recruiting ops.
+        if (localStorage.getItem(RECRUITING_OPEN_KEY) === '1') setRecruitingOpen(true);
       }
     } catch {
       /* ignore */
@@ -113,6 +118,18 @@ export function OverviewTab({
         /* ignore */
       }
       if (!next) setNoPlanExpanded(false);
+      return next;
+    });
+  };
+
+  const toggleRecruiting = () => {
+    setRecruitingOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(RECRUITING_OPEN_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   };
@@ -215,6 +232,106 @@ export function OverviewTab({
         )}
       </div>
 
+
+      <TeamBehavioralIntelBlock
+        locale={locale}
+        intel={data.behavioralIntel}
+        navigateDashboard={navigateDashboard}
+      />
+
+      <div className={S.cardTight}>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <span className={cn(S.label, 'mb-0')}>
+            {t(locale, 'panel.overview.typeMixTitle')}
+          </span>
+          <button
+            type="button"
+            onClick={() => go({ tab: 'compatibility' })}
+            className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
+          >
+            {t(locale, 'panel.overview.openCompat')}
+          </button>
+        </div>
+        {mixTotalRaw === 0 ? (
+          <p className="m-0 text-[13px] text-ink-faint">
+            {t(locale, 'panel.overview.typeMixEmpty')}
+          </p>
+        ) : (
+          <>
+            <div
+              className="mb-2 flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]"
+              role="img"
+              aria-label={t(locale, 'panel.overview.typeHeatAria')}
+            >
+              {mixEntries.map((e) => (
+                <div
+                  key={e.type}
+                  style={{
+                    width: `${Math.max(2, (e.n / mixTotal) * 100)}%`,
+                    background: TYPE_DATA[e.type]?.color || C.purple,
+                  }}
+                  title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
+                />
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
+              {heatCells.map((cell) => (
+                <span
+                  key={cell.type}
+                  title={typeHintTooltip(cell.type, locale)}
+                  className={cn(
+                    'cursor-help tabular-nums',
+                    cell.n > 0 ? 'text-ink' : 'text-ink-faint/70'
+                  )}
+                >
+                  <span
+                    style={
+                      cell.n > 0
+                        ? { color: TYPE_DATA[cell.type]?.color || undefined }
+                        : undefined
+                    }
+                  >
+                    T{cell.type}
+                  </span>
+                  <span className="text-ink-faint"> {cell.n}</span>
+                </span>
+              ))}
+            </div>
+            {dominant ? (
+              <p className="mt-2 mb-0 text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.overview.dominantHint', {
+                  type: typeFullName(dominant, locale),
+                  n: mixCount[dominant] || mixCount[String(dominant)] || 0,
+                  pct: Math.round(
+                    ((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100
+                  ),
+                })}
+              </p>
+            ) : null}
+            {compositionLine ? (
+              <p className="mt-1 mb-0 text-[11px] leading-snug text-ink-faint">{compositionLine}</p>
+            ) : null}
+            {data.typeMix?.windowDelta?.available ? (
+              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.overview.typeMixWindowDelta', {
+                  recent: typeFullName(data.typeMix.windowDelta.recentDominant, locale),
+                  recentPct: data.typeMix.windowDelta.recentPct,
+                  prior: typeFullName(data.typeMix.windowDelta.priorDominant, locale),
+                  priorPct: data.typeMix.windowDelta.priorPct,
+                  delta:
+                    data.typeMix.windowDelta.pctDelta > 0
+                      ? `+${data.typeMix.windowDelta.pctDelta}`
+                      : String(data.typeMix.windowDelta.pctDelta),
+                })}
+              </p>
+            ) : null}
+            {rubricDeltaLine ? (
+              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">{rubricDeltaLine}</p>
+            ) : null}
+          </>
+        )}
+      </div>
+
       <div className={S.card}>
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>
@@ -264,6 +381,37 @@ export function OverviewTab({
           </div>
         )}
       </div>
+
+      <div className={S.card}>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <span className={cn(S.label, 'mb-0')}>
+              {t(locale, 'panel.overview.recruitingTitle')}
+            </span>
+            <p className="mt-1 mb-0 text-[12px] text-ink-muted">
+              {t(locale, 'panel.overview.recruitingHint')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleRecruiting}
+            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-[11px] text-ink-muted"
+            aria-expanded={recruitingOpen}
+          >
+            {recruitingOpen
+              ? t(locale, 'panel.overview.recruitingCollapse')
+              : t(locale, 'panel.overview.recruitingExpand')}
+          </button>
+        </div>
+        {!recruitingOpen ? (
+          <p className="m-0 font-mono text-[11px] text-ink-faint">
+            {t(locale, 'panel.overview.recruitingCollapsedHint', {
+              n: data.funnelTotal || 0,
+              open: data.vacancies?.openCount ?? 0,
+            })}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
 
       <div>
         <span className={cn(S.label, 'mb-2.5')}>
@@ -451,96 +599,7 @@ export function OverviewTab({
         </div>
       </div>
 
-      <div className={S.cardTight}>
-        <div className="mb-2 flex items-baseline justify-between gap-3">
-          <span className={cn(S.label, 'mb-0')}>
-            {t(locale, 'panel.overview.typeMixTitle')}
-          </span>
-          <button
-            type="button"
-            onClick={() => go({ tab: 'compatibility' })}
-            className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
-          >
-            {t(locale, 'panel.overview.openCompat')}
-          </button>
-        </div>
-        {mixTotalRaw === 0 ? (
-          <p className="m-0 text-[13px] text-ink-faint">
-            {t(locale, 'panel.overview.typeMixEmpty')}
-          </p>
-        ) : (
-          <>
-            <div
-              className="mb-2 flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]"
-              role="img"
-              aria-label={t(locale, 'panel.overview.typeHeatAria')}
-            >
-              {mixEntries.map((e) => (
-                <div
-                  key={e.type}
-                  style={{
-                    width: `${Math.max(2, (e.n / mixTotal) * 100)}%`,
-                    background: TYPE_DATA[e.type]?.color || C.purple,
-                  }}
-                  title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
-                />
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
-              {heatCells.map((cell) => (
-                <span
-                  key={cell.type}
-                  title={typeHintTooltip(cell.type, locale)}
-                  className={cn(
-                    'cursor-help tabular-nums',
-                    cell.n > 0 ? 'text-ink' : 'text-ink-faint/70'
-                  )}
-                >
-                  <span
-                    style={
-                      cell.n > 0
-                        ? { color: TYPE_DATA[cell.type]?.color || undefined }
-                        : undefined
-                    }
-                  >
-                    T{cell.type}
-                  </span>
-                  <span className="text-ink-faint"> {cell.n}</span>
-                </span>
-              ))}
-            </div>
-            {dominant ? (
-              <p className="mt-2 mb-0 text-[11px] leading-snug text-ink-muted">
-                {t(locale, 'panel.overview.dominantHint', {
-                  type: typeFullName(dominant, locale),
-                  n: mixCount[dominant] || mixCount[String(dominant)] || 0,
-                  pct: Math.round(
-                    ((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100
-                  ),
-                })}
-              </p>
-            ) : null}
-            {compositionLine ? (
-              <p className="mt-1 mb-0 text-[11px] leading-snug text-ink-faint">{compositionLine}</p>
-            ) : null}
-            {data.typeMix?.windowDelta?.available ? (
-              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">
-                {t(locale, 'panel.overview.typeMixWindowDelta', {
-                  recent: typeFullName(data.typeMix.windowDelta.recentDominant, locale),
-                  recentPct: data.typeMix.windowDelta.recentPct,
-                  prior: typeFullName(data.typeMix.windowDelta.priorDominant, locale),
-                  priorPct: data.typeMix.windowDelta.priorPct,
-                  delta:
-                    data.typeMix.windowDelta.pctDelta > 0
-                      ? `+${data.typeMix.windowDelta.pctDelta}`
-                      : String(data.typeMix.windowDelta.pctDelta),
-                })}
-              </p>
-            ) : null}
-            {rubricDeltaLine ? (
-              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">{rubricDeltaLine}</p>
-            ) : null}
-          </>
+          </div>
         )}
       </div>
 

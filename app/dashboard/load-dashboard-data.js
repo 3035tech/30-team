@@ -100,6 +100,9 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
   const { dateFrom: selectedDateFrom, dateTo: selectedDateTo } = parseDateFilter(searchParams);
   const nameSearch = parseNameSearch(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
+  const rawTeamGroup = parseInt(String(searchParams?.teamGroup || '').trim(), 10);
+  const selectedTeamGroup =
+    Number.isFinite(rawTeamGroup) && rawTeamGroup > 0 ? rawTeamGroup : null;
 
   let results = [];
   let areas = [];
@@ -432,6 +435,8 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
           nameSearch,
           typeCount: typeCountAgg,
           rosterScope: selectedRoster,
+          locale,
+          teamGroupId: selectedTeamGroup,
         });
       }
 
@@ -626,6 +631,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     selectedDateFrom,
     selectedDateTo,
     selectedSearch: nameSearch,
+    selectedTeamGroup,
     areaStats,
     areaRubric,
     analytics,

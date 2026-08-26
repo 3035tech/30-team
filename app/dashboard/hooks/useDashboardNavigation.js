@@ -61,6 +61,10 @@ export function useDashboardNavigation({
     if (nextDateTo) p.set('dateTo', nextDateTo);
     if (nextSearch) p.set('search', nextSearch);
 
+    const nextTeamGroup =
+      opts.teamGroup !== undefined ? opts.teamGroup : urlParams.get('teamGroup');
+    if (nextTeamGroup) p.set('teamGroup', String(nextTeamGroup));
+
     const pipeResolved = opts.pipeline !== undefined ? opts.pipeline : pipeline;
     if (pipeResolved && pipeResolved !== 'all') p.set('pipeline', String(pipeResolved));
 
@@ -170,6 +174,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.dateFrom !== undefined ? { dateFrom: nextFilter.dateFrom } : {}),
       ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
       ...(nextFilter?.search !== undefined ? { search: nextFilter.search } : {}),
+      ...(nextFilter?.teamGroup !== undefined ? { teamGroup: nextFilter.teamGroup } : {}),
       teamPage: 1,
       comparePage: 1,
       vacanciesPage: 1,
