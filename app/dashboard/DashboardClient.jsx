@@ -991,6 +991,7 @@ export default function DashboardClient({
                   typeCount={typeCount}
                   distributionTotal={listTotal}
                   locale={locale}
+                  companyId={sessionAuth?.companyId}
                   filters={{
                     companyLabel:
                       isAdmin && company !== 'all'

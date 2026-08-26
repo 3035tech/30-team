@@ -10,6 +10,8 @@ import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { TeamBehavioralIntelBlock } from './TeamBehavioralIntelBlock';
+import TurnoverRadarCard from './overview/TurnoverRadarCard';
+import HrScoreCard from './overview/HrScoreCard';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -90,6 +92,7 @@ export function OverviewTab({
   typeCount = {},
   distributionTotal = 0,
   locale = 'pt-BR',
+  companyId = null,
   filters = {},
   navigateDashboard,
 }) {
@@ -238,6 +241,13 @@ export function OverviewTab({
         intel={data.behavioralIntel}
         navigateDashboard={navigateDashboard}
       />
+
+      {companyId && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <TurnoverRadarCard locale={locale} companyId={companyId} />
+          <HrScoreCard locale={locale} companyId={companyId} />
+        </div>
+      )}
 
       <div className={S.cardTight}>
         <div className="mb-2 flex items-baseline justify-between gap-3">
