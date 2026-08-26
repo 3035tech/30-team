@@ -130,15 +130,42 @@ Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma →
 8. **B-1008 — Academy leve** (M3; trilhas/ações ligadas ao PDI — **não** LMS)
 9. **B-1009 — Benefícios (catálogo leve)** (M4; **não** clube/folha)
 
-### B-1001 — Núcleo: HR Score + predições
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
 
-Consolida sinais **já existentes** por colaborador/área: perfil (T1–T9 + Motivadores), Fit vs núcleo, PDI (progresso/atraso), check-ins (concern), clima agregado da empresa, `retention_watch`.
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
 
-- Produto: score 0–100 por pessoa (cap de lista) + rollup por área; hedging no copy.
-- Predições: risco de saída, gaps de PDI, aderência de perfil (reusar Fit).
-- Volta para módulos: briefing Equipe, Overview, critério de fit (alta performance = subset do núcleo com score alto — não inventar segundo hub).
-- Sem absenteísmo; sem nota de desempenho até B-1004.
-- Reusar `lib/people/*`, Overview, `retention-watch`, `development-plans`, `company-nucleus`. Não criar segundo “analytics engine” paralelo.
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
+### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
+
+_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+
 
 ### B-1002 — Radar de rotatividade (multi-sinal)
 
