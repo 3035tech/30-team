@@ -97,6 +97,46 @@ Tabelas novas:
 
 ---
 
+## Epic B-1000 — Plataforma GP (B-1001 a B-1004 entregues)
+
+A partir da migration `054`, `055` e `056`:
+
+### B-1001 — HR Score + Predições
+- **HR Score (0-100)** consolidando 7 sinais comportamentais: perfil T1-T9 (15%), Motivadores (20%), Fit (15%), PDI (20%), Check-ins (10%), Clima (10%), Retenção (10%)
+- **Predições** derivadas dos sinais: risco de turnover (low/medium/high) e áreas de gap PDI
+- UI: `HrScoreCard` na Visão Geral (média empresa, por área, top/bottom 5) e `HrScoreBadge` nas listagens
+- APIs: `GET /api/admin/hr-score/:candidateId`, `GET /api/admin/hr-score/company`, `POST /api/admin/hr-score/recalculate`
+- Migration: `054_hr_score.sql` (tabela `hr_scores`)
+
+### B-1002 — Radar de Rotatividade (Multi-sinal)
+- **Turnover Radar** focado em 4 sinais críticos de saída: Clima (30%), Motivadores/retenção (30%), PDI concern (25%), Check-ins concern (15%)
+- Calcula risco de turnover (low/medium/high) e sugere ações
+- UI: `TurnoverRadarCard` na Visão Geral listando top at-risk employees com breakdown visual de sinais
+- API: `GET /api/admin/turnover-radar/company`
+- Lib: `lib/turnover-radar.js` (calcula radar, detecta trend change para notificações futuras)
+
+### B-1003 — Engenharia de Cargos (Leve)
+- **Cargos (Job Roles)** com rubrica T1-T9 que podem ser herdados por vagas via FK `vacancies.job_role_id`
+- CRUD completo: listar, criar, editar, desativar (soft)
+- UI: `JobRolesAdminTab` (admin), campo `jobRoleId` no formulário de vagas (`VacanciesAdminTab`), componente `RubricEditor` para editar pesos visuais
+- APIs: `GET/POST /api/admin/job-roles`, `GET/PATCH/DELETE /api/admin/job-roles/[id]`
+- Lib: `lib/job-roles.js` (`getRubricForVacancy` resolve herança: job_role → vacancy rubric)
+- Migration: `055_job_roles.sql` (tabela `job_roles`, FK em `vacancies`)
+
+### B-1004 — Avaliação de Desempenho + Metas → PDI
+- **Performance Cycles** (company-wide): rascunho → ativo → fechado
+- **Goals** (metas por candidato em um ciclo): título, descrição, peso (%), outcome (`met`, `exceeded`, `develop`, `not_met`)
+- **Reviews** (avaliação por candidato): draft → submitted
+- **Auto PDI**: ao submeter review, metas com outcome `develop` geram automaticamente itens PDI com `source: 'performance_review'` e `performance_goal_id` linkado
+- UI: `PerformanceReviewsAdminTab` (criar/listar ciclos), review form (metas + outcomes + auto-confirm de PDI)
+- APIs: `/api/admin/performance-cycles` (CRUD cycles), `/api/admin/performance-goals` (CRUD goals), `/api/admin/performance-reviews` (GET/POST draft, POST submit → auto PDI)
+- Lib: `lib/performance-reviews.js` (ciclos, goals, reviews, `autoGeneratePdiFromReview`)
+- Migration: `056_performance_reviews.sql` (tabelas `performance_cycles`, `performance_goals`, `performance_reviews`; estende `development_plan_items.source` para incluir `'performance_review'` e adiciona FK `performance_goal_id`)
+
+**Backlog:** B-1005 a B-1009 (sucessão, análise demissional, cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
+
+---
+
 ## Banco de dados
 
 | Arquivo / comando | Quando usar |

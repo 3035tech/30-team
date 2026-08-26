@@ -159,9 +159,9 @@ _(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRada
 
 _(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com rubrica T1-T9. Vagas podem herdar cargo via FK `job_role_id`. CRUD completo (list, create, update, deactivate). UI de cadastro/listagem pendente para próximo ciclo.
 
-### B-1004 — Avaliação de desempenho + metas → PDI
+### B-1004 — Avaliação de desempenho + metas → PDI ✅ ENTREGUE
 
-Ciclo leve (gestor → colaborador; não 360). Metas no ciclo. Gap/outcome `develop` gera item PDI automaticamente (estender `ITEM_SOURCES`). Não AVD completa.
+_(migration 056 + lib/performance-reviews.js + APIs + UI PerformanceReviewsAdminTab)_ Ciclo leve (gestor → colaborador; não 360). Metas no ciclo com outcome (`met`, `exceeded`, `develop`, `not_met`). Outcome `develop` gera item PDI automaticamente com `source: 'performance_review'` e `performance_goal_id`. Tabelas `performance_cycles`, `performance_goals`, `performance_reviews`. UI admin de ciclos + review form (draft → submitted).
 
 ### B-1005 — Plano de sucessão
 
