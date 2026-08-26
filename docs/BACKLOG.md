@@ -150,26 +150,10 @@ _(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sina
 
 _(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
 
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
 
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
+### B-1002 — Radar de rotatividade (multi-sinal) ✅ ENTREGUE
 
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-
-### B-1002 — Radar de rotatividade (multi-sinal)
-
-Unir clima (queda/campanha) + retenção Motivadores + desempenho/PDI (quando B-1004 existir; até lá PDI concern/atraso) num radar por pessoa/área. Notif + card Overview. Sem ponto/faltas.
+_(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRadarCard UI)_ Calcula risco de turnover (low/medium/high) consolidando 4 sinais críticos: clima (30%), retention Motivadores (30%), PDI atraso/concern (25%), check-ins concern (15%). Lista top at-risk na Overview com drill-down por sinal. Notificações proativas e integração completa na Equipe podem ser adicionadas em próximo ciclo.
 
 ### B-1003 — Engenharia de cargos leve
 
