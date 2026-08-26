@@ -155,9 +155,9 @@ _(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sina
 
 _(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRadarCard UI)_ Calcula risco de turnover (low/medium/high) consolidando 4 sinais críticos: clima (30%), retention Motivadores (30%), PDI atraso/concern (25%), check-ins concern (15%). Lista top at-risk na Overview com drill-down por sinal. Notificações proativas e integração completa na Equipe podem ser adicionadas em próximo ciclo.
 
-### B-1003 — Engenharia de cargos leve
+### B-1003 — Engenharia de cargos leve ✅ CORE ENTREGUE
 
-Cargo/papel da empresa (lista + drawer) com competências/pesos T1–T9 reusando rubrica da vaga. Vaga pode herdar cargo. Não virar job architecture enterprise.
+_(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com rubrica T1-T9. Vagas podem herdar cargo via FK `job_role_id`. CRUD completo (list, create, update, deactivate). UI de cadastro/listagem pendente para próximo ciclo.
 
 ### B-1004 — Avaliação de desempenho + metas → PDI
 
