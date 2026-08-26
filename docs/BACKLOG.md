@@ -101,9 +101,82 @@ _(epic fechado — itens A/B/C entregues.)_
 
 ---
 
+## Aberto — Epic B-1000 (plataforma GP sem DP)
+
+Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma → inteligência volta como decisão**, **sem** o Módulo 2 (DP). Hub continua `candidates`. Reusar o que já existe; não reconstruir ATS, PDI, clima, Motivadores nem Overview.
+
+**Fora (DP — não abrir item):** admissão documental, gestão de documentos, ponto, férias, ocorrências/saúde, holerite, quadro de tarefas RH legal, app do colaborador full (folha/ponto). Absenteísmo **não** entra como sinal do radar até haver fonte fora de DP.
+
+**Já coberto (não reimplementar):**
+
+| Bloco da arquitetura | 30Team hoje |
+|----------------------|-------------|
+| M1 Portal / funil / perfil | `/j` `/c` `/v` `/t`, pipeline, rubrica, T1–T9, Motivadores, Fit, `/r` |
+| M3 PDI + jornada leve | PDI, 1:1, check-ins D30/D60/D90, `/e`, seed concern→PDI |
+| M4 Clima + retenção parcial | `/clima`, pulso `/pulso`, `retention_watch` (Motivadores) |
+| Núcleo parcial | Overview, núcleo T1–T9 do time (`company-nucleus`), intel comportamental, Fit vs núcleo |
+
+**Sinal DP omitido de propósito:** absenteísmo. Radar e HR Score usam só sinais já no produto (clima, Motivadores/retenção, PDI, check-in concern, fit).
+
+### Ordem de entrega (conectar antes de expandir)
+
+1. **B-1001 — Núcleo HR Score + predições** (liga os módulos)
+2. **B-1002 — Radar de rotatividade multi-sinal** (M4; alimenta o núcleo)
+3. **B-1003 — Engenharia de cargos leve** (M1; cargo → rubrica/fit)
+4. **B-1004 — Avaliação de desempenho + metas → PDI** (M3; gap vira plano)
+5. **B-1005 — Plano de sucessão** (M3; usa HR Score + prontidão)
+6. **B-1006 — Análise demissional** (M4; fecha o loop seleção/gestão)
+7. **B-1007 — Cultura organizacional** (M4; leitura hedged, não survey isolada)
+8. **B-1008 — Academy leve** (M3; trilhas/ações ligadas ao PDI — **não** LMS)
+9. **B-1009 — Benefícios (catálogo leve)** (M4; **não** clube/folha)
+
+### B-1001 — Núcleo: HR Score + predições
+
+Consolida sinais **já existentes** por colaborador/área: perfil (T1–T9 + Motivadores), Fit vs núcleo, PDI (progresso/atraso), check-ins (concern), clima agregado da empresa, `retention_watch`.
+
+- Produto: score 0–100 por pessoa (cap de lista) + rollup por área; hedging no copy.
+- Predições: risco de saída, gaps de PDI, aderência de perfil (reusar Fit).
+- Volta para módulos: briefing Equipe, Overview, critério de fit (alta performance = subset do núcleo com score alto — não inventar segundo hub).
+- Sem absenteísmo; sem nota de desempenho até B-1004.
+- Reusar `lib/people/*`, Overview, `retention-watch`, `development-plans`, `company-nucleus`. Não criar segundo “analytics engine” paralelo.
+
+### B-1002 — Radar de rotatividade (multi-sinal)
+
+Unir clima (queda/campanha) + retenção Motivadores + desempenho/PDI (quando B-1004 existir; até lá PDI concern/atraso) num radar por pessoa/área. Notif + card Overview. Sem ponto/faltas.
+
+### B-1003 — Engenharia de cargos leve
+
+Cargo/papel da empresa (lista + drawer) com competências/pesos T1–T9 reusando rubrica da vaga. Vaga pode herdar cargo. Não virar job architecture enterprise.
+
+### B-1004 — Avaliação de desempenho + metas → PDI
+
+Ciclo leve (gestor → colaborador; não 360). Metas no ciclo. Gap/outcome `develop` gera item PDI automaticamente (estender `ITEM_SOURCES`). Não AVD completa.
+
+### B-1005 — Plano de sucessão
+
+Papéis críticos + sucessor(es) + prontidão. Reusar HR Score (B-1001) e `leadership-analytics` (já há score de conversa de sucessão). Não org chart pesado.
+
+### B-1006 — Análise demissional
+
+Registro de saída (motivo + texto) no `candidate` alumni. Agregar motivos × tipo/área (padrão C4). Leitura: o que corrigir na seleção (M1) e na gestão (M3/M4). Sem workflow de desligamento DP.
+
+### B-1007 — Cultura organizacional
+
+Leitura hedged a partir de clima + mix T1–T9 + pulso. Valores declarados (texto rico da empresa, já há “sobre”) vs praticada (sinais). Sem segundo instrumento.
+
+### B-1008 — Academy leve (não LMS)
+
+Catálogo curto de ações/trilhas (título, tema) que o PDI pode apontar. Sem player, sem SCORM, sem escola completa.
+
+### B-1009 — Catálogo de benefícios (não clube/folha)
+
+Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta. Sem adesão, sem desconto em folha, sem “clube”.
+
+---
+
 ## Em andamento
 
-_(vazio)_
+_(vazio — B-1000 registrado; aguardando fatia para implementar)_
 
 ---
 
