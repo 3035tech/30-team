@@ -112,6 +112,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [publicShowCompanyInfo, setPublicShowCompanyInfo] = useState(false);
   const [publicShowSalary, setPublicShowSalary] = useState(false);
   const [companyId, setCompanyId] = useState('');
+  const [jobRoleId, setJobRoleId] = useState('');
+  const [jobRoles, setJobRoles] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
 
   const appUrl =
@@ -188,6 +190,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     }
   };
 
+  const loadJobRoles = async (cid) => {
+    if (!cid) return;
+    try {
+      const res = await fetch(`/api/admin/job-roles?companyId=${cid}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setJobRoles(data.roles || []);
+    } catch (e) {
+      console.error('[VacanciesTab] Load job roles error:', e);
+    }
+  };
+
   useEffect(() => {
     if (isDetailView) return;
     loadVacancies();
@@ -196,6 +210,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   useEffect(() => {
     loadCompanies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (companyId) loadJobRoles(companyId);
+  }, [companyId]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -260,6 +278,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         publicAllowIndex,
         publicShowCompanyInfo,
         publicShowSalary,
+        jobRoleId: jobRoleId ? parseInt(jobRoleId, 10) : null,
       };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
@@ -274,6 +293,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
       setPublicPageEnabled(false); setPublicAllowIndex(true);
       setPublicShowCompanyInfo(false); setPublicShowSalary(false);
+      setJobRoleId('');
       setShowCreate(false);
       setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
@@ -548,6 +568,22 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 ))}
               </select>
             ) : null}
+
+            {jobRoles.length > 0 && (
+              <label className={FIELD_LABEL}>
+                {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
+                <select
+                  value={jobRoleId}
+                  onChange={(e) => setJobRoleId(e.target.value)}
+                  className={cn(FIELD_SELECT, "max-w-[420px]")}
+                >
+                  <option value="">{t(locale, 'recruiting.noJobRole')}</option>
+                  {jobRoles.map((jr) => (
+                    <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <div className={GRID_AUTO_LG}>
               <input
