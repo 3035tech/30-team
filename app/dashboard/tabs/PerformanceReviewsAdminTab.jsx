@@ -34,6 +34,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
         submittedCount: 'submetidas',
         createCycleSuccess: 'Ciclo criado com sucesso',
         errorCycleTitleRequired: 'Título do ciclo é obrigatório',
+        autoPdiNote: '💡 Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
       },
       en: {
         title: 'Performance Reviews',
@@ -52,6 +53,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
         submittedCount: 'submitted',
         createCycleSuccess: 'Cycle created successfully',
         errorCycleTitleRequired: 'Cycle title is required',
+        autoPdiNote: '💡 Outcome "Develop" automatically generates a PDI item for the employee',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -127,6 +129,9 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-ink">{t('title')}</h1>
         <p className="text-sm text-ink-muted">{t('subtitle')}</p>
+        <div className="rounded-lg border border-info/20 bg-info/5 px-3 py-2 text-xs text-ink-muted">
+          {t('autoPdiNote')}
+        </div>
       </div>
 
       {/* Actions */}
