@@ -107,8 +107,15 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
       return;
     }
     const queryId = Number(new URLSearchParams(window.location.search).get('course'));
-    if (Number.isFinite(queryId) && queryId > 0) setSelectedId(queryId);
-  }, [courseId]);
+    if (Number.isFinite(queryId) && queryId > 0) {
+      setSelectedId(queryId);
+      return;
+    }
+    // Prefer first course so the right panel isn’t empty after open.
+    if (!selectedId && courses.length > 0) {
+      setSelectedId(courses[0].id);
+    }
+  }, [courseId, courses, selectedId]);
 
   useEffect(() => {
     if (selectedId) void loadDetail(selectedId);

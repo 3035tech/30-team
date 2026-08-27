@@ -698,7 +698,7 @@ export default function DashboardClient({
     </button>
   );
 
-  const sectionLabel = (sectionKey, text) => {
+  const sectionLabel = (sectionKey, text, opts = {}) => {
     if (navCollapsed) {
       return <div className="mx-1 mb-2 mt-2.5 h-px bg-ink/[0.08]" aria-hidden />;
     }
@@ -710,7 +710,13 @@ export default function DashboardClient({
           S.sidebarSection,
           'mb-1 flex w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-0 text-left hover:text-ink'
         )}
-        onClick={() => toggleNavSection(sectionKey)}
+        onClick={() => {
+          toggleNavSection(sectionKey);
+          if (opts.navigateTab) {
+            navigateToTab(opts.navigateTab);
+            setSidebarOpen(false);
+          }
+        }}
         aria-expanded={open}
         aria-controls={`nav-section-${sectionKey}`}
       >
@@ -893,7 +899,7 @@ export default function DashboardClient({
             {showLmsSection ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('lms', t(locale, 'dashboard.sectionLms'))}
+                {sectionLabel('lms', t(locale, 'dashboard.sectionLms'), { navigateTab: 'lms' })}
                 {sectionBody('lms', (
                   <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
                 ))}
@@ -1383,7 +1389,11 @@ export default function DashboardClient({
               {tab === 'lms' && showLearning && (
                 <LmsAdminTab
                   locale={locale}
-                  companyId={sessionAuth?.companyId}
+                  companyId={
+                    company && company !== 'all'
+                      ? Number(company)
+                      : (sessionAuth?.companyId ?? null)
+                  }
                   courseId={urlParams.get('course') || null}
                 />
               )}
