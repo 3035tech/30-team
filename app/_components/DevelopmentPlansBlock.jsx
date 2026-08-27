@@ -110,11 +110,13 @@ export function DevelopmentPlansBlock({
           key: 'periodStart',
           type: 'date',
           label: t(locale, 'panel.pdi.periodStart'),
+          row: 'period',
         },
         {
           key: 'periodEnd',
           type: 'date',
           label: t(locale, 'panel.pdi.periodEnd'),
+          row: 'period',
         },
         ...(ideas.length
           ? [
@@ -180,12 +182,14 @@ export function DevelopmentPlansBlock({
           type: 'date',
           label: t(locale, 'panel.pdi.periodStart'),
           defaultValue: detail.periodStart ? String(detail.periodStart).slice(0, 10) : '',
+          row: 'period',
         },
         {
           key: 'periodEnd',
           type: 'date',
           label: t(locale, 'panel.pdi.periodEnd'),
           defaultValue: detail.periodEnd ? String(detail.periodEnd).slice(0, 10) : '',
+          row: 'period',
         },
         {
           key: 'status',

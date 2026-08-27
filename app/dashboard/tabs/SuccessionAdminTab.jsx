@@ -76,7 +76,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       title: t('createRoleButton'),
       fields: [
         { name: 'title', label: t('roleTitle'), placeholder: t('roleTitlePlaceholder'), required: true },
-        { name: 'description', label: t('roleDescription'), type: 'textarea', rows: 3 },
+        { name: 'description', label: t('roleDescription'), type: 'textarea', rows: 2 },
         {
           name: 'impactLevel',
           label: t('impactLevel'),

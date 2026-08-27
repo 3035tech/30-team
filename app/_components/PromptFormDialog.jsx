@@ -37,6 +37,7 @@ import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
  *   rows?: number,
  *   minHeight?: number, // richText
  *   min?: string, max?: string, // date / datetime-local
+ *   row?: string, // same key → side-by-side on one row (e.g. start/end dates)
  *   // imageUpload:
  *   uploadUrl?: string,
  *   storageConfigured?: boolean,
@@ -52,6 +53,21 @@ function fieldInitial(f) {
 }
 function fieldKeyOf(f) {
   return f?.key || f?.name || '';
+}
+
+/** Consecutive fields sharing `row` render in a 2-col grid. */
+function groupFieldsByRow(fields) {
+  const groups = [];
+  for (const f of fields) {
+    const row = f.row != null && String(f.row).trim() ? String(f.row) : '';
+    const last = groups[groups.length - 1];
+    if (row && last && last.row === row) {
+      last.fields.push(f);
+      continue;
+    }
+    groups.push({ row: row || null, fields: [f] });
+  }
+  return groups;
 }
 
 export function PromptFormDialog({
@@ -154,6 +170,29 @@ export function PromptFormDialog({
       return true;
     }
   });
+  const fieldGroups = groupFieldsByRow(visibleFields);
+
+  const renderFieldBlock = (f) => (
+    <div key={fieldKeyOf(f)} className="block min-w-0">
+      {f.type !== 'boolean' ? (
+        <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
+      ) : null}
+      {renderControl(f)}
+      {f.help && f.type !== 'imageUpload' ? (
+        <p
+          className={cn(
+            'text-xs leading-[1.45] text-ink-muted',
+            f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
+          )}
+        >
+          {f.help}
+        </p>
+      ) : null}
+      {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
+        <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
+      ) : null}
+    </div>
+  );
 
   const onImageFile = async (f, file) => {
     if (!file) return;
@@ -450,27 +489,18 @@ export function PromptFormDialog({
             <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
           ) : null}
           <div className="mt-4 flex flex-col gap-3">
-            {visibleFields.map((f) => (
-              <div key={fieldKeyOf(f)} className="block">
-                {f.type !== 'boolean' ? (
-                  <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
-                ) : null}
-                {renderControl(f)}
-                {f.help && f.type !== 'imageUpload' ? (
-                  <p
-                    className={cn(
-                      'text-xs leading-[1.45] text-ink-muted',
-                      f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
-                    )}
-                  >
-                    {f.help}
-                  </p>
-                ) : null}
-                {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
-                  <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
-                ) : null}
-              </div>
-            ))}
+            {fieldGroups.map((group, gi) =>
+              group.row && group.fields.length > 1 ? (
+                <div
+                  key={`row-${group.row}-${gi}`}
+                  className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                >
+                  {group.fields.map((f) => renderFieldBlock(f))}
+                </div>
+              ) : (
+                group.fields.map((f) => renderFieldBlock(f))
+              )
+            )}
           </div>
           <div className="mt-[22px] flex justify-end gap-2.5">
             <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>

@@ -671,34 +671,32 @@ export function OverviewTab({
 
         return (
           <div className={S.cardTight}>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <button
-                type="button"
-                className="flex min-h-touch min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 border-none bg-transparent p-0 text-left"
-                onClick={togglePeopleOps}
-                aria-expanded={peopleOpsOpen}
-              >
-                <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
-                <span className="shrink-0 font-mono text-[11px] text-ink-muted">
-                  {peopleOpsOpen
-                    ? t(locale, 'panel.overview.peopleOpsCollapse')
-                    : t(locale, 'panel.overview.peopleOpsExpand')}
-                </span>
-              </button>
-              <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
                 <button
                   type="button"
-                  className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                  className={cn(S.cardLink, 'min-h-touch border-none bg-transparent px-0 hover:underline')}
                   onClick={() => go({ tab: 'team' })}
                 >
                   {t(locale, 'panel.overview.openTeam')}
                 </button>
                 <button
                   type="button"
-                  className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+                  className={cn(S.cardLink, 'min-h-touch border-none bg-transparent px-0 hover:underline')}
                   onClick={() => go({ tab: 'climate' })}
                 >
                   {t(locale, 'panel.overview.openClimate')}
+                </button>
+                <button
+                  type="button"
+                  onClick={togglePeopleOps}
+                  className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
+                  aria-expanded={peopleOpsOpen}
+                >
+                  {peopleOpsOpen
+                    ? t(locale, 'panel.overview.peopleOpsCollapse')
+                    : t(locale, 'panel.overview.peopleOpsExpand')}
                 </button>
               </div>
             </div>

@@ -85,8 +85,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
       fields: [
         { name: 'title', label: t('cycleTitle'), placeholder: t('cycleTitlePlaceholder'), required: true },
         { name: 'description', label: t('cycleDescription'), type: 'textarea', rows: 3 },
-        { name: 'periodStart', label: t('periodStart'), type: 'date' },
-        { name: 'periodEnd', label: t('periodEnd'), type: 'date' },
+        { name: 'periodStart', label: t('periodStart'), type: 'date', row: 'period' },
+        { name: 'periodEnd', label: t('periodEnd'), type: 'date', row: 'period' },
       ],
     });
     if (!result) return;
