@@ -240,7 +240,7 @@ export function DashboardTopBarMenus({
   };
 
   const dropdownClass =
-    'absolute right-0 top-[calc(100%+8px)] z-40 w-80 max-w-[min(320px,92vw)] overflow-hidden rounded-xl border border-ink/12 bg-white';
+    'absolute right-0 top-[calc(100%+8px)] z-40 w-80 max-w-[min(320px,92vw)] overflow-hidden rounded-xl border border-ink/12 bg-surface shadow-menu';
 
   return (
     <div ref={wrapRef} className="flex shrink-0 items-center gap-2">
@@ -258,7 +258,7 @@ export function DashboardTopBarMenus({
           aria-expanded={notifOpen}
           className={cn(
             'relative flex h-[42px] w-[42px] cursor-pointer items-center justify-center rounded-xl border border-ink/12 text-ink-muted',
-            notifOpen ? 'bg-brand-500/[0.07]' : 'bg-white/90'
+            notifOpen ? 'bg-brand-500/[0.07]' : 'bg-surface/90'
           )}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -330,7 +330,7 @@ export function DashboardTopBarMenus({
           type="button"
           className={cn(
             'db-profile-btn flex h-[42px] max-w-[200px] cursor-pointer items-center gap-2 rounded-xl border border-ink/12 px-3 font-mono text-xs text-ink-muted',
-            profileOpen ? 'bg-brand-500/[0.07]' : 'bg-white/90'
+            profileOpen ? 'bg-brand-500/[0.07]' : 'bg-surface/90'
           )}
           onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
           aria-expanded={profileOpen}

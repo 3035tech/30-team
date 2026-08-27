@@ -184,7 +184,7 @@ const { showHelp, setShowHelp } = useKeyboardShortcuts({
 **Features:**
 - Toggle suave com transição 200ms
 - Persistência em localStorage (`team30_dark_mode`)
-- Respeita `prefers-color-scheme` se sem preferência salva
+- Padrão: **light** (não segue o SO até o usuário escolher dark uma vez)
 - Cores adaptadas mantendo legibilidade
 - Type badges preservam vivacidade (filter brightness 1.1)
 - Scrollbars customizadas

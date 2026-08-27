@@ -636,7 +636,7 @@ export default function DashboardClient({
         <aside
           id="dashboard-sidebar"
           className={cn(
-            'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-white/88 backdrop-blur-[14px]',
+            'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface/88 backdrop-blur-[14px]',
             sidebarOpen && 'db-sidebar-open',
             navCollapsed && 'db-sidebar-collapsed',
             navCollapsed ? 'w-[72px] px-2.5 pb-6 pt-5' : 'w-[226px] pb-8 pl-[18px] pr-3.5 pt-6'

@@ -1,326 +1,257 @@
 /**
- * Dark Mode Styles
- * UX/UX Melhoria #9 — Modo escuro completo
+ * Dark mode — CSS variables drive Tailwind tokens (canvas / ink / surface).
+ * Class `dark` on <html> (see DarkModeProvider). Default preference: light.
  */
 
-/* =================================================================
-   DARK MODE COLORS — Baseado no tailwind.config.js
-   ================================================================= */
-
-.dark {
-  /* Canvas & Ink */
-  --color-canvas: #1a1a1a;
-  --color-ink: #e5e5e5;
-  --color-ink-muted: #a3a3a3;
-  --color-ink-faint: #737373;
-  --color-ink-label: #8b8b8b;
-
-  /* Brand (mantém tom roxo mas ajusta brilho) */
-  --color-brand-50: #1a0d2e;
-  --color-brand-100: #2d1653;
-  --color-brand-500: #9f7aea;
-  --color-brand-600: #805ad5;
-  --color-brand-700: #6b46c1;
-
-  /* Semantic */
-  --color-success: #48bb78;
-  --color-danger: #f56565;
-  --color-warning: #ed8936;
-  --color-info: #4299e1;
-
-  /* Gray scale */
-  --color-gray-50: #262626;
-  --color-gray-100: #2d2d2d;
-  --color-gray-200: #3d3d3d;
-  --color-gray-300: #525252;
-  --color-gray-400: #737373;
-  --color-gray-500: #a3a3a3;
-  --color-gray-600: #d4d4d4;
-  --color-gray-700: #e5e5e5;
-  --color-gray-800: #f5f5f5;
-  --color-gray-900: #fafafa;
+:root {
+  --canvas: 245 244 247;
+  --surface: 255 255 255;
+  --ink: 26 22 37;
+  --brand-50: 250 245 255;
+  --brand-100: 243 232 255;
+  --brand-200: 233 213 255;
+  --brand-300: 199 154 219;
+  --brand-400: 173 93 205;
+  --brand-500: 137 48 184;
+  --brand-600: 118 51 155;
+  --brand-700: 80 37 116;
+  --brand-800: 59 7 100;
+  --brand-900: 46 10 74;
+  --success: 21 128 61;
+  --danger: 220 38 38;
+  --warning: 217 119 6;
+  --info: 2 132 199;
+  --soft: 100 116 139;
+  color-scheme: light;
 }
 
-/* =================================================================
-   GLOBAL DARK MODE OVERRIDES
-   ================================================================= */
-
 .dark {
+  --canvas: 18 16 22;
+  --surface: 30 28 38;
+  --ink: 242 239 247;
+  --brand-50: 36 22 52;
+  --brand-100: 48 28 72;
+  --brand-200: 72 40 110;
+  --brand-300: 160 110 200;
+  --brand-400: 180 120 220;
+  --brand-500: 173 110 220;
+  --brand-600: 190 130 230;
+  --brand-700: 210 160 240;
+  --brand-800: 230 200 250;
+  --brand-900: 245 235 255;
+  --success: 74 222 128;
+  --danger: 248 113 113;
+  --warning: 251 191 36;
+  --info: 56 189 248;
+  --soft: 148 163 184;
   color-scheme: dark;
-  background-color: var(--color-canvas);
-  color: var(--color-ink);
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink) / 0.92);
 }
 
 .dark body {
-  background-color: var(--color-canvas);
-  color: var(--color-ink);
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink) / 0.92);
 }
 
-/* =================================================================
-   COMPONENTS — Dark mode adaptations
-   ================================================================= */
-
-/* Cards */
+/* Legacy utility classes still used in a few places */
 .dark .bg-white {
-  background-color: #262626;
+  background-color: rgb(var(--surface));
+}
+
+.dark .bg-white\/90 {
+  background-color: rgb(var(--surface) / 0.92);
 }
 
 .dark .border-gray-200 {
-  border-color: #3d3d3d;
+  border-color: rgb(var(--ink) / 0.14);
 }
 
 .dark .border-gray-300 {
-  border-color: #525252;
+  border-color: rgb(var(--ink) / 0.22);
 }
 
-/* Text colors */
-.dark .text-gray-900 {
-  color: #fafafa;
-}
-
-.dark .text-gray-800 {
-  color: #f5f5f5;
-}
-
+.dark .text-gray-900,
+.dark .text-gray-800,
 .dark .text-gray-700 {
-  color: #e5e5e5;
+  color: rgb(var(--ink) / 0.95);
 }
 
-.dark .text-gray-600 {
-  color: #d4d4d4;
-}
-
+.dark .text-gray-600,
 .dark .text-gray-500 {
-  color: #a3a3a3;
+  color: rgb(var(--ink) / 0.72);
 }
 
 .dark .text-gray-400 {
-  color: #737373;
+  color: rgb(var(--ink) / 0.48);
 }
 
-/* Backgrounds */
-.dark .bg-gray-50 {
-  background-color: #262626;
-}
-
+.dark .bg-gray-50,
 .dark .bg-gray-100 {
-  background-color: #2d2d2d;
+  background-color: rgb(var(--ink) / 0.06);
 }
 
 .dark .bg-gray-200 {
-  background-color: #3d3d3d;
+  background-color: rgb(var(--ink) / 0.1);
 }
 
-/* Inputs */
-.dark input[type="text"],
-.dark input[type="email"],
-.dark input[type="password"],
-.dark input[type="tel"],
-.dark input[type="number"],
-.dark input[type="date"],
-.dark input[type="time"],
-.dark input[type="search"],
+.dark input[type='text'],
+.dark input[type='email'],
+.dark input[type='password'],
+.dark input[type='tel'],
+.dark input[type='number'],
+.dark input[type='date'],
+.dark input[type='time'],
+.dark input[type='search'],
 .dark textarea,
 .dark select {
-  background-color: #2d2d2d;
-  border-color: #3d3d3d;
-  color: #e5e5e5;
+  background-color: rgb(var(--ink) / 0.06);
+  border-color: rgb(var(--ink) / 0.14);
+  color: rgb(var(--ink) / 0.95);
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #737373;
+  color: rgb(var(--ink) / 0.42);
 }
 
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
-  border-color: #9f7aea;
-  ring-color: rgba(159, 122, 234, 0.3);
+  border-color: rgb(var(--brand-500) / 0.7);
 }
 
-/* Buttons */
-.dark button:not(.bg-purple-600):not(.bg-red-600):not(.bg-green-600):not(.bg-yellow-600) {
-  background-color: #2d2d2d;
-  border-color: #3d3d3d;
-  color: #e5e5e5;
-}
-
-.dark button:not(.bg-purple-600):not(.bg-red-600):not(.bg-green-600):not(.bg-yellow-600):hover {
-  background-color: #3d3d3d;
-}
-
-/* Modals & Overlays */
-.dark [role="dialog"],
+.dark [role='dialog'],
 .dark .modal-content {
-  background-color: #1f1f1f;
-  border-color: #3d3d3d;
+  background-color: rgb(var(--surface));
+  border-color: rgb(var(--ink) / 0.14);
 }
 
-/* Shadows */
 .dark .shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.45);
 }
 
-.dark .shadow {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
-}
-
+.dark .shadow,
 .dark .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.45);
 }
 
-.dark .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-card,
+.dark .shadow-dialog,
+.dark .shadow-menu,
+.dark .shadow-toast {
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.55);
 }
 
-.dark .shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-}
-
-.dark .shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-}
-
-/* Tables */
 .dark table {
-  border-color: #3d3d3d;
+  border-color: rgb(var(--ink) / 0.12);
 }
 
 .dark thead {
-  background-color: #262626;
-  border-color: #3d3d3d;
+  background-color: rgb(var(--ink) / 0.06);
+  border-color: rgb(var(--ink) / 0.12);
 }
 
 .dark tbody tr {
-  border-color: #2d2d2d;
+  border-color: rgb(var(--ink) / 0.08);
 }
 
 .dark tbody tr:hover {
-  background-color: #2d2d2d;
+  background-color: rgb(var(--ink) / 0.05);
 }
 
-/* Kanban / Cards */
 .dark .kanban-column {
-  background-color: #262626;
+  background-color: rgb(var(--ink) / 0.05);
 }
 
 .dark .kanban-card {
-  background-color: #2d2d2d;
-  border-color: #3d3d3d;
+  background-color: rgb(var(--surface));
+  border-color: rgb(var(--ink) / 0.14);
 }
 
-.dark .kanban-card:hover {
-  background-color: #333333;
-}
-
-/* Sidebar */
-.dark .db-sidebar {
-  background-color: #1a1a1a;
-  border-color: #2d2d2d;
-}
-
-/* Top bar */
+.dark .db-sidebar,
 .dark .db-topbar {
-  background-color: #1a1a1a;
-  border-color: #2d2d2d;
+  background-color: rgb(var(--canvas));
+  border-color: rgb(var(--ink) / 0.12);
 }
 
-/* Dropdown menus */
-.dark .dropdown-menu {
-  background-color: #262626;
-  border-color: #3d3d3d;
+.dark .dropdown-menu,
+.dark .db-dropdown-panel {
+  background-color: rgb(var(--surface));
+  border-color: rgb(var(--ink) / 0.14);
 }
 
-/* Tooltips */
-.dark [role="tooltip"] {
-  background-color: #2d2d2d;
-  color: #e5e5e5;
-}
-
-/* Toast notifications */
+.dark [role='tooltip'],
 .dark .toast {
-  background-color: #2d2d2d;
-  border-color: #3d3d3d;
+  background-color: rgb(var(--surface));
+  color: rgb(var(--ink) / 0.92);
+  border-color: rgb(var(--ink) / 0.14);
 }
 
-/* Code blocks */
 .dark code {
-  background-color: #2d2d2d;
-  color: #a3a3a3;
+  background-color: rgb(var(--ink) / 0.08);
+  color: rgb(var(--ink) / 0.8);
 }
 
 .dark pre {
-  background-color: #1f1f1f;
-  border-color: #3d3d3d;
+  background-color: rgb(var(--canvas));
+  border-color: rgb(var(--ink) / 0.14);
 }
 
-/* Dividers */
 .dark hr,
 .dark .divider {
-  border-color: #3d3d3d;
-}
-
-/* Scrollbars (webkit) */
-.dark ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  border-color: rgb(var(--ink) / 0.12);
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: rgb(var(--canvas));
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #3d3d3d;
+  background: rgb(var(--ink) / 0.22);
   border-radius: 6px;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #525252;
+  background: rgb(var(--ink) / 0.35);
 }
 
-/* Selection */
 .dark ::selection {
-  background-color: #9f7aea;
-  color: #ffffff;
+  background-color: rgb(var(--brand-500) / 0.45);
+  color: #fff;
 }
 
-/* Focus rings */
 .dark *:focus-visible {
-  outline-color: #9f7aea;
+  outline-color: rgb(var(--brand-500));
 }
 
-/* =================================================================
-   TYPE BADGES & COLORS — Preserve vibrancy in dark mode
-   ================================================================= */
-
-.dark .type-badge {
-  /* Keep type colors vivid */
-  filter: brightness(1.1);
-}
-
-/* =================================================================
-   CHARTS & DATA VIZ — Adjust for readability
-   ================================================================= */
-
+/* Charts: labels must stay readable on dark surfaces */
 .dark svg text {
-  fill: #a3a3a3;
+  fill: rgb(var(--ink) / 0.72);
 }
 
 .dark .chart-grid {
-  stroke: #3d3d3d;
+  stroke: rgb(var(--ink) / 0.14);
 }
 
-/* =================================================================
-   TRANSITIONS — Smooth theme switching
-   ================================================================= */
-
-* {
-  transition: background-color 200ms ease-in-out, border-color 200ms ease-in-out, color 200ms ease-in-out;
+/* Bump secondary text contrast on dark surfaces (TW opacities tuned for light) */
+.dark .text-ink-muted {
+  color: rgb(var(--ink) / 0.72);
 }
 
-/* Disable transitions during initial load to prevent flash */
-.dark-mode-loading * {
-  transition: none !important;
+.dark .text-ink-faint {
+  color: rgb(var(--ink) / 0.52);
+}
+
+.dark .text-ink-label {
+  color: rgb(var(--ink) / 0.45);
+}
+
+/* Inline C.* from theme.js (hex light tokens) — remap common text when dark */
+.dark [style*='color: rgb(26, 22, 37)'],
+.dark [style*='color:#1a1625'],
+.dark [style*='color: #1a1625'] {
+  color: rgb(var(--ink) / 0.92) !important;
 }

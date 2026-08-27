@@ -1,47 +1,50 @@
 /** @type {import('tailwindcss').Config} */
 /**
  * Tailwind theme aligned to lib/theme.js + lib/brand.js.
- * Prefer these tokens over arbitrary hex. Brand purple ≠ pipeline/status.
+ * Canvas / ink / brand / semantic colors use CSS vars so `.dark` on <html> remaps them
+ * (see app/dark-mode.css). Brand purple ≠ pipeline/status.
  */
 module.exports = {
+  darkMode: 'class',
   content: ['./app/**/*.{js,jsx}', './lib/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        canvas: '#F5F4F7',
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
         ink: {
-          DEFAULT: '#1a1625',
-          muted: 'rgba(26,22,37,0.62)',
-          faint: 'rgba(26,22,37,0.38)',
-          label: 'rgba(26,22,37,0.28)',
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
+          muted: 'rgb(var(--ink) / 0.62)',
+          faint: 'rgb(var(--ink) / 0.38)',
+          label: 'rgb(var(--ink) / 0.28)',
         },
         brand: {
-          50: '#FAF5FF',
-          100: '#F3E8FF',
-          200: '#E9D5FF',
-          300: '#C79ADB',
-          400: '#AD5DCD',
-          500: '#8930B8',
-          600: '#76339B',
-          700: '#502574',
-          800: '#3B0764',
-          900: '#2E0A4A',
-          DEFAULT: '#8930B8',
+          50: 'rgb(var(--brand-50) / <alpha-value>)',
+          100: 'rgb(var(--brand-100) / <alpha-value>)',
+          200: 'rgb(var(--brand-200) / <alpha-value>)',
+          300: 'rgb(var(--brand-300) / <alpha-value>)',
+          400: 'rgb(var(--brand-400) / <alpha-value>)',
+          500: 'rgb(var(--brand-500) / <alpha-value>)',
+          600: 'rgb(var(--brand-600) / <alpha-value>)',
+          700: 'rgb(var(--brand-700) / <alpha-value>)',
+          800: 'rgb(var(--brand-800) / <alpha-value>)',
+          900: 'rgb(var(--brand-900) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--brand-500) / <alpha-value>)',
         },
-        success: '#15803d',
-        danger: '#dc2626',
-        warning: '#d97706',
-        info: '#0284c7',
-        soft: '#64748B',
+        success: 'rgb(var(--success) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
+        warning: 'rgb(var(--warning) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
+        soft: 'rgb(var(--soft) / <alpha-value>)',
         pipeline: {
-          new: 'rgba(26,22,37,0.5)',
+          new: 'rgb(var(--ink) / 0.5)',
           test: '#6366F1',
-          screening: '#0284c7',
-          interview: '#d97706',
-          approved: '#15803d',
+          screening: 'rgb(var(--info) / <alpha-value>)',
+          interview: 'rgb(var(--warning) / <alpha-value>)',
+          approved: 'rgb(var(--success) / <alpha-value>)',
           hired: '#0f766e',
-          rejected: '#dc2626',
-          archived: 'rgba(26,22,37,0.3)',
+          rejected: 'rgb(var(--danger) / <alpha-value>)',
+          archived: 'rgb(var(--ink) / 0.3)',
         },
       },
       fontFamily: {

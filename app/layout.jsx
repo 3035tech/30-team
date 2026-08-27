@@ -34,8 +34,14 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#8930B8" />
+        {/* Apply saved theme before paint — default remains light */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('team30_dark_mode')==='true')document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
       </head>
-      <body className="m-0 p-0 bg-white">
+      <body className="m-0 bg-canvas p-0 text-ink">
         <DarkModeProvider>
           {children}
         </DarkModeProvider>

@@ -10,8 +10,8 @@ import { cn } from '../../lib/cn';
 const S = {
   label:
     'mb-3 block font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label',
-  card: 'rounded-card border border-ink/12 bg-white p-7 backdrop-blur-[16px]',
-  cardTight: 'rounded-card border border-ink/12 bg-white p-5',
+  card: 'rounded-card border border-ink/12 bg-surface p-7 backdrop-blur-[16px]',
+  cardTight: 'rounded-card border border-ink/12 bg-surface p-5',
   select:
     'cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-[9px] font-ui text-[13px] text-ink-muted',
   input:
