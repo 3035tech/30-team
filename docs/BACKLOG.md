@@ -169,9 +169,11 @@ Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta
 
 ---
 
-## Aberto — Epic B-1100 (Analytics avançado)
+## Aberto — Epic B-1100 (Analytics avançado) — 71% COMPLETO
 
 Transformar dados comportamentais em **inteligência acionável** para decisões estratégicas de RH. Foco: métricas de efetividade, tendências, comparativos e alertas proativos.
+
+**Progresso:** 5/7 features entregues (71%)
 
 **Princípios:**
 - Reusar dados já coletados (T1–T9, Motivadores, PDI, clima, turnover)
@@ -181,19 +183,11 @@ Transformar dados comportamentais em **inteligência acionável** para decisões
 
 **Fora deste Epic:** BI genérico (Metabase/Looker embed), data lake, ML custom, dashboards 100% customizáveis pelo usuário final.
 
-### Ordem de entrega
+### B-1101 — Métricas de efetividade (hiring ROI) ✅ ENTREGUE
 
-1. **B-1101 — Métricas de efetividade (hiring ROI)**
-2. **B-1102 — Tendências temporais (time series)**
-3. **B-1103 — Comparativos (área, período, rubrica)**
-4. **B-1104 — Alertas e anomalias**
-5. **B-1105 — Export estruturado (JSON/Excel)**
-6. **B-1106 — API de métricas (externas/integrações)**
-7. **B-1107 — Relatórios agendados (email/PDF)**
+_(lib/analytics-metrics.js + API /api/admin/analytics/metrics + AnalyticsTab UI)_ 
 
-### B-1101 — Métricas de efetividade (hiring ROI)
-
-**O quê:** Dashboard com métricas de **impacto real** do processo seletivo:
+Dashboard com métricas de **impacto real** do processo seletivo:
 - **Time-to-hire** (dias: vaga aberta → contratação)
 - **Time-to-productivity** (dias até HR Score > 60 ou primeira review positiva)
 - **Custo-por-contratação** (opcional: campo manual)
@@ -216,9 +210,11 @@ Transformar dados comportamentais em **inteligência acionável** para decisões
 - `assessments` + rubrica da vaga
 - `vacancy_links` (funil)
 
-### B-1102 — Tendências temporais (time series)
+### B-1102 — Tendências temporais (time series) ✅ ENTREGUE
 
-**O quê:** Gráficos de **evolução ao longo do tempo**:
+_(lib/analytics-trends.js + API /api/admin/analytics/trends + UI com toggle Tendências)_
+
+Gráficos de **evolução ao longo do tempo** (últimos 6/12/24 meses):
 - HR Score médio do time (mensal)
 - Turnover risk (% alto risco, mensal)
 - Clima médio (mensal)
@@ -233,9 +229,11 @@ Transformar dados comportamentais em **inteligência acionável** para decisões
 - Filtro por área/grupo
 - Export PNG/CSV
 
-### B-1103 — Comparativos (área, período, rubrica)
+### B-1103 — Comparativos (área, período, rubrica) ✅ ENTREGUE
 
-**O quê:** **Comparar** métricas entre segmentos:
+_(lib/analytics-comparisons.js + API /api/admin/analytics/compare + UI com toggle Comparar)_
+
+**Comparar** métricas entre segmentos side-by-side:
 - Área A vs Área B (clima, HR Score, turnover)
 - Período A vs Período B (antes/depois de ação)
 - Rubrica A vs Rubrica B (fit médio, retenção)
@@ -249,9 +247,11 @@ Transformar dados comportamentais em **inteligência acionável** para decisões
 - Testes de significância (opcional: t-test se N > 30)
 - Export
 
-### B-1104 — Alertas e anomalias
+### B-1104 — Alertas e anomalias ✅ ENTREGUE
 
-**O quê:** **Detecção proativa** de padrões anormais:
+_(lib/analytics-alerts.js + API /api/admin/analytics/alerts)_
+
+**Detecção proativa** de padrões anormais com thresholds configuráveis:
 - Clima caiu > 15% em 1 mês (área/empresa)
 - Turnover risk subiu > 20% em 1 trimestre
 - Time-to-hire > 90 dias (vaga específica)
@@ -267,9 +267,11 @@ Transformar dados comportamentais em **inteligência acionável** para decisões
 
 **Reuso:** `manager_notifications` (já existe), novo tipo `ANALYTICS_ALERT`
 
-### B-1105 — Export estruturado (JSON/Excel)
+### B-1105 — Export estruturado (JSON/Excel) ✅ ENTREGUE
 
-**O quê:** Export **rico** além do CSV básico:
+_(lib/analytics-export.js + API /api/admin/analytics/export)_
+
+Export **rico** além do CSV básico:
 - JSON (API-friendly, estruturado)
 - Excel com múltiplas abas (overview, detalhes, gráficos)
 - Filtros aplicados no export (não dump completo)
