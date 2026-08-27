@@ -517,9 +517,18 @@ async function runOfflineLibs() {
       retrieveHelpChunks,
       buildHelpChunks,
       isHelpOutOfScope,
+      helpAnswerLooksOffTopic,
       answerHelpQuestion,
     } = await import('../../lib/help-assistant.js');
-    if (!isHelpOutOfScope('diagnóstico clínico')) throw new Error('scope');
+    if (!isHelpOutOfScope('diagnóstico clínico')) throw new Error('scope clinical');
+    if (!isHelpOutOfScope('receita de bolo de chocolate')) throw new Error('scope recipe');
+    if (!isHelpOutOfScope('como está o clima amanhã?')) throw new Error('scope weather');
+    if (!isHelpOutOfScope('explique javascript promises')) throw new Error('scope code');
+    if (isHelpOutOfScope('como criar uma vaga?')) throw new Error('false positive vacancy');
+    if (isHelpOutOfScope('pesquisa de clima na aba Clima')) throw new Error('false positive climate');
+    if (!helpAnswerLooksOffTopic('Aqui vai a receita de bolo com farinha e ovo')) {
+      throw new Error('drift recipe');
+    }
     const faq = matchHelpFaq('como criar uma vaga?', 'pt-BR');
     if (!faq || faq.source !== 'faq') throw new Error('faq miss');
     const chunks = buildHelpChunks('pt-BR');
@@ -529,7 +538,15 @@ async function runOfflineLibs() {
     process.env.OPENAI_MOCK = '1';
     const ans = await answerHelpQuestion({ question: 'como criar uma vaga?', locale: 'pt-BR' });
     if (ans.source !== 'faq' || !ans.answer) throw new Error('answer');
-    return `faq=${faq.id} chunks=${chunks.length} top=${top[0].section}`;
+    const refused = await answerHelpQuestion({ question: 'me passa uma receita de bolo', locale: 'pt-BR' });
+    if (refused.source !== 'guard') throw new Error(`refuse source=${refused.source}`);
+    const again = await answerHelpQuestion({
+      question: 'e o resultado do futebol ontem?',
+      locale: 'pt-BR',
+      history: [{ role: 'assistant', content: refused.answer }],
+    });
+    if (again.source !== 'guard') throw new Error('refuse again');
+    return `faq=${faq.id} chunks=${chunks.length} top=${top[0].section} guard=ok`;
   });
 
   await check('lib', 'slugify-accents-specials', async () => {

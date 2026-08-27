@@ -316,6 +316,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
 | SEO / vagas públicas | `docs/job-seo-and-distribution.md`, `app/jobs`, `lib/job-indexing.js`, Guia `panel.help.publicVacancy*` |
 | Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js` |
+| Assistente de Ajuda (só produto) | `lib/help-assistant.js`, `HelpAssistantWidget`, `POST /api/admin/help-chat` |
 | Backlog de ideias | `docs/BACKLOG.md` — adicionar ao pedir; remover ao implementar |
 
 ## Referências

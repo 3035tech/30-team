@@ -340,19 +340,7 @@ _(entregue — B-1201–B-1204: Overview attention ← PDI/clima/sucessão/onboa
 
 ## Aberto — Assistente de Ajuda (escopo estrito)
 
-### B-1301 — IA da Ajuda só responde produto / plataforma
-**Onde:** botão flutuante de Ajuda no painel (`HelpAssistantWidget` → `POST /api/admin/help-chat` → `lib/help-assistant.js`).
-
-**Comportamento desejado:**
-- Responder **apenas** perguntas sobre o 30Team: navegar o painel, abas, fluxos (vagas, Equipe, PDI, clima, etc.), Guia, links públicos do produto (`/t`, `/v`, `/jobs`, …).
-- Qualquer assunto fora do escopo (clima climático, receita de bolo, política, código genérico, RH/folha fora do produto, diagnóstico clínico, etc.): **recusar com educação**, em 1–2 frases, sem responder o conteúdo pedido.
-- **Não** seguir a conversa fora de escopo: não fazer follow-up, não “ajudar um pouco”, não evoluir o tema. Pode convidar a perguntar algo sobre o painel / abrir a aba Ajuda.
-- Preferir gate **antes** do LLM (classificador leve / regex+FAQ / “off-topic”) + reforço no system prompt; se o modelo ainda sair do escopo, truncar/substituir por recusa padrão i18n (`panel.helpAssist.offTopic*`).
-- pt-BR **e** en; reusar `answerHelpQuestion`, rate limit e retrieval existentes — não inventar segundo chatbot.
-
-**Fora:** IA de rubrica/descrição de vaga (`assist-ai`) — escopo próprio; este item é só o assistente de Ajuda.
-
-**Critério de pronto:** pergunta in-scope → resposta útil com Guia; pergunta off-topic → recusa educada sem conteúdo fora; segunda mensagem off-topic na mesma thread → mesma postura (não “entrar no jogo”).
+_(entregue — B-1301: gate pré-FAQ/LLM + recusa i18n `offTopic`/`offTopicAgain`; pós-LLM `helpAnswerLooksOffTopic`; system prompt reforçado; tip Guia `tipsStep12`.)_
 
 ---
 
