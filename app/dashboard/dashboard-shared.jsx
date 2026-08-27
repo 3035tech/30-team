@@ -2,6 +2,7 @@
 
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
+import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
@@ -156,7 +157,106 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
 
 function clientSortNextDir(column, previousKey, previousDir) {
   if (previousKey === column) return previousDir === 'asc' ? 'desc' : 'asc';
-  return column === 'createdAt' ? 'desc' : 'asc';
+  return column === 'createdAt' || column === 'sentAt' || column === 'completedAt' || column === 'expiresAt'
+    ? 'desc'
+    : 'asc';
+}
+
+const PAGER_BTN =
+  'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
+
+/**
+ * Canonical list footer: count + page size + prev/next.
+ * Pair with SortableTh headers on admin/table listagens.
+ *
+ * @param {{
+ *   locale?: string,
+ *   page: number,
+ *   pageSize: number,
+ *   total: number,
+ *   loading?: boolean,
+ *   onPageChange: (page: number) => void,
+ *   onPageSizeChange: (pageSize: number) => void,
+ *   countLabel?: string,
+ *   className?: string,
+ *   pageSizeOptions?: number[],
+ * }} props
+ */
+function AdminListPager({
+  locale = 'pt-BR',
+  page,
+  pageSize,
+  total,
+  loading = false,
+  onPageChange,
+  onPageSizeChange,
+  countLabel,
+  className,
+  pageSizeOptions = PAGE_SIZE_OPTIONS,
+}) {
+  const totalPages = Math.max(1, Math.ceil(Number(total || 0) / Math.max(1, Number(pageSize) || 20)));
+  const safePage = Math.min(Math.max(1, Number(page) || 1), totalPages);
+  if (!total || total <= 0) return null;
+
+  const label =
+    countLabel ||
+    t(locale, 'panel.common.listCount', {
+      total,
+      page: safePage,
+      totalPages,
+    });
+
+  return (
+    <div
+      className={cn(
+        'mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3',
+        className
+      )}
+    >
+      <span className="font-mono text-[11px] text-ink-muted">{label}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={String(pageSize)}
+          onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
+          disabled={loading}
+          className={S.selectCompact}
+          aria-label={t(locale, 'panel.common.pageSize')}
+        >
+          {pageSizeOptions.map((n) => (
+            <option key={n} value={String(n)}>
+              {t(locale, 'panel.compat.perPageShort', { n })}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          disabled={loading || safePage <= 1}
+          onClick={() => onPageChange?.(Math.max(1, safePage - 1))}
+          className={cn(
+            PAGER_BTN,
+            safePage <= 1
+              ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+              : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+          )}
+        >
+          {t(locale, 'panel.admin.prev')}
+        </button>
+        <button
+          type="button"
+          disabled={loading || safePage >= totalPages}
+          onClick={() => onPageChange?.(Math.min(totalPages, safePage + 1))}
+          className={cn(
+            PAGER_BTN,
+            safePage >= totalPages
+              ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+              : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+          )}
+        >
+          {t(locale, 'panel.admin.next')}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 const CompatBadge = ({ level, locale = 'pt-BR' }) => {
@@ -338,6 +438,7 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
 }
 
 export {
+  AdminListPager,
   Bar,
   CompatBadge,
   DashboardBreadcrumb,

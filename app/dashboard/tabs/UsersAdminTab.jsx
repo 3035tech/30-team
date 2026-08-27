@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
-import { PAGE_SIZE_OPTIONS, parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
+import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
-import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
+import { clientSortNextDir, S, SortableTh, AdminListPager } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 
@@ -16,8 +16,6 @@ const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
 const BTN_ROW =
   'min-h-touch rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
-const BTN_PAGER =
-  'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
 
 function moduleOptions(locale) {
   return ASSIGNABLE_MODULE_CAPS.map((cap) => ({
@@ -543,56 +541,22 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
               </tbody>
             </table>
             {navigateDashboard && usersTotal > 0 ? (
-              <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3">
-                <span className="font-mono text-[11px] text-ink-muted">
-                  {t(locale, 'panel.admin.userCount', {
-                    total: usersTotal,
-                    page: usersPage,
-                    totalPages: usersTotalPages,
-                  })}
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={String(usersPageSize)}
-                    onChange={(e) => {
-                      const ps = parseInt(e.target.value, 10);
-                      navigateDashboard({ usersPage: 1, usersPageSize: ps, tab: 'users' });
-                    }}
-                    disabled={loading}
-                    className={S.selectCompact}
-                  >
-                    {PAGE_SIZE_OPTIONS.map((n) => (
-                      <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={loading || usersPage <= 1}
-                    onClick={() => navigateDashboard({ usersPage: Math.max(1, usersPage - 1), tab: 'users' })}
-                    className={cn(
-                      BTN_PAGER,
-                      usersPage <= 1
-                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                    )}
-                  >
-                    {t(locale, 'panel.admin.prev')}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading || usersPage >= usersTotalPages}
-                    onClick={() => navigateDashboard({ usersPage: Math.min(usersTotalPages, usersPage + 1), tab: 'users' })}
-                    className={cn(
-                      BTN_PAGER,
-                      usersPage >= usersTotalPages
-                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                    )}
-                  >
-                    {t(locale, 'panel.admin.next')}
-                  </button>
-                </div>
-              </div>
+              <AdminListPager
+                locale={locale}
+                page={usersPage}
+                pageSize={usersPageSize}
+                total={usersTotal}
+                loading={loading}
+                countLabel={t(locale, 'panel.admin.userCount', {
+                  total: usersTotal,
+                  page: usersPage,
+                  totalPages: usersTotalPages,
+                })}
+                onPageChange={(p) => navigateDashboard({ usersPage: p, tab: 'users' })}
+                onPageSizeChange={(ps) =>
+                  navigateDashboard({ usersPage: 1, usersPageSize: ps, tab: 'users' })
+                }
+              />
             ) : null}
           </div>
         )}

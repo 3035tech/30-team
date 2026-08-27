@@ -13,6 +13,9 @@ const iconActionClass =
  * Shareable URL for managers: clickable link + icon actions (copy / open).
  * Labels stay in aria-label + title; toast via AppFeedback when present.
  *
+ * When `showUrl` is false and `label` is set, the label itself opens the URL
+ * (compact list rows — no long URL wrapping).
+ *
  * @param {{
  *   url: string,
  *   locale?: string,
@@ -44,6 +47,7 @@ export function CopyableLink({
   const copyText = copyLabel || t(locale, 'panel.common.copyLink');
   const openText = openLabel || t(locale, 'panel.common.openLink');
   const hit = compact ? 'min-h-9 min-w-9' : 'min-h-touch min-w-touch';
+  const labelAsLink = Boolean(label) && !showUrl && openable;
 
   const onCopy = async () => {
     if (!canUse) return;
@@ -57,11 +61,34 @@ export function CopyableLink({
     }
   };
 
+  const labelClass = 'font-mono text-[11px] tracking-[0.02em]';
+
   return (
-    <div className={cn('flex min-w-0 flex-col gap-1', className)}>
-      {label ? (
-        <span className="font-mono text-[11px] tracking-[0.02em] text-ink-faint">{label}</span>
+    <div
+      className={cn(
+        'flex min-w-0',
+        labelAsLink ? 'flex-row flex-wrap items-center gap-1.5' : 'flex-col gap-1',
+        className
+      )}
+    >
+      {label && labelAsLink ? (
+        canUse ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(labelClass, 'text-brand-500 underline underline-offset-2')}
+            title={openText}
+          >
+            {label}
+          </a>
+        ) : (
+          <span className={cn(labelClass, 'text-ink-faint')}>{label}</span>
+        )
+      ) : label ? (
+        <span className={cn(labelClass, 'text-ink-faint')}>{label}</span>
       ) : null}
+
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {showUrl ? (
           canUse && openable ? (
@@ -99,7 +126,7 @@ export function CopyableLink({
         >
           <Icon name="copy" />
         </button>
-        {openable && !showUrl && canUse ? (
+        {openable && !showUrl && !labelAsLink && canUse ? (
           <a
             href={href}
             target="_blank"

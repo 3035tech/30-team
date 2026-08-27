@@ -1,15 +1,32 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { Icon } from '../../_components/Icon';
+import { RichTextView } from '../../_components/RichTextView';
+import {
+  dialogBtnGhostClass,
+  dialogBtnPrimaryClass,
+  dialogCardClass,
+  dialogOverlayClass,
+} from '../../_components/app-dialog-styles';
 import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
-import { S } from '../dashboard-shared';
+import { formatDisplayDate, toDateOnlyIso } from '../../../lib/format-display-date.js';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { cn } from '../../../lib/cn';
+import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
 
 export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { promptForm, toast } = useAppFeedback();
+  const [viewRecord, setViewRecord] = useState(null);
+  const { promptForm, toast, confirm } = useAppFeedback();
+
+  /** Tab already gated by USERS_MANAGE; allow write for hr/direction too. */
+  const canWrite = Boolean(isAdmin) || Boolean(companyId);
 
   function t(key) {
     const messages = {
@@ -23,6 +40,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Colaborador',
         exitType: 'Tipo',
         exitReason: 'Motivo',
+        actions: 'Ações',
+        view: 'Ver',
+        edit: 'Editar',
+        delete: 'Excluir',
+        close: 'Fechar',
+        viewTitle: 'Detalhe da saída',
+        notes: 'Notas',
+        noNotes: 'Sem notas neste registro.',
+        email: 'E-mail',
         voluntary: 'Voluntária',
         involuntary: 'Involuntária',
         mutual: 'Acordo mútuo',
@@ -43,6 +69,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         lack_of_challenge: 'Falta de desafio',
         other: 'Outro',
         formTitle: 'Registrar Saída',
+        formEditTitle: 'Editar saída',
         formCandidate: 'Colaborador',
         formCandidatePh: 'Buscar por nome…',
         formCandidateHelp: 'Digite o nome e selecione na lista. O ID é gravado automaticamente.',
@@ -51,9 +78,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         formExitReason: 'Motivo principal',
         formNotes: 'Notas (contexto, feedback)',
         registered: 'Saída registrada',
+        updated: 'Registro atualizado',
+        deleted: 'Registro excluído',
         loadError: 'Erro ao carregar saídas',
         saveError: 'Erro ao registrar saída',
+        updateError: 'Erro ao atualizar saída',
+        deleteError: 'Erro ao excluir saída',
         pickEmployee: 'Selecione um colaborador na busca.',
+        confirmDelete:
+          'Excluir este registro de saída? O colaborador volta ao status ativo se ainda estiver como alumni. Esta ação não desfaz o histórico de insights já agregados em outras telas até o próximo refresh.',
       },
       en: {
         title: 'Exit Analysis',
@@ -65,6 +98,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Employee',
         exitType: 'Type',
         exitReason: 'Reason',
+        actions: 'Actions',
+        view: 'View',
+        edit: 'Edit',
+        delete: 'Delete',
+        close: 'Close',
+        viewTitle: 'Exit details',
+        notes: 'Notes',
+        noNotes: 'No notes on this record.',
+        email: 'Email',
         voluntary: 'Voluntary',
         involuntary: 'Involuntary',
         mutual: 'Mutual agreement',
@@ -85,6 +127,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         lack_of_challenge: 'Lack of challenge',
         other: 'Other',
         formTitle: 'Register Exit',
+        formEditTitle: 'Edit exit',
         formCandidate: 'Employee',
         formCandidatePh: 'Search by name…',
         formCandidateHelp: 'Type a name and pick from the list. The ID is saved automatically.',
@@ -93,9 +136,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         formExitReason: 'Main reason',
         formNotes: 'Notes (context, feedback)',
         registered: 'Exit recorded',
+        updated: 'Record updated',
+        deleted: 'Record deleted',
         loadError: 'Failed to load exits',
         saveError: 'Failed to record exit',
+        updateError: 'Failed to update exit',
+        deleteError: 'Failed to delete exit',
         pickEmployee: 'Select an employee from search.',
+        confirmDelete:
+          'Delete this exit record? The employee returns to active status if still alumni. Aggregated insights on other screens refresh on the next load.',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -206,11 +255,123 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
     }
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr + 'T00:00:00Z');
-    return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR');
+  async function handleEdit(rec) {
+    const result = await promptForm({
+      title: t('formEditTitle'),
+      fields: [
+        {
+          name: 'exitDate',
+          label: t('formExitDate'),
+          type: 'date',
+          required: true,
+          defaultValue: toDateOnlyIso(rec.exitDate) || '',
+        },
+        {
+          name: 'exitType',
+          label: t('formExitType'),
+          type: 'select',
+          required: true,
+          defaultValue: rec.exitType || 'voluntary',
+          options: EXIT_TYPES.map((value) => ({ value, label: t(value) })),
+        },
+        {
+          name: 'exitReason',
+          label: t('formExitReason'),
+          type: 'select',
+          required: true,
+          defaultValue: rec.exitReason || 'other',
+          options: EXIT_REASONS.map((value) => ({ value, label: t(value) })),
+        },
+        {
+          name: 'notes',
+          label: t('formNotes'),
+          type: 'richText',
+          required: false,
+          minHeight: 120,
+          defaultValue: rec.notes || '',
+        },
+      ],
+    });
+    if (!result) return;
+
+    try {
+      const res = await fetch(`/api/admin/exit-analysis/${rec.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          exitDate: result.exitDate,
+          exitType: result.exitType,
+          exitReason: result.exitReason,
+          notes: result.notes,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast(t('updated'), 'ok');
+        setViewRecord(null);
+        loadRecords();
+      } else {
+        toast(data.error || t('updateError'), 'error');
+      }
+    } catch {
+      toast(t('updateError'), 'error');
+    }
   }
+
+  async function handleDelete(rec) {
+    const ok = await confirm({
+      message: t('confirmDelete'),
+      danger: true,
+      confirmLabel: t('delete'),
+    });
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/admin/exit-analysis/${rec.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        toast(t('deleted'), 'ok');
+        setViewRecord((cur) => (cur?.id === rec.id ? null : cur));
+        loadRecords();
+      } else {
+        toast(data.error || t('deleteError'), 'error');
+      }
+    } catch {
+      toast(t('deleteError'), 'error');
+    }
+  }
+
+  function formatDate(dateStr) {
+    return formatDisplayDate(dateStr, locale, { fallback: '-' });
+  }
+
+  const sortedRecords = useMemo(() => {
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const rows = [...records];
+    rows.sort((a, b) => {
+      const av = a?.[sort];
+      const bv = b?.[sort];
+      if (sort === 'exitDate') {
+        const as = toDateOnlyIso(av) || '';
+        const bs = toDateOnlyIso(bv) || '';
+        return as.localeCompare(bs) * dirMul;
+      }
+      return String(av || '').localeCompare(String(bv || ''), locale === 'en' ? 'en' : 'pt-BR') * dirMul;
+    });
+    return rows;
+  }, [records, sort, sortDir, locale]);
+
+  const total = sortedRecords.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = sortedRecords.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
 
   if (loading) return <AppLoading />;
 
@@ -221,7 +382,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         <p className="text-sm text-ink-muted mt-1">{t('subtitle')}</p>
       </div>
 
-      {isAdmin && (
+      {canWrite && (
         <div className="flex gap-2">
           <button type="button" onClick={handleRegisterExit} className={S.btnPrimary}>
             + {t('register')}
@@ -233,30 +394,36 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         <EmptyState
           title={t('noRecords')}
           message={t('noRecordsDesc')}
-          actionLabel={isAdmin ? `+ ${t('register')}` : undefined}
-          onAction={isAdmin ? handleRegisterExit : undefined}
+          actionLabel={canWrite ? `+ ${t('register')}` : undefined}
+          onAction={canWrite ? handleRegisterExit : undefined}
         />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                <SortableTh columnKey="exitDate" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('exitDate')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('candidateName')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="exitType" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('exitType')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="exitReason" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('exitReason')}
+                </SortableTh>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-4 py-3 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+                >
+                  {t('actions')}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {records.map((rec) => (
+              {pageRows.map((rec) => (
                 <tr key={rec.id} className="hover:bg-canvas-alt/50">
                   <td className="px-4 py-3 text-sm text-ink">{formatDate(rec.exitDate)}</td>
                   <td className="px-4 py-3 text-sm text-ink">{rec.candidateName}</td>
@@ -274,12 +441,175 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(rec.exitReason)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex flex-wrap items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewRecord(rec)}
+                        className={cn(S.btnGhost, 'min-h-touch px-2 text-xs')}
+                        aria-label={t('view')}
+                        title={t('view')}
+                      >
+                        {t('view')}
+                      </button>
+                      {canWrite ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(rec)}
+                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs text-brand-600')}
+                            aria-label={t('edit')}
+                            title={t('edit')}
+                          >
+                            <Icon name="pencil" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(rec)}
+                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs text-danger')}
+                            aria-label={t('delete')}
+                            title={t('delete')}
+                          >
+                            <Icon name="trash" />
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <AdminListPager
+              locale={locale}
+              page={safePage}
+              pageSize={pageSize}
+              total={total}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(ps) => {
+                setPageSize(ps);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
+
+      {viewRecord ? (
+        <ExitRecordViewDialog
+          locale={locale}
+          record={viewRecord}
+          t={t}
+          formatDate={formatDate}
+          canWrite={canWrite}
+          onClose={() => setViewRecord(null)}
+          onEdit={() => handleEdit(viewRecord)}
+          onDelete={() => handleDelete(viewRecord)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function ExitRecordViewDialog({ locale, record, t, formatDate, canWrite, onClose, onEdit, onDelete }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!record) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [record, onClose]);
+
+  if (!mounted || !record) return null;
+
+  const hasNotes = Boolean(String(record.notes || '').replace(/<[^>]*>/g, '').trim());
+
+  return createPortal(
+    <div
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
+      role="presentation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        className={cn(dialogCardClass, 'max-w-[520px]')}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exit-record-view-title"
+      >
+        <h3 id="exit-record-view-title" className="m-0 text-lg font-semibold text-ink">
+          {t('viewTitle')}
+        </h3>
+        <dl className="mt-4 flex flex-col gap-3 text-sm">
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('candidateName')}</dt>
+            <dd className="m-0 mt-0.5 text-ink">{record.candidateName}</dd>
+            {record.candidateEmail ? (
+              <dd className="m-0 text-xs text-ink-muted">
+                {t('email')}: {record.candidateEmail}
+              </dd>
+            ) : null}
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitDate')}</dt>
+            <dd className="m-0 mt-0.5 text-ink">{formatDate(record.exitDate)}</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitType')}</dt>
+            <dd className="m-0 mt-0.5 text-ink">{t(record.exitType)}</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitReason')}</dt>
+            <dd className="m-0 mt-0.5 text-ink">{t(record.exitReason)}</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('notes')}</dt>
+            <dd className="m-0 mt-1">
+              {hasNotes ? (
+                <RichTextView html={record.notes} className="rounded-control border border-ink/8 bg-canvas px-3 py-2" />
+              ) : (
+                <span className="text-ink-muted">{t('noNotes')}</span>
+              )}
+            </dd>
+          </div>
+        </dl>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          {canWrite ? (
+            <>
+              <button type="button" onClick={onEdit} className={dialogBtnGhostClass}>
+                {t('edit')}
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className={cn(dialogBtnGhostClass, 'border-danger/30 text-danger')}
+              >
+                {t('delete')}
+              </button>
+            </>
+          ) : null}
+          <button type="button" onClick={onClose} className={dialogBtnPrimaryClass}>
+            {t('close')}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

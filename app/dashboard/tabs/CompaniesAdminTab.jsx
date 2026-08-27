@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { publicCompanyPath } from '../../../lib/public-job-url';
-import { PAGE_SIZE_OPTIONS, parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
-import { clientSortNextDir, S, SortableTh } from '../dashboard-shared';
+import { parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
+import { clientSortNextDir, S, SortableTh, AdminListPager } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
@@ -24,7 +24,6 @@ const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
 const BTN_ROW =
   'rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
-const BTN_PAGER = 'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
 const DIALOG_BTN_GHOST =
   'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted disabled:cursor-default disabled:opacity-60';
 const DIALOG_BTN_PRIMARY =
@@ -564,56 +563,22 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               </tbody>
             </table>
             {navigateDashboard && companiesTotal > 0 ? (
-              <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3">
-                <span className="font-mono text-[11px] text-ink-muted">
-                  {t(locale, 'panel.admin.companyCount', {
-                    total: companiesTotal,
-                    page: companiesPage,
-                    totalPages: companiesTotalPages,
-                  })}
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={String(companiesPageSize)}
-                    onChange={(e) => {
-                      const ps = parseInt(e.target.value, 10);
-                      navigateDashboard({ companiesPage: 1, companiesPageSize: ps, tab: 'companies' });
-                    }}
-                    disabled={loading}
-                    className={S.selectCompact}
-                  >
-                    {PAGE_SIZE_OPTIONS.map((n) => (
-                      <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={loading || companiesPage <= 1}
-                    onClick={() => navigateDashboard({ companiesPage: Math.max(1, companiesPage - 1), tab: 'companies' })}
-                    className={cn(
-                      BTN_PAGER,
-                      companiesPage <= 1
-                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                    )}
-                  >
-                    {t(locale, 'panel.admin.prev')}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading || companiesPage >= companiesTotalPages}
-                    onClick={() => navigateDashboard({ companiesPage: Math.min(companiesTotalPages, companiesPage + 1), tab: 'companies' })}
-                    className={cn(
-                      BTN_PAGER,
-                      companiesPage >= companiesTotalPages
-                        ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-                        : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                    )}
-                  >
-                    {t(locale, 'panel.admin.next')}
-                  </button>
-                </div>
-              </div>
+              <AdminListPager
+                locale={locale}
+                page={companiesPage}
+                pageSize={companiesPageSize}
+                total={companiesTotal}
+                loading={loading}
+                countLabel={t(locale, 'panel.admin.companyCount', {
+                  total: companiesTotal,
+                  page: companiesPage,
+                  totalPages: companiesTotalPages,
+                })}
+                onPageChange={(p) => navigateDashboard({ companiesPage: p, tab: 'companies' })}
+                onPageSizeChange={(ps) =>
+                  navigateDashboard({ companiesPage: 1, companiesPageSize: ps, tab: 'companies' })
+                }
+              />
             ) : null}
           </div>
         )}

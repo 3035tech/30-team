@@ -5,10 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
-import { S } from '../dashboard-shared';
+import { S, AdminListPager } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
-
-const BTN_PAGER = 'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
 
 function statusChipClass(status) {
   if (status === 'pending') return 'border-warning/25 bg-warning/10 text-warning';
@@ -262,39 +260,14 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={BTN_PAGER}
-              disabled={filters.page <= 1}
-              onClick={() => pushFilters({ page: filters.page - 1 })}
-            >
-              ←
-            </button>
-            <span className="font-mono text-[11px] text-ink-faint">
-              {filters.page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              className={BTN_PAGER}
-              disabled={filters.page >= totalPages}
-              onClick={() => pushFilters({ page: filters.page + 1 })}
-            >
-              →
-            </button>
-            <select
-              value={String(filters.pageSize)}
-              onChange={(e) => pushFilters({ pageSize: Number(e.target.value), page: 1 })}
-              className={S.select}
-              aria-label={t(locale, 'panel.leads.pageSize')}
-            >
-              {PAGE_SIZE_OPTIONS.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
+          <AdminListPager
+            locale={locale}
+            page={filters.page}
+            pageSize={filters.pageSize}
+            total={total}
+            onPageChange={(p) => pushFilters({ page: p })}
+            onPageSizeChange={(ps) => pushFilters({ pageSize: ps, page: 1 })}
+          />
         </>
       ) : null}
     </div>

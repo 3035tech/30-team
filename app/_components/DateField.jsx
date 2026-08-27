@@ -7,6 +7,8 @@ import { fieldInputClass } from './form-control-styles';
  * Shared date / datetime control for dashboard forms.
  * Prefer this over raw `<input type="date">` so styling and a11y stay consistent.
  *
+ * Click anywhere on the field opens the native picker (not only the calendar icon).
+ *
  * @param {'date'|'datetime-local'} [mode='date']
  */
 export function DateField({
@@ -27,6 +29,18 @@ export function DateField({
 }) {
   const inputType = mode === 'datetime-local' ? 'datetime-local' : 'date';
 
+  const openPicker = (e) => {
+    if (disabled) return;
+    const el = e.currentTarget;
+    try {
+      if (typeof el.showPicker === 'function') {
+        el.showPicker();
+      }
+    } catch {
+      /* Already open, unsupported, or blocked — native control still works */
+    }
+  };
+
   return (
     <input
       type={inputType}
@@ -34,6 +48,7 @@ export function DateField({
       name={name}
       value={value ?? ''}
       onChange={onChange}
+      onClick={openPicker}
       disabled={disabled}
       required={required}
       min={min}

@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, PanelSubNav, S } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { formatDisplayDate } from '../../../lib/format-display-date.js';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -292,24 +294,42 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
 function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
   const { confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('createdAt');
+  const [sortDir, setSortDir] = useState('desc');
   const [notice, setNotice] = useState(null);
   const appUrl =
     (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
 
   const load = useCallback(async () => {
     setLoading(true);
-    const p = new URLSearchParams({ pageSize: '30' });
+    const p = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sort,
+      sortDir,
+    });
     if (status !== 'all') p.set('status', status);
     if (isAdmin && companyFilter && companyFilter !== 'all') p.set('company', companyFilter);
     const res = await fetch(`/api/admin/ae/invites?${p}`);
     const data = await res.json().catch(() => ({}));
     setItems(data.items || []);
+    setTotal(Number(data.total) || 0);
     setLoading(false);
-  }, [status, isAdmin, companyFilter, refreshKey]);
+  }, [status, isAdmin, companyFilter, refreshKey, page, pageSize, sort, sortDir]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
 
   const cancel = async (id) => {
     const ok = await confirm({
@@ -353,7 +373,14 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
       />
       <div className="mb-4 flex flex-wrap justify-between gap-2.5">
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className={S.select}>
+        <select
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          className={S.select}
+        >
           <option value="all">{t(locale, 'panel.motivatorsAdmin.invites.allStatuses')}</option>
           <option value="sent">{t(locale, 'panel.motivatorsAdmin.invites.statusSent')}</option>
           <option value="opened">{t(locale, 'panel.motivatorsAdmin.invites.statusOpened')}</option>
@@ -362,53 +389,81 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         </select>
       </div>
       {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr className="text-left font-mono text-[10px] text-ink-muted">
-            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colEmployee')}</th>
-            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colStatus')}</th>
-            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colSent')}</th>
-            <th className="p-2">{t(locale, 'panel.motivatorsAdmin.invites.colExpires')}</th>
-            <th className="p-2" />
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((row) => {
-            const inviteUrl =
-              row.token && appUrl ? `${appUrl}/assessment/motivators/${row.token}` : '';
-            const canShareLink = ['sent', 'opened'].includes(row.status) && Boolean(inviteUrl);
-            return (
-            <tr key={row.id} className="border-t border-ink/12">
-              <td className="px-2 py-2.5">
-                <div>{row.candidateName}</div>
-                <div className="text-[11px] text-ink-muted">{row.candidateEmail}</div>
-                {canShareLink ? (
-                  <div className="mt-1.5 max-w-[320px]">
-                    <CopyableLink
-                      url={inviteUrl}
-                      locale={locale}
-                      compact
-                      label={t(locale, 'panel.motivatorsAdmin.invites.assessmentLink')}
-                    />
-                  </div>
-                ) : null}
-              </td>
-              <td className="px-2 py-2.5">{statusBadge(locale, row.status)}</td>
-              <td className="px-2 py-2.5 text-ink-muted">{row.sentAt ? new Date(row.sentAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
-              <td className="px-2 py-2.5 text-ink-muted">{row.expiresAt ? new Date(row.expiresAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}</td>
-              <td className="px-2 py-2.5 text-right">
-                {['sent', 'opened'].includes(row.status) ? (
-                  <>
-                    <button type="button" onClick={() => remind(row.id)} className="mr-2 cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
-                    <button type="button" onClick={() => cancel(row.id)} className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger">{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
-                  </>
-                ) : null}
-              </td>
+      <div className="db-table-scroll overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-xs">
+          <thead>
+            <tr className="bg-ink/[0.02]">
+              <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.invites.colEmployee')}
+              </SortableTh>
+              <SortableTh columnKey="status" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.invites.colStatus')}
+              </SortableTh>
+              <SortableTh columnKey="sentAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.invites.colSent')}
+              </SortableTh>
+              <SortableTh columnKey="expiresAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.invites.colExpires')}
+              </SortableTh>
+              <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted" />
             </tr>
-            );
-          })}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((row) => {
+              const inviteUrl =
+                row.token && appUrl ? `${appUrl}/assessment/motivators/${row.token}` : '';
+              const canShareLink = ['sent', 'opened'].includes(row.status) && Boolean(inviteUrl);
+              return (
+              <tr key={row.id} className="border-t border-ink/12">
+                <td className="px-3 py-2.5">
+                  <div>{row.candidateName}</div>
+                  <div className="text-[11px] text-ink-muted">{row.candidateEmail}</div>
+                  {canShareLink ? (
+                    <div className="mt-1">
+                      <CopyableLink
+                        url={inviteUrl}
+                        locale={locale}
+                        compact
+                        showUrl={false}
+                        label={t(locale, 'panel.motivatorsAdmin.invites.assessmentLink')}
+                      />
+                    </div>
+                  ) : null}
+                </td>
+                <td className="px-3 py-2.5">{statusBadge(locale, row.status)}</td>
+                <td className="px-3 py-2.5 text-ink-muted">
+                  {formatDisplayDate(row.sentAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
+                </td>
+                <td className="px-3 py-2.5 text-ink-muted">
+                  {formatDisplayDate(row.expiresAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  {['sent', 'opened'].includes(row.status) ? (
+                    <>
+                      <button type="button" onClick={() => remind(row.id)} className="mr-2 cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
+                      <button type="button" onClick={() => cancel(row.id)} className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger">{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
+                    </>
+                  ) : null}
+                </td>
+              </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <AdminListPager
+          locale={locale}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          loading={loading}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageChange={setPage}
+          onPageSizeChange={(ps) => {
+            setPageSize(ps);
+            setPage(1);
+          }}
+        />
+      </div>
       {!loading && items.length === 0 ? <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
     </div>
   );
@@ -417,20 +472,44 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
 function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) {
   const { confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('completedAt');
+  const [sortDir, setSortDir] = useState('desc');
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
 
   const load = useCallback(() => {
-    const p = new URLSearchParams({ status: 'completed', pageSize: '30' });
+    setLoading(true);
+    const p = new URLSearchParams({
+      status: 'completed',
+      page: String(page),
+      pageSize: String(pageSize),
+      sort,
+      sortDir,
+    });
     if (isAdmin && companyFilter && companyFilter !== 'all') p.set('company', companyFilter);
     fetch(`/api/admin/ae/attempts?${p}`)
       .then((r) => r.json())
-      .then((d) => setItems(d.items || []));
-  }, [isAdmin, companyFilter]);
+      .then((d) => {
+        setItems(d.items || []);
+        setTotal(Number(d.total) || 0);
+      })
+      .finally(() => setLoading(false));
+  }, [isAdmin, companyFilter, page, pageSize, sort, sortDir]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
 
   useEffect(() => {
     if (!focusAttemptId) return;
@@ -515,32 +594,52 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       />
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
-        <table className="w-full border-collapse text-xs">
-          <thead>
-            <tr className="font-mono text-[10px] text-ink-muted">
-              <th className="p-2 text-left">{t(locale, 'panel.motivatorsAdmin.results.colEmployee')}</th>
-              <th className="p-2 text-left">{t(locale, 'panel.motivatorsAdmin.results.colDate')}</th>
-              <th className="p-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((row) => (
-              <tr key={row.id} className="border-t border-ink/12">
-                <td className="px-2 py-2.5">
-                  <div>{row.candidateName}</div>
-                  <div className="text-[11px] text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
-                </td>
-                <td className="px-2 py-2.5 text-ink-muted">
-                  {row.completedAt ? new Date(row.completedAt).toLocaleDateString(dateLocale(locale)) : t(locale, 'panel.common.notApplicable')}
-                </td>
-                <td className="px-2 py-2.5 text-right">
-                  <button type="button" onClick={() => setSelected(row.id)} className="mr-2.5 cursor-pointer border-none bg-transparent text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
-                  <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} className={cn('border-none bg-transparent text-[11px] text-danger', busy ? 'cursor-not-allowed' : 'cursor-pointer')}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
-                </td>
+        {loading ? <p className="text-ink-muted">{t(locale, 'panel.common.loading')}</p> : null}
+        <div className="db-table-scroll overflow-x-auto">
+          <table className="w-full min-w-[480px] border-collapse text-xs">
+            <thead>
+              <tr className="bg-ink/[0.02]">
+                <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t(locale, 'panel.motivatorsAdmin.results.colEmployee')}
+                </SortableTh>
+                <SortableTh columnKey="completedAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t(locale, 'panel.motivatorsAdmin.results.colDate')}
+                </SortableTh>
+                <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((row) => (
+                <tr key={row.id} className="border-t border-ink/12">
+                  <td className="px-3 py-2.5">
+                    <div>{row.candidateName}</div>
+                    <div className="text-[11px] text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
+                  </td>
+                  <td className="px-3 py-2.5 text-ink-muted">
+                    {formatDisplayDate(row.completedAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <button type="button" onClick={() => setSelected(row.id)} className="mr-2.5 cursor-pointer border-none bg-transparent text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
+                    <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} className={cn('border-none bg-transparent text-[11px] text-danger', busy ? 'cursor-not-allowed' : 'cursor-pointer')}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <AdminListPager
+            locale={locale}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
       {detail?.attempt ? (
         <div className={S.card}>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
 import { apiError, ERR } from '../../../../../lib/api-error';
+import { sqlAeAttemptsOrderBy } from '../../../../../lib/ae/list-sort';
 
 /** GET /api/admin/ae/attempts — resultados / tentativas */
 export async function GET(request) {
@@ -21,6 +22,7 @@ export async function GET(request) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const pageSize = Math.min(50, Math.max(10, parseInt(searchParams.get('pageSize') || '20', 10)));
     const offset = (page - 1) * pageSize;
+    const orderBy = sqlAeAttemptsOrderBy(searchParams.get('sort'), searchParams.get('sortDir'));
 
     const where = [];
     const params = [];
@@ -68,7 +70,7 @@ export async function GET(request) {
        JOIN companies co ON co.id = a.company_id
        LEFT JOIN areas ar ON ar.id = a.area_id
        ${whereSql}
-       ORDER BY a.completed_at DESC NULLS LAST, a.started_at DESC
+       ORDER BY ${orderBy}
        LIMIT $${n} OFFSET $${n + 1}`,
       [...params, pageSize, offset]
     );
