@@ -146,6 +146,7 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Mapa do sistema (HelpSystemMap): diagrama BPM em faixas + tabela de links públicos.
 - Assistente flutuante (HelpAssistantWidget): atalhos “onde clico?” + Guia.
 - Chrome admin consistente: empty states com 1 CTA; Vagas com `AdminEdit`/`AdminDelete`; dark `bg-surface` no painel (print/público light-first).
+- Roster empty com CTAs (Time interno → candidatos de vaga / todos); Overview “Sinais operacionais” lazy; busca por nome nas grids B-1000 + Empresas.
 
 ### Notificações e ops
 - Sino in-app (Eneagrama/Motivadores concluídos, retention_watch, kit pós-hire, digest semanal, prazo, vaga fechada).

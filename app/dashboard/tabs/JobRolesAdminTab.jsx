@@ -49,6 +49,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [nameQ, setNameQ] = useState('');
 
   const loadRoles = async () => {
     if (!companyId) return;
@@ -231,10 +232,14 @@ export function JobRolesAdminTab({ locale, companyId }) {
   const sortedRoles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
     const collator = locale === 'en' ? 'en' : 'pt-BR';
-    const rows = [...roles];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...roles].filter((r) => {
+      if (!q) return true;
+      return String(r.name || '').toLowerCase().includes(q);
+    });
     rows.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), collator) * dirMul);
     return rows;
-  }, [roles, sort, sortDir, locale]);
+  }, [roles, sort, sortDir, locale, nameQ]);
 
   const total = sortedRoles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -290,6 +295,23 @@ export function JobRolesAdminTab({ locale, companyId }) {
           onAction={openCreate}
         />
       ) : (
+        <>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={nameQ}
+            onChange={(e) => {
+              setNameQ(e.target.value);
+              setPage(1);
+            }}
+            placeholder={t(locale, 'panel.admin.nameSearchPh')}
+            aria-label={t(locale, 'panel.admin.nameSearchPh')}
+            className={cn(S.input, 'max-w-xs')}
+          />
+        </div>
+        {sortedRoles.length === 0 ? (
+          <EmptyState message={t(locale, 'panel.admin.noUsersMatch')} />
+        ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
           <table className="w-full min-w-[480px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
@@ -357,6 +379,8 @@ export function JobRolesAdminTab({ locale, companyId }) {
             />
           </div>
         </div>
+        )}
+        </>
       )}
 
       <AdminRichFormDrawer

@@ -203,6 +203,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
   const { page: companiesPage, pageSize: companiesPageSize } = parseCompaniesPagination(sp);
   const listSort = parseCompaniesSort(sp);
+  const companiesQ = String(sp.companiesQ || '').trim();
+  const [searchDraft, setSearchDraft] = useState(companiesQ);
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
 
   const [loading, setLoading] = useState(false);
@@ -221,6 +223,15 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState('');
   const [formSaving, setFormSaving] = useState(false);
+
+  useEffect(() => {
+    setSearchDraft(companiesQ);
+  }, [companiesQ]);
+
+  const pushCompaniesSearch = (q) => {
+    if (!navigateDashboard) return;
+    navigateDashboard({ companiesQ: q || '', companiesPage: 1, tab: 'companies' });
+  };
 
   const toggleCompanySort = (col) => {
     if (!navigateDashboard) return;
@@ -244,6 +255,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         sort: sortSt.sort,
         sortDir: sortSt.dir,
       });
+      const q = String(snap.companiesQ || '').trim();
+      if (q) qs.set('q', q);
       const res = await fetch(`/api/admin/companies?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
@@ -446,12 +459,40 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             </button>
           </div>
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pushCompaniesSearch(String(searchDraft || '').trim());
+              }
+            }}
+            placeholder={t(locale, 'panel.admin.companiesSearchPh')}
+            aria-label={t(locale, 'panel.admin.companiesSearchPh')}
+            className={cn(S.input, 'max-w-xs')}
+          />
+          <button
+            type="button"
+            onClick={() => pushCompaniesSearch(String(searchDraft || '').trim())}
+            disabled={loading}
+            className={cn(BTN_GHOST, loading && 'opacity-60')}
+          >
+            {t(locale, 'panel.admin.usersSearchBtn')}
+          </button>
+        </div>
         {companiesTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
-              message={t(locale, 'panel.admin.noCompaniesYet')}
-              actionLabel={t(locale, 'panel.admin.createCompanyTitle')}
-              onAction={openCreateCompany}
+              message={
+                companiesQ
+                  ? t(locale, 'panel.admin.noUsersMatch')
+                  : t(locale, 'panel.admin.noCompaniesYet')
+              }
+              actionLabel={companiesQ ? undefined : t(locale, 'panel.admin.createCompanyTitle')}
+              onAction={companiesQ ? undefined : openCreateCompany}
               actionDisabled={loading}
             />
           </div>

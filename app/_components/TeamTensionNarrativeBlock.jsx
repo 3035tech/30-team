@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { t } from '../../../lib/i18n';
-import { cn } from '../../../lib/cn';
+import { t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
-import { buildTeamTensionNarrative } from '../../../lib/people/team-tension-narrative';
+import { buildTeamTensionNarrative } from '../../lib/people/team-tension-narrative';
 import { useAppFeedback } from './AppFeedback';
 
 /**

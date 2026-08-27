@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '../../../lib/i18n';
-import { cn } from '../../../lib/cn';
+import { t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { TypeBadge } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';

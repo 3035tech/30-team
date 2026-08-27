@@ -9,6 +9,8 @@ import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { S, TypeBadge } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { ROSTER_SCOPE } from '../../../lib/domain-status';
 
 function scoreOf(row, typeNum) {
   const v = row?.scores?.[typeNum] ?? row?.scores?.[String(typeNum)] ?? 0;
@@ -87,7 +89,15 @@ function InsightStrip({ locale, visible }) {
   );
 }
 
-export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, listTotal = 0 }) {
+export function CompareTab({
+  results,
+  locale = 'pt-BR',
+  search = '',
+  onSearch,
+  listTotal = 0,
+  roster,
+  navigateDashboard,
+}) {
   const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
   const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
   const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' }));
@@ -257,11 +267,19 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
 
         <div className="mb-[18px] grid max-h-[200px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 overflow-y-auto py-0.5">
           {resultsByName.length === 0 ? (
-            <span className="col-span-full text-[13px] italic text-ink-faint">
-              {(search || '').trim()
-                ? t(locale, 'panel.compare.searchEmpty')
-                : t(locale, 'panel.compare.noneSelected')}
-            </span>
+            <div className="col-span-full">
+              {(search || '').trim() ? (
+                <span className="text-[13px] italic text-ink-faint">
+                  {t(locale, 'panel.compare.searchEmpty')}
+                </span>
+              ) : (
+                <RosterEmptyHint
+                  locale={locale}
+                  roster={roster || ROSTER_SCOPE.INTERNAL}
+                  navigateDashboard={navigateDashboard}
+                />
+              )}
+            </div>
           ) : (
             resultsByName.map((r) => {
               const id = String(r.assessmentId);

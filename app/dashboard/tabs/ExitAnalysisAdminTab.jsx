@@ -25,6 +25,7 @@ import {
   AdminEditButton,
   AdminListPager,
   AdminViewButton,
+  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -37,6 +38,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('exitDate');
   const [sortDir, setSortDir] = useState('desc');
+  const [nameQ, setNameQ] = useState('');
   const { promptForm, toast, confirm } = useAppFeedback();
 
   /** Tab already gated by USERS_MANAGE; allow write for hr/direction too. */
@@ -49,6 +51,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         subtitle: 'Registro de saídas e insights para melhorar seleção e gestão',
         register: 'Registrar Saída',
         noRecords: 'Nenhuma saída registrada',
+        searchNamePh: 'Buscar por colaborador…',
         noRecordsDesc: 'Registre saídas de colaboradores para análise',
         openPerson: 'Abrir na Equipe',
         ctaBenefits: 'Revisar benefícios',
@@ -127,6 +130,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         subtitle: 'Exit records and insights to improve recruitment and management',
         register: 'Register Exit',
         noRecords: 'No exits recorded',
+        searchNamePh: 'Search by employee…',
         noRecordsDesc: 'Register employee exits for analysis',
         openPerson: 'Open on Team',
         ctaBenefits: 'Review benefits',
@@ -401,7 +405,11 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
 
   const sortedRecords = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const rows = [...records];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...records].filter((row) => {
+      if (!q) return true;
+      return String(row.candidateName || '').toLowerCase().includes(q);
+    });
     rows.sort((a, b) => {
       const av = a?.[sort];
       const bv = b?.[sort];
@@ -413,7 +421,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       return String(av || '').localeCompare(String(bv || ''), locale === 'en' ? 'en' : 'pt-BR') * dirMul;
     });
     return rows;
-  }, [records, sort, sortDir, locale]);
+  }, [records, sort, sortDir, locale, nameQ]);
 
   const total = sortedRecords.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -441,6 +449,19 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           <AdminCreateButton label={t('register')} onClick={handleRegisterExit} />
         </div>
       )}
+
+      {records.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={nameQ}
+            onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+            placeholder={t('searchNamePh')}
+            aria-label={t('searchNamePh')}
+            className={cn(S.input, 'max-w-xs')}
+          />
+        </div>
+      ) : null}
 
       {records.length === 0 ? (
         <div className="flex flex-col gap-3">

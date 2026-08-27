@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { cn } from '../../../lib/cn';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -28,6 +29,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [nameQ, setNameQ] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   function t(key) {
@@ -40,6 +42,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         newCategory: 'Nova categoria',
         editCategory: 'Editar categoria',
         noBenefits: 'Nenhum benefício cadastrado',
+        searchNamePh: 'Buscar por nome…',
         noBenefitsDesc: 'Cadastre categorias e depois os benefícios oferecidos pela empresa',
         ctaExit: 'Ver Análise Demissional',
         ctaHelp: 'Ver Guia (Benefícios)',
@@ -107,6 +110,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         newCategory: 'New category',
         editCategory: 'Edit category',
         noBenefits: 'No benefits registered',
+        searchNamePh: 'Search by name…',
         noBenefitsDesc: 'Create categories, then register benefits offered by the company',
         ctaExit: 'Open Exit Analysis',
         ctaHelp: 'Open Help (Benefits)',
@@ -432,7 +436,11 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
 
   const sortedBenefits = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const rows = [...benefits];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...benefits].filter((row) => {
+      if (!q) return true;
+      return String(row.name || '').toLowerCase().includes(q);
+    });
     const collator = locale === 'en' ? 'en' : 'pt-BR';
     rows.sort((a, b) => {
       const key = sort === 'category' ? 'category' : sort === 'benefitType' ? 'benefitType' : 'name';
@@ -441,7 +449,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       return String(av || '').localeCompare(String(bv || ''), collator) * dirMul;
     });
     return rows;
-  }, [benefits, sort, sortDir, locale]);
+  }, [benefits, sort, sortDir, locale, nameQ]);
 
   const total = sortedBenefits.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -498,6 +506,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       </section>
 
       <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={nameQ}
+          onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+          placeholder={t('searchNamePh')}
+          aria-label={t('searchNamePh')}
+          className={cn(S.input, 'max-w-xs')}
+        />
         {isAdmin && (
           <AdminCreateButton label={t('create')} onClick={handleCreate} />
         )}

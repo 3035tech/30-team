@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { cn } from '../../../lib/cn';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -17,6 +18,7 @@ import {
   AdminCreateButton,
   AdminEditButton,
   AdminListPager,
+  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -28,6 +30,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('periodStart');
   const [sortDir, setSortDir] = useState('desc');
+  const [nameQ, setNameQ] = useState('');
   const { promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
@@ -36,6 +39,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Avaliações de Desempenho',
         subtitle: 'Ciclos, metas e avaliação → PDI',
         listEmpty: 'Nenhum ciclo cadastrado',
+        searchNamePh: 'Buscar por título…',
         listEmptyDesc:
           'Crie um ciclo com metas; outcomes “Desenvolver” geram itens no PDI e pedem 1:1 na Equipe.',
         createCycleButton: 'Novo Ciclo',
@@ -68,6 +72,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Performance Reviews',
         subtitle: 'Cycles, goals, and review → PDI',
         listEmpty: 'No cycles registered',
+        searchNamePh: 'Search by title…',
         listEmptyDesc:
           'Create a cycle with goals; “Develop” outcomes seed PDI items and call for a 1:1 in Team.',
         createCycleButton: 'New Cycle',
@@ -247,7 +252,11 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const sortedCycles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
     const collator = locale === 'en' ? 'en' : 'pt-BR';
-    const rows = [...cycles];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...cycles].filter((row) => {
+      if (!q) return true;
+      return String(row.title || '').toLowerCase().includes(q);
+    });
     rows.sort((a, b) => {
       if (sort === 'reviewCount') {
         return ((Number(a.reviewCount) || 0) - (Number(b.reviewCount) || 0)) * dirMul;
@@ -263,7 +272,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
     });
     return rows;
-  }, [cycles, sort, sortDir, locale]);
+  }, [cycles, sort, sortDir, locale, nameQ]);
 
   const total = sortedCycles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -297,6 +306,17 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
 
       <div className="flex items-center gap-3">
         <AdminCreateButton label={t('createCycleButton')} onClick={handleCreateCycle} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={nameQ}
+          onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+          placeholder={t('searchNamePh')}
+          aria-label={t('searchNamePh')}
+          className={cn(S.input, 'max-w-xs')}
+        />
       </div>
 
       {cycles.length === 0 ? (

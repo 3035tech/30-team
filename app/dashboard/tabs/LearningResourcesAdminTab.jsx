@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { cn } from '../../../lib/cn';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -30,6 +31,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('title');
   const [sortDir, setSortDir] = useState('asc');
+  const [nameQ, setNameQ] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   function t(key) {
@@ -39,6 +41,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         subtitle: 'Catálogo leve de ações/trilhas para desenvolvimento',
         create: 'Novo Recurso',
         noResources: 'Nenhum recurso cadastrado',
+        searchNamePh: 'Buscar por título…',
         noResourcesDesc: 'Crie ações, cursos, trilhas que o PDI pode apontar',
         ctaHelp: 'Ver Guia (PDI → Academy)',
         ctaPdi: 'Abrir Equipe (PDI)',
@@ -82,6 +85,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         subtitle: 'Lightweight catalog of actions/tracks for development',
         create: 'New Resource',
         noResources: 'No resources registered',
+        searchNamePh: 'Search by title…',
         noResourcesDesc: 'Create actions, courses, tracks that PDI can point to',
         ctaHelp: 'Open Help (PDI → Academy)',
         ctaPdi: 'Open Team (PDI)',
@@ -306,7 +310,11 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
 
   const sortedResources = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const rows = [...resources];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...resources].filter((row) => {
+      if (!q) return true;
+      return String(row.title || '').toLowerCase().includes(q);
+    });
     const collator = locale === 'en' ? 'en' : 'pt-BR';
     rows.sort((a, b) => {
       if (sort === 'durationHours') {
@@ -323,7 +331,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
     });
     return rows;
-  }, [resources, sort, sortDir, locale]);
+  }, [resources, sort, sortDir, locale, nameQ]);
 
   const total = sortedResources.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -347,6 +355,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={nameQ}
+          onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+          placeholder={t('searchNamePh')}
+          aria-label={t('searchNamePh')}
+          className={cn(S.input, 'max-w-xs')}
+        />
         {isAdmin && (
           <AdminCreateButton label={t('create')} onClick={handleCreate} />
         )}

@@ -10,6 +10,8 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
+import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { ROSTER_SCOPE } from '../../../lib/domain-status';
 import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
 
 export function GroupTab({
@@ -24,6 +26,7 @@ export function GroupTab({
   groupTensions,
   locale = 'pt-BR',
   companyId = null,
+  roster = null,
   navigateDashboard = null,
 }) {
   const { promptForm, confirm, toast } = useAppFeedback();
@@ -309,6 +312,16 @@ export function GroupTab({
       </div>
     );
   };
+
+  if ((results || []).length === 0) {
+    return (
+      <RosterEmptyHint
+        locale={locale}
+        roster={roster || ROSTER_SCOPE.INTERNAL}
+        navigateDashboard={navigateDashboard}
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-4">

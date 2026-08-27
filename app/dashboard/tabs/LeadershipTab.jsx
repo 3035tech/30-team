@@ -8,6 +8,8 @@ import { C } from '../../../lib/theme';
 import { Icon } from '../../_components/Icon';
 import { Bar, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { cn } from '../../../lib/cn';
+import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { ROSTER_SCOPE } from '../../../lib/domain-status';
 
 const BAND_KEYS = {
   standout: 'bandStandout',
@@ -39,17 +41,21 @@ function summaryPeople(leadershipPotentials, cap = 8) {
   return flat.slice(0, cap);
 }
 
-export function LeadershipTab({ analytics, locale = 'pt-BR' }) {
+export function LeadershipTab({
+  analytics,
+  locale = 'pt-BR',
+  roster = null,
+  navigateDashboard = null,
+}) {
   const [viewMode, setViewMode] = useState('summary');
   const hasData = analytics && analytics.kpis && analytics.kpis.assessments > 0;
   if (!hasData) {
     return (
-      <div className={cn(S.card, 'p-12 text-center')}>
-        <span className={S.label}>{t(locale, 'panel.leadership.emptyTitle')}</span>
-        <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-          {t(locale, 'panel.leadership.emptyBody')}
-        </p>
-      </div>
+      <RosterEmptyHint
+        locale={locale}
+        roster={roster || ROSTER_SCOPE.INTERNAL}
+        navigateDashboard={navigateDashboard}
+      />
     );
   }
 

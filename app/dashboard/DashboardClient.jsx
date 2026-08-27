@@ -9,11 +9,12 @@ import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { CAP, can, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
-import { VACANCY_STATUS } from '../../lib/domain-status.js';
+import { VACANCY_STATUS, ROSTER_SCOPE } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
 import { DateField } from '../_components/DateField';
+import { RosterEmptyHint } from '../_components/RosterEmptyHint';
 
 import {
   PAGE_SIZE_OPTIONS,
@@ -1192,20 +1193,21 @@ export default function DashboardClient({
           {showsCohortChrome &&
           compatMetrics.total === 0 &&
           (tab === 'team' || tab === 'compatibility') ? (
-            <div className={cn(S.card, 'p-[60px] text-center')}>
-              <div className="mb-4 text-[40px]">🌑</div>
-              <p className="italic text-ink-muted">
-                {t(locale, 'dashboard.empty').split('\n').map((line, i) => (
-                  <span key={line}>
-                    {i > 0 ? <br /> : null}
-                    {line}
-                  </span>
-                ))}
-              </p>
-            </div>
+            <RosterEmptyHint
+              locale={locale}
+              roster={roster || ROSTER_SCOPE.INTERNAL}
+              navigateDashboard={navigateWithOpts}
+            />
           ) : (
             <>
-              {tab === 'leadership' && <LeadershipTab analytics={analytics} locale={locale} />}
+              {tab === 'leadership' && (
+                <LeadershipTab
+                  analytics={analytics}
+                  locale={locale}
+                  roster={roster}
+                  navigateDashboard={navigateWithOpts}
+                />
+              )}
               {tab === 'overview' && (
                 <OverviewTab
                   overview={overviewMetrics}
@@ -1336,6 +1338,8 @@ export default function DashboardClient({
                   onComparePagination={pushComparePagination}
                   locale={locale}
                   search={selectedSearch}
+                  roster={roster}
+                  navigateDashboard={navigateWithOpts}
                   onSearch={(value) => {
                     setSearch(value || '');
                     pushFilters({ search: value });
@@ -1389,6 +1393,7 @@ export default function DashboardClient({
                   suggestions={suggestions}
                   groupTensions={groupTensions}
                   locale={locale}
+                  roster={roster}
                   navigateDashboard={navigateWithOpts}
                   companyId={
                     isAdmin

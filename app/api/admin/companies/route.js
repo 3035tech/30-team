@@ -57,13 +57,30 @@ export async function GET(request) {
   const sort = COMPANY_SORT_KEYS.has(sortRaw) ? sortRaw : 'createdAt';
   const dir = url.searchParams.get('sortDir') === 'asc' ? 'asc' : 'desc';
   const orderSql = sqlCompaniesOrderBy(sort, dir);
+  const qRaw = String(url.searchParams.get('q') || '').trim().slice(0, 80);
+  const q = qRaw.length >= 1 ? qRaw : '';
 
-  const cnt = await queryRead(`SELECT COUNT(*)::int AS n FROM companies WHERE deleted = FALSE`);
+  const whereParts = ['c.deleted = FALSE'];
+  const params = [];
+  if (q) {
+    params.push(`%${q}%`);
+    const i = params.length;
+    whereParts.push(`(c.name ILIKE $${i} OR COALESCE(c.slug, '') ILIKE $${i})`);
+  }
+  const whereSql = whereParts.join(' AND ');
+
+  const cnt = await queryRead(
+    `SELECT COUNT(*)::int AS n FROM companies c WHERE ${whereSql}`,
+    params
+  );
   const total = cnt.rows[0]?.n ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const effectivePage = Math.min(page, totalPages);
   const offset = (effectivePage - 1) * pageSize;
 
+  const listParams = [...params, pageSize, offset];
+  const lim = params.length + 1;
+  const off = params.length + 2;
   const r = await queryRead(
     `SELECT
        c.id,
@@ -79,10 +96,10 @@ export async function GET(request) {
        lk.expires_at AS "activeTokenExpiresAt"
      FROM companies c
      LEFT JOIN company_links lk ON lk.company_id = c.id AND lk.active = TRUE
-     WHERE c.deleted = FALSE
+     WHERE ${whereSql}
     ${orderSql}
-     LIMIT $1 OFFSET $2`,
-    [pageSize, offset]
+     LIMIT $${lim} OFFSET $${off}`,
+    listParams
   );
 
   return NextResponse.json({

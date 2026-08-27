@@ -160,6 +160,9 @@ export function useDashboardNavigation({
     const coSortSt = parseCompaniesSort(merged);
     p.set('companiesSort', opts.companiesSort != null ? opts.companiesSort : coSortSt.sort);
     p.set('companiesSortDir', opts.companiesSortDir != null ? opts.companiesSortDir : coSortSt.dir);
+    const companiesQ =
+      opts.companiesQ !== undefined ? opts.companiesQ : urlParams.get('companiesQ') || '';
+    if (companiesQ) p.set('companiesQ', String(companiesQ));
 
     const resolvedTab =
       opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';

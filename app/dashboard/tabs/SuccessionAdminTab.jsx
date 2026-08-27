@@ -5,6 +5,7 @@
  */
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { cn } from '../../../lib/cn';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -18,6 +19,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -31,6 +33,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('title');
   const [sortDir, setSortDir] = useState('asc');
+  const [nameQ, setNameQ] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
@@ -39,6 +42,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Sucessão',
         subtitle: 'Papéis críticos + sucessores + prontidão',
         listEmpty: 'Nenhum papel crítico cadastrado',
+        searchNamePh: 'Buscar por título…',
         listEmptyDesc:
           'Comece por um papel de alto impacto; depois atribua sucessores e acompanhe prontidão na Equipe.',
         createRoleButton: 'Novo Papel Crítico',
@@ -70,6 +74,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Succession',
         subtitle: 'Critical roles + successors + readiness',
         listEmpty: 'No critical roles registered',
+        searchNamePh: 'Search by title…',
         listEmptyDesc:
           'Start with a high-impact role; then assign successors and track readiness in Team.',
         createRoleButton: 'New Critical Role',
@@ -291,7 +296,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const sortedRoles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
     const collator = locale === 'en' ? 'en' : 'pt-BR';
-    const rows = [...roles];
+    const q = String(nameQ || '').trim().toLowerCase();
+    const rows = [...roles].filter((row) => {
+      if (!q) return true;
+      return String(row.title || '').toLowerCase().includes(q);
+    });
     rows.sort((a, b) => {
       if (sort === 'successorCount') {
         return ((Number(a.successorCount) || 0) - (Number(b.successorCount) || 0)) * dirMul;
@@ -303,7 +312,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
     });
     return rows;
-  }, [roles, sort, sortDir, locale]);
+  }, [roles, sort, sortDir, locale, nameQ]);
 
   const total = sortedRoles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -329,6 +338,19 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       <div className="flex items-center gap-3">
         <AdminCreateButton label={t('createRoleButton')} onClick={handleCreateRole} />
       </div>
+
+      {roles.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={nameQ}
+            onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+            placeholder={t('searchNamePh')}
+            aria-label={t('searchNamePh')}
+            className={cn(S.input, 'max-w-xs')}
+          />
+        </div>
+      ) : null}
 
       {roles.length === 0 ? (
         <div className="flex flex-col gap-3">

@@ -6,6 +6,8 @@ import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
+import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { ROSTER_SCOPE } from '../../../lib/domain-status';
 
 export function CompareTabLoader({
   filterQueryString,
@@ -15,6 +17,8 @@ export function CompareTabLoader({
   locale = 'pt-BR',
   search = '',
   onSearch,
+  roster,
+  navigateDashboard,
 }) {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, page: 1 });
@@ -80,13 +84,23 @@ export function CompareTabLoader({
 
   return (
     <div className="flex flex-col gap-3.5">
-      <CompareTab
-        results={rows}
-        locale={locale}
-        search={search}
-        onSearch={onSearch}
-        listTotal={meta.total}
-      />
+      {meta.total === 0 && !(search || '').trim() ? (
+        <RosterEmptyHint
+          locale={locale}
+          roster={roster || ROSTER_SCOPE.INTERNAL}
+          navigateDashboard={navigateDashboard}
+        />
+      ) : (
+        <CompareTab
+          results={rows}
+          locale={locale}
+          search={search}
+          onSearch={onSearch}
+          listTotal={meta.total}
+          roster={roster}
+          navigateDashboard={navigateDashboard}
+        />
+      )}
       {meta.total > 0 ? (
         <div className={cn(S.card, 'flex flex-wrap items-center justify-between gap-3 px-5 py-3.5')}>
           <span className="font-mono text-xs text-ink-muted">

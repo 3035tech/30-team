@@ -20,6 +20,7 @@ import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativ
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
+const OPS_INTEL_OPEN_KEY = '30team_overview_ops_intel_open';
 const NO_PLAN_PREVIEW = 3;
 
 const FUNNEL_LABEL_KEYS = {
@@ -104,6 +105,7 @@ export function OverviewTab({
 }) {
   const [peopleOpsOpen, setPeopleOpsOpen] = useState(false);
   const [recruitingOpen, setRecruitingOpen] = useState(false);
+  const [opsIntelOpen, setOpsIntelOpen] = useState(false);
   const [noPlanExpanded, setNoPlanExpanded] = useState(false);
 
   useEffect(() => {
@@ -112,6 +114,7 @@ export function OverviewTab({
         if (localStorage.getItem(PEOPLE_OPS_OPEN_KEY) === '1') setPeopleOpsOpen(true);
         // Default collapsed so BCI wins the first viewport; '1' opens recruiting ops.
         if (localStorage.getItem(RECRUITING_OPEN_KEY) === '1') setRecruitingOpen(true);
+        if (localStorage.getItem(OPS_INTEL_OPEN_KEY) === '1') setOpsIntelOpen(true);
       }
     } catch {
       /* ignore */
@@ -127,6 +130,18 @@ export function OverviewTab({
         /* ignore */
       }
       if (!next) setNoPlanExpanded(false);
+      return next;
+    });
+  };
+
+  const toggleOpsIntel = () => {
+    setOpsIntelOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(OPS_INTEL_OPEN_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   };
@@ -260,23 +275,45 @@ export function OverviewTab({
         />
       ) : null}
 
-      {companyId && (
-        <>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <TurnoverRadarCard locale={locale} companyId={companyId} />
-            <HrScoreCard locale={locale} companyId={companyId} />
+      {companyId ? (
+        <div className={S.cardTight}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.opsIntelTitle')}</span>
+              <p className="mt-1.5 mb-0 text-[13px] leading-snug text-ink-muted">
+                {t(locale, 'panel.overview.opsIntelBody')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleOpsIntel}
+              className={opsIntelOpen ? S.btnGhost : S.btnBrandSoft}
+              aria-expanded={opsIntelOpen}
+            >
+              {opsIntelOpen
+                ? t(locale, 'panel.overview.opsIntelCollapse')
+                : t(locale, 'panel.overview.opsIntelExpand')}
+            </button>
           </div>
-          <MultiSignalWorkbenchCard
-            locale={locale}
-            companyId={companyId}
-            navigateDashboard={navigateDashboard}
-          />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <ExitInsightsCard locale={locale} companyId={companyId} />
-            <CultureInsightsCard locale={locale} companyId={companyId} />
-          </div>
-        </>
-      )}
+          {opsIntelOpen ? (
+            <div className="mt-3.5 flex flex-col gap-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <TurnoverRadarCard locale={locale} companyId={companyId} />
+                <HrScoreCard locale={locale} companyId={companyId} />
+              </div>
+              <MultiSignalWorkbenchCard
+                locale={locale}
+                companyId={companyId}
+                navigateDashboard={navigateDashboard}
+              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <ExitInsightsCard locale={locale} companyId={companyId} />
+                <CultureInsightsCard locale={locale} companyId={companyId} />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className={S.cardTight}>
         <div className="mb-2 flex items-baseline justify-between gap-3">
