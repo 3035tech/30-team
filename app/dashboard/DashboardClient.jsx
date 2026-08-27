@@ -1017,7 +1017,11 @@ export default function DashboardClient({
             <div className="mb-3" />
           )}
 
-          {showsCohortChrome && compatMetrics.total === 0 && tab !== 'overview' ? (
+          {/* Empty moon only when SSR counted the cohort (team / compatibility).
+              Compare / group / leadership skip that COUNT on purpose and have their own empty UI. */}
+          {showsCohortChrome &&
+          compatMetrics.total === 0 &&
+          (tab === 'team' || tab === 'compatibility') ? (
             <div className={cn(S.card, 'p-[60px] text-center')}>
               <div className="mb-4 text-[40px]">🌑</div>
               <p className="italic text-ink-muted">

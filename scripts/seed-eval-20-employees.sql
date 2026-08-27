@@ -8,13 +8,13 @@
 -- Role:    admin (abas B-1000 + gestão da empresa do seed)
 --
 -- Conteúdo:
---   • 20 colaboradores (emp##@) com T1–T9 + scores (massa Equipe/compat)
+--   • 20 colaboradores (emp##@) com T1–T9 + scores (Equipe / Compatibilidade / Comparativo / Liderança)
 --   • 10 time interno (int##@) com pacote completo People:
 --       assessment hired, Motivadores, 1:1, PDI+itens+link recurso,
 --       pre-onboarding, check-ins 30/60/90, portal /e, retention, hr_scores,
 --       metas + review de performance, sucessão (subset)
+--   • Grupos salvos (time interno 10 + núcleo emp) + pulso aberto
 --   • Clima aberto (perguntas + convites anônimos + respostas)
---   • Grupo salvo + pulso aberto (convites + respostas)
 --   • 1 vaga + 5 candidatos no funil; 2 alumni + exit_records (tipos/motivos)
 --   • job_role
 --   • Benefícios: benefit_categories + company_benefits.category_id + descrição HTML
