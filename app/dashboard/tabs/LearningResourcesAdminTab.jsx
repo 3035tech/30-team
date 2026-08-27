@@ -9,6 +9,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTheme, setFilterTheme] = useState('');
+  const [filterType, setFilterType] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   function t(key) {
@@ -21,6 +22,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         noResourcesDesc: 'Crie ações, cursos, trilhas que o PDI pode apontar',
         filterTheme: 'Filtrar por tema',
         allThemes: 'Todos os temas',
+        filterType: 'Filtrar por tipo',
+        allTypes: 'Todos os tipos',
         title_col: 'Título',
         theme_col: 'Tema',
         type_col: 'Tipo',
@@ -55,6 +58,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         noResourcesDesc: 'Create actions, courses, tracks that PDI can point to',
         filterTheme: 'Filter by theme',
         allThemes: 'All themes',
+        filterType: 'Filter by type',
+        allTypes: 'All types',
         title_col: 'Title',
         theme_col: 'Theme',
         type_col: 'Type',
@@ -88,14 +93,17 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   useEffect(() => {
     loadResources();
     loadThemes();
-  }, [companyId, filterTheme]);
+  }, [companyId, filterTheme, filterType]);
 
   async function loadResources() {
     if (!companyId) return;
     setLoading(true);
     try {
-      const url = filterTheme
-        ? `/api/admin/learning-resources?theme=${encodeURIComponent(filterTheme)}`
+      const params = new URLSearchParams();
+      if (filterTheme) params.set('theme', filterTheme);
+      if (filterType) params.set('resourceType', filterType);
+      const url = params.toString()
+        ? `/api/admin/learning-resources?${params.toString()}`
         : '/api/admin/learning-resources';
       const res = await fetch(url);
       const data = await res.json();
@@ -273,6 +281,20 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
             ))}
           </select>
         )}
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="rounded-control border border-ink/20 bg-white px-3 py-2 text-sm text-ink"
+        >
+          <option value="">{t('allTypes')}</option>
+          <option value="course">{t('course')}</option>
+          <option value="article">{t('article')}</option>
+          <option value="video">{t('video')}</option>
+          <option value="book">{t('book')}</option>
+          <option value="workshop">{t('workshop')}</option>
+          <option value="mentoring">{t('mentoring')}</option>
+          <option value="other">{t('other')}</option>
+        </select>
       </div>
 
       {/* List */}

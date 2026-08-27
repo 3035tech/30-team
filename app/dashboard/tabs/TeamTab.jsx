@@ -24,6 +24,7 @@ import { HrActionBrief } from '../../_components/HrActionBrief';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
+import { HrScoreBadge } from '../../_components/HrScoreBadge';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
@@ -964,6 +965,9 @@ export function TeamTab({
                       {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
                     </span>
                   ) : null}
+                  {(r.hrScore != null || r.turnoverRisk) && (
+                    <HrScoreBadge score={r.hrScore} risk={r.turnoverRisk} size="xs" />
+                  )}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">

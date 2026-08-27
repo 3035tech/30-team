@@ -24,6 +24,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const includeInactive = searchParams.get('includeInactive') === 'true';
   const theme = searchParams.get('theme') || null;
+  const resourceType = searchParams.get('resourceType') || null;
   const themes = searchParams.get('themes') === 'true';
   const limit = Number(searchParams.get('limit')) || 100;
 
@@ -33,7 +34,7 @@ export async function GET(request) {
       return NextResponse.json({ ok: true, themes: themesList }, { status: 200 });
     }
 
-    const resources = await listLearningResources({ companyId, includeInactive, theme, limit });
+    const resources = await listLearningResources({ companyId, includeInactive, theme, resourceType, limit });
     return NextResponse.json({ ok: true, resources }, { status: 200 });
   } catch (err) {
     console.error('Failed to list learning resources:', err);
