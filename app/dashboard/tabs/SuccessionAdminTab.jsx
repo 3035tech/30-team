@@ -5,6 +5,7 @@
  */
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -398,9 +399,30 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                     key={successor.id}
                                     className="flex items-center justify-between gap-2 rounded-lg border border-ink/8 bg-surface px-3 py-2"
                                   >
-                                    <span className="text-sm text-ink">
-                                      {successor.candidateName || 'N/A'}
-                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <span className="text-sm text-ink">
+                                        {successor.candidateName || 'N/A'}
+                                      </span>
+                                      {successor.candidateId ? (
+                                        <div className="mt-1 flex flex-wrap gap-2">
+                                          <Link
+                                            href={`/dashboard?tab=team&candidate=${successor.candidateId}`}
+                                            className="font-mono text-[11px] text-brand-600 hover:underline"
+                                          >
+                                            {locale === 'en' ? 'Open on Team' : 'Abrir na Equipe'}
+                                          </Link>
+                                          {(successor.readiness === 'developing' ||
+                                            successor.readiness === 'not_ready') && (
+                                            <Link
+                                              href={`/dashboard?tab=team&candidate=${successor.candidateId}&section=journey`}
+                                              className="font-mono text-[11px] text-brand-600 hover:underline"
+                                            >
+                                              PDI
+                                            </Link>
+                                          )}
+                                        </div>
+                                      ) : null}
+                                    </div>
                                     <span
                                       className={`rounded-full border px-2 py-px font-mono text-[11px] ${colors.bg} ${colors.border} ${colors.text}`}
                                     >

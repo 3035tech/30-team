@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -49,6 +50,9 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         register: 'Registrar Saída',
         noRecords: 'Nenhuma saída registrada',
         noRecordsDesc: 'Registre saídas de colaboradores para análise',
+        openPerson: 'Abrir na Equipe',
+        ctaBenefits: 'Revisar benefícios',
+        ctaTeam: 'Ver Equipe / retenção',
         exitDate: 'Data',
         candidateName: 'Colaborador',
         exitType: 'Tipo',
@@ -124,6 +128,9 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         register: 'Register Exit',
         noRecords: 'No exits recorded',
         noRecordsDesc: 'Register employee exits for analysis',
+        openPerson: 'Open on Team',
+        ctaBenefits: 'Review benefits',
+        ctaTeam: 'Open Team / retention',
         exitDate: 'Date',
         candidateName: 'Employee',
         exitType: 'Type',
@@ -436,12 +443,22 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       )}
 
       {records.length === 0 ? (
-        <EmptyState
-          title={t('noRecords')}
-          message={t('noRecordsDesc')}
-          actionLabel={canWrite ? `+ ${t('register')}` : undefined}
-          onAction={canWrite ? handleRegisterExit : undefined}
-        />
+        <div className="flex flex-col gap-3">
+          <EmptyState
+            title={t('noRecords')}
+            message={t('noRecordsDesc')}
+            actionLabel={canWrite ? `+ ${t('register')}` : undefined}
+            onAction={canWrite ? handleRegisterExit : undefined}
+          />
+          <div className="flex flex-wrap gap-3 px-1">
+            <Link href="/dashboard?tab=company-benefits" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaBenefits')} →
+            </Link>
+            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaTeam')} →
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full min-w-[640px]">
@@ -466,7 +483,29 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
               {pageRows.map((rec) => (
                 <tr key={rec.id} className="hover:bg-canvas-alt/50">
                   <td className="px-4 py-3 text-sm text-ink">{formatDate(rec.exitDate)}</td>
-                  <td className="px-4 py-3 text-sm text-ink">{rec.candidateName}</td>
+                  <td className="px-4 py-3 text-sm text-ink">
+                    {rec.candidateId ? (
+                      <Link
+                        href={`/dashboard?tab=team&candidate=${rec.candidateId}`}
+                        className="text-brand-600 hover:underline"
+                        title={t('openPerson')}
+                      >
+                        {rec.candidateName}
+                      </Link>
+                    ) : (
+                      rec.candidateName
+                    )}
+                    {rec.exitReason === 'benefits' || rec.exitReason === 'compensation' ? (
+                      <div className="mt-1">
+                        <Link
+                          href="/dashboard?tab=company-benefits"
+                          className="font-mono text-[10px] text-brand-600 hover:underline"
+                        >
+                          {t('ctaBenefits')}
+                        </Link>
+                      </div>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     <span
                       className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${

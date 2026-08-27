@@ -157,12 +157,15 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
         )}
       </div>
 
-      <div className="mt-4 border-t border-ink/5 pt-4">
-        <Link
-          href="/dashboard?tab=exit-analysis"
-          className={S.cardLink}
-        >
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-ink/5 pt-4">
+        <Link href="/dashboard?tab=exit-analysis" className={S.cardLink}>
           {t('viewAll')}
+        </Link>
+        <Link href="/dashboard?tab=company-benefits" className={S.cardLink}>
+          {locale === 'en' ? 'Review benefits' : 'Revisar benefícios'} →
+        </Link>
+        <Link href="/dashboard?tab=team" className={S.cardLink}>
+          {locale === 'en' ? 'Team / retention' : 'Equipe / retenção'} →
         </Link>
       </div>
     </div>

@@ -19,10 +19,10 @@ Legenda: **tem** = demoável hoje · **parcial** = existe mas raso / siloed · *
 | 9 | Gaps de desenvolvimento + ações sugeridas | **tem** | PDI + Academy + IA no dossier (B-1904) |
 | 10 | PDI + acompanhamento de evolução | **tem** | PDI + `/e` + Overview fila |
 | 11 | Recomendações ao gestor por pessoa | **tem** | HrActionBrief (faça/evite, perguntas) |
-| 12 | 1:1 / feedback / acompanhamento contínuo | **parcial** | 1:1 + hipóteses fortes; feedback formal/ciclo contínuo ainda leve |
+| 12 | 1:1 / feedback / acompanhamento contínuo | **parcial** | 1:1 + hipóteses + CTA review→1:1 (B-2002); feedback formal/ciclo contínuo ainda leve |
 | 13 | Analisar a equipe como um todo | **tem** | Grupos, intel comportamental, Overview |
 | 14 | Complementaridades / conflitos / lacunas / dominante | **tem** | Bloco tensão Overview/Grupos (B-1902) |
-| 15 | Relacionar pessoas × cultura / valores | **parcial** | Cultura (B-1007) + clima; valores declarados ainda rasos |
+| 15 | Relacionar pessoas × cultura / valores | **parcial** | Cultura + snippet Sobre + CTAs (B-2004); taxonomia de valores ainda fora |
 | 16 | Cruzar dados de pessoas p/ padrões | **tem** | Workbench multi-sinal Overview (B-1903) |
 | 17 | Onde usa IA | **tem** | Help + vaga + interpret dossier/time/workbench |
 | 18 | IA interpreta / recomenda (não só resume) | **tem** | `/api/admin/people/interpret-ai` (B-1904) |

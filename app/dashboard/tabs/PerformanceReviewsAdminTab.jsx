@@ -55,6 +55,9 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         loadError: 'Erro ao carregar ciclos',
         saveError: 'Erro ao salvar',
         autoPdiNote: 'Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
+        continuousFeedbackNote:
+          'Entre ciclos, use 1:1 na Equipe para feedback contínuo — metas “Desenvolver” também pedem conversa.',
+        continuousFeedbackCta: 'Abrir Equipe',
         edit: 'Editar',
         actions: 'Ações',
         titleCol: 'Título',
@@ -82,6 +85,9 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         loadError: 'Failed to load cycles',
         saveError: 'Failed to save',
         autoPdiNote: 'Outcome "Develop" automatically generates a PDI item for the employee',
+        continuousFeedbackNote:
+          'Between cycles, use Team 1:1s for continuous feedback — “Develop” goals also need a conversation.',
+        continuousFeedbackCta: 'Open Team',
         edit: 'Edit',
         actions: 'Actions',
         titleCol: 'Title',
@@ -276,6 +282,12 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         <p className="text-sm text-ink-muted">{t('subtitle')}</p>
         <div className="rounded-lg border border-info/20 bg-info/5 px-3 py-2 text-xs text-ink-muted">
           {t('autoPdiNote')}
+        </div>
+        <div className="rounded-lg border border-brand-500/20 bg-brand-500/[0.06] px-3 py-2 text-xs text-ink-muted">
+          {t('continuousFeedbackNote')}{' '}
+          <a href="/dashboard?tab=team" className="font-medium text-brand-600 hover:underline">
+            {t('continuousFeedbackCta')}
+          </a>
         </div>
       </div>
 

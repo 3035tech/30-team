@@ -209,12 +209,32 @@ export function PersonDossierBlock({
         <section className={S.cardTight}>
           <span className={S.label}>{t(locale, 'panel.dossier.performanceTitle')}</span>
           {d.performance ? (
-            <p className="mt-2 mb-0 text-[13px] text-ink">
-              {d.performance.cycleTitle || '—'} · {d.performance.status}
-              {d.performance.developCount > 0
-                ? ` · ${t(locale, 'panel.dossier.developGoals', { n: d.performance.developCount })}`
-                : ''}
-            </p>
+            <>
+              <p className="mt-2 mb-0 text-[13px] text-ink">
+                {d.performance.cycleTitle || '—'} · {d.performance.status}
+                {d.performance.developCount > 0
+                  ? ` · ${t(locale, 'panel.dossier.developGoals', { n: d.performance.developCount })}`
+                  : ''}
+              </p>
+              {d.performance.developCount > 0 && typeof onGoSubTab === 'function' ? (
+                <div className="mt-2 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+                    onClick={() => onGoSubTab('oneOnOne')}
+                  >
+                    {t(locale, 'panel.dossier.openOneOnOneFromReview')}
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+                    onClick={() => onGoSubTab('journey')}
+                  >
+                    {t(locale, 'panel.dossier.openJourney')}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <p className="mt-2 mb-0 text-[13px] text-ink-faint">
               {t(locale, 'panel.dossier.performanceEmpty')}

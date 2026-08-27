@@ -30,6 +30,11 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         typeMix: 'Mix T1–T9',
         pulse: 'Pulso',
         alignment: 'Alinhamento',
+        declaredTitle: 'Sobre / valores declarados',
+        declaredEmpty: 'Ainda sem texto em Sobre da empresa — preencha no cadastro da empresa.',
+        ctaClimate: 'Abrir Clima',
+        ctaCompanies: 'Editar Sobre',
+        ctaTeam: 'Ver mix na Equipe',
       },
       en: {
         title: 'Organizational Culture',
@@ -50,6 +55,11 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         typeMix: 'T1–T9 Mix',
         pulse: 'Pulse',
         alignment: 'Alignment',
+        declaredTitle: 'About / declared values',
+        declaredEmpty: 'No company About text yet — fill it in the company profile.',
+        ctaClimate: 'Open Climate',
+        ctaCompanies: 'Edit About',
+        ctaTeam: 'See mix on Team',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -127,7 +137,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
     );
   }
 
-  if (!data || (!data.hasClimateData && !data.hasPulseData)) {
+  if (!data || (!data.hasClimateData && !data.hasPulseData && !data.hasTypeMixData)) {
     return (
       <div className={S.card}>
         <div className="mb-4">
@@ -136,6 +146,14 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         </div>
         <p className={S.cardBody}>{t('noData')}</p>
         <p className={cn(S.cardMuted, 'mt-1')}>{t('noDataDesc')}</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Link href="/dashboard?tab=climate" className={S.cardLink}>
+            {t('ctaClimate')} →
+          </Link>
+          <Link href="/dashboard?tab=companies" className={S.cardLink}>
+            {t('ctaCompanies')} →
+          </Link>
+        </div>
       </div>
     );
   }
@@ -170,6 +188,26 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             </div>
           )}
 
+          <div>
+            <p className={S.cardSection}>{t('declaredTitle')}</p>
+            {data.declaredSnippet ? (
+              <p className={cn(S.cardMuted, 'm-0')}>{data.declaredSnippet}</p>
+            ) : (
+              <p className={cn(S.cardMuted, 'm-0')}>{t('declaredEmpty')}</p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-3">
+              <Link href="/dashboard?tab=climate" className={S.cardLink}>
+                {t('ctaClimate')}
+              </Link>
+              <Link href="/dashboard?tab=companies" className={S.cardLink}>
+                {t('ctaCompanies')}
+              </Link>
+              <Link href="/dashboard?tab=team" className={S.cardLink}>
+                {t('ctaTeam')}
+              </Link>
+            </div>
+          </div>
+
           <div className="rounded-lg border border-ink/5 bg-canvas-alt/30 p-3">
             <p className={S.cardMuted}>{t('hedgingNote')}</p>
           </div>
@@ -190,6 +228,10 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
                 actionLink = '/dashboard?tab=climate';
               } else if (insight.category === 'pulse') {
                 actionLink = '/dashboard?tab=groups';
+              } else if (insight.category === 'alignment') {
+                actionLink = '/dashboard?tab=companies';
+              } else if (insight.category === 'type_mix') {
+                actionLink = '/dashboard?tab=team';
               }
               return (
                 <div

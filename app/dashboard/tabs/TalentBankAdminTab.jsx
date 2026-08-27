@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -46,6 +47,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   const [q, setQ] = useState('');
   const [vacancyId, setVacancyId] = useState('');
   const [stage, setStage] = useState('');
+  const [topType, setTopType] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('lastActivityAt');
@@ -82,6 +84,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
       if (q) qs.set('q', q);
       if (vacancyId) qs.set('vacancyId', vacancyId);
       if (stage) qs.set('stage', stage);
+      if (topType) qs.set('topType', topType);
       const res = await fetch(`/api/admin/talent-bank?${qs.toString()}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.talentBank.loadFailed'));
@@ -94,7 +97,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
     } finally {
       setLoading(false);
     }
-  }, [companyId, page, pageSize, sort, sortDir, q, vacancyId, stage, locale]);
+  }, [companyId, page, pageSize, sort, sortDir, q, vacancyId, stage, topType, locale]);
 
   useEffect(() => {
     loadVacancies();
@@ -248,6 +251,24 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 font-mono text-[11px] text-ink-faint">
+          {t(locale, 'panel.talentBank.filterType')}
+          <select
+            value={topType}
+            onChange={(e) => {
+              setTopType(e.target.value);
+              setPage(1);
+            }}
+            className={S.select}
+          >
+            <option value="">{t(locale, 'panel.talentBank.allTypes')}</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <option key={n} value={String(n)}>
+                T{n}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
@@ -352,13 +373,21 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                       {formatDate(row.lastActivityAt)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => addToVacancy(row.id, row.fullName)}
-                        className={cn(S.btnBrandSoft, 'min-h-touch')}
-                      >
-                        {t(locale, 'panel.team.addToVacancyBtn')}
-                      </button>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Link
+                          href={`/dashboard?tab=team&candidate=${row.id}`}
+                          className={cn(S.btnGhost, 'min-h-touch inline-flex items-center')}
+                        >
+                          {t(locale, 'panel.talentBank.openPerson')}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => addToVacancy(row.id, row.fullName)}
+                          className={cn(S.btnBrandSoft, 'min-h-touch')}
+                        >
+                          {t(locale, 'panel.team.addToVacancyBtn')}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

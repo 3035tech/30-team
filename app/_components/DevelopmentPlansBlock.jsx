@@ -30,6 +30,7 @@ export function DevelopmentPlansBlock({
   const [expandedId, setExpandedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [academyCatalog, setAcademyCatalog] = useState([]);
 
   const load = useCallback(async () => {
     if (!candidateId) return;
@@ -52,6 +53,28 @@ export function DevelopmentPlansBlock({
   useEffect(() => {
     load();
   }, [load, refreshKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/learning-resources?limit=40');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || cancelled) return;
+        const resources = Array.isArray(data.resources)
+          ? data.resources
+          : Array.isArray(data.items)
+            ? data.items
+            : [];
+        setAcademyCatalog(resources.filter((r) => r?.id && r?.title));
+      } catch {
+        if (!cancelled) setAcademyCatalog([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateId]);
 
   const openDetail = async (planId, force = false) => {
     if (!force && expandedId === planId) {
@@ -87,6 +110,22 @@ export function DevelopmentPlansBlock({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error || 'patch');
     return data;
+  };
+
+  const quickLinkAcademy = async (item, resourceId) => {
+    if (!expandedId || !resourceId) return;
+    setBusy(true);
+    try {
+      const patched = await patchPlan(expandedId, {
+        linkResource: { itemId: item.id, resourceId: Number(resourceId) },
+      });
+      setDetail(patched.plan);
+      toast(t(locale, 'panel.pdi.academyLinked'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const createPlan = async () => {
@@ -581,6 +620,56 @@ export function DevelopmentPlansBlock({
                     {detail.objective ? (
                       <p className={cn(S.muted, 'mb-2 text-xs')}>{detail.objective}</p>
                     ) : null}
+                    {(() => {
+                      const needSuggest = (detail.items || []).filter(
+                        (it) =>
+                          it.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE &&
+                          !(Array.isArray(it.linkedResources) && it.linkedResources.length > 0)
+                      );
+                      if (!needSuggest.length) return null;
+                      const suggestions = academyCatalog.slice(0, 3);
+                      return (
+                        <div className="mb-2 rounded-control border border-brand-500/20 bg-brand-500/[0.05] px-2.5 py-2">
+                          <p className="m-0 font-mono text-[11px] text-brand-600">
+                            {t(locale, 'panel.pdi.academySuggestTitle')}
+                          </p>
+                          <p className="mb-1.5 mt-0.5 text-[11px] text-ink-muted">
+                            {t(locale, 'panel.pdi.academySuggestHint')}
+                          </p>
+                          {suggestions.length === 0 ? (
+                            <p className="m-0 text-[11px] text-ink-faint">
+                              {t(locale, 'panel.pdi.academySuggestNone')}
+                            </p>
+                          ) : (
+                            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                              {needSuggest.slice(0, 3).map((it, idx) => {
+                                const res = suggestions[idx % suggestions.length];
+                                return (
+                                  <li
+                                    key={it.id}
+                                    className="flex flex-wrap items-center justify-between gap-2"
+                                  >
+                                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink">
+                                      {it.title}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 py-1 text-[10px]')}
+                                      onClick={() => quickLinkAcademy(it, res.id)}
+                                    >
+                                      {t(locale, 'panel.pdi.academySuggestApply')}:{' '}
+                                      {String(res.title).slice(0, 32)}
+                                      {String(res.title).length > 32 ? '…' : ''}
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {(detail.items || []).length === 0 ? (
                       <EmptyState
                         title={t(locale, 'panel.pdi.noItems')}

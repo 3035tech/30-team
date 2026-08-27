@@ -14,6 +14,22 @@ const SIGNAL_META = {
   checkins: { emoji: '✅', labelKey: 'turnoverRadar.signalLabelCheckins', hintKey: 'turnoverRadar.signalCheckinsHint' },
 };
 
+function actionHref(action, candidateId) {
+  const cid = encodeURIComponent(String(candidateId));
+  switch (action) {
+    case 'review_climate':
+      return '/dashboard?tab=climate';
+    case 'accelerate_pdi':
+      return `/dashboard?tab=team&candidate=${cid}&section=journey`;
+    case 'schedule_one_on_one':
+      return `/dashboard?tab=team&candidate=${cid}&section=oneOnOne`;
+    case 'motivators_interview':
+      return `/dashboard?tab=team&candidate=${cid}&section=briefing`;
+    default:
+      return null;
+  }
+}
+
 /**
  * Card de Turnover Radar na Overview (B-1002)
  * Lista colaboradores em risco médio/alto
@@ -168,6 +184,25 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                     );
                   })}
                 </div>
+
+                {Array.isArray(person.actions) && person.actions.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {person.actions.map((action) => {
+                      const href = actionHref(action, person.candidateId);
+                      if (!href) return null;
+                      return (
+                        <Link
+                          key={action}
+                          href={href}
+                          className={cn(S.cardChip, 'border-brand-500/25 text-brand-600 hover:bg-brand-500/[0.1]')}
+                          title={t(locale, `turnoverRadar.action.${action}`)}
+                        >
+                          {t(locale, `turnoverRadar.action.${action}`)}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             </div>
           );

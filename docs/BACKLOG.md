@@ -375,6 +375,16 @@ _(entregue — B-1901 dossier Equipe; B-1902 complementaridade/tensão Overview+
 
 ---
 
+## Aberto — Epic B-2000 (aprofundar módulos “leves”)
+
+_(entregue — B-2001 radar `actions[]`; B-2002 Performance↔1:1 CTA; B-2003 PDI sugestões Academy; B-2004 Cultura snippet+CTAs; B-2005 Sucessão/Exit CTAs; B-2006 Banco talentos abrir pessoa + filtro T1–T9. Ver Guia `b2000LightDepth`.)_
+
+Profundidade **média** entregue: conectar e enriquecer o que já existe — **sem** LMS, DISC, ATS ou portal colaborador full.
+
+**Fora (permanece):** feedback formal contínuo tipo Feedz; taxonomia de valores; LMS com conclusão; convite Motivadores em massa.
+
+---
+
 ## Aberto — Observabilidade
 
 ### B-1701 — Logs estruturados (infra) ✅ ENTREGUE (básico)
