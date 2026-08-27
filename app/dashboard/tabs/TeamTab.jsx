@@ -1307,6 +1307,7 @@ export function TeamTab({
                         sourceLabel(locale, c?.source),
                         birthIso || null,
                         startIso || null,
+                        detail?.lmsOverdue?.length ? 'lms-overdue' : null,
                       ].filter(Boolean);
                       if (!bits.length) {
                         return (
@@ -1340,6 +1341,21 @@ export function TeamTab({
                             <div>
                               {t(locale, 'panel.team.workAnniversary')}: {fmtDate(startIso)}
                             </div>
+                          ) : null}
+                          {detail?.lmsOverdue?.length ? (
+                            <ul className="mt-2 flex list-none flex-col gap-1 p-0">
+                              {detail.lmsOverdue.map((course) => (
+                                <li
+                                  key={course.enrollmentId}
+                                  className="w-fit rounded-full bg-danger/10 px-2 py-1 text-[11px] text-danger"
+                                >
+                                  {t(locale, 'panel.team.lmsOverdue', {
+                                    title: course.courseTitle,
+                                    date: fmtDate(course.dueDate),
+                                  })}
+                                </li>
+                              ))}
+                            </ul>
                           ) : null}
                         </div>
                       );

@@ -40,7 +40,7 @@ export const POST = withAdminApi(
 
     const rl = await checkRateLimit(`lms-pdf:${payload.userId || 'anon'}`, 20, 60_000);
     if (!rl.ok) {
-      return apiError(request, ERR.RATE_LIMITED, httpStatusForError(ERR.RATE_LIMITED));
+      return apiError(request, ERR.RATE_LIMIT, httpStatusForError(ERR.RATE_LIMIT));
     }
 
     let form;

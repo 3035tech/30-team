@@ -11,6 +11,7 @@ import { buildCandidateTimeline } from '../../../../../lib/hire';
 import { buildCandidatePeopleBrief } from '../../../../../lib/people/candidate-people-brief';
 import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/sanitize-html';
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
+import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 
 export async function GET(request, { params }) {
   const cookieStore = cookies();
@@ -99,7 +100,7 @@ export async function GET(request, { params }) {
   const { searchParams } = new URL(request.url);
   const loc = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
 
-  const [timeline, people] = await Promise.all([
+  const [timeline, people, lmsOverdue] = await Promise.all([
     buildCandidateTimeline(id).catch((e) => {
       console.error('candidate timeline:', e);
       return [];
@@ -115,6 +116,11 @@ export async function GET(request, { params }) {
       console.error('candidate people brief:', e);
       return null;
     }),
+    listCandidateOverdueLms(query, {
+      companyId: c.rows[0].companyId,
+      candidateId: id,
+      limit: 5,
+    }).catch(() => []),
   ]);
 
   return NextResponse.json({
@@ -122,6 +128,7 @@ export async function GET(request, { params }) {
     assessments: assessmentsWithHistory,
     timeline,
     people,
+    lmsOverdue,
   });
 }
 

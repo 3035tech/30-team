@@ -90,6 +90,29 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
     }
   };
 
+  const uncompleteLesson = async (lessonId) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/public/employee-portal/${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'uncompleteLesson', lessonId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'lesson');
+      const refresh = await fetch(
+        `/api/public/employee-portal/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`
+      );
+      const next = await refresh.json().catch(() => ({}));
+      if (refresh.ok) setData(next);
+      toast(t(locale, 'panel.employeePortal.lessonUnmarked'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <AppLoading variant="panel" />;
   if (error) {
     return (
@@ -173,6 +196,25 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                 {course.description ? (
                   <p className={cn(S.muted, 'mt-1 text-xs')}>{course.description}</p>
                 ) : null}
+                {course.dueDate || course.mandatory || course.overdue ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-[10px]">
+                    {course.dueDate ? (
+                      <span className="rounded-full bg-ink/5 px-2 py-1 text-ink-muted">
+                        {t(locale, 'panel.employeePortal.courseDue', { date: course.dueDate })}
+                      </span>
+                    ) : null}
+                    {course.mandatory ? (
+                      <span className="rounded-full bg-warning/10 px-2 py-1 text-warning">
+                        {t(locale, 'panel.employeePortal.courseMandatory')}
+                      </span>
+                    ) : null}
+                    {course.overdue ? (
+                      <span className="rounded-full bg-danger/10 px-2 py-1 text-danger">
+                        {t(locale, 'panel.employeePortal.courseOverdue')}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 <ul className="mt-2 m-0 list-none space-y-2 p-0">
                   {(course.lessons || []).map((lesson) => (
                     <li
@@ -203,9 +245,19 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                           {t(locale, 'panel.employeePortal.markLessonDone')}
                         </button>
                       ) : (
-                        <span className="font-mono text-[10px] text-success">
-                          {t(locale, 'panel.employeePortal.lessonDone')}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-[10px] text-success">
+                            {t(locale, 'panel.employeePortal.lessonDone')}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+                            onClick={() => uncompleteLesson(lesson.id)}
+                          >
+                            {t(locale, 'panel.employeePortal.unmarkLesson')}
+                          </button>
+                        </div>
                       )}
                     </li>
                   ))}

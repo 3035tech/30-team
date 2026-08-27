@@ -31,6 +31,7 @@ export function DevelopmentPlansBlock({
   const [detail, setDetail] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
   const [academyCatalog, setAcademyCatalog] = useState([]);
+  const [lmsCatalog, setLmsCatalog] = useState([]);
 
   const load = useCallback(async () => {
     if (!candidateId) return;
@@ -69,6 +70,28 @@ export function DevelopmentPlansBlock({
         setAcademyCatalog(resources.filter((r) => r?.id && r?.title));
       } catch {
         if (!cancelled) setAcademyCatalog([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/lms/courses?limit=80');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || cancelled) return;
+        const courses = Array.isArray(data.courses) ? data.courses : [];
+        setLmsCatalog(
+          courses
+            .filter((course) => course?.id && course?.title)
+            .map((course) => ({ id: course.id, title: course.title }))
+        );
+      } catch {
+        if (!cancelled) setLmsCatalog([]);
       }
     })();
     return () => {
@@ -443,6 +466,76 @@ export function DevelopmentPlansBlock({
     }
   };
 
+  const linkLmsCourse = async (item) => {
+    if (!expandedId) return;
+    const options = lmsCatalog.map((course) => ({
+      value: String(course.id),
+      label: course.title,
+    }));
+    if (options.length === 0) {
+      toast(t(locale, 'panel.pdi.lmsEmpty'), 'info');
+      return;
+    }
+    const values = await promptForm({
+      title: t(locale, 'panel.pdi.linkLmsTitle'),
+      confirmLabel: t(locale, 'panel.pdi.linkLmsConfirm'),
+      fields: [
+        {
+          key: 'courseId',
+          type: 'select',
+          label: t(locale, 'panel.pdi.linkLmsLabel'),
+          required: true,
+          options,
+        },
+        {
+          key: 'enroll',
+          type: 'boolean',
+          label: t(locale, 'panel.pdi.linkLmsEnroll'),
+          defaultValue: true,
+        },
+      ],
+    });
+    if (!values?.courseId) return;
+    setBusy(true);
+    try {
+      const patched = await patchPlan(expandedId, {
+        linkLmsCourse: {
+          itemId: item.id,
+          courseId: Number(values.courseId),
+          enroll: values.enroll === true,
+        },
+      });
+      setDetail(patched.plan);
+      toast(t(locale, 'panel.pdi.lmsLinked'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unlinkLmsCourse = async (item, courseId) => {
+    if (!expandedId) return;
+    const ok = await confirm({
+      title: t(locale, 'panel.pdi.unlinkLmsTitle'),
+      message: t(locale, 'panel.pdi.unlinkLmsConfirm'),
+      confirmLabel: t(locale, 'panel.pdi.unlinkLmsBtn'),
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const patched = await patchPlan(expandedId, {
+        unlinkLmsCourse: { itemId: item.id, courseId: Number(courseId) },
+      });
+      setDetail(patched.plan);
+      toast(t(locale, 'panel.pdi.lmsUnlinked'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const addItem = async () => {
     if (!expandedId) return;
     const values = await promptForm({
@@ -743,6 +836,14 @@ export function DevelopmentPlansBlock({
                                   >
                                     {t(locale, 'panel.pdi.linkAcademyBtn')}
                                   </button>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    onClick={() => linkLmsCourse(it)}
+                                  >
+                                    {t(locale, 'panel.pdi.linkLmsBtn')}
+                                  </button>
                                   <select
                                     className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
                                     value={it.status}
@@ -783,6 +884,28 @@ export function DevelopmentPlansBlock({
                                         onClick={() => unlinkAcademyResource(it, lr.id)}
                                       >
                                         {t(locale, 'panel.pdi.unlinkAcademyBtn')}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                              {(it.linkedLmsCourses || []).length > 0 ? (
+                                <ul className="m-0 flex list-none flex-col gap-1 p-0 pl-10">
+                                  {(it.linkedLmsCourses || []).map((course) => (
+                                    <li
+                                      key={course.courseId}
+                                      className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-muted"
+                                    >
+                                      <span className="text-ink">
+                                        {t(locale, 'panel.pdi.lmsChip')}: {course.title}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-[10px] text-danger')}
+                                        onClick={() => unlinkLmsCourse(it, course.courseId)}
+                                      >
+                                        {t(locale, 'panel.pdi.unlinkLmsBtn')}
                                       </button>
                                     </li>
                                   ))}

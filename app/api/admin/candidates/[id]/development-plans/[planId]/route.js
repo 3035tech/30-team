@@ -10,6 +10,11 @@ import {
   updateDevelopmentPlanItem,
 } from '../../../../../../../lib/people/development-plans';
 import { linkResourceToPdi, unlinkResourceFromPdi } from '../../../../../../../lib/learning-resources';
+import {
+  enrollLmsCandidates,
+  linkLmsCourseToPdi,
+  unlinkLmsCourseFromPdi,
+} from '../../../../../../../lib/lms.js';
 
 async function loadCandidateScope(candidateId, scope) {
   const c = await query(
@@ -112,6 +117,72 @@ export async function PATCH(request, { params }) {
           planId,
           itemId: body.unlinkResource.itemId,
           resourceId: body.unlinkResource.resourceId,
+        },
+      });
+      const plan = await getDevelopmentPlan(query, {
+        companyId: loaded.candidate.companyId,
+        planId,
+        candidateId,
+      });
+      return NextResponse.json({ ok: true, plan });
+    }
+
+    if (body.linkLmsCourse?.itemId && body.linkLmsCourse?.courseId) {
+      const linked = await linkLmsCourseToPdi(query, {
+        companyId: loaded.candidate.companyId,
+        planItemId: body.linkLmsCourse.itemId,
+        courseId: body.linkLmsCourse.courseId,
+      });
+      if (!linked.ok) {
+        return apiError(request, linked.errorCode || ERR.INVALID_REFERENCE, 400);
+      }
+      let enrolled = 0;
+      if (body.linkLmsCourse.enroll === true) {
+        const enr = await enrollLmsCandidates(query, {
+          companyId: loaded.candidate.companyId,
+          courseId: body.linkLmsCourse.courseId,
+          candidateIds: [Number(candidateId)],
+          enrolledByUserId: payload.userId || null,
+          dueDate: body.linkLmsCourse.dueDate || null,
+          mandatory: body.linkLmsCourse.mandatory === true,
+        });
+        if (enr.ok) enrolled = enr.enrolled || 0;
+      }
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'development_plan.lms_link',
+        targetType: 'candidate',
+        targetId: candidateId,
+        metadata: {
+          planId,
+          itemId: body.linkLmsCourse.itemId,
+          courseId: body.linkLmsCourse.courseId,
+          enrolled,
+        },
+      });
+      const plan = await getDevelopmentPlan(query, {
+        companyId: loaded.candidate.companyId,
+        planId,
+        candidateId,
+      });
+      return NextResponse.json({ ok: true, plan, enrolled });
+    }
+
+    if (body.unlinkLmsCourse?.itemId && body.unlinkLmsCourse?.courseId) {
+      await unlinkLmsCourseFromPdi(query, {
+        companyId: loaded.candidate.companyId,
+        planItemId: body.unlinkLmsCourse.itemId,
+        courseId: body.unlinkLmsCourse.courseId,
+      });
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'development_plan.lms_unlink',
+        targetType: 'candidate',
+        targetId: candidateId,
+        metadata: {
+          planId,
+          itemId: body.unlinkLmsCourse.itemId,
+          courseId: body.unlinkLmsCourse.courseId,
         },
       });
       const plan = await getDevelopmentPlan(query, {

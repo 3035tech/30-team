@@ -401,7 +401,10 @@ _(entregue — B-2201 `RosterEmptyHint` em Equipe/Compat/Comparar/Grupos/Lideran
 _(entregue — `candidates.birth_date` + `companies.anniversary_date` (`066`); tempo de casa = `candidates.start_date` (hire); card Overview `BirthdaysCard` + `GET /api/admin/upcoming-anniversaries`; Equipe edita nascimento; Empresas edita aniversário institucional; seed demo/eval com datas na janela.)_
 
 ### Epic B-2400 — LMS básico ✅ ENTREGUE (MVP)
-_(entregue — `067` `lms_courses` / `lms_lessons` / `lms_enrollments` / `lms_lesson_completions`; aba Catálogos → Cursos; matrícula de employees; progresso + conclusão por %; “Meus cursos” no `/e` token. **Fora:** quiz, certificado, SCORM, player, login colaborador. Academy (`learning_resources`) continua catálogo PDI separado.)_
+_(entregue — `067` `lms_courses` / `lms_lessons` / `lms_enrollments` / `lms_lesson_completions`; menu LMS → Cursos; matrícula; progresso no `/e`. **Fora:** quiz, certificado, SCORM, player, login colaborador. Academy continua catálogo PDI separado.)_
+
+### Epic B-2401 — LMS próximo corte ✅ ENTREGUE
+_(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; matrícula em lote (todos/grupo); PDF S3; reordenar/editar aulas; reset/desmarcar; notifs enrolled/overdue/completed; Overview/Equipe atraso; PDI↔curso com matrícula opcional e auto-done no PDI ao concluir; cron `lms-overdue-notifications`; resumo ops no curso. **Fora ainda:** quiz, certificado, SCORM, trilha multi-curso, login colaborador.)_
 
 ---
 

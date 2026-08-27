@@ -1296,3 +1296,53 @@ CREATE INDEX IF NOT EXISTS idx_lms_lesson_completions_company
 
 INSERT INTO schema_migrations (name) VALUES ('067_lms_basic.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- 068_lms_cohorts_due_pdi.sql
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS lms_cohorts (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  course_id            BIGINT NOT NULL REFERENCES lms_courses(id) ON DELETE CASCADE,
+  name                 TEXT NOT NULL,
+  due_date             DATE,
+  mandatory            BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT lms_cohorts_name_len CHECK (char_length(btrim(name)) >= 1 AND char_length(name) <= 200)
+);
+
+CREATE INDEX IF NOT EXISTS idx_lms_cohorts_course
+  ON lms_cohorts (company_id, course_id, created_at DESC);
+
+ALTER TABLE lms_enrollments
+  ADD COLUMN IF NOT EXISTS cohort_id BIGINT REFERENCES lms_cohorts(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS due_date DATE,
+  ADD COLUMN IF NOT EXISTS mandatory BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_lms_enrollments_due
+  ON lms_enrollments (company_id, due_date)
+  WHERE due_date IS NOT NULL AND completed_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_lms_enrollments_cohort
+  ON lms_enrollments (cohort_id)
+  WHERE cohort_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS development_plan_lms_links (
+  id                   BIGSERIAL PRIMARY KEY,
+  plan_item_id         BIGINT NOT NULL REFERENCES development_plan_items(id) ON DELETE CASCADE,
+  course_id            BIGINT NOT NULL REFERENCES lms_courses(id) ON DELETE CASCADE,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (plan_item_id, course_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dev_plan_lms_links_item
+  ON development_plan_lms_links (plan_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_dev_plan_lms_links_course
+  ON development_plan_lms_links (course_id);
+
+INSERT INTO schema_migrations (name) VALUES ('068_lms_cohorts_due_pdi.sql')
+ON CONFLICT (name) DO NOTHING;

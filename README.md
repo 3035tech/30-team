@@ -429,7 +429,7 @@ Principais (lista completa em `.env.example`):
 | `GOOGLE_INDEXING_MOCK` | `1` = não chama Google (DTOV já mocka com `DTOV=1`) |
 | `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` | Mínimo de vagas para publicar `/jobs/remote` e `/jobs/city/…` (default `3`) |
 | `RETENTION_DAYS` | Retenção / LGPD |
-| `CRON_SECRET` | Crons (lembretes, prazos, retenção de notificações, digest semanal) |
+| `CRON_SECRET` | Crons (lembretes, prazos de vaga, LMS overdue, retenção de notificações, digest semanal) |
 
 ---
 

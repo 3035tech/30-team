@@ -1380,7 +1380,13 @@ export default function DashboardClient({
               {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'lms' && showLearning && <LmsAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
+              {tab === 'lms' && showLearning && (
+                <LmsAdminTab
+                  locale={locale}
+                  companyId={sessionAuth?.companyId}
+                  courseId={urlParams.get('course') || null}
+                />
+              )}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}

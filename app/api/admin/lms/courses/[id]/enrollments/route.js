@@ -3,7 +3,7 @@ import { withAdminApi } from '../../../../../../../lib/admin-api.js';
 import { CAP } from '../../../../../../../lib/ae/require-admin.js';
 import { apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
 import { z, zPositiveInt } from '../../../../../../../lib/validate.js';
-import { enrollLmsCandidates, listLmsEnrollments } from '../../../../../../../lib/lms.js';
+import { enrollLmsCandidates, listLmsEnrollments, getLmsCourseOpsSummary } from '../../../../../../../lib/lms.js';
 import { audit } from '../../../../../../../lib/audit.js';
 import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifications.js';
 import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
@@ -38,11 +38,14 @@ export const GET = withAdminApi(
     if (!Number.isFinite(courseId)) {
       return apiErrorFromResult(request, { ok: false, errorCode: ERR.NOT_FOUND });
     }
-    const result = await listLmsEnrollments(null, {
-      companyId,
-      courseId,
-      limit: query.limit,
-    });
+    const [result, ops] = await Promise.all([
+      listLmsEnrollments(null, {
+        companyId,
+        courseId,
+        limit: query.limit,
+      }),
+      getLmsCourseOpsSummary(null, { companyId, courseId }),
+    ]);
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.NOT_FOUND });
     }
@@ -51,6 +54,7 @@ export const GET = withAdminApi(
       enrollments: result.enrollments,
       totalLessons: result.totalLessons,
       completionPct: result.completionPct,
+      ops,
     });
   }
 );

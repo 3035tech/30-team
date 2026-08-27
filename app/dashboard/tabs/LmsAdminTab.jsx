@@ -39,6 +39,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
+  const [ops, setOps] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [enrollPick, setEnrollPick] = useState('');
   const [enrollBusy, setEnrollBusy] = useState(false);
@@ -82,10 +83,12 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
         if (!cRes.ok) throw new Error(cJson?.error || 'detail');
         setDetail({ course: cJson.course, lessons: cJson.lessons || [] });
         setEnrollments(eRes.ok ? eJson.enrollments || [] : []);
+        setOps(eRes.ok ? eJson.ops || null : null);
       } catch (e) {
         toast(e?.message || t(locale, 'panel.lms.loadError'), 'error');
         setDetail(null);
         setEnrollments([]);
+        setOps(null);
       } finally {
         setDetailLoading(false);
       }
@@ -112,6 +115,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
     else {
       setDetail(null);
       setEnrollments([]);
+      setOps(null);
     }
   }, [selectedId, loadDetail]);
 
@@ -653,6 +657,20 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                 {detail.course.description ? (
                   <p className="m-0 whitespace-pre-wrap text-sm text-ink-muted">
                     {detail.course.description}
+                  </p>
+                ) : null}
+                {ops ? (
+                  <p
+                    className={cn(
+                      'm-0 font-mono text-[12px]',
+                      ops.overdue > 0 ? 'text-danger' : 'text-ink-muted'
+                    )}
+                  >
+                    {t(locale, 'panel.lms.opsSummary', {
+                      completed: ops.completed,
+                      enrolled: ops.enrolled,
+                      overdue: ops.overdue,
+                    })}
                   </p>
                 ) : null}
 
