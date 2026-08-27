@@ -9,6 +9,7 @@ import { C } from '../../../lib/theme';
 import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
+import { DateField } from '../../_components/DateField';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
@@ -147,9 +148,14 @@ const emptyProfileDraft = () => ({
   salaryExpectation: '',
   availability: '',
   source: '',
+  birthDate: '',
 });
 
 function profileFromCandidate(c) {
+  const birth =
+    c?.birthDate != null
+      ? String(c.birthDate).slice(0, 10)
+      : '';
   return {
     phone: stripPhone(c?.phone) || '',
     linkedinUrl: c?.linkedinUrl || '',
@@ -158,6 +164,7 @@ function profileFromCandidate(c) {
     salaryExpectation: salaryToCentsDigits(c?.salaryExpectation),
     availability: c?.availability || '',
     source: c?.source || '',
+    birthDate: /^\d{4}-\d{2}-\d{2}$/.test(birth) ? birth : '',
   };
 }
 
@@ -441,6 +448,7 @@ export function TeamTab({
           salaryExpectation: stripSalary(profileDraft.salaryExpectation),
           availability: profileDraft.availability || null,
           source: profileDraft.source || null,
+          birthDate: profileDraft.birthDate || null,
           hrNotes: notesDraft,
         }),
       });
@@ -1275,6 +1283,21 @@ export function TeamTab({
                     (() => {
                       const c = detail?.candidate;
                       const locBits = [c?.city, c?.state].filter(Boolean).join(' / ');
+                      const birthIso =
+                        c?.birthDate != null ? String(c.birthDate).slice(0, 10) : '';
+                      const startIso =
+                        c?.startDate != null ? String(c.startDate).slice(0, 10) : '';
+                      const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+                      const fmtDate = (iso) => {
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || null;
+                        const d = new Date(`${iso}T12:00:00`);
+                        if (Number.isNaN(d.getTime())) return iso;
+                        return d.toLocaleDateString(dateLocale, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        });
+                      };
                       const bits = [
                         c?.phone,
                         locBits || null,
@@ -1282,6 +1305,8 @@ export function TeamTab({
                         c?.salaryExpectation,
                         availabilityLabel(locale, c?.availability),
                         sourceLabel(locale, c?.source),
+                        birthIso || null,
+                        startIso || null,
                       ].filter(Boolean);
                       if (!bits.length) {
                         return (
@@ -1305,6 +1330,16 @@ export function TeamTab({
                           ) : null}
                           {sourceLabel(locale, c?.source) ? (
                             <div>{sourceLabel(locale, c.source)}</div>
+                          ) : null}
+                          {birthIso ? (
+                            <div>
+                              {t(locale, 'panel.team.birthDate')}: {fmtDate(birthIso)}
+                            </div>
+                          ) : null}
+                          {startIso ? (
+                            <div>
+                              {t(locale, 'panel.team.workAnniversary')}: {fmtDate(startIso)}
+                            </div>
                           ) : null}
                         </div>
                       );
@@ -1374,6 +1409,26 @@ export function TeamTab({
                           <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
                           <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
                         </select>
+                        <label className="flex min-w-0 flex-[1_1_160px] flex-col gap-1">
+                          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.birthDate')}</span>
+                          <DateField
+                            value={profileDraft.birthDate || ''}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({ ...p, birthDate: e.target.value || '' }))
+                            }
+                            aria-label={t(locale, 'panel.team.birthDate')}
+                            className="font-mono text-xs"
+                          />
+                        </label>
+                        {detail?.candidate?.startDate ? (
+                          <p className="m-0 min-w-0 flex-[1_1_160px] font-mono text-[11px] leading-snug text-ink-muted">
+                            {t(locale, 'panel.team.workAnniversary')}:{' '}
+                            {String(detail.candidate.startDate).slice(0, 10)}
+                            <span className="mt-0.5 block text-ink-faint">
+                              {t(locale, 'panel.team.workAnniversaryHint')}
+                            </span>
+                          </p>
+                        ) : null}
                       </div>
                       <div className="mb-2.5">
                         <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.team.hrNotes')}</span>

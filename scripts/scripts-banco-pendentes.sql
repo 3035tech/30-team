@@ -1189,3 +1189,30 @@ ALTER TABLE company_benefits ADD CONSTRAINT company_benefits_type_chk CHECK (
 
 INSERT INTO schema_migrations (name) VALUES ('065_expand_exit_benefit_enums.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- 066_birth_and_company_anniversary.sql
+-- =============================================================================
+
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS birth_date DATE;
+
+COMMENT ON COLUMN candidates.birth_date IS
+  'Date of birth (nullable). Day/month used for Overview birthday card. Not hire/start date.';
+
+CREATE INDEX IF NOT EXISTS idx_candidates_company_birth_md
+  ON candidates (
+    company_id,
+    (EXTRACT(MONTH FROM birth_date)::smallint),
+    (EXTRACT(DAY FROM birth_date)::smallint)
+  )
+  WHERE birth_date IS NOT NULL;
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS anniversary_date DATE;
+
+COMMENT ON COLUMN companies.anniversary_date IS
+  'Company founding / institutional anniversary (nullable). Day/month for Overview chip.';
+
+INSERT INTO schema_migrations (name) VALUES ('066_birth_and_company_anniversary.sql')
+ON CONFLICT (name) DO NOTHING;

@@ -28,6 +28,7 @@ export async function GET(request, { params }) {
             salary_expectation AS "salaryExpectation", availability, source,
             employment_status AS "employmentStatus",
             hired_at AS "hiredAt", start_date AS "startDate",
+            birth_date AS "birthDate",
             hired_vacancy_id AS "hiredVacancyId",
             consent_at AS "consentAt", created_at AS "createdAt"
      FROM candidates WHERE id = $1 LIMIT 1`,
@@ -146,8 +147,9 @@ export async function PATCH(request, { params }) {
   const hasHrNotes = body.hrNotes !== undefined;
   const hasProfile = Object.values(profile).some((v) => v != null);
   const hasName = body.fullName !== undefined || body.name !== undefined;
+  const hasBirthDate = body.birthDate !== undefined || body.birth_date !== undefined;
 
-  if (!hasHrNotes && !hasProfile && !hasName) {
+  if (!hasHrNotes && !hasProfile && !hasName && !hasBirthDate) {
     return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
   }
 
@@ -197,6 +199,19 @@ export async function PATCH(request, { params }) {
     sets.push(`source = $${n++}`);
     sqlParams.push(profile.source);
   }
+  if (body.birthDate !== undefined || body.birth_date !== undefined) {
+    const raw = body.birthDate !== undefined ? body.birthDate : body.birth_date;
+    let birthDate = null;
+    if (raw != null && String(raw).trim() !== '') {
+      const s = String(raw).trim().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        return apiError(request, ERR.INVALID_DATE, 400);
+      }
+      birthDate = s;
+    }
+    sets.push(`birth_date = $${n++}`);
+    sqlParams.push(birthDate);
+  }
 
   if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
@@ -205,7 +220,8 @@ export async function PATCH(request, { params }) {
      WHERE id = $1
      RETURNING id, full_name AS "fullName", email, hr_notes AS "hrNotes",
                phone, linkedin_url AS "linkedinUrl", city, state,
-               salary_expectation AS "salaryExpectation", availability, source`,
+               salary_expectation AS "salaryExpectation", availability, source,
+               birth_date AS "birthDate", start_date AS "startDate"`,
     sqlParams
   );
   if (up.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);

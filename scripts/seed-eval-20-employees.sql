@@ -1097,6 +1097,19 @@ BEGIN
   RAISE NOTICE 'Time interno: int01@…int10@eval-20.demo (portal /e/eint##eval20portal…)';
   RAISE NOTICE 'Clima: /clima/clim01eval20climate…  Pulso: /pulso/puls01eval20pulse…';
   RAISE NOTICE 'Catálogos: benefit_categories + benefits (category_id); Academy themes multi-tag; 2 exit_records';
+
+  -- B-2300: birthdays + work anniversaries near "today" for Overview demo card
+  UPDATE companies
+  SET anniversary_date = (CURRENT_DATE + 4) - INTERVAL '10 years'
+  WHERE id = v_company_id;
+
+  UPDATE candidates c
+  SET birth_date = (CURRENT_DATE + ((c.id % 10) + 1)) - INTERVAL '30 years',
+      start_date = (CURRENT_DATE + ((c.id % 7) + 2)) - INTERVAL '2 years'
+  WHERE c.company_id = v_company_id
+    AND c.employment_status = 'employee'
+    AND c.email LIKE '%@eval-20.demo';
+
 END;
 $eval$;
 

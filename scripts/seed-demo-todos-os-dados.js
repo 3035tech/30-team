@@ -80,6 +80,18 @@ function makeScoresBiased(topType) {
   return scores;
 }
 
+/** Local calendar date as YYYY-MM-DD shifted by dayOffset, then yearsAgo. */
+function calendarYmd(dayOffset = 0, yearsAgo = 0) {
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + dayOffset);
+  d.setFullYear(d.getFullYear() - yearsAgo);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function motivatorsPayload(topKeys) {
   const dims = MOTIVATORS_DIMENSIONS.map((d) => d.key);
   const scores = {};
@@ -112,6 +124,10 @@ const EMPLOYEES = [
     city: 'São Paulo',
     state: 'SP',
     phone: '+55 11 99100-1001',
+    birthInDays: 2,
+    ageYears: 34,
+    workAnnivInDays: 7,
+    tenureYears: 3,
   },
   {
     key: 'bruno',
@@ -122,6 +138,10 @@ const EMPLOYEES = [
     city: 'São Paulo',
     state: 'SP',
     phone: '+55 11 99100-1002',
+    birthInDays: 5,
+    ageYears: 29,
+    workAnnivInDays: 11,
+    tenureYears: 2,
   },
   {
     key: 'carla',
@@ -132,6 +152,10 @@ const EMPLOYEES = [
     city: 'Campinas',
     state: 'SP',
     phone: '+55 19 99100-1003',
+    birthInDays: 9,
+    ageYears: 31,
+    workAnnivInDays: 0,
+    tenureYears: 1,
   },
   {
     key: 'diego',
@@ -460,9 +484,9 @@ async function main() {
     }
 
     const co = await client.query(
-      `INSERT INTO companies (name, slug, active, deleted)
-       VALUES ($1, $2, TRUE, FALSE) RETURNING id`,
-      [COMPANY_NAME, SLUG]
+      `INSERT INTO companies (name, slug, active, deleted, anniversary_date)
+       VALUES ($1, $2, TRUE, FALSE, $3::date) RETURNING id`,
+      [COMPANY_NAME, SLUG, calendarYmd(5, 12)]
     );
     companyId = co.rows[0].id;
 
@@ -593,10 +617,10 @@ async function main() {
         `INSERT INTO candidates (
            company_id, full_name, email, phone, linkedin_url, city, state,
            salary_expectation, availability, source, consent_at,
-           employment_status, hired_at, start_date, hr_notes
+           employment_status, hired_at, start_date, birth_date, hr_notes
          ) VALUES (
            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW() - INTERVAL '20 days',
-           $11, $12::timestamptz, $13::date, $14
+           $11, $12::timestamptz, $13::date, $14::date, $15
          ) RETURNING id`,
         [
           companyId,
@@ -611,11 +635,15 @@ async function main() {
           p.source || (employee ? 'referral' : 'linkedin'),
           employee ? 'employee' : 'candidate',
           employee ? new Date(Date.now() - 100 * 86400000).toISOString() : null,
-          employee ? '2026-02-01' : null,
+          employee ? p.startDate || calendarYmd(p.workAnnivInDays ?? 40, p.tenureYears ?? 2) : null,
+          employee ? p.birthDate || calendarYmd(p.birthInDays ?? 20, p.ageYears ?? 32) : null,
           hrNotes,
         ]
       );
       const candidateId = cand.rows[0].id;
+      const employeeStartDate = employee
+        ? p.startDate || calendarYmd(p.workAnnivInDays ?? 40, p.tenureYears ?? 2)
+        : null;
 
       const assVacancyId = employee ? null : vacancyOpenId;
       const ass = await client.query(
@@ -640,7 +668,7 @@ async function main() {
           employee ? 'hired' : p.pipeline || 'test_completed',
           p.rejectionReason || null,
           employee ? new Date(Date.now() - 100 * 86400000).toISOString() : null,
-          employee ? '2026-02-01' : null,
+          employeeStartDate,
           150000 + Math.floor(Math.random() * 100000),
           employee ? 0 : Math.floor(Math.random() * 3),
           String(employee ? 60 + Math.floor(Math.random() * 30) : 3 + Math.floor(Math.random() * 12)),

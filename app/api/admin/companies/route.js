@@ -90,6 +90,7 @@ export async function GET(request) {
        c.website,
        c.about_html AS "aboutHtml",
        c.public_profile_enabled AS "publicProfileEnabled",
+       c.anniversary_date AS "anniversaryDate",
        c.logo_url AS "logoUrl",
        c.created_at AS "createdAt",
        lk.token AS "activeToken",
@@ -128,16 +129,25 @@ export async function POST(request) {
     profile = parseCompanyProfileFromBody(body, { forCreate: true });
   } catch (e) {
     if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
+    if (e?.code === 'INVALID_DATE') return apiError(request, ERR.INVALID_DATE, 400);
     throw e;
   }
 
   const ins = await query(
-    `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled)
-     VALUES ($1, $2, TRUE, $3, $4, $5)
+    `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled, anniversary_date)
+     VALUES ($1, $2, TRUE, $3, $4, $5, $6)
      RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
                public_profile_enabled AS "publicProfileEnabled",
+               anniversary_date AS "anniversaryDate",
                logo_url AS "logoUrl", created_at AS "createdAt"`,
-    [name, slug, profile.website, profile.aboutHtml, profile.publicProfileEnabled === true]
+    [
+      name,
+      slug,
+      profile.website,
+      profile.aboutHtml,
+      profile.publicProfileEnabled === true,
+      profile.anniversaryDate ?? null,
+    ]
   );
 
   const linkToken = await ensureActiveLink(ins.rows[0].id);

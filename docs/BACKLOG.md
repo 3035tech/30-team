@@ -397,26 +397,8 @@ Corte **rápido/barato**: consistência de chrome e dark no painel + roteiro dem
 
 _(entregue — B-2201 `RosterEmptyHint` em Equipe/Compat/Comparar/Grupos/Liderança; B-2202 Overview “Sinais operacionais” lazy (fetch só ao expandir); B-2203 busca por nome em Cargos/Avaliações/Sucessão/Exit/Academy/Benefícios + Empresas `q` API.)_
 
----
-
-## Aberto — Epic B-2300 (aniversários)
-
-Pedido (ago/2026): dados de **calendário humano** no hub `candidates` e na empresa — sem portal colaborador full nem folha.
-
-**Já existe (não reimplementar):** `candidates.hire_date` = data de contratação / **tempo de casa** (analytics, retenção, check-ins D30/60/90). Isso **não** é aniversário de nascimento.
-
-**Fora:** cartão físico, integração Slack/Teams genérica, LGPD de data completa sem base legal explícita no produto (preferir dia+mês se política exigir; detalhar na implementação).
-
-### B-2301 — Aniversário do colaborador (nascimento)
-- Migration: `candidates.birth_date` (`DATE` nullable) escopo por `company_id`.
-- Cadastro/edição na Equipe (perfil) + i18n pt-BR/en; `DateField`.
-- Superfície leve: lista “próximos aniversários” (dia/mês) na Overview ou Equipe — **cap** + tenant; índice se filtrar por mês (`(company_id, EXTRACT…)` ou coluna `birth_md` gerada — escolher o mais simples na implementação).
-- Opcional depois: notif in-app `NOTIF` para gestores da empresa (dedupe, O(gestores)).
-
-### B-2302 — Data de aniversário da empresa
-- Migration: `companies.anniversary_date` ou `founded_on` (`DATE` nullable) — **data de fundação / aniversário institucional** (não confundir com `hire_date` do colaborador).
-- UI Empresas (drawer create/edit) + leitura no card/listagem.
-- Superfície leve: chip/aviso na Overview no mês do aniversário da empresa (hedged, opcional).
+### Epic B-2300 — Aniversários ✅ ENTREGUE
+_(entregue — `candidates.birth_date` + `companies.anniversary_date` (`066`); tempo de casa = `candidates.start_date` (hire); card Overview `BirthdaysCard` + `GET /api/admin/upcoming-anniversaries`; Equipe edita nascimento; Empresas edita aniversário institucional; seed demo/eval com datas na janela.)_
 
 ---
 

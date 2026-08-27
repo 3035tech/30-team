@@ -46,6 +46,7 @@ const SECTIONS = [
   'b1900Packaging',
   'b2000LightDepth',
   'b2200RosterGrids',
+  'birthdays',
   'access',
   'tips',
 ];
@@ -230,6 +231,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     b1900Packaging: 6,
     b2000LightDepth: 6,
     b2200RosterGrids: 4,
+    birthdays: 4,
     access: 9,
     tips: 11,
   };

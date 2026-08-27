@@ -18,6 +18,7 @@ import {
   clientSortNextDir,
 } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { DateField } from '../../_components/DateField';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CopyableLink } from '../../_components/CopyableLink';
@@ -192,6 +193,7 @@ function emptyCompanyForm() {
     website: '',
     aboutHtml: '',
     publicProfileEnabled: false,
+    anniversaryDate: '',
     active: true,
   };
 }
@@ -306,6 +308,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       website: c?.website ?? '',
       aboutHtml: c?.aboutHtml ?? '',
       publicProfileEnabled: Boolean(c?.publicProfileEnabled),
+      anniversaryDate:
+        c?.anniversaryDate != null ? String(c.anniversaryDate).slice(0, 10) : '',
       active: Boolean(c?.active),
     });
     setLogoPreviewUrl(c?.logoUrl ?? '');
@@ -332,6 +336,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             website: String(form.website || '').trim() || null,
             aboutHtml: String(form.aboutHtml || '').trim() || null,
             publicProfileEnabled: form.publicProfileEnabled === true,
+            anniversaryDate: String(form.anniversaryDate || '').trim() || null,
           }),
         });
         const data = await res.json();
@@ -364,6 +369,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             website: String(form.website || '').trim() || null,
             aboutHtml: String(form.aboutHtml || '').trim() || null,
             publicProfileEnabled: form.publicProfileEnabled === true,
+            anniversaryDate: String(form.anniversaryDate || '').trim() || null,
           }),
         });
         const data = await res.json();
@@ -703,6 +709,19 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               disabled={formSaving}
               className={FIELD_INPUT}
             />
+          </label>
+          <label className={FIELD_LABEL}>
+            {t(locale, 'panel.admin.editCompanyAnniversary')}
+            <DateField
+              value={form.anniversaryDate || ''}
+              onChange={(e) => setFormField('anniversaryDate', e.target.value || '')}
+              disabled={formSaving}
+              aria-label={t(locale, 'panel.admin.editCompanyAnniversary')}
+              className={FIELD_INPUT}
+            />
+            <span className="text-[11px] leading-snug text-ink-muted">
+              {t(locale, 'panel.admin.editCompanyAnniversaryHelp')}
+            </span>
           </label>
           <CompanyLogoField
             locale={locale}

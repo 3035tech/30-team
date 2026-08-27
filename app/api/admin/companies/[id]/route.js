@@ -26,6 +26,7 @@ export async function PATCH(request, { params }) {
   const current = await query(
     `SELECT id, name, slug, active, website, about_html AS "aboutHtml",
             public_profile_enabled AS "publicProfileEnabled",
+            anniversary_date AS "anniversaryDate",
             logo_url AS "logoUrl"
      FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [companyId]
@@ -45,6 +46,7 @@ export async function PATCH(request, { params }) {
     profile = parseCompanyProfileFromBody(body, { forCreate: false });
   } catch (e) {
     if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
+    if (e?.code === 'INVALID_DATE') return apiError(request, ERR.INVALID_DATE, 400);
     throw e;
   }
 
@@ -59,16 +61,30 @@ export async function PATCH(request, { params }) {
     profile.publicProfileEnabled !== undefined
       ? profile.publicProfileEnabled
       : Boolean(current.rows[0].publicProfileEnabled);
+  const nextAnniversary =
+    profile.anniversaryDate !== undefined
+      ? profile.anniversaryDate
+      : current.rows[0].anniversaryDate ?? null;
 
   const up = await query(
     `UPDATE companies
      SET name = $2, slug = $3, active = $4, website = $5, about_html = $6,
-         public_profile_enabled = $7
+         public_profile_enabled = $7, anniversary_date = $8
      WHERE id = $1 AND deleted = FALSE
      RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
                public_profile_enabled AS "publicProfileEnabled",
+               anniversary_date AS "anniversaryDate",
                logo_url AS "logoUrl", created_at AS "createdAt"`,
-    [companyId, nextName, nextSlug, nextActive, nextWebsite, nextAbout, nextPublicProfile]
+    [
+      companyId,
+      nextName,
+      nextSlug,
+      nextActive,
+      nextWebsite,
+      nextAbout,
+      nextPublicProfile,
+      nextAnniversary,
+    ]
   );
 
   await audit({

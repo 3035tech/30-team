@@ -15,6 +15,7 @@ import HrScoreCard from './overview/HrScoreCard';
 import ExitInsightsCard from './overview/ExitInsightsCard';
 import CultureInsightsCard from './overview/CultureInsightsCard';
 import MultiSignalWorkbenchCard from './overview/MultiSignalWorkbenchCard';
+import BirthdaysCard from './overview/BirthdaysCard';
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
 
@@ -271,6 +272,14 @@ export function OverviewTab({
           intel={data.behavioralIntel}
           companyId={companyId}
           teamGroupId={data.behavioralIntel?.selectedTeamGroupId ?? data.behavioralIntel?.meta?.teamGroupId}
+          navigateDashboard={navigateDashboard}
+        />
+      ) : null}
+
+      {companyId ? (
+        <BirthdaysCard
+          locale={locale}
+          companyId={companyId}
           navigateDashboard={navigateDashboard}
         />
       ) : null}
