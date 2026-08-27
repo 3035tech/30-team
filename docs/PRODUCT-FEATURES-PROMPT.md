@@ -45,10 +45,12 @@ Não inventar merge por nome nem segundo hub paralelo.
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
 
 ## Painel — abas / módulos (CAP)
-Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · **B-1000 admin** (Cargos, Avaliação, Sucessão, Saídas, Academy light, Benefícios — CAP `users.manage`) · Guia · Meu perfil.
-Cards Overview (HR Score / Turnover / Exit / Cultura) + analytics APIs: CAP `overview.view` (hr/direction ok). CRUD B-1000 e APIs de gestão desses módulos: `users.manage` (admin). GET cargos: `vacancies.manage` **ou** `users.manage`.
-Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃO são invalidados ao revogar CAP do gestor.
+Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · **B-1000** (Cargos, Avaliações, Sucessão, Saídas, Academy, Benefícios — CAPs dedicadas assignáveis; defaults hr/direction) · Banco de talentos (`vacancies.view`) · Guia · Meu perfil.
+Cards Overview (HR Score / Turnover / Exit / Cultura) + analytics: CAP `overview.view`. Usuários/Empresas/Leads: `users.manage` / `companies.manage` (admin-only). GET cargos: `vacancies.manage` **ou** `job_roles.view`.
+Overrides por usuário (whitelist de módulos, incl. B-1000). Links públicos já emitidos NÃO são invalidados ao revogar CAP do gestor.
 Assistente flutuante de ajuda (B-801): FAQ + retrieval + LLM barato — só navegação/Guia, canto inferior direito.
+
+Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-rh.md` + epic B-1900 no backlog.
 
 ## Funcionalidades entregues (por área)
 
