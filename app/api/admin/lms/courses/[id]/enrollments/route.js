@@ -5,6 +5,8 @@ import { apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
 import { z, zPositiveInt } from '../../../../../../../lib/validate.js';
 import { enrollLmsCandidates, listLmsEnrollments } from '../../../../../../../lib/lms.js';
 import { audit } from '../../../../../../../lib/audit.js';
+import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifications.js';
+import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 
 const listQuerySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -13,7 +15,14 @@ const listQuerySchema = z.object({
 
 const enrollBodySchema = z.object({
   companyId: zPositiveInt.optional(),
-  candidateIds: z.array(zPositiveInt).min(1).max(40),
+  candidateIds: z.array(zPositiveInt).max(100).optional(),
+  allEmployees: z.boolean().optional(),
+  teamGroupId: zPositiveInt.optional().nullable(),
+  cohortId: zPositiveInt.optional().nullable(),
+  cohortName: z.string().trim().min(1).max(200).optional().nullable(),
+  dueDate: z.string().trim().max(10).optional().nullable(),
+  mandatory: z.boolean().optional(),
+  notify: z.boolean().optional(),
 });
 
 /** GET /api/admin/lms/courses/[id]/enrollments */
@@ -46,7 +55,7 @@ export const GET = withAdminApi(
   }
 );
 
-/** POST /api/admin/lms/courses/[id]/enrollments — batch enroll employees */
+/** POST batch enroll — ids / allEmployees / teamGroupId + optional turma */
 export const POST = withAdminApi(
   {
     cap: CAP.LEARNING_VIEW,
@@ -62,7 +71,13 @@ export const POST = withAdminApi(
     const result = await enrollLmsCandidates(null, {
       companyId,
       courseId,
-      candidateIds: body.candidateIds,
+      candidateIds: body.candidateIds || [],
+      allEmployees: body.allEmployees === true,
+      teamGroupId: body.teamGroupId || null,
+      cohortId: body.cohortId || null,
+      cohortName: body.cohortName || null,
+      dueDate: body.dueDate,
+      mandatory: body.mandatory === true,
       enrolledByUserId: payload.userId,
     });
     if (!result.ok) {
@@ -73,12 +88,31 @@ export const POST = withAdminApi(
       action: 'lms.enroll.batch',
       targetType: 'lms_course',
       targetId: String(courseId),
-      metadata: { enrolled: result.enrolled, skipped: result.skipped },
+      metadata: {
+        enrolled: result.enrolled,
+        skipped: result.skipped,
+        cohortId: result.cohortId,
+      },
     });
+    if (body.notify !== false && result.enrolled > 0) {
+      await notifyCompanyManagers({
+        companyId,
+        type: NOTIF.LMS_ENROLLED,
+        entityType: 'lms_course',
+        entityId: courseId,
+        dedupeKey: `lms_enrolled:${courseId}:${Date.now()}`,
+        payload: {
+          courseId,
+          courseTitle: result.courseTitle,
+          enrolled: result.enrolled,
+        },
+      });
+    }
     return NextResponse.json({
       ok: true,
       enrolled: result.enrolled,
       skipped: result.skipped,
+      cohortId: result.cohortId,
     });
   }
 );

@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { DateField } from '../../_components/DateField';
 import { EntitySearchSelect } from '../../_components/EntitySearchSelect';
 import {
   AdminActionsCell,
@@ -21,11 +22,18 @@ function companyQs(companyId) {
   return companyId ? `companyId=${encodeURIComponent(companyId)}` : '';
 }
 
+function lmsText(locale, key, fallback) {
+  const path = `panel.lms.${key}`;
+  const translated = t(locale, path);
+  return translated === path ? fallback : translated;
+}
+
 /**
- * Basic LMS admin — courses, lessons (URL), enrollments + progress.
+ * LMS admin — courses, ordered URL/PDF lessons, cohort enrollment + progress.
  */
-export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
+export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
   const { confirm, promptForm, toast } = useAppFeedback();
+  const pdfInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -34,6 +42,10 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [enrollPick, setEnrollPick] = useState('');
   const [enrollBusy, setEnrollBusy] = useState(false);
+  const [lessonBusy, setLessonBusy] = useState(false);
+  const [cohortName, setCohortName] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [mandatory, setMandatory] = useState(false);
 
   const loadCourses = useCallback(async () => {
     if (!companyId) return;
@@ -84,6 +96,16 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
   useEffect(() => {
     void loadCourses();
   }, [loadCourses]);
+
+  useEffect(() => {
+    const passedId = Number(courseId);
+    if (Number.isFinite(passedId) && passedId > 0) {
+      setSelectedId(passedId);
+      return;
+    }
+    const queryId = Number(new URLSearchParams(window.location.search).get('course'));
+    if (Number.isFinite(queryId) && queryId > 0) setSelectedId(queryId);
+  }, [courseId]);
 
   useEffect(() => {
     if (selectedId) void loadDetail(selectedId);
@@ -221,12 +243,126 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
     }
   };
 
+  const editLesson = async (lesson) => {
+    const values = await promptForm({
+      title: lmsText(locale, 'lessonEdit', 'Editar aula'),
+      fields: [
+        {
+          name: 'title',
+          label: t(locale, 'panel.lms.fieldTitle'),
+          type: 'text',
+          required: true,
+          defaultValue: lesson.title,
+        },
+        {
+          name: 'contentUrl',
+          label: t(locale, 'panel.lms.fieldUrl'),
+          type: 'text',
+          required: true,
+          defaultValue: lesson.contentUrl,
+        },
+      ],
+    });
+    if (!values) return;
+    setLessonBusy(true);
+    try {
+      const res = await fetch(`/api/admin/lms/lessons/${encodeURIComponent(lesson.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          title: values.title,
+          contentUrl: values.contentUrl,
+          contentKind: lesson.contentKind,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'lesson update');
+      toast(lmsText(locale, 'lessonUpdated', 'Aula atualizada.'), 'ok');
+      await loadDetail(selectedId);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
+    }
+  };
+
+  const reorderLesson = async (lessonIndex, direction) => {
+    const nextIndex = lessonIndex + direction;
+    const lessons = [...(detail?.lessons || [])];
+    if (!selectedId || nextIndex < 0 || nextIndex >= lessons.length) return;
+    [lessons[lessonIndex], lessons[nextIndex]] = [lessons[nextIndex], lessons[lessonIndex]];
+    setLessonBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons/reorder`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyId,
+            lessonIds: lessons.map((lesson) => Number(lesson.id)),
+          }),
+        }
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'lesson reorder');
+      setDetail((current) => (current ? { ...current, lessons } : current));
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
+    }
+  };
+
+  const uploadPdf = async (file) => {
+    if (!selectedId || !file) return;
+    const values = await promptForm({
+      title: lmsText(locale, 'uploadPdf', 'Enviar PDF'),
+      fields: [
+        {
+          name: 'title',
+          label: t(locale, 'panel.lms.fieldTitle'),
+          type: 'text',
+          required: true,
+          defaultValue: file.name.replace(/\.pdf$/i, ''),
+        },
+      ],
+    });
+    if (!values) return;
+    setLessonBusy(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('title', values.title);
+      form.append('companyId', String(companyId));
+      const res = await fetch(
+        `/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons/upload`,
+        { method: 'POST', body: form }
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          json?.error || lmsText(locale, 'storageNotConfigured', 'Armazenamento não configurado')
+        );
+      }
+      toast(t(locale, 'panel.lms.lessonCreated'), 'ok');
+      await loadDetail(selectedId);
+      await loadCourses();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
+    }
+  };
+
   const deactivateLesson = async (lesson) => {
     const ok = await confirm({
       title: t(locale, 'panel.lms.deactivateLesson'),
       message: lesson.title,
     });
     if (!ok) return;
+    setLessonBusy(true);
     try {
       const res = await fetch(`/api/admin/lms/lessons/${encodeURIComponent(lesson.id)}`, {
         method: 'PATCH',
@@ -241,12 +377,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
       await loadDetail(selectedId);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
     }
   };
 
-  const enrollSelected = async () => {
-    const candidateId = Number(enrollPick);
-    if (!selectedId || !Number.isFinite(candidateId) || candidateId <= 0) return;
+  const enroll = async (target) => {
+    if (!selectedId) return;
     setEnrollBusy(true);
     try {
       const res = await fetch(
@@ -254,7 +391,14 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ companyId, candidateIds: [candidateId] }),
+          body: JSON.stringify({
+            companyId,
+            ...target,
+            cohortName: cohortName.trim() || null,
+            dueDate: dueDate || null,
+            mandatory,
+            notify: true,
+          }),
         }
       );
       const json = await res.json().catch(() => ({}));
@@ -276,12 +420,123 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
     }
   };
 
+  const enrollSelected = async () => {
+    const candidateId = Number(enrollPick);
+    if (!Number.isFinite(candidateId) || candidateId <= 0) return;
+    await enroll({ candidateIds: [candidateId] });
+  };
+
+  const enrollAllEmployees = async () => {
+    const ok = await confirm({
+      title: lmsText(locale, 'batchAllEmployees', 'Matricular todos os colaboradores'),
+      message: detail?.course?.title || '',
+    });
+    if (ok) await enroll({ allEmployees: true });
+  };
+
+  const enrollTeamGroup = async () => {
+    setEnrollBusy(true);
+    try {
+      const res = await fetch(`/api/admin/team-groups?${companyQs(companyId)}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'groups');
+      const groups = Array.isArray(json.items) ? json.items : [];
+      const values = await promptForm({
+        title: lmsText(locale, 'batchTeamGroup', 'Matricular grupo'),
+        fields: [
+          {
+            name: 'teamGroupId',
+            label: lmsText(locale, 'batchTeamGroup', 'Grupo'),
+            type: 'select',
+            required: true,
+            options: groups.map((group) => ({
+              value: String(group.id),
+              label: group.name,
+            })),
+          },
+        ],
+      });
+      if (!values) return;
+      const teamGroupId = Number(values.teamGroupId);
+      if (Number.isFinite(teamGroupId) && teamGroupId > 0) await enroll({ teamGroupId });
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.loadError'), 'error');
+    } finally {
+      setEnrollBusy(false);
+    }
+  };
+
+  const editEnrollment = async (row) => {
+    const values = await promptForm({
+      title: lmsText(locale, 'enrollmentDue', 'Prazo da matrícula'),
+      fields: [
+        {
+          name: 'dueDate',
+          label: lmsText(locale, 'fieldDueDate', 'Data limite'),
+          type: 'date',
+          defaultValue: row.dueDate || '',
+        },
+        {
+          name: 'mandatory',
+          label: lmsText(locale, 'fieldMandatory', 'Obrigatório'),
+          type: 'boolean',
+          defaultValue: row.mandatory,
+        },
+      ],
+    });
+    if (!values) return;
+    setEnrollBusy(true);
+    try {
+      const res = await fetch(`/api/admin/lms/enrollments/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          dueDate: values.dueDate || null,
+          mandatory: values.mandatory === true,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'enrollment update');
+      await loadDetail(selectedId);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setEnrollBusy(false);
+    }
+  };
+
+  const resetEnrollment = async (row) => {
+    const ok = await confirm({
+      title: lmsText(locale, 'resetProgress', 'Zerar progresso'),
+      message: row.fullName,
+    });
+    if (!ok) return;
+    setEnrollBusy(true);
+    try {
+      const res = await fetch(`/api/admin/lms/enrollments/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId, resetProgress: true }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'reset progress');
+      await loadDetail(selectedId);
+      await loadCourses();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setEnrollBusy(false);
+    }
+  };
+
   const removeEnrollment = async (row) => {
     const ok = await confirm({
       title: t(locale, 'panel.lms.removeEnrollment'),
       message: row.fullName,
     });
     if (!ok) return;
+    setEnrollBusy(true);
     try {
       const res = await fetch(
         `/api/admin/lms/enrollments/${encodeURIComponent(row.id)}?${companyQs(companyId)}`,
@@ -296,6 +551,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
       await loadCourses();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setEnrollBusy(false);
     }
   };
 
@@ -402,20 +659,45 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
                 <div>
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <span className={S.label}>{t(locale, 'panel.lms.lessonsTitle')}</span>
-                    <AdminCreateButton onClick={addLesson} label={t(locale, 'panel.lms.addLesson')} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className={cn(S.btnBrandSoft, 'min-h-touch')}
+                        disabled={lessonBusy}
+                        onClick={() => pdfInputRef.current?.click()}
+                      >
+                        {lmsText(locale, 'uploadPdf', 'Enviar PDF')}
+                      </button>
+                      <input
+                        ref={pdfInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = '';
+                          if (file) void uploadPdf(file);
+                        }}
+                      />
+                      <AdminCreateButton
+                        onClick={addLesson}
+                        disabled={lessonBusy}
+                        label={t(locale, 'panel.lms.addLesson')}
+                      />
+                    </div>
                   </div>
                   {(detail.lessons || []).length === 0 ? (
                     <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.lms.noLessons')}</p>
                   ) : (
                     <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                      {detail.lessons.map((l) => (
+                      {detail.lessons.map((l, index) => (
                         <li
                           key={l.id}
                           className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 px-3 py-2"
                         >
                           <div className="min-w-0">
                             <div className="text-sm text-ink">
-                              {l.sortOrder + 1}. {l.title}
+                              {index + 1}. {l.title}
                               {!l.active ? (
                                 <span className="ml-2 font-mono text-[10px] text-ink-faint">
                                   {t(locale, 'panel.lms.inactive')}
@@ -431,12 +713,40 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
                               {l.contentKind} · {l.contentUrl}
                             </a>
                           </div>
-                          {l.active ? (
-                            <AdminDeleteButton
-                              onClick={() => deactivateLesson(l)}
-                              label={t(locale, 'panel.lms.deactivateLesson')}
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className={cn(S.btnGhost, 'min-h-touch px-2')}
+                              disabled={lessonBusy || index === 0}
+                              onClick={() => reorderLesson(index, -1)}
+                              aria-label={lmsText(locale, 'lessonReorderUp', 'Mover aula para cima')}
+                              title={lmsText(locale, 'lessonReorderUp', 'Mover aula para cima')}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(S.btnGhost, 'min-h-touch px-2')}
+                              disabled={lessonBusy || index === detail.lessons.length - 1}
+                              onClick={() => reorderLesson(index, 1)}
+                              aria-label={lmsText(locale, 'lessonReorderDown', 'Mover aula para baixo')}
+                              title={lmsText(locale, 'lessonReorderDown', 'Mover aula para baixo')}
+                            >
+                              ↓
+                            </button>
+                            <AdminEditButton
+                              onClick={() => editLesson(l)}
+                              disabled={lessonBusy}
+                              label={lmsText(locale, 'lessonEdit', 'Editar aula')}
                             />
-                          ) : null}
+                            {l.active ? (
+                              <AdminDeleteButton
+                                onClick={() => deactivateLesson(l)}
+                                disabled={lessonBusy}
+                                label={t(locale, 'panel.lms.deactivateLesson')}
+                              />
+                            ) : null}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -445,6 +755,44 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
 
                 <div>
                   <span className={S.label}>{t(locale, 'panel.lms.enrollmentsTitle')}</span>
+                  <div className="mt-2 rounded-control border border-ink/10 bg-canvas-alt p-3">
+                    <div className="mb-2 font-mono text-[11px] uppercase text-ink-faint">
+                      {lmsText(locale, 'enrollBatchOpts', 'Opções da turma')}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block min-w-0">
+                        <span className="font-mono text-[11px] text-ink-faint">
+                          {lmsText(locale, 'batchCohortName', 'Nome da turma (opcional)')}
+                        </span>
+                        <input
+                          type="text"
+                          value={cohortName}
+                          onChange={(event) => setCohortName(event.target.value)}
+                          className={cn(S.input, 'mt-1 w-full')}
+                        />
+                      </label>
+                      <label className="block min-w-0">
+                        <span className="font-mono text-[11px] text-ink-faint">
+                          {lmsText(locale, 'fieldDueDate', 'Data limite')}
+                        </span>
+                        <DateField
+                          value={dueDate}
+                          onChange={(event) => setDueDate(event.target.value)}
+                          className="mt-1"
+                          aria-label={lmsText(locale, 'fieldDueDate', 'Data limite')}
+                        />
+                      </label>
+                    </div>
+                    <label className="mt-3 flex min-h-touch cursor-pointer items-center gap-2 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        checked={mandatory}
+                        onChange={(event) => setMandatory(event.target.checked)}
+                        className={S.checkbox}
+                      />
+                      {lmsText(locale, 'fieldMandatory', 'Obrigatório')}
+                    </label>
+                  </div>
                   <div className="mt-2 flex flex-wrap items-end gap-2">
                     <div className="min-w-[220px] flex-1">
                       <EntitySearchSelect
@@ -463,6 +811,24 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
                       onClick={enrollSelected}
                     >
                       {t(locale, 'panel.lms.enrollBtn')}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className={cn(S.btnBrandSoft, 'min-h-touch')}
+                      disabled={enrollBusy}
+                      onClick={enrollAllEmployees}
+                    >
+                      {lmsText(locale, 'batchAllEmployees', 'Matricular todos os colaboradores')}
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(S.btnGhost, 'min-h-touch')}
+                      disabled={enrollBusy}
+                      onClick={enrollTeamGroup}
+                    >
+                      {lmsText(locale, 'batchTeamGroup', 'Matricular grupo')}
                     </button>
                   </div>
                   {enrollments.length === 0 ? (
@@ -484,6 +850,28 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
                             <td className="px-2 py-2">
                               <div className="text-sm text-ink">{row.fullName}</div>
                               <div className="font-mono text-[11px] text-ink-faint">{row.email}</div>
+                              {row.cohortName ? (
+                                <div className="mt-1 text-xs text-ink-muted">
+                                  {lmsText(locale, 'cohortLabel', 'Turma')}: {row.cohortName}
+                                </div>
+                              ) : null}
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+                                {row.dueDate ? (
+                                  <span>
+                                    {lmsText(locale, 'enrollmentDue', 'Prazo')}: {row.dueDate}
+                                  </span>
+                                ) : null}
+                                {row.mandatory ? (
+                                  <span className="rounded-full bg-warning/10 px-2 py-0.5 text-warning">
+                                    {lmsText(locale, 'fieldMandatory', 'Obrigatório')}
+                                  </span>
+                                ) : null}
+                                {row.overdue ? (
+                                  <span className="rounded-full bg-danger/10 px-2 py-0.5 text-danger">
+                                    {lmsText(locale, 'enrollmentOverdue', 'Em atraso')}
+                                  </span>
+                                ) : null}
+                              </div>
                             </td>
                             <td className="px-2 py-2 font-mono text-xs text-ink-muted">
                               {row.progressPct}%
@@ -494,8 +882,22 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId }) {
                               ) : null}
                             </td>
                             <AdminActionsCell>
+                              <button
+                                type="button"
+                                className={cn(S.btnGhost, 'min-h-touch px-2 text-xs')}
+                                disabled={enrollBusy}
+                                onClick={() => resetEnrollment(row)}
+                              >
+                                {lmsText(locale, 'resetProgress', 'Zerar progresso')}
+                              </button>
+                              <AdminEditButton
+                                onClick={() => editEnrollment(row)}
+                                disabled={enrollBusy}
+                                label={lmsText(locale, 'enrollmentDue', 'Editar prazo')}
+                              />
                               <AdminDeleteButton
                                 onClick={() => removeEnrollment(row)}
+                                disabled={enrollBusy}
                                 label={t(locale, 'panel.lms.removeEnrollment')}
                               />
                             </AdminActionsCell>

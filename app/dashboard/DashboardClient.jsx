@@ -187,6 +187,7 @@ const DEFAULT_NAV_SECTIONS = {
   recruiting: true,
   people: true,
   catalogs: true,
+  lms: true,
   account: true,
   help: true,
 };
@@ -207,7 +208,7 @@ const TAB_TO_SECTION = {
   climate: 'people',
   'job-roles': 'catalogs',
   'learning-resources': 'catalogs',
-  lms: 'catalogs',
+  lms: 'lms',
   'company-benefits': 'catalogs',
   users: 'account',
   companies: 'account',
@@ -317,6 +318,7 @@ export default function DashboardClient({
   const showBenefits = can(sessionAuth, CAP.BENEFITS_VIEW);
   const showPeopleGp = showPerformance || showSuccession || showExitAnalysis;
   const showCatalogs = showJobRoles || showLearning || showBenefits;
+  const showLmsSection = showLearning;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -880,13 +882,20 @@ export default function DashboardClient({
                     {showLearning ? (
                       <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
                     ) : null}
-                    {showLearning ? (
-                      <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
-                    ) : null}
                     {showBenefits ? (
                       <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
                     ) : null}
                   </>
+                ))}
+              </>
+            ) : null}
+
+            {showLmsSection ? (
+              <>
+                <div className="my-2 h-px bg-ink/[0.08]" />
+                {sectionLabel('lms', t(locale, 'dashboard.sectionLms'))}
+                {sectionBody('lms', (
+                  <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
                 ))}
               </>
             ) : null}

@@ -343,7 +343,7 @@ const DASHBOARD_TAB_NAV = {
   succession: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.succession' },
   'exit-analysis': { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.exitAnalysis' },
   'learning-resources': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.learningResources' },
-  lms: { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.lms' },
+  lms: { sectionKey: 'dashboard.sectionLms', labelKey: 'dashboard.lms' },
   'company-benefits': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.companyBenefits' },
   companies: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.companies' },
   users: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.users' },
