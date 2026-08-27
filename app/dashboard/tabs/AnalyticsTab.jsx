@@ -11,7 +11,9 @@ import { S } from '../dashboard-shared.jsx';
 
 export function AnalyticsTab({ session }) {
   const { t, locale } = useLocale();
+  const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends'
   const [metrics, setMetrics] = useState(null);
+  const [trends, setTrends] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -19,6 +21,7 @@ export function AnalyticsTab({ session }) {
     endDate: '',
     vacancyId: '',
   });
+  const [trendMonths, setTrendMonths] = useState(12);
 
   useEffect(() => {
     loadMetrics();
