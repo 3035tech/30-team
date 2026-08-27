@@ -15,7 +15,7 @@ import { FUNNEL_EVENT_TYPES, recordJobFunnelEvent } from '../../../../lib/job-fu
  */
 export async function POST(request) {
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`job-funnel:${ip}`, 120, 10 * 60 * 1000);
+  const rl = await checkRateLimit(`job-funnel:${ip}`, 120, 10 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }

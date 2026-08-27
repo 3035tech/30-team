@@ -24,7 +24,7 @@ export async function POST(request) {
   }
 
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`help-chat:${payload.userId || ip}`, 40, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`help-chat:${payload.userId || ip}`, 40, 60 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }

@@ -1,8 +1,10 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '../../../../../lib/auth.js';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
-import { hydrateSessionPayload } from '../../../../../lib/session.js';
-import { isManagerRole, isAdminRole } from '../../../../../lib/permissions.js';
+import {
+  getSessionPayload,
+  isAdminRole,
+  CAP,
+  requireCapability,
+} from '../../../../../lib/ae/require-admin.js';
 import { getJobRole, updateJobRole, deactivateJobRole } from '../../../../../lib/job-roles.js';
 
 /**
@@ -11,15 +13,8 @@ import { getJobRole, updateJobRole, deactivateJobRole } from '../../../../../lib
  */
 export async function GET(request, { params }) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
@@ -55,15 +50,8 @@ export async function GET(request, { params }) {
  */
 export async function PATCH(request, { params }) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
@@ -103,20 +91,20 @@ export async function PATCH(request, { params }) {
     return Response.json(updatedRole);
   } catch (err) {
     console.error('[job-roles] PATCH [id] error:', err);
-    
+
     if (err.message === 'INVALID_RUBRIC') {
       return apiError(request, ERR.INVALID_RUBRIC, 400);
     }
-    
+
     if (err.message === 'JOB_ROLE_NOT_FOUND') {
       return apiError(request, ERR.JOB_ROLE_NOT_FOUND, 404);
     }
-    
+
     // Violação de UNIQUE (company_id, name)
     if (err.code === '23505') {
       return apiError(request, ERR.JOB_ROLE_NAME_EXISTS, 409);
     }
-    
+
     return apiError(request, ERR.INTERNAL, 500);
   }
 }
@@ -127,15 +115,8 @@ export async function PATCH(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 

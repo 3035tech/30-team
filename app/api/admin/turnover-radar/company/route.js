@@ -1,32 +1,31 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '../../../../../lib/auth.js';
+import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
-import { hydrateSessionPayload } from '../../../../../lib/session.js';
-import { isManagerRole, isAdminRole } from '../../../../../lib/permissions.js';
+import {
+  getSessionPayload,
+  getManagerScope,
+  isAdminRole,
+  CAP,
+  requireCapability,
+} from '../../../../../lib/ae/require-admin.js';
 import { getCompanyTurnoverRisks } from '../../../../../lib/turnover-radar.js';
 
 /**
  * GET /api/admin/turnover-radar/company?companyId=X
- * 
- * Retorna lista de colaboradores em risco de rotatividade
+ *
+ * Retorna lista de colaboradores em risco de rotatividade (Overview intel).
  */
 export async function GET(request) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const { searchParams } = new URL(request.url);
-    
+
     let companyId;
     if (isAdmin) {
       const qCompanyId = searchParams.get('companyId');
@@ -41,15 +40,15 @@ export async function GET(request) {
       }
     }
 
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
     const minRisk = searchParams.get('minRisk') || 'medium';
 
     const risks = await getCompanyTurnoverRisks(companyId, {
-      limit: Math.min(limit, 100),
+      limit: Math.min(Number.isFinite(limit) ? limit : 20, 100),
       minRisk,
     });
 
-    return Response.json({
+    return NextResponse.json({
       companyId,
       total: risks.length,
       risks,

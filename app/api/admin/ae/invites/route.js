@@ -87,7 +87,7 @@ export async function POST(request) {
     if (!authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`ae-invite:${payload?.userId || ip}`, 40, 60 * 60 * 1000);
+    const rl = await checkRateLimit(`ae-invite:${payload?.userId || ip}`, 40, 60 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT_INVITES, 429);
     }

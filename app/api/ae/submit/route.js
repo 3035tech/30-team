@@ -18,7 +18,7 @@ import { buildManagementHypotheses } from '../../../../lib/people/management-hyp
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`ae-submit:${ip}`, 30, 10 * 60 * 1000);
+    const rl = await checkRateLimit(`ae-submit:${ip}`, 30, 10 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT_SHORT, 429);
     }

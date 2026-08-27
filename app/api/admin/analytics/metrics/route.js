@@ -7,13 +7,13 @@
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
 import { getHiringEffectivenessMetrics } from '../../../../../lib/analytics-metrics.js';
-import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../../lib/ae/require-admin.js';
 import { checkAnalyticsRateLimit, addRateLimitHeaders } from '../../../../../lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
     const companyId = scope.isAdmin
@@ -22,7 +22,7 @@ export async function GET(request) {
     if (!Number.isFinite(companyId) || companyId <= 0) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     const rateLimitScope = { ...scope, companyId, userId: payload.userId };
-    const rateLimitResponse = checkAnalyticsRateLimit(request, rateLimitScope);
+    const rateLimitResponse = await checkAnalyticsRateLimit(request, rateLimitScope);
     if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);

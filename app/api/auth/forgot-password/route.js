@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request) {
   const ip = clientIpFromRequest(request);
-  const rlIp = checkRateLimit(`forgot-password-ip:${ip}`, 10, 15 * 60 * 1000);
+  const rlIp = await checkRateLimit(`forgot-password-ip:${ip}`, 10, 15 * 60 * 1000);
   if (!rlIp.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rlIp.retryAfterSec) } });
   }
@@ -22,7 +22,7 @@ export async function POST(request) {
   const email = String(body.email || '').trim().toLowerCase();
   const locale = normalizeLocale(body.locale || 'pt-BR');
 
-  const rlEmail = checkRateLimit(`forgot-password-email:${email || 'empty'}`, 5, 60 * 60 * 1000);
+  const rlEmail = await checkRateLimit(`forgot-password-email:${email || 'empty'}`, 5, 60 * 60 * 1000);
   if (!rlEmail.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rlEmail.retryAfterSec) } });
   }

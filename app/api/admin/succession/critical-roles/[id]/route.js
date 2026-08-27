@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../../lib/api-error.js';
-import { getSessionPayload, getManagerScope, resolveScopedCompanyId, requireManagerRole } from '../../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, resolveScopedCompanyId, CAP, requireCapability } from '../../../../../../lib/ae/require-admin.js';
 import { getCriticalRole, updateCriticalRole, deactivateCriticalRole } from '../../../../../../lib/succession-plans.js';
 import { audit } from '../../../../../../lib/audit.js';
 
@@ -14,7 +14,7 @@ import { audit } from '../../../../../../lib/audit.js';
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
@@ -90,7 +90,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 

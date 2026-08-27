@@ -397,6 +397,8 @@ Principais (lista completa em `.env.example`):
 | `POSTGRES_READ_HOST` | Réplica só-leitura (opcional) |
 | `BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD` | Admin inicial |
 | `JWT_SECRET` | Assinatura do JWT (≥32 chars em produção) |
+| `REDIS_URL` | Opcional — Redis clássico para rate limit (`redis://:senha@host:6379/4`). Dublin: `redis-haproxy.redis.svc` |
+| `REDIS_KEY_PREFIX` | Prefixo das chaves de rate limit (default `team30`) |
 | `NEXT_PUBLIC_APP_URL` | URL pública (links de e-mail, Indexing, share) |
 | `COOKIE_SECURE` | Força Secure (`true`/`false`) |
 | `SMTP_HOST` + `MAIL_FROM` | E-mail (convites **e** job alerts ao publicar `/jobs`; sem SMTP = alerts no-op) |

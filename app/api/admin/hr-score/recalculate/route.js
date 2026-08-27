@@ -1,30 +1,23 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '../../../../../lib/auth.js';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
-import { hydrateSessionPayload } from '../../../../../lib/session.js';
-import { isAdminRole } from '../../../../../lib/permissions.js';
+import {
+  getSessionPayload,
+  CAP,
+  requireCapability,
+} from '../../../../../lib/ae/require-admin.js';
 import { recalculateCompanyScores } from '../../../../../lib/hr-score.js';
 
 /**
  * POST /api/admin/hr-score/recalculate
- * 
+ *
  * Recalcula scores de todos os colaboradores ativos de uma empresa.
- * Admin only.
- * 
+ *
  * Body: { companyId: number, limit?: number }
  */
 export async function POST(request) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isAdminRole(payload)) {
-      return apiError(request, ERR.ADMIN_ONLY, 403);
+    const payload = await getSessionPayload();
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const body = await request.json();

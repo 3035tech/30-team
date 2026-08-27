@@ -8,7 +8,7 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit'
 export async function GET(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`public-ae-invite:${ip}`, 60, 60 * 1000);
+    const rl = await checkRateLimit(`public-ae-invite:${ip}`, 60, 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }

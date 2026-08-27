@@ -16,7 +16,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`ae-start:${ip}`, 30, 10 * 60 * 1000);
+    const rl = await checkRateLimit(`ae-start:${ip}`, 30, 10 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT_SHORT, 429);
     }

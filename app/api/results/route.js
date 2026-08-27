@@ -11,7 +11,7 @@ import { normalizeAssessmentTelemetry, submitAssessmentResult } from '../../../l
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
+    const rl = await checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }

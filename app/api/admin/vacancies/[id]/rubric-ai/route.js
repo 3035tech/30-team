@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
   }
 
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`rubric-ai:${payload.userId || ip}`, 20, 15 * 60 * 1000);
+  const rl = await checkRateLimit(`rubric-ai:${payload.userId || ip}`, 20, 15 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }

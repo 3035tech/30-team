@@ -7,13 +7,13 @@
 
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
-import { getSessionPayload, requireAdminRole } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, CAP, requireCapability } from '../../../../../lib/ae/require-admin.js';
 import { getHrScoreCacheMetrics } from '../../../../../lib/hr-score-cache.js';
 
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireAdminRole(payload)) {
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 

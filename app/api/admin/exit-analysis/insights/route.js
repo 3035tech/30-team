@@ -1,30 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
-import { apiError, ERR } from '../../../../../lib/api-error.js';
+import { withAdminApi } from '../../../../../lib/admin-api.js';
+import { CAP } from '../../../../../lib/ae/require-admin.js';
+import { z, zPositiveInt } from '../../../../../lib/validate.js';
 import { getExitInsights } from '../../../../../lib/exit-analysis.js';
 
+const querySchema = z.object({
+  companyId: zPositiveInt.optional(),
+});
+
 /**
- * GET /api/admin/exit-analysis/insights — get exit insights (M1/M3/M4 patterns)
+ * GET /api/admin/exit-analysis/insights — Overview intel (overview.view)
  */
-
-export async function GET(request) {
-  try {
-    const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
-    const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
-
-    const companyId = scope.isAdmin
-      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, ERR.COMPANY_REQUIRED, 400);
-    }
-
+export const GET = withAdminApi(
+  {
+    cap: CAP.OVERVIEW_VIEW,
+    query: querySchema,
+    companyFrom: 'query',
+    logLabel: 'exit-analysis insights',
+  },
+  async ({ companyId }) => {
     const data = await getExitInsights(null, { companyId });
     return NextResponse.json({ ok: true, ...data }, { status: 200 });
-  } catch (err) {
-    console.error('GET /api/admin/exit-analysis/insights error:', err);
-    return apiError(request, ERR.INTERNAL, 500);
   }
-}
+);

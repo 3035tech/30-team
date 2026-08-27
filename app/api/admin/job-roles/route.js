@@ -1,121 +1,60 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '../../../../lib/auth.js';
-import { apiError, ERR } from '../../../../lib/api-error.js';
-import { hydrateSessionPayload } from '../../../../lib/session.js';
-import { isManagerRole, isAdminRole } from '../../../../lib/permissions.js';
+import { withAdminApi } from '../../../../lib/admin-api.js';
+import { CAP } from '../../../../lib/ae/require-admin.js';
+import { z, zPositiveInt, zQueryBool } from '../../../../lib/validate.js';
 import { listCompanyJobRoles, createJobRole } from '../../../../lib/job-roles.js';
+
+const listQuerySchema = z.object({
+  companyId: zPositiveInt.optional(),
+  includeInactive: zQueryBool,
+});
+
+const createBodySchema = z.object({
+  companyId: zPositiveInt.optional(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(4000).optional().nullable(),
+  rubric: z.record(z.coerce.number()).optional().default({}),
+});
 
 /**
  * GET /api/admin/job-roles?companyId=X&includeInactive=false
- * Lista cargos da empresa
+ * Lista cargos — vacancies.manage (seleção em vagas) ou users.manage (aba admin).
  */
-export async function GET(request) {
-  try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
-      return apiError(request, ERR.UNAUTHORIZED, 401);
-    }
-
-    const isAdmin = isAdminRole(payload);
-    const { searchParams } = new URL(request.url);
-    
-    let companyId;
-    if (isAdmin) {
-      const qCompanyId = searchParams.get('companyId');
-      companyId = qCompanyId ? parseInt(qCompanyId) : null;
-      if (!companyId) {
-        return apiError(request, ERR.COMPANY_REQUIRED, 400);
-      }
-    } else {
-      companyId = payload.companyId;
-      if (!companyId) {
-        return apiError(request, ERR.COMPANY_REQUIRED, 400);
-      }
-    }
-
-    const includeInactive = searchParams.get('includeInactive') === 'true';
-
-    const roles = await listCompanyJobRoles(companyId, { includeInactive });
-
+export const GET = withAdminApi(
+  {
+    anyCap: [CAP.VACANCIES_MANAGE, CAP.USERS_MANAGE],
+    query: listQuerySchema,
+    companyFrom: 'query',
+    logLabel: 'job-roles GET',
+  },
+  async ({ companyId, query }) => {
+    const roles = await listCompanyJobRoles(companyId, {
+      includeInactive: query.includeInactive,
+    });
     return Response.json({
       companyId,
       total: roles.length,
       roles,
     });
-  } catch (err) {
-    console.error('[job-roles] GET error:', err);
-    return apiError(request, ERR.INTERNAL, 500);
   }
-}
+);
 
 /**
- * POST /api/admin/job-roles
- * Cria novo cargo
- * Body: { companyId?, name, description?, rubric }
+ * POST /api/admin/job-roles — cria cargo (users.manage)
  */
-export async function POST(request) {
-  try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, ERR.REQUIRED_LOGIN, 401);
-    }
-
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
-      return apiError(request, ERR.UNAUTHORIZED, 401);
-    }
-
-    const isAdmin = isAdminRole(payload);
-    const body = await request.json();
-    
-    let companyId;
-    if (isAdmin) {
-      companyId = body.companyId ? parseInt(body.companyId) : null;
-      if (!companyId) {
-        return apiError(request, ERR.COMPANY_REQUIRED, 400);
-      }
-    } else {
-      companyId = payload.companyId;
-      if (!companyId) {
-        return apiError(request, ERR.COMPANY_REQUIRED, 400);
-      }
-    }
-
-    const { name, description, rubric } = body;
-
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      return apiError(request, ERR.NAME_REQUIRED, 400);
-    }
-
+export const POST = withAdminApi(
+  {
+    cap: CAP.USERS_MANAGE,
+    body: createBodySchema,
+    companyFrom: 'body',
+    logLabel: 'job-roles POST',
+  },
+  async ({ companyId, body }) => {
     const newRole = await createJobRole({
       companyId,
-      name: name.trim(),
-      description: description?.trim() || null,
-      rubric: rubric || {},
+      name: body.name,
+      description: body.description || null,
+      rubric: body.rubric || {},
     });
-
     return Response.json(newRole, { status: 201 });
-  } catch (err) {
-    console.error('[job-roles] POST error:', err);
-    
-    if (err.message === 'INVALID_RUBRIC') {
-      return apiError(request, ERR.INVALID_RUBRIC, 400);
-    }
-    
-    // Violação de UNIQUE (company_id, name)
-    if (err.code === '23505') {
-      return apiError(request, ERR.JOB_ROLE_NAME_EXISTS, 409);
-    }
-    
-    return apiError(request, ERR.INTERNAL, 500);
   }
-}
+);

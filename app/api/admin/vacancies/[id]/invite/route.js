@@ -31,7 +31,7 @@ export async function POST(request, { params }) {
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rlKey = `invite:${uid || ip}`;
-    const rl = checkRateLimit(rlKey, 40, 60 * 60 * 1000);
+    const rl = await checkRateLimit(rlKey, 40, 60 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT_INVITES, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }

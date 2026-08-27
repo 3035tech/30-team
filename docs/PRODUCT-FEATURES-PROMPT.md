@@ -45,7 +45,8 @@ Não inventar merge por nome nem segundo hub paralelo.
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
 
 ## Painel — abas / módulos (CAP)
-Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · Guia · Meu perfil.
+Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · **B-1000 admin** (Cargos, Avaliação, Sucessão, Saídas, Academy light, Benefícios — CAP `users.manage`) · Guia · Meu perfil.
+Cards Overview (HR Score / Turnover / Exit / Cultura) + analytics APIs: CAP `overview.view` (hr/direction ok). CRUD B-1000 e APIs de gestão desses módulos: `users.manage` (admin). GET cargos: `vacancies.manage` **ou** `users.manage`.
 Overrides por usuário (whitelist de módulos). Links públicos já emitidos NÃO são invalidados ao revogar CAP do gestor.
 Assistente flutuante de ajuda (B-801): FAQ + retrieval + LLM barato — só navegação/Guia, canto inferior direito.
 

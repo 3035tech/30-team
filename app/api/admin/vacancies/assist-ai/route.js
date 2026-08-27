@@ -30,7 +30,7 @@ export async function POST(request) {
   }
 
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`assist-ai-draft:${payload.userId || ip}`, 20, 15 * 60 * 1000);
+  const rl = await checkRateLimit(`assist-ai-draft:${payload.userId || ip}`, 20, 15 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }

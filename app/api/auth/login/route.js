@@ -15,7 +15,7 @@ import { apiError, ERR } from '../../../../lib/api-error';
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
+    const rl = await checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }

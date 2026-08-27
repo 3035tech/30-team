@@ -4,14 +4,14 @@
 
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
-import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../../lib/ae/require-admin.js';
 import { submitPerformanceReview } from '../../../../../lib/performance-reviews.js';
 import { audit } from '../../../../../lib/audit.js';
 
 export async function POST(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 

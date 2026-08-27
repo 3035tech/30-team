@@ -7,16 +7,18 @@ alwaysApply: false
 # API e auth
 
 1. Erros: `return apiError(request, ERR.UNAUTHORIZED, httpStatusForError(ERR.UNAUTHORIZED))` ou `apiErrorFromResult(request, result)` — códigos em `ERR` (`lib/api-error-codes.js`). **Nunca** `{ error: '...' }` solto nem `'CODE'` literal em código novo. Ver `.cursor/rules/domain-constants.mdc` / `AGENTS.md` § Constantes.
-2. Sessão gestor: cookie `team30_session`; reusar `verifyToken` + `getManagerScope`. Visão de módulo: `can` / `CAP` / `requireCapability` em `lib/permissions.js` (APIs em `app/api/admin/**` já checam capability — VIEW vs MANAGE em vagas).
+2. Sessão gestor: cookie `team30_session`; reusar `getSessionPayload` / `getManagerScope`. Visão de módulo: `can` / `CAP` / `requireCapability` em `lib/permissions.js`.
+   **Rotas admin novas/editadas:** preferir `withAdminApi` (`lib/admin-api.js`) + Zod (`lib/validate.js`) em vez de copiar cookie/CAP/companyId à mão.
 3. Não-admin: filtrar `company_id` em **todo** SELECT/UPDATE. Sem `company_id` → 401.
-4. `/api/admin/*` já passa pelo middleware; ainda assim validar **capability** + escopo de tenant na rota (`isAdminRole` / `getManagerScope`).
+4. `/api/admin/*` já passa pelo middleware; ainda assim validar **capability** + escopo de tenant (`withAdminApi` ou `requireCapability` + `resolveScopedCompanyId`).
 5. Endpoints públicos (`/api/results`, `/api/public/*`, `/api/ae/*`) autenticam por **token de link/convite**, não JWT de gestor.
 6. Escrita: `query`. Leitura que pode ir à réplica: `queryRead`.
 7. SQL só com placeholders `$1`. Soft delete: `deleted = FALSE`.
 8. Mutações sensíveis (user, company, hire/reject, purge): `audit({ actorUserId, action, ... })`.
 9. Cron: exigir `CRON_SECRET`. Não vazar stack traces para o cliente.
 10. Performance: validar volumetria da query (paginação/LIMIT/caps, sem N+1) — `.cursor/rules/dba-performance.mdc` / `AGENTS.md` § DBA e performance.
-11. **Imports relativos para `lib/` (obrigatório — erro comum de CI)**  
+11. Rate limit: `await checkRateLimit(key, limit, windowMs)` (`lib/rate-limit.js`). Opcional Redis clássico (`REDIS_URL`, ex. Dublin `redis-haproxy.redis.svc`) + `REDIS_KEY_PREFIX`.
+12. **Imports relativos para `lib/` (obrigatório — erro comum de CI)**  
     Contar pastas **entre `app/` e o `route.js`**, depois somar **1** (sair de `app/`):
     | Arquivo | `../` até `lib/` |
     |---------|------------------|

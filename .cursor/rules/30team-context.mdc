@@ -32,7 +32,8 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - **Reutilizar antes de criar** — em **cada nova tela**, avaliar reaproveitar componentes (`app/_components`, `dashboard-shared`, outras tabs). **Antes de função nova**, grep em `lib/` / call sites; reutilizar ou extrair util compartilhado. Só criar do zero se nada servir (ver `.cursor/rules/reuse-before-create.mdc` e `AGENTS.md` § Reaproveitamento)
 - **UI/UX** — atuar como especialista de usabilidade (ver `.cursor/rules/ui-ux.mdc` e `AGENTS.md` § UI/UX): lista antes de formulário, progressive disclosure, feedback de estados, consistência com tokens existentes
 - **DBA / performance** — validar cada query e a volumetria da transação (ver `.cursor/rules/dba-performance.mdc` e `AGENTS.md` § DBA e performance): tenant, índices, paginação/caps, sem N+1; desenhar para escalar sem refactor grande
-- **Imports em `app/api/**/route.js`** — contar `../` até `lib/` pela profundidade da pasta (não copiar de rota irmã de outro nível). Ver `.cursor/rules/api-and-auth.mdc` §11. Erro típico de CI: `Module not found: Can't resolve '../../../lib/…'`
+- **Imports em `app/api/**/route.js`** — contar `../` até `lib/` pela profundidade da pasta (não copiar de rota irmã de outro nível). Ver `.cursor/rules/api-and-auth.mdc` §12. Erro típico de CI: `Module not found: Can't resolve '../../../lib/…'`
+- **APIs admin novas** — `withAdminApi` (`lib/admin-api.js`) + Zod (`lib/validate.js`); rate limit com `await checkRateLimit` (Upstash opcional)
 - **Pós-implementação** — após feature/fix: (1) README/`docs` + Guia; (2) **sempre** rodar Dev → Test → Validate na mesma entrega (sem esperar o usuário pedir). Ver `AGENTS.md` e `.cursor/rules/dev-test-validate.mdc`.
 
 ## Proibido

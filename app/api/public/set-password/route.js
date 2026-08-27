@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 /** GET /api/public/set-password?token= — valida convite (e-mail mascarado). */
 export async function GET(request) {
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`set-password-peek:${ip}`, 40, 15 * 60 * 1000);
+  const rl = await checkRateLimit(`set-password-peek:${ip}`, 40, 15 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
@@ -32,7 +32,7 @@ export async function GET(request) {
 /** POST /api/public/set-password — body: { token, password } */
 export async function POST(request) {
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`set-password:${ip}`, 20, 15 * 60 * 1000);
+  const rl = await checkRateLimit(`set-password:${ip}`, 20, 15 * 60 * 1000);
   if (!rl.ok) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }

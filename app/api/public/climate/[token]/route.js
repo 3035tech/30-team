@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`public-climate:${ip}`, 40, 10 * 60 * 1000);
+    const rl = await checkRateLimit(`public-climate:${ip}`, 40, 10 * 60 * 1000);
     if (!rl.ok) {
       return apiError(
         request,

@@ -3,7 +3,7 @@ import { apiError, ERR } from '../../../../../lib/api-error.js';
 import {
   getSessionPayload,
   getManagerScope,
-  requireManagerRole,
+  CAP, requireCapability,
   resolveScopedCompanyId,
 } from '../../../../../lib/ae/require-admin.js';
 import { getCompanyHrScoreRollup } from '../../../../../lib/hr-score.js';
@@ -15,7 +15,7 @@ import { getCompanyHrScoreRollup } from '../../../../../lib/hr-score.js';
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 

@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request) {
   const ip = clientIpFromRequest(request);
-  const rl = checkRateLimit(`health-status:${ip}`, 30, 60 * 1000);
+  const rl = await checkRateLimit(`health-status:${ip}`, 30, 60 * 1000);
   if (!rl.ok) {
     return NextResponse.json(
       { status: 'down', error: 'RATE_LIMIT' },

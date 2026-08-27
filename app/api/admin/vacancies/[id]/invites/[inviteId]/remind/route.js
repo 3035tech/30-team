@@ -28,7 +28,7 @@ export async function POST(request, { params }) {
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
-    const rl = checkRateLimit(`invite-remind:${uid || ip}`, 60, 60 * 60 * 1000);
+    const rl = await checkRateLimit(`invite-remind:${uid || ip}`, 60, 60 * 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT_REMINDERS, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }

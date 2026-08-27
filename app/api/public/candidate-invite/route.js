@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   try {
     const ip = clientIpFromRequest(request);
-    const rl = checkRateLimit(`public-candidate-invite:${ip}`, 60, 60 * 1000);
+    const rl = await checkRateLimit(`public-candidate-invite:${ip}`, 60, 60 * 1000);
     if (!rl.ok) {
       return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
