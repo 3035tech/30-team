@@ -30,7 +30,7 @@ Wrappers legados em `scripts/test-*.js` só reexportam `test/unit/*`.
 
 | npm | O quê |
 |-----|--------|
-| `dtov:reset` | Sobe Postgres :55432, migrate, seed, smoke SQL |
+| `dtov:reset` | Sobe Postgres :55432 + Redis :56379, migrate, seed, smoke SQL |
 | `dtov:full` | Reset + regressão SQL/libs |
 | `dtov:full-app` | Reset + SQL + Next + HTTP + browser |
 | `test:http` | Só HTTP (app já no ar) |

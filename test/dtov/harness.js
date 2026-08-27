@@ -1,7 +1,8 @@
 /**
- * Harness Postgres efêmero para /dev-test-validate (DTOV).
+ * Harness Postgres + Redis efêmeros para /dev-test-validate (DTOV).
  *
  * Segurança: só localhost:55432 / DB enneagram_dtov / user dtov.
+ * Redis: localhost:56379 (senha dtov_redis).
  * Nunca usa o .env de produção/dev sem override explícito destas vars.
  *
  * Uso:
@@ -24,6 +25,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
+const Redis = require('ioredis');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
@@ -38,6 +40,8 @@ export const DTOV_DEFAULTS = Object.freeze({
   POSTGRES_PASSWORD: 'dtov_local_only',
   POSTGRES_SSL: 'false',
   POSTGRES_READ_HOST: '',
+  REDIS_URL: 'redis://:dtov_redis@127.0.0.1:56379/0',
+  REDIS_KEY_PREFIX: 'team30_dtov',
   DTOV: '1',
 });
 
@@ -118,12 +122,40 @@ async function waitHealthy(env, timeoutMs = 60000) {
       await client.connect();
       await client.query('SELECT 1');
       await client.end();
-      return;
+      break;
     } catch {
       await new Promise((r) => setTimeout(r, 800));
     }
+    if (Date.now() - start >= timeoutMs) {
+      fail('Postgres DTOV did not become ready in time (is Docker running?)');
+    }
   }
-  fail('Postgres DTOV did not become ready in time (is Docker running?)');
+
+  const redisUrl = String(env.REDIS_URL || '').trim();
+  if (!redisUrl) return;
+  const redisStart = Date.now();
+  while (Date.now() - redisStart < timeoutMs) {
+    const redis = new Redis(redisUrl, {
+      maxRetriesPerRequest: 1,
+      connectTimeout: 2000,
+      lazyConnect: true,
+      enableOfflineQueue: false,
+    });
+    try {
+      await redis.connect();
+      const pong = await redis.ping();
+      await redis.quit();
+      if (pong === 'PONG') return;
+    } catch {
+      try {
+        redis.disconnect();
+      } catch {
+        /* ignore */
+      }
+      await new Promise((r) => setTimeout(r, 800));
+    }
+  }
+  fail('Redis DTOV did not become ready in time (is Docker running?)');
 }
 
 async function loadCatalog() {
@@ -136,14 +168,14 @@ async function loadCatalog() {
 async function cmdUp() {
   const env = dtovEnv();
   assertDtovTarget(env);
-  log('starting postgres container…');
+  log('starting postgres + redis containers…');
   try {
     await compose(['up', '-d'], env);
   } catch (e) {
     fail(`docker compose failed — install/start Docker. ${e.message}`, 2);
   }
   await waitHealthy(env);
-  log('postgres ready');
+  log('postgres + redis ready');
 }
 
 async function cmdDown() {

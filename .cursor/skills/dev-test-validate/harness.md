@@ -2,7 +2,7 @@
 
 ## O que é
 
-Banco **efêmero** em Docker (`test/dtov/docker-compose.dtov.yml`), porta **55432**, DB `enneagram_dtov`.
+Banco **efêmero** em Docker (`test/dtov/docker-compose.dtov.yml`): Postgres porta **55432** (`enneagram_dtov`) + Redis porta **56379** (`REDIS_URL` / prefixo `team30_dtov` exportados pelo harness).
 
 - **Início do pipeline:** `npm run dtov:reset` (down -v → up → migrate → seed → smoke)
 - **Durante as rounds:** o volume persiste (Test → Dev → Test reusa os dados)

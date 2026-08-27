@@ -1,6 +1,7 @@
-# Postgres efêmero só para o pipeline /dev-test-validate.
-# Porta 55432 — não conflita com docker-compose.dev (5432).
-# Volume é destruído em `npm run dtov:down` / harness down (padrão).
+# Postgres + Redis efêmeros para o pipeline /dev-test-validate.
+# Postgres :55432 — não conflita com docker-compose.dev (5432).
+# Redis   :56379 — não conflita com Redis local padrão (6379).
+# Volumes destruídos em `npm run dtov:down` / harness down (padrão).
 
 services:
   postgres:
@@ -17,6 +18,19 @@ services:
       - dtov_pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U dtov -d enneagram_dtov']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: team30_dtov_redis
+    restart: 'no'
+    command: ['redis-server', '--requirepass', 'dtov_redis', '--appendonly', 'no']
+    ports:
+      - '56379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'dtov_redis', 'ping']
       interval: 3s
       timeout: 3s
       retries: 20

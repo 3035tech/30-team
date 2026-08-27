@@ -20,6 +20,19 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: enneagram_redis_dev
+    restart: unless-stopped
+    command: ['redis-server', '--requirepass', 'team30_local', '--appendonly', 'no']
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'team30_local', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   app:
     image: node:20-alpine
     container_name: enneagram_app_dev
@@ -28,9 +41,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file: .env
     environment:
       POSTGRES_HOST: postgres
+      REDIS_URL: redis://:team30_local@redis:6379/0
+      REDIS_KEY_PREFIX: team30
     volumes:
       - .:/app
       - /app/node_modules
