@@ -2,6 +2,8 @@
 
 import { BR_STATES, BR_UF_SET } from '../../lib/candidate-profile';
 import { t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
+import { fieldSelectClass } from './form-control-styles';
 
 /** Select fixo com as 27 UFs brasileiras. */
 export function BrStateSelect({
@@ -19,7 +21,7 @@ export function BrStateSelect({
   return (
     <select
       id={id}
-      className={className}
+      className={cn(fieldSelectClass, className)}
       value={selectValue}
       onChange={(e) => onChange?.(e.target.value)}
       aria-label={ariaLabel || t(locale, 'recruiting.statePh')}

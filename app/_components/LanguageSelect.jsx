@@ -2,6 +2,7 @@
 
 import { LOCALES, LOCALE_COOKIE, localeLabel, normalizeLocale, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { fieldSelectClass } from './form-control-styles';
 
 export default function LanguageSelect({ locale, onChange, persistUser = false, compact = false }) {
   const current = normalizeLocale(locale);
@@ -35,8 +36,9 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
         value={current}
         onChange={(e) => changeLocale(e.target.value)}
         className={cn(
-          'cursor-pointer rounded-control border border-brand-500/16 bg-ink/[0.05] font-display text-xs text-ink-muted',
-          compact ? 'min-h-touch px-3 py-2.5' : 'px-3 py-[9px]'
+          fieldSelectClass,
+          'border-brand-500/16 font-display text-xs',
+          compact ? 'min-h-touch' : ''
         )}
       >
         {LOCALES.map((loc) => (

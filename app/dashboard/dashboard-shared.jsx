@@ -6,6 +6,12 @@ import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
 import { cn } from '../../lib/cn';
+import {
+  fieldInputClass,
+  fieldSelectClass,
+  fieldTextareaClass,
+  fieldCheckboxClass,
+} from '../_components/form-control-styles';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -13,10 +19,12 @@ const S = {
     'mb-3 block font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label',
   card: 'rounded-card border border-ink/12 bg-surface p-7 backdrop-blur-[16px]',
   cardTight: 'rounded-card border border-ink/12 bg-surface p-5',
-  select:
-    'cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-[9px] font-ui text-[13px] text-ink-muted',
-  input:
-    'w-full box-border rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-mono text-[13px] text-ink',
+  /** Native select — custom chevron via `.ui-select` (globals.css). */
+  select: fieldSelectClass,
+  /** Text / number — pair with `w-full` when block. */
+  input: `${fieldInputClass} w-full`,
+  textarea: fieldTextareaClass,
+  checkbox: fieldCheckboxClass,
   sidebarSection:
     'mb-1 block px-3 font-mono text-[11px] uppercase tracking-[2px] text-ink-label',
   filterChip:
@@ -307,7 +315,7 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
               if (next) onChange(next);
             }}
             className={cn(
-              'max-w-[220px] min-h-touch cursor-pointer rounded-full border px-3.5 py-2 font-mono text-xs',
+              'ui-select max-w-[220px] min-h-touch cursor-pointer rounded-full border px-3.5 py-2 font-mono text-xs',
               moreActive
                 ? 'border-brand-500/40 bg-brand-500/[0.08] text-brand-600'
                 : 'border-ink/12 bg-ink/[0.05] text-ink-muted'

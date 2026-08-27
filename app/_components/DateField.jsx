@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '../../lib/cn';
+import { fieldInputClass } from './form-control-styles';
 
 /**
  * Shared date / datetime control for dashboard forms.
@@ -41,11 +42,7 @@ export function DateField({
       placeholder={placeholder}
       aria-label={ariaLabel}
       title={title}
-      className={cn(
-        'box-border min-h-touch w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-mono text-[13px] text-ink',
-        'disabled:cursor-default disabled:opacity-55',
-        className
-      )}
+      className={cn(fieldInputClass, 'w-full cursor-pointer', className)}
     />
   );
 }

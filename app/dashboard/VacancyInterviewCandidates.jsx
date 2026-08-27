@@ -18,7 +18,7 @@ import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
 import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-white/80');
-const FIELD_SELECT = cn(FIELD, 'cursor-pointer');
+const FIELD_SELECT = cn(S.select, 'min-w-0 flex-[1_1_180px] bg-white/80');
 
 function inviteStatusLabel(locale, status) {
   const s = String(status || '');

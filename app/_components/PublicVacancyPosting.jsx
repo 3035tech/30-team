@@ -45,7 +45,8 @@ const SC = {
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
   card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
-  input: 'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
+  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
+  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
   btnPrimary:
     'min-h-touch items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-xs font-medium text-white',
 };
@@ -501,7 +502,7 @@ className="mb-1.5 block font-mono text-xs text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexEmploymentLabel')}
               </span>
-              <select name="employmentType" defaultValue={employmentType} className={SC.input}>
+              <select name="employmentType" defaultValue={employmentType} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
                 <option value="clt">{t(locale, 'recruiting.employmentType_clt')}</option>
                 <option value="pj">{t(locale, 'recruiting.employmentType_pj')}</option>

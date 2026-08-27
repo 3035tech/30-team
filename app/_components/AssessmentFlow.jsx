@@ -22,7 +22,8 @@ const SC = {
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
   p: 'mb-7 text-[15px] italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
+  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
+  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
   fieldLabel: 'mb-2 block text-xs text-ink-muted',
   fields: 'cand-flow-fields',
 };
@@ -294,7 +295,7 @@ function HomeScreen({
           <select
             value={areaKey}
             onChange={(e) => setAreaKey(e.target.value)}
-            className={cn(SC.input, 'cursor-pointer appearance-none')}
+            className={SC.select}
           >
             {areaOptions.map((a) => (
               <option key={a.key} value={a.key}>

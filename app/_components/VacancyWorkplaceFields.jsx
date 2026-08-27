@@ -8,6 +8,7 @@ import {
   VACANCY_WORKPLACE_MODALITIES,
   workplaceModalityLabelKey,
 } from '../../lib/vacancy-workplace';
+import { fieldInputClass, fieldSelectClass } from './form-control-styles';
 
 const fieldLabelClass =
   'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
@@ -24,9 +25,11 @@ export function VacancyWorkplaceFields({
   compact = false,
 }) {
   const controlClass = cn(
-    'box-border w-full rounded-control border border-ink/12 bg-ink/[0.03] font-mono text-ink-muted',
-    compact ? 'px-2.5 py-2 text-[13px]' : 'px-3 py-2.5 text-xs'
+    fieldInputClass,
+    'w-full text-ink-muted',
+    compact ? 'px-2.5 py-2 text-[13px]' : 'text-xs'
   );
+  const selectClass = cn(fieldSelectClass, 'w-full', compact ? 'px-2.5 py-2 text-[13px]' : 'text-xs');
 
   return (
     <div className="grid max-w-[640px] grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5">
@@ -36,7 +39,7 @@ export function VacancyWorkplaceFields({
           value={workplaceModality || ''}
           onChange={(e) => onChange?.({ workplaceModality: e.target.value })}
           aria-label={t(locale, 'recruiting.workplaceModalityLabel')}
-          className={cn(controlClass, 'cursor-pointer')}
+          className={selectClass}
         >
           <option value="">{t(locale, 'recruiting.workplaceModalityNone')}</option>
           {VACANCY_WORKPLACE_MODALITIES.map((mod) => (
@@ -58,7 +61,7 @@ export function VacancyWorkplaceFields({
             })
           }
           aria-label={t(locale, 'recruiting.workplaceStateLabel')}
-          className={cn(controlClass, 'cursor-pointer')}
+          className={selectClass}
         />
       </label>
       <label className={fieldLabelClass}>

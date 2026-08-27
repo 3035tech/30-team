@@ -1,3 +1,10 @@
+import {
+  fieldCheckboxClass,
+  fieldInputClass,
+  fieldSelectBlockClass,
+  fieldTextareaClass,
+} from './form-control-styles';
+
 /** Shared overlay / card class strings for in-app dialogs (confirm, notice, prompt). */
 export const dialogOverlayClass =
   'fixed inset-0 z-[10060] box-border flex items-center justify-center bg-ink/45 p-6';
@@ -19,5 +26,13 @@ export const dialogBtnSolidClass =
 export const dialogBtnGhostClass =
   'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted';
 
-export const dialogFieldClass =
-  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-mono text-[13px] text-ink';
+/** Text / password / number in dialogs. */
+export const dialogFieldClass = `mt-1.5 w-full ${fieldInputClass}`;
+
+/** Native select in dialogs (custom chevron). */
+export const dialogSelectClass = `mt-1.5 ${fieldSelectBlockClass}`;
+
+/** Textarea in dialogs. */
+export const dialogTextareaClass = `mt-1.5 ${fieldTextareaClass}`;
+
+export const dialogCheckboxClass = fieldCheckboxClass;

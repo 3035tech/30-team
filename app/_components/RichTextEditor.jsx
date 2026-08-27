@@ -39,7 +39,7 @@ function ToolbarSelect({ value, onChange, title, children }) {
       value={value}
       onMouseDown={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
-      className="max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] px-1.5 py-1 font-mono text-[11px] text-ink"
+      className="ui-select max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] !px-1.5 !py-1 !pr-6 font-mono text-[11px] text-ink"
     >
       {children}
     </select>

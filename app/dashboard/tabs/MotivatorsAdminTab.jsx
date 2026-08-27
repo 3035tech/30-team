@@ -353,7 +353,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
       />
       <div className="mb-4 flex flex-wrap justify-between gap-2.5">
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-lg border border-ink/12 px-2.5 py-1.5">
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={S.select}>
           <option value="all">{t(locale, 'panel.motivatorsAdmin.invites.allStatuses')}</option>
           <option value="sent">{t(locale, 'panel.motivatorsAdmin.invites.statusSent')}</option>
           <option value="opened">{t(locale, 'panel.motivatorsAdmin.invites.statusOpened')}</option>

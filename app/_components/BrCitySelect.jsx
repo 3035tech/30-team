@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { BR_UF_SET } from '../../lib/candidate-profile';
 import { cn } from '../../lib/cn';
+import { fieldInputClass, fieldSelectClass } from './form-control-styles';
 
 function foldCity(s) {
   return String(s || '')
@@ -133,7 +134,8 @@ export function BrCitySelect({
             if (hasUf && !loading) setOpen(true);
           }}
           className={cn(
-            'box-border w-full',
+            fieldInputClass,
+            'w-full',
             !hasUf || loading ? 'cursor-default' : 'cursor-text',
             !hasUf && 'opacity-65'
           )}
@@ -181,7 +183,12 @@ export function BrCitySelect({
   return (
     <select
       id={id}
-      className={cn(className, !hasUf && 'opacity-65', !hasUf || loading ? 'cursor-default' : 'cursor-pointer')}
+      className={cn(
+        fieldSelectClass,
+        className,
+        !hasUf && 'opacity-65',
+        !hasUf || loading ? 'cursor-default' : 'cursor-pointer'
+      )}
       value={showLegacy || inList ? cityValue : ''}
       disabled={!hasUf || loading}
       onChange={(e) => onChange?.(e.target.value)}

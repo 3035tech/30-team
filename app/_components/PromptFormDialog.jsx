@@ -8,8 +8,11 @@ import {
   dialogBtnGhostClass,
   dialogBtnPrimaryClass,
   dialogCardClass,
+  dialogCheckboxClass,
   dialogFieldClass,
   dialogOverlayClass,
+  dialogSelectClass,
+  dialogTextareaClass,
 } from './app-dialog-styles';
 import { RichTextEditor } from './RichTextEditor';
 import { DateField } from './DateField';
@@ -281,7 +284,7 @@ export function PromptFormDialog({
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleCheck(fk, opt.value)}
-                  className="h-4 w-4 accent-brand-500"
+                  className={dialogCheckboxClass}
                 />
                 {opt.label}
               </label>
@@ -297,7 +300,7 @@ export function PromptFormDialog({
           value={values[fk] ?? ''}
           onChange={(e) => setField(fk, e.target.value)}
           disabled={Boolean(f.disabled)}
-          className={cn(dialogFieldClass, f.disabled ? 'cursor-default opacity-60' : 'cursor-pointer')}
+          className={cn(dialogSelectClass, f.disabled && 'cursor-default opacity-60')}
         >
           {(f.options || []).map((opt) => (
             <option key={String(opt.value)} value={String(opt.value)}>
@@ -321,7 +324,7 @@ export function PromptFormDialog({
             type="checkbox"
             checked={checked}
             onChange={(e) => setField(fk, e.target.checked)}
-            className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-brand-500"
+            className={dialogCheckboxClass}
           />
           <span>{f.label}</span>
         </label>
@@ -381,7 +384,7 @@ export function PromptFormDialog({
           onChange={(e) => setField(fk, e.target.value)}
           placeholder={f.placeholder || ''}
           rows={f.rows || 4}
-          className={cn(dialogFieldClass, 'min-h-[88px] resize-y font-display')}
+          className={dialogTextareaClass}
         />
       );
     }
