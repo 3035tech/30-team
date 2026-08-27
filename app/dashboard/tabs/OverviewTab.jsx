@@ -165,13 +165,11 @@ export function OverviewTab({
   const mixEntries = Object.entries(mixCount)
     .map(([k, v]) => ({ type: parseInt(k, 10), n: Number(v) || 0 }))
     .filter((x) => x.n > 0 && x.type >= 1 && x.type <= 9)
-    .sort((a, b) => b.n - a.n);
-  const heatCells = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((type) => ({
-    type,
-    n: Number(mixCount[type] ?? mixCount[String(type)] ?? 0) || 0,
-  }));
-  const heatMax = Math.max(...heatCells.map((c) => c.n), 1);
-  const dominant = data.typeMix?.dominantType || mixEntries[0]?.type || null;
+    .sort((a, b) => a.type - b.type);
+  const dominant =
+    data.typeMix?.dominantType ||
+    mixEntries.reduce((best, cur) => (!best || cur.n > best.n ? cur : best), null)?.type ||
+    null;
   const advice = data.typeMix?.advice || null;
   const reasons = data.rejectionReasons || [];
   const maxReason = Math.max(...reasons.map((r) => r.n), 1);
@@ -282,44 +280,37 @@ export function OverviewTab({
           </p>
         ) : (
           <>
-            <div
-              className="mb-2 flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]"
-              role="img"
-              aria-label={t(locale, 'panel.overview.typeHeatAria')}
-            >
-              {mixEntries.map((e) => (
-                <div
-                  key={e.type}
-                  style={{
-                    width: `${Math.max(2, (e.n / mixTotal) * 100)}%`,
-                    background: TYPE_DATA[e.type]?.color || C.purple,
-                  }}
-                  title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
-                />
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
-              {heatCells.map((cell) => (
-                <span
-                  key={cell.type}
-                  title={typeHintTooltip(cell.type, locale)}
-                  className={cn(
-                    'cursor-help tabular-nums',
-                    cell.n > 0 ? 'text-ink' : 'text-ink-faint/70'
-                  )}
-                >
-                  <span
-                    style={
-                      cell.n > 0
-                        ? { color: TYPE_DATA[cell.type]?.color || undefined }
-                        : undefined
-                    }
+            <div role="img" aria-label={t(locale, 'panel.overview.typeHeatAria')}>
+              <div className="flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
+                {mixEntries.map((e) => (
+                  <div
+                    key={e.type}
+                    style={{
+                      width: `${(e.n / mixTotal) * 100}%`,
+                      background: TYPE_DATA[e.type]?.color || C.purple,
+                    }}
+                    title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
+                  />
+                ))}
+              </div>
+              <div className="mt-1.5 flex">
+                {mixEntries.map((e) => (
+                  <div
+                    key={e.type}
+                    className="flex min-w-0 flex-col items-center gap-0 overflow-hidden font-mono text-[10px] leading-tight tabular-nums"
+                    style={{ width: `${(e.n / mixTotal) * 100}%` }}
+                    title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
                   >
-                    T{cell.type}
-                  </span>
-                  <span className="text-ink-faint"> {cell.n}</span>
-                </span>
-              ))}
+                    <span
+                      className="cursor-help max-w-full truncate"
+                      style={{ color: TYPE_DATA[e.type]?.color || undefined }}
+                    >
+                      T{e.type}
+                    </span>
+                    <span className="max-w-full truncate text-ink-faint">{e.n}</span>
+                  </div>
+                ))}
+              </div>
             </div>
             {dominant ? (
               <p className="mt-2 mb-0 text-[11px] leading-snug text-ink-muted">

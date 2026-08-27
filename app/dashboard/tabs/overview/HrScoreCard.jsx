@@ -44,7 +44,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
       <div className={S.card}>
         <div className="flex items-center gap-2 text-ink-muted">
           <span className="spinner" aria-hidden />
-          <span className="text-sm">{t(locale, 'hrScore.calculating')}</span>
+          <span className={S.cardMuted}>{t(locale, 'hrScore.calculating')}</span>
         </div>
       </div>
     );
@@ -53,7 +53,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
   if (error || !data) {
     return (
       <div className={S.card}>
-        <div className="text-sm text-ink-faint">{t(locale, 'hrScore.notAvailable')}</div>
+        <div className={S.cardFaint}>{t(locale, 'hrScore.notAvailable')}</div>
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
     <div className={S.card}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="mb-1 flex items-center gap-1.5 text-base font-medium text-ink">
+          <h3 className={cn(S.cardTitle, 'mb-1 flex items-center gap-1.5')}>
             {t(locale, 'hrScore.title')}
             <span
               className="inline-flex cursor-help text-ink-faint"
@@ -85,7 +85,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
               <Icon name="infoCircle" className="h-3.5 w-3.5" />
             </span>
           </h3>
-          <p className="text-sm text-ink-muted">{t(locale, 'hrScore.companyOverview')}</p>
+          <p className={S.cardSubtitle}>{t(locale, 'hrScore.companyOverview')}</p>
         </div>
         {isAdmin && (
           <button
@@ -113,25 +113,24 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
       </div>
 
       {overall.total === 0 ? (
-        <div className="py-8 text-center text-sm text-ink-muted">
-          {t(locale, 'hrScore.noScores')}
-        </div>
+        <div className={cn('py-8 text-center', S.cardMuted)}>{t(locale, 'hrScore.noScores')}</div>
       ) : (
         <>
           <div className="mb-6 flex items-center justify-between rounded-card border border-ink/8 bg-ink/[0.02] p-4">
             <div>
               <div
-                className="cursor-help text-sm text-ink-muted"
+                className={cn('cursor-help', S.cardMuted)}
                 title={t(locale, 'hrScore.avgScoreHint')}
               >
                 {t(locale, 'hrScore.avgScore')}
               </div>
-              <div className="text-xs text-ink-faint">{peopleLabel}</div>
+              <div className={S.cardFaint}>{peopleLabel}</div>
             </div>
             <div className="text-center">
               <div
                 className={cn(
-                  'cursor-help font-mono text-3xl font-bold tabular-nums',
+                  'cursor-help',
+                  S.cardMetricHero,
                   getScoreColor(overall.avgScore)
                 )}
                 title={t(locale, 'hrScore.avgScoreHint')}
@@ -140,7 +139,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                 {overall.avgScore}
               </div>
               <div
-                className="cursor-help text-xs text-ink-muted"
+                className={cn('cursor-help', S.cardMuted)}
                 title={t(locale, 'hrScore.scoreRangeHint')}
                 aria-label={`${overall.minScore}–${overall.maxScore}. ${t(locale, 'hrScore.scoreRangeHint')}`}
               >
@@ -151,16 +150,17 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
 
           {byArea.length > 0 && (
             <div className="mb-6">
-              <h4 className="mb-2 text-sm font-medium text-ink">{t(locale, 'hrScore.byArea')}</h4>
-              <div className="space-y-2 text-sm">
+              <h4 className={S.cardSection}>{t(locale, 'hrScore.byArea')}</h4>
+              <div className="space-y-2">
                 {byArea.slice(0, 5).map((area) => (
-                  <div key={area.area} className="flex items-center justify-between">
-                    <span className="text-ink">
-                      {area.area} <span className="text-xs text-ink-faint">({area.count})</span>
+                  <div key={area.area} className="flex items-center justify-between gap-2">
+                    <span className={S.cardBody}>
+                      {area.area} <span className={S.cardFaint}>({area.count})</span>
                     </span>
                     <span
                       className={cn(
-                        'cursor-help font-mono text-sm font-medium tabular-nums',
+                        'cursor-help',
+                        S.cardMetric,
                         getScoreColor(area.avgScore)
                       )}
                       title={t(locale, 'hrScore.personScoreHint')}
@@ -177,23 +177,24 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
             {topPerformers.length > 0 && (
               <div>
                 <h4
-                  className="mb-2 cursor-help text-sm font-medium text-ink"
+                  className={cn(S.cardSection, 'cursor-help')}
                   title={t(locale, 'hrScore.topPerformersHint')}
                 >
                   {t(locale, 'hrScore.topPerformers')}
                 </h4>
-                <ul className="space-y-1 text-xs">
+                <ul className="space-y-1.5">
                   {topPerformers.slice(0, 3).map((person) => (
                     <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
                         href={`/dashboard?tab=team&candidateId=${person.id}`}
-                        className="truncate text-ink hover:underline"
+                        className={cn(S.cardRowTitle, 'hover:underline')}
                       >
                         {person.fullName}
                       </Link>
                       <span
                         className={cn(
-                          'ml-2 cursor-help font-mono tabular-nums',
+                          'ml-2 cursor-help',
+                          S.cardMetric,
                           getScoreColor(person.score)
                         )}
                         title={t(locale, 'hrScore.personScoreHint')}
@@ -209,24 +210,25 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
             {bottomPerformers.length > 0 && (
               <div>
                 <h4
-                  className="mb-2 cursor-help text-sm font-medium text-ink"
+                  className={cn(S.cardSection, 'cursor-help')}
                   title={t(locale, 'hrScore.bottomPerformersHint')}
                 >
                   {t(locale, 'hrScore.bottomPerformers')}
                 </h4>
-                <ul className="space-y-1 text-xs">
+                <ul className="space-y-1.5">
                   {bottomPerformers.slice(0, 3).map((person) => (
                     <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
                         href={`/dashboard?tab=team&candidateId=${person.id}`}
-                        className="truncate text-ink hover:underline"
+                        className={cn(S.cardRowTitle, 'hover:underline')}
                       >
                         {person.fullName}
                       </Link>
                       <div className="ml-2 flex items-center gap-1">
                         <span
                           className={cn(
-                            'cursor-help font-mono tabular-nums',
+                            'cursor-help',
+                            S.cardMetric,
                             getScoreColor(person.score)
                           )}
                           title={t(locale, 'hrScore.personScoreHint')}
@@ -250,7 +252,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
             )}
           </div>
 
-          <p className="mt-4 text-xs leading-snug text-ink-faint">{t(locale, 'hrScore.hedgingNote')}</p>
+          <p className={cn(S.cardFaint, 'mt-4')}>{t(locale, 'hrScore.hedgingNote')}</p>
         </>
       )}
     </div>

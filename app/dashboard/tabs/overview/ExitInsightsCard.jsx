@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { cn } from '../../../../lib/cn';
+import { S } from '../../dashboard-shared';
 
 export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -56,9 +58,9 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
 
   if (loading) {
     return (
-      <div className="rounded-card border border-ink/10 bg-white p-6">
+      <div className={S.card}>
         <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500" />
         </div>
       </div>
     );
@@ -66,12 +68,12 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
 
   if (!data || data.total === 0) {
     return (
-      <div className="rounded-card border border-ink/10 bg-white p-6">
+      <div className={S.card}>
         <div className="mb-4">
-          <h3 className="text-base font-semibold text-ink">{t('title')}</h3>
-          <p className="text-xs text-ink-muted mt-0.5">{t('subtitle')}</p>
+          <h3 className={S.cardTitle}>{t('title')}</h3>
+          <p className={cn(S.cardSubtitle, 'mt-0.5')}>{t('subtitle')}</p>
         </div>
-        <p className="text-sm text-ink-muted">{t('noExits')}</p>
+        <p className={S.cardMuted}>{t('noExits')}</p>
       </div>
     );
   }
@@ -80,26 +82,21 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
   const managementInsights = data.insights.filter((i) => i.category === 'management');
 
   return (
-    <div className="rounded-card border border-ink/10 bg-white p-6">
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
+    <div className={S.card}>
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-ink">{t('title')}</h3>
-          <p className="text-xs text-ink-muted mt-0.5">{t('subtitle')}</p>
+          <h3 className={S.cardTitle}>{t('title')}</h3>
+          <p className={cn(S.cardSubtitle, 'mt-0.5')}>{t('subtitle')}</p>
         </div>
         <span className="rounded bg-canvas-alt px-2 py-1 text-xs font-medium text-ink-muted">
           {data.total} {t('totalExits')}
         </span>
       </div>
 
-      {/* Insights */}
       <div className="space-y-4">
-        {/* Recruitment (M1) */}
         {recruitmentInsights.length > 0 && (
           <div>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-label">
-              {t('recruitment')}
-            </h4>
+            <h4 className={S.cardSection}>{t('recruitment')}</h4>
             <div className="space-y-2">
               {recruitmentInsights.map((insight, idx) => (
                 <div
@@ -116,9 +113,9 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
                     !
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-ink">{insight.description}</p>
-                    <p className="text-xs text-ink-muted mt-1">{insight.suggestion}</p>
-                    <p className="text-xs text-ink-faint mt-1">
+                    <p className={cn(S.cardBody, 'font-medium')}>{insight.description}</p>
+                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.suggestion}</p>
+                    <p className={cn(S.cardFaint, 'mt-1')}>
                       {insight.percentage}% das saídas ({insight.count})
                     </p>
                   </div>
@@ -128,12 +125,9 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
           </div>
         )}
 
-        {/* Management (M3/M4) */}
         {managementInsights.length > 0 && (
           <div>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-label">
-              {t('management')}
-            </h4>
+            <h4 className={S.cardSection}>{t('management')}</h4>
             <div className="space-y-2">
               {managementInsights.map((insight, idx) => (
                 <div
@@ -150,9 +144,9 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
                     !
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-ink">{insight.description}</p>
-                    <p className="text-xs text-ink-muted mt-1">{insight.suggestion}</p>
-                    <p className="text-xs text-ink-faint mt-1">
+                    <p className={cn(S.cardBody, 'font-medium')}>{insight.description}</p>
+                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.suggestion}</p>
+                    <p className={cn(S.cardFaint, 'mt-1')}>
                       {insight.percentage}% das saídas ({insight.count})
                     </p>
                   </div>
@@ -163,15 +157,10 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
         )}
       </div>
 
-      {/* Footer link */}
-      <div className="mt-4 pt-4 border-t border-ink/5">
+      <div className="mt-4 border-t border-ink/5 pt-4">
         <Link
-          href="#"
-          className="text-xs text-brand-600 hover:text-brand-700 font-medium"
-          onClick={(e) => {
-            e.preventDefault();
-            // Navigate to admin tab (requires navigateDashboard, but simplified for now)
-          }}
+          href="/dashboard?tab=exit-analysis"
+          className={S.cardLink}
         >
           {t('viewAll')}
         </Link>

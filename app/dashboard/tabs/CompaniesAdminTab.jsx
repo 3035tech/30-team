@@ -475,7 +475,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   const exp = c.activeTokenExpiresAt ? new Date(c.activeTokenExpiresAt) : null;
                   const createdAt = c.createdAt ? new Date(c.createdAt) : null;
                   return (
-                    <tr key={c.id} className="align-top border-b border-ink/[0.07]">
+                    <tr key={c.id} className="border-b border-ink/[0.07]">
                       <td className="px-3 py-3 font-mono text-ink-faint">#{c.id}</td>
                       <td className="px-3 py-3 text-ink">
                         <div className="flex items-center gap-2.5">
@@ -497,37 +497,41 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <div className="mb-2 space-y-2 text-left">
+                        <div className="mb-2 flex flex-col items-end gap-1.5">
                           {token ? (
                             <CopyableLink
                               url={link}
                               locale={locale}
                               compact
+                              showUrl={false}
                               label={t(locale, 'panel.admin.linkAssessmentLabel')}
                               disabled={loading}
+                              className="justify-end"
+                              openLabel={
+                                exp
+                                  ? `${t(locale, 'panel.common.openLink')} — ${t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}`
+                                  : undefined
+                              }
                             />
                           ) : (
                             <span className="font-mono text-[11px] text-ink-faint">
                               {t(locale, 'panel.admin.noLink')}
                             </span>
                           )}
-                          {token && exp ? (
-                            <div className="text-[10px] text-ink-faint">
-                              {t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}
-                            </div>
-                          ) : null}
                           {publicOn && careersUrl ? (
                             <CopyableLink
                               url={careersUrl}
                               locale={locale}
                               compact
+                              showUrl={false}
                               label={t(locale, 'panel.admin.companyPublicPageLabel')}
                               disabled={loading}
+                              className="justify-end"
                             />
                           ) : (
-                            <div className="text-[10px] text-ink-faint">
+                            <span className="font-mono text-[11px] text-ink-faint">
                               {t(locale, 'panel.admin.companyPublicPageOff')}
-                            </div>
+                            </span>
                           )}
                         </div>
                         <div className="flex flex-wrap justify-end gap-2">

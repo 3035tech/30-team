@@ -59,7 +59,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
       <div className={S.card}>
         <div className="flex items-center gap-2">
           <span className="spinner text-ink-muted" aria-hidden />
-          <span className="text-sm text-ink-muted">{t(locale, 'common.loading')}</span>
+          <span className={S.cardMuted}>{t(locale, 'common.loading')}</span>
         </div>
       </div>
     );
@@ -68,12 +68,8 @@ export default function TurnoverRadarCard({ locale, companyId }) {
   if (!data || data.risks.length === 0) {
     return (
       <div className={S.card}>
-        <h3 className="mb-2 text-base font-medium text-ink">
-          {t(locale, 'turnoverRadar.title')}
-        </h3>
-        <div className="py-6 text-center text-sm text-ink-muted">
-          {t(locale, 'turnoverRadar.noRisks')}
-        </div>
+        <h3 className={cn(S.cardTitle, 'mb-2')}>{t(locale, 'turnoverRadar.title')}</h3>
+        <div className={cn('py-6 text-center', S.cardMuted)}>{t(locale, 'turnoverRadar.noRisks')}</div>
       </div>
     );
   }
@@ -87,10 +83,8 @@ export default function TurnoverRadarCard({ locale, companyId }) {
     <div className={S.card}>
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h3 className="mb-1 text-base font-medium text-ink">
-            {t(locale, 'turnoverRadar.title')}
-          </h3>
-          <p className="text-sm text-ink-muted">{atRiskLabel}</p>
+          <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'turnoverRadar.title')}</h3>
+          <p className={S.cardSubtitle}>{atRiskLabel}</p>
         </div>
       </div>
 
@@ -125,7 +119,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                   <div className="flex min-w-0 items-center gap-2">
                     <Link
                       href={`/dashboard?tab=team&candidate=${person.candidateId}`}
-                      className="truncate font-medium text-ink hover:underline"
+                      className={cn(S.cardRowTitle, 'hover:underline')}
                     >
                       {person.candidateName}
                     </Link>
@@ -133,7 +127,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                       href={`/dashboard?tab=team&candidate=${person.candidateId}&section=journey`}
                       title={t(locale, 'turnoverRadar.viewPdi')}
                       aria-label={t(locale, 'turnoverRadar.viewPdi')}
-                      className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:bg-brand-500/[0.12]"
+                      className={cn(S.cardChip, 'border-brand-500/30 text-brand-600 hover:bg-brand-500/[0.12]')}
                     >
                       <Icon name="leadership" className="h-3 w-3" />
                       PDI
@@ -141,7 +135,8 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                   </div>
                   <span
                     className={cn(
-                      'cursor-help font-mono text-sm font-semibold tabular-nums',
+                      'cursor-help',
+                      S.cardMetric,
                       getRiskColor(person.risk).split(' ')[0]
                     )}
                     title={`${riskLabel}: ${person.riskScore}. ${riskScoreHint}`}
@@ -151,9 +146,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                   </span>
                 </div>
 
-                {person.area && (
-                  <div className="mb-2 text-xs text-ink-muted">{person.area}</div>
-                )}
+                {person.area ? <div className={cn(S.cardMuted, 'mb-2')}>{person.area}</div> : null}
 
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(person.signals || {}).map(([key, signal]) => {
@@ -166,7 +159,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                     return (
                       <span
                         key={key}
-                        className="cursor-help rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 text-xs text-ink-muted"
+                        className={cn(S.cardChip, 'cursor-help')}
                         title={tip}
                         aria-label={tip}
                       >
@@ -181,16 +174,16 @@ export default function TurnoverRadarCard({ locale, companyId }) {
         })}
       </div>
 
-      {data.risks.length > 8 && (
+      {data.risks.length > 8 ? (
         <div className="mt-4 text-center">
           <Link
             href="/dashboard?tab=team&roster=internal&filter=turnover_risk"
-            className="text-sm text-brand-600 hover:underline"
+            className={cn(S.cardLink, 'hover:underline')}
           >
             {t(locale, 'turnoverRadar.viewAll', { n: data.risks.length })}
           </Link>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

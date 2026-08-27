@@ -153,7 +153,7 @@ _(migration 057 + lib/succession-plans.js + APIs + UI SuccessionAdminTab)_ Papé
 
 ### B-1006 — Análise demissional ✅ ENTREGUE
 
-_(migration 058 + lib/exit-analysis.js + APIs + UI ExitAnalysisAdminTab + ExitInsightsCard no Overview)_ Registro de saída (`exit_records`) com tipo (voluntary/involuntary/mutual), motivo (taxonomia de 16 razões) e notas. Agregação por motivo × tipo T1–T9 × área. Insights automáticos categorizados em M1 (seleção: compensação, fit cultural, desempenho) e M3/M4 (gestão: relação com gestor, crescimento de carreira). Card no Overview com % e sugestões hedged.
+_(migration 058 + 065 enums ampliado + lib/exit-analysis.js + APIs + UI ExitAnalysisAdminTab + ExitInsightsCard no Overview)_ Registro de saída (`exit_records`) com tipo (voluntary/involuntary/mutual), motivo (**taxonomia fechada multi-segmento** em `EXIT_REASON`) e notas. Agregação por motivo × tipo T1–T9 × área. Insights M1/M3/M4 (compensação/benefícios, fit, gestor, carga/burnout, carreira, desempenho). Card no Overview com % e sugestões hedged. Motivo/tipo **não** são cadastrais por empresa.
 
 ### B-1007 — Cultura organizacional ✅ ENTREGUE
 
@@ -165,7 +165,7 @@ _(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_
 
 ### B-1009 — Catálogo de benefícios (não clube/folha) ✅ ENTREGUE
 
-_(migration 060 + lib/company-benefits.js + APIs + CompanyBenefitsAdminTab)_ Catálogo simples de benefícios da empresa (nome, descrição, categoria, tipo) para contexto de retenção/oferta. Tipos: health, dental, vision, life_insurance, retirement, vacation, flexible_hours, remote_work, gym, meal_voucher, transport_voucher, education, daycare, other. Sem adesão, sem desconto em folha, sem "clube" — apenas lista informativa para gestão de pessoas e ofertas. CRUD completo com filtros por categoria.
+_(migration 060 + 062 categorias + 065 enums ampliado + lib/company-benefits.js + APIs + CompanyBenefitsAdminTab)_ Catálogo simples de benefícios da empresa (nome, descrição, **categoria cadastral por empresa**, tipo enum multi-segmento) para contexto de retenção/oferta. Tipos fechados em `BENEFIT_TYPE` (saúde, PLR, home office, cesta, etc. + other). Sem adesão, sem desconto em folha, sem "clube". CRUD com filtros por categoria.
 
 ---
 
@@ -386,6 +386,27 @@ Hoje quem aplica a uma vaga vira `candidates` (+ assessment/pipeline daquela vag
 **Já existe (não reinventar):** `candidates` como hub; “Adicionar à vaga (pool)” em PRODUCT-FEATURES; roster recruiting vs internal.
 
 **Fora:** ATS genérico com CV parsing; conta de candidato; merge por nome; segundo CRM paralelo.
+
+---
+
+## Aberto — Capabilities / módulos do painel
+
+### B-1801 — CAPs granulares para módulos B-1000 (checklist de usuário)
+Hoje a checklist **“Módulos visíveis no painel”** (override em Usuários) só cobre as views “clássicas”: overview, team, compatibility, compare, group, leadership, vacancies, motivators, climate, help (`ASSIGNABLE_MODULE_CAPS`).
+
+As abas B-1000 — **Cargos, Avaliações, Sucessão, Análise demissional, Academy, Benefícios** (+ o pacote Usuários/Empresas/Leads) — usam o mesmo gate `CAP.USERS_MANAGE` (admin-only). RH/direção **não** conseguem receber só “Análise demissional” ou só “Benefícios” sem o pacote admin.
+
+**Instruções:**
+1. Criar CAPs dedicadas por módulo (ex.: `job_roles.view`, `performance.view`, `succession.view`, `exit_analysis.view`, `learning.view`, `benefits.view`) — constantes em `lib/permissions.js` (`CAP`, `TAB_CAPABILITY`, `ASSIGNABLE_MODULE_CAPS`, `ASSIGNABLE_MODULE_I18N` pt-BR+en).
+2. Defaults de role: decidir o que `hr`/`direction` ganham por padrão (provável: view dos B-1000 ligados a people/GP; **não** `users.manage` / `companies.manage`).
+3. Manter `USERS_MANAGE` / `COMPANIES_MANAGE` / Leads / Motivators config como admin-only (`ADMIN_ONLY_CAPS`).
+4. Atualizar nav (`DashboardClient`), APIs admin B-1000 (`requireCapability` / `withAdminApi`) e checklist do form de usuário — mesmo padrão do override atual (vazio = default da role).
+5. Migração/backfill: overrides existentes continuam válidos; não forçar whitelist incompleta.
+6. Guia (`panel.help.*` + hint em `userModulesHint`) pt-BR+en; Dev→Test→Validate (provar hr sem `users.manage` com CAP de exit/benefits).
+
+**Já existe:** `user_capability_overrides`, `ASSIGNABLE_MODULE_CAPS`, `TAB_CAPABILITY` → B-1000 hoje = `USERS_MANAGE`.
+
+**Fora:** capabilities em links públicos `/t` `/v` assessment; segundo ACL por empresa além de `company_id`; permissões por linha de candidato.
 
 ---
 

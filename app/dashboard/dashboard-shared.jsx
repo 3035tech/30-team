@@ -46,6 +46,22 @@ const S = {
   faint: 'text-[12px] leading-snug text-ink-faint',
   stack: 'flex flex-col gap-4',
   row: 'flex flex-wrap items-center gap-2',
+  /**
+   * Overview / intel cards — one type scale (title → subtitle → body → chips).
+   * Prefer these over ad-hoc text-[10px] / font-medium vs font-semibold mix.
+   */
+  cardTitle: 'text-base font-semibold text-ink',
+  cardSubtitle: 'text-xs text-ink-muted',
+  cardBody: 'text-sm text-ink',
+  cardMuted: 'text-xs text-ink-muted',
+  cardFaint: 'text-xs leading-snug text-ink-faint',
+  cardSection: 'mb-2 text-xs font-semibold uppercase tracking-wide text-ink-label',
+  cardRowTitle: 'truncate text-sm font-medium text-ink',
+  cardLink: 'text-xs font-medium text-brand-600 hover:text-brand-700',
+  cardChip:
+    'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 text-xs text-ink-muted',
+  cardMetric: 'font-mono text-sm font-semibold tabular-nums',
+  cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
 };
 
 const Bar = ({ value, max, color, h = 6 }) => (

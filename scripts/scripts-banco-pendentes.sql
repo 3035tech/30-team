@@ -1151,3 +1151,41 @@ CREATE TABLE IF NOT EXISTS company_analytics_report_prefs (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL
 );
+
+INSERT INTO schema_migrations (name) VALUES ('064_analytics_report_prefs.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 065 — expand exit reasons + benefit types (multi-segment enums)
+ALTER TABLE exit_records DROP CONSTRAINT IF EXISTS exit_records_reason_chk;
+ALTER TABLE exit_records ADD CONSTRAINT exit_records_reason_chk CHECK (
+  exit_reason IN (
+    'better_offer', 'career_growth', 'compensation', 'benefits',
+    'work_life_balance', 'burnout', 'workload',
+    'relocation', 'commute', 'schedule',
+    'personal', 'family_care', 'health',
+    'study', 'public_exam', 'entrepreneurship',
+    'performance', 'conduct', 'harassment',
+    'restructuring', 'layoff', 'position_eliminated',
+    'contract_end', 'seasonal_end', 'retirement',
+    'culture_fit', 'manager_relationship', 'recognition',
+    'lack_of_challenge', 'targets_pressure', 'client_pressure',
+    'tools_process', 'other'
+  )
+);
+
+ALTER TABLE company_benefits DROP CONSTRAINT IF EXISTS company_benefits_type_chk;
+ALTER TABLE company_benefits ADD CONSTRAINT company_benefits_type_chk CHECK (
+  benefit_type IN (
+    'health', 'dental', 'vision', 'mental_health', 'life_insurance',
+    'retirement', 'profit_sharing', 'equity',
+    'vacation', 'parental_leave', 'sabbatical',
+    'flexible_hours', 'remote_work', 'home_office_allowance',
+    'gym', 'wellness',
+    'meal_voucher', 'food_basket', 'transport_voucher', 'parking', 'mobility', 'phone',
+    'education', 'language', 'daycare', 'legal_aid', 'uniform', 'pet',
+    'other'
+  )
+);
+
+INSERT INTO schema_migrations (name) VALUES ('065_expand_exit_benefit_enums.sql')
+ON CONFLICT (name) DO NOTHING;

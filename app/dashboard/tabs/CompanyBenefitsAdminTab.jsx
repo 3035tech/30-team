@@ -4,24 +4,8 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
+import { BENEFIT_TYPES } from '../../../lib/domain-status.js';
 import { S } from '../dashboard-shared';
-
-const BENEFIT_TYPE_KEYS = [
-  'health',
-  'dental',
-  'vision',
-  'life_insurance',
-  'retirement',
-  'vacation',
-  'flexible_hours',
-  'remote_work',
-  'gym',
-  'meal_voucher',
-  'transport_voucher',
-  'education',
-  'daycare',
-  'other',
-];
 
 export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [benefits, setBenefits] = useState([]);
@@ -63,16 +47,31 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         health: 'Plano de Saúde',
         dental: 'Plano Odontológico',
         vision: 'Plano de Visão',
+        mental_health: 'Saúde mental / terapia',
         life_insurance: 'Seguro de Vida',
         retirement: 'Previdência Privada',
+        profit_sharing: 'Participação nos lucros (PLR)',
+        equity: 'Equity / stock options',
         vacation: 'Férias Estendidas',
+        parental_leave: 'Licença parental estendida',
+        sabbatical: 'Sabático',
         flexible_hours: 'Horário Flexível',
         remote_work: 'Trabalho Remoto',
+        home_office_allowance: 'Ajuda de custo home office',
         gym: 'Academia',
+        wellness: 'Bem-estar / wellness',
         meal_voucher: 'Vale Refeição',
+        food_basket: 'Cesta básica',
         transport_voucher: 'Vale Transporte',
+        parking: 'Estacionamento',
+        mobility: 'Mobilidade / frota',
+        phone: 'Plano de celular',
         education: 'Educação/Cursos',
+        language: 'Idiomas',
         daycare: 'Creche',
+        legal_aid: 'Assistência jurídica',
+        uniform: 'Uniforme / vestuário',
+        pet: 'Pet / assistência animal',
         other: 'Outro',
         formTitle: 'Benefício da Empresa',
         formNameLabel: 'Nome',
@@ -113,16 +112,31 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         health: 'Health Insurance',
         dental: 'Dental Insurance',
         vision: 'Vision Insurance',
+        mental_health: 'Mental health / therapy',
         life_insurance: 'Life Insurance',
         retirement: 'Retirement Plan',
+        profit_sharing: 'Profit sharing',
+        equity: 'Equity / stock options',
         vacation: 'Extended Vacation',
+        parental_leave: 'Extended parental leave',
+        sabbatical: 'Sabbatical',
         flexible_hours: 'Flexible Hours',
         remote_work: 'Remote Work',
+        home_office_allowance: 'Home-office allowance',
         gym: 'Gym',
+        wellness: 'Wellness',
         meal_voucher: 'Meal Voucher',
+        food_basket: 'Food basket',
         transport_voucher: 'Transport Voucher',
+        parking: 'Parking',
+        mobility: 'Mobility / fleet',
+        phone: 'Phone plan',
         education: 'Education/Courses',
+        language: 'Language courses',
         daycare: 'Daycare',
+        legal_aid: 'Legal aid',
+        uniform: 'Uniform / workwear',
+        pet: 'Pet benefit',
         other: 'Other',
         formTitle: 'Company Benefit',
         formNameLabel: 'Name',
@@ -136,7 +150,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
   }
 
-  const typeOptions = BENEFIT_TYPE_KEYS.map((value) => ({ value, label: t(value) }));
+  const typeOptions = BENEFIT_TYPES.map((value) => ({ value, label: t(value) }));
 
   const categorySelectOptions = [
     { value: '', label: t('formCategoryNone') },
