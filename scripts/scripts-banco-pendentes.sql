@@ -1054,3 +1054,30 @@ WHERE deleted = FALSE
 
 INSERT INTO schema_migrations (name) VALUES ('055_onboarding_wizard_panel_users.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 055 — Job roles (B-1003). Soft delete = `active`; this table has no `deleted`.
+CREATE TABLE IF NOT EXISTS job_roles (
+  id BIGSERIAL PRIMARY KEY,
+  company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  rubric JSONB NOT NULL DEFAULT '{}'::jsonb,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ,
+  UNIQUE(company_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_roles_company
+  ON job_roles (company_id, active)
+  WHERE active = TRUE;
+
+ALTER TABLE vacancies
+  ADD COLUMN IF NOT EXISTS job_role_id BIGINT REFERENCES job_roles(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_vacancies_job_role
+  ON vacancies (job_role_id)
+  WHERE job_role_id IS NOT NULL;
+
+INSERT INTO schema_migrations (name) VALUES ('055_job_roles.sql')
+ON CONFLICT (name) DO NOTHING;

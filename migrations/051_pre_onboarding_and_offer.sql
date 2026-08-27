@@ -48,20 +48,14 @@ ALTER TABLE assessments
   ADD COLUMN IF NOT EXISTS offer_accepted_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS offer_notes TEXT NOT NULL DEFAULT '';
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vacancy_candidates_offer_status_chk') THEN
-    ALTER TABLE vacancy_candidates DROP CONSTRAINT vacancy_candidates_offer_status_chk;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'assessments_offer_status_chk') THEN
-    ALTER TABLE assessments DROP CONSTRAINT assessments_offer_status_chk;
-  END IF;
-END $$;
-
+ALTER TABLE vacancy_candidates
+  DROP CONSTRAINT IF EXISTS vacancy_candidates_offer_status_chk;
 ALTER TABLE vacancy_candidates
   ADD CONSTRAINT vacancy_candidates_offer_status_chk
   CHECK (offer_status IN ('none', 'proposed', 'accepted', 'declined'));
 
+ALTER TABLE assessments
+  DROP CONSTRAINT IF EXISTS assessments_offer_status_chk;
 ALTER TABLE assessments
   ADD CONSTRAINT assessments_offer_status_chk
   CHECK (offer_status IN ('none', 'proposed', 'accepted', 'declined'));

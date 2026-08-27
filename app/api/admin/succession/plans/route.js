@@ -5,22 +5,30 @@
 
 import { NextResponse } from 'next/server';
 import { apiError } from '../../../../../lib/api-error.js';
-import { requireManagerRole } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
 import { listCompanySuccessionPlans, createSuccessionPlan } from '../../../../../lib/succession-plans.js';
 import { audit } from '../../../../../lib/audit.js';
 
 export async function GET(request) {
   try {
-    const { company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = scope.isAdmin
+      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
     const url = new URL(request.url);
     const limit = Number(url.searchParams.get('limit')) || 40;
 
-    const plans = await listCompanySuccessionPlans(null, { companyId: company_id, limit });
+    const plans = await listCompanySuccessionPlans(null, { companyId, limit });
     return NextResponse.json({ plans });
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('GET /api/admin/succession/plans error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }
@@ -28,8 +36,19 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { session, company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
     const body = await request.json();
+    const companyId = scope.isAdmin
+      ? Number(body.companyId || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
     const { roleId, successorId, readiness, notes, targetDate } = body;
 
     if (!Number.isFinite(roleId) || roleId <= 0 || !Number.isFinite(successorId) || successorId <= 0) {
@@ -37,13 +56,13 @@ export async function POST(request) {
     }
 
     const result = await createSuccessionPlan(null, {
-      companyId: company_id,
+      companyId,
       roleId,
       successorId,
       readiness,
       notes,
       targetDate,
-      createdByUserId: session.userId,
+      createdByUserId: payload.userId,
     });
 
     if (!result.ok) {
@@ -58,8 +77,8 @@ export async function POST(request) {
 
     await audit({
       action: 'succession_plan_create',
-      userId: session.userId,
-      companyId: company_id,
+      userId: payload.userId,
+      companyId,
       resourceType: 'succession_plan',
       resourceId: result.plan.id,
       metadata: { roleId, successorId, readiness: result.plan.readiness },
@@ -67,9 +86,6 @@ export async function POST(request) {
 
     return NextResponse.json(result.plan, { status: 201 });
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('POST /api/admin/succession/plans error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }

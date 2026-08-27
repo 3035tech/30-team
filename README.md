@@ -290,6 +290,94 @@ Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/jo
 
 ---
 
+## Analytics — Métricas de Efetividade (Epic B-1100)
+
+A aba **Analytics** consolida **inteligência acionável** sobre recrutamento e gestão de pessoas, reutilizando dados já coletados (T1–T9, Motivadores, PDI, clima, turnover).
+
+### Funcionalidades Principais
+
+| Módulo | O que mede | Onde |
+|--------|------------|------|
+| **Métricas de Efetividade** (B-1101) | Time-to-hire, retenção 6m/12m/24m, time-to-productivity, fit contratados vs pool, aderência rubrica | `/dashboard?tab=analytics` → Métricas |
+| **Tendências Temporais** (B-1102) | HR Score médio, turnover risk, clima, PDI completion, hires vs exits (últimos 6/12/24 meses) | Analytics → Tendências |
+| **Comparativos** (B-1103) | Área A vs B, período antes/depois, rubrica X vs Y | Analytics → Comparar |
+| **Alertas** (B-1104) | Clima -15%, turnover +20%, vagas >90 dias, HR Score <50, PDI <30% | Analytics → Alertas (proativo) |
+| **Export** (B-1105) | JSON estruturado, CSV | Botão "Export" em cada visão |
+
+### API para Integrações Externas (B-1106)
+
+Todas as métricas são expostas via **REST API** autenticada (JWT de gestor):
+
+```bash
+# Métricas de efetividade
+GET /api/admin/analytics/metrics?startDate=2025-01-01&endDate=2026-08-27
+
+# Tendências (12 meses)
+GET /api/admin/analytics/trends?months=12
+
+# Comparar duas áreas
+GET /api/admin/analytics/compare?type=areas&areaA=Engineering&areaB=Sales
+
+# Alertas ativos
+GET /api/admin/analytics/alerts
+
+# Export CSV
+GET /api/admin/analytics/export?format=csv&type=metrics
+```
+
+**Rate Limiting:** 100 req/min por usuário  
+**Autenticação:** Cookie `team30_session` (JWT)  
+**Roles:** `admin`, `direction`, `hr`
+
+Documentação completa: [`docs/analytics-api.md`](./docs/analytics-api.md)
+
+### Performance & Cache
+
+- **HR Score Cache:** TTL 5min em memória (`lib/hr-score-cache.js`)
+- **Índices otimizados:** `migrations/061_performance_indexes.sql` (15 índices estratégicos)
+- **Monitoring:** Logs estruturados JSON (`lib/monitoring.js`) + métricas in-memory
+- **Health Check:** `GET /api/health/metrics` (admin-only) — cache metrics, memory, request counts
+
+### Exemplo: Comparar Fit Contratados vs Pool
+
+```javascript
+const response = await fetch('/api/admin/analytics/metrics?startDate=2026-01-01', {
+  credentials: 'include',
+});
+
+const { metrics } = await response.json();
+console.log(`Fit contratados: ${metrics.fitComparison.hiredAvgFit}`);
+console.log(`Fit pool: ${metrics.fitComparison.poolAvgFit}`);
+console.log(`Delta: +${metrics.fitComparison.delta}`);
+```
+
+### Relatórios Agendados (B-1107)
+
+Digest semanal ou mensal automatizado por email:
+
+```bash
+# Cron job (adicionar ao crontab ou scheduler)
+# Toda segunda-feira às 9h
+0 9 * * 1 curl -X POST https://30team.app/api/cron/analytics-report \
+  -H "Authorization: Bearer ${CRON_SECRET}"
+
+# Mensal (1º do mês)
+0 9 1 * * curl -X POST https://30team.app/api/cron/analytics-report \
+  -H "Authorization: Bearer ${CRON_SECRET}"
+```
+
+**Conteúdo do email:**
+- Métricas de efetividade (time-to-hire, retenção, fit)
+- Tendências dos últimos 3 meses (HR Score, turnover, clima)
+- Alertas ativos (climate_drop, turnover_risk_increase, etc.)
+- Link direto para o dashboard
+
+**Destinatários:** automático para todos os `direction` + `admin` da empresa ativa.
+
+**Roadmap:** Webhooks de alertas, PDF anexo, OpenAPI spec, destinatários configuráveis.
+
+---
+
 ## Segurança
 
 | Aspecto | Implementação |

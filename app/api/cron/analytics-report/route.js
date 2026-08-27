@@ -1,0 +1,56 @@
+/**
+ * B-1107 — Relatórios agendados de Analytics
+ * POST /api/cron/analytics-report
+ * 
+ * Cron job semanal/mensal para enviar digest de métricas por email
+ * Authorization: Bearer {CRON_SECRET} ou header X-Cron-Secret
+ */
+
+import { NextResponse } from 'next/server';
+import { query } from '../../../../lib/db.js';
+import { apiError } from '../../../../lib/api-error.js';
+import { runScheduledAnalyticsReports } from '../../../../lib/analytics-scheduled-reports.js';
+
+export const dynamic = 'force-dynamic';
+
+function verifyCron(request) {
+  const secret = (process.env.CRON_SECRET || '').trim();
+  if (!secret) return false;
+  const auth = request.headers.get('authorization') || '';
+  const bearer = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  if (bearer === secret) return true;
+  const hdr = (request.headers.get('x-cron-secret') || '').trim();
+  return hdr === secret;
+}
+
+/**
+ * POST /api/cron/analytics-report
+ * Query params:
+ * - email=0 : desabilita envio de email (default: enabled)
+ * - locale=en : idioma do relatório (default: pt-BR)
+ */
+export async function POST(request) {
+  try {
+    if (!verifyCron(request)) {
+      return apiError(request, 'UNAUTHORIZED', 401);
+    }
+
+    const url = new URL(request.url);
+    const sendEmail = url.searchParams.get('email') !== '0';
+    const locale = url.searchParams.get('locale') || 'pt-BR';
+
+    const result = await runScheduledAnalyticsReports(query, {
+      sendEmail,
+      locale,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[POST /api/cron/analytics-report]', err);
+    return apiError(request, 'SERVER_ERROR', 500);
+  }
+}

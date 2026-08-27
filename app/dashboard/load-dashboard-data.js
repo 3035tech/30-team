@@ -22,6 +22,7 @@ import {
 } from '../../lib/leadership-analytics';
 import { buildOverviewMetrics } from '../../lib/overview-metrics';
 import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles';
+import { getOnboardingProgress } from '../../lib/onboarding-progress';
 
 /** Max rows in the vacancy filter dropdown (cohort tabs only). */
 const VACANCIES_FILTER_CAP = 200;
@@ -128,6 +129,7 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
   let interactionPeople = [];
   let enneagram = 'all';
   let overviewMetrics = null;
+  let onboardingProgress = null;
 
   try {
     const areasPromise = needAreas
@@ -438,6 +440,16 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
           locale,
           teamGroupId: selectedTeamGroup,
         });
+
+        // Onboarding progress (only for non-admins viewing their own company)
+        if (!isAdmin && companyId) {
+          try {
+            onboardingProgress = await getOnboardingProgress(queryRead, companyId);
+          } catch (err) {
+            console.error('[dashboard/load] Onboarding progress error:', err);
+            onboardingProgress = null;
+          }
+        }
       }
 
       if (needTeam) {
@@ -636,5 +648,6 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     areaRubric,
     analytics,
     overviewMetrics,
+    onboardingProgress,
   };
 }

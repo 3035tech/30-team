@@ -4,15 +4,8 @@ ALTER TABLE employee_portal_tokens
   ADD COLUMN IF NOT EXISTS prepared_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS note_to_manager TEXT NOT NULL DEFAULT '';
 
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'employee_portal_tokens_note_len'
-  ) THEN
-    ALTER TABLE employee_portal_tokens DROP CONSTRAINT employee_portal_tokens_note_len;
-  END IF;
-END $$;
-
+ALTER TABLE employee_portal_tokens
+  DROP CONSTRAINT IF EXISTS employee_portal_tokens_note_len;
 ALTER TABLE employee_portal_tokens
   ADD CONSTRAINT employee_portal_tokens_note_len
   CHECK (char_length(note_to_manager) <= 2000);

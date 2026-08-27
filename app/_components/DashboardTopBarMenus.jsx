@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { notificationCopySpec, notificationVisual } from '../../lib/manager-notification-catalog';
+import { GlobalSearch } from './GlobalSearch';
+import { DarkModeToggle } from './DarkModeProvider';
 
 function formatWhen(iso, locale) {
   if (!iso) return '';
@@ -242,6 +244,12 @@ export function DashboardTopBarMenus({
 
   return (
     <div ref={wrapRef} className="flex shrink-0 items-center gap-2">
+      {/* Global Search */}
+      <GlobalSearch locale={locale} />
+      
+      {/* Dark Mode Toggle */}
+      <DarkModeToggle />
+      
       <div className="relative">
         <button
           type="button"

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireManagerRole, getManagerScope } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
 import { apiError } from '../../../../../lib/api-error.js';
 import { getExitRecord, updateExitRecord } from '../../../../../lib/exit-analysis.js';
 
@@ -8,66 +8,90 @@ import { getExitRecord, updateExitRecord } from '../../../../../lib/exit-analysi
  * PATCH /api/admin/exit-analysis/[id] — update exit record
  */
 
+function resolveCompanyId(request, scope, bodyCompanyId) {
+  if (scope.isAdmin) {
+    const fromQuery = new URL(request.url).searchParams.get('companyId');
+    const cid = bodyCompanyId != null
+      ? Number(bodyCompanyId)
+      : fromQuery != null
+        ? Number(fromQuery)
+        : Number(scope.companyId);
+    return Number.isFinite(cid) && cid > 0 ? cid : null;
+  }
+  const cid = Number(scope.companyId);
+  return Number.isFinite(cid) && cid > 0 ? cid : null;
+}
+
 export async function GET(request, { params }) {
-  const auth = await requireManagerRole(request);
-  if (!auth.ok) return auth.response;
+  try {
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const { companyId } = getManagerScope(auth);
-  if (!companyId) {
-    return apiError(request, 'NO_COMPANY', 400);
+    const companyId = resolveCompanyId(request, scope);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
+    const { id } = params;
+    const candidateId = Number(id);
+    if (!candidateId || candidateId <= 0) {
+      return apiError(request, 'INVALID_ID', 400);
+    }
+
+    const record = await getExitRecord({ companyId, candidateId });
+    if (!record) {
+      return apiError(request, 'EXIT_RECORD_NOT_FOUND', 404);
+    }
+
+    return NextResponse.json({ ok: true, exitRecord: record }, { status: 200 });
+  } catch (err) {
+    console.error('GET /api/admin/exit-analysis/[id] error:', err);
+    return apiError(request, 'INTERNAL', 500);
   }
-
-  const { id } = params;
-  const candidateId = Number(id);
-  if (!candidateId || candidateId <= 0) {
-    return apiError(request, 'INVALID_ID', 400);
-  }
-
-  const record = await getExitRecord({ companyId, candidateId });
-  if (!record) {
-    return apiError(request, 'EXIT_RECORD_NOT_FOUND', 404);
-  }
-
-  return NextResponse.json({ ok: true, exitRecord: record }, { status: 200 });
 }
 
 export async function PATCH(request, { params }) {
-  const auth = await requireManagerRole(request);
-  if (!auth.ok) return auth.response;
-
-  const { companyId } = getManagerScope(auth);
-  if (!companyId) {
-    return apiError(request, 'NO_COMPANY', 400);
-  }
-
-  const { id } = params;
-  const exitRecordId = Number(id);
-  if (!exitRecordId || exitRecordId <= 0) {
-    return apiError(request, 'INVALID_ID', 400);
-  }
-
-  let body;
   try {
-    body = await request.json();
-  } catch {
-    return apiError(request, 'INVALID_JSON', 400);
-  }
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const result = await updateExitRecord({
-    companyId,
-    exitRecordId,
-    exitDate: body.exitDate,
-    exitType: body.exitType,
-    exitReason: body.exitReason,
-    notes: body.notes,
-  });
-
-  if (!result.ok) {
-    if (result.errorCode === 'NOT_FOUND') {
-      return apiError(request, 'EXIT_RECORD_NOT_FOUND', 404);
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return apiError(request, 'INVALID_JSON', 400);
     }
-    return apiError(request, 'EXIT_UPDATE_FAILED', 500);
-  }
 
-  return NextResponse.json({ ok: true, exitRecord: result.exitRecord }, { status: 200 });
+    const companyId = resolveCompanyId(request, scope, body.companyId);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
+    const { id } = params;
+    const exitRecordId = Number(id);
+    if (!exitRecordId || exitRecordId <= 0) {
+      return apiError(request, 'INVALID_ID', 400);
+    }
+
+    const result = await updateExitRecord({
+      companyId,
+      exitRecordId,
+      exitDate: body.exitDate,
+      exitType: body.exitType,
+      exitReason: body.exitReason,
+      notes: body.notes,
+    });
+
+    if (!result.ok) {
+      if (result.errorCode === 'NOT_FOUND') {
+        return apiError(request, 'EXIT_RECORD_NOT_FOUND', 404);
+      }
+      return apiError(request, 'EXIT_UPDATE_FAILED', 500);
+    }
+
+    return NextResponse.json({ ok: true, exitRecord: result.exitRecord }, { status: 200 });
+  } catch (err) {
+    console.error('PATCH /api/admin/exit-analysis/[id] error:', err);
+    return apiError(request, 'INTERNAL', 500);
+  }
 }

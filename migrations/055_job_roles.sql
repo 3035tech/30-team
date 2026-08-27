@@ -24,9 +24,10 @@ COMMENT ON COLUMN job_roles.active IS
   'TRUE = cargo ativo (disponível para novas vagas); FALSE = desativado (soft delete).';
 
 -- Índices
+-- Soft delete desta tabela é `active` (não há coluna `deleted`).
 CREATE INDEX IF NOT EXISTS idx_job_roles_company
   ON job_roles (company_id, active)
-  WHERE active = TRUE AND deleted = FALSE;
+  WHERE active = TRUE;
 
 -- FK na vaga para herdar cargo
 ALTER TABLE vacancies

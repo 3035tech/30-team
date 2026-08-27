@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireManagerRole, getManagerScope } from '../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../lib/ae/require-admin.js';
 import { apiError } from '../../../../lib/api-error.js';
 import {
   listCompanyBenefits,
@@ -13,21 +13,25 @@ import {
  */
 
 export async function GET(request) {
-  const auth = await requireManagerRole(request);
-  if (!auth.ok) return auth.response;
-
-  const { companyId } = getManagerScope(auth);
-  if (!companyId) {
-    return apiError(request, 'NO_COMPANY', 400);
-  }
-
-  const { searchParams } = new URL(request.url);
-  const includeInactive = searchParams.get('includeInactive') === 'true';
-  const category = searchParams.get('category') || null;
-  const categories = searchParams.get('categories') === 'true';
-  const limit = Number(searchParams.get('limit')) || 100;
-
   try {
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = scope.isAdmin
+      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('includeInactive') === 'true';
+    const category = searchParams.get('category') || null;
+    const categories = searchParams.get('categories') === 'true';
+    const limit = Number(searchParams.get('limit')) || 100;
+
     if (categories) {
       const categoriesList = await getCompanyBenefitCategories({ companyId });
       return NextResponse.json({ ok: true, categories: categoriesList }, { status: 200 });
@@ -42,38 +46,47 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = await requireManagerRole(request);
-  if (!auth.ok) return auth.response;
-
-  const { companyId, userId } = getManagerScope(auth);
-  if (!companyId) {
-    return apiError(request, 'NO_COMPANY', 400);
-  }
-
-  let body;
   try {
-    body = await request.json();
-  } catch {
-    return apiError(request, 'INVALID_JSON', 400);
-  }
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-  const { name, description, category, benefitType } = body;
-
-  const result = await createCompanyBenefit({
-    companyId,
-    name,
-    description,
-    category,
-    benefitType,
-    createdByUserId: userId,
-  });
-
-  if (!result.ok) {
-    if (result.errorCode === 'NAME_REQUIRED') {
-      return apiError(request, 'NAME_REQUIRED', 400);
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return apiError(request, 'INVALID_JSON', 400);
     }
-    return apiError(request, 'CREATE_FAILED', 500);
-  }
 
-  return NextResponse.json({ ok: true, benefit: result.benefit }, { status: 201 });
+    const companyId = scope.isAdmin
+      ? Number(body.companyId || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
+    const { name, description, category, benefitType } = body;
+
+    const result = await createCompanyBenefit({
+      companyId,
+      name,
+      description,
+      category,
+      benefitType,
+      createdByUserId: payload.userId,
+    });
+
+    if (!result.ok) {
+      if (result.errorCode === 'NAME_REQUIRED') {
+        return apiError(request, 'NAME_REQUIRED', 400);
+      }
+      return apiError(request, 'CREATE_FAILED', 500);
+    }
+
+    return NextResponse.json({ ok: true, benefit: result.benefit }, { status: 201 });
+  } catch (err) {
+    console.error('Failed to create company benefit:', err);
+    return apiError(request, 'INTERNAL', 500);
+  }
 }

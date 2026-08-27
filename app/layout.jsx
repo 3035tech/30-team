@@ -1,6 +1,7 @@
 import './globals.css';
 import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
+import { DarkModeProvider } from './_components/DarkModeProvider';
 
 export function generateMetadata() {
   const cookieStore = cookies();
@@ -35,7 +36,9 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#8930B8" />
       </head>
       <body className="m-0 p-0 bg-white">
-        {children}
+        <DarkModeProvider>
+          {children}
+        </DarkModeProvider>
       </body>
     </html>
   );

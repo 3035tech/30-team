@@ -6,26 +6,44 @@
 
 import { NextResponse } from 'next/server';
 import { apiError } from '../../../../../../lib/api-error.js';
-import { requireManagerRole } from '../../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../../lib/ae/require-admin.js';
 import { getCriticalRole, updateCriticalRole, deactivateCriticalRole } from '../../../../../../lib/succession-plans.js';
 import { audit } from '../../../../../../lib/audit.js';
 
+function resolveCompanyId(request, scope, bodyCompanyId) {
+  if (scope.isAdmin) {
+    const fromQuery = new URL(request.url).searchParams.get('companyId');
+    const cid = bodyCompanyId != null
+      ? Number(bodyCompanyId)
+      : fromQuery != null
+        ? Number(fromQuery)
+        : Number(scope.companyId);
+    return Number.isFinite(cid) && cid > 0 ? cid : null;
+  }
+  const cid = Number(scope.companyId);
+  return Number.isFinite(cid) && cid > 0 ? cid : null;
+}
+
 export async function GET(request, { params }) {
   try {
-    const { company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = resolveCompanyId(request, scope);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
     const roleId = Number(params.id);
     if (!Number.isFinite(roleId) || roleId <= 0) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const role = await getCriticalRole(null, { companyId: company_id, roleId });
+    const role = await getCriticalRole(null, { companyId, roleId });
     if (!role) return apiError(request, 'NOT_FOUND', 404);
 
     return NextResponse.json(role);
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('GET /api/admin/succession/critical-roles/[id] error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }
@@ -33,17 +51,24 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { session, company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const body = await request.json();
+    const companyId = resolveCompanyId(request, scope, body.companyId);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
     const roleId = Number(params.id);
     if (!Number.isFinite(roleId) || roleId <= 0) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const body = await request.json();
     const { title, description, areaKey, impactLevel, active } = body;
 
     const result = await updateCriticalRole(null, {
-      companyId: company_id,
+      companyId,
       roleId,
       title,
       description,
@@ -61,8 +86,8 @@ export async function PATCH(request, { params }) {
 
     await audit({
       action: 'critical_role_update',
-      userId: session.userId,
-      companyId: company_id,
+      userId: payload.userId,
+      companyId,
       resourceType: 'critical_role',
       resourceId: roleId,
       metadata: { title: result.role.title },
@@ -70,9 +95,6 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json(result.role);
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('PATCH /api/admin/succession/critical-roles/[id] error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }
@@ -80,13 +102,20 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { session, company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = resolveCompanyId(request, scope);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
     const roleId = Number(params.id);
     if (!Number.isFinite(roleId) || roleId <= 0) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await deactivateCriticalRole(null, { companyId: company_id, roleId });
+    const result = await deactivateCriticalRole(null, { companyId, roleId });
 
     if (!result.ok) {
       if (result.errorCode === 'NOT_FOUND') {
@@ -97,17 +126,14 @@ export async function DELETE(request, { params }) {
 
     await audit({
       action: 'critical_role_deactivate',
-      userId: session.userId,
-      companyId: company_id,
+      userId: payload.userId,
+      companyId,
       resourceType: 'critical_role',
       resourceId: roleId,
     });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('DELETE /api/admin/succession/critical-roles/[id] error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }

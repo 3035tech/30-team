@@ -5,13 +5,24 @@
 
 import { NextResponse } from 'next/server';
 import { apiError } from '../../../../lib/api-error.js';
-import { requireManagerRole } from '../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../lib/ae/require-admin.js';
 import { listPerformanceGoals, createPerformanceGoal } from '../../../../lib/performance-reviews.js';
 import { audit } from '../../../../lib/audit.js';
 
 export async function GET(request) {
   try {
-    const { company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = scope.isAdmin
+      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
     const url = new URL(request.url);
     const cycleId = Number(url.searchParams.get('cycleId'));
     const candidateId = Number(url.searchParams.get('candidateId'));
@@ -22,7 +33,7 @@ export async function GET(request) {
     }
 
     const goals = await listPerformanceGoals(null, {
-      companyId: company_id,
+      companyId,
       cycleId,
       candidateId,
       limit,
@@ -30,9 +41,6 @@ export async function GET(request) {
 
     return NextResponse.json({ goals });
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('GET /api/admin/performance-goals error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }
@@ -40,8 +48,19 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { session, company_id } = await requireManagerRole(request);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
     const body = await request.json();
+    const companyId = scope.isAdmin
+      ? Number(body.companyId || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) {
+      return apiError(request, 'COMPANY_REQUIRED', 400);
+    }
+
     const { cycleId, candidateId, title, description, weight, sortOrder } = body;
 
     if (!Number.isFinite(cycleId) || cycleId <= 0 || !Number.isFinite(candidateId) || candidateId <= 0) {
@@ -53,7 +72,7 @@ export async function POST(request) {
     }
 
     const result = await createPerformanceGoal(null, {
-      companyId: company_id,
+      companyId,
       cycleId,
       candidateId,
       title,
@@ -74,8 +93,8 @@ export async function POST(request) {
 
     await audit({
       action: 'performance_goal_create',
-      userId: session.userId,
-      companyId: company_id,
+      userId: payload.userId,
+      companyId,
       resourceType: 'performance_goal',
       resourceId: result.goal.id,
       metadata: { cycleId, candidateId, title: result.goal.title },
@@ -83,9 +102,6 @@ export async function POST(request) {
 
     return NextResponse.json(result.goal, { status: 201 });
   } catch (err) {
-    if (err?.name === 'UnauthorizedError') {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
     console.error('POST /api/admin/performance-goals error:', err);
     return apiError(request, 'INTERNAL_ERROR', 500);
   }

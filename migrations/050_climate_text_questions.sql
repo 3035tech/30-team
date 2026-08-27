@@ -3,15 +3,8 @@
 ALTER TABLE climate_survey_questions
   ADD COLUMN IF NOT EXISTS question_kind TEXT NOT NULL DEFAULT 'likert';
 
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'climate_survey_questions_kind_chk'
-  ) THEN
-    ALTER TABLE climate_survey_questions DROP CONSTRAINT climate_survey_questions_kind_chk;
-  END IF;
-END $$;
-
+ALTER TABLE climate_survey_questions
+  DROP CONSTRAINT IF EXISTS climate_survey_questions_kind_chk;
 ALTER TABLE climate_survey_questions
   ADD CONSTRAINT climate_survey_questions_kind_chk
   CHECK (question_kind IN ('likert', 'text'));

@@ -28,6 +28,8 @@ import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppF
 import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
+import { OnboardingTour } from '../_components/OnboardingTour';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../_components/KeyboardShortcuts';
 import OnboardingWizard from '../_components/OnboardingWizard';
 
 function TabLoadingFallback() {
@@ -204,6 +206,7 @@ export default function DashboardClient({
   selectedEnneagram = 'all',
   analytics = null,
   overviewMetrics = null,
+  onboardingProgress = null,
   auth = null,
   initialLocale = 'pt-BR',
   /** Shell-only paint while tab queries stream (B-201). */
@@ -212,6 +215,11 @@ export default function DashboardClient({
   const router = useRouter();
   const urlParams = useSearchParams();
   const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
+
+  // Keyboard shortcuts
+  const { showHelp, setShowHelp } = useKeyboardShortcuts({
+    onNavigateToTab: (tabName) => navigateToTab(tabName),
+  });
 
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
@@ -566,6 +574,7 @@ export default function DashboardClient({
   const NavLink = ({ id, label, badge, icon }) => (
     <button
       type="button"
+      id={`${id}-tab`}
       onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
       title={navCollapsed ? label : undefined}
       aria-label={label}
@@ -603,6 +612,11 @@ export default function DashboardClient({
     <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
     <div className="relative min-h-screen bg-canvas font-ui text-ink">
+      {/* Onboarding Tour */}
+      {onboardingProgress && onboardingProgress.progress < 100 && <OnboardingTour />}
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} locale={locale} />
 
       <button
         type="button"
@@ -1019,6 +1033,7 @@ export default function DashboardClient({
                   distributionTotal={listTotal}
                   locale={locale}
                   companyId={sessionAuth?.companyId}
+                  onboardingProgress={onboardingProgress}
                   filters={{
                     companyLabel:
                       isAdmin && company !== 'all'
@@ -1030,7 +1045,7 @@ export default function DashboardClient({
                     vacancyLabel: vacancies.find((v) => String(v.id) === String(vacancy))?.title,
                     dateFrom: dateFrom || null,
                     dateTo: dateTo || null,
-                    search: selectedSearch || null,
+    search: selectedSearch || null,
                   }}
                   navigateDashboard={(opts) => {
                     if (opts.pipeline != null) setPipeline(opts.pipeline);

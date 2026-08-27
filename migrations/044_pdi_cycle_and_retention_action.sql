@@ -3,16 +3,8 @@
 ALTER TABLE development_plan_items
   ADD COLUMN IF NOT EXISTS owner_label TEXT NOT NULL DEFAULT '';
 
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'development_plan_items_owner_label_len'
-  ) THEN
-    ALTER TABLE development_plan_items DROP CONSTRAINT development_plan_items_owner_label_len;
-  END IF;
-END $$;
-
+ALTER TABLE development_plan_items
+  DROP CONSTRAINT IF EXISTS development_plan_items_owner_label_len;
 ALTER TABLE development_plan_items
   ADD CONSTRAINT development_plan_items_owner_label_len
   CHECK (char_length(owner_label) <= 120);

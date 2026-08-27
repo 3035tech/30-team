@@ -169,9 +169,170 @@ _(migration 060 + lib/company-benefits.js + APIs + CompanyBenefitsAdminTab)_ Cat
 
 ---
 
+## Epic B-1100 (Analytics avançado) — ✅ 100% COMPLETO
+
+Transformar dados comportamentais em **inteligência acionável** para decisões estratégicas de RH. Foco: métricas de efetividade, tendências, comparativos e alertas proativos.
+
+**Progresso:** 7/7 features entregues (100%)
+
+**Princípios:**
+- Reusar dados já coletados (T1–T9, Motivadores, PDI, clima, turnover)
+- Export estruturado (não só CSV genérico)
+- Dashboards focados em **decisão**, não vanity metrics
+- Alertas baseados em thresholds (não só notificação pontual)
+
+**Fora deste Epic:** BI genérico (Metabase/Looker embed), data lake, ML custom, dashboards 100% customizáveis pelo usuário final.
+
+### B-1101 — Métricas de efetividade (hiring ROI) ✅ ENTREGUE
+
+_(lib/analytics-metrics.js + API /api/admin/analytics/metrics + AnalyticsTab UI)_ 
+
+Dashboard com métricas de **impacto real** do processo seletivo:
+- **Time-to-hire** (dias: vaga aberta → contratação)
+- **Time-to-productivity** (dias até HR Score > 60 ou primeira review positiva)
+- **Custo-por-contratação** (opcional: campo manual)
+- **Taxa de retenção** (% contratados que ficam 6m/12m/24m)
+- **Fit médio contratados** vs **fit médio pool**
+- **Aderência rubrica** (fit T1–T9 contratados vs expectativa da vaga)
+
+**Onde:** nova aba **Analytics** no dashboard (ou sub-aba da Overview)
+
+**Saída:**
+- Cards com número + Δ período anterior
+- Gráfico de tendência (últimos 6/12 meses)
+- Drill-down por vaga/área/gestor
+- Export de métricas
+
+**Reuso:**
+- `vacancies` (created_at, deadline)
+- `candidates` + `hire_date` (já existe via B-700)
+- `hr_scores` (B-1001)
+- `assessments` + rubrica da vaga
+- `vacancy_links` (funil)
+
+### B-1102 — Tendências temporais (time series) ✅ ENTREGUE
+
+_(lib/analytics-trends.js + API /api/admin/analytics/trends + UI com toggle Tendências)_
+
+Gráficos de **evolução ao longo do tempo** (últimos 6/12/24 meses):
+- HR Score médio do time (mensal)
+- Turnover risk (% alto risco, mensal)
+- Clima médio (mensal)
+- PDI completion rate (mensal)
+- Contratações × desligamentos (mensal)
+
+**Onde:** aba Analytics, sub-seção "Tendências"
+
+**Saída:**
+- Line charts (últimos 12/24 meses)
+- Marcadores de eventos (ex: "ciclo de review Q2")
+- Filtro por área/grupo
+- Export PNG/CSV
+
+### B-1103 — Comparativos (área, período, rubrica) ✅ ENTREGUE
+
+_(lib/analytics-comparisons.js + API /api/admin/analytics/compare + UI com toggle Comparar)_
+
+**Comparar** métricas entre segmentos side-by-side:
+- Área A vs Área B (clima, HR Score, turnover)
+- Período A vs Período B (antes/depois de ação)
+- Rubrica A vs Rubrica B (fit médio, retenção)
+- Gestor A vs Gestor B (time-to-hire, retenção)
+
+**Onde:** aba Analytics, sub-seção "Comparativos"
+
+**Saída:**
+- Tabela side-by-side
+- Bar chart comparativo
+- Testes de significância (opcional: t-test se N > 30)
+- Export
+
+### B-1104 — Alertas e anomalias ✅ ENTREGUE
+
+_(lib/analytics-alerts.js + API /api/admin/analytics/alerts)_
+
+**Detecção proativa** de padrões anormais com thresholds configuráveis:
+- Clima caiu > 15% em 1 mês (área/empresa)
+- Turnover risk subiu > 20% em 1 trimestre
+- Time-to-hire > 90 dias (vaga específica)
+- HR Score médio < 50 (área)
+- PDI completion < 30% (empresa)
+
+**Onde:** notificações in-app + email digest
+
+**Saída:**
+- Alerta com contexto (o quê mudou, onde, quando)
+- Link para drill-down
+- Sugestão de ação (ex: "Revisar clima na área X")
+
+**Reuso:** `manager_notifications` (já existe), novo tipo `ANALYTICS_ALERT`
+
+### B-1105 — Export estruturado (JSON/Excel) ✅ ENTREGUE
+
+_(lib/analytics-export.js + API /api/admin/analytics/export)_
+
+Export **rico** além do CSV básico:
+- JSON (API-friendly, estruturado)
+- Excel com múltiplas abas (overview, detalhes, gráficos)
+- Filtros aplicados no export (não dump completo)
+
+**Onde:** botão "Export" em cada visão de Analytics
+
+**Saída:**
+- Arquivo baixável
+- Metadados (período, filtros, gerado em X)
+- Formato escolhido pelo usuário (CSV/JSON/XLSX)
+
+**Reuso:** `lib/export-assessments-csv.js` (já existe), estender
+
+### B-1106 — API de métricas (externas/integrações) ✅ ENTREGUE
+
+_(lib/analytics-rate-limit.js + aplicado em todas as 5 rotas + docs/analytics-api.md)_
+
+API REST autenticada (JWT) para expor métricas:
+- `GET /api/admin/analytics/metrics` (HR Score, clima, turnover)
+- `GET /api/admin/analytics/trends` (time series)
+- `GET /api/admin/analytics/compare` (segmentação)
+- `GET /api/admin/analytics/alerts` (anomalias)
+- `GET /api/admin/analytics/export` (JSON/CSV)
+
+**Implementado:**
+- ✅ Autenticação JWT de gestor (mesmo padrão `/api/admin/*`)
+- ✅ Rate limiting (100 req/min por user_id)
+- ✅ Headers HTTP (`X-RateLimit-*`, `Retry-After`)
+- ✅ Documentação completa (endpoints, exemplos cURL/JS/Python)
+- ✅ Multi-tenant isolado por `company_id`
+
+**Uso:** integrações com BI externo (Metabase, Looker), automações, Slack, webhooks
+
+### B-1107 — Relatórios agendados (email/PDF) ✅ ENTREGUE
+
+_(lib/analytics-scheduled-reports.js + API /api/cron/analytics-report)_
+
+**Envio automático** de relatórios de Analytics:
+- Weekly/monthly digest com métricas de efetividade inline
+- HTML responsivo (não requer PDF reader)
+- Tendências (últimos 3 meses): HR Score, turnover, clima
+- Alertas ativos destacados (severity high/medium/info)
+- Destinatários automáticos: `direction` + `admin` da empresa
+- Multi-idioma (pt-BR / en)
+
+**Implementado:**
+- ✅ Email HTML inline (métrica cards, trend table, alerts)
+- ✅ Cron job (`POST /api/cron/analytics-report`)
+- ✅ Rate: processa até 50 empresas/execução
+- ✅ Reutiliza estrutura de `manager-weekly-digest`
+- ✅ CTA direto para `/dashboard?tab=analytics`
+
+**Uso:** cron semanal (ex: segunda 9h) ou mensal (1º do mês)
+
+**Roadmap:** PDF anexo (puppeteer), destinatários configuráveis por empresa, frequência por empresa
+
+---
+
 ## Em andamento
 
-_(vazio — B-1000 registrado; aguardando fatia para implementar)_
+**B-1100 — Analytics avançado** (preparando B-1101)
 
 ---
 
@@ -186,3 +347,5 @@ _(vazio — B-1000 registrado; aguardando fatia para implementar)_
 - Epic **B-800** / **B-801** entregue (assistente de ajuda no painel — FAQ + retrieval + LLM barato).
 - Epic **B-900** entregue (Sprint A/B/C — Overview atenção + Fit/briefing/report + mix/rubrica/clima).
 - Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).
+- **Onboarding Contextual** (Melhoria #1 — Sprint Quick Wins) entregue: tooltips contextuais, checklist de progresso (7 tarefas), empty states acionáveis, tour guiado opcional (5 steps). Ver `docs/onboarding-contextual.md`.
+- **UX/UI — Categoria Completa** (Melhorias #3-#9) entregue: Sistema Undo/Confirmação, Loading States rico, Mobile fixes completo (10 áreas), Busca global Cmd+K, Atalhos de teclado (j/k/g+tecla/?), Modo escuro. Ver `docs/ux-ui-improvements.md`.
