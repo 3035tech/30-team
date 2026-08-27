@@ -336,3 +336,8 @@ textarea:focus-visible {
   }
 }
 
+/* Mobile Fixes - UX/UX Melhoria #5 */
+@import url('./mobile-fixes.css');
+
+/* Dark Mode - UX/UX Melhoria #9 */
+@import url('./dark-mode.css');
