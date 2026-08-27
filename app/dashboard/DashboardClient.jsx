@@ -29,6 +29,7 @@ import { AppLoading } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
 import { OnboardingTour } from '../_components/OnboardingTour';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../_components/KeyboardShortcuts';
 import OnboardingWizard from '../_components/OnboardingWizard';
 
 function TabLoadingFallback() {
@@ -194,6 +195,11 @@ export default function DashboardClient({
   const router = useRouter();
   const urlParams = useSearchParams();
   const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
+
+  // Keyboard shortcuts
+  const { showHelp, setShowHelp } = useKeyboardShortcuts({
+    onNavigateToTab: (tabName) => navigateToTab(tabName),
+  });
 
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
@@ -588,6 +594,9 @@ export default function DashboardClient({
     <div className="relative min-h-screen bg-canvas font-ui text-ink">
       {/* Onboarding Tour */}
       {onboardingProgress && onboardingProgress.progress < 100 && <OnboardingTour />}
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} locale={locale} />
 
       <button
         type="button"
