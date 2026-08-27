@@ -469,7 +469,12 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       </div>
 
       {benefits.length === 0 ? (
-        <EmptyState title={t('noBenefits')} description={t('noBenefitsDesc')} icon="🎁" />
+        <EmptyState
+          title={t('noBenefits')}
+          message={t('noBenefitsDesc')}
+          actionLabel={isAdmin ? `+ ${t('create')}` : undefined}
+          onAction={isAdmin ? handleCreate : undefined}
+        />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full">

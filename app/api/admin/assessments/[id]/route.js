@@ -11,10 +11,9 @@ import {
   normalizeRejectionReason,
   normalizeStartDate,
 } from '../../../../../lib/pipeline';
-import { markCandidateHired, maybeCloseVacancyIfFilled } from '../../../../../lib/hire';
+import { markCandidateHired, maybeCloseVacancyIfFilled, notifyHireOnboardingKit } from '../../../../../lib/hire';
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../lib/job-funnel';
-import { notifyCompanyManagers, NOTIF } from '../../../../../lib/manager-notifications';
 
 export async function PATCH(request, { params }) {
   try {
@@ -131,19 +130,14 @@ export async function PATCH(request, { params }) {
         await maybeCloseVacancyIfFilled(vacancyId);
       }
       if (assCompanyId) {
-        await notifyCompanyManagers(query, {
+        await notifyHireOnboardingKit(query, {
           companyId: assCompanyId,
-          type: NOTIF.HIRE_ONBOARDING_KIT,
-          entityType: 'candidate',
-          entityId: Number(candidateId),
+          candidateId: Number(candidateId),
+          vacancyId: vacancyId != null ? Number(vacancyId) : null,
+          candidateName: own.rows[0]?.candidateName || null,
+          vacancyTitle: own.rows[0]?.vacancyTitle || null,
+          startDate: startDate || null,
           dedupeKey: `hire_kit:assessment:${id}:candidate:${candidateId}`,
-          payload: {
-            candidateId: Number(candidateId),
-            vacancyId: vacancyId != null ? Number(vacancyId) : null,
-            candidateName: own.rows[0]?.candidateName || null,
-            vacancyTitle: own.rows[0]?.vacancyTitle || null,
-            startDate: startDate || null,
-          },
         });
       }
     }

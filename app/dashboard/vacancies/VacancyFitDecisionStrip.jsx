@@ -91,7 +91,7 @@ export function VacancyFitDecisionStrip({
     );
   }
 
-  const { score010 } = computeAreaScore010(scores, weights, { withBreakdown: true });
+  const { score010, breakdown } = computeAreaScore010(scores, weights, { withBreakdown: true });
   const align = fitTypeAlignment(scores, weights);
   const aligned = align.alignedTypes || [];
   const gaps = align.gapTypes || [];
@@ -101,6 +101,7 @@ export function VacancyFitDecisionStrip({
   const probe = challenge
     ? t(locale, 'recruiting.fitDecisionProbe', { challenge })
     : null;
+  const topContrib = Array.isArray(breakdown?.types) ? breakdown.types.slice(0, 3) : [];
 
   return (
     <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
@@ -117,6 +118,25 @@ export function VacancyFitDecisionStrip({
         )}
       </div>
       <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'recruiting.fitDecisionHint')}</p>
+      {topContrib.length > 0 ? (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {topContrib.map((c) => (
+            <span
+              key={c.type}
+              className="rounded-control border border-ink/10 bg-white/70 px-2 py-0.5 font-mono text-[10px] text-ink-muted"
+              title={t(locale, 'recruiting.fitDecisionContribTitle', {
+                type: `T${c.type}`,
+                weight: c.weight,
+              })}
+            >
+              {t(locale, 'recruiting.fitDecisionContribChip', {
+                type: `T${c.type}`,
+                contribution: c.contribution,
+              })}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
         {aligned.length > 0 ? (
           <span className="text-success">

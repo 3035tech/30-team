@@ -230,7 +230,12 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       )}
 
       {records.length === 0 ? (
-        <EmptyState title={t('noRecords')} description={t('noRecordsDesc')} icon="📊" />
+        <EmptyState
+          title={t('noRecords')}
+          message={t('noRecordsDesc')}
+          actionLabel={isAdmin ? `+ ${t('register')}` : undefined}
+          onAction={isAdmin ? handleRegisterExit : undefined}
+        />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full">

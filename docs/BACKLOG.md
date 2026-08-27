@@ -330,9 +330,12 @@ _(lib/analytics-scheduled-reports.js + API /api/cron/analytics-report)_
 
 ---
 
-## Em andamento
+## Aberto — Epic B-1200 (conectar + UX + signup + profundidade)
 
-**B-1100 — Analytics avançado** (preparando B-1101)
+_(entregue — B-1201–B-1204: Overview attention ← PDI/clima/sucessão/onboarding; hire-kit + benefícios; PDI↔Academy; sidebar agrupado; EmptyState CTAs; tour `#*-tab`; fit strip com contribuições.)_
+
+**Fora deste corte (permanece fora):** LMS, folha, DISC, conta de candidato, segundo design system.
+
 
 ---
 

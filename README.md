@@ -158,13 +158,11 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/organizational-culture.js` (`getOrganizationalCulture`, `getCultureSummary`, `synthesizeCultureInsights`)
 
 ### B-1008 — Academy (Learning Resources)
-- **Catálogo leve** de recursos de aprendizagem (não é LMS completo): título, descrição, tema, tipo (course/article/video/book/workshop/mentoring/other), URL externa, duração (horas)
-- **Link opcional com PDI**: tabela `development_plan_resource_links` (muitos-para-muitos) para sugerir ações concretas no plano, ou referência no texto do item PDI
-- **Sem player, sem SCORM, sem progresso**: apenas catálogo que o gestor pode apontar como ação de desenvolvimento
-- UI: `LearningResourcesAdminTab` (CRUD com filtro por tema)
-- APIs: `/api/admin/learning-resources` (list com `?theme=`, `?themes=true` para lista de temas, POST), `/api/admin/learning-resources/[id]` (GET, PATCH, DELETE)
-- Lib: `lib/learning-resources.js` (CRUD, `linkResourceToPdi`, `unlinkResourceFromPdi`, `getPdiLinkedResources`)
-- Migration: `059_learning_resources.sql` (tabelas `learning_resources`, `development_plan_resource_links`)
+- **Catálogo leve** (não é LMS): título, descrição rica, temas em tags (`TagInput`), tipo, URL, duração
+- **Link com PDI**: Equipe → PDI → item → botão Academy (`development_plan_resource_links`); listagem GET também para `TEAM_VIEW`
+- Sem player, SCORM ou progresso
+- UI: `LearningResourcesAdminTab`; APIs `/api/admin/learning-resources`; lib `lib/learning-resources.js`
+- Migrations: `059_learning_resources.sql`, `063_learning_theme_tags.sql`
 
 ### B-1009 — Benefícios da Empresa (Company Benefits)
 - **Catálogo informativo** de benefícios oferecidos pela empresa: nome, descrição, categoria (livre), tipo (health/dental/vision/life_insurance/retirement/vacation/flexible_hours/remote_work/gym/meal_voucher/transport_voucher/education/daycare/other)
@@ -176,6 +174,13 @@ A partir da migration `054`, `055` e `056`:
 - Migration: `060_company_benefits.sql` (tabela `company_benefits`)
 
 **Epic B-1000 completo** (B-1001 a B-1009) ✅
+
+### Epic B-1200 — conectar + UX + profundidade
+- Sidebar agrupado (Análise / Recrutamento / Pessoas / Catálogos / Conta / Ajuda)
+- Overview Atenção: PDI atrasado, clima aberto, check-in pós-hire, papel crítico sem sucessor
+- Kit de hire notifica com trecho de benefícios (`formatBenefitsForOnboarding`)
+- PDI ↔ Academy na UI; tour pós-signup aponta `#overview-tab` / `#vacancies-tab` / `#team-tab` / `#help-tab`
+- Fit da vaga mostra top contribuições da rubrica
 
 ---
 

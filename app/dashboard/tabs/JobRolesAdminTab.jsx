@@ -197,13 +197,9 @@ export function JobRolesAdminTab({ locale, companyId }) {
       {/* Lista */}
       {roles.length === 0 ? (
         <EmptyState
-          icon="briefcase"
           title={t(locale, 'jobRoles.listEmpty')}
-          action={
-            <button type="button" onClick={handleCreate} className={S.btnBrandSoft}>
-              {t(locale, 'jobRoles.createButton')}
-            </button>
-          }
+          actionLabel={t(locale, 'jobRoles.createButton')}
+          onAction={handleCreate}
         />
       ) : (
         <div className="grid gap-3">

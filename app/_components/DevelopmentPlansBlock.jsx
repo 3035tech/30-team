@@ -335,6 +335,71 @@ export function DevelopmentPlansBlock({
     }
   };
 
+  const linkAcademyResource = async (item) => {
+    if (!expandedId) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/learning-resources?limit=80');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'load');
+      const resources = Array.isArray(data.resources) ? data.resources : Array.isArray(data.items) ? data.items : [];
+      const options = resources
+        .filter((r) => r?.id && r?.title)
+        .map((r) => ({ value: String(r.id), label: r.title }));
+      if (options.length === 0) {
+        toast(t(locale, 'panel.pdi.academyEmpty'), 'info');
+        return;
+      }
+      setBusy(false);
+      const values = await promptForm({
+        title: t(locale, 'panel.pdi.linkAcademyTitle'),
+        confirmLabel: t(locale, 'panel.pdi.linkAcademyConfirm'),
+        fields: [
+          {
+            key: 'resourceId',
+            type: 'select',
+            label: t(locale, 'panel.pdi.linkAcademyLabel'),
+            required: true,
+            options,
+          },
+        ],
+      });
+      if (!values?.resourceId) return;
+      setBusy(true);
+      const patched = await patchPlan(expandedId, {
+        linkResource: { itemId: item.id, resourceId: Number(values.resourceId) },
+      });
+      setDetail(patched.plan);
+      toast(t(locale, 'panel.pdi.academyLinked'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unlinkAcademyResource = async (item, resourceId) => {
+    if (!expandedId) return;
+    const ok = await confirm({
+      title: t(locale, 'panel.pdi.unlinkAcademyTitle'),
+      message: t(locale, 'panel.pdi.unlinkAcademyConfirm'),
+      confirmLabel: t(locale, 'panel.pdi.unlinkAcademyBtn'),
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const patched = await patchPlan(expandedId, {
+        unlinkResource: { itemId: item.id, resourceId: Number(resourceId) },
+      });
+      setDetail(patched.plan);
+      toast(t(locale, 'panel.pdi.academyUnlinked'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.pdi.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const addItem = async () => {
     if (!expandedId) return;
     const values = await promptForm({
@@ -577,6 +642,14 @@ export function DevelopmentPlansBlock({
                                   >
                                     {t(locale, 'panel.pdi.editItemBtn')}
                                   </button>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    onClick={() => linkAcademyResource(it)}
+                                  >
+                                    {t(locale, 'panel.pdi.linkAcademyBtn')}
+                                  </button>
                                   <select
                                     className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
                                     value={it.status}
@@ -590,6 +663,38 @@ export function DevelopmentPlansBlock({
                                   </select>
                                 </div>
                               </div>
+                              {(it.linkedResources || []).length > 0 ? (
+                                <ul className="m-0 flex list-none flex-col gap-1 pl-10 p-0">
+                                  {(it.linkedResources || []).map((lr) => (
+                                    <li
+                                      key={lr.id}
+                                      className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-muted"
+                                    >
+                                      <span className="text-ink">
+                                        {t(locale, 'panel.pdi.academyChip')}: {lr.title}
+                                      </span>
+                                      {lr.url ? (
+                                        <a
+                                          href={lr.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-brand-600 underline-offset-2 hover:underline"
+                                        >
+                                          {t(locale, 'panel.pdi.academyOpen')}
+                                        </a>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-[10px] text-danger')}
+                                        onClick={() => unlinkAcademyResource(it, lr.id)}
+                                      >
+                                        {t(locale, 'panel.pdi.unlinkAcademyBtn')}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
                               {ooOpts.length > 0 ? (
                                 <label className="flex flex-wrap items-center gap-2 pl-10 text-[11px] text-ink-muted">
                                   <span>{t(locale, 'panel.pdi.linkOo')}</span>

@@ -8,7 +8,7 @@ import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { CAP, can, canSeeManagementSection, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
+import { CAP, can, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
 import { VACANCY_STATUS } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
 import { BrandMark } from '../_components/BrandMark';
@@ -263,7 +263,6 @@ export default function DashboardClient({
   const showClimate = can(sessionAuth, CAP.CLIMATE_VIEW);
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
   const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
-  const showManagement = canSeeManagementSection(sessionAuth);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -699,31 +698,28 @@ export default function DashboardClient({
             {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
               <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
             ) : null}
-            {showManagement ? (
+
+            {showVacancies ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
-                {showVacancies ? <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} /> : null}
-                {showMotivators ? (
-                  <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
-                ) : null}
-                {showClimate ? (
-                  <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
-                ) : null}
-                {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
-                {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
-                {showUsers ? <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} /> : null}
-                {showUsers ? <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} /> : null}
-                {showUsers ? <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} /> : null}
-                {showUsers ? <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
-                {showUsers ? <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} /> : null}
-                {showUsers ? <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} /> : null}
-                {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                {sectionLabel(t(locale, 'dashboard.sectionRecruiting'))}
+                <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
               </>
-            ) : showMotivators || showClimate ? (
+            ) : null}
+
+            {showMotivators || showClimate || showUsers ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionManagement'))}
+                {sectionLabel(t(locale, 'dashboard.sectionPeople'))}
+                {showUsers ? (
+                  <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
+                ) : null}
+                {showUsers ? (
+                  <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
+                ) : null}
+                {showUsers ? (
+                  <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
+                ) : null}
                 {showMotivators ? (
                   <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
                 ) : null}
@@ -732,6 +728,29 @@ export default function DashboardClient({
                 ) : null}
               </>
             ) : null}
+
+            {showUsers ? (
+              <>
+                <div className="my-2 h-px bg-ink/[0.08]" />
+                {sectionLabel(t(locale, 'dashboard.sectionCatalogs'))}
+                <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
+                <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
+                <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
+              </>
+            ) : null}
+
+            {showCompanies || showUsers || showLeads ? (
+              <>
+                <div className="my-2 h-px bg-ink/[0.08]" />
+                {sectionLabel(t(locale, 'dashboard.sectionAccount'))}
+                {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
+                {showCompanies ? (
+                  <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
+                ) : null}
+                {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+              </>
+            ) : null}
+
             <div className="my-2 h-px bg-ink/[0.08]" />
             {sectionLabel(t(locale, 'dashboard.sectionHelp'))}
             {can(sessionAuth, CAP.HELP_VIEW) ? (

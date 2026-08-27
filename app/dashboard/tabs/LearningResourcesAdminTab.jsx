@@ -328,7 +328,12 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       </div>
 
       {resources.length === 0 ? (
-        <EmptyState title={t('noResources')} description={t('noResourcesDesc')} icon="📚" />
+        <EmptyState
+          title={t('noResources')}
+          message={t('noResourcesDesc')}
+          actionLabel={isAdmin ? `+ ${t('create')}` : undefined}
+          onAction={isAdmin ? handleCreate : undefined}
+        />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full">

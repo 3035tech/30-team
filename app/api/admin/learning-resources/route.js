@@ -15,7 +15,9 @@ import {
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    const canManageCatalog = requireCapability(payload, CAP.USERS_MANAGE);
+    const canViewTeam = requireCapability(payload, CAP.TEAM_VIEW);
+    if (!canManageCatalog && !canViewTeam) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
@@ -27,18 +29,25 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+    const includeInactive = canManageCatalog && searchParams.get('includeInactive') === 'true';
     const theme = searchParams.get('theme') || null;
     const resourceType = searchParams.get('resourceType') || null;
     const themes = searchParams.get('themes') === 'true';
     const limit = Number(searchParams.get('limit')) || 100;
 
     if (themes) {
+      if (!canManageCatalog) return apiError(request, ERR.UNAUTHORIZED, 401);
       const themesList = await getCompanyLearningThemes(null, { companyId });
       return NextResponse.json({ ok: true, themes: themesList }, { status: 200 });
     }
 
-    const resources = await listLearningResources(null, { companyId, includeInactive, theme, resourceType, limit });
+    const resources = await listLearningResources(null, {
+      companyId,
+      includeInactive,
+      theme,
+      resourceType,
+      limit,
+    });
     return NextResponse.json({ ok: true, resources }, { status: 200 });
   } catch (err) {
     console.error('Failed to list learning resources:', err);

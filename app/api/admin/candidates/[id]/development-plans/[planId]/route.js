@@ -9,6 +9,7 @@ import {
   updateDevelopmentPlan,
   updateDevelopmentPlanItem,
 } from '../../../../../../../lib/people/development-plans';
+import { linkResourceToPdi, unlinkResourceFromPdi } from '../../../../../../../lib/learning-resources';
 
 async function loadCandidateScope(candidateId, scope) {
   const c = await query(
@@ -67,6 +68,59 @@ export async function PATCH(request, { params }) {
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
     const body = await request.json().catch(() => ({}));
+
+    if (body.linkResource?.itemId && body.linkResource?.resourceId) {
+      const linked = await linkResourceToPdi(query, {
+        companyId: loaded.candidate.companyId,
+        planItemId: body.linkResource.itemId,
+        resourceId: body.linkResource.resourceId,
+      });
+      if (!linked.ok) {
+        return apiError(request, linked.errorCode || ERR.INVALID_REFERENCE, 400);
+      }
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'development_plan.resource_link',
+        targetType: 'candidate',
+        targetId: candidateId,
+        metadata: {
+          planId,
+          itemId: body.linkResource.itemId,
+          resourceId: body.linkResource.resourceId,
+        },
+      });
+      const plan = await getDevelopmentPlan(query, {
+        companyId: loaded.candidate.companyId,
+        planId,
+        candidateId,
+      });
+      return NextResponse.json({ ok: true, plan });
+    }
+
+    if (body.unlinkResource?.itemId && body.unlinkResource?.resourceId) {
+      await unlinkResourceFromPdi(query, {
+        companyId: loaded.candidate.companyId,
+        planItemId: body.unlinkResource.itemId,
+        resourceId: body.unlinkResource.resourceId,
+      });
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'development_plan.resource_unlink',
+        targetType: 'candidate',
+        targetId: candidateId,
+        metadata: {
+          planId,
+          itemId: body.unlinkResource.itemId,
+          resourceId: body.unlinkResource.resourceId,
+        },
+      });
+      const plan = await getDevelopmentPlan(query, {
+        companyId: loaded.candidate.companyId,
+        planId,
+        candidateId,
+      });
+      return NextResponse.json({ ok: true, plan });
+    }
 
     if (body.item && body.item.id) {
       const updItem = await updateDevelopmentPlanItem(query, {
