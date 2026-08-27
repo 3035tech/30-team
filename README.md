@@ -152,7 +152,15 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/exit-analysis.js` (CRUD, `getExitReasonAggregation`, `getExitsByTypeProfile`, `getExitInsights`)
 - Migration: `058_exit_analysis.sql` (tabela `exit_records`)
 
-**Backlog:** B-1007 a B-1009 (cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
+### B-1007 — Cultura Organizacional
+- **Leitura hedged**: sintetiza clima (Likert mean level), mix T1–T9 (arquétipo dominante, % homogeneidade), pulsos recentes (engajamento), e valores declarados (`companies.about_html`)
+- **Insights categorizados**: saúde geral (positivo ≥4.0, neutro ≥3.0, atenção <3.0), arquétipo cultural (tipos dominantes ≥20%), homogeneidade (>50% em um tipo), engajamento (frequência de pulsos), alinhamento declarado × praticado
+- **Sem novo instrumento**: reusa climate surveys, T1–T9 assessments, team pulses, company profile
+- UI: `CultureInsightsCard` no Overview (resumo + insights completos expandíveis)
+- API: `/api/admin/organizational-culture` (GET com `?summary=true` para rollup)
+- Lib: `lib/organizational-culture.js` (`getOrganizationalCulture`, `getCultureSummary`, `synthesizeCultureInsights`)
+
+**Backlog:** B-1008 a B-1009 (Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
 
 ---
 
