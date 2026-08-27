@@ -5,7 +5,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { TagChips } from '../../_components/TagInput';
-import { formatTagList, parseTagList } from '../../lib/tag-list';
+import { formatTagList, parseTagList } from '../../../lib/tag-list';
 import { S } from '../dashboard-shared';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {

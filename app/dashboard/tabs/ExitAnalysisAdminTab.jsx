@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
-import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status';
+import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
 import { S } from '../dashboard-shared';
 
 export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {

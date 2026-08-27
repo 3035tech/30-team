@@ -15,8 +15,13 @@
 --       metas + review de performance, sucessão (subset)
 --   • Clima aberto (perguntas + convites anônimos + respostas)
 --   • Grupo salvo + pulso aberto (convites + respostas)
---   • 1 vaga + 5 candidatos no funil; 1 alumni + exit_record
---   • job_role, benefícios, learning resources, notificação
+--   • 1 vaga + 5 candidatos no funil; 2 alumni + exit_records (tipos/motivos)
+--   • job_role
+--   • Benefícios: benefit_categories + company_benefits.category_id + descrição HTML
+--   • Academy: learning_resources com temas multi-tag ("A, B") + descrição HTML
+--   • notificação in-app
+--
+-- Requer migrations até 063 (benefit_categories + theme tags len).
 --
 -- Como rodar (migrations aplicadas + areas seedadas):
 --   psql "$DATABASE_URL" -f scripts/seed-eval-20-employees.sql
@@ -484,11 +489,14 @@ BEGIN
     );
   END LOOP;
 
-  -- ---------- Catálogos (antes do time interno — PDI pode linkar recurso) ----------
+  -- ---------- Catálogos B-1000 (categorias → benefícios; Academy com tags) ----------
+  -- Categorias de benefício (cadastro vinculado via category_id)
   INSERT INTO benefit_categories (company_id, name, active, created_by_user_id)
   VALUES
     (v_company_id, 'Alimentação', TRUE, v_user_id),
-    (v_company_id, 'Saúde', TRUE, v_user_id);
+    (v_company_id, 'Saúde', TRUE, v_user_id),
+    (v_company_id, 'Qualidade de Vida', TRUE, v_user_id),
+    (v_company_id, 'Financeiro', TRUE, v_user_id);
 
   INSERT INTO company_benefits (
     company_id, name, description, category, category_id, benefit_type, active, created_by_user_id
@@ -503,22 +511,82 @@ BEGIN
     TRUE,
     v_user_id
   FROM (VALUES
-    ('VR / VA', 'Auxílio alimentação demo', 'Alimentação', 'meal_voucher'),
-    ('Plano de saúde', 'Cobertura demo', 'Saúde', 'health')
+    (
+      'VR / VA',
+      '<p>Auxílio alimentação demo — uso em restaurantes e mercados parceiros.</p><ul><li>Recarga mensal</li><li>App do fornecedor</li></ul>',
+      'Alimentação',
+      'meal_voucher'
+    ),
+    (
+      'Plano de saúde',
+      '<p>Cobertura médico-hospitalar demo para colaborador e dependentes elegíveis.</p>',
+      'Saúde',
+      'health'
+    ),
+    (
+      'Plano odontológico',
+      '<p>Rede credenciada demo — consultas e procedimentos básicos.</p>',
+      'Saúde',
+      'dental'
+    ),
+    (
+      'Gympass / academia',
+      '<p>Acesso a academias e apps de bem-estar (pacote demo).</p>',
+      'Qualidade de Vida',
+      'gym'
+    ),
+    (
+      'Previdência privada',
+      '<p>Contribuição parcial da empresa (percentual ilustrativo no seed).</p>',
+      'Financeiro',
+      'retirement'
+    )
   ) AS v(name, description, cat_name, benefit_type)
   JOIN benefit_categories c
-    ON c.company_id = v_company_id AND LOWER(c.name) = LOWER(v.cat_name);
+    ON c.company_id = v_company_id AND LOWER(btrim(c.name)) = LOWER(btrim(v.cat_name));
 
+  -- Academy: temas multi-tag (vírgula) + descrição HTML; 1º recurso linkado no PDI
   INSERT INTO learning_resources (
-    company_id, title, url, theme, resource_type, active, created_by_user_id
+    company_id, title, description, url, theme, resource_type, duration_hours, active, created_by_user_id
   ) VALUES
-    (v_company_id, 'Feedback eficaz', 'https://example.com/feedback', 'Liderança', 'article', TRUE, v_user_id)
+    (
+      v_company_id,
+      'Feedback eficaz',
+      '<p>Como dar e receber feedback com clareza — trilha leve para gestores.</p><ul><li>Situação / comportamento / impacto</li><li>Follow-up em 1:1</li></ul>',
+      'https://example.com/feedback',
+      'Liderança, Comunicação',
+      'article',
+      2,
+      TRUE,
+      v_user_id
+    )
   RETURNING id INTO v_res_id;
 
   INSERT INTO learning_resources (
-    company_id, title, url, theme, resource_type, active, created_by_user_id
+    company_id, title, description, url, theme, resource_type, duration_hours, active, created_by_user_id
   ) VALUES
-    (v_company_id, 'SQL para gestores', 'https://example.com/sql', 'Técnico', 'course', TRUE, v_user_id);
+    (
+      v_company_id,
+      'SQL para gestores',
+      '<p>Consultas básicas para leitura de indicadores (sem virar DBA).</p>',
+      'https://example.com/sql',
+      'Técnico, Dados',
+      'course',
+      4,
+      TRUE,
+      v_user_id
+    ),
+    (
+      v_company_id,
+      'Onboarding do time',
+      '<p>Checklist e rituais das primeiras semanas — alinhado ao portal /e.</p>',
+      'https://example.com/onboarding',
+      'Onboarding, Cultura, Liderança',
+      'workshop',
+      3,
+      TRUE,
+      v_user_id
+    );
 
   -- ---------- Ciclo de performance (company) ----------
   INSERT INTO performance_cycles (
@@ -838,7 +906,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- ---------- 1 alumni + exit (aba análise de saída) ----------
+  -- ---------- Alumni + exit_records (busca por nome na UI; tipos/motivos fixos; notas HTML) ----------
   INSERT INTO candidates (
     company_id, full_name, email, phone, city, state,
     availability, source, consent_at, employment_status, hired_at, start_date, hr_notes
@@ -847,7 +915,7 @@ BEGIN
     '+55 11 90000-0001', 'São Paulo', 'SP', 'immediate', 'referral',
     NOW() - INTERVAL '400 days', 'alumni',
     NOW() - INTERVAL '400 days', CURRENT_DATE - 400,
-    '<p>Alumni seed para exit analysis.</p>'
+    '<p>Alumni seed para exit analysis (voluntária).</p>'
   )
   RETURNING id INTO v_cand_id;
 
@@ -865,7 +933,37 @@ BEGIN
     candidate_id, company_id, exit_date, exit_type, exit_reason, notes, created_by_user_id
   ) VALUES (
     v_cand_id, v_company_id, CURRENT_DATE - 40, 'voluntary', 'career_growth',
-    '<p>Saída voluntária — hipótese de crescimento externo (seed).</p>',
+    '<p>Saída <strong>voluntária</strong> — hipótese de crescimento externo (seed).</p><ul><li>Buscou desafio técnico maior</li><li>Retenção: revisar plano de carreira</li></ul>',
+    v_user_id
+  );
+
+  INSERT INTO candidates (
+    company_id, full_name, email, phone, city, state,
+    availability, source, consent_at, employment_status, hired_at, start_date, hr_notes
+  ) VALUES (
+    v_company_id, 'Marina Alves Ex', 'alumni02@eval-20.demo',
+    '+55 11 90000-0002', 'Curitiba', 'PR', 'immediate', 'linkedin',
+    NOW() - INTERVAL '500 days', 'alumni',
+    NOW() - INTERVAL '500 days', CURRENT_DATE - 500,
+    '<p>Alumni seed — saída involuntária (performance).</p>'
+  )
+  RETURNING id INTO v_cand_id;
+
+  INSERT INTO assessments (
+    candidate_id, company_id, area_id, top_type, scores, source, pipeline_stage,
+    hired_at, start_date, fill_duration_ms, created_at
+  ) VALUES (
+    v_cand_id, v_company_id, v_area_ids[2], 3,
+    '{"1":10,"2":12,"3":27,"4":11,"5":14,"6":13,"7":9,"8":15,"9":10}'::jsonb,
+    'seed_eval_20_alumni', 'hired',
+    NOW() - INTERVAL '500 days', CURRENT_DATE - 500, 175000, NOW() - INTERVAL '510 days'
+  );
+
+  INSERT INTO exit_records (
+    candidate_id, company_id, exit_date, exit_type, exit_reason, notes, created_by_user_id
+  ) VALUES (
+    v_cand_id, v_company_id, CURRENT_DATE - 90, 'involuntary', 'performance',
+    '<p>Saída <strong>involuntária</strong> — desempenho abaixo do esperado após PIP (seed).</p><p>Insight M1: revisar aderência na triagem.</p>',
     v_user_id
   );
 
@@ -998,6 +1096,7 @@ BEGIN
   RAISE NOTICE 'Link vaga /v/%', v_vacancy_tok;
   RAISE NOTICE 'Time interno: int01@…int10@eval-20.demo (portal /e/eint##eval20portal…)';
   RAISE NOTICE 'Clima: /clima/clim01eval20climate…  Pulso: /pulso/puls01eval20pulse…';
+  RAISE NOTICE 'Catálogos: benefit_categories + benefits (category_id); Academy themes multi-tag; 2 exit_records';
 END;
 $eval$;
 

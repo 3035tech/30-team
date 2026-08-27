@@ -186,7 +186,7 @@ A partir da migration `054`, `055` e `056`:
 | `npm run db:migrate` | Ambiente já existente — aplica `migrations/*.sql` pendentes |
 | `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
-| `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + 1 admin (`eval-20-demo`) |
+| `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
 
 ```bash
 # Migrações incrementais
