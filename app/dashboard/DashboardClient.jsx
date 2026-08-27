@@ -124,6 +124,26 @@ const JobRolesAdminTab = dynamic(
   () => import('./tabs/JobRolesAdminTab').then((m) => ({ default: m.JobRolesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const PerformanceReviewsAdminTab = dynamic(
+  () => import('./tabs/PerformanceReviewsAdminTab').then((m) => ({ default: m.PerformanceReviewsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const SuccessionAdminTab = dynamic(
+  () => import('./tabs/SuccessionAdminTab').then((m) => ({ default: m.SuccessionAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const ExitAnalysisAdminTab = dynamic(
+  () => import('./tabs/ExitAnalysisAdminTab').then((m) => ({ default: m.ExitAnalysisAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const LearningResourcesAdminTab = dynamic(
+  () => import('./tabs/LearningResourcesAdminTab').then((m) => ({ default: m.LearningResourcesAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const CompanyBenefitsAdminTab = dynamic(
+  () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const LeadsAdminTab = dynamic(
   () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -690,6 +710,8 @@ export default function DashboardClient({
                 {showCompanies ? <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} /> : null}
                 {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
                 {showUsers ? <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} /> : null}
+                {showUsers ? <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} /> : null}
+                {showUsers ? <NavLink id="succession" icon="users" label={t(locale, 'succession.title')} /> : null}
                 {showUsers ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
               </>
             ) : showMotivators || showClimate ? (
@@ -1142,6 +1164,11 @@ export default function DashboardClient({
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'job-roles' && showUsers && <JobRolesAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
+              {tab === 'performance-reviews' && showUsers && <PerformanceReviewsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'succession' && showUsers && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'exit-analysis' && showUsers && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'learning-resources' && showUsers && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'company-benefits' && showUsers && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showUsers && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (

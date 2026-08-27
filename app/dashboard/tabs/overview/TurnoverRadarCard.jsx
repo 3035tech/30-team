@@ -100,12 +100,22 @@ export default function TurnoverRadarCard({ locale, companyId }) {
             {/* Info */}
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <Link
-                  href={`/dashboard?tab=team&candidateId=${person.candidateId}`}
-                  className="truncate font-medium text-ink hover:underline"
-                >
-                  {person.candidateName}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard?tab=team&candidateId=${person.candidateId}`}
+                    className="truncate font-medium text-ink hover:underline"
+                  >
+                    {person.candidateName}
+                  </Link>
+                  <Link
+                    href={`/dashboard?tab=team&candidateId=${person.candidateId}&section=journey`}
+                    title={locale === 'en' ? 'View PDI' : 'Ver PDI'}
+                    className="flex-shrink-0 inline-flex items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:bg-brand-500/[0.12]"
+                  >
+                    <Icon name="target" className="h-3 w-3" />
+                    PDI
+                  </Link>
+                </div>
                 <span className={cn('text-xs font-medium', getRiskColor(person.risk).split(' ')[0])}>
                   {person.riskScore}
                 </span>

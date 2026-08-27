@@ -97,6 +97,91 @@ Tabelas novas:
 
 ---
 
+## Epic B-1000 — Plataforma GP (B-1001 a B-1004 entregues)
+
+A partir da migration `054`, `055` e `056`:
+
+### B-1001 — HR Score + Predições
+- **HR Score (0-100)** consolidando 7 sinais comportamentais: perfil T1-T9 (15%), Motivadores (20%), Fit (15%), PDI (20%), Check-ins (10%), Clima (10%), Retenção (10%)
+- **Predições** derivadas dos sinais: risco de turnover (low/medium/high) e áreas de gap PDI
+- UI: `HrScoreCard` na Visão Geral (média empresa, por área, top/bottom 5) e `HrScoreBadge` nas listagens
+- APIs: `GET /api/admin/hr-score/:candidateId`, `GET /api/admin/hr-score/company`, `POST /api/admin/hr-score/recalculate`
+- Migration: `054_hr_score.sql` (tabela `hr_scores`)
+
+### B-1002 — Radar de Rotatividade (Multi-sinal)
+- **Turnover Radar** focado em 4 sinais críticos de saída: Clima (30%), Motivadores/retenção (30%), PDI concern (25%), Check-ins concern (15%)
+- Calcula risco de turnover (low/medium/high) e sugere ações
+- UI: `TurnoverRadarCard` na Visão Geral listando top at-risk employees com breakdown visual de sinais
+- API: `GET /api/admin/turnover-radar/company`
+- Lib: `lib/turnover-radar.js` (calcula radar, detecta trend change para notificações futuras)
+
+### B-1003 — Engenharia de Cargos (Leve)
+- **Cargos (Job Roles)** com rubrica T1-T9 que podem ser herdados por vagas via FK `vacancies.job_role_id`
+- CRUD completo: listar, criar, editar, desativar (soft)
+- UI: `JobRolesAdminTab` (admin), campo `jobRoleId` no formulário de vagas (`VacanciesAdminTab`), componente `RubricEditor` para editar pesos visuais
+- APIs: `GET/POST /api/admin/job-roles`, `GET/PATCH/DELETE /api/admin/job-roles/[id]`
+- Lib: `lib/job-roles.js` (`getRubricForVacancy` resolve herança: job_role → vacancy rubric)
+- Migration: `055_job_roles.sql` (tabela `job_roles`, FK em `vacancies`)
+
+### B-1004 — Avaliação de Desempenho + Metas → PDI
+- **Performance Cycles** (company-wide): rascunho → ativo → fechado
+- **Goals** (metas por candidato em um ciclo): título, descrição, peso (%), outcome (`met`, `exceeded`, `develop`, `not_met`)
+- **Reviews** (avaliação por candidato): draft → submitted
+- **Auto PDI**: ao submeter review, metas com outcome `develop` geram automaticamente itens PDI com `source: 'performance_review'` e `performance_goal_id` linkado
+- UI: `PerformanceReviewsAdminTab` (criar/listar ciclos), review form (metas + outcomes + auto-confirm de PDI)
+- APIs: `/api/admin/performance-cycles` (CRUD cycles), `/api/admin/performance-goals` (CRUD goals), `/api/admin/performance-reviews` (GET/POST draft, POST submit → auto PDI)
+- Lib: `lib/performance-reviews.js` (ciclos, goals, reviews, `autoGeneratePdiFromReview`)
+- Migration: `056_performance_reviews.sql` (tabelas `performance_cycles`, `performance_goals`, `performance_reviews`; estende `development_plan_items.source` para incluir `'performance_review'` e adiciona FK `performance_goal_id`)
+
+### B-1005 — Plano de Sucessão
+- **Critical Roles** (papéis críticos da empresa): título, descrição, área, nível de impacto (high/critical)
+- **Succession Plans** (sucessores por papel): candidato, prontidão (`not_ready`, `developing`, `ready`, `now`), notas, data-alvo
+- **Readiness Score**: combina HR Score (70%) + Leadership Potential (30%) para ranquear candidatos
+- Integração com `lib/hr-score.js` (B-1001) e `lib/leadership-analytics.js` (potencial de liderança já existente)
+- UI: `SuccessionAdminTab` (criar/listar papéis críticos, ver contadores de sucessores)
+- APIs: `/api/admin/succession/critical-roles` (CRUD roles), `/api/admin/succession/plans` (CRUD succession plans), `/api/admin/succession/critical-roles/[id]/successors` (list successors)
+- Lib: `lib/succession-plans.js` (CRUD roles/plans, `calculateSuccessionReadiness`, `getPotentialSuccessors`)
+- Migration: `057_succession_plans.sql` (tabelas `critical_roles`, `succession_plans`)
+
+### B-1006 — Análise Demissional
+- **Exit Records** (registro de saída): candidato alumni, data, tipo (voluntary/involuntary/mutual), motivo (16 razões: better_offer, compensation, career_growth, performance, culture_fit, manager_relationship, etc.), notas (contexto/feedback)
+- **Agregação**: motivos × tipo T1–T9 × área para padrões de rotatividade
+- **Insights automáticos**: categoriza em M1 (seleção: compensação não competitiva, fit cultural, desempenho) e M3/M4 (gestão: relação com gestor, falta de crescimento). Apresenta % e sugestões hedged.
+- UI: `ExitAnalysisAdminTab` (registrar/listar saídas), `ExitInsightsCard` no Overview (padrões M1/M3/M4)
+- APIs: `/api/admin/exit-analysis` (CRUD exit records), `/api/admin/exit-analysis/insights` (agregações + insights)
+- Lib: `lib/exit-analysis.js` (CRUD, `getExitReasonAggregation`, `getExitsByTypeProfile`, `getExitInsights`)
+- Migration: `058_exit_analysis.sql` (tabela `exit_records`)
+
+### B-1007 — Cultura Organizacional
+- **Leitura hedged**: sintetiza clima (Likert mean level), mix T1–T9 (arquétipo dominante, % homogeneidade), pulsos recentes (engajamento), e valores declarados (`companies.about_html`)
+- **Insights categorizados**: saúde geral (positivo ≥4.0, neutro ≥3.0, atenção <3.0), arquétipo cultural (tipos dominantes ≥20%), homogeneidade (>50% em um tipo), engajamento (frequência de pulsos), alinhamento declarado × praticado
+- **Sem novo instrumento**: reusa climate surveys, T1–T9 assessments, team pulses, company profile
+- UI: `CultureInsightsCard` no Overview (resumo + insights completos expandíveis)
+- API: `/api/admin/organizational-culture` (GET com `?summary=true` para rollup)
+- Lib: `lib/organizational-culture.js` (`getOrganizationalCulture`, `getCultureSummary`, `synthesizeCultureInsights`)
+
+### B-1008 — Academy (Learning Resources)
+- **Catálogo leve** de recursos de aprendizagem (não é LMS completo): título, descrição, tema, tipo (course/article/video/book/workshop/mentoring/other), URL externa, duração (horas)
+- **Link opcional com PDI**: tabela `development_plan_resource_links` (muitos-para-muitos) para sugerir ações concretas no plano, ou referência no texto do item PDI
+- **Sem player, sem SCORM, sem progresso**: apenas catálogo que o gestor pode apontar como ação de desenvolvimento
+- UI: `LearningResourcesAdminTab` (CRUD com filtro por tema)
+- APIs: `/api/admin/learning-resources` (list com `?theme=`, `?themes=true` para lista de temas, POST), `/api/admin/learning-resources/[id]` (GET, PATCH, DELETE)
+- Lib: `lib/learning-resources.js` (CRUD, `linkResourceToPdi`, `unlinkResourceFromPdi`, `getPdiLinkedResources`)
+- Migration: `059_learning_resources.sql` (tabelas `learning_resources`, `development_plan_resource_links`)
+
+### B-1009 — Benefícios da Empresa (Company Benefits)
+- **Catálogo informativo** de benefícios oferecidos pela empresa: nome, descrição, categoria (livre), tipo (health/dental/vision/life_insurance/retirement/vacation/flexible_hours/remote_work/gym/meal_voucher/transport_voucher/education/daycare/other)
+- **Contexto de retenção/oferta**: lista serve como referência em conversas de retenção e na composição de ofertas de emprego
+- **Sem adesão, sem folha, sem clube**: não há sistema de inscrição, desconto em folha ou gestão de adesão. Apenas catálogo de benefícios que a empresa oferece
+- UI: `CompanyBenefitsAdminTab` (CRUD com filtro por categoria)
+- APIs: `/api/admin/company-benefits` (list com `?category=`, `?categories=true`, POST), `/api/admin/company-benefits/[id]` (GET, PATCH, DELETE)
+- Lib: `lib/company-benefits.js` (CRUD, `getCompanyBenefitCategories`)
+- Migration: `060_company_benefits.sql` (tabela `company_benefits`)
+
+**Epic B-1000 completo** (B-1001 a B-1009) ✅
+
+---
+
 ## Banco de dados
 
 | Arquivo / comando | Quando usar |

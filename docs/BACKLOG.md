@@ -145,27 +145,27 @@ _(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com r
 
 ### B-1004 — Avaliação de desempenho + metas → PDI ✅ ENTREGUE
 
-_(migration 056 + lib/performance-reviews.js + APIs + PerformanceReviewsAdminTab)_ Ciclo leve (gestor → colaborador). Metas no ciclo. Gap/outcome `develop` gera item PDI automaticamente.
+_(migration 056 + lib/performance-reviews.js + APIs + UI PerformanceReviewsAdminTab)_ Ciclo leve (gestor → colaborador; não 360). Metas no ciclo com outcome (`met`, `exceeded`, `develop`, `not_met`). Outcome `develop` gera item PDI automaticamente com `source: 'performance_review'` e `performance_goal_id`. Tabelas `performance_cycles`, `performance_goals`, `performance_reviews`. UI admin de ciclos + review form (draft → submitted).
 
 ### B-1005 — Plano de sucessão ✅ ENTREGUE
 
-_(migration 057 + lib/succession-plans.js + APIs + SuccessionAdminTab)_ Papéis críticos + sucessor(es) + prontidão. Reusa HR Score (B-1001).
+_(migration 057 + lib/succession-plans.js + APIs + UI SuccessionAdminTab)_ Papéis críticos (`critical_roles`) com sucessores (`succession_plans`) + prontidão (`not_ready`, `developing`, `ready`, `now`). Readiness score combina HR Score (70%) + Leadership Potential (30%). Integra com `lib/hr-score.js` e `lib/leadership-analytics.js`. UI admin de papéis críticos + contador de sucessores.
 
 ### B-1006 — Análise demissional ✅ ENTREGUE
 
-_(migration 058 + lib/exit-analysis.js + APIs + ExitAnalysisAdminTab + ExitInsightsCard)_ Registro de saída (motivo + texto). Agrega motivos × tipo/área.
+_(migration 058 + lib/exit-analysis.js + APIs + UI ExitAnalysisAdminTab + ExitInsightsCard no Overview)_ Registro de saída (`exit_records`) com tipo (voluntary/involuntary/mutual), motivo (taxonomia de 16 razões) e notas. Agregação por motivo × tipo T1–T9 × área. Insights automáticos categorizados em M1 (seleção: compensação, fit cultural, desempenho) e M3/M4 (gestão: relação com gestor, crescimento de carreira). Card no Overview com % e sugestões hedged.
 
-### B-1007 — Cultura organizacional
+### B-1007 — Cultura organizacional ✅ ENTREGUE
 
-Leitura hedged a partir de clima + mix T1–T9 + pulso. Valores declarados (texto rico da empresa, já há “sobre”) vs praticada (sinais). Sem segundo instrumento.
+_(lib/organizational-culture.js + API `/api/admin/organizational-culture` + CultureInsightsCard no Overview)_ Leitura hedged a partir de clima + mix T1–T9 + pulso + valores declarados (`companies.about_html`). Síntese automática em categorias (climate, type_mix, pulse, alignment) com força (strong/medium/high concern) e hedging. Card no Overview com resumo (health overall, dominant archetype) + drill-down para insights detalhados. Sem segundo instrumento, apenas consolidação de dados existentes.
 
-### B-1008 — Academy leve ✅ ENTREGUE
+### B-1008 — Academy leve (não LMS) ✅ ENTREGUE
 
-_(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_ Catálogo de ações/trilhas que o PDI pode apontar. Não LMS.
+_(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_ Catálogo simples de recursos de aprendizagem (título, descrição, tema, tipo, URL, duração). Tipos: course, article, video, book, workshop, mentoring, other. PDI pode linkar recursos via `development_plan_resource_links` (muitos-para-muitos) ou referenciar no texto. Sem player, sem SCORM, sem acompanhamento de progresso — apenas catálogo de ações/trilhas que o gestor pode apontar no plano de desenvolvimento.
 
-### B-1009 — Catálogo de benefícios (não clube/folha)
+### B-1009 — Catálogo de benefícios (não clube/folha) ✅ ENTREGUE
 
-Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta. Sem adesão, sem desconto em folha, sem “clube”.
+_(migration 060 + lib/company-benefits.js + APIs + CompanyBenefitsAdminTab)_ Catálogo simples de benefícios da empresa (nome, descrição, categoria, tipo) para contexto de retenção/oferta. Tipos: health, dental, vision, life_insurance, retirement, vacation, flexible_hours, remote_work, gym, meal_voucher, transport_voucher, education, daycare, other. Sem adesão, sem desconto em folha, sem "clube" — apenas lista informativa para gestão de pessoas e ofertas. CRUD completo com filtros por categoria.
 
 ---
 

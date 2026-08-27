@@ -12,6 +12,8 @@ import { S } from '../dashboard-shared';
 import { TeamBehavioralIntelBlock } from './TeamBehavioralIntelBlock';
 import TurnoverRadarCard from './overview/TurnoverRadarCard';
 import HrScoreCard from './overview/HrScoreCard';
+import ExitInsightsCard from './overview/ExitInsightsCard';
+import CultureInsightsCard from './overview/CultureInsightsCard';
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
@@ -249,10 +251,16 @@ export function OverviewTab({
       />
 
       {companyId && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <TurnoverRadarCard locale={locale} companyId={companyId} />
-          <HrScoreCard locale={locale} companyId={companyId} />
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TurnoverRadarCard locale={locale} companyId={companyId} />
+            <HrScoreCard locale={locale} companyId={companyId} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ExitInsightsCard locale={locale} companyId={companyId} />
+            <CultureInsightsCard locale={locale} companyId={companyId} />
+          </div>
+        </>
       )}
 
       <div className={S.cardTight}>

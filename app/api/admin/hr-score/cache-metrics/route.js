@@ -1,19 +1,19 @@
 /**
  * P-1026 — Performance: Métricas de cache do HR Score
  * GET /api/admin/hr-score/cache-metrics
- * 
+ *
  * Retorna estatísticas de uso do cache (hits, misses, hitRate, size)
  */
 
 import { NextResponse } from 'next/server';
-import { apiError } from '@/lib/api-error.js';
-import { requireManagerRole } from '@/lib/ae/require-admin.js';
-import { getHrScoreCacheMetrics } from '@/lib/hr-score-cache.js';
+import { apiError } from '../../../../../lib/api-error.js';
+import { getSessionPayload, requireAdminRole } from '../../../../../lib/ae/require-admin.js';
+import { getHrScoreCacheMetrics } from '../../../../../lib/hr-score-cache.js';
 
 export async function GET(request) {
   try {
-    const manager = await requireManagerRole(request, { adminOnly: true });
-    if (!manager) {
+    const payload = await getSessionPayload();
+    if (!requireAdminRole(payload)) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
 

@@ -4,9 +4,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { queryRead } from '../../../lib/db.js';
-import { apiError } from '../../../lib/api-error.js';
-import { getManagerScope } from '../../../lib/ae/require-admin.js';
+import { queryRead } from '../../../../lib/db.js';
+import { apiError } from '../../../../lib/api-error.js';
+import { getSessionPayload, getManagerScope } from '../../../../lib/ae/require-admin.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +19,9 @@ const MAX_RESULTS_PER_CATEGORY = 5;
  */
 export async function GET(request) {
   try {
-    const scope = await getManagerScope(request, { allowDirection: true, allowHr: true });
-    if (!scope) {
+    const payload = await getSessionPayload();
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
 

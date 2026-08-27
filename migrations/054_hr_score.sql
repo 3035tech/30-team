@@ -56,13 +56,13 @@ COMMENT ON COLUMN hr_scores.pdi_gap_areas IS
   'Áreas de desenvolvimento sugeridas com prioridade';
 
 -- Índices para performance
-CREATE INDEX idx_hr_scores_company ON hr_scores(company_id);
+CREATE INDEX IF NOT EXISTS idx_hr_scores_company ON hr_scores(company_id);
 
-CREATE INDEX idx_hr_scores_score_desc ON hr_scores(company_id, score DESC);
+CREATE INDEX IF NOT EXISTS idx_hr_scores_score_desc ON hr_scores(company_id, score DESC);
 
-CREATE INDEX idx_hr_scores_candidate ON hr_scores(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_hr_scores_candidate ON hr_scores(candidate_id);
 
-CREATE INDEX idx_hr_scores_risk ON hr_scores(company_id, turnover_risk) 
+CREATE INDEX IF NOT EXISTS idx_hr_scores_risk ON hr_scores(company_id, turnover_risk)
   WHERE turnover_risk IN ('medium', 'high');
 
-CREATE INDEX idx_hr_scores_calculated ON hr_scores(calculated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_hr_scores_calculated ON hr_scores(calculated_at DESC);

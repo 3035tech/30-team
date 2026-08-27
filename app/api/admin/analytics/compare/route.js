@@ -11,25 +11,30 @@
  */
 
 import { NextResponse } from 'next/server';
-import { apiError } from '@/lib/api-error.js';
-import { getManagerScope } from '@/lib/ae/require-admin.js';
+import { apiError } from '../../../../../lib/api-error.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
 import {
   compareAreas,
   comparePeriods,
   compareRubrics,
   listAvailableAreas,
   listAvailableRubrics,
-} from '@/lib/analytics-comparisons.js';
-import { checkAnalyticsRateLimit, addRateLimitHeaders } from '@/lib/analytics-rate-limit.js';
+} from '../../../../../lib/analytics-comparisons.js';
+import { checkAnalyticsRateLimit, addRateLimitHeaders } from '../../../../../lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
-    const scope = await getManagerScope(request, { allowDirection: true, allowHr: true });
-    if (!scope) {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    const companyId = scope.isAdmin
+      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) return apiError(request, 'COMPANY_REQUIRED', 400);
 
-    const rateLimitResponse = checkAnalyticsRateLimit(request, scope);
+    const rateLimitScope = { ...scope, companyId, userId: payload.userId };
+    const rateLimitResponse = checkAnalyticsRateLimit(request, rateLimitScope);
     if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
@@ -37,16 +42,16 @@ export async function GET(request) {
 
     // List available options
     if (type === 'list-areas') {
-      const areas = await listAvailableAreas(scope.companyId);
+      const areas = await listAvailableAreas(companyId);
       const response = NextResponse.json({ ok: true, areas });
-      addRateLimitHeaders(response, scope);
+      addRateLimitHeaders(response, rateLimitScope);
       return response;
     }
 
     if (type === 'list-rubrics') {
-      const rubrics = await listAvailableRubrics(scope.companyId);
+      const rubrics = await listAvailableRubrics(companyId);
       const response = NextResponse.json({ ok: true, rubrics });
-      addRateLimitHeaders(response, scope);
+      addRateLimitHeaders(response, rateLimitScope);
       return response;
     }
 
@@ -59,9 +64,9 @@ export async function GET(request) {
         return apiError(request, 'MISSING_PARAMS', 400);
       }
 
-      const comparison = await compareAreas(scope.companyId, areaA, areaB);
+      const comparison = await compareAreas(companyId, areaA, areaB);
       const response = NextResponse.json({ ok: true, comparison });
-      addRateLimitHeaders(response, scope);
+      addRateLimitHeaders(response, rateLimitScope);
       return response;
     }
 
@@ -76,14 +81,14 @@ export async function GET(request) {
       }
 
       const comparison = await comparePeriods(
-        scope.companyId,
+        companyId,
         periodAStart,
         periodAEnd,
         periodBStart,
         periodBEnd
       );
       const response = NextResponse.json({ ok: true, comparison });
-      addRateLimitHeaders(response, scope);
+      addRateLimitHeaders(response, rateLimitScope);
       return response;
     }
 
@@ -95,9 +100,9 @@ export async function GET(request) {
         return apiError(request, 'MISSING_PARAMS', 400);
       }
 
-      const comparison = await compareRubrics(scope.companyId, rubricAId, rubricBId);
+      const comparison = await compareRubrics(companyId, rubricAId, rubricBId);
       const response = NextResponse.json({ ok: true, comparison });
-      addRateLimitHeaders(response, scope);
+      addRateLimitHeaders(response, rateLimitScope);
       return response;
     }
 

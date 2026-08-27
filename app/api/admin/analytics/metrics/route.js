@@ -5,19 +5,24 @@
  */
 
 import { NextResponse } from 'next/server';
-import { apiError } from '@/lib/api-error.js';
-import { getHiringEffectivenessMetrics } from '@/lib/analytics-metrics.js';
-import { getManagerScope } from '@/lib/ae/require-admin.js';
-import { checkAnalyticsRateLimit, addRateLimitHeaders } from '@/lib/analytics-rate-limit.js';
+import { apiError } from '../../../../../lib/api-error.js';
+import { getHiringEffectivenessMetrics } from '../../../../../lib/analytics-metrics.js';
+import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
+import { checkAnalyticsRateLimit, addRateLimitHeaders } from '../../../../../lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
-    const scope = await getManagerScope(request, { allowDirection: true, allowHr: true });
-    if (!scope) {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    const companyId = scope.isAdmin
+      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
+      : Number(scope.companyId);
+    if (!Number.isFinite(companyId) || companyId <= 0) return apiError(request, 'COMPANY_REQUIRED', 400);
 
-    const rateLimitResponse = checkAnalyticsRateLimit(request, scope);
+    const rateLimitScope = { ...scope, companyId, userId: payload.userId };
+    const rateLimitResponse = checkAnalyticsRateLimit(request, rateLimitScope);
     if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
@@ -25,7 +30,7 @@ export async function GET(request) {
     const endDate = searchParams.get('endDate') || null;
     const vacancyId = searchParams.get('vacancyId') || null;
 
-    const metrics = await getHiringEffectivenessMetrics(scope.companyId, {
+    const metrics = await getHiringEffectivenessMetrics(companyId, {
       startDate,
       endDate,
       vacancyId: vacancyId ? parseInt(vacancyId) : null,
@@ -36,7 +41,7 @@ export async function GET(request) {
       metrics,
       filters: { startDate, endDate, vacancyId },
     });
-    addRateLimitHeaders(response, scope);
+    addRateLimitHeaders(response, rateLimitScope);
     return response;
   } catch (err) {
     console.error('[analytics/metrics GET]', err);

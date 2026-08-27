@@ -5,12 +5,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useLocale } from '@/lib/useLocale.js';
-import { C } from '@/lib/theme.js';
+import { t } from '../../../lib/i18n.js';
+import { useLocale } from '../../../lib/useLocale.js';
+import { C } from '../../../lib/theme.js';
 import { S } from '../dashboard-shared.jsx';
 
 export function AnalyticsTab({ session }) {
-  const { t, locale } = useLocale();
+  const [locale] = useLocale();
   const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends' | 'compare'
   const [metrics, setMetrics] = useState(null);
   const [trends, setTrends] = useState(null);
