@@ -143,7 +143,16 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/succession-plans.js` (CRUD roles/plans, `calculateSuccessionReadiness`, `getPotentialSuccessors`)
 - Migration: `057_succession_plans.sql` (tabelas `critical_roles`, `succession_plans`)
 
-**Backlog:** B-1006 a B-1009 (análise demissional, cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
+### B-1006 — Análise Demissional
+- **Exit Records** (registro de saída): candidato alumni, data, tipo (voluntary/involuntary/mutual), motivo (16 razões: better_offer, compensation, career_growth, performance, culture_fit, manager_relationship, etc.), notas (contexto/feedback)
+- **Agregação**: motivos × tipo T1–T9 × área para padrões de rotatividade
+- **Insights automáticos**: categoriza em M1 (seleção: compensação não competitiva, fit cultural, desempenho) e M3/M4 (gestão: relação com gestor, falta de crescimento). Apresenta % e sugestões hedged.
+- UI: `ExitAnalysisAdminTab` (registrar/listar saídas), `ExitInsightsCard` no Overview (padrões M1/M3/M4)
+- APIs: `/api/admin/exit-analysis` (CRUD exit records), `/api/admin/exit-analysis/insights` (agregações + insights)
+- Lib: `lib/exit-analysis.js` (CRUD, `getExitReasonAggregation`, `getExitsByTypeProfile`, `getExitInsights`)
+- Migration: `058_exit_analysis.sql` (tabela `exit_records`)
+
+**Backlog:** B-1007 a B-1009 (cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
 
 ---
 

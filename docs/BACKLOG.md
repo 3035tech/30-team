@@ -167,9 +167,9 @@ _(migration 056 + lib/performance-reviews.js + APIs + UI PerformanceReviewsAdmin
 
 _(migration 057 + lib/succession-plans.js + APIs + UI SuccessionAdminTab)_ Papéis críticos (`critical_roles`) com sucessores (`succession_plans`) + prontidão (`not_ready`, `developing`, `ready`, `now`). Readiness score combina HR Score (70%) + Leadership Potential (30%). Integra com `lib/hr-score.js` e `lib/leadership-analytics.js`. UI admin de papéis críticos + contador de sucessores.
 
-### B-1006 — Análise demissional
+### B-1006 — Análise demissional ✅ ENTREGUE
 
-Registro de saída (motivo + texto) no `candidate` alumni. Agregar motivos × tipo/área (padrão C4). Leitura: o que corrigir na seleção (M1) e na gestão (M3/M4). Sem workflow de desligamento DP.
+_(migration 058 + lib/exit-analysis.js + APIs + UI ExitAnalysisAdminTab + ExitInsightsCard no Overview)_ Registro de saída (`exit_records`) com tipo (voluntary/involuntary/mutual), motivo (taxonomia de 16 razões) e notas. Agregação por motivo × tipo T1–T9 × área. Insights automáticos categorizados em M1 (seleção: compensação, fit cultural, desempenho) e M3/M4 (gestão: relação com gestor, crescimento de carreira). Card no Overview com % e sugestões hedged.
 
 ### B-1007 — Cultura organizacional
 
