@@ -477,7 +477,7 @@ export function GroupTab({
               <select
                 onChange={(e)=>{ const id=e.target.value; if(id) addToGroup(id); e.target.value=''; }}
                 defaultValue=""
-                className="w-full max-w-full flex-[0_0_240px] cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-mono text-xs text-ink-muted sm:w-auto"
+                className={cn(S.select, 'w-full max-w-full flex-[0_0_240px] font-mono text-xs sm:w-auto')}
               >
                 <option value="">{t(locale, 'panel.group.addAnyone')}</option>
                 {results

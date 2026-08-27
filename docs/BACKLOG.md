@@ -362,7 +362,7 @@ _(entregue — B-1401: crop 1:1 + compressão cliente ≤512 KB / lado ≤768 px
 
 ## Aberto — Controles de formulário (primitivos)
 
-_(entregue — B-1402: `form-control-styles.js` + `.ui-select` / `.ui-field` / `.ui-checkbox`; `S.select`/`S.input`/`S.checkbox`; dialogs, DateField, LanguageSelect, BrState/City, fluxos públicos.)_
+_(entregue — B-1402 tokens + B-1403 migração dos selects ad hoc: page-size, pipeline Equipe, reject reason, grupos, signup, recommendation relatório; `S.selectCompact`.)_
 
 ---
 

@@ -827,7 +827,7 @@ export function TeamTab({
             value={bulkStage}
             onChange={(e) => setBulkStage(e.target.value)}
             disabled={bulkBusy}
-            className="rounded-lg border border-ink/12 bg-transparent px-2.5 py-1.5 text-xs text-ink"
+            className={cn(S.select, 'bg-transparent py-1.5 text-xs')}
           >
             {PIPELINE_OPTIONS.map((code) => (
               <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
@@ -1198,7 +1198,7 @@ export function TeamTab({
                               value={a.pipelineStage || PIPELINE_STAGE.TEST_COMPLETED}
                               disabled={!!stageBusy}
                               onChange={(e) => patchPipeline(a.id, e.target.value)}
-                              className="rounded-md border border-ink/12 bg-transparent px-2 py-1 text-[11px] text-ink"
+                              className={cn(S.selectCompact, 'bg-transparent py-1')}
                             >
                               {PIPELINE_OPTIONS.map((code) => (
                                 <option key={code} value={code}>
@@ -1292,7 +1292,7 @@ export function TeamTab({
                           onChange={(e) => setProfileDraft((p) => ({ ...p, phone: stripPhone(e.target.value) || '' }))}
                           placeholder={t(locale, 'recruiting.phonePh')}
                           inputMode="tel"
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
+                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
                         />
                         <input
                           value={profileDraft.linkedinUrl}
@@ -1327,7 +1327,7 @@ export function TeamTab({
                           value={profileDraft.availability}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, availability: e.target.value }))}
                           aria-label={t(locale, 'recruiting.availabilityLabel')}
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
+                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
                         >
                           <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
                           <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
@@ -1340,7 +1340,7 @@ export function TeamTab({
                           value={profileDraft.source}
                           onChange={(e) => setProfileDraft((p) => ({ ...p, source: e.target.value }))}
                           aria-label={t(locale, 'recruiting.sourceLabel')}
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_140px]"
+                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
                         >
                           <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
                           <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>

@@ -3,14 +3,14 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { REJECTION_REASONS, normalizeStartDate } from '../../lib/pipeline';
 import { t } from '../../lib/i18n';
-import { cn } from '../../lib/cn';
 import { rejectionReasonLabel } from './pipeline-prompts';
 import { DateField } from '../_components/DateField';
+import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 
 const PipelineExtrasContext = createContext(null);
 
-const FIELD =
-  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.05] px-3.5 py-3 font-ui text-sm text-ink';
+const FIELD = `${fieldInputClass} w-full font-ui text-sm`;
+const FIELD_SELECT = `${fieldSelectClass} w-full font-ui text-sm`;
 const BTN_PRIMARY =
   'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-[13px] text-white';
 const BTN_GHOST =
@@ -91,7 +91,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                 id="pipeline-reject-reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className={cn(FIELD, 'cursor-pointer')}
+                className={FIELD_SELECT}
               >
                 {REJECTION_REASONS.map((code) => (
                   <option key={code} value={code}>
@@ -112,7 +112,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                 id="pipeline-hire-date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className={cn(FIELD, 'cursor-pointer')}
+                className={FIELD}
                 aria-label={t(locale, 'recruiting.startDateLabel')}
               />
               <p className="mb-0 mt-2 text-xs leading-normal text-ink-faint">

@@ -9,6 +9,7 @@ import { cn } from '../../lib/cn';
 import {
   fieldInputClass,
   fieldSelectClass,
+  fieldSelectCompactClass,
   fieldTextareaClass,
   fieldCheckboxClass,
 } from '../_components/form-control-styles';
@@ -21,6 +22,8 @@ const S = {
   cardTight: 'rounded-card border border-ink/12 bg-surface p-5',
   /** Native select — custom chevron via `.ui-select` (globals.css). */
   select: fieldSelectClass,
+  /** Page-size / dense chrome selects. */
+  selectCompact: fieldSelectCompactClass,
   /** Text / number — pair with `w-full` when block. */
   input: `${fieldInputClass} w-full`,
   textarea: fieldTextareaClass,

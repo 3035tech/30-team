@@ -99,7 +99,7 @@ export function CompareTabLoader({
                 const ps = parseInt(e.target.value, 10);
                 onComparePagination({ page: 1, pageSize: ps });
               }}
-              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2 font-mono text-xs text-ink-muted"
+              className={S.selectCompact}
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>

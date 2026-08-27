@@ -305,7 +305,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Tags / chips (tema Academy, etc.) | `app/_components/TagInput.jsx` (+ `type: 'tags'` no `PromptFormDialog`); `lib/tag-list.js` |
 | Busca de colaborador (nome → id) | `app/_components/EntitySearchSelect.jsx` (+ `type: 'entitySearch'`); `GET /api/admin/employees/search` |
 | Campos de data / datetime | `app/_components/DateField.jsx` (+ `type: 'date'` / `'datetime-local'` no `PromptFormDialog`) |
-| Controles nativos (select/input/checkbox) | `app/_components/form-control-styles.js` + `.ui-select` / `.ui-field` / `.ui-checkbox` em `globals.css`; tokens `S.select` / `S.input` / `S.checkbox` |
+| Controles nativos (select/input/checkbox) | `app/_components/form-control-styles.js` + `.ui-select` / `.ui-field` / `.ui-checkbox` em `globals.css`; tokens `S.select` / `S.selectCompact` / `S.input` / `S.checkbox` |
 | Links compartilháveis (copiar / abrir) | `app/_components/CopyableLink.jsx`, `lib/clipboard.js` |
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |

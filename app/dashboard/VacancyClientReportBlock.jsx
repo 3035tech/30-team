@@ -1021,7 +1021,7 @@ export function VacancyClientReportBlock({
                             <select
                               value={rec}
                               onChange={(e) => setRec(c.candidateId, e.target.value)}
-                              className="py-1 px-1.5 text-[11px]"
+                              className={cn(S.selectCompact, 'py-1')}
                             >
                               {REPORT_RECOMMENDATIONS.map((r) => (
                                 <option key={r} value={r}>

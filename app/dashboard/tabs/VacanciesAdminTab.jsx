@@ -41,12 +41,11 @@ import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalytics
 import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
 
 
-const FIELD =
-  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
-const FIELD_SELECT =
-  'box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5 font-mono text-xs text-ink-muted';
+const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
+const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-xs`;
 const FIELD_LABEL =
   'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
 const FIELD_LABEL_INLINE =
@@ -1586,7 +1585,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' });
                   }}
                   disabled={loading}
-                  className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
+                  className={S.selectCompact}
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => (
                     <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>

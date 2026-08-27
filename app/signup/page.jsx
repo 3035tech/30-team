@@ -8,9 +8,10 @@ import { t, errorMessage } from '../../lib/i18n';
 import { BrandMark } from '../_components/BrandMark';
 import LanguageSelect from '../_components/LanguageSelect';
 import { cn } from '../../lib/cn';
+import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 
-const inputClass =
-  'w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-brand-300 focus:bg-white';
+const inputClass = `${fieldInputClass} w-full px-4 py-3 text-[15px] placeholder:text-ink-faint focus:border-brand-300 focus:bg-white`;
+const selectClass = `${fieldSelectClass} w-full px-4 py-3 text-[15px]`;
 
 export default function SignupPage() {
   const [locale, setLocale] = useLocale();
@@ -179,7 +180,7 @@ export default function SignupPage() {
               id="signup-teamsize"
               value={formData.teamSize}
               onChange={handleChange('teamSize')}
-              className={inputClass}
+              className={selectClass}
             >
               <option value="">{t(locale, 'signup.teamSizePlaceholder')}</option>
               <option value="1-10">1-10</option>

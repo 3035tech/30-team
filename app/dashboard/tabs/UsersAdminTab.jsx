@@ -559,7 +559,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       navigateDashboard({ usersPage: 1, usersPageSize: ps, tab: 'users' });
                     }}
                     disabled={loading}
-                    className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.05] px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
+                    className={S.selectCompact}
                   >
                     {PAGE_SIZE_OPTIONS.map((n) => (
                       <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>

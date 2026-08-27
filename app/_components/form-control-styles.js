@@ -14,6 +14,9 @@ export const fieldInputClass = `${fieldControlChromeClass} ui-field font-mono`;
 /** Native `<select>` with custom chevron (`.ui-select`). Not full-width by default. */
 export const fieldSelectClass = `${fieldControlChromeClass} ui-select cursor-pointer font-ui text-ink-muted`;
 
+/** Compact select (page-size, inline filters). */
+export const fieldSelectCompactClass = `${fieldSelectClass} px-2.5 py-1.5 font-mono text-[11px]`;
+
 /** Full-width select for forms / dialogs. */
 export const fieldSelectBlockClass = `${fieldSelectClass} w-full`;
 
