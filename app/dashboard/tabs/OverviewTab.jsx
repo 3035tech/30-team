@@ -12,6 +12,7 @@ import { S } from '../dashboard-shared';
 import { TeamBehavioralIntelBlock } from './TeamBehavioralIntelBlock';
 import TurnoverRadarCard from './overview/TurnoverRadarCard';
 import HrScoreCard from './overview/HrScoreCard';
+import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -95,6 +96,7 @@ export function OverviewTab({
   companyId = null,
   filters = {},
   navigateDashboard,
+  onboardingProgress = null,
 }) {
   const [peopleOpsOpen, setPeopleOpsOpen] = useState(false);
   const [recruitingOpen, setRecruitingOpen] = useState(false);
@@ -235,6 +237,10 @@ export function OverviewTab({
         )}
       </div>
 
+      {/* Onboarding Checklist */}
+      {onboardingProgress && onboardingProgress.progress < 100 && (
+        <OnboardingChecklist initialProgress={onboardingProgress} />
+      )}
 
       <TeamBehavioralIntelBlock
         locale={locale}
