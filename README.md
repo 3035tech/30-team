@@ -266,7 +266,30 @@ console.log(`Fit pool: ${metrics.fitComparison.poolAvgFit}`);
 console.log(`Delta: +${metrics.fitComparison.delta}`);
 ```
 
-**Roadmap:** B-1107 Relatórios agendados (email/PDF), Webhooks de alertas, OpenAPI spec.
+### Relatórios Agendados (B-1107)
+
+Digest semanal ou mensal automatizado por email:
+
+```bash
+# Cron job (adicionar ao crontab ou scheduler)
+# Toda segunda-feira às 9h
+0 9 * * 1 curl -X POST https://30team.app/api/cron/analytics-report \
+  -H "Authorization: Bearer ${CRON_SECRET}"
+
+# Mensal (1º do mês)
+0 9 1 * * curl -X POST https://30team.app/api/cron/analytics-report \
+  -H "Authorization: Bearer ${CRON_SECRET}"
+```
+
+**Conteúdo do email:**
+- Métricas de efetividade (time-to-hire, retenção, fit)
+- Tendências dos últimos 3 meses (HR Score, turnover, clima)
+- Alertas ativos (climate_drop, turnover_risk_increase, etc.)
+- Link direto para o dashboard
+
+**Destinatários:** automático para todos os `direction` + `admin` da empresa ativa.
+
+**Roadmap:** Webhooks de alertas, PDF anexo, OpenAPI spec, destinatários configuráveis.
 
 ---
 

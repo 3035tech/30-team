@@ -169,11 +169,11 @@ Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta
 
 ---
 
-## Aberto — Epic B-1100 (Analytics avançado) — 71% COMPLETO
+## Aberto — Epic B-1100 (Analytics avançado) — 86% COMPLETO
 
 Transformar dados comportamentais em **inteligência acionável** para decisões estratégicas de RH. Foco: métricas de efetividade, tendências, comparativos e alertas proativos.
 
-**Progresso:** 5/7 features entregues (71%)
+**Progresso:** 6/7 features entregues (86%)
 
 **Princípios:**
 - Reusar dados já coletados (T1–T9, Motivadores, PDI, clima, turnover)
@@ -305,21 +305,28 @@ API REST autenticada (JWT) para expor métricas:
 
 **Uso:** integrações com BI externo (Metabase, Looker), automações, Slack, webhooks
 
-### B-1107 — Relatórios agendados (email/PDF)
+### B-1107 — Relatórios agendados (email/PDF) ✅ ENTREGUE
 
-**O quê:** **Envio automático** de relatórios:
-- Weekly/monthly digest de métricas
-- PDF com gráficos + resumo executivo
-- Destinatários: direction/admin (configurável)
+_(lib/analytics-scheduled-reports.js + API /api/cron/analytics-report)_
 
-**Onde:** config em Settings ou aba Analytics
+**Envio automático** de relatórios de Analytics:
+- Weekly/monthly digest com métricas de efetividade inline
+- HTML responsivo (não requer PDF reader)
+- Tendências (últimos 3 meses): HR Score, turnover, clima
+- Alertas ativos destacados (severity high/medium/info)
+- Destinatários automáticos: `direction` + `admin` da empresa
+- Multi-idioma (pt-BR / en)
 
-**Saída:**
-- Email com PDF anexo
-- HTML inline (charts + tabelas)
-- Botão "Ver no dashboard" (link direto)
+**Implementado:**
+- ✅ Email HTML inline (métrica cards, trend table, alerts)
+- ✅ Cron job (`POST /api/cron/analytics-report`)
+- ✅ Rate: processa até 50 empresas/execução
+- ✅ Reutiliza estrutura de `manager-weekly-digest`
+- ✅ CTA direto para `/dashboard?tab=analytics`
 
-**Reuso:** `lib/mail.js`, crons (já há `manager-weekly-digest`)
+**Uso:** cron semanal (ex: segunda 9h) ou mensal (1º do mês)
+
+**Roadmap:** PDF anexo (puppeteer), destinatários configuráveis por empresa, frequência por empresa
 
 ---
 
