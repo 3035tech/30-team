@@ -971,6 +971,34 @@ export function TeamTab({
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
+                {r.candidateId && isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        const res = await fetch(`/api/admin/hr-score/recalculate`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ candidateId: r.candidateId }),
+                        });
+                        if (res.ok) {
+                          toast(locale === 'en' ? 'Score recalculated' : 'Score recalculado', 'ok');
+                          if (typeof onRefresh === 'function') onRefresh();
+                        } else {
+                          throw new Error('recalc_failed');
+                        }
+                      } catch (err) {
+                        toast(locale === 'en' ? 'Failed to recalculate' : 'Erro ao recalcular', 'error');
+                      }
+                    }}
+                    title={locale === 'en' ? 'Recalculate HR Score' : 'Recalcular HR Score'}
+                    aria-label={locale === 'en' ? 'Recalculate HR Score' : 'Recalcular HR Score'}
+                    className="inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-info/35 bg-info/[0.08] p-0 text-info"
+                  >
+                    <Icon name="refresh-cw" />
+                  </button>
+                ) : null}
                 {r.candidateId ? (
                   <button
                     type="button"

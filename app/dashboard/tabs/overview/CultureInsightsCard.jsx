@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -195,21 +196,39 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         <div className="space-y-4">
           <h4 className="text-sm font-semibold text-ink">{t('insightsTitle')}</h4>
           <div className="space-y-3">
-            {data.fullCulture.insights.map((insight, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
-              >
-                <span className="text-xl shrink-0">{getCategoryIcon(insight.category)}</span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-ink">{insight.description}</p>
-                  <p className="text-xs text-ink-muted mt-1">{insight.details}</p>
-                  {insight.hedging && (
-                    <p className="text-xs text-ink-faint mt-1 italic">{insight.hedging}</p>
-                  )}
+            {data.fullCulture.insights.map((insight, idx) => {
+              let actionLink = null;
+              if (insight.category === 'climate') {
+                actionLink = '/dashboard?tab=climate';
+              } else if (insight.category === 'pulse') {
+                actionLink = '/dashboard?tab=groups';
+              }
+              return (
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
+                >
+                  <span className="text-xl shrink-0">{getCategoryIcon(insight.category)}</span>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-ink">{insight.description}</p>
+                      {actionLink && (
+                        <Link
+                          href={actionLink}
+                          className="flex-shrink-0 text-xs text-brand-600 hover:text-brand-700 font-medium"
+                        >
+                          {locale === 'en' ? 'View' : 'Ver'} →
+                        </Link>
+                      )}
+                    </div>
+                    <p className="text-xs text-ink-muted mt-1">{insight.details}</p>
+                    {insight.hedging && (
+                      <p className="text-xs text-ink-faint mt-1 italic">{insight.hedging}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Back to Summary Button */}
