@@ -10,9 +10,12 @@ import { useLocale } from '../../../lib/useLocale.js';
 import { C } from '../../../lib/theme.js';
 import { S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
+import { useAppFeedback } from '../../_components/AppFeedback.jsx';
+import { cn } from '../../../lib/cn.js';
 
 export function AnalyticsTab({ session }) {
   const [locale] = useLocale();
+  const { toast } = useAppFeedback();
   const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends' | 'compare'
   const [metrics, setMetrics] = useState(null);
   const [trends, setTrends] = useState(null);
@@ -30,6 +33,11 @@ export function AnalyticsTab({ session }) {
     areaA: '',
     areaB: '',
   });
+  const [reportPrefs, setReportPrefs] = useState({
+    frequency: 'weekly',
+    attachPdf: false,
+  });
+  const [prefsBusy, setPrefsBusy] = useState(false);
 
   useEffect(() => {
     if (activeView === 'metrics') {
@@ -39,6 +47,48 @@ export function AnalyticsTab({ session }) {
     }
     // Compare loads on-demand via button
   }, [activeView]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/analytics/report-prefs');
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok && data.prefs) {
+          setReportPrefs({
+            frequency: data.prefs.frequency || 'weekly',
+            attachPdf: data.prefs.attachPdf === true,
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function saveReportPrefs() {
+    setPrefsBusy(true);
+    try {
+      const res = await fetch('/api/admin/analytics/report-prefs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          frequency: reportPrefs.frequency,
+          attachPdf: reportPrefs.attachPdf,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      toast(t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsSaved'), 'ok');
+    } catch {
+      toast(t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsError'), 'error');
+    } finally {
+      setPrefsBusy(false);
+    }
+  }
 
   async function loadMetrics() {
     setLoading(true);
@@ -367,6 +417,46 @@ export function AnalyticsTab({ session }) {
           </div>
         </div>
         )}
+      </div>
+
+      <div className={S.card}>
+        <h3 className="font-display text-lg mb-2">
+          {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsTitle')}
+        </h3>
+        <p className={cn(S.muted, 'mb-4')}>
+          {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsHelp')}
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="flex flex-col gap-1.5">
+            <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.reportFreq')}</span>
+            <select
+              className={S.select}
+              value={reportPrefs.frequency}
+              onChange={(e) => setReportPrefs((p) => ({ ...p, frequency: e.target.value }))}
+            >
+              <option value="weekly">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqWeekly')}</option>
+              <option value="monthly">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqMonthly')}</option>
+              <option value="off">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqOff')}</option>
+            </select>
+          </label>
+          <label className="flex min-h-touch cursor-pointer items-center gap-2 font-display text-sm text-ink">
+            <input
+              type="checkbox"
+              className={S.checkbox}
+              checked={reportPrefs.attachPdf}
+              onChange={(e) => setReportPrefs((p) => ({ ...p, attachPdf: e.target.checked }))}
+            />
+            {t(locale, 'panel.motivatorsAdmin.analytics.reportAttachPdf')}
+          </label>
+          <button
+            type="button"
+            className={S.btnPrimary}
+            disabled={prefsBusy}
+            onClick={saveReportPrefs}
+          >
+            {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsSave')}
+          </button>
+        </div>
       </div>
     </div>
   );

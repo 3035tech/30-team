@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { notificationCopySpec, notificationVisual } from '../../lib/manager-notification-catalog';
+import { notificationCopySpec, notificationVisual, NOTIF } from '../../lib/manager-notification-catalog';
 import { GlobalSearch } from './GlobalSearch';
 import { DarkModeToggle } from './DarkModeProvider';
 
@@ -21,18 +21,35 @@ function formatWhen(iso, locale) {
   }
 }
 
+function riskLevelLabel(locale, level) {
+  if (level === 'high') return t(locale, 'turnoverRadar.riskHigh');
+  if (level === 'medium') return t(locale, 'turnoverRadar.riskMedium');
+  if (level === 'low') return t(locale, 'turnoverRadar.riskLow');
+  return level || '—';
+}
+
 function notifTitle(locale, item) {
   const spec = notificationCopySpec(item.type, item.payload || {});
+  const values = { ...spec.values };
+  if (item.type === NOTIF.TURNOVER_RISK_CHANGE) {
+    values.from = riskLevelLabel(locale, values.from);
+    values.to = riskLevelLabel(locale, values.to);
+  }
   return t(locale, spec.titleKey, {
-    ...spec.values,
-    name: spec.values.name === '—' ? t(locale, 'dashboard.notifSomeone') : spec.values.name,
+    ...values,
+    name: values.name === '—' ? t(locale, 'dashboard.notifSomeone') : values.name,
   });
 }
 
 function notifBody(locale, item) {
   const spec = notificationCopySpec(item.type, item.payload || {});
   if (!spec.bodyKey) return '';
-  return t(locale, spec.bodyKey, spec.values);
+  const values = { ...spec.values };
+  if (item.type === NOTIF.TURNOVER_RISK_CHANGE) {
+    values.from = riskLevelLabel(locale, values.from);
+    values.to = riskLevelLabel(locale, values.to);
+  }
+  return t(locale, spec.bodyKey, values);
 }
 
 function toneClasses(tone) {

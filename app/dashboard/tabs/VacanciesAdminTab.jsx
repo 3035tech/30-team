@@ -41,6 +41,7 @@ import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalytics
 import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { RubricEditor } from '../../_components/RubricEditor';
 import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
 
 
@@ -192,9 +193,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const loadJobRoles = async (cid) => {
-    if (!cid) return;
     try {
-      const res = await fetch(`/api/admin/job-roles?companyId=${cid}`);
+      const qs = cid ? `?companyId=${encodeURIComponent(cid)}` : '';
+      const res = await fetch(`/api/admin/job-roles${qs}`);
       if (!res.ok) return;
       const data = await res.json();
       setJobRoles(data.roles || []);
@@ -213,8 +214,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (companyId) loadJobRoles(companyId);
-  }, [companyId]);
+    if (isAdmin) {
+      if (companyId) loadJobRoles(companyId);
+      return;
+    }
+    loadJobRoles();
+  }, [companyId, isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -381,8 +386,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
   const editVacancy = (v) => {
     setShowCreate(false);
+    if (v.companyId) loadJobRoles(v.companyId);
     setEditingVacancy({
       id: v.id,
+      companyId: v.companyId ?? null,
       title: v.title ?? '',
       slug: v.slug ?? '',
       status: v.status ?? VACANCY_STATUS.OPEN,
@@ -400,6 +407,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       publicAllowIndex: Boolean(v.publicAllowIndex),
       publicShowCompanyInfo: Boolean(v.publicShowCompanyInfo),
       publicShowSalary: Boolean(v.publicShowSalary),
+      jobRoleId: v.jobRoleId != null ? String(v.jobRoleId) : '',
       companySlug: v.companySlug || '',
     });
   };
@@ -450,6 +458,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       publicAllowIndex,
       publicShowCompanyInfo,
       publicShowSalary,
+      jobRoleId: editJobRoleId,
     } = editingVacancy;
     if (!title.trim()) { setError(t(locale, 'recruiting.titleRequired')); return; }
     setLoading(true);
@@ -477,6 +486,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           publicAllowIndex: Boolean(publicAllowIndex),
           publicShowCompanyInfo: Boolean(publicShowCompanyInfo),
           publicShowSalary: Boolean(publicShowSalary),
+          jobRoleId: editJobRoleId ? parseInt(editJobRoleId, 10) : null,
         }),
       });
       const data = await res.json();
@@ -571,19 +581,35 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             ) : null}
 
             {jobRoles.length > 0 && (
-              <label className={FIELD_LABEL}>
-                {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
-                <select
-                  value={jobRoleId}
-                  onChange={(e) => setJobRoleId(e.target.value)}
-                  className={cn(FIELD_SELECT, "max-w-[420px]")}
-                >
-                  <option value="">{t(locale, 'recruiting.noJobRole')}</option>
-                  {jobRoles.map((jr) => (
-                    <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
-                  ))}
-                </select>
-              </label>
+              <div className="flex flex-col gap-1.5">
+                <label className={FIELD_LABEL}>
+                  {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
+                  <select
+                    value={jobRoleId}
+                    onChange={(e) => setJobRoleId(e.target.value)}
+                    className={cn(FIELD_SELECT, "max-w-[420px]")}
+                  >
+                    <option value="">{t(locale, 'recruiting.noJobRole')}</option>
+                    {jobRoles.map((jr) => (
+                      <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
+                    ))}
+                  </select>
+                </label>
+                {(() => {
+                  const selected = jobRoles.find((jr) => String(jr.id) === String(jobRoleId));
+                  const rubric =
+                    selected?.rubric && typeof selected.rubric === 'object' ? selected.rubric : {};
+                  if (!jobRoleId || Object.keys(rubric).length === 0) return null;
+                  return (
+                    <div className="max-w-[420px]">
+                      <p className="m-0 mb-1 font-mono text-[10px] text-ink-faint">
+                        {t(locale, 'jobRoles.rubricPreview')}
+                      </p>
+                      <RubricEditor value={rubric} locale={locale} compact />
+                    </div>
+                  );
+                })()}
+              </div>
             )}
 
             <div className={GRID_AUTO_LG}>
@@ -785,6 +811,41 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         {editingVacancy ? (
           <div className="flex flex-col gap-3">
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
+              {jobRoles.length > 0 ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className={FIELD_LABEL}>
+                    {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
+                    <select
+                      value={editingVacancy.jobRoleId || ''}
+                      onChange={(e) =>
+                        setEditingVacancy((cur) => ({ ...cur, jobRoleId: e.target.value }))
+                      }
+                      className={cn(FIELD_SELECT, 'max-w-[420px] text-[13px]')}
+                    >
+                      <option value="">{t(locale, 'recruiting.noJobRole')}</option>
+                      {jobRoles.map((jr) => (
+                        <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {(() => {
+                    const selected = jobRoles.find(
+                      (jr) => String(jr.id) === String(editingVacancy.jobRoleId || '')
+                    );
+                    const rubric =
+                      selected?.rubric && typeof selected.rubric === 'object' ? selected.rubric : {};
+                    if (!editingVacancy.jobRoleId || Object.keys(rubric).length === 0) return null;
+                    return (
+                      <div className="max-w-[420px]">
+                        <p className="m-0 mb-1 font-mono text-[10px] text-ink-faint">
+                          {t(locale, 'jobRoles.rubricPreview')}
+                        </p>
+                        <RubricEditor value={rubric} locale={locale} compact />
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : null}
               <div className="flex flex-wrap gap-2.5">
                 <input
                   value={editingVacancy.title}

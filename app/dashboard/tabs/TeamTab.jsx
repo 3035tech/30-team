@@ -171,6 +171,9 @@ export function TeamTab({
   onSearch,
   listTotal = 0,
   focusCandidateId = null,
+  focusSection = null,
+  listFilter = null,
+  onClearListFilter = null,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -213,34 +216,42 @@ export function TeamTab({
   useEffect(() => {
     if (!focusCandidateId) return;
     const cid = String(focusCandidateId);
+    const section =
+      focusSection === 'journey' || focusSection === 'oneOnOne' || focusSection === 'briefing'
+        ? focusSection
+        : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
       setPersonTab('people');
-      setPeopleSubTab('briefing');
+      setPeopleSubTab(section);
       loadDetail(cid);
       return;
     }
     loadDetail(cid);
-  }, [focusCandidateId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusCandidateId, focusSection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!focusCandidateId || !detail?.candidate) return;
     if (String(detail.candidate.id) !== String(focusCandidateId)) return;
+    const section =
+      focusSection === 'journey' || focusSection === 'oneOnOne' || focusSection === 'briefing'
+        ? focusSection
+        : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
       setPersonTab('people');
-      setPeopleSubTab('briefing');
+      setPeopleSubTab(section);
       return;
     }
     const aid = detail.assessments?.[0]?.id;
     if (aid) {
       setOpen(String(aid));
       setPersonTab('people');
-      setPeopleSubTab('briefing');
+      setPeopleSubTab(section);
     }
-  }, [detail, focusCandidateId, results]);
+  }, [detail, focusCandidateId, focusSection, results]);
 
   const commitSearch = () => {
     const trimmed = searchDraft.trim();
@@ -582,6 +593,23 @@ export function TeamTab({
           </span>
         ) : null}
       </div>
+      {listFilter === 'turnover_risk' ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-warning/30 bg-warning/10 px-3.5 py-2.5 text-sm text-ink"
+          role="status"
+        >
+          <span>{t(locale, 'panel.team.filterTurnoverRisk')}</span>
+          {typeof onClearListFilter === 'function' ? (
+            <button
+              type="button"
+              onClick={onClearListFilter}
+              className={S.btnGhost}
+            >
+              {t(locale, 'panel.team.clearListFilter')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <div
         role="group"
         aria-label={t(locale, 'panel.team.sortAria')}

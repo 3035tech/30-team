@@ -55,6 +55,9 @@ export function useDashboardNavigation({
     if (nextRoster && nextRoster !== 'internal') p.set('roster', String(nextRoster));
     // Default internal: omit from URL for cleaner links; still apply on server.
 
+    const nextFilter = opts.filter !== undefined ? opts.filter : urlParams.get('filter');
+    if (nextFilter) p.set('filter', String(nextFilter));
+
     if (nextEnneagram && nextEnneagram !== 'all') p.set('enneagram', nextEnneagram);
 
     if (nextDateFrom) p.set('dateFrom', nextDateFrom);
@@ -83,6 +86,13 @@ export function useDashboardNavigation({
     } else if (nextTab === 'team') {
       const curCand = urlParams.get('candidate');
       if (curCand) p.set('candidate', curCand);
+    }
+
+    if (opts.section !== undefined) {
+      if (opts.section) p.set('section', String(opts.section));
+    } else if (nextTab === 'team') {
+      const curSection = urlParams.get('section');
+      if (curSection) p.set('section', curSection);
     }
 
     const merged = { ...snapshot(), ...opts };
@@ -171,6 +181,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.enneagram != null ? { enneagram: nextFilter.enneagram } : {}),
       ...(nextFilter?.pipeline != null ? { pipeline: nextFilter.pipeline } : {}),
       ...(nextFilter?.roster != null ? { roster: nextFilter.roster } : {}),
+      ...(nextFilter?.filter !== undefined ? { filter: nextFilter.filter } : {}),
       ...(nextFilter?.dateFrom !== undefined ? { dateFrom: nextFilter.dateFrom } : {}),
       ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
       ...(nextFilter?.search !== undefined ? { search: nextFilter.search } : {}),

@@ -1,4 +1,4 @@
-import { queryRead } from '../../../../../lib/db.js';
+import { query, queryRead } from '../../../../../lib/db.js';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
 import {
   getSessionPayload,
@@ -8,6 +8,10 @@ import {
 } from '../../../../../lib/ae/require-admin.js';
 import { calculateHrScore, getHrScore, saveHrScore } from '../../../../../lib/hr-score.js';
 import { calculateAllPredictions } from '../../../../../lib/hr-predictions.js';
+import {
+  detectTrendChange,
+  emitTurnoverRiskChangeNotification,
+} from '../../../../../lib/turnover-radar.js';
 
 /**
  * GET /api/admin/hr-score/[candidateId]
@@ -56,10 +60,19 @@ export async function GET(request, { params }) {
       (Date.now() - new Date(score.calculatedAt).getTime()) > 7 * 24 * 60 * 60 * 1000;
 
     if (needsRecalc) {
+      // Antes do save — lê turnover_risk anterior
+      const change = await detectTrendChange(candidateId);
+
       const scoreData = await calculateHrScore(candidateId, candidate.companyId);
       const predictions = await calculateAllPredictions(candidateId, scoreData.signals);
 
       await saveHrScore(candidateId, candidate.companyId, scoreData, predictions);
+      await emitTurnoverRiskChangeNotification(query, {
+        candidateId,
+        companyId: candidate.companyId,
+        candidateName: candidate.fullName,
+        change,
+      });
       score = await getHrScore(candidateId);
     }
 

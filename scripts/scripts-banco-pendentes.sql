@@ -1140,3 +1140,14 @@ ALTER TABLE learning_resources
 
 INSERT INTO schema_migrations (name) VALUES ('063_learning_theme_tags.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 064 — analytics report prefs (B-1107)
+CREATE TABLE IF NOT EXISTS company_analytics_report_prefs (
+  company_id BIGINT PRIMARY KEY REFERENCES companies(id) ON DELETE CASCADE,
+  frequency TEXT NOT NULL DEFAULT 'weekly'
+    CHECK (frequency IN ('weekly', 'monthly', 'off')),
+  recipient_user_ids BIGINT[] NOT NULL DEFAULT '{}',
+  attach_pdf BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL
+);

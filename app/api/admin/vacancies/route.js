@@ -80,6 +80,13 @@ export async function POST(request) {
     throw e;
   }
 
+  const jobRoleId =
+    body.jobRoleId != null && body.jobRoleId !== ''
+      ? body.jobRoleId
+      : body.job_role_id != null && body.job_role_id !== ''
+        ? body.job_role_id
+        : null;
+
   const created = await createVacancy({
     companyId,
     title,
@@ -88,8 +95,9 @@ export async function POST(request) {
     positionsCount,
     targetDate,
     details,
+    jobRoleId,
   });
-  if (!created.ok) return apiError(request, created.errorCode || 'INVALID_DATA', 400);
+  if (!created.ok) return apiError(request, created.errorCode || ERR.INVALID_DATA, 400);
 
   return NextResponse.json(
     { ...created.vacancy, companyName: created.companyName, activeToken: created.activeToken },

@@ -130,10 +130,10 @@ Princípio: **valor rápido** (< 1 dia por item) + **reutilizar** componentes/pa
 **Onde:** `lib/manager-notification-catalog.js` + cron  
 **Esforço:** 🟡 Médio — novo tipo + lógica de detecção
 
-### P-1020 — Turnover Radar: notificação de mudança de nível
+### P-1020 — Turnover Radar: notificação de mudança de nível ✅ ENTREGUE
 **O quê:** Detectar transição low→medium ou medium→high e notificar  
 **Por quê:** Alerta proativo de piora do risco  
-**Onde:** `lib/turnover-radar.js` (`detectTrendChange`) + notificação  
+**Onde:** `lib/turnover-radar.js` (`detectTrendChange` + `emitTurnoverRiskChangeNotification`) ligado a `recalculateCompanyScores` / GET HR Score; Equipe `filter=turnover_risk`  
 **Esforço:** 🟢 Pequeno — função já existe, só plugar notificação
 
 ### P-1021 — Performance: lembrete de ciclo aberto
@@ -190,7 +190,7 @@ Princípio: **valor rápido** (< 1 dia por item) + **reutilizar** componentes/pa
 - P-1013 — Performance auto-sugestão PDI
 - P-1016 — Culture links para Climate/Pulse
 - P-1018 — Benefits no onboarding kit
-- P-1020 — Turnover notificação mudança
+- P-1020 — Turnover notificação mudança ✅
 
 ### 🟡 **Nível 2 — Médio impacto (meio dia cada)**
 - P-1002 — Turnover drill-down modal

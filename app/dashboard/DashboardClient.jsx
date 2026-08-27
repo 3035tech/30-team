@@ -192,6 +192,7 @@ export default function DashboardClient({
   selectedVacancy = 'all',
   selectedPipeline = 'all',
   selectedRoster = 'internal',
+  selectedListFilter = null,
   selectedCompany = 'all',
   selectedDateFrom = null,
   selectedDateTo = null,
@@ -489,7 +490,7 @@ export default function DashboardClient({
     if (isAdmin) setCompany('all');
     pushFilters({
       area: 'all', vacancy: 'all', pipeline: 'all', roster: 'internal', enneagram: 'all',
-      dateFrom: null, dateTo: null, search: null,
+      dateFrom: null, dateTo: null, search: null, filter: null,
       ...(isAdmin ? { company: 'all' } : {}),
     });
   };
@@ -1099,6 +1100,9 @@ export default function DashboardClient({
                     search={selectedSearch}
                     listTotal={listTotal}
                     focusCandidateId={urlParams.get('candidate')}
+                    focusSection={urlParams.get('section')}
+                    listFilter={selectedListFilter || urlParams.get('filter')}
+                    onClearListFilter={() => pushFilters({ filter: null })}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });

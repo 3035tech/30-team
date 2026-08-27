@@ -9,6 +9,7 @@ import {
   parseDateFilter,
   parseNameSearch,
   parseRosterScope,
+  parseTeamListFilter,
   sqlWhere,
 } from '../../lib/assessment-filters';
 import { enrichAssessmentDashboardRow, toNum } from '../../lib/dashboard-assessment-row';
@@ -98,6 +99,7 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();
   const selectedPipeline = parsePipelineFilter(searchParams);
   const selectedRoster = parseRosterScope(searchParams);
+  const selectedListFilter = needTeam ? parseTeamListFilter(searchParams) : null;
   const { dateFrom: selectedDateFrom, dateTo: selectedDateTo } = parseDateFilter(searchParams);
   const nameSearch = parseNameSearch(searchParams);
   const rawCompany = (searchParams?.company || 'all').toString();
@@ -345,6 +347,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         dateFrom: selectedDateFrom,
         dateTo: selectedDateTo,
         rosterScope: selectedRoster,
+        listFilter: selectedListFilter,
       });
       const assessmentWhere = sqlWhere(whereParts);
 
@@ -639,6 +642,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
     selectedVacancy,
     selectedPipeline,
     selectedRoster,
+    selectedListFilter,
     selectedCompany: scopeCompanyFilter != null ? String(scopeCompanyFilter) : 'all',
     selectedDateFrom,
     selectedDateTo,

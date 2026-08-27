@@ -72,7 +72,7 @@ _(entregue — hero logo+nome+CTA, breadcrumb `/j` → empresa, meta local/faixa
 ## Aberto — performance (audit dashboard)
 
 ### B-202 — (opcional) caps/API restantes do audit
-Já entregue na maior parte: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps. Revisitar só se métricas de produção pedirem.
+_(fechado como “monitorar prod” — sem gap aberto claro.)_ Já entregue: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps, indexes `061`. Reabrir só com evidência de produção.
 
 ---
 
@@ -137,11 +137,11 @@ _(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sina
 
 ### B-1002 — Radar de rotatividade (multi-sinal) ✅ ENTREGUE
 
-_(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRadarCard UI)_ Calcula risco de turnover (low/medium/high) consolidando 4 sinais críticos: clima (30%), retention Motivadores (30%), PDI atraso/concern (25%), check-ins concern (15%). Lista top at-risk na Overview com drill-down por sinal. Notificações proativas e integração completa na Equipe podem ser adicionadas em próximo ciclo.
+_(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRadarCard UI)_ Calcula risco de turnover (low/medium/high) consolidando 4 sinais críticos: clima (30%), retention Motivadores (30%), PDI atraso/concern (25%), check-ins concern (15%). Lista top at-risk na Overview com drill-down por sinal. **Polish P-1020:** notificação `turnover_risk_change` ao piorar (hook em `recalculateCompanyScores` / GET HR Score); links Equipe com `candidate=` + filtro `filter=turnover_risk`.
 
-### B-1003 — Engenharia de cargos leve ✅ CORE ENTREGUE
+### B-1003 — Engenharia de cargos leve ✅ ENTREGUE (UI+rubric+FK wired)
 
-_(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com rubrica T1-T9. Vagas podem herdar cargo via FK `job_role_id`. CRUD completo (list, create, update, deactivate). UI de cadastro/listagem pendente para próximo ciclo.
+_(migration 055 + lib/job-roles.js + APIs REST + i18n + JobRolesAdminTab drawer/RubricEditor + vacancies.job_role_id on create/update)_ Tabela `job_roles` com rubrica T1-T9. Vagas herdam cargo via FK `job_role_id` (persistido no create e no PATCH). CRUD completo (list, create, update, deactivate). UI admin com `AdminRichFormDrawer` + `RubricEditor`; prévia compacta da rubrica ao selecionar cargo na vaga.
 
 ### B-1004 — Avaliação de desempenho + metas → PDI ✅ ENTREGUE
 
@@ -324,9 +324,9 @@ _(lib/analytics-scheduled-reports.js + API /api/cron/analytics-report)_
 - ✅ Reutiliza estrutura de `manager-weekly-digest`
 - ✅ CTA direto para `/dashboard?tab=analytics`
 
-**Uso:** cron semanal (ex: segunda 9h) ou mensal (1º do mês)
+**Uso:** cron semanal (`?frequency=weekly`) ou mensal (`?frequency=monthly`). Preferências por empresa: frequência, destinatários (user ids) e anexo PDF (`company_analytics_report_prefs`, migration `064`; UI em Analytics).
 
-**Roadmap:** PDF anexo (puppeteer), destinatários configuráveis por empresa, frequência por empresa
+_(B-1107 polish entregue — prefs + PDF simples sem puppeteer + filtro de frequência no cron.)_
 
 ---
 

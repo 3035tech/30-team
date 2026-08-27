@@ -124,13 +124,13 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <Link
-                      href={`/dashboard?tab=team&candidateId=${person.candidateId}`}
+                      href={`/dashboard?tab=team&candidate=${person.candidateId}`}
                       className="truncate font-medium text-ink hover:underline"
                     >
                       {person.candidateName}
                     </Link>
                     <Link
-                      href={`/dashboard?tab=team&candidateId=${person.candidateId}&section=journey`}
+                      href={`/dashboard?tab=team&candidate=${person.candidateId}&section=journey`}
                       title={t(locale, 'turnoverRadar.viewPdi')}
                       aria-label={t(locale, 'turnoverRadar.viewPdi')}
                       className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:bg-brand-500/[0.12]"
@@ -184,7 +184,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
       {data.risks.length > 8 && (
         <div className="mt-4 text-center">
           <Link
-            href="/dashboard?tab=team&filter=turnover_risk"
+            href="/dashboard?tab=team&roster=internal&filter=turnover_risk"
             className="text-sm text-brand-600 hover:underline"
           >
             {t(locale, 'turnoverRadar.viewAll', { n: data.risks.length })}

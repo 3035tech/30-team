@@ -363,14 +363,16 @@ Digest semanal ou mensal automatizado por email:
 
 ```bash
 # Cron job (adicionar ao crontab ou scheduler)
-# Toda segunda-feira às 9h
-0 9 * * 1 curl -X POST https://30team.app/api/cron/analytics-report \
+# Toda segunda-feira às 9h — empresas com frequency=weekly (default)
+0 9 * * 1 curl -X POST "https://30team.app/api/cron/analytics-report?frequency=weekly" \
   -H "Authorization: Bearer ${CRON_SECRET}"
 
-# Mensal (1º do mês)
-0 9 1 * * curl -X POST https://30team.app/api/cron/analytics-report \
+# Mensal (1º do mês) — empresas com frequency=monthly
+0 9 1 * * curl -X POST "https://30team.app/api/cron/analytics-report?frequency=monthly" \
   -H "Authorization: Bearer ${CRON_SECRET}"
 ```
+
+Preferências por empresa: aba **Analytics** → Relatório agendado (frequência, PDF). Destinatários custom via `PATCH /api/admin/analytics/report-prefs` (`recipientUserIds`). Sem prefs = direction + admin.
 
 **Conteúdo do email:**
 - Métricas de efetividade (time-to-hire, retenção, fit)

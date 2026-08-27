@@ -38,10 +38,14 @@ export async function POST(request) {
     const url = new URL(request.url);
     const sendEmail = url.searchParams.get('email') !== '0';
     const locale = url.searchParams.get('locale') || 'pt-BR';
+    const frequency = url.searchParams.get('frequency') || 'weekly';
+    const force = url.searchParams.get('force') === '1';
 
     const result = await runScheduledAnalyticsReports(query, {
       sendEmail,
       locale,
+      frequency,
+      force,
     });
 
     return NextResponse.json({
