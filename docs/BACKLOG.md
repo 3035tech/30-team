@@ -389,6 +389,16 @@ Hoje quem aplica a uma vaga vira `candidates` (+ assessment/pipeline daquela vag
 
 ---
 
+## Aberto — Observabilidade
+
+### B-1701 — Logs estruturados (infra) ✅ ENTREGUE (básico)
+JSON stdout via `lib/monitoring.js` ligado a Postgres (`lib/db.js`), Redis (`lib/rate-limit.js`) e S3 (`lib/s3-object-storage.js`). Env: `LOG_LEVEL`, `LOG_SLOW_MS`.
+
+### B-1702 — Sentry (erros de app) ✅ ENTREGUE (SDK)
+`@sentry/nextjs` + `instrumentation.js` + `sentry.*.config.js` + `app/global-error.jsx`. Org `3035tech-9t` / project `30team`. Ativar com `NEXT_PUBLIC_SENTRY_DSN` (+ `SENTRY_DSN` server) e opcional `SENTRY_AUTH_TOKEN` no build (source maps).
+
+---
+
 ## Notas
 
 - Qualidade/testes **B-001–B-006** entregues.

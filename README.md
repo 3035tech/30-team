@@ -411,6 +411,11 @@ Principais (lista completa em `.env.example`):
 | `JWT_SECRET` | Assinatura do JWT (≥32 chars em produção) |
 | `REDIS_URL` | Opcional — Redis clássico para rate limit (`redis://:senha@host:6379/4`). Dublin: `redis-haproxy.redis.svc` |
 | `REDIS_KEY_PREFIX` | Prefixo das chaves de rate limit (default `team30`) |
+| `LOG_LEVEL` | Logs JSON stdout: `debug`/`info`/`warn`/`error` (default `info`) |
+| `LOG_SLOW_MS` | Threshold de query/op lenta em ms (default `1000`) |
+| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Sentry (org `3035tech-9t`, project `30team`); vazio = desligado |
+| `SENTRY_AUTH_TOKEN` | Upload de source maps no `next build` (CI/prod) |
+| `SENTRY_ENVIRONMENT` | Tag de ambiente no Sentry (default `NODE_ENV`) |
 | `NEXT_PUBLIC_APP_URL` | URL pública (links de e-mail, Indexing, share) |
 | `COOKIE_SECURE` | Força Secure (`true`/`false`) |
 | `SMTP_HOST` + `MAIL_FROM` | E-mail (convites **e** job alerts ao publicar `/jobs`; sem SMTP = alerts no-op) |
