@@ -9,6 +9,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { htmlToPlainText } from '../../../lib/sanitize-html';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -122,8 +123,8 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       {
         name: 'description',
         label: t('roleDescription'),
-        type: 'textarea',
-        rows: 2,
+        type: 'richText',
+        minHeight: 100,
         value: role?.description || '',
       },
       {
@@ -353,7 +354,9 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-ink">{role.title}</p>
                         {role.description ? (
-                          <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{role.description}</p>
+                          <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">
+                            {htmlToPlainText(role.description)}
+                          </p>
                         ) : null}
                       </td>
                       <td className="px-4 py-3">

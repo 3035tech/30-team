@@ -50,7 +50,7 @@ Cards Overview (HR Score / Turnover / Exit / Cultura) + analytics: CAP `overview
 Overrides por usuário (whitelist de módulos, incl. B-1000). Links públicos já emitidos NÃO são invalidados ao revogar CAP do gestor.
 Assistente flutuante de ajuda (B-801): FAQ + retrieval + LLM barato — só navegação/Guia, canto inferior direito.
 
-Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-rh.md` + epic B-1900 no backlog.
+Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-rh.md` — epic **B-1900 entregue** (dossier, tensão de time, workbench, IA interpretativa).
 
 ## Funcionalidades entregues (por área)
 
@@ -72,7 +72,8 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 ### Equipe
 - Lista + kanban de roster; filtros Time interno / Candidatos de vaga / Todos + área, vaga, T1–T9, pipeline, busca.
 - Detalhe da pessoa: Briefing e 1:1 · Estilo · Histórico · Cadastro.
-- Sub-abas em “Briefing e 1:1”: Briefing | 1:1 | Jornada (PanelSubNav).
+- Sub-abas em “Briefing e 1:1”: **Dossier** (visão unificada B-1901) | Briefing | 1:1 | Jornada (PanelSubNav).
+- Dossier: perfil + briefing + PDI + desempenho + retenção + HR Score + clima da empresa (anônimo) + IA interpretativa opcional.
 - Cadastro/perfil: dados de contato + notas RH em rich text; LinkedIn; marcar funcionário / status de pipeline.
 - Adicionar à vaga (pool): vincula candidato existente a outra vaga aberta.
 - Timeline do candidato (cadastro, convites, testes, estágios, hire).

@@ -14,7 +14,9 @@ import TurnoverRadarCard from './overview/TurnoverRadarCard';
 import HrScoreCard from './overview/HrScoreCard';
 import ExitInsightsCard from './overview/ExitInsightsCard';
 import CultureInsightsCard from './overview/CultureInsightsCard';
+import MultiSignalWorkbenchCard from './overview/MultiSignalWorkbenchCard';
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
+import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -248,12 +250,27 @@ export function OverviewTab({
         navigateDashboard={navigateDashboard}
       />
 
+      {companyId ? (
+        <TeamTensionNarrativeBlock
+          locale={locale}
+          intel={data.behavioralIntel}
+          companyId={companyId}
+          teamGroupId={data.behavioralIntel?.selectedTeamGroupId ?? data.behavioralIntel?.meta?.teamGroupId}
+          navigateDashboard={navigateDashboard}
+        />
+      ) : null}
+
       {companyId && (
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <TurnoverRadarCard locale={locale} companyId={companyId} />
             <HrScoreCard locale={locale} companyId={companyId} />
           </div>
+          <MultiSignalWorkbenchCard
+            locale={locale}
+            companyId={companyId}
+            navigateDashboard={navigateDashboard}
+          />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <ExitInsightsCard locale={locale} companyId={companyId} />
             <CultureInsightsCard locale={locale} companyId={companyId} />

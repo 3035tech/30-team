@@ -1134,20 +1134,22 @@ export default function DashboardClient({
               <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
             </select>
-            <div className="inline-flex items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-1.5">
+            <div className="inline-flex h-[38px] items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3">
               <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
               <DateField
+                bare
                 value={dateFrom}
                 onChange={(e) => { const v = e.target.value; setDateFrom(v); pushFilters({ dateFrom: v || null, dateTo: dateTo || null }); }}
                 aria-label={t(locale, 'dashboard.dateFromLabel')}
-                className="min-h-0 min-w-[120px] border-none bg-transparent px-0 py-0 font-mono text-xs text-ink-muted outline-none"
+                className="min-w-[120px]"
               />
               <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
               <DateField
+                bare
                 value={dateTo}
                 onChange={(e) => { const v = e.target.value; setDateTo(v); pushFilters({ dateFrom: dateFrom || null, dateTo: v || null }); }}
                 aria-label={t(locale, 'dashboard.dateToLabel')}
-                className="min-h-0 min-w-[120px] border-none bg-transparent px-0 py-0 font-mono text-xs text-ink-muted outline-none"
+                className="min-w-[120px]"
               />
             </div>
           </div>
@@ -1245,6 +1247,11 @@ export default function DashboardClient({
                     onSort={pushTeamSort}
                     locale={locale}
                     isAdmin={isAdmin}
+                    companyId={
+                      company && company !== 'all'
+                        ? Number(company)
+                        : (sessionAuth?.companyId ?? null)
+                    }
                     search={selectedSearch}
                     listTotal={listTotal}
                     focusCandidateId={urlParams.get('candidate')}
@@ -1382,6 +1389,7 @@ export default function DashboardClient({
                   suggestions={suggestions}
                   groupTensions={groupTensions}
                   locale={locale}
+                  navigateDashboard={navigateWithOpts}
                   companyId={
                     isAdmin
                       ? (company !== 'all' ? company : null)

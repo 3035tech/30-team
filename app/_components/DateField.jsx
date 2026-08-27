@@ -10,6 +10,7 @@ import { fieldInputClass } from './form-control-styles';
  * Click anywhere on the field opens the native picker (not only the calendar icon).
  *
  * @param {'date'|'datetime-local'} [mode='date']
+ * @param {boolean} [bare=false] — no chrome (for nested filters inside a bordered group)
  */
 export function DateField({
   mode = 'date',
@@ -24,6 +25,7 @@ export function DateField({
   max,
   step,
   placeholder,
+  bare = false,
   'aria-label': ariaLabel,
   title,
 }) {
@@ -57,7 +59,12 @@ export function DateField({
       placeholder={placeholder}
       aria-label={ariaLabel}
       title={title}
-      className={cn(fieldInputClass, 'w-full cursor-pointer', className)}
+      className={cn(
+        bare
+          ? 'ui-field box-border h-7 min-h-0 cursor-pointer border-none bg-transparent px-0 py-0 font-mono text-xs text-ink-muted outline-none'
+          : cn(fieldInputClass, 'w-full cursor-pointer'),
+        className
+      )}
     />
   );
 }

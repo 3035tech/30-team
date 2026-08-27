@@ -2,7 +2,7 @@
 
 Fonte: planilha *Comparação - Plataformas RH - Cliente Oculto* (perguntas de demo, ago/2026).  
 Mapa do **já entregue:** [`PRODUCT-FEATURES-PROMPT.md`](./PRODUCT-FEATURES-PROMPT.md).  
-Backlog de gaps abertos: [`BACKLOG.md`](./BACKLOG.md) § Epic B-1900.
+Backlog de gaps abertos: epic **B-1900 entregue** (ver [`BACKLOG.md`](./BACKLOG.md)).
 
 Legenda: **tem** = demoável hoje · **parcial** = existe mas raso / siloed · **não** = fora ou não construído (respeitar fora de escopo em `AGENTS.md`).
 
@@ -14,19 +14,19 @@ Legenda: **tem** = demoável hoje · **parcial** = existe mas raso / siloed · *
 | 4 | Comparar pessoas / compatibilidade / composição de time | **tem** | Compatibilidade, Comparativo, Grupos, Overview mix |
 | 5 | Motivadores / fatores de motivação | **tem** | Motivadores (`lib/ae/`) |
 | 6 | Uso prático do resultado por RH/gestor | **tem** | Briefing, hipóteses, 1:1, Guia |
-| 7 | Cruzar perfil × motivadores (análise completa) | **parcial** | Briefing une os dois; falta “dossier” único com performance/clima |
+| 7 | Cruzar perfil × motivadores (análise completa) | **tem** | Dossier Equipe (B-1901) + briefing |
 | 8 | Avaliação de desempenho / performance | **tem** | Avaliações (ciclos + metas → PDI) B-1004 |
-| 9 | Gaps de desenvolvimento + ações sugeridas | **parcial** | Seed PDI / Academy / outcome→PDI; narrativa de ação ainda leve |
+| 9 | Gaps de desenvolvimento + ações sugeridas | **tem** | PDI + Academy + IA no dossier (B-1904) |
 | 10 | PDI + acompanhamento de evolução | **tem** | PDI + `/e` + Overview fila |
 | 11 | Recomendações ao gestor por pessoa | **tem** | HrActionBrief (faça/evite, perguntas) |
-| 12 | 1:1 / feedback / acompanhamento contínuo | **parcial** | 1:1 + hipóteses fortes; feedback formal/ciclo contínuo fraco |
+| 12 | 1:1 / feedback / acompanhamento contínuo | **parcial** | 1:1 + hipóteses fortes; feedback formal/ciclo contínuo ainda leve |
 | 13 | Analisar a equipe como um todo | **tem** | Grupos, intel comportamental, Overview |
-| 14 | Complementaridades / conflitos / lacunas / dominante | **parcial** | Compat + mix + intel; “conflito” hedged pouco empacotado p/ demo |
+| 14 | Complementaridades / conflitos / lacunas / dominante | **tem** | Bloco tensão Overview/Grupos (B-1902) |
 | 15 | Relacionar pessoas × cultura / valores | **parcial** | Cultura (B-1007) + clima; valores declarados ainda rasos |
-| 16 | Cruzar dados de pessoas p/ padrões | **parcial** | Analytics + Overview; sem workbench único multi-sinal |
-| 17 | Onde usa IA | **parcial** | Assistente Ajuda, assist vaga, temas clima; não é motor central |
-| 18 | IA interpreta / recomenda (não só resume) | **parcial** | Recomendações no briefing são regras; LLM ajuda/navegação |
-| 19 | Módulos conversam (perfil×perf×dev×clima×liderança) | **parcial** | HR Score, radar, attention; UX ainda modular |
+| 16 | Cruzar dados de pessoas p/ padrões | **tem** | Workbench multi-sinal Overview (B-1903) |
+| 17 | Onde usa IA | **tem** | Help + vaga + interpret dossier/time/workbench |
+| 18 | IA interpreta / recomenda (não só resume) | **tem** | `/api/admin/people/interpret-ai` (B-1904) |
+| 19 | Módulos conversam (perfil×perf×dev×clima×liderança) | **tem** | Dossier + workbench + HR Score/radar |
 
 ## Fora de escopo (não abrir item)
 
@@ -51,4 +51,4 @@ Roteiro sugerido alinhado às perguntas **tem**:
 6. Avaliações → ciclo → PDI  
 7. Cultura / Exit / Sucessão (se o interlocutor for GP)
 
-Para perguntas **parcial**, ser honesto: “temos o sinal X; o workbench unificado / IA interpretativa está no roadmap B-1900”.
+Para perguntas que ainda forem **parcial**, ser honesto sobre o que falta (ex. valores culturais declarados, feedback formal contínuo).

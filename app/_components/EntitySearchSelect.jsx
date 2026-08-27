@@ -121,7 +121,7 @@ export function EntitySearchSelect({
             setOpen(true);
           }}
           onFocus={() => {
-            if (items.length) setOpen(true);
+            setOpen(true);
           }}
           className={cn(dialogFieldClass, 'flex-1')}
           autoComplete="off"

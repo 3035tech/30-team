@@ -371,45 +371,7 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 
 ## Aberto — Epic B-1900 (gaps do roteiro cliente oculto × 30Team)
 
-Contexto: planilha *Comparação plataformas RH* + perguntas de demo. Análise completa: [`docs/GAP-cliente-oculto-rh.md`](./GAP-cliente-oculto-rh.md).  
-Princípio: empacotar o que já medimos antes de inventar módulo novo. Fora: DISC, ATS genérico, LMS, DP, conta de candidato.
-
-### B-1901 — Dossier unificado da pessoa (perfil × motivadores × performance × clima)
-Hoje o briefing une Eneagrama + Motivadores, mas performance/PDI/clima/retenção ficam em superfícies separadas. Falta uma visão única “o que sabemos desta pessoa” para demo e gestão.
-
-**Instruções:**
-1. Superfície na Equipe (sub-aba ou drawer) reutilizando `HrActionBrief`, scores Motivadores, último ciclo de review, PDI ativo, sinais de retenção/check-in — sem segundo hub além de `candidates`.
-2. Copy hedged; pt-BR+en; CAP `TEAM_VIEW`.
-3. Guia + Dev→Test→Validate.
-
-**Já existe:** briefing, PDI, reviews, retention_watch, onboarding check-ins.
-
-### B-1902 — Empacotar complementaridade / tensão de time para demo
-Compat + intel comportamental existem, mas a narrativa “complementaridades, possíveis atritos, lacunas do grupo” não está em um único bloco demoável.
-
-**Instruções:**
-1. Bloco em Grupos ou Compat (reusar `team-behavioral-intel` / overview mix) com 3–5 frases hedged + CTAs.
-2. Sem diagnóstico clínico; sem novo instrumento.
-3. Guia + DTOV smoke com fixture de grupo.
-
-### B-1903 — Cruzamento multi-sinal (workbench leve)
-Analytics e Overview já cruzam pedaços; falta um lugar explícito “quais sinais combinar” (perfil + clima + performance + liderança) com padrões hedged.
-
-**Instruções:**
-1. Preferir estender Overview / Analytics existentes (B-110x) em vez de app paralelo.
-2. Cap volumetria; tenant `company_id`; sem N+1.
-3. Fora: BI genérico / data lake.
-
-### B-1904 — IA interpretativa (com hedging) além do assistente de Ajuda
-Hoje LLM ajuda navegação/Guia e há assists pontuais (vaga, temas clima). A pergunta do roteiro (“interpreta padrões e recomenda?”) ainda é fraca.
-
-**Instruções:**
-1. Escopo estreito: 1–2 superfícies (ex. briefing da pessoa ou leitura de time) com recomendações geradas a partir de sinais já no banco + prompt hedged.
-2. Gate off-topic / não inventar dados; custo controlado (mesmo padrão help-assistant).
-3. Não substituir regras autoritativas de scoring.
-4. Guia + rate limit + DTOV.
-
-**Já existe:** `help-assistant`, assist vaga, climate themes.
+_(entregue — B-1901 dossier Equipe; B-1902 complementaridade/tensão Overview+Grupos; B-1903 workbench multi-sinal Overview; B-1904 IA interpretativa hedged em dossier/tensão/workbench. Ver Guia `b1900Packaging`.)_
 
 ---
 

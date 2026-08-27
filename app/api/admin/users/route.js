@@ -22,6 +22,7 @@ export async function GET(request) {
     pageSize: url.searchParams.get('pageSize') || 20,
     sort: url.searchParams.get('sort') || 'createdAt',
     sortDir: url.searchParams.get('sortDir') || 'desc',
+    q: url.searchParams.get('q') || '',
     isAdmin: scope.isAdmin,
     companyId: scope.companyId,
   });

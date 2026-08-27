@@ -135,6 +135,9 @@ export function useDashboardNavigation({
     const usrSortSt = parseUsersSort(merged);
     p.set('usersSort', opts.usersSort != null ? opts.usersSort : usrSortSt.sort);
     p.set('usersSortDir', opts.usersSortDir != null ? opts.usersSortDir : usrSortSt.dir);
+    const usersQ =
+      opts.usersQ !== undefined ? opts.usersQ : urlParams.get('usersQ') || '';
+    if (usersQ) p.set('usersQ', String(usersQ));
 
     const leadsStatus =
       opts.leadsStatus !== undefined ? opts.leadsStatus : urlParams.get('leadsStatus') || 'all';

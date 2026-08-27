@@ -8,7 +8,6 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { PIPELINE_STAGES } from '../../../lib/pipeline';
-import { VACANCY_STATUS } from '../../../lib/domain-status.js';
 import {
   S,
   SortableTh,
@@ -38,7 +37,7 @@ function stageLabel(locale, stage) {
  * Talent bank — reuse people who already applied / linked to a vacancy.
  */
 export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
-  const { promptForm, notice, toast } = useAppFeedback();
+  const { promptForm, toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -124,41 +123,19 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
     const cid = Number(candidateId);
     if (!Number.isFinite(cid)) return;
     try {
-      const res = await fetch(
-        `/api/admin/vacancies?status=${VACANCY_STATUS.OPEN}&pageSize=50&page=1`
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      const list = Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data.vacancies)
-          ? data.vacancies
-          : [];
-      const open = list.filter(
-        (v) => String(v.status || VACANCY_STATUS.OPEN) === VACANCY_STATUS.OPEN
-      );
-      if (!open.length) {
-        await notice({
-          message: t(locale, 'panel.team.addToVacancyEmpty'),
-          tone: 'info',
-        });
-        return;
-      }
+      const searchQs = new URLSearchParams();
+      if (companyId) searchQs.set('companyId', String(companyId));
       const values = await promptForm({
         title: t(locale, 'panel.team.addToVacancyTitle', { name: personName || '' }),
         confirmLabel: t(locale, 'panel.team.addToVacancyConfirm'),
         fields: [
           {
             key: 'vacancyId',
-            type: 'select',
+            type: 'entitySearch',
             label: t(locale, 'panel.team.addToVacancyPick'),
-            options: [
-              { value: '', label: t(locale, 'panel.team.addToVacancyPick') },
-              ...open.map((v) => ({
-                value: String(v.id),
-                label: v.title || `#${v.id}`,
-              })),
-            ],
+            searchUrl: `/api/admin/vacancies/search${searchQs.toString() ? `?${searchQs}` : ''}`,
+            minChars: 0,
+            placeholder: t(locale, 'panel.team.addToVacancySearchPh'),
             defaultValue: '',
           },
         ],
@@ -177,7 +154,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
       const postData = await post.json().catch(() => ({}));
       if (!post.ok) throw new Error(postData?.error || t(locale, 'panel.common.error'));
       toast(
-        postData.alreadyLinked
+        postData?.alreadyLinked
           ? t(locale, 'panel.team.addToVacancyAlready')
           : t(locale, 'panel.team.addToVacancyOk'),
         'ok'
@@ -186,6 +163,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
       toast(e?.message || t(locale, 'panel.common.error'), 'error');
     }
   };
+;
 
   const formatDate = (iso) => {
     if (!iso) return '—';

@@ -409,7 +409,7 @@ export function PromptFormDialog({
           searchUrl={f.searchUrl}
           locale={locale}
           placeholder={f.placeholder || ''}
-          minChars={f.minChars || 1}
+          minChars={f.minChars != null ? f.minChars : 1}
           aria-label={f.label}
           disabled={Boolean(f.disabled)}
         />

@@ -9,6 +9,8 @@ import { buildNucleusCompositionAdvice } from '../../../lib/people/decision-brie
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
+import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
+import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
 
 export function GroupTab({
   results,
@@ -22,6 +24,7 @@ export function GroupTab({
   groupTensions,
   locale = 'pt-BR',
   companyId = null,
+  navigateDashboard = null,
 }) {
   const { promptForm, confirm, toast } = useAppFeedback();
   const [search, setSearch] = useState('');
@@ -99,6 +102,24 @@ export function GroupTab({
       limitRisks: 3,
     });
   }, [groupBase, groupIds, results, dismissedIds, locale]);
+
+  const groupIntel = useMemo(() => {
+    if (!groupBase) return null;
+    const members = (groupIds || [])
+      .map((id) => (results || []).find((r) => String(r.assessmentId) === String(id)))
+      .filter(Boolean);
+    const eneagramPeople = [
+      { topType: groupBase.topType, scores: groupBase.scores || null },
+      ...members.map((m) => ({ topType: m.topType, scores: m.scores || null })),
+    ].filter((p) => Number.isInteger(Number(p.topType)));
+    if (eneagramPeople.length < 2) return null;
+    return buildTeamBehavioralIntel({
+      eneagramPeople,
+      motivatorAttempts: [],
+      locale,
+      cohort: { kind: 'team_group', teamGroupId: activeSavedId, teamGroupName: null },
+    });
+  }, [groupBase, groupIds, results, locale, activeSavedId]);
 
   const addToGroup = (assessmentId) => {
     const id = String(assessmentId);
@@ -397,6 +418,19 @@ export function GroupTab({
             companyId={resolvedCompanyId}
             teamGroupId={activeSavedId}
           />
+        ) : null}
+
+        {groupIntel ? (
+          <div className="mt-3">
+            <TeamTensionNarrativeBlock
+              locale={locale}
+              intel={groupIntel}
+              companyId={resolvedCompanyId}
+              teamGroupId={activeSavedId}
+              navigateDashboard={navigateDashboard}
+              dense
+            />
+          </div>
         ) : null}
 
         <span className={cn(S.label, 'mt-[18px]')}>{t(locale, 'panel.group.basePerson')}</span>

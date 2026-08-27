@@ -47,8 +47,10 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
   const { page: usersPage, pageSize: usersPageSize } = parseUsersPagination(sp);
   const listSort = parseUsersSort(sp);
+  const usersQ = String(sp.usersQ || '').trim();
 
   const [loading, setLoading] = useState(false);
+  const [searchDraft, setSearchDraft] = useState(usersQ);
   const [companyOptions, setCompanyOptions] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersTotal, setUsersTotal] = useState(0);
@@ -56,10 +58,23 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
+  useEffect(() => {
+    setSearchDraft(usersQ);
+  }, [usersQ]);
+
   const toggleUserSort = (col) => {
     if (!navigateDashboard) return;
     const nextDir = clientSortNextDir(col, listSort.sort, listSort.dir);
     navigateDashboard({ usersSort: col, usersSortDir: nextDir, usersPage: 1, tab: 'users' });
+  };
+
+  const pushUsersSearch = (value) => {
+    if (!navigateDashboard) return;
+    navigateDashboard({
+      usersQ: value || null,
+      usersPage: 1,
+      tab: 'users',
+    });
   };
 
   useEffect(() => {
@@ -95,6 +110,8 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           sort: sortSt.sort,
           sortDir: sortSt.dir,
         });
+        const q = String(snap.usersQ || '').trim();
+        if (q) qs.set('q', q);
         const ru = await fetch(`/api/admin/users?${qs.toString()}`);
         const du = await ru.json();
         if (!ru.ok) throw new Error(du?.error || t(locale, 'panel.admin.loadUsersFailed'));
@@ -124,6 +141,8 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       sort: sortSt.sort,
       sortDir: sortSt.dir,
     });
+    const q = String(snap.usersQ || '').trim();
+    if (q) qs.set('q', q);
     setLoading(true);
     setError('');
     try {
@@ -418,12 +437,40 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             </button>
           </div>
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pushUsersSearch(String(searchDraft || '').trim());
+              }
+            }}
+            placeholder={t(locale, 'panel.admin.usersSearchPh')}
+            aria-label={t(locale, 'panel.admin.usersSearchPh')}
+            className={cn(S.input, 'max-w-xs')}
+          />
+          <button
+            type="button"
+            onClick={() => pushUsersSearch(String(searchDraft || '').trim())}
+            disabled={loading}
+            className={cn(BTN_GHOST, loading && 'opacity-60')}
+          >
+            {t(locale, 'panel.admin.usersSearchBtn')}
+          </button>
+        </div>
         {usersTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
-              message={t(locale, 'panel.admin.noUsersYet')}
-              actionLabel={t(locale, 'panel.admin.createUserBtn')}
-              onAction={openCreateUser}
+              message={
+                usersQ
+                  ? t(locale, 'panel.admin.noUsersMatch')
+                  : t(locale, 'panel.admin.noUsersYet')
+              }
+              actionLabel={usersQ ? undefined : t(locale, 'panel.admin.createUserBtn')}
+              onAction={usersQ ? undefined : openCreateUser}
               actionDisabled={loading}
             />
           </div>
@@ -433,6 +480,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
+                  <SortableTh columnKey="displayName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colDisplayName')}</SortableTh>
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
                   <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
@@ -451,6 +499,9 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   return (
                     <tr key={u.id} className="border-b border-ink/[0.07]">
                       <td className="px-3 py-3 font-mono text-ink-faint">#{u.id}</td>
+                      <td className="px-3 py-3 text-ink">
+                        {u.displayName || t(locale, 'panel.common.notApplicable')}
+                      </td>
                       <td className="px-3 py-3 text-ink">{u.email}</td>
                       <td className="px-3 py-3">
                         <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">

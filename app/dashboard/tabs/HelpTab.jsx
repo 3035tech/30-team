@@ -42,6 +42,7 @@ const SECTIONS = [
   'b1000Culture',
   'b1000Academy',
   'b1000Benefits',
+  'b1900Packaging',
   'access',
   'tips',
 ];
@@ -222,6 +223,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     b1000Culture: 6,
     b1000Academy: 6,
     b1000Benefits: 6,
+    b1900Packaging: 6,
     access: 9,
     tips: 11,
   };

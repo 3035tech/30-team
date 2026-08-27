@@ -36,9 +36,10 @@ const emptyForm = () => ({
 });
 
 export function JobRolesAdminTab({ locale, companyId }) {
-  const { toast, confirm } = useAppFeedback();
+  const { toast, confirm, notice } = useAppFeedback();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const [roles, setRoles] = useState([]);
   const [error, setError] = useState('');
   const [drawerMode, setDrawerMode] = useState(null); // 'create' | 'edit' | null
@@ -89,10 +90,58 @@ export function JobRolesAdminTab({ locale, companyId }) {
   };
 
   const closeDrawer = () => {
-    if (saving) return;
+    if (saving || aiBusy) return;
     setDrawerMode(null);
     setEditingId(null);
     setForm(emptyForm());
+  };
+
+  const suggestRubricAi = async () => {
+    const name = String(form.name || '').trim();
+    if (name.length < 2) {
+      toast(t(locale, 'jobRoles.rubricAiNeedName'), 'error');
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const res = await fetch('/api/admin/job-roles/rubric-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description: String(form.description || '').trim() || null,
+          locale,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const code = data?.errorCode || data?.error || '';
+        if (code === 'RUBRIC_AI_NOT_CONFIGURED') {
+          throw new Error(t(locale, 'jobRoles.rubricAiNotConfigured'));
+        }
+        if (code === 'RUBRIC_AI_PARSE') {
+          throw new Error(t(locale, 'jobRoles.rubricAiParseError'));
+        }
+        throw new Error(data?.error || t(locale, 'jobRoles.rubricAiFailed'));
+      }
+      const rubric = data.rubric && typeof data.rubric === 'object' ? data.rubric : {};
+      if (Object.keys(rubric).length === 0) {
+        throw new Error(t(locale, 'jobRoles.rubricAiParseError'));
+      }
+      setForm((cur) => ({ ...cur, rubric }));
+      toast(t(locale, 'jobRoles.rubricAiApplied'), 'success');
+      if (data.notes) {
+        void notice({
+          title: t(locale, 'jobRoles.rubricAiNotesTitle'),
+          message: String(data.notes),
+          tone: 'info',
+        });
+      }
+    } catch (err) {
+      toast(err?.message || t(locale, 'jobRoles.rubricAiFailed'), 'error');
+    } finally {
+      setAiBusy(false);
+    }
   };
 
   const saveForm = async () => {
@@ -323,7 +372,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
             <button
               type="button"
               onClick={closeDrawer}
-              disabled={saving}
+              disabled={saving || aiBusy}
               className={dialogBtnGhostClass}
             >
               {t(locale, 'panel.admin.cancel')}
@@ -331,11 +380,11 @@ export function JobRolesAdminTab({ locale, companyId }) {
             <button
               type="button"
               onClick={saveForm}
-              disabled={saving || !String(form.name || '').trim()}
+              disabled={saving || aiBusy || !String(form.name || '').trim()}
               className={cn(
                 dialogBtnPrimaryClass,
                 'inline-flex items-center gap-2',
-                (saving || !String(form.name || '').trim()) && 'opacity-60'
+                (saving || aiBusy || !String(form.name || '').trim()) && 'opacity-60'
               )}
             >
               {saving ? <span className="spinner" /> : null}
@@ -370,10 +419,29 @@ export function JobRolesAdminTab({ locale, companyId }) {
           </label>
 
           <div className="flex flex-col gap-2">
-            <div>
-              <p className="m-0 font-mono text-[11px] text-ink-faint">{t(locale, 'jobRoles.rubricLabel')}</p>
-              <p className="m-0 mt-0.5 text-xs text-ink-muted">{t(locale, 'jobRoles.rubricHint')}</p>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="m-0 font-mono text-[11px] text-ink-faint">{t(locale, 'jobRoles.rubricLabel')}</p>
+                <p className="m-0 mt-0.5 text-xs text-ink-muted">{t(locale, 'jobRoles.rubricHint')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={suggestRubricAi}
+                disabled={saving || aiBusy || !String(form.name || '').trim()}
+                aria-busy={aiBusy || undefined}
+                className={cn(
+                  'inline-flex min-h-touch shrink-0 items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-[11px] text-brand-500',
+                  (saving || aiBusy || !String(form.name || '').trim()) && 'cursor-default opacity-60'
+                )}
+              >
+                {aiBusy ? (
+                  <AppLoading locale={locale} variant="button" label={t(locale, 'jobRoles.rubricAiWorking')} />
+                ) : (
+                  t(locale, 'jobRoles.rubricAiSuggest')
+                )}
+              </button>
             </div>
+            <p className="m-0 text-[11px] leading-normal text-ink-faint">{t(locale, 'jobRoles.rubricAiHint')}</p>
             <RubricEditor
               value={form.rubric}
               onChange={(rubric) => setForm((cur) => ({ ...cur, rubric }))}

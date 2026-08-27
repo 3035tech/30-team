@@ -21,6 +21,7 @@ import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { HrActionBrief } from '../../_components/HrActionBrief';
+import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
@@ -28,7 +29,7 @@ import { HrScoreBadge } from '../../_components/HrScoreBadge';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
-import { EMPLOYMENT_STATUS, VACANCY_STATUS } from '../../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS } from '../../../lib/domain-status.js';
 import { PIPELINE_STAGE, PIPELINE_STAGES } from '../../../lib/pipeline';
 
 function nearbyCluster(scores) {
@@ -167,6 +168,7 @@ export function TeamTab({
   onSort,
   locale = 'pt-BR',
   isAdmin = false,
+  companyId = null,
   search = '',
   onSearch,
   listTotal = 0,
@@ -294,33 +296,19 @@ export function TeamTab({
     const cid = Number(candidateId);
     if (!Number.isFinite(cid)) return;
     try {
-      const res = await fetch(`/api/admin/vacancies?status=${VACANCY_STATUS.OPEN}&pageSize=50&page=1`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
-      const items = Array.isArray(data.items) ? data.items : Array.isArray(data.vacancies) ? data.vacancies : [];
-      const open = items.filter((v) => String(v.status || VACANCY_STATUS.OPEN) === VACANCY_STATUS.OPEN);
-      if (!open.length) {
-        await notice({
-          message: t(locale, 'panel.team.addToVacancyEmpty'),
-          tone: 'info',
-        });
-        return;
-      }
+      const searchQs = new URLSearchParams();
+      if (companyId) searchQs.set('companyId', String(companyId));
       const values = await promptForm({
         title: t(locale, 'panel.team.addToVacancyTitle', { name: personName || '' }),
         confirmLabel: t(locale, 'panel.team.addToVacancyConfirm'),
         fields: [
           {
             key: 'vacancyId',
-            type: 'select',
+            type: 'entitySearch',
             label: t(locale, 'panel.team.addToVacancyPick'),
-            options: [
-              { value: '', label: t(locale, 'panel.team.addToVacancyPick') },
-              ...open.map((v) => ({
-                value: String(v.id),
-                label: v.title || `#${v.id}`,
-              })),
-            ],
+            searchUrl: `/api/admin/vacancies/search${searchQs.toString() ? `?${searchQs}` : ''}`,
+            minChars: 0,
+            placeholder: t(locale, 'panel.team.addToVacancySearchPh'),
             defaultValue: '',
           },
         ],
@@ -1109,11 +1097,20 @@ export function TeamTab({
                       active={peopleSubTab}
                       onChange={setPeopleSubTab}
                       tabs={[
+                        { id: 'dossier', label: t(locale, 'panel.team.peopleSubTabDossier') },
                         { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabBriefing') },
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
                       ]}
                     />
+                    {peopleSubTab === 'dossier' ? (
+                      <PersonDossierBlock
+                        locale={locale}
+                        candidateId={detail.candidate.id}
+                        companyId={detail.candidate.companyId}
+                        onGoSubTab={setPeopleSubTab}
+                      />
+                    ) : null}
                     {peopleSubTab === 'briefing' ? (
                       <HrActionBrief
                         locale={locale}
