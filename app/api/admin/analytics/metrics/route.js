@@ -1,12 +1,14 @@
 /**
  * B-1101 — Analytics: API de métricas de efetividade
  * GET /api/admin/analytics/metrics
+ * B-1106: Rate limiting aplicado
  */
 
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/api-error.js';
 import { getHiringEffectivenessMetrics } from '@/lib/analytics-metrics.js';
 import { getManagerScope } from '@/lib/ae/require-admin.js';
+import { checkAnalyticsRateLimit, addRateLimitHeaders } from '@/lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
@@ -14,6 +16,9 @@ export async function GET(request) {
     if (!scope) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
+
+    const rateLimitResponse = checkAnalyticsRateLimit(request, scope);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate') || null;
@@ -26,11 +31,13 @@ export async function GET(request) {
       vacancyId: vacancyId ? parseInt(vacancyId) : null,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       metrics,
       filters: { startDate, endDate, vacancyId },
     });
+    addRateLimitHeaders(response, scope);
+    return response;
   } catch (err) {
     console.error('[analytics/metrics GET]', err);
     return apiError(request, 'SERVER_ERROR', 500);

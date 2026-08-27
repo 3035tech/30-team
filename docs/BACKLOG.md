@@ -285,22 +285,25 @@ Export **rico** além do CSV básico:
 
 **Reuso:** `lib/export-assessments-csv.js` (já existe), estender
 
-### B-1106 — API de métricas (externas/integrações)
+### B-1106 — API de métricas (externas/integrações) ✅ ENTREGUE
 
-**O quê:** **API REST** para expor métricas:
+_(lib/analytics-rate-limit.js + aplicado em todas as 5 rotas + docs/analytics-api.md)_
+
+API REST autenticada (JWT) para expor métricas:
 - `GET /api/admin/analytics/metrics` (HR Score, clima, turnover)
 - `GET /api/admin/analytics/trends` (time series)
-- `GET /api/admin/analytics/comparisons` (segmentação)
+- `GET /api/admin/analytics/compare` (segmentação)
+- `GET /api/admin/analytics/alerts` (anomalias)
+- `GET /api/admin/analytics/export` (JSON/CSV)
 
-**Autenticação:** JWT de gestor (mesmo padrão `/api/admin/*`)
+**Implementado:**
+- ✅ Autenticação JWT de gestor (mesmo padrão `/api/admin/*`)
+- ✅ Rate limiting (100 req/min por user_id)
+- ✅ Headers HTTP (`X-RateLimit-*`, `Retry-After`)
+- ✅ Documentação completa (endpoints, exemplos cURL/JS/Python)
+- ✅ Multi-tenant isolado por `company_id`
 
-**Saída:**
-- JSON estruturado
-- Paginação
-- Rate limiting
-- Documentação OpenAPI/Swagger (opcional)
-
-**Uso:** integrações com BI externo, automações, webhooks
+**Uso:** integrações com BI externo (Metabase, Looker), automações, Slack, webhooks
 
 ### B-1107 — Relatórios agendados (email/PDF)
 

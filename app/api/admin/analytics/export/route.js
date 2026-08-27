@@ -1,6 +1,7 @@
 /**
  * B-1105 — Analytics: API de export
  * GET /api/admin/analytics/export
+ * B-1106: Rate limiting aplicado
  * 
  * Query params:
  * - format: 'json' | 'csv'
@@ -18,6 +19,7 @@ import {
   exportMetricsToCSV,
   exportTrendsToJSON,
 } from '@/lib/analytics-export.js';
+import { checkAnalyticsRateLimit, addRateLimitHeaders } from '@/lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
@@ -25,6 +27,9 @@ export async function GET(request) {
     if (!scope) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
+
+    const rateLimitResponse = checkAnalyticsRateLimit(request, scope);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'json';
@@ -43,20 +48,24 @@ export async function GET(request) {
 
       if (format === 'json') {
         const json = exportMetricsToJSON(metrics, { startDate, endDate, vacancyId });
-        return new NextResponse(json, {
+        const response = new NextResponse(json, {
           headers: {
             'Content-Type': 'application/json',
             'Content-Disposition': `attachment; filename="metrics-${new Date().toISOString().slice(0, 10)}.json"`,
           },
         });
+        addRateLimitHeaders(response, scope);
+        return response;
       } else if (format === 'csv') {
         const csv = exportMetricsToCSV(metrics);
-        return new NextResponse(csv, {
+        const response = new NextResponse(csv, {
           headers: {
             'Content-Type': 'text/csv',
             'Content-Disposition': `attachment; filename="metrics-${new Date().toISOString().slice(0, 10)}.csv"`,
           },
         });
+        addRateLimitHeaders(response, scope);
+        return response;
       }
     }
 
@@ -66,12 +75,14 @@ export async function GET(request) {
 
       if (format === 'json') {
         const json = exportTrendsToJSON(trends);
-        return new NextResponse(json, {
+        const response = new NextResponse(json, {
           headers: {
             'Content-Type': 'application/json',
             'Content-Disposition': `attachment; filename="trends-${new Date().toISOString().slice(0, 10)}.json"`,
           },
         });
+        addRateLimitHeaders(response, scope);
+        return response;
       }
     }
 

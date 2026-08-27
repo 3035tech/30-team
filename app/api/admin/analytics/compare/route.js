@@ -1,6 +1,7 @@
 /**
  * B-1103 — Analytics: API de comparativos
  * GET /api/admin/analytics/compare
+ * B-1106: Rate limiting aplicado
  * 
  * Query params:
  * - type: 'areas' | 'periods' | 'rubrics'
@@ -19,6 +20,7 @@ import {
   listAvailableAreas,
   listAvailableRubrics,
 } from '@/lib/analytics-comparisons.js';
+import { checkAnalyticsRateLimit, addRateLimitHeaders } from '@/lib/analytics-rate-limit.js';
 
 export async function GET(request) {
   try {
@@ -27,18 +29,25 @@ export async function GET(request) {
       return apiError(request, 'UNAUTHORIZED', 401);
     }
 
+    const rateLimitResponse = checkAnalyticsRateLimit(request, scope);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
     // List available options
     if (type === 'list-areas') {
       const areas = await listAvailableAreas(scope.companyId);
-      return NextResponse.json({ ok: true, areas });
+      const response = NextResponse.json({ ok: true, areas });
+      addRateLimitHeaders(response, scope);
+      return response;
     }
 
     if (type === 'list-rubrics') {
       const rubrics = await listAvailableRubrics(scope.companyId);
-      return NextResponse.json({ ok: true, rubrics });
+      const response = NextResponse.json({ ok: true, rubrics });
+      addRateLimitHeaders(response, scope);
+      return response;
     }
 
     // Comparisons
@@ -51,7 +60,9 @@ export async function GET(request) {
       }
 
       const comparison = await compareAreas(scope.companyId, areaA, areaB);
-      return NextResponse.json({ ok: true, comparison });
+      const response = NextResponse.json({ ok: true, comparison });
+      addRateLimitHeaders(response, scope);
+      return response;
     }
 
     if (type === 'periods') {
@@ -71,7 +82,9 @@ export async function GET(request) {
         periodBStart,
         periodBEnd
       );
-      return NextResponse.json({ ok: true, comparison });
+      const response = NextResponse.json({ ok: true, comparison });
+      addRateLimitHeaders(response, scope);
+      return response;
     }
 
     if (type === 'rubrics') {
@@ -83,7 +96,9 @@ export async function GET(request) {
       }
 
       const comparison = await compareRubrics(scope.companyId, rubricAId, rubricBId);
-      return NextResponse.json({ ok: true, comparison });
+      const response = NextResponse.json({ ok: true, comparison });
+      addRateLimitHeaders(response, scope);
+      return response;
     }
 
     return apiError(request, 'INVALID_TYPE', 400);
