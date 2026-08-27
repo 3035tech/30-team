@@ -63,6 +63,8 @@ Provas relevantes à página pública / funil / referral (epic B-100 / **B-126**
 | Browser | páginas públicas + navegação vagas — `browser-smoke.spec.js` |
 | Browser | assessment completo (/t) até thank-you — `assessment-submit.spec.js` (~3 min; 54 Likert) |
 | Browser | kanban vaga DnD (Nina new→interview) — `vacancy-kanban-dnd.spec.js` |
+| Browser | early-access `/signup` → set-password → login — `signup-early-access.spec.js` |
+| HTTP | early-access signup completo (create/resent/activate/login/409) — suite `signup` em `http-smoke.js` |
 
 Rodar tudo: `npm run dtov:full-app`.
 

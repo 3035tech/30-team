@@ -865,6 +865,196 @@ export async function runHttpSmoke(baseUrl) {
     }
   }
 
+  // ── Early-access signup (self-service) — fluxo completo ───────────────
+  {
+    const { Client } = await import('pg');
+    const client = new Client({
+      host: process.env.POSTGRES_HOST || '127.0.0.1',
+      port: Number(process.env.POSTGRES_PORT || 55432),
+      database: process.env.POSTGRES_DB || 'enneagram_dtov',
+      user: process.env.POSTGRES_USER || 'dtov',
+      password: process.env.POSTGRES_PASSWORD || 'dtov_local_only',
+      ssl: false,
+    });
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const signupEmail = `early.${stamp}@signup.30team.test`;
+    const signupPassword = 'SignupTest!2026';
+    const companyName = `#0Pay ${stamp}`;
+
+    try {
+      await client.connect();
+
+      // Página /signup renderiza
+      {
+        const { res, text } = await req(base, '/signup');
+        if (res.status !== 200 || String(text).length < 100) {
+          fail('signup', 'page', `status ${res.status} len=${String(text).length}`);
+        } else ok('signup', 'page', `HTTP ${res.status}`);
+      }
+
+      // Validação: campos obrigatórios
+      {
+        const { res, data } = await req(base, '/api/auth/signup', {
+          method: 'POST',
+          body: { email: signupEmail },
+        });
+        await expectStatus('signup', 'missing-fields', res.status, [400], data?.errorCode || '');
+      }
+
+      // Happy path: criar conta (# no nome da empresa — repro do bug de prod)
+      {
+        const { res, data } = await req(base, '/api/auth/signup', {
+          method: 'POST',
+          body: {
+            fullName: 'Thomas Early',
+            email: signupEmail,
+            companyName,
+            jobTitle: 'Gerente',
+            teamSize: '11-50',
+            painPoints: 'Gestao 360',
+            locale: 'pt-BR',
+          },
+        });
+        if (!(res.status === 200 && data?.ok && data?.action === 'created')) {
+          fail(
+            'signup',
+            'create',
+            `status ${res.status} body=${JSON.stringify(data).slice(0, 240)}`
+          );
+        } else {
+          ok('signup', 'create', `userId=${data.userId} companyId=${data.companyId}`);
+        }
+      }
+
+      // Estado no DB: pending + token
+      let setupToken = '';
+      {
+        const u = await client.query(
+          `SELECT id, active, signup_pending, signup_source, password_setup_token, company_id
+           FROM users WHERE LOWER(email) = $1 LIMIT 1`,
+          [signupEmail]
+        );
+        if (!u.rowCount) {
+          fail('signup', 'db-user', 'user missing after create');
+        } else {
+          const row = u.rows[0];
+          if (row.active !== false || row.signup_pending !== true || row.signup_source !== 'early_access') {
+            fail(
+              'signup',
+              'db-user',
+              `active=${row.active} pending=${row.signup_pending} source=${row.signup_source}`
+            );
+          } else if (!row.password_setup_token || String(row.password_setup_token).length < 16) {
+            fail('signup', 'db-user', 'password_setup_token missing (invite failed?)');
+          } else {
+            setupToken = row.password_setup_token;
+            ok('signup', 'db-user', 'pending + setup token');
+          }
+          const co = await client.query(
+            `SELECT signup_auto_created, signup_creator_user_id, name, slug
+             FROM companies WHERE id = $1`,
+            [row.company_id]
+          );
+          if (!co.rowCount || co.rows[0].signup_auto_created !== true) {
+            fail('signup', 'db-company', 'signup_auto_created expected');
+          } else if (Number(co.rows[0].signup_creator_user_id) !== Number(row.id)) {
+            fail('signup', 'db-company', 'creator mismatch');
+          } else {
+            ok('signup', 'db-company', `slug=${co.rows[0].slug}`);
+          }
+        }
+      }
+
+      // Resend enquanto pending
+      {
+        const { res, data } = await req(base, '/api/auth/signup', {
+          method: 'POST',
+          body: {
+            fullName: 'Thomas Early',
+            email: signupEmail,
+            companyName,
+            locale: 'pt-BR',
+          },
+        });
+        if (!(res.status === 200 && data?.ok && data?.action === 'resent')) {
+          fail('signup', 'resent', `status ${res.status} ${JSON.stringify(data).slice(0, 160)}`);
+        } else {
+          const u2 = await client.query(
+            `SELECT password_setup_token FROM users WHERE LOWER(email) = $1 LIMIT 1`,
+            [signupEmail]
+          );
+          const nextTok = u2.rows[0]?.password_setup_token;
+          if (!nextTok) fail('signup', 'resent', 'token cleared');
+          else {
+            setupToken = nextTok;
+            ok('signup', 'resent', 'token rotated');
+          }
+        }
+      }
+
+      // Peek + complete set-password
+      if (setupToken) {
+        const peek = await req(base, `/api/public/set-password?token=${encodeURIComponent(setupToken)}`);
+        if (!(peek.res.status === 200 && peek.data?.ok)) {
+          fail('signup', 'set-password-peek', `status ${peek.res.status} ${JSON.stringify(peek.data)}`);
+        } else ok('signup', 'set-password-peek', peek.data.email || 'masked');
+
+        const done = await req(base, '/api/public/set-password', {
+          method: 'POST',
+          body: { token: setupToken, password: signupPassword },
+        });
+        if (!(done.res.status === 200 && done.data?.ok)) {
+          fail('signup', 'set-password-complete', `status ${done.res.status} ${JSON.stringify(done.data)}`);
+        } else ok('signup', 'set-password-complete', 'activated');
+
+        const after = await client.query(
+          `SELECT active, signup_pending, password_setup_token IS NULL AS token_cleared
+           FROM users WHERE LOWER(email) = $1`,
+          [signupEmail]
+        );
+        const a = after.rows[0];
+        if (!a?.active || a.signup_pending || !a.token_cleared) {
+          fail('signup', 'db-activated', JSON.stringify(a));
+        } else ok('signup', 'db-activated', 'active + pending cleared');
+      }
+
+      // Login com a senha definida
+      {
+        const login = await req(base, '/api/auth/login', {
+          method: 'POST',
+          body: { email: signupEmail, password: signupPassword },
+        });
+        const setCookie = parseSetCookie(login.res);
+        const cookie = cookieHeaderFromSetCookie(setCookie);
+        if (!(login.res.status === 200 && cookie.includes('team30_session'))) {
+          fail('signup', 'login-after', `status ${login.res.status} cookie=${Boolean(cookie)}`);
+        } else ok('signup', 'login-after', 'session cookie');
+      }
+
+      // E-mail já ativo → 409
+      {
+        const { res, data } = await req(base, '/api/auth/signup', {
+          method: 'POST',
+          body: {
+            fullName: 'Other',
+            email: signupEmail,
+            companyName: 'Other Co',
+            locale: 'pt-BR',
+          },
+        });
+        await expectStatus('signup', 'duplicate-active', res.status, [409], data?.errorCode || '');
+      }
+    } catch (e) {
+      fail('signup', 'flow-exception', e?.message || e);
+    } finally {
+      try {
+        await client.end();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   // Logout
   {
     const { res } = await req(base, '/api/auth/logout', { method: 'POST', cookie: hrCookie });

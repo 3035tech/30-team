@@ -3,7 +3,7 @@ import {
   hashUnusablePassword,
   issuePasswordSetupInvite,
 } from '../../../../lib/user-password-invite.js';
-import { apiError, ERR } from '../../../../lib/api-error.js';
+import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error.js';
 import { isMailConfigured } from '../../../../lib/mail.js';
 import { generateUniqueCompanySlug } from '../../../../lib/slugify.js';
 import { trackLandingEvent } from '../../../../lib/landing-analytics.js';
@@ -43,8 +43,12 @@ export async function POST(request) {
       return apiError(request, ERR.SMTP_NOT_CONFIGURED, 503);
     }
 
-    // Rate limit simples (5 signups/min por IP) — opcional, adicionar depois
-    // TODO: implement rate limiting via redis or in-memory cache
+    const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || '')
+      .trim()
+      .replace(/\/+$/, '');
+    if (!appUrl) {
+      return apiError(request, ERR.APP_URL_NOT_CONFIGURED, httpStatusForError(ERR.APP_URL_NOT_CONFIGURED));
+    }
 
     // Check se email já existe
     const existing = await query(
@@ -65,14 +69,13 @@ export async function POST(request) {
 
       if (user.signup_pending) {
         // Signup pendente → reenviar email de confirmação
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL;
         const issued = await issuePasswordSetupInvite(user.id, {
           appUrl,
           locale: locale || 'pt-BR',
           purpose: 'invite',
         });
         if (!issued.ok) {
-          return apiError(request, issued.code, 500);
+          return apiError(request, issued.code, httpStatusForError(issued.code));
         }
 
         await trackLandingEvent({
@@ -121,14 +124,14 @@ export async function POST(request) {
         `INSERT INTO companies (name, slug, active, signup_auto_created)
          VALUES ($1, $2, TRUE, TRUE)
          RETURNING id`,
-        [companyName, slug]
+        [String(companyName).trim(), slug]
       );
       companyId = companyRes.rows[0].id;
     }
 
-    // Criar user pendente
+    // Criar user pendente (active=FALSE até definir senha no link)
     const passwordHash = await hashUnusablePassword();
-    const role = 'direction'; // ou 'hr' — early access usa direction
+    const role = 'direction'; // early access usa direction
     const signupMetadata = {
       companyName: String(companyName).trim(),
       fullName: String(fullName).trim(),
@@ -152,19 +155,13 @@ export async function POST(request) {
       await query(`UPDATE companies SET signup_creator_user_id = $1 WHERE id = $2`, [userId, companyId]);
     }
 
-    // Emitir token de confirmação (72h)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      return apiError(request, ERR.APP_URL_NOT_CONFIGURED, 500);
-    }
-
     const issued = await issuePasswordSetupInvite(userId, {
       appUrl,
       locale: locale || 'pt-BR',
       purpose: 'invite',
     });
     if (!issued.ok) {
-      return apiError(request, issued.code, 500);
+      return apiError(request, issued.code, httpStatusForError(issued.code));
     }
 
     // Analytics

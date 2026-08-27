@@ -598,6 +598,15 @@ async function runOfflineLibs() {
     if (!tok || tok.length < 20) throw new Error('token too short');
     if (maskEmail('hr@acme.com') !== 'hr***@acme.com') throw new Error(maskEmail('hr@acme.com'));
     if (PASSWORD_SETUP_TTL_MS < 24 * 60 * 60 * 1000) throw new Error('ttl too short');
+    const src = await import('node:fs/promises').then((fs) =>
+      fs.readFile(new URL('../../lib/user-password-invite.js', import.meta.url), 'utf8')
+    );
+    if (!src.includes('signup_pending = TRUE')) {
+      throw new Error('invite must allow signup_pending inactive users');
+    }
+    if (!src.includes('signup_pending = FALSE')) {
+      throw new Error('completePasswordSetup must clear signup_pending');
+    }
     return 'invite helpers ok';
   });
 

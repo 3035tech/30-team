@@ -370,6 +370,25 @@ O toggle e a class `.dark` existem (`DarkModeProvider`, `app/dark-mode.css`, tok
 
 ---
 
+## Aberto — Banco de talentos (applicants)
+
+### B-1601 — Banco de talentos a partir das candidaturas
+Hoje quem aplica a uma vaga vira `candidates` (+ assessment/pipeline daquela vaga). Existe “adicionar à vaga” (pool leve B-400) para religar alguém a outra abertura, mas **não há um banco de talentos dedicado**: RH precisa achar e reaproveitar no futuro **todas** as pessoas que já aplicaram (aprovadas, rejeitadas, arquivadas ou em funil), com busca/filtros e ação clara de “convidar / abrir em outra vaga”.
+
+**Instruções:**
+1. Escopo por `company_id` — nunca cruzar empresas.
+2. Superfície no painel (aba ou visão sob Recrutamento): listar candidatos que já tiveram candidatura/vínculo a vaga (`assessments.vacancy_id` / pipeline), não só colaboradores (`employment_status`).
+3. Filtros úteis: vaga de origem, estágio final, área, T1–T9, datas, texto (nome/e-mail); paginação + caps (padrão DBA).
+4. Ações: abrir perfil/briefing; **reusar no pool** (vincular a vaga aberta existente — estender o fluxo “adicionar à vaga”); opcional marcar “disponível no banco” / tags leves se já houver primitivo.
+5. Soft-delete / LGPD: respeitar retenção; não inventar segunda tabela de pessoa — hub continua `candidates`.
+6. Guia (`panel.help.*` pt-BR+en) + Dev→Test→Validate.
+
+**Já existe (não reinventar):** `candidates` como hub; “Adicionar à vaga (pool)” em PRODUCT-FEATURES; roster recruiting vs internal.
+
+**Fora:** ATS genérico com CV parsing; conta de candidato; merge por nome; segundo CRM paralelo.
+
+---
+
 ## Notas
 
 - Qualidade/testes **B-001–B-006** entregues.
