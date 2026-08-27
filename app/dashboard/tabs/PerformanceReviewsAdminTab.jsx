@@ -36,6 +36,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Avaliações de Desempenho',
         subtitle: 'Ciclos, metas e avaliação → PDI',
         listEmpty: 'Nenhum ciclo cadastrado',
+        listEmptyDesc:
+          'Crie um ciclo com metas; outcomes “Desenvolver” geram itens no PDI e pedem 1:1 na Equipe.',
         createCycleButton: 'Novo Ciclo',
         editCycleTitle: 'Editar ciclo',
         cycleTitle: 'Título do ciclo',
@@ -66,6 +68,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Performance Reviews',
         subtitle: 'Cycles, goals, and review → PDI',
         listEmpty: 'No cycles registered',
+        listEmptyDesc:
+          'Create a cycle with goals; “Develop” outcomes seed PDI items and call for a 1:1 in Team.',
         createCycleButton: 'New Cycle',
         editCycleTitle: 'Edit cycle',
         cycleTitle: 'Cycle title',
@@ -297,7 +301,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
 
       {cycles.length === 0 ? (
         <EmptyState
-          message={t('listEmpty')}
+          title={t('listEmpty')}
+          message={t('listEmptyDesc')}
           actionLabel={t('createCycleButton')}
           onAction={handleCreateCycle}
         />

@@ -123,7 +123,7 @@ export function VacancyFitDecisionStrip({
           {topContrib.map((c) => (
             <span
               key={c.type}
-              className="rounded-control border border-ink/10 bg-white/70 px-2 py-0.5 font-mono text-[10px] text-ink-muted"
+              className="rounded-control border border-ink/10 bg-surface/70 px-2 py-0.5 font-mono text-[10px] text-ink-muted"
               title={t(locale, 'recruiting.fitDecisionContribTitle', {
                 type: `T${c.type}`,
                 weight: c.weight,

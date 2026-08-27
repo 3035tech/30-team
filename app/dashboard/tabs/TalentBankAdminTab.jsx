@@ -288,7 +288,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.talentBank.count', { n: total })}
           </p>
-          <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
+          <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
             <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">

@@ -25,7 +25,7 @@ export function VacancyFormSection({ locale, titleKey, defaultOpen = true, child
         </span>
       </button>
       {open ? (
-        <div className={cn('flex flex-col gap-3 border-t border-ink/10 bg-white px-3 py-3')}>
+        <div className={cn('flex flex-col gap-3 border-t border-ink/10 bg-surface px-3 py-3')}>
           {children}
         </div>
       ) : null}

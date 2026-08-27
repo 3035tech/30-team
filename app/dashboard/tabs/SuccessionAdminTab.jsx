@@ -39,7 +39,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Sucessão',
         subtitle: 'Papéis críticos + sucessores + prontidão',
         listEmpty: 'Nenhum papel crítico cadastrado',
+        listEmptyDesc:
+          'Comece por um papel de alto impacto; depois atribua sucessores e acompanhe prontidão na Equipe.',
         createRoleButton: 'Novo Papel Crítico',
+        ctaTeam: 'Ver Equipe',
+        ctaHelp: 'Roteiro no Guia',
         roleTitle: 'Título do papel',
         roleTitlePlaceholder: 'Ex: Diretor Comercial, CTO...',
         roleDescription: 'Descrição',
@@ -66,7 +70,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         title: 'Succession',
         subtitle: 'Critical roles + successors + readiness',
         listEmpty: 'No critical roles registered',
+        listEmptyDesc:
+          'Start with a high-impact role; then assign successors and track readiness in Team.',
         createRoleButton: 'New Critical Role',
+        ctaTeam: 'Open Team',
+        ctaHelp: 'Demo path in Help',
         roleTitle: 'Role title',
         roleTitlePlaceholder: 'E.g.: Sales Director, CTO...',
         roleDescription: 'Description',
@@ -323,11 +331,22 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       </div>
 
       {roles.length === 0 ? (
-        <EmptyState
-          message={t('listEmpty')}
-          actionLabel={t('createRoleButton')}
-          onAction={handleCreateRole}
-        />
+        <div className="flex flex-col gap-3">
+          <EmptyState
+            title={t('listEmpty')}
+            message={t('listEmptyDesc')}
+            actionLabel={t('createRoleButton')}
+            onAction={handleCreateRole}
+          />
+          <div className="flex flex-wrap gap-3 px-1">
+            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaTeam')} →
+            </Link>
+            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaHelp')} →
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
           <table className="w-full min-w-[640px]">

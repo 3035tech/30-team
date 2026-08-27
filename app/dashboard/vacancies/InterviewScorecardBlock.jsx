@@ -102,7 +102,7 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
                     'min-h-touch min-w-[40px] rounded-control border px-2 font-mono text-xs',
                     row.rating === n
                       ? 'border-brand-500/40 bg-brand-500/[0.12] text-brand-500'
-                      : 'border-ink/12 bg-white text-ink-muted'
+                      : 'border-ink/12 bg-surface text-ink-muted'
                   )}
                   aria-label={t(locale, 'recruiting.scorecardRatingAria', { n })}
                 >
@@ -114,7 +114,7 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
               value={row.comment || ''}
               onChange={(e) => setComment(idx, e.target.value)}
               placeholder={t(locale, 'recruiting.scorecardCommentPh')}
-              className={cn(S.input, 'w-full bg-white/90')}
+              className={cn(S.input, 'w-full bg-surface/90')}
               maxLength={2000}
             />
           </li>

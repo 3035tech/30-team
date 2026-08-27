@@ -9,7 +9,15 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, PanelSubNav, S, AdminCreateButton } from '../dashboard-shared';
+import {
+  clientSortNextDir,
+  PanelSubNav,
+  S,
+  AdminCreateButton,
+  AdminEditButton,
+  AdminDeleteButton,
+  AdminActionsCell,
+} from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
@@ -1163,14 +1171,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               </div>
 
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => editVacancy(v)}
-                  disabled={loading}
-                  className={cn(BTN_GHOST, loading && "opacity-60")}
-                >
-                  {t(locale, 'recruiting.editVacancy')}
-                </button>
+                <AdminActionsCell>
+                  <AdminEditButton
+                    label={t(locale, 'recruiting.editVacancy')}
+                    onClick={() => editVacancy(v)}
+                    disabled={loading}
+                  />
+                </AdminActionsCell>
                 <button
                   type="button"
                   onClick={() => cloneVacancyAction(v)}
@@ -1576,14 +1583,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       >
                         {t(locale, 'recruiting.viewCandidates')}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => editVacancy(v)}
-                        disabled={loading}
-                        className={cn(BTN_GHOST, loading && "opacity-60")}
-                      >
-                        {t(locale, 'recruiting.editVacancy')}
-                      </button>
+                      <AdminActionsCell>
+                        <AdminEditButton
+                          label={t(locale, 'recruiting.editVacancy')}
+                          onClick={() => editVacancy(v)}
+                          disabled={loading}
+                        />
+                        <AdminDeleteButton
+                          label={t(locale, 'recruiting.archiveVacancy')}
+                          onClick={() => archiveVacancy(v.id, v.title)}
+                          disabled={loading}
+                        />
+                      </AdminActionsCell>
                       <button
                         type="button"
                         onClick={() => cloneVacancyAction(v)}
@@ -1607,14 +1618,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         className={cn(BTN_GHOST, loading && "opacity-60")}
                       >
                         {t(locale, 'recruiting.rotateLink')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => archiveVacancy(v.id, v.title)}
-                        disabled={loading}
-                        className={cn("min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger", loading && "opacity-60")}
-                      >
-                        {t(locale, 'recruiting.archiveVacancy')}
                       </button>
                       <button
                         type="button"

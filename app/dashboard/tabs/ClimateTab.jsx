@@ -805,7 +805,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           'w-full cursor-pointer rounded-card border px-3.5 py-3 text-left transition-colors',
                           selected
                             ? 'border-brand-500/45 bg-brand-500/[0.07] shadow-sm'
-                            : 'border-ink/12 bg-white hover:border-ink/25'
+                            : 'border-ink/12 bg-surface hover:border-ink/25'
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -1011,7 +1011,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           return (
                             <li
                               key={row.questionId}
-                              className="rounded-control border border-ink/10 bg-white px-3.5 py-3"
+                              className="rounded-control border border-ink/10 bg-surface px-3.5 py-3"
                             >
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <span className="min-w-0 flex-1 text-sm leading-snug text-ink">

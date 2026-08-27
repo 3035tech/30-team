@@ -745,7 +745,7 @@ export function TeamTab({
                             if (r.candidateId) loadDetail(r.candidateId);
                           }}
                           className={cn(
-                            'cursor-grab select-none rounded-control bg-white/90 px-3.5 py-[11px] shadow-sm transition-opacity duration-150',
+                            'cursor-grab select-none rounded-control bg-surface/90 px-3.5 py-[11px] shadow-sm transition-opacity duration-150',
                             isDragging && 'opacity-40',
                             draggingId && !isDragging && 'pointer-events-none'
                           )}
@@ -1167,7 +1167,7 @@ export function TeamTab({
                       {detail.assessments.map((a) => (
                         <div
                           key={a.id}
-                          className="flex flex-wrap items-center gap-2.5 rounded-lg border border-ink/12 bg-white/40 p-2.5"
+                          className="flex flex-wrap items-center gap-2.5 rounded-lg border border-ink/12 bg-surface/40 p-2.5"
                         >
                           <div>
                             <span className="font-mono text-xs text-ink-muted">

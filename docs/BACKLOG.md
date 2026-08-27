@@ -361,7 +361,7 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 
 **Follow-up (ainda aberto):**
 1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first.
-2. Hex inline `C.*` em charts / pills de pipeline com `style=`.
+2. Hex inline `C.*` em charts / pills de pipeline com `style=` (parcial: Analytics texto/métricas → tokens TW em B-2103; barras dinâmicas T1–T9/Motivadores ainda usam cor do tipo).
 3. Passada visual fina AA em chips de pipeline + Analytics (viewport mobile).
 4. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome.
 
@@ -382,6 +382,14 @@ _(entregue — B-2001 radar `actions[]`; B-2002 Performance↔1:1 CTA; B-2003 PD
 Profundidade **média** entregue: conectar e enriquecer o que já existe — **sem** LMS, DISC, ATS ou portal colaborador full.
 
 **Fora (permanece):** feedback formal contínuo tipo Feedz; taxonomia de valores; LMS com conclusão; convite Motivadores em massa.
+
+---
+
+## Aberto — Epic B-2100 (UX / consistência — rápido)
+
+_(entregue — B-2101 empty states CTA + copy nos B-1000; B-2102 Vagas chrome `AdminEdit`/`AdminDelete`; B-2103 dark `bg-surface` leftovers + Analytics sem `C.*` em texto; B-2104 Guia `demoRoteiro` 7 passos. Ver Guia `demoRoteiro`.)_
+
+Corte **rápido/barato**: consistência de chrome e dark no painel + roteiro demo no Guia. **Sem** forçar tabela em Vagas; print/público continuam light-first (resto em B-1501).
 
 ---
 

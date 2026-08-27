@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -40,6 +41,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         editCategory: 'Editar categoria',
         noBenefits: 'Nenhum benefício cadastrado',
         noBenefitsDesc: 'Cadastre categorias e depois os benefícios oferecidos pela empresa',
+        ctaExit: 'Ver Análise Demissional',
+        ctaHelp: 'Ver Guia (Benefícios)',
         noCategories: 'Nenhuma categoria ainda. Crie uma antes de classificar benefícios.',
         filterCategory: 'Filtrar por categoria',
         allCategories: 'Todas as categorias',
@@ -105,6 +108,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         editCategory: 'Edit category',
         noBenefits: 'No benefits registered',
         noBenefitsDesc: 'Create categories, then register benefits offered by the company',
+        ctaExit: 'Open Exit Analysis',
+        ctaHelp: 'Open Help (Benefits)',
         noCategories: 'No categories yet. Create one before classifying benefits.',
         filterCategory: 'Filter by category',
         allCategories: 'All categories',
@@ -514,12 +519,22 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       </div>
 
       {benefits.length === 0 ? (
-        <EmptyState
-          title={t('noBenefits')}
-          message={t('noBenefitsDesc')}
-          actionLabel={isAdmin ? t('create') : undefined}
-          onAction={isAdmin ? handleCreate : undefined}
-        />
+        <div className="flex flex-col gap-3">
+          <EmptyState
+            title={t('noBenefits')}
+            message={t('noBenefitsDesc')}
+            actionLabel={isAdmin ? t('create') : undefined}
+            onAction={isAdmin ? handleCreate : undefined}
+          />
+          <div className="flex flex-wrap gap-3 px-1">
+            <Link href="/dashboard?tab=exit-analysis" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaExit')} →
+            </Link>
+            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaHelp')} →
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
           <table className="w-full min-w-[560px]">

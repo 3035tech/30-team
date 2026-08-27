@@ -71,7 +71,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
     <div className="pointer-events-none fixed bottom-4 right-4 z-[90] flex flex-col items-end gap-2">
       {open ? (
         <div
-          className="pointer-events-auto flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-card border border-ink/12 bg-white shadow-dialog"
+          className="pointer-events-auto flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-card border border-ink/12 bg-surface shadow-dialog"
           role="dialog"
           aria-label={t(locale, 'panel.helpAssist.title')}
         >
@@ -145,7 +145,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
               placeholder={t(locale, 'panel.helpAssist.placeholder')}
               aria-label={t(locale, 'panel.helpAssist.placeholder')}
               disabled={busy}
-              className={cn(S.input, 'min-h-touch flex-1 bg-white')}
+              className={cn(S.input, 'min-h-touch flex-1 bg-surface')}
             />
             <button
               type="submit"

@@ -18,7 +18,7 @@ export function descAssistBtnClass(opts = {}) {
     'inline-flex min-h-[36px] items-center justify-center gap-2 rounded-lg px-3 py-1.5 font-mono text-[11px]',
     opts.primary
       ? 'border border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-      : 'border border-ink/12 bg-white text-ink',
+      : 'border border-ink/12 bg-surface text-ink',
     opts.busy ? 'cursor-wait opacity-100' : opts.disabled ? 'cursor-default opacity-55' : 'cursor-pointer'
   );
 }

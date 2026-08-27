@@ -345,7 +345,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                   {topMovers.map((m) => (
                     <li
                       key={m.key}
-                      className="flex min-w-[7.5rem] flex-1 items-baseline gap-2 rounded-control border border-ink/10 bg-white px-3 py-2.5"
+                      className="flex min-w-[7.5rem] flex-1 items-baseline gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
                     >
                       <span className="font-mono text-[11px] text-ink-faint">#{m.rank}</span>
                       <span className="text-sm font-medium text-ink">{m.label}</span>

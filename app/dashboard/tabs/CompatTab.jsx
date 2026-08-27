@@ -180,7 +180,7 @@ export function CompatTab({
               key={x.id}
               type="button"
               onClick={() => goSection(x.id)}
-              className="cursor-pointer rounded-[14px] border bg-white px-5 py-[18px] text-left"
+              className="cursor-pointer rounded-[14px] border bg-surface px-5 py-[18px] text-left"
               style={{
                 borderColor: active ? x.c : `${x.c}25`,
                 boxShadow: active ? `0 0 0 2px ${x.c}22` : 'none',
@@ -207,7 +207,7 @@ export function CompatTab({
             {topRisks.map((pair, i) => (
               <div
                 key={`risk-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
-                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-white px-3 py-2.5"
+                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-surface px-3 py-2.5"
               >
                 <span className="min-w-[18px] font-mono text-[11px] text-danger">
                   {i + 1}.
@@ -237,7 +237,7 @@ export function CompatTab({
             {topWins.map((pair, i) => (
               <div
                 key={`win-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
-                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-white px-3 py-2.5"
+                className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-surface px-3 py-2.5"
               >
                 <span className="min-w-[18px] font-mono text-[11px] text-success">
                   {i + 1}.
@@ -298,7 +298,7 @@ export function CompatTab({
             return (
               <div
                 key={pairKey}
-                className="mb-3 rounded-[14px] border bg-white p-[18px]"
+                className="mb-3 rounded-[14px] border bg-surface p-[18px]"
                 style={{ borderColor: `${lc}30` }}
               >
                 <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">

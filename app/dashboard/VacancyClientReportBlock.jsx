@@ -729,7 +729,7 @@ export function VacancyClientReportBlock({
 
       {open ? (
         <div
-          className="mt-3 rounded-xl border border-ink/12 bg-white p-4"
+          className="mt-3 rounded-xl border border-ink/12 bg-surface p-4"
         >
           <span className={S.label}>{t(locale, 'panel.report.title')}</span>
           <p className="mt-[8px] mx-[0] mb-[0] text-xs text-ink-muted leading-[1.55]">

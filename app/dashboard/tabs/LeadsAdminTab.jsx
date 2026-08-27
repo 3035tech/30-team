@@ -160,7 +160,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.leads.count', { n: total })}
           </p>
-          <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
+          <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
             <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">

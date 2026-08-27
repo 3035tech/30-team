@@ -41,11 +41,11 @@ Alina, TeamCulture, Qulture.Rocks, Feedz, WURK, Sólides, Gupy, InCicle, Pulsefy
 
 ## Como usar em demo
 
-Roteiro sugerido alinhado às perguntas **tem**:
+Roteiro sugerido alinhado às perguntas **tem** (também no Guia do painel → **Roteiro de demo (7 passos)**):
 
 1. Assessment `/v` ou `/t` → resultado T1–T9  
 2. Motivadores → retenção  
-3. Equipe → Briefing (cruzamento leve) + 1:1  
+3. Equipe → Briefing/Dossier + 1:1  
 4. Compatibilidade / Grupos → composição  
 5. Overview → atenção + mix + clima/PDI  
 6. Avaliações → ciclo → PDI  

@@ -285,6 +285,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
       {roles.length === 0 ? (
         <EmptyState
           title={t(locale, 'jobRoles.listEmpty')}
+          message={t(locale, 'jobRoles.listEmptyDesc')}
           actionLabel={t(locale, 'jobRoles.createButton')}
           onAction={openCreate}
         />

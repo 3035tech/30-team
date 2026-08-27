@@ -78,7 +78,7 @@ function InsightStrip({ locale, visible }) {
       {chips.map((text) => (
         <span
           key={text}
-          className="rounded-lg border border-ink/12 bg-white/55 px-2.5 py-1 text-xs leading-snug text-ink-muted"
+          className="rounded-lg border border-ink/12 bg-surface/55 px-2.5 py-1 text-xs leading-snug text-ink-muted"
         >
           {text}
         </span>
@@ -308,7 +308,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                 <tr>
                   <th
                     onClick={() => toggleSort('name')}
-                    className="sticky left-0 z-[1] cursor-pointer select-none border-b border-ink/12 bg-white px-3 py-2.5 text-left font-normal font-mono text-ink-muted"
+                    className="sticky left-0 z-[1] cursor-pointer select-none border-b border-ink/12 bg-surface px-3 py-2.5 text-left font-normal font-mono text-ink-muted"
                   >
                     <span className="inline-flex items-center gap-2">
                       {t(locale, 'panel.compare.personCol')}
@@ -340,7 +340,7 @@ export function CompareTab({ results, locale = 'pt-BR', search = '', onSearch, l
                   const maxS = Math.max(...scores, 1);
                   return (
                     <tr key={String(r.assessmentId) || i} className="border-b border-ink/[0.07]">
-                      <td className="sticky left-0 z-[1] min-w-[180px] max-w-[280px] bg-white px-3 py-2.5 text-ink">
+                      <td className="sticky left-0 z-[1] min-w-[180px] max-w-[280px] bg-surface px-3 py-2.5 text-ink">
                         <span title={r.name} className="inline-flex w-full min-w-0 items-center gap-2">
                           <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                             {personListName(r.name)}

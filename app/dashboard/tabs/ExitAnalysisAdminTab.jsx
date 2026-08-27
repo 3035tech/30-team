@@ -447,7 +447,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           <EmptyState
             title={t('noRecords')}
             message={t('noRecordsDesc')}
-            actionLabel={canWrite ? `+ ${t('register')}` : undefined}
+            actionLabel={canWrite ? t('register') : undefined}
             onAction={canWrite ? handleRegisterExit : undefined}
           />
           <div className="flex flex-wrap gap-3 px-1">
@@ -460,7 +460,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
+        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
           <table className="w-full min-w-[640px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>

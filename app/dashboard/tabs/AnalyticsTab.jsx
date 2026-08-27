@@ -7,11 +7,16 @@
 import { useState, useEffect } from 'react';
 import { t } from '../../../lib/i18n.js';
 import { useLocale } from '../../../lib/useLocale.js';
-import { C } from '../../../lib/theme.js';
 import { S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
 import { cn } from '../../../lib/cn.js';
+
+const TREND_TONE = {
+  brand: { bar: 'bg-brand-500', value: 'text-brand-600' },
+  danger: { bar: 'bg-danger', value: 'text-danger' },
+  success: { bar: 'bg-success', value: 'text-success' },
+};
 
 export function AnalyticsTab({ session }) {
   const [locale] = useLocale();
@@ -191,7 +196,7 @@ export function AnalyticsTab({ session }) {
   if (error) {
     return (
       <div className={S.card}>
-        <p style={{ color: C.danger }}>{error}</p>
+        <p className="text-danger">{error}</p>
       </div>
     );
   }
@@ -352,7 +357,7 @@ export function AnalyticsTab({ session }) {
             data={trends.hrScore}
             dataKey="avgScore"
             label={locale === 'pt-BR' ? 'Score' : 'Score'}
-            color={C.brand}
+            tone="brand"
             locale={locale}
           />
 
@@ -362,7 +367,7 @@ export function AnalyticsTab({ session }) {
             data={trends.turnoverRisk}
             dataKey="highRiskPct"
             label={locale === 'pt-BR' ? 'Alto Risco' : 'High Risk'}
-            color={C.danger}
+            tone="danger"
             locale={locale}
           />
 
@@ -372,7 +377,7 @@ export function AnalyticsTab({ session }) {
             data={trends.climate}
             dataKey="avgClimate"
             label={locale === 'pt-BR' ? 'Clima' : 'Climate'}
-            color={C.success}
+            tone="success"
             locale={locale}
           />
 
@@ -397,7 +402,7 @@ export function AnalyticsTab({ session }) {
                       className="bg-danger/70"
                       style={{ height: `${exitsHeight}%` }}
                     />
-                    <div className="text-xs text-center" style={{ color: C.faint }}>
+                    <div className="text-xs text-center text-ink-faint">
                       {item.month.slice(5)}
                     </div>
                   </div>
@@ -462,9 +467,10 @@ export function AnalyticsTab({ session }) {
   );
 }
 
-function TrendChart({ title, data, dataKey, label, color, locale }) {
+function TrendChart({ title, data, dataKey, label, tone = 'brand', locale }) {
   const maxValue = Math.max(...data.map(d => d[dataKey] || 0));
-  
+  const tones = TREND_TONE[tone] || TREND_TONE.brand;
+
   return (
     <div className={S.cardTight}>
       <div className="font-bold mb-3">{title}</div>
@@ -472,20 +478,16 @@ function TrendChart({ title, data, dataKey, label, color, locale }) {
         {data.map((item, idx) => {
           const value = item[dataKey] || 0;
           const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-          
+
           return (
             <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-              <div className="text-xs" style={{ color }}>{value > 0 ? value : ''}</div>
+              <div className={cn('text-xs', tones.value)}>{value > 0 ? value : ''}</div>
               <div
-                className="w-full"
-                style={{
-                  height: `${height}%`,
-                  backgroundColor: color,
-                  opacity: 0.8,
-                }}
+                className={cn('w-full opacity-80', tones.bar)}
+                style={{ height: `${height}%` }}
                 title={`${item.month}: ${value}`}
               />
-              <div className="text-xs" style={{ color: C.faint }}>
+              <div className="text-xs text-ink-faint">
                 {item.month.slice(5)}
               </div>
             </div>
@@ -497,18 +499,19 @@ function TrendChart({ title, data, dataKey, label, color, locale }) {
 }
 
 function MetricCard({ title, value, subtitle, trend, locale }) {
-  const trendColor = trend > 0 ? C.danger : trend < 0 ? C.success : C.ink;
+  const trendClass =
+    trend > 0 ? 'text-danger' : trend < 0 ? 'text-success' : 'text-ink';
   const trendText = trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : '';
 
   return (
     <div className={S.cardTight}>
       <div className={S.label}>{title}</div>
-      <div className="text-2xl font-bold mt-2 mb-1" style={{ color: C.brand }}>
+      <div className="text-2xl font-bold mt-2 mb-1 text-brand-600">
         {value}
       </div>
       <div className={S.faint}>{subtitle}</div>
       {trend !== undefined && trendText && (
-        <div className="text-sm mt-2" style={{ color: trendColor }}>
+        <div className={cn('text-sm mt-2', trendClass)}>
           {trendText} {locale === 'pt-BR' ? 'vs período anterior' : 'vs previous period'}
         </div>
       )}

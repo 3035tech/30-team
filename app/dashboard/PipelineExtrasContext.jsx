@@ -64,7 +64,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="pipeline-extras-title"
-        className="w-full max-w-[440px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog"
+        className="w-full max-w-[440px] rounded-card border border-ink/12 bg-surface px-[26px] py-6 shadow-dialog"
         onClick={(e) => e.stopPropagation()}
       >
         <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">

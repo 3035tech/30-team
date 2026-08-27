@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -39,6 +40,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         create: 'Novo Recurso',
         noResources: 'Nenhum recurso cadastrado',
         noResourcesDesc: 'Crie ações, cursos, trilhas que o PDI pode apontar',
+        ctaHelp: 'Ver Guia (PDI → Academy)',
+        ctaPdi: 'Abrir Equipe (PDI)',
         filterTheme: 'Filtrar por tema',
         allThemes: 'Todos os temas',
         filterType: 'Filtrar por tipo',
@@ -80,6 +83,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         create: 'New Resource',
         noResources: 'No resources registered',
         noResourcesDesc: 'Create actions, courses, tracks that PDI can point to',
+        ctaHelp: 'Open Help (PDI → Academy)',
+        ctaPdi: 'Open Team (PDI)',
         filterTheme: 'Filter by theme',
         allThemes: 'All themes',
         filterType: 'Filter by type',
@@ -378,12 +383,22 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       </div>
 
       {resources.length === 0 ? (
-        <EmptyState
-          title={t('noResources')}
-          message={t('noResourcesDesc')}
-          actionLabel={isAdmin ? t('create') : undefined}
-          onAction={isAdmin ? handleCreate : undefined}
-        />
+        <div className="flex flex-col gap-3">
+          <EmptyState
+            title={t('noResources')}
+            message={t('noResourcesDesc')}
+            actionLabel={isAdmin ? t('create') : undefined}
+            onAction={isAdmin ? handleCreate : undefined}
+          />
+          <div className="flex flex-wrap gap-3 px-1">
+            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaPdi')} →
+            </Link>
+            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+              {t('ctaHelp')} →
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
           <table className="w-full min-w-[640px]">

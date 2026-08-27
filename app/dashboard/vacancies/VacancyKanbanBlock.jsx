@@ -204,7 +204,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           }}
                           onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
                           className={cn(
-                            'cursor-grab select-none rounded-lg border border-ink/12 bg-white/[0.88] px-2.5 py-[9px] transition-opacity duration-150',
+                            'cursor-grab select-none rounded-lg border border-ink/12 bg-surface/[0.88] px-2.5 py-[9px] transition-opacity duration-150',
                             isDragging && 'opacity-40',
                             isBusy && !isDragging && 'opacity-65',
                             draggingId && !isDragging && 'pointer-events-none'

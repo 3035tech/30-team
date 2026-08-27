@@ -376,7 +376,7 @@ export function GroupTab({
                     key={g.id}
                     className={cn(
                       'flex flex-wrap items-center justify-between gap-2 rounded-control border px-2.5 py-2',
-                      active ? 'border-brand-500/35 bg-brand-500/[0.06]' : 'border-ink/10 bg-white/70'
+                      active ? 'border-brand-500/35 bg-brand-500/[0.06]' : 'border-ink/10 bg-surface/70'
                     )}
                   >
                     <div className="min-w-0">
@@ -561,7 +561,7 @@ export function GroupTab({
                         return (
                           <li
                             key={`comp-${row.id}`}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-success/20 bg-white/70 px-2.5 py-2"
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-success/20 bg-surface/70 px-2.5 py-2"
                           >
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5">

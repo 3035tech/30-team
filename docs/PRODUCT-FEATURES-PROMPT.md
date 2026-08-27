@@ -142,8 +142,10 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 
 ### Guia e ajuda
 - Guia do painel (HelpTab) com passos por fluxo + catálogo T1–T9.
+- **Roteiro de demo (7 passos)** (`demoRoteiro`): assessment → Motivadores → Equipe/Dossier → Compat/Grupos → Overview → Avaliações/PDI → Cultura/Exit/Sucessão.
 - Mapa do sistema (HelpSystemMap): diagrama BPM em faixas + tabela de links públicos.
 - Assistente flutuante (HelpAssistantWidget): atalhos “onde clico?” + Guia.
+- Chrome admin consistente: empty states com 1 CTA; Vagas com `AdminEdit`/`AdminDelete`; dark `bg-surface` no painel (print/público light-first).
 
 ### Notificações e ops
 - Sino in-app (Eneagrama/Motivadores concluídos, retention_watch, kit pós-hire, digest semanal, prazo, vaga fechada).

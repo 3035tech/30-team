@@ -244,7 +244,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
               onChange={(e) => setJobDesc(e.target.value)}
               placeholder={t(locale, 'recruiting.rubricAiJobPh')}
               rows={10}
-              className="mb-2 box-border w-full resize-y rounded-lg border border-ink/12 bg-white px-3 py-2.5 font-ui text-xs text-ink"
+              className="mb-2 box-border w-full resize-y rounded-lg border border-ink/12 bg-surface px-3 py-2.5 font-ui text-xs text-ink"
             />
             <div className="flex flex-wrap items-center gap-2">
               <button

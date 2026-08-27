@@ -74,7 +74,7 @@ function StatTile({ value, label, color, onClick }) {
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        'min-w-0 rounded-[14px] border border-ink/12 bg-white px-[18px] py-4 text-left',
+        'min-w-0 rounded-[14px] border border-ink/12 bg-surface px-[18px] py-4 text-left',
         onClick ? 'cursor-pointer' : 'cursor-default'
       )}
       style={color ? { borderColor: `${color}35` } : undefined}
