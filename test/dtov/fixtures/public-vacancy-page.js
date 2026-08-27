@@ -1,5 +1,5 @@
 /**
- * Extensão DTOV para página pública /vaga + perfil de empresa (migration 030).
+ * DTOV extension for public /jobs page + company profile (migration 030).
  * Exemplar do padrão: feature nova → fixture que enriquece o baseline.
  */
 

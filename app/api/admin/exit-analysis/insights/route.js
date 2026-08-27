@@ -21,7 +21,7 @@ export async function GET(request) {
       return apiError(request, 'COMPANY_REQUIRED', 400);
     }
 
-    const data = await getExitInsights({ companyId });
+    const data = await getExitInsights(null, { companyId });
     return NextResponse.json({ ok: true, ...data }, { status: 200 });
   } catch (err) {
     console.error('GET /api/admin/exit-analysis/insights error:', err);

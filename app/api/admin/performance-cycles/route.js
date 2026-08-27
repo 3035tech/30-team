@@ -71,10 +71,10 @@ export async function POST(request) {
 
     await audit({
       action: 'performance_cycle_create',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_cycle',
-      resourceId: result.cycle.id,
+      targetType: 'performance_cycle',
+      targetId: result.cycle.id,
       metadata: { title: result.cycle.title, status: result.cycle.status },
     });
 

@@ -55,10 +55,10 @@ export async function POST(request) {
 
     await audit({
       action: 'performance_review_submit',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_review',
-      resourceId: result.review.id,
+      targetType: 'performance_review',
+      targetId: result.review.id,
       metadata: { cycleId, candidateId, pdiGenerated: result.pdiGenerated },
     });
 

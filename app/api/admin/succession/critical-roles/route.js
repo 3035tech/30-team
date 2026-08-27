@@ -71,10 +71,10 @@ export async function POST(request) {
 
     await audit({
       action: 'critical_role_create',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'critical_role',
-      resourceId: result.role.id,
+      targetType: 'critical_role',
+      targetId: result.role.id,
       metadata: { title: result.role.title, impactLevel: result.role.impactLevel },
     });
 

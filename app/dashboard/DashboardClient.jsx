@@ -712,6 +712,9 @@ export default function DashboardClient({
                 {showUsers ? <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} /> : null}
                 {showUsers ? <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} /> : null}
                 {showUsers ? <NavLink id="succession" icon="users" label={t(locale, 'succession.title')} /> : null}
+                {showUsers ? <NavLink id="exit-analysis" icon="users" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
+                {showUsers ? <NavLink id="learning-resources" icon="help" label={t(locale, 'dashboard.learningResources')} /> : null}
+                {showUsers ? <NavLink id="company-benefits" icon="briefcase" label={t(locale, 'dashboard.companyBenefits')} /> : null}
                 {showUsers ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
               </>
             ) : showMotivators || showClimate ? (

@@ -41,7 +41,7 @@ export default async function JobAlertUnsubscribePage({ searchParams }) {
         <div className="mt-5 rounded-card border border-ink/12 bg-white px-6 py-[22px]">
           <p className="m-0 leading-relaxed text-ink-muted">{message}</p>
           <p className="mb-0 mt-4">
-            <Link href="/j" className="text-brand-500">
+            <Link href="/jobs" className="text-brand-500">
               {t(locale, 'publicVacancy.browseOpenCta')}
             </Link>
           </p>

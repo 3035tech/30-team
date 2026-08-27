@@ -18,7 +18,7 @@ Use the **smallest** set that covers the change. Skip gates that cannot apply.
    - no `window.confirm` / `alert` / `prompt` in `app/`
    - no new hardcoded UI strings without `lib/i18n.js` pt-BR **and** en (if UI touched)
 3. If auth/ACL touched: public token paths must **not** import `CAP` / `requireCapability`
-   (`app/api/public`, `app/api/ae`, pages `/t` `/v` `/r` `/assessment` `/vaga` `/vagas`).
+   (`app/api/public`, `app/api/ae`, pages `/t` `/v` `/r` `/assessment` `/jobs`).
 
 ## Permissions / users (etapas ACL)
 
@@ -41,7 +41,7 @@ Use the **smallest** set that covers the change. Skip gates that cannot apply.
 1. Empty / loading / error covered if new surface.
 2. Reused feedback components (`useAppFeedback`), not browser dialogs.
 
-## Public vacancy pages (`/vaga`, `/vagas`)
+## Public vacancy pages (`/jobs`)
 
 1. Fixture `public-vacancy-page` seeded (open indexed + closed public).
 2. Closed path: thanks + link to other open public vacancies (no JobPosting index).

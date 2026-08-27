@@ -77,10 +77,10 @@ export async function POST(request) {
 
     await audit({
       action: 'succession_plan_create',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'succession_plan',
-      resourceId: result.plan.id,
+      targetType: 'succession_plan',
+      targetId: result.plan.id,
       metadata: { roleId, successorId, readiness: result.plan.readiness },
     });
 

@@ -33,9 +33,9 @@ Não inventar merge por nome nem segundo hub paralelo.
 | /t/{token} | Assessment Eneagrama da empresa (time interno; noindex) |
 | /v/{token} | Assessment Eneagrama da vaga (candidato; noindex) |
 | /assessment/motivators/{token} | Motivadores |
-| /j , /j/{slug}-{id} | Anúncio SEO da vaga (marketing; distinto do teste) |
-| /j/remoto , /j/cidade/{slug} | Agregadores públicos (massa mínima) |
-| /c/{companySlug} | Carreiras da empresa (opt-in; hero logo+sobre) |
+| /j , /jobs/{slug}-{id} | Anúncio SEO da vaga (marketing; distinto do teste) |
+| /jobs/remote , /jobs/city/{slug} | Agregadores públicos (massa mínima) |
+| /companies/{companySlug} | Carreiras da empresa (opt-in; hero logo+sobre) |
 | /r/{token} | Relatório shortlist para o cliente (+ print/PDF) |
 | /clima/{token} | Pesquisa de clima anônima (um uso; Likert + texto descritivo) |
 | /pulso/{token} | Pulso curto de grupo (anônimo, um uso) |
@@ -122,10 +122,9 @@ Assistente flutuante de ajuda (B-801): FAQ + retrieval + LLM barato — só nave
 - Índice /j (busca, filtro contrato, paginação); JobPosting JSON-LD; sitemap/robots.
 - Share WhatsApp/LinkedIn/copiar com UTM; cookie de atribuição sem PII.
 - Job alerts por e-mail + unsubscribe.
-- Agregadores /j/remoto e /j/cidade/{slug}.
-- Perfil /c/{slug} (opt-in: site, sobre rich text, logo S3; hero + breadcrumb).
+- Agregadores /jobs/remote e /jobs/city/{slug}.
+- Perfil /companies/{slug} (opt-in: site, sobre rich text, logo S3; hero + breadcrumb).
 - Google Indexing API (opt-in via env; mock em DTOV).
-- URLs legadas /vagas /empresas /vaga/… → 308.
 
 ### Motivadores (AE)
 - Banco situacional v4 (linguagem de trabalho; dimensões só no servidor).
@@ -169,7 +168,7 @@ Assistente flutuante de ajuda (B-801): FAQ + retrieval + LLM barato — só nave
 - Equipe UI: PeopleManagementPanel, HireJourneyBlock, HrActionBrief, OnboardingCheckinsBlock
 - Motivadores: lib/ae/*, app/api/ae/*, app/api/admin/ae/*
 - Vagas/pipeline: lib/pipeline.js, lib/hire.js, app/dashboard/vacancies/*, VacancyFitDecisionStrip, VacancyOfferBlock
-- Público SEO: docs/job-seo-and-distribution.md, app/j, lib/job-*
+- Público SEO: docs/job-seo-and-distribution.md, app/jobs, lib/job-*
 - Landpage SEO: `app/page.jsx`, `lib/product-landing-seo.js`, `ProductLandingClient`, `/llms.txt`
 - Guia / mapa / assistente: HelpTab, HelpSystemMap, HelpAssistantWidget + panel.help.* / panel.assistant.*
 - Auth reset: lib/user-password-invite.js, POST /api/auth/forgot-password

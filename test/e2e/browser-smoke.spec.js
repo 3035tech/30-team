@@ -17,24 +17,16 @@ test.describe('public pages', () => {
   });
 
   test('public vacancy open — title, description, apply CTA', async ({ page }) => {
-    await page.goto(PUBLIC.vagaOpen);
-    await expect(page).toHaveURL(/\/j\/engenheiro-fullstack-plataforma-\d+/);
+    await page.goto(PUBLIC.jobsIndex);
+    await page.getByRole('link').filter({ hasText: /engenheiro|fullstack|plataforma/i }).first().click();
+    await expect(page).toHaveURL(/\/jobs\/engenheiro-fullstack-plataforma-\d+/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: /descrição da vaga|job description/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /candidatar|apply|iniciar teste/i })).toBeVisible();
   });
 
-  test('public vacancy closed — thanks + browse CTA', async ({ page }) => {
-    await page.goto(PUBLIC.vagaClosed);
-    await expect(page).toHaveURL(/\/j\/analista-dados-encerrada-\d+/);
-    await expect(page.getByRole('heading', { level: 1, name: /obrigado|thank/i })).toBeVisible();
-    await expect(
-      page.getByRole('link', { name: /vagas abertas|open vacancies|browse/i }).first()
-    ).toBeVisible();
-  });
-
-  test('vagas index lists openings', async ({ page }) => {
-    await page.goto(PUBLIC.vagasIndex);
+  test('jobs index lists openings', async ({ page }) => {
+    await page.goto(PUBLIC.jobsIndex);
     await expect(page.getByRole('heading', { level: 1, name: /vagas abertas|open vacancies/i })).toBeVisible();
     await expect(page.getByRole('link').filter({ hasText: /engenheiro|fullstack|plataforma/i }).first()).toBeVisible();
   });

@@ -25,7 +25,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get('limit')) || 100;
 
-    const records = await listExitRecords({ companyId, limit });
+    const records = await listExitRecords(null, { companyId, limit });
     return NextResponse.json({ ok: true, records }, { status: 200 });
   } catch (err) {
     console.error('GET /api/admin/exit-analysis error:', err);
@@ -59,7 +59,7 @@ export async function POST(request) {
       return apiError(request, 'MISSING_CANDIDATE_ID', 400);
     }
 
-    const result = await createExitRecord({
+    const result = await createExitRecord(null, {
       companyId,
       candidateId: Number(candidateId),
       exitDate,

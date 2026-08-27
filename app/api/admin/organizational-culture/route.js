@@ -26,11 +26,11 @@ export async function GET(request) {
     const summary = searchParams.get('summary') === 'true';
 
     if (summary) {
-      const data = await getCultureSummary({ companyId });
+      const data = await getCultureSummary(null, { companyId });
       return NextResponse.json({ ok: true, summary: data }, { status: 200 });
     }
 
-    const data = await getOrganizationalCulture({ companyId });
+    const data = await getOrganizationalCulture(null, { companyId });
     return NextResponse.json({ ok: true, culture: data }, { status: 200 });
   } catch (err) {
     console.error('Failed to get organizational culture:', err);

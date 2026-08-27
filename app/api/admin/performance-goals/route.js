@@ -93,10 +93,10 @@ export async function POST(request) {
 
     await audit({
       action: 'performance_goal_create',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_goal',
-      resourceId: result.goal.id,
+      targetType: 'performance_goal',
+      targetId: result.goal.id,
       metadata: { cycleId, candidateId, title: result.goal.title },
     });
 

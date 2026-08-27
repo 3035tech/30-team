@@ -1,6 +1,6 @@
 # SEO, distribuição e analytics de vagas públicas
 
-Documento técnico do epic de páginas públicas (`/j`, `/c`, share, funil, indicação, job alerts, Indexing API).  
+Documento técnico do epic de páginas públicas (`/jobs`, `/companies`, share, funil, indicação, job alerts, Indexing API).  
 Uso no painel (RH): Guia → seções **Vagas** e **Página pública da vaga**. Setup: `README.md` + `.env.example`.
 
 **Não substitui** parecer jurídico nem política de privacidade pública. Checklist LGPD do epic: § [Segurança / LGPD](#segurança--lgpd-checklist-do-epic).
@@ -11,13 +11,12 @@ Uso no painel (RH): Guia → seções **Vagas** e **Página pública da vaga**. 
 
 | URL | Público? | Função |
 |-----|----------|--------|
-| `/j` | Sim | Índice de vagas abertas indexáveis (busca, filtro, paginação) |
-| `/j/remoto` | Sim (se massa ≥ limiar) | Agregador de vagas `workplace_modality = remote` — sem JobPosting |
-| `/j/cidade/{slug}` | Sim (se massa ≥ limiar) | Agregador por cidade (`workplace_city` slugificado) — sem JobPosting |
-| `/j/{slug}-{id}` | Sim | Página SEO da vaga (canônica). `id` = `vacancies.id` |
-| `/c/{companySlug}` | Sim (opt-in) | Carreiras da empresa (`companies.public_profile_enabled`) |
+| `/jobs` | Sim | Índice de vagas abertas indexáveis (busca, filtro, paginação) |
+| `/jobs/remote` | Sim (se massa ≥ limiar) | Agregador de vagas `workplace_modality = remote` — sem JobPosting |
+| `/jobs/city/{slug}` | Sim (se massa ≥ limiar) | Agregador por cidade (`workplace_city` slugificado) — sem JobPosting |
+| `/jobs/{slug}-{id}` | Sim | Página SEO da vaga (canônica). `id` = `vacancies.id` |
+| `/companies/{companySlug}` | Sim (opt-in) | Carreiras da empresa (`companies.public_profile_enabled`) |
 | `/a/unsubscribe?token=…` | Sim | Cancelar job alert |
-| `/vaga/…`, `/vagas`, `/empresas/…` | — | Legado → **308** para `/j` / `/c` |
 | `/v/{token}` | Sim | Assessment Eneagrama da vaga (**noindex**; não é marketing) |
 | `/t/{token}` | Sim | Assessment empresa / time interno (**noindex**) |
 | `/r/{token}` | Sim | Relatório ao cliente (token; **noindex**) |
@@ -40,7 +39,7 @@ Flags na vaga (drawer): página pública, permitir indexação, mostrar empresa,
 Local: `workplace_modality` (`onsite` \| `hybrid` \| `remote`), `workplace_state` (UF), `workplace_city` (município IBGE via `/api/public/br-cities` + autocomplete no drawer).  
 Salário no relatório cliente (`/r`) é flag **separada** (`client_report_show_salary`).
 
-Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/c/{slug}`), `logo_url` / `logo_key` (arquivo no S3; migration `039`).
+Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/companies/{slug}`), `logo_url` / `logo_key` (arquivo no S3; migration `039`).
 
 Score de completude (determinístico): `lib/job-seo-score.js` → `computeJobSeoScore` (checklist no drawer).
 
@@ -48,13 +47,13 @@ Score de completude (determinístico): `lib/job-seo-score.js` → `computeJobSeo
 
 ## Conteúdo e SEO on-page
 
-- **Title / description / canonical / robots / OG+Twitter**: `generateMetadata` nas rotas `/j`, `/j/remoto`, `/j/cidade/[slug]` e `/j/[jobKey]`.
+- **Title / description / canonical / robots / OG+Twitter**: `generateMetadata` nas rotas `/jobs`, `/jobs/remote`, `/jobs/city/[slug]` e `/jobs/[jobKey]`.
 - **JSON-LD JobPosting**: `buildJobPostingJsonLd` — só na página da vaga, se open + index + prazo ok; sem `TELECOMMUTE` inventado; sem dados de candidato. **Agregadores não emitem JobPosting.**
-- **Encerrada**: agradecimento + vagas relacionadas + link `/j`; sem apply / JSON-LD.
-- **Agregadores** (`lib/public-job-aggregators.js`): `/j/remoto` e `/j/cidade/{slug}` só se count ≥ `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` (default **3**); abaixo do limiar → **404** (nunca página vazia indexável). Filtros via `listOpenPublicVacancies` (`workplaceModality` / `workplaceCities`).
-- **Sitemap / robots**: `app/sitemap.js`, `app/robots.js` — `/j`, agregadores que passam o limiar (cap cidades), vagas indexáveis; empresa `/c` quando opt-in.
+- **Encerrada**: agradecimento + vagas relacionadas + link `/jobs`; sem apply / JSON-LD.
+- **Agregadores** (`lib/public-job-aggregators.js`): `/jobs/remote` e `/jobs/city/{slug}` só se count ≥ `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` (default **3**); abaixo do limiar → **404** (nunca página vazia indexável). Filtros via `listOpenPublicVacancies` (`workplaceModality` / `workplaceCities`).
+- **Sitemap / robots**: `app/sitemap.js`, `app/robots.js` — `/jobs`, agregadores que passam o limiar (cap cidades), vagas indexáveis; empresa `/companies` quando opt-in.
 
-Validar JobPosting: [Google Rich Results Test](https://search.google.com/test/rich-results) com a URL `/j/…` em staging/produção.
+Validar JobPosting: [Google Rich Results Test](https://search.google.com/test/rich-results) com a URL `/jobs/…` em staging/produção.
 
 ---
 
@@ -87,7 +86,7 @@ Service account no Google Cloud: API “Indexing” habilitada; owner/verified d
 ## Indicação (referral)
 
 - Tabela `referral_codes` (migration `033`).
-- UI: aba **Indicação** no detalhe da vaga (criar, copiar `/j/…?ref=CODIGO`, desativar, métricas).
+- UI: aba **Indicação** no detalhe da vaga (criar, copiar `/jobs/…?ref=CODIGO`, desativar, métricas).
 - Escopo: só a vaga ou empresa inteira.
 - APIs: `GET/POST /api/admin/referral-codes`, `PATCH …/[id]`, `GET …/analytics`.
 - `?ref=` entra no mesmo cookie/funil da atribuição.
@@ -97,7 +96,7 @@ Service account no Google Cloud: API “Indexing” habilitada; owner/verified d
 ## Job alerts
 
 - Tabela `job_alerts` (migration `035`).
-- Cadastro: formulário no rodapé de `/j` → `POST /api/public/job-alerts`.
+- Cadastro: formulário no rodapé de `/jobs` → `POST /api/public/job-alerts`.
 - Cancelar: `/a/unsubscribe?token=…`.
 - Disparo: `scheduleJobAlertDispatch` ao **criar** ou **ligar** página pública aberta (não a cada edit trivial).
 - **SMTP** (`SMTP_HOST` + `MAIL_FROM`): sem SMTP → **no-op** (não falha o save). Com SMTP → e-mail em lote (cap interno).
@@ -130,14 +129,14 @@ Fluxo sempre: sugerir → RH revisa → salvar. Linguagem hedged; sem diagnósti
 |------|------|
 | URL / slug | `lib/public-job-url.js` |
 | Resolve posting | `lib/public-vacancy-posting.js` |
-| Agregadores SEO | `lib/public-job-aggregators.js`, `app/j/remoto`, `app/j/cidade/[citySlug]` |
+| Agregadores SEO | `lib/public-job-aggregators.js`, `app/jobs/remote`, `app/jobs/city/[citySlug]` |
 | Lifecycle / closed UX | `lib/public-vacancy-lifecycle.js` |
-| JSON-LD / meta | posting helpers + `app/j/**` |
+| JSON-LD / meta | posting helpers + `app/jobs/**` |
 | Indexing | `lib/job-indexing.js` |
 | Funil / attr | `lib/job-attribution*.js`, `job_funnel_events` |
 | Alerts | `lib/job-alerts.js` |
 | Score | `lib/job-seo-score.js` |
-| Empresa pública | `lib/company-profile.js`, `app/c/[companySlug]` |
+| Empresa pública | `lib/company-profile.js`, `app/companies/[companySlug]` |
 | Migrations | `030`–`037` (ver `migrations/`) |
 
 ---
@@ -151,7 +150,7 @@ npm run dtov:full-app   # inclui mock Indexing, SQL funil/referral, HTTP /j, red
 
 Checklist do epic (slugify/acentos, JobPosting variantes, sitemap, UTM/referral, SEO score, Indexing mock): `test/dtov/full-regression.js` + HTTP/browser — ver `test/README.md`.
 
-Manual: abrir `/j/…` → Rich Results Test; Funil/Indicação no painel com HR demo DTOV.
+Manual: abrir `/jobs/…` → Rich Results Test; Funil/Indicação no painel com HR demo DTOV.
 
 ---
 

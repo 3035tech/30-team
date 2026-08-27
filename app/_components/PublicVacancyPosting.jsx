@@ -93,7 +93,7 @@ className="mt-1 block font-mono text-xs text-ink-muted"
       </ul>
       <p className="mb-0 mt-4">
         <Link
-          href="/j"
+          href="/jobs"
           className="font-mono text-sm text-brand-500"
         >
           {t(locale, 'publicVacancy.seeAllOpen')}
@@ -209,7 +209,7 @@ className="mb-2 mt-0 font-mono text-[13px] text-ink-faint"
                   </Link>
                 ) : null}
                 <Link
-                  href="/j"
+                  href="/jobs"
                   className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
                 >
                   {t(locale, 'publicVacancy.browseOpenCta')}
@@ -368,7 +368,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                 )}
                 <PublicVacancyShareBar locale={locale} posting={posting} />
                 <p className="mb-0 mt-4 font-mono text-xs">
-                  <Link href="/j" className="text-brand-500">
+                  <Link href="/jobs" className="text-brand-500">
                     {t(locale, 'publicVacancy.seeAllOpen')}
                   </Link>
                 </p>
@@ -381,7 +381,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
   );
 }
 
-/** Listagem /j — busca + filtro tipo + paginação (GET). Também agregadores SEO. */
+/** Job listing /jobs — busca + filtro tipo + paginação (GET). Também agregadores SEO. */
 export function PublicVacanciesIndexView({
   locale = 'pt-BR',
   items = [],
@@ -391,7 +391,7 @@ export function PublicVacanciesIndexView({
   filters = {},
   title = null,
   intro = null,
-  basePath = '/j',
+  basePath = '/jobs',
   showSearchForm = true,
   showJobAlert = true,
 }) {
@@ -404,7 +404,7 @@ export function PublicVacanciesIndexView({
     : t(locale, 'publicVacancy.indexEmpty');
   const heading = title || t(locale, 'publicVacancy.indexTitle');
   const lead = intro || t(locale, 'publicVacancy.indexIntro');
-  const listBase = String(basePath || '/j').replace(/\/$/, '') || '/j';
+  const listBase = String(basePath || '/jobs').replace(/\/$/, '') || '/jobs';
 
   function hrefForPage(p) {
     const params = new URLSearchParams();
@@ -454,9 +454,9 @@ export function PublicVacanciesIndexView({
       <div className={SC.wrap}>
         <header className="mb-6">
           <img src={brandMarkSrc(64)} alt="" width={40} height={40} className="mb-3" />
-          {listBase !== '/j' ? (
+          {listBase !== '/jobs' ? (
             <p className="mb-2 mt-0 font-mono text-xs">
-              <Link href="/j" className="text-ink-muted">
+              <Link href="/jobs" className="text-ink-muted">
                 {t(locale, 'publicVacancy.browseOpenCta')}
               </Link>
             </p>
@@ -474,7 +474,7 @@ export function PublicVacanciesIndexView({
         {showSearchForm ? (
         <form
           method="get"
-          action="/j"
+          action="/jobs"
           className={cn(SC.card, 'mb-4 flex flex-col gap-3')}
         >
           <label className="block">
@@ -517,7 +517,7 @@ className="min-h-[44px] shrink-0 cursor-pointer rounded-control border-none bg-b
             </button>
             {hasFilters ? (
               <Link
-                href="/j"
+                href="/jobs"
 className="inline-flex min-h-[44px] shrink-0 items-center px-3.5 text-sm text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexClearFilters')}
@@ -681,7 +681,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
   );
 }
 
-/** Página pública `/c/{slug}` (perfil da empresa). */
+/** Public company page `/companies/{slug}` (perfil da empresa). */
 export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], total = 0 }) {
   const name = company?.name || t(locale, 'publicVacancy.companyFallback');
   const website = String(company?.website || '').trim();
@@ -694,7 +694,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
       <div className={SC.glow} aria-hidden />
       <div className={SC.wrap}>
         <nav className="mb-4 font-mono text-xs text-ink-muted" aria-label={t(locale, 'publicVacancy.breadcrumbAria')}>
-          <Link href="/j" className="text-ink-muted no-underline hover:text-brand-500">
+          <Link href="/jobs" className="text-ink-muted no-underline hover:text-brand-500">
             {t(locale, 'publicVacancy.browseOpenCta')}
           </Link>
           <span className="mx-1.5 text-ink-faint" aria-hidden>
@@ -815,7 +815,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
           )}
           {total > items.length ? (
             <p className="mb-0 mt-3.5 text-xs text-ink-muted">
-              <Link href="/j" className="text-brand-500">
+              <Link href="/jobs" className="text-brand-500">
                 {t(locale, 'publicVacancy.seeAllOpen')}
               </Link>
             </p>

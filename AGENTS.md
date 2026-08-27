@@ -275,7 +275,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
-| SEO / vagas públicas | `docs/job-seo-and-distribution.md`, `app/j`, `lib/job-indexing.js`, Guia `panel.help.publicVacancy*` |
+| SEO / vagas públicas | `docs/job-seo-and-distribution.md`, `app/jobs`, `lib/job-indexing.js`, Guia `panel.help.publicVacancy*` |
 | Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js` |
 | Backlog de ideias | `docs/BACKLOG.md` — adicionar ao pedir; remover ao implementar |
 

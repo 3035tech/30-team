@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const resource = await getLearningResource({ companyId, resourceId });
+    const resource = await getLearningResource(null, { companyId, resourceId });
     if (!resource) {
       return apiError(request, 'NOT_FOUND', 404);
     }
@@ -78,7 +78,7 @@ export async function PATCH(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await updateLearningResource({
+    const result = await updateLearningResource(null, {
       companyId,
       resourceId,
       title: body.title,
@@ -123,7 +123,7 @@ export async function DELETE(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await deactivateLearningResource({ companyId, resourceId });
+    const result = await deactivateLearningResource(null, { companyId, resourceId });
     if (!result.ok) {
       if (result.errorCode === 'NOT_FOUND') {
         return apiError(request, 'NOT_FOUND', 404);

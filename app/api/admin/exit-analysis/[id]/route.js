@@ -38,7 +38,7 @@ export async function GET(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const record = await getExitRecord({ companyId, candidateId });
+    const record = await getExitRecord(null, { companyId, candidateId });
     if (!record) {
       return apiError(request, 'EXIT_RECORD_NOT_FOUND', 404);
     }
@@ -73,7 +73,7 @@ export async function PATCH(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await updateExitRecord({
+    const result = await updateExitRecord(null, {
       companyId,
       exitRecordId,
       exitDate: body.exitDate,

@@ -86,10 +86,10 @@ export async function PATCH(request, { params }) {
 
     await audit({
       action: 'critical_role_update',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'critical_role',
-      resourceId: roleId,
+      targetType: 'critical_role',
+      targetId: roleId,
       metadata: { title: result.role.title },
     });
 
@@ -126,10 +126,10 @@ export async function DELETE(request, { params }) {
 
     await audit({
       action: 'critical_role_deactivate',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'critical_role',
-      resourceId: roleId,
+      targetType: 'critical_role',
+      targetId: roleId,
     });
 
     return NextResponse.json({ ok: true });

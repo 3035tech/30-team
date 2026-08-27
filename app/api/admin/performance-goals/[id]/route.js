@@ -59,10 +59,10 @@ export async function PATCH(request, { params }) {
 
     await audit({
       action: 'performance_goal_update',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_goal',
-      resourceId: goalId,
+      targetType: 'performance_goal',
+      targetId: goalId,
       metadata: { title: result.goal.title },
     });
 
@@ -102,10 +102,10 @@ export async function DELETE(request, { params }) {
 
     await audit({
       action: 'performance_goal_delete',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_goal',
-      resourceId: goalId,
+      targetType: 'performance_goal',
+      targetId: goalId,
     });
 
     return NextResponse.json({ ok: true });

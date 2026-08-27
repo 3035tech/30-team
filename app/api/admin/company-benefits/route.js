@@ -33,11 +33,11 @@ export async function GET(request) {
     const limit = Number(searchParams.get('limit')) || 100;
 
     if (categories) {
-      const categoriesList = await getCompanyBenefitCategories({ companyId });
+      const categoriesList = await getCompanyBenefitCategories(null, { companyId });
       return NextResponse.json({ ok: true, categories: categoriesList }, { status: 200 });
     }
 
-    const benefits = await listCompanyBenefits({ companyId, includeInactive, category, limit });
+    const benefits = await listCompanyBenefits(null, { companyId, includeInactive, category, limit });
     return NextResponse.json({ ok: true, benefits }, { status: 200 });
   } catch (err) {
     console.error('Failed to list company benefits:', err);
@@ -68,7 +68,7 @@ export async function POST(request) {
 
     const { name, description, category, benefitType } = body;
 
-    const result = await createCompanyBenefit({
+    const result = await createCompanyBenefit(null, {
       companyId,
       name,
       description,

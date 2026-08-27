@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const benefit = await getCompanyBenefit({ companyId, benefitId });
+    const benefit = await getCompanyBenefit(null, { companyId, benefitId });
     if (!benefit) {
       return apiError(request, 'NOT_FOUND', 404);
     }
@@ -78,7 +78,7 @@ export async function PATCH(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await updateCompanyBenefit({
+    const result = await updateCompanyBenefit(null, {
       companyId,
       benefitId,
       name: body.name,
@@ -121,7 +121,7 @@ export async function DELETE(request, { params }) {
       return apiError(request, 'INVALID_ID', 400);
     }
 
-    const result = await deactivateCompanyBenefit({ companyId, benefitId });
+    const result = await deactivateCompanyBenefit(null, { companyId, benefitId });
     if (!result.ok) {
       if (result.errorCode === 'NOT_FOUND') {
         return apiError(request, 'NOT_FOUND', 404);

@@ -36,7 +36,7 @@ DTOV_KEEP=1 npm run dtov:full-app         # não dá down no fim
 DTOV_SKIP_BROWSER=1 npm run dtov:full-app # só SQL + HTTP (sem Chromium)
 ```
 
-`dtov:full-app` cobre login HR/admin, dashboard tabs, APIs de vagas/candidatos/AE/export/notificações, páginas públicas (`/t` `/v` `/r` `/vaga` `/vagas`), health e crons (auth), **mais** navegação/layout no Chromium (`test/e2e/browser-smoke.spec.js`).
+`dtov:full-app` cobre login HR/admin, dashboard tabs, APIs de vagas/candidatos/AE/export/notificações, páginas públicas (`/t` `/v` `/r` `/jobs`), health e crons (auth), **mais** navegação/layout no Chromium (`test/e2e/browser-smoke.spec.js`).
 
 Só browser (servidor já no ar): `BASE_URL=http://127.0.0.1:3010 npm run test:browser`.
 

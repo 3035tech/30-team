@@ -99,8 +99,8 @@ SELECT _mig_create_index_if_ready(
 SELECT _mig_create_index_if_ready(
   'idx_performance_reviews_cycle_employee',
   'performance_reviews',
-  'CREATE INDEX IF NOT EXISTS idx_performance_reviews_cycle_employee ON performance_reviews (cycle_id, employee_candidate_id)',
-  ARRAY['cycle_id', 'employee_candidate_id']
+  'CREATE INDEX IF NOT EXISTS idx_performance_reviews_cycle_employee ON performance_reviews (cycle_id, candidate_id)',
+  ARRAY['cycle_id', 'candidate_id']
 );
 
 SELECT _mig_create_index_if_ready(

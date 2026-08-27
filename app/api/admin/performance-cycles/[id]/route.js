@@ -85,10 +85,10 @@ export async function PATCH(request, { params }) {
 
     await audit({
       action: 'performance_cycle_update',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'performance_cycle',
-      resourceId: cycleId,
+      targetType: 'performance_cycle',
+      targetId: cycleId,
       metadata: { title: result.cycle.title, status: result.cycle.status },
     });
 

@@ -43,19 +43,18 @@ export async function GET(request) {
     const candidatesPromise = queryRead(
       `SELECT
          c.id,
-         c.name,
+         c.full_name AS name,
          c.email AS subtitle,
          v.title AS vacancy_title
        FROM candidates c
        LEFT JOIN assessments ass ON ass.candidate_id = c.id
        LEFT JOIN vacancies v ON v.id = ass.vacancy_id
        WHERE ${scope.isAdmin ? 'TRUE' : 'c.company_id = $2'}
-         AND c.deleted = FALSE
          AND (
-           c.name ILIKE $1
+           c.full_name ILIKE $1
            OR c.email ILIKE $1
          )
-       ORDER BY c.name ASC
+       ORDER BY c.full_name ASC
        LIMIT $${scope.isAdmin ? '2' : '3'}`,
       scope.isAdmin
         ? [searchPattern, MAX_RESULTS_PER_CATEGORY]

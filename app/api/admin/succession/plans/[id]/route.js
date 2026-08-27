@@ -58,10 +58,10 @@ export async function PATCH(request, { params }) {
 
     await audit({
       action: 'succession_plan_update',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'succession_plan',
-      resourceId: planId,
+      targetType: 'succession_plan',
+      targetId: planId,
       metadata: { readiness: result.plan.readiness },
     });
 
@@ -98,10 +98,10 @@ export async function DELETE(request, { params }) {
 
     await audit({
       action: 'succession_plan_delete',
-      userId: payload.userId,
+      actorUserId: payload.userId,
       companyId,
-      resourceType: 'succession_plan',
-      resourceId: planId,
+      targetType: 'succession_plan',
+      targetId: planId,
     });
 
     return NextResponse.json({ ok: true });

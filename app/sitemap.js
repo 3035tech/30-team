@@ -6,7 +6,7 @@ function appBaseUrl() {
 }
 
 /**
- * Sitemap: / + /j + agregadores (remoto/cidade com massa) + vagas públicas indexáveis.
+ * Sitemap: / + /jobs + aggregators (remote/city with enough volume) + vagas públicas indexáveis.
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
 export default async function sitemap() {
@@ -28,7 +28,7 @@ export default async function sitemap() {
       priority: 0.4,
     },
     {
-      url: `${base}/j`,
+      url: `${base}/jobs`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.8,

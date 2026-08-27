@@ -13,10 +13,7 @@ export const HR = {
 };
 
 export const PUBLIC = {
-  /** Legado — Playwright segue redirect 308 para /j/{slug}-{id}. */
-  vagaOpen: '/vaga/todos-os-dados-demo/engenheiro-fullstack-plataforma',
-  vagaClosed: '/vaga/todos-os-dados-demo/analista-dados-encerrada',
-  vagasIndex: '/j',
+  jobsIndex: '/jobs',
 };
 
 /** E-mail único por run — evita colisão em links com require_candidate_email. */

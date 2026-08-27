@@ -34,11 +34,11 @@ export async function GET(request) {
     const limit = Number(searchParams.get('limit')) || 100;
 
     if (themes) {
-      const themesList = await getCompanyLearningThemes({ companyId });
+      const themesList = await getCompanyLearningThemes(null, { companyId });
       return NextResponse.json({ ok: true, themes: themesList }, { status: 200 });
     }
 
-    const resources = await listLearningResources({ companyId, includeInactive, theme, resourceType, limit });
+    const resources = await listLearningResources(null, { companyId, includeInactive, theme, resourceType, limit });
     return NextResponse.json({ ok: true, resources }, { status: 200 });
   } catch (err) {
     console.error('Failed to list learning resources:', err);
@@ -69,7 +69,7 @@ export async function POST(request) {
 
     const { title, description, theme, resourceType, url, durationHours } = body;
 
-    const result = await createLearningResource({
+    const result = await createLearningResource(null, {
       companyId,
       title,
       description,
