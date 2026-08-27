@@ -4,9 +4,10 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../../lib/auth';
 import { query } from '../../../../../../../lib/db';
 import { sanitizeInterviewNotesHtml } from '../../../../../../../lib/sanitize-html';
-import { apiError } from '../../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
 import {
+  PIPELINE_STAGE,
   PIPELINE_STAGE_SET,
   normalizeRejectionReason,
   normalizeStartDate,
@@ -19,7 +20,7 @@ import { notifyCompanyManagers, NOTIF } from '../../../../../../../lib/manager-n
 async function loadLink(request, vacancyId, candidateId, payload) {
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
+  if (!isAdmin && !companyId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
 
   const r = await query(
     `SELECT vc.id, vc.vacancy_id AS "vacancyId", vc.candidate_id AS "candidateId",
@@ -37,9 +38,9 @@ async function loadLink(request, vacancyId, candidateId, payload) {
      LIMIT 1`,
     [vacancyId, candidateId]
   );
-  if (r.rowCount === 0) return { error: apiError(request, 'NOT_FOUND', 404) };
+  if (r.rowCount === 0) return { error: apiError(request, ERR.NOT_FOUND, 404) };
   if (!isAdmin && String(r.rows[0].companyId) !== String(companyId)) {
-    return { error: apiError(request, 'UNAUTHORIZED', 401) };
+    return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   }
   return { link: r.rows[0] };
 }
@@ -50,18 +51,18 @@ export async function PATCH(request, { params }) {
     const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const loaded = await loadLink(request, vacancyId, candidateId, payload);
     if (loaded.error) return loaded.error;
 
     const body = await request.json().catch(() => ({}));
     if (body.interviewNotes === undefined && body.notes === undefined && body.pipelineStage === undefined) {
-      return apiError(request, 'NOTHING_TO_UPDATE', 400);
+      return apiError(request, ERR.NOTHING_TO_UPDATE, 400);
     }
 
     let notes = loaded.link.interviewNotes;
@@ -75,16 +76,16 @@ export async function PATCH(request, { params }) {
     if (body.pipelineStage !== undefined) {
       const s = body.pipelineStage == null ? null : String(body.pipelineStage).trim();
       if (s != null && !PIPELINE_STAGE_SET.has(s)) {
-        return apiError(request, 'INVALID_PIPELINE_STAGE', 400);
+        return apiError(request, ERR.INVALID_PIPELINE_STAGE, 400);
       }
       stage = s;
       rejectionReason = normalizeRejectionReason(body.rejectionReason ?? body.reason);
       startDate = normalizeStartDate(body.startDate);
-      if (stage === 'rejected' && !rejectionReason) {
-        return apiError(request, 'REJECTION_REASON_REQUIRED', 400);
+      if (stage === PIPELINE_STAGE.REJECTED && !rejectionReason) {
+        return apiError(request, ERR.REJECTION_REASON_REQUIRED, 400);
       }
-      if (stage === 'hired' && !startDate) {
-        return apiError(request, 'START_DATE_REQUIRED', 400);
+      if (stage === PIPELINE_STAGE.HIRED && !startDate) {
+        return apiError(request, ERR.START_DATE_REQUIRED, 400);
       }
     }
 
@@ -95,16 +96,16 @@ export async function PATCH(request, { params }) {
        SET interview_notes = CASE WHEN $3::boolean THEN $4 ELSE interview_notes END,
            pipeline_stage = CASE WHEN $5::boolean THEN $6 ELSE pipeline_stage END,
            rejection_reason = CASE
-             WHEN $5::boolean AND $6 = 'rejected' THEN $7
-             WHEN $5::boolean AND $6 IS DISTINCT FROM 'rejected' THEN NULL
+             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.REJECTED}' THEN $7
+             WHEN $5::boolean AND $6 IS DISTINCT FROM '${PIPELINE_STAGE.REJECTED}' THEN NULL
              ELSE rejection_reason
            END,
            start_date = CASE
-             WHEN $5::boolean AND $6 = 'hired' THEN $8::date
+             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.HIRED}' THEN $8::date
              ELSE start_date
            END,
            hired_at = CASE
-             WHEN $5::boolean AND $6 = 'hired' THEN COALESCE(hired_at, NOW())
+             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.HIRED}' THEN COALESCE(hired_at, NOW())
              ELSE hired_at
            END,
            updated_at = NOW()
@@ -134,8 +135,8 @@ export async function PATCH(request, { params }) {
           loaded.link.id,
           currentStage,
           stage,
-          stage === 'rejected' ? rejectionReason : null,
-          stage === 'hired' ? startDate : null,
+          stage === PIPELINE_STAGE.REJECTED ? rejectionReason : null,
+          stage === PIPELINE_STAGE.HIRED ? startDate : null,
           payload.userId || null,
         ]
       ).catch(() => {});
@@ -151,7 +152,7 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    if (stage === 'hired') {
+    if (stage === PIPELINE_STAGE.HIRED) {
       await markCandidateHired({ candidateId, vacancyId, startDate });
       await maybeCloseVacancyIfFilled(vacancyId);
       await notifyCompanyManagers(query, {
@@ -177,6 +178,6 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error(error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

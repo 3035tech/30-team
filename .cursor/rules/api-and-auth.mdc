@@ -1,12 +1,12 @@
 ---
 description: Convenções de API Routes, auth e isolamento por empresa
-globs: app/api/**/*.js,middleware.js,lib/auth.js,lib/auth-edge.js,lib/api-error.js
+globs: app/api/**/*.js,middleware.js,lib/auth.js,lib/auth-edge.js,lib/api-error.js,lib/api-error-codes.js,lib/domain-status.js
 alwaysApply: false
 ---
 
 # API e auth
 
-1. Erros: `return apiError(request, 'UNAUTHORIZED', 401)` — nunca `{ error: '...' }` solto.
+1. Erros: `return apiError(request, ERR.UNAUTHORIZED, httpStatusForError(ERR.UNAUTHORIZED))` ou `apiErrorFromResult(request, result)` — códigos em `ERR` (`lib/api-error-codes.js`). **Nunca** `{ error: '...' }` solto nem `'CODE'` literal em código novo. Ver `.cursor/rules/domain-constants.mdc` / `AGENTS.md` § Constantes.
 2. Sessão gestor: cookie `team30_session`; reusar `verifyToken` + `getManagerScope`. Visão de módulo: `can` / `CAP` / `requireCapability` em `lib/permissions.js` (APIs em `app/api/admin/**` já checam capability — VIEW vs MANAGE em vagas).
 3. Não-admin: filtrar `company_id` em **todo** SELECT/UPDATE. Sem `company_id` → 401.
 4. `/api/admin/*` já passa pelo middleware; ainda assim validar **capability** + escopo de tenant na rota (`isAdminRole` / `getManagerScope`).

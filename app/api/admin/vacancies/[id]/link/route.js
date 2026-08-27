@@ -4,17 +4,17 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import crypto from 'node:crypto';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 
 
 async function authorizeVacancyLink(payload, vacancyId) {
-  if (!vacancyId) return { errorCode: 'INVALID_VACANCY', status: 400 };
+  if (!vacancyId) return { errorCode: ERR.INVALID_VACANCY, status: 400 };
 
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
 
-  if (!isAdmin && !companyId) return { errorCode: 'UNAUTHORIZED', status: 401 };
+  if (!isAdmin && !companyId) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
 
   if (!isAdmin) {
     const owned = await query(
@@ -24,7 +24,7 @@ async function authorizeVacancyLink(payload, vacancyId) {
        LIMIT 1`,
       [vacancyId, companyId]
     );
-    if (owned.rowCount === 0) return { errorCode: 'UNAUTHORIZED', status: 401 };
+    if (owned.rowCount === 0) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
   } else {
     const exists = await query(
       `SELECT v.id FROM vacancies v
@@ -33,7 +33,7 @@ async function authorizeVacancyLink(payload, vacancyId) {
        LIMIT 1`,
       [vacancyId]
     );
-    if (exists.rowCount === 0) return { errorCode: 'VACANCY_NOT_FOUND', status: 404 };
+    if (exists.rowCount === 0) return { errorCode: ERR.VACANCY_NOT_FOUND, status: 404 };
   }
 
   return { ok: true };
@@ -43,7 +43,7 @@ export async function POST(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const vacancyId = params?.id;
   const auth = await authorizeVacancyLink(payload, vacancyId);
@@ -70,7 +70,7 @@ export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const vacancyId = params?.id;
   const auth = await authorizeVacancyLink(payload, vacancyId);
@@ -80,17 +80,17 @@ export async function PATCH(request, { params }) {
   try {
     body = await request.json();
   } catch {
-    return apiError(request, 'INVALID_JSON', 400);
+    return apiError(request, ERR.INVALID_JSON, 400);
   }
 
   const expiresAtRaw = body?.expiresAt;
   if (expiresAtRaw == null || expiresAtRaw === '') {
-    return apiError(request, 'EXPIRES_AT_REQUIRED', 400);
+    return apiError(request, ERR.EXPIRES_AT_REQUIRED, 400);
   }
 
   const expiresAt = new Date(expiresAtRaw);
   if (Number.isNaN(expiresAt.getTime())) {
-    return apiError(request, 'INVALID_DATE', 400);
+    return apiError(request, ERR.INVALID_DATE, 400);
   }
 
   const r = await query(
@@ -102,7 +102,7 @@ export async function PATCH(request, { params }) {
   );
 
   if (r.rowCount === 0) {
-    return apiError(request, 'NO_ACTIVE_LINK', 400);
+    return apiError(request, ERR.NO_ACTIVE_LINK, 400);
   }
 
   return NextResponse.json({ ok: true, expiresAt: r.rows[0].expiresAt });

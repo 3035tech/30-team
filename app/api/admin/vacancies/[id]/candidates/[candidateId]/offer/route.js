@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { query, queryRead } from '../../../../../../../../lib/db';
-import { apiError } from '../../../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
 import { verifySessionWithCapabilities } from '../../../../../../../../lib/user-capabilities';
 import { updateCandidateOffer, mapOffer } from '../../../../../../../../lib/people/candidate-offer';
@@ -11,7 +11,7 @@ import { audit } from '../../../../../../../../lib/audit';
 async function loadScope(request, vacancyId, candidateId, payload) {
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
+  if (!isAdmin && !companyId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
 
   const r = await queryRead(
     `SELECT vc.id, vc.company_id AS "companyId",
@@ -50,16 +50,16 @@ async function loadScope(request, vacancyId, candidateId, payload) {
        LIMIT 1`,
       !isAdmin ? [vacancyId, candidateId, companyId] : [vacancyId, candidateId]
     );
-    if (assOnly.rowCount === 0) return { error: apiError(request, 'NOT_FOUND', 404) };
+    if (assOnly.rowCount === 0) return { error: apiError(request, ERR.NOT_FOUND, 404) };
     const row = assOnly.rows[0];
     if (!isAdmin && String(row.companyId) !== String(companyId)) {
-      return { error: apiError(request, 'UNAUTHORIZED', 401) };
+      return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
     }
     return { link: { ...row, hasVacancyCandidate: false } };
   }
   const row = r.rows[0];
   if (!isAdmin && String(row.companyId) !== String(companyId)) {
-    return { error: apiError(request, 'UNAUTHORIZED', 401) };
+    return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   }
   return { link: { ...row, hasVacancyCandidate: true } };
 }
@@ -70,11 +70,11 @@ export async function GET(request, { params }) {
     const token = cookies().get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const loaded = await loadScope(request, vacancyId, candidateId, payload);
     if (loaded.error) return loaded.error;
@@ -85,7 +85,7 @@ export async function GET(request, { params }) {
     });
   } catch (err) {
     console.error('GET offer', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -95,11 +95,11 @@ export async function PATCH(request, { params }) {
     const token = cookies().get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const loaded = await loadScope(request, vacancyId, candidateId, payload);
     if (loaded.error) return loaded.error;
@@ -134,6 +134,6 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ offer: result.offer });
   } catch (err) {
     console.error('PATCH offer', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
+import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
 import { S } from '../dashboard/dashboard-shared';
 import { RichTextEditor } from './RichTextEditor';
 import { RichTextView } from './RichTextView';
@@ -101,7 +102,7 @@ export function PeopleManagementPanel({
   const showJourney = section === 'all' || section === 'journey';
 
   if (section === 'journey') {
-    if (employmentStatus !== 'employee') {
+    if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) {
       return (
         <p className="m-0 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3 text-xs leading-normal text-ink-muted">
           {t(locale, 'panel.team.journeyNotEmployee')}

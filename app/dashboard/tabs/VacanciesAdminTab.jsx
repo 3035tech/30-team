@@ -22,6 +22,7 @@ import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '..
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
+import { VACANCY_STATUS } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
 import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
 import { publicVacancyPath } from '../../../lib/public-job-url';
@@ -95,7 +96,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [status, setStatus] = useState('open');
+  const [status, setStatus] = useState(VACANCY_STATUS.OPEN);
   const [positionsCount, setPositionsCount] = useState('1');
   const [targetDate, setTargetDate] = useState('');
   const [description, setDescription] = useState('');
@@ -288,7 +289,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.createVacancyFailed'));
-      setTitle(''); setSlug(''); setStatus('open'); setPositionsCount('1'); setTargetDate('');
+      setTitle(''); setSlug(''); setStatus(VACANCY_STATUS.OPEN); setPositionsCount('1'); setTargetDate('');
       setDescription(''); setEmploymentType(''); setWorkplaceModality(''); setWorkplaceState(''); setWorkplaceCity('');
       setSalaryMin(''); setSalaryMax(''); setClientReportShowSalary(false);
       setPublicPageEnabled(false); setPublicAllowIndex(true);
@@ -384,7 +385,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       id: v.id,
       title: v.title ?? '',
       slug: v.slug ?? '',
-      status: v.status ?? 'open',
+      status: v.status ?? VACANCY_STATUS.OPEN,
       positionsCount: String(v.positionsCount ?? 1),
       targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
       description: v.description ?? '',
@@ -1005,12 +1006,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <span
                       className={cn(
                       'rounded-full border px-2 py-0.5 font-mono text-[11px]',
-                      v.status === 'open'
+                      v.status === VACANCY_STATUS.OPEN
                         ? 'border-success/35 text-success'
                         : 'border-ink/12 text-ink-faint'
                     )}
                     >
-                      {v.status === 'open' ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
+                      {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
                     </span>
                     {isAdmin && (
                       <span className="font-mono text-xs text-ink-faint">
@@ -1251,11 +1252,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </button>
                     <button
                       type="button"
-                      onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
+                      onClick={() => setVacancyStatus(v.id, v.status === VACANCY_STATUS.OPEN ? VACANCY_STATUS.CLOSED : VACANCY_STATUS.OPEN)}
                       disabled={loading}
                       className={cn(BTN_GHOST, loading && "opacity-60")}
                     >
-                      {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
+                      {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
                     </button>
                     <button
                       type="button"
@@ -1465,12 +1466,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         <span
                           className={cn(
                             'ml-2.5 rounded-lg border px-2 py-0.5 font-mono text-[11px]',
-                            v.status === 'open'
+                            v.status === VACANCY_STATUS.OPEN
                               ? 'border-success/30 bg-success/[0.12] text-success'
                               : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
                           )}
                         >
-                          {v.status === 'open' ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
+                          {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
                         </span>
                         {isAdmin && (
                           <span className="ml-2.5 font-mono text-xs text-ink-faint">
@@ -1538,11 +1539,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       </button>
                       <button
                         type="button"
-                        onClick={() => setVacancyStatus(v.id, v.status === 'open' ? 'closed' : 'open')}
+                        onClick={() => setVacancyStatus(v.id, v.status === VACANCY_STATUS.OPEN ? VACANCY_STATUS.CLOSED : VACANCY_STATUS.OPEN)}
                         disabled={loading}
                         className={cn(BTN_GHOST, loading && "opacity-60")}
                       >
-                        {v.status === 'open' ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
+                        {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
                       </button>
                       <button
                         type="button"

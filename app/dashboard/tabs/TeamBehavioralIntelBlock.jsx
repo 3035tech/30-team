@@ -12,14 +12,15 @@ const BCI_OPEN_KEY = '30team_overview_bci_open';
  */
 export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navigateDashboard }) {
   const [motivatorsOpen, setMotivatorsOpen] = useState(false);
-  const [sectionOpen, setSectionOpen] = useState(true);
+  const [sectionOpen, setSectionOpen] = useState(false);
 
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
         const v = localStorage.getItem(BCI_OPEN_KEY);
-        if (v === '0') setSectionOpen(false);
+        // Default collapsed (first viewport lighter). Only '1' opens.
         if (v === '1') setSectionOpen(true);
+        if (v === '0') setSectionOpen(false);
       }
     } catch {
       /* ignore */

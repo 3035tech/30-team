@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 
 async function loadInvite(id, { isAdmin, companyId }) {
   const params = [id];
@@ -28,21 +28,21 @@ export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const invite = await loadInvite(params.id, scope);
-    if (!invite) return apiError(request, 'INVITE_NOT_FOUND', 404);
+    if (!invite) return apiError(request, ERR.INVITE_NOT_FOUND, 404);
     if (invite.status === 'completed') {
-      return apiError(request, 'INVITE_ALREADY_COMPLETED', 400);
+      return apiError(request, ERR.INVITE_ALREADY_COMPLETED, 400);
     }
 
     await query(`UPDATE ae_invites SET status = 'cancelled' WHERE id = $1`, [invite.id]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/ae/invites/[id]', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

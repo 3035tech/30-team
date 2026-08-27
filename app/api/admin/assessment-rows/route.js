@@ -10,7 +10,7 @@ import {
   parseRosterScope,
   sqlWhere,
 } from '../../../../lib/assessment-filters';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { canAccessAnalysisData, isAdminRole } from '../../../../lib/permissions';
 
 const BASE_JOIN = `
@@ -27,11 +27,11 @@ export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!canAccessAnalysisData(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!canAccessAnalysisData(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const url = new URL(request.url);
   const selectedArea = (url.searchParams.get('area') || 'all').toString();

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
@@ -16,10 +16,10 @@ export async function GET(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.id;
   const c = await query(
@@ -33,9 +33,9 @@ export async function GET(request, { params }) {
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
   );
-  if (c.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (c.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
   if (!isAdmin && String(c.rows[0].companyId) !== String(companyId)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const a = await query(
@@ -128,17 +128,17 @@ export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.id;
-  if (!id) return apiError(request, 'INVALID_ID', 400);
+  if (!id) return apiError(request, ERR.INVALID_ID, 400);
 
   if (!isAdmin) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
-    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
+    if (owned.rowCount === 0) return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const body = await request.json().catch(() => ({}));
@@ -148,7 +148,7 @@ export async function PATCH(request, { params }) {
   const hasName = body.fullName !== undefined || body.name !== undefined;
 
   if (!hasHrNotes && !hasProfile && !hasName) {
-    return apiError(request, 'NO_FIELDS_TO_UPDATE', 400);
+    return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
   }
 
   const sets = [];
@@ -157,7 +157,7 @@ export async function PATCH(request, { params }) {
 
   if (hasName) {
     const name = titleCasePersonName(body.fullName || body.name).slice(0, 200);
-    if (!name) return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
+    if (!name) return apiError(request, ERR.CANDIDATE_NAME_REQUIRED, 400);
     sets.push(`full_name = $${n++}`);
     sqlParams.push(name);
   }
@@ -198,7 +198,7 @@ export async function PATCH(request, { params }) {
     sqlParams.push(profile.source);
   }
 
-  if (sets.length === 0) return apiError(request, 'NO_FIELDS_TO_UPDATE', 400);
+  if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
   const up = await query(
     `UPDATE candidates SET ${sets.join(', ')}
@@ -208,7 +208,7 @@ export async function PATCH(request, { params }) {
                salary_expectation AS "salaryExpectation", availability, source`,
     sqlParams
   );
-  if (up.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (up.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   await audit({
     actorUserId: payload.userId || null,
@@ -224,22 +224,22 @@ export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!canAccessCandidateRecord(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.id;
   if (!isAdmin) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
-    if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
+    if (owned.rowCount === 0) return apiError(request, ERR.UNAUTHORIZED, 401);
   }
   const cand = await query(`SELECT full_name AS "fullName" FROM candidates WHERE id = $1 LIMIT 1`, [id]);
-  if (cand.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
   const fullName = cand.rows?.[0]?.fullName || null;
 
   const del = await query(`DELETE FROM candidates WHERE id = $1 RETURNING id`, [id]);
-  if (del.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (del.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   // Best-effort cleanup: legacy table used by /api/results
   if (fullName) {

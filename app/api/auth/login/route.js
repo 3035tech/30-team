@@ -10,20 +10,20 @@ import {
 import { audit } from '../../../../lib/audit';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`login:${ip}`, 25, 15 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+      return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return apiError(request, 'REQUIRED_LOGIN', 400);
+      return apiError(request, ERR.REQUIRED_LOGIN, 400);
     }
 
     const res = await query(
@@ -51,19 +51,19 @@ export async function POST(request) {
     const companyBlocked = row0?.role !== 'admin' && row0?.companyId && row0?.companyDeleted;
     if (res.rowCount === 0 || !row0?.active || row0?.userDeleted || companyBlocked) {
       await new Promise((r) => setTimeout(r, 500));
-      return apiError(request, 'INVALID_CREDENTIALS', 401);
+      return apiError(request, ERR.INVALID_CREDENTIALS, 401);
     }
 
     if (row0.passwordSetupToken) {
       await new Promise((r) => setTimeout(r, 500));
-      return apiError(request, 'PASSWORD_SETUP_PENDING', 403);
+      return apiError(request, ERR.PASSWORD_SETUP_PENDING, 403);
     }
 
     const u = res.rows[0];
     const valid = await verifyPassword(password, u.passwordHash);
     if (!valid) {
       await new Promise((r) => setTimeout(r, 500));
-      return apiError(request, 'INVALID_CREDENTIALS', 401);
+      return apiError(request, ERR.INVALID_CREDENTIALS, 401);
     }
 
     try {
@@ -106,6 +106,6 @@ export async function POST(request) {
     return response;
   } catch (error) {
     console.error('Erro no login:', error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

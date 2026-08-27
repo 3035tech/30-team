@@ -28,6 +28,8 @@ import { HrScoreBadge } from '../../_components/HrScoreBadge';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
+import { EMPLOYMENT_STATUS, VACANCY_STATUS } from '../../../lib/domain-status.js';
+import { PIPELINE_STAGE } from '../../../lib/pipeline';
 
 function nearbyCluster(scores) {
   return clusterCloseTypes(rankEnneagramScores(scores));
@@ -290,11 +292,11 @@ export function TeamTab({
     const cid = Number(candidateId);
     if (!Number.isFinite(cid)) return;
     try {
-      const res = await fetch('/api/admin/vacancies?status=open&pageSize=50&page=1');
+      const res = await fetch(`/api/admin/vacancies?status=${VACANCY_STATUS.OPEN}&pageSize=50&page=1`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       const items = Array.isArray(data.items) ? data.items : Array.isArray(data.vacancies) ? data.vacancies : [];
-      const open = items.filter((v) => String(v.status || 'open') === 'open');
+      const open = items.filter((v) => String(v.status || VACANCY_STATUS.OPEN) === VACANCY_STATUS.OPEN);
       if (!open.length) {
         await notice({
           message: t(locale, 'panel.team.addToVacancyEmpty'),
@@ -924,7 +926,7 @@ export function TeamTab({
                   <span className="text-[15px] leading-snug text-ink">
                     {titleCasePersonName(r.name)}
                   </span>
-                  {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === 'employee' ? (
+                  {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
                     <span className="rounded-full border border-success/35 px-1.5 py-px font-mono text-[10px] text-success">
                       {t(locale, 'recruiting.employmentEmployee')}
                     </span>
@@ -1180,7 +1182,7 @@ export function TeamTab({
                                 {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, a.rejectionReason)}
                               </div>
                             ) : null}
-                            {a.startDate && a.pipelineStage === 'hired' ? (
+                            {a.startDate && a.pipelineStage === PIPELINE_STAGE.HIRED ? (
                               <div className="mt-1 font-mono text-[11px] text-success">
                                 {t(locale, 'recruiting.startDateLabel')}: {a.startDate}
                               </div>

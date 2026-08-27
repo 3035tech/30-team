@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '../../../../../lib/auth.js';
 import { query } from '../../../../../lib/db.js';
-import { apiError } from '../../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../../lib/api-error.js';
 import { hydrateSessionPayload } from '../../../../../lib/session.js';
 
 /**
@@ -13,13 +13,13 @@ export async function POST(request) {
     const cookieStore = cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+      return apiError(request, ERR.REQUIRED_LOGIN, 401);
     }
 
     const rawPayload = verifyToken(token);
     const payload = await hydrateSessionPayload(rawPayload);
     if (!payload) {
-      return apiError(request, 'INVALID_CREDENTIALS', 401);
+      return apiError(request, ERR.INVALID_CREDENTIALS, 401);
     }
 
     const userId = payload.userId;
@@ -38,6 +38,6 @@ export async function POST(request) {
     return Response.json({ ok: true });
   } catch (err) {
     console.error('[onboarding] Complete error:', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

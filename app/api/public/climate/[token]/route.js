@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, apiErrorFromResult, ERR } from '../../../../../lib/api-error';
+import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
 import {
   resolveClimateInviteByToken,
   submitClimateResponse,
@@ -12,13 +13,10 @@ export async function GET(request, { params }) {
     const token = params?.token;
     const resolved = await resolveClimateInviteByToken(query, token);
     if (!resolved.ok) {
-      const status =
-        resolved.errorCode === 'ALREADY_SUBMITTED'
-          ? 409
-          : resolved.errorCode === 'EXPIRED_LINK' || resolved.errorCode === 'SURVEY_NOT_OPEN'
-            ? 410
-            : 404;
-      return apiError(request, resolved.errorCode || 'INVALID_TOKEN', status);
+      return apiErrorFromResult(request, resolved, {
+        fallbackCode: ERR.INVALID_TOKEN,
+        fallbackStatus: 404,
+      });
     }
     return NextResponse.json({
       title: resolved.title,
@@ -32,15 +30,27 @@ export async function GET(request, { params }) {
       })),
     });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET public climate', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
 /** POST /api/public/climate/[token] — submit anonymous answers. */
 export async function POST(request, { params }) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = checkRateLimit(`public-climate:${ip}`, 40, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(
+        request,
+        ERR.RATE_LIMIT,
+        429,
+        {},
+        { headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const token = params?.token;
     const body = await request.json().catch(() => ({}));
     const result = await submitClimateResponse(query, {
@@ -48,20 +58,15 @@ export async function POST(request, { params }) {
       answers: body.answers,
     });
     if (!result.ok) {
-      const status =
-        result.errorCode === 'ALREADY_SUBMITTED'
-          ? 409
-          : result.errorCode === 'INCOMPLETE_ANSWERS'
-            ? 400
-            : result.errorCode === 'EXPIRED_LINK' || result.errorCode === 'SURVEY_NOT_OPEN'
-              ? 410
-              : 404;
-      return apiError(request, result.errorCode || 'INVALID_DATA', status);
+      return apiErrorFromResult(request, result, {
+        fallbackCode: ERR.INVALID_DATA,
+        fallbackStatus: 404,
+      });
     }
     return NextResponse.json({ ok: true, submittedAt: result.submittedAt });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('POST public climate', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

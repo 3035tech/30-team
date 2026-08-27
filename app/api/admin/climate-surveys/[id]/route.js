@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import { audit } from '../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
 import {
@@ -32,12 +32,12 @@ async function loadScopedSurvey(surveyId, scope) {
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const surveyId = params?.id;
-    if (!surveyId) return apiError(request, 'INVALID_ID', 400);
+    if (!surveyId) return apiError(request, ERR.INVALID_ID, 400);
 
     const loaded = await loadScopedSurvey(surveyId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
@@ -56,12 +56,12 @@ export async function GET(request, { params }) {
       companyId: loaded.survey.companyId,
       surveyId,
     });
-    if (!survey) return apiError(request, 'NOT_FOUND', 404);
+    if (!survey) return apiError(request, ERR.NOT_FOUND, 404);
     return NextResponse.json({ survey });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET climate-survey', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -69,12 +69,12 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const surveyId = params?.id;
-    if (!surveyId) return apiError(request, 'INVALID_ID', 400);
+    if (!surveyId) return apiError(request, ERR.INVALID_ID, 400);
 
     const loaded = await loadScopedSurvey(surveyId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
@@ -197,9 +197,9 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ ok: true, survey: updated.survey });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('PATCH climate-survey', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -207,12 +207,12 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const surveyId = params?.id;
-    if (!surveyId) return apiError(request, 'INVALID_ID', 400);
+    if (!surveyId) return apiError(request, ERR.INVALID_ID, 400);
 
     const loaded = await loadScopedSurvey(surveyId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
@@ -232,8 +232,8 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('DELETE climate-survey', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

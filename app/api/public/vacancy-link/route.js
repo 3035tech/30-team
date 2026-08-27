@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveVacancyLinkByToken } from '../../../../lib/public-vacancy-link';
-import { apiError, localeFromRequest } from '../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../lib/api-error';
 import { t } from '../../../../lib/i18n';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
@@ -8,7 +8,7 @@ export async function GET(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`public-vacancy-link:${ip}`, 60, 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const { searchParams } = new URL(request.url);
@@ -21,7 +21,7 @@ export async function GET(request) {
       const locale = localeFromRequest(request);
       return NextResponse.json(
         {
-          errorCode: 'DUPLICATE_VACANCY_SUBMISSION',
+          errorCode: ERR.DUPLICATE_VACANCY_SUBMISSION,
           error: t(locale, 'errors.DUPLICATE_VACANCY_SUBMISSION'),
           alreadySubmitted: true,
         },

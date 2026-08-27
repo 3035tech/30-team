@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../../lib/auth';
 import { query, queryRead } from '../../../../../../../lib/db';
 import { audit } from '../../../../../../../lib/audit';
-import { apiError } from '../../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
 
 
@@ -13,21 +13,21 @@ export async function DELETE(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
     const inviteId = params?.inviteId;
-    if (!vacancyId || !inviteId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !inviteId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const own = await queryRead(
       `SELECT v.id FROM vacancies v WHERE v.id = $1 AND v.deleted = FALSE ${!isAdmin ? 'AND v.company_id = $2' : ''} LIMIT 1`,
       !isAdmin ? [vacancyId, companyId] : [vacancyId]
     );
-    if (own.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+    if (own.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
     const inv = await queryRead(
       `SELECT ci.id, ci.status, ci.candidate_name AS "candidateName"
@@ -36,7 +36,7 @@ export async function DELETE(request, { params }) {
        LIMIT 1`,
       [inviteId, vacancyId]
     );
-    if (inv.rowCount === 0) return apiError(request, 'INVITE_NOT_FOUND', 404);
+    if (inv.rowCount === 0) return apiError(request, ERR.INVITE_NOT_FOUND, 404);
 
     const status = String(inv.rows[0].status || '');
 
@@ -81,6 +81,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

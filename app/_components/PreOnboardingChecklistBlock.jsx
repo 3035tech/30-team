@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
 import { S } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading } from './AppLoading';
@@ -18,7 +19,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    if (!candidateId || employmentStatus !== 'employee') {
+    if (!candidateId || employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) {
       setItems([]);
       setLoading(false);
       return;
@@ -43,7 +44,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
     load();
   }, [load]);
 
-  if (employmentStatus !== 'employee') return null;
+  if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) return null;
 
   const complete = async (row, status) => {
     const values = await promptForm({

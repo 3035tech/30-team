@@ -7,7 +7,7 @@ import { ensureActiveVacancyLinkToken } from '../../../../../../../../lib/vacanc
 import { enqueueTransactionalMail } from '../../../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
-import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
 import { publicAppUrl } from '../../../../../../../../lib/ae/require-admin';
 
@@ -16,21 +16,21 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
     const inviteId = params?.inviteId;
-    if (!vacancyId || !inviteId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !inviteId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rl = checkRateLimit(`invite-remind:${uid || ip}`, 60, 60 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_REMINDERS', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+      return apiError(request, ERR.RATE_LIMIT_REMINDERS, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const inv = await queryRead(
@@ -45,22 +45,22 @@ export async function POST(request, { params }) {
        LIMIT 1`,
       [inviteId, vacancyId]
     );
-    if (inv.rowCount === 0) return apiError(request, 'INVITE_NOT_FOUND', 404);
+    if (inv.rowCount === 0) return apiError(request, ERR.INVITE_NOT_FOUND, 404);
 
     const row = inv.rows[0];
     if (!isAdmin && String(row.companyId) !== String(companyId)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     if (String(row.vacancyStatus || '') === 'closed') {
-      return apiError(request, 'VACANCY_CLOSED', 400);
+      return apiError(request, ERR.VACANCY_CLOSED, 400);
     }
     if (!['sent', 'opened'].includes(String(row.status || ''))) {
-      return apiError(request, 'INVITE_NOT_PENDING', 400);
+      return apiError(request, ERR.INVITE_NOT_PENDING, 400);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return apiError(request, 'APP_URL_MISSING', 500);
+      return apiError(request, ERR.APP_URL_MISSING, 500);
     }
 
     const linkToken = await ensureActiveVacancyLinkToken(row.vacancyId);
@@ -78,10 +78,10 @@ export async function POST(request, { params }) {
       enqueueTransactionalMail({ to: row.candidateEmail, subject, text, html });
     } catch (e) {
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
+        return apiError(request, ERR.SMTP_NOT_CONFIGURED, 503);
       }
       console.error('remind mail error', e);
-      return apiError(request, 'MAIL_FAILED', 502);
+      return apiError(request, ERR.MAIL_FAILED, 502);
     }
 
     const up = await query(
@@ -95,6 +95,6 @@ export async function POST(request, { params }) {
     return NextResponse.json({ ok: true, queued: true, ...up.rows[0] });
   } catch (e) {
     console.error(e);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

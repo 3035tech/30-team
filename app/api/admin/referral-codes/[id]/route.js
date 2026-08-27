@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../lib/permissions';
 import { updateReferralCode } from '../../../../../lib/referral-codes';
 
@@ -14,15 +14,15 @@ export async function PATCH(request, { params }) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = Number(params?.id);
-  if (!Number.isFinite(id) || id <= 0) return apiError(request, 'INVALID_ID', 400);
+  if (!Number.isFinite(id) || id <= 0) return apiError(request, ERR.INVALID_ID, 400);
 
   const body = await request.json().catch(() => ({}));
   const result = await updateReferralCode({

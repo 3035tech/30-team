@@ -28,6 +28,8 @@ Pode pular só em docs/read-only, se o usuário pedir para não testar, ou se o 
 ### Reaproveitamento
 Antes de UI ou função nova: **buscar e reutilizar** o que já existe (`app/_components`, `dashboard-shared`, `lib/`). Em tela nova, avaliar componente a componente. Em lógica nova, grep de helpers; se for compartilhado, extrair para `lib/` em vez de copiar. Ordem: reusar → estender → extrair → criar. Ver `AGENTS.md` § Reaproveitamento e `.cursor/rules/reuse-before-create.mdc`.
 
+**Constantes (não enums TS):** erros/status/pipeline/roster via `ERR` / `lib/domain-status.js` / `PIPELINE_STAGES` — ver `AGENTS.md` § Constantes e `.cursor/rules/domain-constants.mdc`.
+
 ### UI/UX
 Atue como **especialista UI/UX** em mudanças de interface:
 
@@ -44,13 +46,14 @@ Atue como **DBA** e **engenheiro de performance** em SQL, APIs, crons e listagen
 - Evitar N+1 e fan-out sem teto; transações curtas; respeito ao pool PG
 - Desenhar para escalar sem refactor grande depois
 
-Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`, `30team-context.mdc`, `reuse-before-create.mdc`, `dev-test-validate.mdc`, `sql-schema.mdc`).
+Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`, `30team-context.mdc`, `reuse-before-create.mdc`, `domain-constants.mdc`, `dev-test-validate.mdc`, `sql-schema.mdc`).
 
 ## Atalhos
 
 | Área | Onde |
 |------|------|
 | Contexto geral | `AGENTS.md`, `.cursor/rules/30team-context.mdc` |
+| Constantes / “enums” string (`ERR`, status, pipeline) | `AGENTS.md` § Constantes, `.cursor/rules/domain-constants.mdc`, `lib/api-error-codes.js`, `lib/domain-status.js`, `lib/pipeline.js` |
 | UI/UX | `AGENTS.md` § UI/UX, `.cursor/rules/ui-ux.mdc` |
 | DBA / performance | `AGENTS.md` § DBA e performance, `.cursor/rules/dba-performance.mdc` |
 | Dashboard JSX | `.cursor/rules/dashboard-ui.mdc` |

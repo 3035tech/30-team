@@ -2,6 +2,7 @@
 
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
 import { S } from '../dashboard/dashboard-shared';
 import { PreOnboardingChecklistBlock } from './PreOnboardingChecklistBlock';
 import { OnboardingCheckinsBlock } from './OnboardingCheckinsBlock';
@@ -22,7 +23,7 @@ export function HireJourneyBlock({
   oneOnOnes,
   pdiRefresh,
 }) {
-  if (!candidateId || employmentStatus !== 'employee') return null;
+  if (!candidateId || employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) return null;
 
   return (
     <section

@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db.js';
-import { apiError } from '../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { getSessionPayload, getManagerScope } from '../../../../lib/ae/require-admin.js';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export async function GET(request) {
     const payload = await getSessionPayload();
     const scope = getManagerScope(payload);
     if (!scope.authorized) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -109,6 +109,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('[GET /api/admin/search]', err);
-    return apiError(request, 'SERVER_ERROR', 500);
+    return apiError(request, ERR.SERVER_ERROR, 500);
   }
 }

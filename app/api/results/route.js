@@ -3,7 +3,7 @@ import { queryRead } from '../../../lib/db';
 import { verifyToken, COOKIE_NAME } from '../../../lib/auth';
 import { cookies } from 'next/headers';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
-import { apiError } from '../../../lib/api-error';
+import { apiError, ERR } from '../../../lib/api-error';
 import { JOB_ATTR_COOKIE } from '../../../lib/job-attribution';
 import { normalizeAssessmentTelemetry, submitAssessmentResult } from '../../../lib/assessment-submit';
 
@@ -13,7 +13,7 @@ export async function POST(request) {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`results:${ip}`, 40, 10 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+      return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const body = await request.json().catch(() => ({}));
@@ -52,7 +52,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Erro ao salvar resultado:', error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -63,7 +63,7 @@ export async function GET(request) {
   const payload = token ? verifyToken(token) : null;
 
   if (!payload || payload?.role !== 'admin') {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   try {
@@ -75,6 +75,6 @@ export async function GET(request) {
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar resultados:', error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

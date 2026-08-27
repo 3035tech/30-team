@@ -33,6 +33,7 @@ Antes de **criar qualquer função nova**:
 3. Se a lógica for útil em **mais de um lugar** (ou claramente vai ser): extrair para `lib/` (módulo de domínio) ou util compartilhado — **não** deixar cópia em duas tabs/rotas.
 4. Rotas `app/api/**` devem ficar finas: regra de negócio e SQL reutilizável em `lib/`.
 5. Auth/scope: `requireManagerRole` / `getManagerScope` — não copiar check de role.
+6. **Constantes / status / errorCode:** reusar `ERR` / `lib/domain-status.js` / `PIPELINE_STAGES` / `CAP` — não literais soltos nem enums TS (`AGENTS.md` § Constantes, `.cursor/rules/domain-constants.mdc`).
 
 ## Ordem de preferência
 
@@ -46,11 +47,13 @@ Antes de **criar qualquer função nova**:
 - Nova tela “do zero” sem grep nos componentes existentes
 - Copiar bloco de uma tab para outra (estilo, filtro, fetch, empty state)
 - Nova função `formatX` / `buildWhere` / `requireAdmin` quando já existe em `lib/`
+- Literal `'UNAUTHORIZED'` / `'employee'` / `'open'` ou enum TS quando `ERR` / `domain-status` / `pipeline` já cobrem
 - Utils soltos na raiz ou em pastas fora de `app/` / `lib/` / `migrations/` / `test/`
 
 ## Checklist rápido
 
 - [ ] Grep de componente equivalente feito?
 - [ ] Grep de função/helper equivalente feito?
+- [ ] Grep de constante de domínio (`ERR`, `domain-status`, `pipeline`, `CAP`) feito se tocou status/erro?
 - [ ] Se 2+ call sites: está (ou vai para) `lib/` / `_components` / `dashboard-shared`?
 - [ ] Documentei no resumo se criei algo novo *por que* o existente não serviu?

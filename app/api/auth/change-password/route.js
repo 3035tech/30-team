@@ -9,20 +9,20 @@ import {
   sessionCookieOptions,
 } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../../lib/session';
 
 export async function POST(request) {
   const token = cookies().get(COOKIE_NAME)?.value;
   const session = await verifySessionWithCapabilities(token);
-  if (!session?.userId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!session?.userId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const body = await request.json().catch(() => ({}));
   const currentPassword = String(body.currentPassword || '');
   const newPassword = String(body.newPassword || '');
-  if (!currentPassword) return apiError(request, 'CURRENT_PASSWORD_REQUIRED', 400);
-  if (newPassword.length < 8) return apiError(request, 'PASSWORD_TOO_SHORT', 400);
+  if (!currentPassword) return apiError(request, ERR.CURRENT_PASSWORD_REQUIRED, 400);
+  if (newPassword.length < 8) return apiError(request, ERR.PASSWORD_TOO_SHORT, 400);
 
   const result = await query(
     `SELECT password_hash AS "passwordHash"
@@ -31,10 +31,10 @@ export async function POST(request) {
      LIMIT 1`,
     [session.userId]
   );
-  if (result.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
+  if (result.rowCount === 0) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const valid = await verifyPassword(currentPassword, result.rows[0].passwordHash);
-  if (!valid) return apiError(request, 'INVALID_CURRENT_PASSWORD', 400);
+  if (!valid) return apiError(request, ERR.INVALID_CURRENT_PASSWORD, 400);
 
   const passwordHash = await hashPassword(newPassword);
   await query(

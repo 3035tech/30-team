@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME, verifyToken } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import {
   listNotificationsForUser,
   markAllNotificationsRead,
@@ -14,7 +14,7 @@ function requireSession(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
-  if (!payload?.userId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
+  if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   return { payload };
 }
 
@@ -57,10 +57,10 @@ export async function PATCH(request) {
   }
 
   const id = Number(body.id);
-  if (!Number.isFinite(id)) return apiError(request, 'INVALID_DATA', 400);
+  if (!Number.isFinite(id)) return apiError(request, ERR.INVALID_DATA, 400);
 
   const r = await markNotificationRead(query, payload.userId, id);
-  if (!r.ok) return apiError(request, 'NOT_FOUND', 404);
+  if (!r.ok) return apiError(request, ERR.NOT_FOUND, 404);
 
   const data = await listNotificationsForUser(query, payload.userId, { limit: 1 });
   return NextResponse.json({ ok: true, unreadCount: data.unreadCount });

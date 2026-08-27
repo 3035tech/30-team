@@ -3,17 +3,17 @@ import { query } from '../../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
 import { buildHrInsights } from '../../../../../../lib/ae/hr-insights';
 import { buildDimensionRanking, maybeRescoreAndPersist } from '../../../../../../lib/ae/rescore-attempt';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const sqlParams = [params.id];
     let companyScope = '';
@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
       sqlParams
     );
     if (res.rowCount === 0) {
-      return apiError(request, 'RESULT_NOT_FOUND', 404);
+      return apiError(request, ERR.RESULT_NOT_FOUND, 404);
     }
     let attempt = res.rows[0];
 
@@ -94,7 +94,7 @@ export async function GET(request, { params }) {
     });
   } catch (err) {
     console.error('GET /api/admin/ae/attempts/[id]', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -103,10 +103,10 @@ export async function POST(request, { params }) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const sqlParams = [params.id];
     let companyScope = '';
@@ -120,7 +120,7 @@ export async function POST(request, { params }) {
       sqlParams
     );
     if (exists.rowCount === 0) {
-      return apiError(request, 'RESULT_NOT_FOUND', 404);
+      return apiError(request, ERR.RESULT_NOT_FOUND, 404);
     }
 
     const rescore = await maybeRescoreAndPersist(query, params.id, { force: true });
@@ -138,7 +138,7 @@ export async function POST(request, { params }) {
     });
   } catch (err) {
     console.error('POST /api/admin/ae/attempts/[id]', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -147,14 +147,14 @@ export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const attemptId = Number(params.id);
     if (!Number.isFinite(attemptId)) {
-      return apiError(request, 'INVALID_ID', 400);
+      return apiError(request, ERR.INVALID_ID, 400);
     }
 
     const sqlParams = [attemptId];
@@ -172,7 +172,7 @@ export async function DELETE(request, { params }) {
       sqlParams
     );
     if (row.rowCount === 0) {
-      return apiError(request, 'RESULT_NOT_FOUND', 404);
+      return apiError(request, ERR.RESULT_NOT_FOUND, 404);
     }
 
     const { inviteId } = row.rows[0];
@@ -191,6 +191,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/ae/attempts/[id]', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

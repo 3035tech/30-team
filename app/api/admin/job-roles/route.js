@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '../../../../lib/auth.js';
-import { apiError } from '../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { hydrateSessionPayload } from '../../../../lib/session.js';
 import { isManagerRole, isAdminRole } from '../../../../lib/permissions.js';
 import { listCompanyJobRoles, createJobRole } from '../../../../lib/job-roles.js';
@@ -14,13 +14,13 @@ export async function GET(request) {
     const cookieStore = cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+      return apiError(request, ERR.REQUIRED_LOGIN, 401);
     }
 
     const rawPayload = verifyToken(token);
     const payload = await hydrateSessionPayload(rawPayload);
     if (!isManagerRole(payload)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const isAdmin = isAdminRole(payload);
@@ -31,12 +31,12 @@ export async function GET(request) {
       const qCompanyId = searchParams.get('companyId');
       companyId = qCompanyId ? parseInt(qCompanyId) : null;
       if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
+        return apiError(request, ERR.COMPANY_REQUIRED, 400);
       }
     } else {
       companyId = payload.companyId;
       if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
+        return apiError(request, ERR.COMPANY_REQUIRED, 400);
       }
     }
 
@@ -51,7 +51,7 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('[job-roles] GET error:', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -65,13 +65,13 @@ export async function POST(request) {
     const cookieStore = cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+      return apiError(request, ERR.REQUIRED_LOGIN, 401);
     }
 
     const rawPayload = verifyToken(token);
     const payload = await hydrateSessionPayload(rawPayload);
     if (!isManagerRole(payload)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const isAdmin = isAdminRole(payload);
@@ -81,19 +81,19 @@ export async function POST(request) {
     if (isAdmin) {
       companyId = body.companyId ? parseInt(body.companyId) : null;
       if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
+        return apiError(request, ERR.COMPANY_REQUIRED, 400);
       }
     } else {
       companyId = payload.companyId;
       if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
+        return apiError(request, ERR.COMPANY_REQUIRED, 400);
       }
     }
 
     const { name, description, rubric } = body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
-      return apiError(request, 'NAME_REQUIRED', 400);
+      return apiError(request, ERR.NAME_REQUIRED, 400);
     }
 
     const newRole = await createJobRole({
@@ -108,14 +108,14 @@ export async function POST(request) {
     console.error('[job-roles] POST error:', err);
     
     if (err.message === 'INVALID_RUBRIC') {
-      return apiError(request, 'INVALID_RUBRIC', 400);
+      return apiError(request, ERR.INVALID_RUBRIC, 400);
     }
     
     // Violação de UNIQUE (company_id, name)
     if (err.code === '23505') {
-      return apiError(request, 'JOB_ROLE_NAME_EXISTS', 409);
+      return apiError(request, ERR.JOB_ROLE_NAME_EXISTS, 409);
     }
     
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

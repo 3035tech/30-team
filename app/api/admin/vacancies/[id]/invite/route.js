@@ -8,7 +8,7 @@ import { ensureActiveVacancyLinkToken } from '../../../../../../lib/vacancy-link
 import { enqueueTransactionalMail } from '../../../../../../lib/mail';
 import { buildCandidateChallengeInviteMail } from '../../../../../../lib/candidate-challenge-invite-mail';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit';
-import { apiError, localeFromRequest } from '../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 import { publicAppUrl } from '../../../../../../lib/ae/require-admin';
 
@@ -19,21 +19,21 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rlKey = `invite:${uid || ip}`;
     const rl = checkRateLimit(rlKey, 40, 60 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_INVITES', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+      return apiError(request, ERR.RATE_LIMIT_INVITES, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
     const body = await request.json().catch(() => ({}));
@@ -43,10 +43,10 @@ export async function POST(request, { params }) {
       .toLowerCase();
 
     if (!candidateName || candidateName.length > 200) {
-      return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
+      return apiError(request, ERR.CANDIDATE_NAME_REQUIRED, 400);
     }
     if (!candidateEmail || !EMAIL_RE.test(candidateEmail)) {
-      return apiError(request, 'INVALID_CANDIDATE_EMAIL', 400);
+      return apiError(request, ERR.INVALID_CANDIDATE_EMAIL, 400);
     }
 
     let row;
@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
          LIMIT 1`,
         [vacancyId, companyId]
       );
-      if (owned.rowCount === 0) return apiError(request, 'UNAUTHORIZED', 401);
+      if (owned.rowCount === 0) return apiError(request, ERR.UNAUTHORIZED, 401);
       row = owned.rows[0];
     } else {
       const exists = await query(
@@ -70,17 +70,17 @@ export async function POST(request, { params }) {
          LIMIT 1`,
         [vacancyId]
       );
-      if (exists.rowCount === 0) return apiError(request, 'VACANCY_NOT_FOUND', 404);
+      if (exists.rowCount === 0) return apiError(request, ERR.VACANCY_NOT_FOUND, 404);
       row = exists.rows[0];
     }
 
     if (String(row.status || '') === 'closed') {
-      return apiError(request, 'VACANCY_CLOSED', 400);
+      return apiError(request, ERR.VACANCY_CLOSED, 400);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return apiError(request, 'APP_URL_MISSING', 500);
+      return apiError(request, ERR.APP_URL_MISSING, 500);
     }
 
     const linkToken = await ensureActiveVacancyLinkToken(row.id);
@@ -114,15 +114,15 @@ export async function POST(request, { params }) {
         await query(`DELETE FROM candidate_invites WHERE id = $1`, [inviteId]).catch(() => {});
       }
       if (e?.code === 'MAIL_NOT_CONFIGURED') {
-        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
+        return apiError(request, ERR.SMTP_NOT_CONFIGURED, 503);
       }
       console.error('invite mail error', e);
-      return apiError(request, 'MAIL_FAILED', 502);
+      return apiError(request, ERR.MAIL_FAILED, 502);
     }
 
     return NextResponse.json({ ok: true, sentTo: candidateEmail, inviteId, queued: true });
   } catch (error) {
     console.error(error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

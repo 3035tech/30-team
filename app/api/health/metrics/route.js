@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { getSessionPayload, requireAdminRole } from '../../../../lib/ae/require-admin.js';
 import { getHealthStatus } from '../../../../lib/monitoring.js';
 import { getHrScoreCacheMetrics } from '../../../../lib/hr-score-cache.js';
@@ -15,7 +15,7 @@ import { getHrScoreCacheMetrics } from '../../../../lib/hr-score-cache.js';
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireAdminRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireAdminRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const health = getHealthStatus();
     const hrScoreCache = getHrScoreCacheMetrics();
@@ -31,6 +31,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('[health/metrics GET]', err);
-    return apiError(request, 'SERVER_ERROR', 500);
+    return apiError(request, ERR.SERVER_ERROR, 500);
   }
 }

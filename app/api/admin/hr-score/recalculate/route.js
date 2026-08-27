@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '../../../../../lib/auth.js';
-import { apiError } from '../../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../../lib/api-error.js';
 import { hydrateSessionPayload } from '../../../../../lib/session.js';
 import { isAdminRole } from '../../../../../lib/permissions.js';
 import { recalculateCompanyScores } from '../../../../../lib/hr-score.js';
@@ -18,13 +18,13 @@ export async function POST(request) {
     const cookieStore = cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+      return apiError(request, ERR.REQUIRED_LOGIN, 401);
     }
 
     const rawPayload = verifyToken(token);
     const payload = await hydrateSessionPayload(rawPayload);
     if (!isAdminRole(payload)) {
-      return apiError(request, 'ADMIN_ONLY', 403);
+      return apiError(request, ERR.ADMIN_ONLY, 403);
     }
 
     const body = await request.json();
@@ -32,7 +32,7 @@ export async function POST(request) {
     const limit = body.limit ? parseInt(body.limit) : 100;
 
     if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, 'INVALID_PARAMS', 400);
+      return apiError(request, ERR.INVALID_PARAMS, 400);
     }
 
     console.log(`[hr-score] Recalculating scores for company ${companyId} (limit ${limit})...`);
@@ -52,6 +52,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('[hr-score] Recalculate error:', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

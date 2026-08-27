@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +11,6 @@ export async function GET(request) {
     return NextResponse.json({ areas: r.rows });
   } catch (e) {
     console.error('public/areas:', e);
-    return apiError(request, 'AREAS_LOAD', 500);
+    return apiError(request, ERR.AREAS_LOAD, 500);
   }
 }

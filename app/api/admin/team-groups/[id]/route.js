@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import { audit } from '../../../../../lib/audit';
 import {
   CAP,
@@ -18,24 +18,24 @@ import {
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const id = params?.id;
-    if (!id) return apiError(request, 'INVALID_ID', 400);
+    if (!id) return apiError(request, ERR.INVALID_ID, 400);
 
     const item = await getTeamGroup(query, {
       id,
       companyId: scope.companyId,
       isAdmin: scope.isAdmin,
     });
-    if (!item) return apiError(request, 'NOT_FOUND', 404);
+    if (!item) return apiError(request, ERR.NOT_FOUND, 404);
     return NextResponse.json({ item });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET team-group', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -43,12 +43,12 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const id = params?.id;
-    if (!id) return apiError(request, 'INVALID_ID', 400);
+    if (!id) return apiError(request, ERR.INVALID_ID, 400);
 
     const body = await request.json().catch(() => ({}));
     const updated = await updateTeamGroup(query, {
@@ -77,9 +77,9 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ item: updated.item });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('PATCH team-group', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -87,19 +87,19 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const id = params?.id;
-    if (!id) return apiError(request, 'INVALID_ID', 400);
+    if (!id) return apiError(request, ERR.INVALID_ID, 400);
 
     const deleted = await softDeleteTeamGroup(query, {
       id,
       companyId: scope.companyId,
       isAdmin: scope.isAdmin,
     });
-    if (!deleted.ok) return apiError(request, 'NOT_FOUND', 404);
+    if (!deleted.ok) return apiError(request, ERR.NOT_FOUND, 404);
 
     await audit({
       actorUserId: payload.userId || null,
@@ -111,8 +111,8 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('DELETE team-group', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

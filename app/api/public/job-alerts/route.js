@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { upsertJobAlert } from '../../../../lib/job-alerts';
 
@@ -7,7 +7,7 @@ export async function POST(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`job-alert:${ip}`, 10, 60 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const body = await request.json().catch(() => ({}));

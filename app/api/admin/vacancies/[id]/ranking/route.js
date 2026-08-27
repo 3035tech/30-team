@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../../../lib/api-error.js';
 import {
   CAP,
   getSessionPayload,
@@ -12,12 +12,12 @@ import { getVacancyRanking } from '../../../../../../lib/vacancy-ranking.js';
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const url = new URL(request.url);
     const qLocale = url.searchParams.get('locale');
@@ -41,6 +41,6 @@ export async function GET(request, { params }) {
     });
   } catch (e) {
     console.error(e);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { CAP, getManagerScope, resolveScopedCompanyId, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
 import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys, climateMinResponses } from '../../../../lib/people/climate-surveys';
@@ -10,13 +10,13 @@ import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys, cl
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const url = new URL(request.url);
     const companyId = resolveScopedCompanyId(scope, url.searchParams.get('companyId'));
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     if (url.searchParams.get('benchmark') === '1') {
       const bench = await getClimateCompanyBenchmark(query, { companyId });
@@ -26,9 +26,9 @@ export async function GET(request) {
     const items = await listClimateSurveys(query, { companyId });
     return NextResponse.json({ items, minResponses: climateMinResponses() });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET climate-surveys', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -36,13 +36,13 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.CLIMATE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const body = await request.json().catch(() => ({}));
     const companyId = resolveScopedCompanyId(scope, body.companyId);
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     const created = await createClimateSurvey(query, {
       companyId,
@@ -65,8 +65,8 @@ export async function POST(request) {
 
     return NextResponse.json({ ok: true, survey: created.survey }, { status: 201 });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('POST climate-surveys', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

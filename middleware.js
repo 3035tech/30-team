@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { COOKIE_NAME } from './lib/auth';
 import { verifyTokenEdge } from './lib/auth-edge';
 import { isManagerRole } from './lib/permissions';
+import { ERR } from './lib/api-error-codes';
 import {
   JOB_ATTR_COOKIE,
   attributionCookieOptions,
@@ -71,7 +72,7 @@ export async function middleware(request) {
         return withJobAttributionCookie(
           request,
           withSecurityHeaders(
-            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: 'UNAUTHORIZED' }, { status: 401 })
+            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
           )
         );
       }

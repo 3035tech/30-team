@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
 import { query } from '../../../../../../lib/db';
-import { apiError, localeFromRequest } from '../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../lib/api-error';
 import { audit } from '../../../../../../lib/audit';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 import { cloneVacancy } from '../../../../../../lib/vacancy-clone';
@@ -16,15 +16,15 @@ export async function POST(request, { params }) {
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const locale = localeFromRequest(request);
     const cloned = await cloneVacancy(query, {
@@ -57,6 +57,6 @@ export async function POST(request, { params }) {
     );
   } catch (err) {
     console.error('POST vacancy clone', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
+import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
 import {
   getEmployeePortalView,
   submitEmployeePortalPrep,
@@ -10,7 +11,7 @@ import {
 export async function GET(request, { params }) {
   try {
     const token = params?.token;
-    if (!token) return apiError(request, 'NOT_FOUND', 404);
+    if (!token) return apiError(request, ERR.NOT_FOUND, 404);
     const url = new URL(request.url);
     const locale = url.searchParams.get('locale') || 'pt-BR';
     const view = await getEmployeePortalView(query, { token, locale });
@@ -30,21 +31,27 @@ export async function GET(request, { params }) {
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
-      return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+      return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     }
     console.error('GET public employee-portal', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
 /** POST /api/public/employee-portal/[token] — mark prep + optional note */
 export async function POST(request, { params }) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = checkRateLimit(`public-employee-portal:${ip}`, 40, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    }
+
     const token = params?.token;
-    if (!token) return apiError(request, 'NOT_FOUND', 404);
+    if (!token) return apiError(request, ERR.NOT_FOUND, 404);
     const body = await request.json().catch(() => ({}));
     if (!body.prepared && body.noteToManager == null) {
-      return apiError(request, 'INVALID_DATA', 400);
+      return apiError(request, ERR.INVALID_DATA, 400);
     }
     const saved = await submitEmployeePortalPrep(query, {
       token,
@@ -62,9 +69,9 @@ export async function POST(request, { params }) {
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
-      return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+      return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     }
     console.error('POST public employee-portal', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

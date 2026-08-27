@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../../lib/permissions';
 import { parseCompanyProfileFromBody } from '../../../../../lib/company-profile';
 import { slugify as slugifyRaw } from '../../../../../lib/slugify';
@@ -17,11 +17,11 @@ export async function PATCH(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const raw = params?.id;
   const companyId = raw ? parseInt(String(raw), 10) : NaN;
-  if (!Number.isFinite(companyId)) return apiError(request, 'INVALID_COMPANY', 400);
+  if (!Number.isFinite(companyId)) return apiError(request, ERR.INVALID_COMPANY, 400);
 
   const current = await query(
     `SELECT id, name, slug, active, website, about_html AS "aboutHtml",
@@ -30,21 +30,21 @@ export async function PATCH(request, { params }) {
      FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [companyId]
   );
-  if (current.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (current.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   const body = await request.json().catch(() => ({}));
   const name = body.name != null ? String(body.name || '').trim() : null;
   const slug = body.slug != null ? slugify(body.slug || '') : null;
   const active = body.active != null ? Boolean(body.active) : null;
 
-  if (name !== null && !name) return apiError(request, 'NAME_REQUIRED', 400);
-  if (slug !== null && !slug) return apiError(request, 'INVALID_SLUG', 400);
+  if (name !== null && !name) return apiError(request, ERR.NAME_REQUIRED, 400);
+  if (slug !== null && !slug) return apiError(request, ERR.INVALID_SLUG, 400);
 
   let profile;
   try {
     profile = parseCompanyProfileFromBody(body, { forCreate: false });
   } catch (e) {
-    if (e?.code === 'INVALID_WEBSITE') return apiError(request, 'INVALID_WEBSITE', 400);
+    if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
     throw e;
   }
 
@@ -86,14 +86,14 @@ export async function DELETE(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const raw = params?.id;
   const companyId = raw ? parseInt(String(raw), 10) : NaN;
-  if (!Number.isFinite(companyId)) return apiError(request, 'INVALID_COMPANY', 400);
+  if (!Number.isFinite(companyId)) return apiError(request, ERR.INVALID_COMPANY, 400);
 
   const cur = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
-  if (cur.rowCount === 0) return apiError(request, 'NOT_FOUND', 404);
+  if (cur.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   await query(
     `UPDATE company_links SET active = FALSE, rotated_at = NOW() WHERE company_id = $1 AND active = TRUE`,

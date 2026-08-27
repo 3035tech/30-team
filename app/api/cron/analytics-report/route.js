@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db.js';
-import { apiError } from '../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { runScheduledAnalyticsReports } from '../../../../lib/analytics-scheduled-reports.js';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,7 @@ function verifyCron(request) {
 export async function POST(request) {
   try {
     if (!verifyCron(request)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const url = new URL(request.url);
@@ -51,6 +51,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('[POST /api/cron/analytics-report]', err);
-    return apiError(request, 'SERVER_ERROR', 500);
+    return apiError(request, ERR.SERVER_ERROR, 500);
   }
 }

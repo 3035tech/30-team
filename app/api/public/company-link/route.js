@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { resolveCompanyLinkByToken } from '../../../../lib/public-company-link';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export async function GET(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`public-company-link:${ip}`, 60, 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const { searchParams } = new URL(request.url);

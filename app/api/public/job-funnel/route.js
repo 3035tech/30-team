@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import {
   JOB_ATTR_COOKIE,
@@ -17,17 +17,17 @@ export async function POST(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`job-funnel:${ip}`, 120, 10 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const body = await request.json().catch(() => ({}));
   const eventType = String(body.eventType || '').trim();
   const vacancyId = Number(body.vacancyId);
   if (!FUNNEL_EVENT_TYPES.has(eventType) || (eventType !== 'job_view' && eventType !== 'apply_start')) {
-    return apiError(request, 'INVALID_DATA', 400);
+    return apiError(request, ERR.INVALID_DATA, 400);
   }
   if (!Number.isFinite(vacancyId) || vacancyId <= 0) {
-    return apiError(request, 'INVALID_VACANCY', 400);
+    return apiError(request, ERR.INVALID_VACANCY, 400);
   }
 
   const vac = await queryRead(

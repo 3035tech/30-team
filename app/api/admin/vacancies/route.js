@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import {
   CAP,
   getSessionPayload,
@@ -13,9 +13,9 @@ import { createVacancy, listVacancies } from '../../../../lib/vacancies-admin';
 
 export async function GET(request) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const url = new URL(request.url);
   const vacFromQs = String(url.searchParams.get('vacancy') || '').trim();
@@ -44,9 +44,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const body = await request.json().catch(() => ({}));
   const title = String(body.title || '').trim();
@@ -55,12 +55,12 @@ export async function POST(request) {
   const requestedCompanyId = body.companyId ?? null;
   const companyId = scope.isAdmin ? (requestedCompanyId ?? scope.companyId) : scope.companyId;
 
-  if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
-  if (!title) return apiError(request, 'TITLE_REQUIRED', 400);
-  if (!['open', 'closed'].includes(status)) return apiError(request, 'INVALID_STATUS', 400);
+  if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
+  if (!title) return apiError(request, ERR.TITLE_REQUIRED, 400);
+  if (!['open', 'closed'].includes(status)) return apiError(request, ERR.INVALID_STATUS, 400);
 
   const slug = slugify(body.slug || title);
-  if (!slug) return apiError(request, 'INVALID_SLUG', 400);
+  if (!slug) return apiError(request, ERR.INVALID_SLUG, 400);
 
   const positionsCount = Math.max(1, parseInt(body.positionsCount || '1', 10) || 1);
   const targetDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.targetDate || ''))
@@ -71,12 +71,12 @@ export async function POST(request) {
   try {
     details = parseVacancyDetailsFromBody(body, { forCreate: true });
   } catch (e) {
-    if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, 'INVALID_SALARY_RANGE', 400);
-    if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, 'INVALID_EMPLOYMENT_TYPE', 400);
+    if (e?.code === 'INVALID_SALARY_RANGE') return apiError(request, ERR.INVALID_SALARY_RANGE, 400);
+    if (e?.code === 'INVALID_EMPLOYMENT_TYPE') return apiError(request, ERR.INVALID_EMPLOYMENT_TYPE, 400);
     if (e?.code === 'INVALID_WORKPLACE_MODALITY') {
-      return apiError(request, 'INVALID_WORKPLACE_MODALITY', 400);
+      return apiError(request, ERR.INVALID_WORKPLACE_MODALITY, 400);
     }
-    if (e?.code === 'INVALID_WORKPLACE_STATE') return apiError(request, 'INVALID_WORKPLACE_STATE', 400);
+    if (e?.code === 'INVALID_WORKPLACE_STATE') return apiError(request, ERR.INVALID_WORKPLACE_STATE, 400);
     throw e;
   }
 

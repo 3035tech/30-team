@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../../../lib/api-error.js';
 import { getSessionPayload, getManagerScope, resolveScopedCompanyId, requireManagerRole } from '../../../../../../lib/ae/require-admin.js';
 import { updateSuccessionPlan, deleteSuccessionPlan } from '../../../../../../lib/succession-plans.js';
 import { audit } from '../../../../../../lib/audit.js';
@@ -13,17 +13,17 @@ import { audit } from '../../../../../../lib/audit.js';
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const body = await request.json();
     const companyId = resolveScopedCompanyId(scope, body.companyId);
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     const planId = Number(params.id);
     if (!Number.isFinite(planId) || planId <= 0) {
-      return apiError(request, 'INVALID_ID', 400);
+      return apiError(request, ERR.INVALID_ID, 400);
     }
 
     const { readiness, notes, targetDate } = body;
@@ -38,7 +38,7 @@ export async function PATCH(request, { params }) {
 
     if (!result.ok) {
       if (result.errorCode === 'NOT_FOUND') {
-        return apiError(request, 'NOT_FOUND', 404);
+        return apiError(request, ERR.NOT_FOUND, 404);
       }
       return apiError(request, result.errorCode, 400);
     }
@@ -55,30 +55,30 @@ export async function PATCH(request, { params }) {
     return NextResponse.json(result.plan);
   } catch (err) {
     console.error('PATCH /api/admin/succession/plans/[id] error:', err);
-    return apiError(request, 'INTERNAL_ERROR', 500);
+    return apiError(request, ERR.INTERNAL_ERROR, 500);
   }
 }
 
 export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireManagerRole(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const companyId = resolveScopedCompanyId(scope, new URL(request.url).searchParams.get('companyId'));
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     const planId = Number(params.id);
     if (!Number.isFinite(planId) || planId <= 0) {
-      return apiError(request, 'INVALID_ID', 400);
+      return apiError(request, ERR.INVALID_ID, 400);
     }
 
     const result = await deleteSuccessionPlan(null, { companyId, planId });
 
     if (!result.ok) {
       if (result.errorCode === 'NOT_FOUND') {
-        return apiError(request, 'NOT_FOUND', 404);
+        return apiError(request, ERR.NOT_FOUND, 404);
       }
       return apiError(request, result.errorCode, 400);
     }
@@ -94,6 +94,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/succession/plans/[id] error:', err);
-    return apiError(request, 'INTERNAL_ERROR', 500);
+    return apiError(request, ERR.INTERNAL_ERROR, 500);
   }
 }

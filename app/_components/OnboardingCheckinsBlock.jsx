@@ -9,6 +9,7 @@ import { AppLoading } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
+import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
 
 /**
  * Post-hire check-ins D30/D60/D90 — B-701 (light, not AVD).
@@ -25,7 +26,7 @@ export function OnboardingCheckinsBlock({
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    if (!candidateId || employmentStatus !== 'employee') {
+    if (!candidateId || employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) {
       setItems([]);
       setLoading(false);
       return;
@@ -50,7 +51,7 @@ export function OnboardingCheckinsBlock({
     load();
   }, [load]);
 
-  if (employmentStatus !== 'employee') return null;
+  if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) return null;
 
   const complete = async (row, status) => {
     const fields = [

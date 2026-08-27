@@ -5,7 +5,7 @@ import { COOKIE_NAME } from '../../../../lib/auth';
 import { query, queryRead } from '../../../../lib/db';
 import crypto from 'node:crypto';
 import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
 import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
 import { isCompanyLogoStorageConfigured } from '../../../../lib/company-logo';
@@ -36,7 +36,7 @@ export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const url = new URL(request.url);
   if (url.searchParams.get('forSelect') === '1') {
@@ -99,18 +99,18 @@ export async function POST(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const body = await request.json().catch(() => ({}));
   const name = String(body.name || '').trim();
   const slug = slugify(body.slug || name);
-  if (!name || !slug) return apiError(request, 'NAME_REQUIRED', 400);
+  if (!name || !slug) return apiError(request, ERR.NAME_REQUIRED, 400);
 
   let profile;
   try {
     profile = parseCompanyProfileFromBody(body, { forCreate: true });
   } catch (e) {
-    if (e?.code === 'INVALID_WEBSITE') return apiError(request, 'INVALID_WEBSITE', 400);
+    if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
     throw e;
   }
 

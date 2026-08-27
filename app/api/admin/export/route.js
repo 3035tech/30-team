@@ -10,7 +10,7 @@ import {
   parseNameSearch,
   parseRosterScope,
 } from '../../../../lib/assessment-filters';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { canAccessAnalysisData, isAdminRole } from '../../../../lib/permissions';
 import {
   assessmentsCsvStream,
@@ -23,10 +23,10 @@ export async function GET(request) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   const allowed = canAccessAnalysisData(payload);
-  if (!allowed) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!allowed) return apiError(request, ERR.UNAUTHORIZED, 401);
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const { searchParams } = new URL(request.url);
   const area = (searchParams.get('area') || 'all').toString();

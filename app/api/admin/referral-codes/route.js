@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../lib/auth';
 import { verifySessionWithCapabilities } from '../../../../lib/user-capabilities';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../lib/permissions';
 import { createReferralCode, listReferralCodes } from '../../../../lib/referral-codes';
 
@@ -15,14 +15,14 @@ export async function GET(request) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const isAdmin = isAdminRole(payload);
   const companyId = isAdmin
     ? Number(request.nextUrl.searchParams.get('companyId') || payload?.companyId) || null
     : payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const vacancyIdRaw = request.nextUrl.searchParams.get('vacancyId');
   const vacancyId = vacancyIdRaw != null && vacancyIdRaw !== '' ? Number(vacancyIdRaw) : null;
@@ -47,7 +47,7 @@ export async function POST(request) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const isAdmin = isAdminRole(payload);
@@ -55,7 +55,7 @@ export async function POST(request) {
   const companyId = isAdmin
     ? Number(body.companyId || payload?.companyId)
     : payload?.companyId ?? null;
-  if (!companyId) return apiError(request, 'INVALID_COMPANY', 400);
+  if (!companyId) return apiError(request, ERR.INVALID_COMPANY, 400);
 
   const result = await createReferralCode({
     companyId,

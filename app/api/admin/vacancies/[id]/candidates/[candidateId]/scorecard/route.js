@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { verifySessionWithCapabilities } from '../../../../../../../../lib/user-capabilities';
 import { query } from '../../../../../../../../lib/db';
-import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
 import {
   draftScorecardItemsFromBrief,
@@ -15,7 +15,7 @@ import { buildInterviewQuestions } from '../../../../../../../../lib/people/deci
 async function loadVacancyScope(request, vacancyId, payload) {
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
+  if (!isAdmin && !companyId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   const params = [vacancyId];
   let sql = `SELECT id, company_id AS "companyId" FROM vacancies WHERE id = $1 AND deleted = FALSE`;
   if (!isAdmin) {
@@ -23,7 +23,7 @@ async function loadVacancyScope(request, vacancyId, payload) {
     params.push(companyId);
   }
   const res = await query(`${sql} LIMIT 1`, params);
-  if (!res.rowCount) return { error: apiError(request, 'VACANCY_NOT_FOUND', 404) };
+  if (!res.rowCount) return { error: apiError(request, ERR.VACANCY_NOT_FOUND, 404) };
   return { vacancy: res.rows[0], isAdmin, companyId };
 }
 
@@ -34,12 +34,12 @@ export async function GET(request, { params }) {
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_DATA', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_DATA, 400);
 
     const scope = await loadVacancyScope(request, vacancyId, payload);
     if (scope.error) return scope.error;
@@ -86,7 +86,7 @@ export async function GET(request, { params }) {
     });
   } catch (err) {
     console.error('GET scorecard', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -97,12 +97,12 @@ export async function PUT(request, { params }) {
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_DATA', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_DATA, 400);
 
     const scope = await loadVacancyScope(request, vacancyId, payload);
     if (scope.error) return scope.error;
@@ -120,6 +120,6 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ scorecard: saved.scorecard });
   } catch (err) {
     console.error('PUT scorecard', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

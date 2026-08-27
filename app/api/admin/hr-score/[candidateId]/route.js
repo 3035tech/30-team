@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '../../../../../lib/auth.js';
 import { queryRead } from '../../../../../lib/db.js';
-import { apiError } from '../../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../../lib/api-error.js';
 import { hydrateSessionPayload } from '../../../../../lib/session.js';
 import { isManagerRole, isAdminRole } from '../../../../../lib/permissions.js';
 import { calculateHrScore, getHrScore, saveHrScore } from '../../../../../lib/hr-score.js';
@@ -18,18 +18,18 @@ export async function GET(request, { params }) {
     const cookieStore = cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+      return apiError(request, ERR.REQUIRED_LOGIN, 401);
     }
 
     const rawPayload = verifyToken(token);
     const payload = await hydrateSessionPayload(rawPayload);
     if (!isManagerRole(payload)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const candidateId = parseInt(params.candidateId);
     if (!Number.isFinite(candidateId) || candidateId <= 0) {
-      return apiError(request, 'INVALID_PARAMS', 400);
+      return apiError(request, ERR.INVALID_PARAMS, 400);
     }
 
     // Verificar tenant e existência do candidato
@@ -42,7 +42,7 @@ export async function GET(request, { params }) {
     );
 
     if (candidateRes.rowCount === 0) {
-      return apiError(request, 'NOT_FOUND', 404);
+      return apiError(request, ERR.NOT_FOUND, 404);
     }
 
     const candidate = candidateRes.rows[0];
@@ -50,7 +50,7 @@ export async function GET(request, { params }) {
 
     // Tenant check
     if (!isAdmin && String(candidate.companyId) !== String(payload.companyId)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     // Buscar score existente
@@ -81,6 +81,6 @@ export async function GET(request, { params }) {
     });
   } catch (err) {
     console.error('[hr-score] GET error:', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

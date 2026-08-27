@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../../lib/db';
-import { apiError } from '../../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { audit } from '../../../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../../lib/ae/require-admin';
 import {
@@ -26,13 +26,13 @@ async function loadCandidateScope(candidateId, scope) {
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const candidateId = params?.id;
     const planId = params?.planId;
-    if (!candidateId || !planId) return apiError(request, 'INVALID_ID', 400);
+    if (!candidateId || !planId) return apiError(request, ERR.INVALID_ID, 400);
 
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
@@ -42,12 +42,12 @@ export async function GET(request, { params }) {
       planId,
       candidateId,
     });
-    if (!plan) return apiError(request, 'NOT_FOUND', 404);
+    if (!plan) return apiError(request, ERR.NOT_FOUND, 404);
     return NextResponse.json({ plan });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET development-plan', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -55,13 +55,13 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const candidateId = params?.id;
     const planId = params?.planId;
-    if (!candidateId || !planId) return apiError(request, 'INVALID_ID', 400);
+    if (!candidateId || !planId) return apiError(request, ERR.INVALID_ID, 400);
 
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
@@ -147,8 +147,8 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ ok: true, plan: updated.plan });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('PATCH development-plan', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

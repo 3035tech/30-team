@@ -5,7 +5,7 @@ import { upsertCandidate, normalizeEmail } from '../../../../lib/ae/candidate-up
 import { titleCasePersonName } from '../../../../lib/person-name';
 import { toPublicQuestions } from '../../../../lib/ae/to-public-questions';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,7 +18,7 @@ export async function POST(request) {
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`ae-start:${ip}`, 30, 10 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_SHORT', 429);
+      return apiError(request, ERR.RATE_LIMIT_SHORT, 429);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -30,10 +30,10 @@ export async function POST(request) {
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (!inviteToken || !name || name.length > 200 || consent !== true) {
-      return apiError(request, 'INVALID_DATA', 400);
+      return apiError(request, ERR.INVALID_DATA, 400);
     }
     if (!email || !EMAIL_RE.test(email)) {
-      return apiError(request, 'VALID_EMAIL_REQUIRED', 400);
+      return apiError(request, ERR.VALID_EMAIL_REQUIRED, 400);
     }
 
     const inv = await query(
@@ -48,17 +48,17 @@ export async function POST(request) {
       [inviteToken]
     );
     if (inv.rowCount === 0) {
-      return apiError(request, 'INVITE_INVALID', 403);
+      return apiError(request, ERR.INVITE_INVALID, 403);
     }
     const invite = inv.rows[0];
     if (new Date(invite.expiresAt) < new Date()) {
-      return apiError(request, 'INVITE_EXPIRED', 403);
+      return apiError(request, ERR.INVITE_EXPIRED, 403);
     }
     if (invite.status === 'cancelled' || invite.status === 'completed') {
-      return apiError(request, 'INVITE_NOT_AVAILABLE', 403);
+      return apiError(request, ERR.INVITE_NOT_AVAILABLE, 403);
     }
     if (invite.inviteEmail !== email) {
-      return apiError(request, 'INVITE_EMAIL_MISMATCH', 400);
+      return apiError(request, ERR.INVITE_EMAIL_MISMATCH, 400);
     }
 
     let areaId = null;
@@ -115,6 +115,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('POST /api/ae/start', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

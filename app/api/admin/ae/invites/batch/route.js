@@ -13,7 +13,7 @@ import {
   listInternalMotivatorsInviteRoster,
 } from '../../../../../../lib/ae/batch-motivators-invites';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit';
-import { apiError, localeFromRequest } from '../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../lib/api-error';
 import { audit } from '../../../../../../lib/audit';
 
 
@@ -22,15 +22,15 @@ export async function GET(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const { searchParams } = new URL(request.url);
     const companyId = resolveScopedCompanyId(scope, searchParams.get('companyId'));
     if (!Number.isFinite(companyId)) {
-      return apiError(request, 'INVALID_COMPANY', 400);
+      return apiError(request, ERR.INVALID_COMPANY, 400);
     }
 
     const roster = await listInternalMotivatorsInviteRoster(query, { companyId });
@@ -42,7 +42,7 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('GET /api/admin/ae/invites/batch', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -51,26 +51,26 @@ export async function POST(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`ae-invite-batch:${payload?.userId || ip}`, 8, 60 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_INVITES', 429);
+      return apiError(request, ERR.RATE_LIMIT_INVITES, 429);
     }
 
     const body = await request.json().catch(() => ({}));
     const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!Number.isFinite(companyId)) {
-      return apiError(request, 'INVALID_COMPANY', 400);
+      return apiError(request, ERR.INVALID_COMPANY, 400);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return apiError(request, 'APP_URL_MISSING', 500);
+      return apiError(request, ERR.APP_URL_MISSING, 500);
     }
 
     const result = await batchCreateMotivatorsInvites(query, {
@@ -110,6 +110,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('POST /api/admin/ae/invites/batch', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

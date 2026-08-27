@@ -5,7 +5,7 @@ import { COOKIE_NAME } from '../../../../../../../../lib/auth';
 import { query } from '../../../../../../../../lib/db';
 import { createAndQueueMotivatorsInvite } from '../../../../../../../../lib/ae/create-motivators-invite';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../../lib/rate-limit';
-import { apiError, localeFromRequest } from '../../../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../../lib/permissions';
 import { publicAppUrl } from '../../../../../../../../lib/ae/require-admin';
 
@@ -19,22 +19,22 @@ export async function POST(request, { params }) {
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
     const candidateId = params?.candidateId;
-    if (!vacancyId || !candidateId) return apiError(request, 'INVALID_PARAMS', 400);
+    if (!vacancyId || !candidateId) return apiError(request, ERR.INVALID_PARAMS, 400);
 
     const ip = clientIpFromRequest(request);
     const uid = payload?.userId ?? '';
     const rl = checkRateLimit(`ae-invite-vacancy:${uid || ip}`, 40, 60 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_INVITES', 429, {}, {
+      return apiError(request, ERR.RATE_LIMIT_INVITES, 429, {}, {
         headers: { 'Retry-After': String(rl.retryAfterSec) },
       });
     }
@@ -52,16 +52,16 @@ export async function POST(request, { params }) {
        LIMIT 1`,
       [vacancyId, candidateId]
     );
-    if (link.rowCount === 0) return apiError(request, 'CANDIDATE_NOT_FOUND', 404);
+    if (link.rowCount === 0) return apiError(request, ERR.CANDIDATE_NOT_FOUND, 404);
     const row = link.rows[0];
     if (!isAdmin && String(row.companyId) !== String(companyId)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     if (!row.email) {
-      return apiError(request, 'CANDIDATE_NO_EMAIL', 400);
+      return apiError(request, ERR.CANDIDATE_NO_EMAIL, 400);
     }
     if (String(row.status || '') === 'closed') {
-      return apiError(request, 'VACANCY_CLOSED', 400);
+      return apiError(request, ERR.VACANCY_CLOSED, 400);
     }
 
     const already = await query(
@@ -75,12 +75,12 @@ export async function POST(request, { params }) {
       [row.companyId, candidateId]
     );
     if (already.rowCount > 0) {
-      return apiError(request, 'MOTIVATORS_ALREADY_ANSWERED', 409);
+      return apiError(request, ERR.MOTIVATORS_ALREADY_ANSWERED, 409);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return apiError(request, 'APP_URL_MISSING', 500);
+      return apiError(request, ERR.APP_URL_MISSING, 500);
     }
 
     const result = await createAndQueueMotivatorsInvite(query, {
@@ -106,6 +106,6 @@ export async function POST(request, { params }) {
     });
   } catch (err) {
     console.error('POST vacancy candidate motivators invite', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

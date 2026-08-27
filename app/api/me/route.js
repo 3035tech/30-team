@@ -3,14 +3,14 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME, MAX_AGE, hashPassword, signToken, verifyPassword, sessionCookieOptions } from '../../../lib/auth';
 import { query } from '../../../lib/db';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../lib/i18n';
-import { apiError } from '../../../lib/api-error';
+import { apiError, ERR } from '../../../lib/api-error';
 import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../lib/session';
 
 async function requireSession(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!payload?.userId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
+  if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   return { payload };
 }
 
@@ -50,7 +50,7 @@ export async function GET(request) {
      LIMIT 1`,
     [payload.userId]
   );
-  if (res.rowCount === 0) return apiError(request, 'USER_NOT_FOUND', 404);
+  if (res.rowCount === 0) return apiError(request, ERR.USER_NOT_FOUND, 404);
 
   return NextResponse.json({ user: res.rows[0] });
 }
@@ -69,7 +69,7 @@ export async function PATCH(request) {
      FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
     [payload.userId]
   );
-  if (current.rowCount === 0) return apiError(request, 'USER_NOT_FOUND', 404);
+  if (current.rowCount === 0) return apiError(request, ERR.USER_NOT_FOUND, 404);
   const row = current.rows[0];
 
   const sets = [];
@@ -91,12 +91,12 @@ export async function PATCH(request) {
 
   if (body.email !== undefined) {
     const email = String(body.email || '').trim().toLowerCase();
-    if (!email || !email.includes('@')) return apiError(request, 'EMAIL_REQUIRED', 400);
+    if (!email || !email.includes('@')) return apiError(request, ERR.EMAIL_REQUIRED, 400);
     const clash = await query(
       `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND deleted = FALSE AND id <> $2 LIMIT 1`,
       [email, payload.userId]
     );
-    if (clash.rowCount > 0) return apiError(request, 'EMAIL_TAKEN', 409);
+    if (clash.rowCount > 0) return apiError(request, ERR.EMAIL_TAKEN, 409);
     sets.push(`email = $${n++}`);
     params.push(email);
   }
@@ -104,15 +104,15 @@ export async function PATCH(request) {
   if (body.newPassword != null && String(body.newPassword).length > 0) {
     const currentPassword = String(body.currentPassword || '');
     const newPassword = String(body.newPassword || '');
-    if (!currentPassword) return apiError(request, 'CURRENT_PASSWORD_REQUIRED', 400);
-    if (newPassword.length < 8) return apiError(request, 'PASSWORD_TOO_SHORT', 400);
+    if (!currentPassword) return apiError(request, ERR.CURRENT_PASSWORD_REQUIRED, 400);
+    if (newPassword.length < 8) return apiError(request, ERR.PASSWORD_TOO_SHORT, 400);
     const ok = await verifyPassword(currentPassword, row.passwordHash);
-    if (!ok) return apiError(request, 'INVALID_CURRENT_PASSWORD', 403);
+    if (!ok) return apiError(request, ERR.INVALID_CURRENT_PASSWORD, 403);
     sets.push(`password_hash = $${n++}`);
     params.push(await hashPassword(newPassword));
   }
 
-  if (!sets.length) return apiError(request, 'NOTHING_TO_UPDATE', 400);
+  if (!sets.length) return apiError(request, ERR.NOTHING_TO_UPDATE, 400);
 
   params.push(payload.userId);
   await query(

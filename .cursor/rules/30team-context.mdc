@@ -28,6 +28,7 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Cores/status via `lib/theme.js` (`C`) — roxo da marca não é cor de pipeline
 - SQL parametrizado; `query` vs `queryRead`
 - Perfil: linguagem “tende a”; hipóteses ≠ diagnóstico
+- **Constantes string** — erros/status/pipeline/roster via `ERR` / `lib/domain-status.js` / `PIPELINE_STAGES` (não literais soltos, não enums TS). Ver `AGENTS.md` § Constantes e `.cursor/rules/domain-constants.mdc`
 - **Reutilizar antes de criar** — em **cada nova tela**, avaliar reaproveitar componentes (`app/_components`, `dashboard-shared`, outras tabs). **Antes de função nova**, grep em `lib/` / call sites; reutilizar ou extrair util compartilhado. Só criar do zero se nada servir (ver `.cursor/rules/reuse-before-create.mdc` e `AGENTS.md` § Reaproveitamento)
 - **UI/UX** — atuar como especialista de usabilidade (ver `.cursor/rules/ui-ux.mdc` e `AGENTS.md` § UI/UX): lista antes de formulário, progressive disclosure, feedback de estados, consistência com tokens existentes
 - **DBA / performance** — validar cada query e a volumetria da transação (ver `.cursor/rules/dba-performance.mdc` e `AGENTS.md` § DBA e performance): tenant, índices, paginação/caps, sem N+1; desenhar para escalar sem refactor grande
@@ -39,6 +40,7 @@ Next.js 14 App Router + React 18 + JSX (sem TS) + PostgreSQL (`pg`) + JWT cookie
 - Tratar T1–T9 como diagnóstico clínico
 - TypeScript, pasta `src/`
 - Inventar segundo design system além de Tailwind + tokens (`lib/theme.js` / `tailwind.config.js`)
+- Literais de erro/status de domínio em código novo (`'UNAUTHORIZED'`, `'employee'`) — usar `ERR` / `domain-status` / `pipeline`
 - Commit sem pedido explícito; não commitar `.env`
 - Carregar dados de todas as abas do dashboard em todo request
 - Apagar `ae_questions` com tentativas existentes (desativar/sync em vez de DELETE)

@@ -9,6 +9,7 @@ import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { CAP, can, canSeeManagementSection, isAdminRole } from '../../lib/permissions';
+import { VACANCY_STATUS } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
@@ -908,7 +909,7 @@ export default function DashboardClient({
               <option value="all">{t(locale, 'dashboard.allVacancies')}</option>
               {vacancies.map((v) => (
                 <option key={v.id} value={String(v.id)}>
-                  {v.title} {v.status === 'closed' ? t(locale, 'dashboard.closed') : ''}
+                  {v.title} {v.status === VACANCY_STATUS.CLOSED ? t(locale, 'dashboard.closed') : ''}
                 </option>
               ))}
             </select>

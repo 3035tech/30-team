@@ -7,7 +7,7 @@ import {
   listReportShares,
   loadVacancyReportSource,
 } from '../../../../../../lib/vacancy-report';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 
 
@@ -26,19 +26,19 @@ export async function GET(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
-    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const { searchParams } = new URL(request.url);
     if (searchParams.get('candidates') === '1') {
       const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
-      if (!source) return apiError(request, 'NOT_FOUND', 404);
+      if (!source) return apiError(request, ERR.NOT_FOUND, 404);
       return NextResponse.json({
         vacancyId: Number(vacancyId),
         vacancy: {
@@ -85,7 +85,7 @@ export async function GET(request, { params }) {
     });
   } catch (e) {
     console.error('[vacancy-reports GET]', e);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -94,14 +94,14 @@ export async function POST(request, { params }) {
     const cookieStore = cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const isAdmin = isAdminRole(payload);
     const companyId = payload?.companyId ?? null;
-    if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const body = await request.json().catch(() => ({}));
     const candidateIds = Array.isArray(body.candidateIds) ? body.candidateIds : [];
@@ -111,7 +111,7 @@ export async function POST(request, { params }) {
       body.candidateOverrides && typeof body.candidateOverrides === 'object' ? body.candidateOverrides : {};
 
     const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
-    if (!source) return apiError(request, 'NOT_FOUND', 404);
+    if (!source) return apiError(request, ERR.NOT_FOUND, 404);
 
     const row = await createReportShare({
       vacancyId: Number(vacancyId),
@@ -139,10 +139,10 @@ export async function POST(request, { params }) {
       { status: 201 }
     );
   } catch (e) {
-    if (e?.code === 'NO_CANDIDATES') return apiError(request, 'INCOMPLETE_DATA', 400);
-    if (e?.code === 'NOTE_TOO_SHORT') return apiError(request, 'REPORT_NOTE_TOO_SHORT', 400);
-    if (e?.code === 'NOT_FOUND') return apiError(request, 'NOT_FOUND', 404);
+    if (e?.code === 'NO_CANDIDATES') return apiError(request, ERR.INCOMPLETE_DATA, 400);
+    if (e?.code === 'NOTE_TOO_SHORT') return apiError(request, ERR.REPORT_NOTE_TOO_SHORT, 400);
+    if (e?.code === 'NOT_FOUND') return apiError(request, ERR.NOT_FOUND, 404);
     console.error('[vacancy-reports POST]', e);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

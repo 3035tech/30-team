@@ -3,17 +3,17 @@ import { query } from '../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, publicAppUrl, requireCapability } from '../../../../../lib/ae/require-admin';
 import { createAndQueueMotivatorsInvite, isValidInviteEmail } from '../../../../../lib/ae/create-motivators-invite';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit';
-import { apiError, localeFromRequest } from '../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../lib/api-error';
 
 /** GET /api/admin/ae/invites — lista convites */
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
-    if (!authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const { searchParams } = new URL(request.url);
     const status = String(searchParams.get('status') || '').trim();
@@ -72,7 +72,7 @@ export async function GET(request) {
     return NextResponse.json({ items: listRes.rows, total, page, pageSize });
   } catch (err) {
     console.error('GET /api/admin/ae/invites', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -81,15 +81,15 @@ export async function POST(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const { isAdmin, companyId, authorized } = getManagerScope(payload);
-    if (!authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const ip = clientIpFromRequest(request);
     const rl = checkRateLimit(`ae-invite:${payload?.userId || ip}`, 40, 60 * 60 * 1000);
     if (!rl.ok) {
-      return apiError(request, 'RATE_LIMIT_INVITES', 429);
+      return apiError(request, ERR.RATE_LIMIT_INVITES, 429);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -101,18 +101,18 @@ export async function POST(request) {
     let targetCompanyId = isAdmin ? Number(body.companyId) : Number(companyId);
 
     if (!candidateName || candidateName.length > 200) {
-      return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
+      return apiError(request, ERR.CANDIDATE_NAME_REQUIRED, 400);
     }
     if (!isValidInviteEmail(candidateEmail)) {
-      return apiError(request, 'INVALID_EMAIL', 400);
+      return apiError(request, ERR.INVALID_EMAIL, 400);
     }
     if (!Number.isFinite(targetCompanyId)) {
-      return apiError(request, 'INVALID_COMPANY', 400);
+      return apiError(request, ERR.INVALID_COMPANY, 400);
     }
 
     const base = publicAppUrl(request);
     if (!base) {
-      return apiError(request, 'APP_URL_MISSING', 500);
+      return apiError(request, ERR.APP_URL_MISSING, 500);
     }
 
     const result = await createAndQueueMotivatorsInvite(query, {
@@ -139,6 +139,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('POST /api/admin/ae/invites', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

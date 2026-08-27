@@ -13,7 +13,8 @@ Antes de qualquer DDL/DML ou query de feature: seguir **DBA e performance** em `
 3. Operação no pgAdmin: incluir o delta idempotente em `scripts/scripts-banco-pendentes.sql`.
 4. **Não** criar `.sql` na raiz do repo. `init.sql` é stub Docker — manter vazio.
 5. Preferir `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS` em scripts de operador.
-6. Soft delete já existe (`deleted`); não mudar para delete físico sem pedido.
-7. Índices de performance: seguir o estilo de `migrations/006_performance_indexes.sql`. Toda feature com filtro/`ORDER BY` novo frequente deve considerar índice na mesma entrega.
-8. Seeds ficam em `scripts/seed-*.js` / `scripts/seed-*.sql`, não misturados com DDL de produção.
-9. Queries de listagem: paginação ou `LIMIT`; crons com teto de lote + idempotência/dedupe.
+7. Soft delete já existe (`deleted`); não mudar para delete físico sem pedido.
+8. Status de domínio em queries (employment, vaga open/closed): preferir constantes de `lib/domain-status.js` / `lib/pipeline.js` interpoladas só quando o valor é constante do código — ver `AGENTS.md` § Constantes.
+9. Índices de performance: seguir o estilo de `migrations/006_performance_indexes.sql`. Toda feature com filtro/`ORDER BY` novo frequente deve considerar índice na mesma entrega.
+10. Seeds ficam em `scripts/seed-*.js` / `scripts/seed-*.sql`, não misturados com DDL de produção.
+11. Queries de listagem: paginação ou `LIMIT`; crons com teto de lote + idempotência/dedupe.

@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { PERFORMANCE_CYCLE_STATUS } from '../../../lib/domain-status.js';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [cycles, setCycles] = useState([]);
@@ -111,8 +112,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
   }
 
   function getStatusColor(status) {
-    if (status === 'active') return 'text-success';
-    if (status === 'closed') return 'text-ink-muted';
+    if (status === PERFORMANCE_CYCLE_STATUS.ACTIVE) return 'text-success';
+    if (status === PERFORMANCE_CYCLE_STATUS.CLOSED) return 'text-ink-muted';
     return 'text-warning';
   }
 

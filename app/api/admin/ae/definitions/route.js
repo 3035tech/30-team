@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db';
 import { CAP, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 
 /** GET /api/admin/ae/definitions — lista assessments cadastrados */
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_CONFIG)) {
-      return apiError(request, 'ADMIN_ONLY', 401);
+      return apiError(request, ERR.ADMIN_ONLY, 401);
     }
 
     const res = await query(
@@ -23,6 +23,6 @@ export async function GET(request) {
     return NextResponse.json({ items: res.rows });
   } catch (err) {
     console.error('GET /api/admin/ae/definitions', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
 import { getVacancyFunnelAnalytics } from '../../../../../../lib/job-funnel';
 
@@ -14,16 +14,16 @@ export async function GET(request, { params }) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const vacancyId = Number(params?.id);
   if (!Number.isFinite(vacancyId) || vacancyId <= 0) {
-    return apiError(request, 'INVALID_VACANCY', 400);
+    return apiError(request, ERR.INVALID_VACANCY, 400);
   }
 
   const stats = await getVacancyFunnelAnalytics({

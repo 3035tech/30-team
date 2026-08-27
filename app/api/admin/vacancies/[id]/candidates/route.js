@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import {
   CAP,
   getSessionPayload,
@@ -21,12 +21,12 @@ function actorErrorStatus(errorCode) {
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const loaded = await loadVacancyForActor({
       vacancyId,
@@ -41,7 +41,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({ items });
   } catch (error) {
     console.error(error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -49,12 +49,12 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const vacancyId = params?.id;
-    if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+    if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const loaded = await loadVacancyForActor({
       vacancyId,
@@ -78,6 +78,6 @@ export async function POST(request, { params }) {
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     console.error(error);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

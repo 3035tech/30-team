@@ -3,7 +3,7 @@ import { query } from '../../../../../../../lib/db';
 import { CAP, getManagerScope, getSessionPayload, publicAppUrl, requireCapability } from '../../../../../../../lib/ae/require-admin';
 import { enqueueTransactionalMail } from '../../../../../../../lib/mail';
 import { buildMotivatorsInviteMail } from '../../../../../../../lib/motivators-invite-mail';
-import { apiError, localeFromRequest } from '../../../../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../../../../lib/api-error';
 
 async function loadInvite(id, { isAdmin, companyId }) {
   const params = [id];
@@ -29,19 +29,19 @@ export async function POST(request, { params }) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const invite = await loadInvite(params.id, scope);
-    if (!invite) return apiError(request, 'INVITE_NOT_FOUND', 404);
+    if (!invite) return apiError(request, ERR.INVITE_NOT_FOUND, 404);
     if (!['sent', 'opened'].includes(invite.status)) {
-      return apiError(request, 'INVITE_NOT_PENDING', 400);
+      return apiError(request, ERR.INVITE_NOT_PENDING, 400);
     }
 
     const base = publicAppUrl(request);
-    if (!base) return apiError(request, 'APP_URL_MISSING', 500);
+    if (!base) return apiError(request, ERR.APP_URL_MISSING, 500);
 
     const assessmentUrl = `${base}/assessment/motivators/${invite.token}`;
     const locale = localeFromRequest(request);
@@ -56,10 +56,10 @@ export async function POST(request, { params }) {
       enqueueTransactionalMail({ to: invite.candidateEmail, subject, text, html });
     } catch (err) {
       if (err?.code === 'MAIL_NOT_CONFIGURED') {
-        return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
+        return apiError(request, ERR.SMTP_NOT_CONFIGURED, 503);
       }
       console.error('POST /api/admin/ae/invites/[id]/remind', err);
-      return apiError(request, 'MAIL_FAILED', 502);
+      return apiError(request, ERR.MAIL_FAILED, 502);
     }
     await query(
       `UPDATE ae_invites SET last_reminder_at = NOW(), reminder_count = reminder_count + 1 WHERE id = $1`,
@@ -68,6 +68,6 @@ export async function POST(request, { params }) {
     return NextResponse.json({ ok: true, queued: true });
   } catch (err) {
     console.error('POST /api/admin/ae/invites/[id]/remind', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

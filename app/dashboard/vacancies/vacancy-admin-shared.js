@@ -1,6 +1,7 @@
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { formatSalaryBr } from '../../../lib/br-masks';
+import { PIPELINE_STAGE } from '../../../lib/pipeline.js';
 
 export function formatVacancySalaryRange(locale, min, max) {
   const a = min ? formatSalaryBr(min) : '';
@@ -59,7 +60,13 @@ export function daysInStage(dateLike) {
 export function stageAgingTone(days, pipelineStage) {
   if (days == null) return null;
   const s = String(pipelineStage || '');
-  if (s === 'hired' || s === 'rejected' || s === 'archived') return null;
+  if (
+    s === PIPELINE_STAGE.HIRED ||
+    s === PIPELINE_STAGE.REJECTED ||
+    s === PIPELINE_STAGE.ARCHIVED
+  ) {
+    return null;
+  }
   if (days >= 14) return 'danger';
   if (days >= 7) return 'warning';
   return null;

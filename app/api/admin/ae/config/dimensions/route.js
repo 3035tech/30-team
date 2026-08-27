@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import { CAP, getSessionPayload, requireCapability } from '../../../../../../lib/ae/require-admin';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 
 /** GET /api/admin/ae/config/dimensions */
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_CONFIG)) {
-      return apiError(request, 'ADMIN_ONLY', 401);
+      return apiError(request, ERR.ADMIN_ONLY, 401);
     }
 
     const res = await query(
@@ -21,7 +21,7 @@ export async function GET(request) {
     return NextResponse.json({ items: res.rows });
   } catch (err) {
     console.error(err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -30,12 +30,12 @@ export async function PATCH(request) {
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_CONFIG)) {
-      return apiError(request, 'ADMIN_ONLY', 401);
+      return apiError(request, ERR.ADMIN_ONLY, 401);
     }
 
     const body = await request.json().catch(() => ({}));
     const id = Number(body.id);
-    if (!Number.isFinite(id)) return apiError(request, 'INVALID_ID', 400);
+    if (!Number.isFinite(id)) return apiError(request, ERR.INVALID_ID, 400);
 
     const fields = [];
     const params = [id];
@@ -52,12 +52,12 @@ export async function PATCH(request) {
       fields.push(`sort_order = $${n++}`);
       params.push(Number(body.sortOrder));
     }
-    if (fields.length === 0) return apiError(request, 'NOTHING_TO_UPDATE', 400);
+    if (fields.length === 0) return apiError(request, ERR.NOTHING_TO_UPDATE, 400);
 
     await query(`UPDATE ae_dimensions SET ${fields.join(', ')} WHERE id = $1`, params);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error(err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

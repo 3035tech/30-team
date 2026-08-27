@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { CAP, getManagerScope, resolveScopedCompanyId, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
 import {
@@ -18,19 +18,19 @@ import {
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const url = new URL(request.url);
     const teamGroupId = url.searchParams.get('teamGroupId');
     const pulseId = url.searchParams.get('id');
     const companyId = resolveScopedCompanyId(scope, url.searchParams.get('companyId'));
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     if (pulseId) {
       const pulse = await getTeamPulse(query, { companyId, pulseId });
-      if (!pulse) return apiError(request, 'NOT_FOUND', 404);
+      if (!pulse) return apiError(request, ERR.NOT_FOUND, 404);
       const aggregate =
         url.searchParams.get('aggregate') === '1'
           ? await getTeamPulseAggregate(query, {
@@ -42,13 +42,13 @@ export async function GET(request) {
       return NextResponse.json({ pulse, aggregate });
     }
 
-    if (!teamGroupId) return apiError(request, 'INVALID_ID', 400);
+    if (!teamGroupId) return apiError(request, ERR.INVALID_ID, 400);
     const items = await listTeamPulses(query, { companyId, teamGroupId });
     return NextResponse.json({ items, minResponses: items[0] ? undefined : undefined });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET team-pulses', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }
 
@@ -56,13 +56,13 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
     const body = await request.json().catch(() => ({}));
     const companyId = resolveScopedCompanyId(scope, body.companyId);
-    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+    if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
     if (body.action === 'invite' || body.action === 'inviteBatch') {
       if (body.action === 'inviteBatch') {
@@ -111,8 +111,8 @@ export async function POST(request) {
 
     return NextResponse.json({ ok: true, pulse: created.pulse }, { status: 201 });
   } catch (err) {
-    if (err?.code === '42P01') return apiError(request, 'SCHEMA_NOT_INITIALIZED', 503);
+    if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('POST team-pulses', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

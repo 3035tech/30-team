@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { runManagerWeeklyDigest } from '../../../../lib/manager-weekly-digest';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ function verifyCron(request) {
 export async function POST(request) {
   try {
     if (!verifyCron(request)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
+      return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
     const url = new URL(request.url);
@@ -39,6 +39,6 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error('POST /api/cron/manager-weekly-digest', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

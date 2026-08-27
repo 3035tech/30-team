@@ -56,7 +56,8 @@ scripts/                                           → migrate, seeds, ops (não
 | `/dashboard`, `/api/admin/*` | `middleware.js` + JWT; roles admin/direction/hr |
 | `/api/results`, `/api/public/*`, `/api/ae/*` | token de link/convite — sem sessão de gestor |
 | `/api/cron/*` | `CRON_SECRET` |
-| Erros de API | `apiError(request, 'CODE', status)` em `lib/api-error.js` |
+| Erros de API | `apiError` / `apiErrorFromResult` / `ERR` / `httpStatusForError` em `lib/api-error.js` + `lib/api-error-codes.js` (constantes string — sem enums TS; **proibido** `'CODE'` solto) |
+| Status de domínio | `lib/domain-status.js` (`EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `CLIMATE_SURVEY_STATUS`, `ROSTER_SCOPE`, …) + `PIPELINE_STAGES` em `lib/pipeline.js` |
 
 Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, para visões/módulos, `can` / `CAP` / `requireCapability` em `lib/permissions.js`. Overrides por usuário: tabela `user_capability_overrides` + `lib/user-capabilities.js` (whitelist de módulos; vazio = default da role). **Links públicos de assessment** (`/t`, `/v`, token AE, `vacancy_links`) autenticam por token — não por CAP; revogar capability do gestor não invalida convites já emitidos. Ações sensíveis: `audit()` em `lib/audit.js`.
 
@@ -69,6 +70,32 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 - **Identidade da pessoa:** `candidates` é o hub. Chave estável: `company_id` + e-mail (`upsert` por e-mail). Eneagrama (`assessments.candidate_id`), Motivadores (`ae_attempts.candidate_id` / convites AE) e People (`one_on_ones.candidate_id`) apontam para o **mesmo** registro. Não inventar merge por nome nem tabelas de pessoa paralelas.
 - **People (gestão):** hipóteses + 1:1 em `lib/people/` e na Equipe. `candidates.hr_notes` = nota livre de triagem; **não** usar como log de 1:1 (isso é `one_on_ones`).
 - Linguagem de perfil: hedging (“tende a”). Hipóteses de gestão são roteiro para conversa — não rótulo nem diagnóstico.
+
+## Constantes de domínio (não enums TypeScript)
+
+O projeto é **JavaScript puro**. Não introduzir `enum` TS. Valores fechados (erro de API, status de vaga, employment, roster, pipeline) vivem como **objetos/arrays congelados de string** em `lib/`, para reuso e grep.
+
+| Precisa de… | Use | Arquivo |
+|-------------|-----|---------|
+| Código de erro de API (`errorCode`) | `ERR.UNAUTHORIZED`, `ERR.NOT_FOUND`, … | `lib/api-error-codes.js` (reexport em `lib/api-error.js`) |
+| Status HTTP a partir do código | `httpStatusForError(code)` ou `apiErrorFromResult(request, result)` | idem |
+| Employment / vaga / clima / roster / ciclo review / PDI / pulso | `EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `CLIMATE_SURVEY_STATUS`, `ROSTER_SCOPE`, `PERFORMANCE_*`, `DEVELOPMENT_PLAN_*`, `TEAM_PULSE_STATUS` | `lib/domain-status.js` |
+| Estágios do funil / motivos de rejeição | `PIPELINE_STAGE.HIRED`, `PIPELINE_STAGES`, `REJECTION_REASONS` | `lib/pipeline.js` |
+| Capabilities / roles | `CAP`, `ROLES`, `can`, `requireCapability` | `lib/permissions.js` |
+| Notificações in-app | `NOTIF` | `lib/manager-notification-catalog.js` |
+| Modalidade / tipo de vínculo da vaga | `VACANCY_WORKPLACE_MODALITIES`, `VACANCY_EMPLOYMENT_TYPES` | `lib/vacancy-workplace.js`, `lib/vacancy-employment-type.js` |
+
+**Antes de escrever uma string de domínio** (`'employee'`, `'open'`, `'ALREADY_SUBMITTED'`, `'internal'`):
+
+1. Grep / ler o módulo da tabela acima.
+2. Reusar a constante (`ERR.X`, `EMPLOYMENT_STATUS.EMPLOYEE`, …).
+3. Se o valor **ainda não existe** e for compartilhável: **adicionar** em `ERR` / `domain-status.js` / módulo de domínio adequado **e** a chave `errors.<CODE>` em `lib/i18n.js` (pt-BR **e** en) quando for erro de API.
+4. Em SQL template: `` `... = '${EMPLOYMENT_STATUS.EMPLOYEE}'` `` (constante do código, não input do usuário).
+5. Rotas: preferir `apiError(request, ERR.X, httpStatusForError(ERR.X))` ou `apiErrorFromResult` — **não** ternário de strings soltas.
+
+**Proibido:** inventar segundo `const ERRORS = {…}` na rota; TypeScript `enum`; literais de `errorCode` / status de domínio em código novo.
+
+Regra Cursor: `.cursor/rules/domain-constants.mdc` (alwaysApply).
 
 ## Convenções de código
 
@@ -83,6 +110,7 @@ Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, p
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
 | Nomes de arquivo/export em inglês | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`) |
 | **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
+| **Constantes string** (`ERR.*`, `EMPLOYMENT_STATUS.*`, `PIPELINE_STAGES`, `CAP.*`) — ver § Constantes | Literais `'UNAUTHORIZED'` / `'employee'` / `'open'` soltos; enums TypeScript; segundo mapa de status HTTP na rota |
 | **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
 | Imports `lib/` com `../` contados pela profundidade do `route.js` (ver `.cursor/rules/api-and-auth.mdc` §11) | Copiar `../../../lib` de outra rota sem conferir pastas → `Module not found` no Docker build |
 
@@ -209,7 +237,7 @@ Fechar a entrega com o bloco **Pipeline result** do skill (`done` | `failed` | `
 
 - Locales: `pt-BR` e `en` — **sempre os dois** em `lib/i18n.js` (`messages`).
 - Tipos T1–T9 em inglês: `lib/i18n-data.js` / `lib/type-en.js`.
-- Erros de API: chave `errors.<CODE>` + `apiError`.
+- Erros de API: chave `errors.<CODE>` + `apiError` / `apiErrorFromResult`. Códigos canônicos em `ERR` (`lib/api-error-codes.js`); status HTTP via `httpStatusForError` — não espalhar ternários de string nas rotas. Domínio de funil: `PIPELINE_STAGES` em `lib/pipeline.js` (mesmo padrão de constantes).
 - Hook de UI: `lib/useLocale.js`.
 
 ## Banco de dados
@@ -236,6 +264,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não commitar salvo pedido explícito do usuário
 - Não refatorar fora do escopo do pedido
 - Não duplicar componentes **nem** funções/helpers que já existem (reutilizar / estender / extrair para `lib/` primeiro; ver § Reaproveitamento)
+- Não inventar literais de erro/status de domínio (`'UNAUTHORIZED'`, `'employee'`, `'open'`) nem enums TypeScript — usar `ERR` / `domain-status` / `pipeline` (ver § Constantes)
 - Não encerrar implementação de produto sem rodar Dev → Test → Validate (ou declarar skip/`blocked` válido; ver § Pós-implementação)
 - Não encerrar feature de uso sem atualizar README/`docs` e o Guia do painel (`panel.help.*` pt-BR+en) quando houver fluxo novo para gestor ou ops
 
@@ -266,7 +295,9 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Retenção LGPD | `lib/retention.js`, `POST /api/admin/retention/purge` (lotes) |
 | Links públicos | `lib/public-company-link.js`, `lib/public-vacancy-link.js`, `app/t`, `app/v` |
 | Timeline do candidato | `app/_components/CandidateTimeline.jsx`, `lib/hire.js` (`buildCandidateTimeline`) |
-| Auth | `lib/auth.js`, `lib/auth-edge.js`, `lib/session.js` (`session_version`), `middleware.js` |
+| Erros / status HTTP | `lib/api-error.js`, `lib/api-error-codes.js` (`ERR`, `apiErrorFromResult`) |
+| Status domínio (employment, vaga, clima, roster) | `lib/domain-status.js` |
+| Funil / rejeição | `lib/pipeline.js` (`PIPELINE_STAGES`) |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx`, `EmptyState.jsx` |

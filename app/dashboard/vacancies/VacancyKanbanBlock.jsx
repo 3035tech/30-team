@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { titleCasePersonName } from '../../../lib/person-name';
+import { PIPELINE_STAGE } from '../../../lib/pipeline';
 import { getKanbanStages } from '../dashboard-shared';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
@@ -257,7 +258,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                               {rejectionReasonLabel(locale, r.rejectionReason)}
                             </div>
                           ) : null}
-                          {r.startDate && (r.pipelineStage === 'hired') ? (
+                          {r.startDate && (r.pipelineStage === PIPELINE_STAGE.HIRED) ? (
                             <div className="mt-1 font-mono text-[10px] text-success">
                               {t(locale, 'recruiting.startDateLabel')}: {r.startDate}
                             </div>

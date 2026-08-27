@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { fetchCitiesByUf } from '../../../../lib/br-cities';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,8 @@ export async function GET(request) {
       }
     );
   } catch (e) {
-    if (e?.code === 'INVALID_UF') return apiError(request, 'INVALID_UF', 400);
+    if (e?.code === 'INVALID_UF') return apiError(request, ERR.INVALID_UF, 400);
     console.error('public/br-cities:', e);
-    return apiError(request, 'IBGE_CITIES_FAILED', 502);
+    return apiError(request, ERR.IBGE_CITIES_FAILED, 502);
   }
 }

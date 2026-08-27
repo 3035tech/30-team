@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import {
   CAP,
   getSessionPayload,
@@ -12,9 +12,9 @@ import { createUser, listUsers } from '../../../../lib/users-admin';
 
 export async function GET(request) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const url = new URL(request.url);
   const result = await listUsers({
@@ -31,14 +31,14 @@ export async function GET(request) {
 
 export async function POST(request) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const body = await request.json().catch(() => ({}));
   const role = String(body.role || '').trim();
   if (!scope.isAdmin && role === 'admin') {
-    return apiError(request, 'INVALID_ROLE', 400);
+    return apiError(request, ERR.INVALID_ROLE, 400);
   }
 
   const companyId = scope.isAdmin

@@ -7,7 +7,7 @@ import {
   requireCapability,
   verifySessionWithCapabilities,
 } from '../../../../../../lib/ae/require-admin';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { queryRead } from '../../../../../../lib/db';
 import { isRubricContextFilledEnough } from '../../../../../../lib/rubric-prompt';
 import {
@@ -48,27 +48,27 @@ export async function POST(request, { params }) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   if (!isRubricAiConfigured()) {
-    return apiError(request, 'RUBRIC_AI_NOT_CONFIGURED', 503);
+    return apiError(request, ERR.RUBRIC_AI_NOT_CONFIGURED, 503);
   }
 
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`rubric-ai:${payload.userId || ip}`, 20, 15 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const vacancyId = params?.id;
-  if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+  if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
   const vacancy = await loadVacancyScoped(vacancyId, scope);
-  if (!vacancy) return apiError(request, 'NOT_FOUND', 404);
+  if (!vacancy) return apiError(request, ERR.NOT_FOUND, 404);
 
   const body = await request.json().catch(() => ({}));
   const action = String(body.action || '').trim();
@@ -83,7 +83,7 @@ export async function POST(request, { params }) {
     if (action === 'suggestWeights') {
       const context = String(body.context || '').trim();
       if (!isRubricContextFilledEnough(context)) {
-        return apiError(request, 'RUBRIC_AI_NEED_CONTEXT', 400);
+        return apiError(request, ERR.RUBRIC_AI_NEED_CONTEXT, 400);
       }
       const out = await suggestRubricWeightsFromContext(context, locale);
       return NextResponse.json({
@@ -96,12 +96,12 @@ export async function POST(request, { params }) {
       });
     }
 
-    return apiError(request, 'INVALID_ACTION', 400);
+    return apiError(request, ERR.INVALID_ACTION, 400);
   } catch (e) {
     const code = e?.code || 'RUBRIC_AI_FAILED';
     if (code === 'RUBRIC_AI_PARSE') {
       return NextResponse.json(
-        { error: 'RUBRIC_AI_PARSE', errorCode: 'RUBRIC_AI_PARSE', raw: e.raw || null },
+        { error: 'RUBRIC_AI_PARSE', errorCode: ERR.RUBRIC_AI_PARSE, raw: e.raw || null },
         { status: 422 }
       );
     }

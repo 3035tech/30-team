@@ -8,6 +8,10 @@ import { EmptyState } from './EmptyState';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
 import { isItemDueOverdue, isPlanPeriodOverdue } from '../../lib/people/pdi-action-lines';
+import {
+  DEVELOPMENT_PLAN_ITEM_STATUS,
+  DEVELOPMENT_PLAN_STATUS,
+} from '../../lib/domain-status.js';
 
 /**
  * PDI — create/edit plan, archive, items + optional 1:1 link (B-501 / B-601).
@@ -135,7 +139,7 @@ export function DevelopmentPlansBlock({
           body: JSON.stringify({
             title: values.title,
             objective: values.objective,
-            status: 'active',
+            status: DEVELOPMENT_PLAN_STATUS.ACTIVE,
             periodStart: values.periodStart || null,
             periodEnd: values.periodEnd || null,
             seedIdeas: values.seed ? ideas : undefined,
@@ -187,8 +191,8 @@ export function DevelopmentPlansBlock({
           key: 'status',
           type: 'select',
           label: t(locale, 'panel.pdi.statusLabel'),
-          defaultValue: detail.status || 'draft',
-          options: ['draft', 'active', 'completed', 'archived'].map((s) => ({
+          defaultValue: detail.status || DEVELOPMENT_PLAN_STATUS.DRAFT,
+          options: Object.values(DEVELOPMENT_PLAN_STATUS).map((s) => ({
             value: s,
             label: t(locale, `panel.pdi.status.${s}`),
           })),
@@ -224,7 +228,7 @@ export function DevelopmentPlansBlock({
     if (!ok) return;
     setBusy(true);
     try {
-      const data = await patchPlan(detail.id, { status: 'archived' });
+      const data = await patchPlan(detail.id, { status: DEVELOPMENT_PLAN_STATUS.ARCHIVED });
       setDetail(data.plan);
       toast(t(locale, 'panel.pdi.archived'), 'ok');
       await load();
@@ -251,7 +255,9 @@ export function DevelopmentPlansBlock({
   };
 
   const toggleItemDone = async (item) => {
-    const next = item.status === 'done' ? 'todo' : 'done';
+    const next = item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE
+      ? DEVELOPMENT_PLAN_ITEM_STATUS.TODO
+      : DEVELOPMENT_PLAN_ITEM_STATUS.DONE;
     await setItemStatus(item, next);
   };
 
@@ -283,8 +289,8 @@ export function DevelopmentPlansBlock({
           key: 'status',
           type: 'select',
           label: t(locale, 'panel.pdi.itemStatusAria'),
-          defaultValue: item.status || 'todo',
-          options: ['todo', 'doing', 'done'].map((s) => ({
+          defaultValue: item.status || DEVELOPMENT_PLAN_ITEM_STATUS.TODO,
+          options: Object.values(DEVELOPMENT_PLAN_ITEM_STATUS).map((s) => ({
             value: s,
             label: t(locale, `panel.pdi.itemStatus.${s}`),
           })),
@@ -375,9 +381,9 @@ export function DevelopmentPlansBlock({
 
   if (loading) return <AppLoading variant="inline" />;
 
-  const visible = showArchived ? items : items.filter((p) => p.status !== 'archived');
+  const visible = showArchived ? items : items.filter((p) => p.status !== DEVELOPMENT_PLAN_STATUS.ARCHIVED);
   const ooOpts = Array.isArray(oneOnOnes) ? oneOnOnes : [];
-  const activePlans = items.filter((p) => p.status === 'active');
+  const activePlans = items.filter((p) => p.status === DEVELOPMENT_PLAN_STATUS.ACTIVE);
   const sumDone = activePlans.reduce((a, p) => a + (Number(p.doneCount) || 0), 0);
   const sumItems = activePlans.reduce((a, p) => a + (Number(p.itemCount) || 0), 0);
   const overallPct = sumItems > 0 ? Math.round((sumDone / sumItems) * 100) : null;
@@ -489,7 +495,7 @@ export function DevelopmentPlansBlock({
                       <button type="button" disabled={busy} className={S.btnGhost} onClick={editPlan}>
                         {t(locale, 'panel.pdi.editBtn')}
                       </button>
-                      {detail.status !== 'archived' ? (
+                      {detail.status !== DEVELOPMENT_PLAN_STATUS.ARCHIVED ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -528,7 +534,7 @@ export function DevelopmentPlansBlock({
                                   <input
                                     type="checkbox"
                                     className="h-4 w-4 accent-success"
-                                    checked={it.status === 'done'}
+                                    checked={it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE}
                                     disabled={busy}
                                     aria-label={t(locale, 'panel.pdi.markDoneAria')}
                                     onChange={() => toggleItemDone(it)}
@@ -538,7 +544,7 @@ export function DevelopmentPlansBlock({
                                   <div
                                     className={cn(
                                       'text-sm leading-snug text-ink',
-                                      it.status === 'done' && 'text-ink-muted line-through'
+                                      it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE && 'text-ink-muted line-through'
                                     )}
                                   >
                                     {it.title}

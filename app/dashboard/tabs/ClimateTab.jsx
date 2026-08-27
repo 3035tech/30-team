@@ -10,6 +10,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
 import { C } from '../../../lib/theme';
+import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
 
 function dateLocale(locale) {
   return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
@@ -62,13 +63,13 @@ const TONE_STROKE = {
 };
 
 const STATUS_CHIP = {
-  draft: 'border-ink/15 bg-ink/[0.05] text-ink-muted',
-  open: 'border-success/30 bg-success/10 text-success',
-  closed: 'border-info/25 bg-info/10 text-info',
+  [CLIMATE_SURVEY_STATUS.DRAFT]: 'border-ink/15 bg-ink/[0.05] text-ink-muted',
+  [CLIMATE_SURVEY_STATUS.OPEN]: 'border-success/30 bg-success/10 text-success',
+  [CLIMATE_SURVEY_STATUS.CLOSED]: 'border-info/25 bg-info/10 text-info',
 };
 
 function ClimateStatusChip({ status, locale }) {
-  const key = STATUS_CHIP[status] ? status : 'draft';
+  const key = STATUS_CHIP[status] ? status : CLIMATE_SURVEY_STATUS.DRAFT;
   return (
     <span
       className={cn(
@@ -385,7 +386,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         if (!res.ok) throw new Error(data?.error || 'load');
         setSelectedId(id);
         setDetail(data.survey);
-        setShowQuestions(data.survey?.status === 'draft');
+        setShowQuestions(data.survey?.status === CLIMATE_SURVEY_STATUS.DRAFT);
         const ag = await fetch(
           `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
         );
@@ -498,7 +499,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       setDetail(data.survey);
       toast(t(locale, 'panel.climate.statusUpdated'), 'ok');
       await load();
-      if (status === 'open') {
+      if (status === CLIMATE_SURVEY_STATUS.OPEN) {
         try {
           const inv = await patch(selectedId, { createInvite: true });
           const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -519,7 +520,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
 
   const createInvite = async () => {
     if (!selectedId) return;
-    if (detail?.status !== 'open') {
+    if (detail?.status !== CLIMATE_SURVEY_STATUS.OPEN) {
       toast(t(locale, 'panel.climate.needOpen'), 'info');
       return;
     }
@@ -537,7 +538,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   };
 
   const createInviteBatch = async () => {
-    if (!selectedId || detail?.status !== 'open') {
+    if (!selectedId || detail?.status !== CLIMATE_SURVEY_STATUS.OPEN) {
       toast(t(locale, 'panel.climate.needOpen'), 'info');
       return;
     }
@@ -572,7 +573,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   };
 
   const emailInvites = async () => {
-    if (!selectedId || detail?.status !== 'open') {
+    if (!selectedId || detail?.status !== CLIMATE_SURVEY_STATUS.OPEN) {
       toast(t(locale, 'panel.climate.needOpen'), 'info');
       return;
     }
@@ -833,7 +834,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               />
                             </div>
                           </div>
-                        ) : s.status === 'open' || s.status === 'closed' ? (
+                        ) : s.status === CLIMATE_SURVEY_STATUS.OPEN || s.status === CLIMATE_SURVEY_STATUS.CLOSED ? (
                           <div className="mt-2">
                             <div className="mb-0.5 font-mono text-[10px] text-ink-faint">
                               {t(locale, 'panel.climate.responseProgress', { n: listResp, min: listMin })}
@@ -882,17 +883,17 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {detail.status === 'draft' ? (
+                      {detail.status === CLIMATE_SURVEY_STATUS.DRAFT ? (
                         <button
                           type="button"
                           disabled={busy}
                           className={S.btnPrimary}
-                          onClick={() => setStatus('open')}
+                          onClick={() => setStatus(CLIMATE_SURVEY_STATUS.OPEN)}
                         >
                           {t(locale, 'panel.climate.openBtn')}
                         </button>
                       ) : null}
-                      {detail.status === 'open' ? (
+                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -902,17 +903,17 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.inviteBtn')}
                         </button>
                       ) : null}
-                      {detail.status === 'open' ? (
+                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <button
                           type="button"
                           disabled={busy}
                           className={S.btnGhost}
-                          onClick={() => setStatus('closed')}
+                          onClick={() => setStatus(CLIMATE_SURVEY_STATUS.CLOSED)}
                         >
                           {t(locale, 'panel.climate.closeBtn')}
                         </button>
                       ) : null}
-                      {detail.status === 'open' ? (
+                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <>
                           <button type="button" disabled={busy} className={S.btnGhost} onClick={createInviteBatch}>
                             {t(locale, 'panel.climate.batchBtn')}
@@ -922,7 +923,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           </button>
                         </>
                       ) : null}
-                      {detail.status !== 'closed' ? (
+                      {detail.status !== CLIMATE_SURVEY_STATUS.CLOSED ? (
                         <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
                           {t(locale, 'panel.climate.addQuestionBtn')}
                         </button>
@@ -938,7 +939,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </div>
                   </header>
 
-                  {detail.status === 'open' && inviteUrls.length === 0 ? (
+                  {detail.status === CLIMATE_SURVEY_STATUS.OPEN && inviteUrls.length === 0 ? (
                     <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-4 py-3">
                       <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'panel.climate.invitePrimaryHint')}</p>
                     </div>
@@ -962,7 +963,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </section>
                   ) : null}
 
-                  {detail.status === 'open' || detail.status === 'closed' ? (
+                  {detail.status === CLIMATE_SURVEY_STATUS.OPEN || detail.status === CLIMATE_SURVEY_STATUS.CLOSED ? (
                     aggregate?.overallMean != null ? (
                       <OverallScoreHero
                         mean={aggregate.overallMean}
@@ -1131,7 +1132,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               </span>
                               {q.prompt}
                             </span>
-                            {detail.status !== 'closed' ? (
+                            {detail.status !== CLIMATE_SURVEY_STATUS.CLOSED ? (
                               <span className="flex gap-1">
                                 <button
                                   type="button"

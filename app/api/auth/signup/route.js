@@ -3,7 +3,7 @@ import {
   hashUnusablePassword,
   issuePasswordSetupInvite,
 } from '../../../../lib/user-password-invite.js';
-import { apiError } from '../../../../lib/api-error.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { isMailConfigured } from '../../../../lib/mail.js';
 import { generateUniqueCompanySlug } from '../../../../lib/slugify.js';
 import { trackLandingEvent } from '../../../../lib/landing-analytics.js';
@@ -34,13 +34,13 @@ export async function POST(request) {
       .trim()
       .toLowerCase();
     if (!emailClean || !emailClean.includes('@') || emailClean.length > 254) {
-      return apiError(request, 'EMAIL_REQUIRED', 400);
+      return apiError(request, ERR.EMAIL_REQUIRED, 400);
     }
     if (!companyName || !fullName) {
-      return apiError(request, 'REQUIRED_FIELDS_MISSING', 400);
+      return apiError(request, ERR.REQUIRED_FIELDS_MISSING, 400);
     }
     if (!isMailConfigured()) {
-      return apiError(request, 'SMTP_NOT_CONFIGURED', 503);
+      return apiError(request, ERR.SMTP_NOT_CONFIGURED, 503);
     }
 
     // Rate limit simples (5 signups/min por IP) — opcional, adicionar depois
@@ -60,7 +60,7 @@ export async function POST(request) {
 
       if (!user.deleted && user.active && !user.signup_pending) {
         // Usuário já ativo → não revelar (segurança), mas sugerir login
-        return apiError(request, 'EMAIL_ALREADY_REGISTERED', 409);
+        return apiError(request, ERR.EMAIL_ALREADY_REGISTERED, 409);
       }
 
       if (user.signup_pending) {
@@ -155,7 +155,7 @@ export async function POST(request) {
     // Emitir token de confirmação (72h)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
-      return apiError(request, 'APP_URL_NOT_CONFIGURED', 500);
+      return apiError(request, ERR.APP_URL_NOT_CONFIGURED, 500);
     }
 
     const issued = await issuePasswordSetupInvite(userId, {
@@ -192,6 +192,6 @@ export async function POST(request) {
     return Response.json({ ok: true, action: 'created', userId, companyId });
   } catch (err) {
     console.error('[signup] Error:', err);
-    return apiError(request, 'INTERNAL', 500);
+    return apiError(request, ERR.INTERNAL, 500);
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db';
 import { drawMotivatorsQuestions } from '../../../../lib/ae/draw-questions';
 import { toPublicQuestions } from '../../../../lib/ae/to-public-questions';
-import { apiError, localeFromRequest } from '../../../../lib/api-error';
+import { apiError, localeFromRequest, ERR } from '../../../../lib/api-error';
 
 /**
  * GET /api/ae/questions?definition=motivators
@@ -27,6 +27,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('GET /api/ae/questions', err);
-    return apiError(request, 'QUESTIONS_LOAD_FAILED', 500);
+    return apiError(request, ERR.QUESTIONS_LOAD_FAILED, 500);
   }
 }

@@ -7,6 +7,7 @@ import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 import { AppLoading } from './AppLoading';
+import { TEAM_PULSE_STATUS } from '../../lib/domain-status.js';
 
 /**
  * Short pulse for a saved team group (B-603).
@@ -111,7 +112,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
       setDetail(data.pulse);
       toast(t(locale, 'panel.pulse.statusUpdated'), 'ok');
       await load();
-      if (status === 'open') {
+      if (status === TEAM_PULSE_STATUS.OPEN) {
         const inv = await fetch('/api/admin/team-pulses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -174,22 +175,22 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
       {detail ? (
         <div className="mt-3 border-t border-ink/10 pt-3">
           <div className="mb-2 flex flex-wrap gap-2">
-            {detail.status === 'draft' ? (
+            {detail.status === TEAM_PULSE_STATUS.DRAFT ? (
               <button
                 type="button"
                 disabled={busy}
                 className={S.btnBrandSoft}
-                onClick={() => setStatus('open')}
+                onClick={() => setStatus(TEAM_PULSE_STATUS.OPEN)}
               >
                 {t(locale, 'panel.pulse.openBtn')}
               </button>
             ) : null}
-            {detail.status === 'open' ? (
+            {detail.status === TEAM_PULSE_STATUS.OPEN ? (
               <button
                 type="button"
                 disabled={busy}
                 className={S.btnGhost}
-                onClick={() => setStatus('closed')}
+                onClick={() => setStatus(TEAM_PULSE_STATUS.CLOSED)}
               >
                 {t(locale, 'panel.pulse.closeBtn')}
               </button>

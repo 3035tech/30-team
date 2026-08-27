@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../lib/api-error';
+import { apiError, ERR } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import {
   completePasswordSetup,
@@ -14,7 +14,7 @@ export async function GET(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`set-password-peek:${ip}`, 40, 15 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const token = new URL(request.url).searchParams.get('token') || '';
@@ -34,7 +34,7 @@ export async function POST(request) {
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`set-password:${ip}`, 20, 15 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const body = await request.json().catch(() => ({}));

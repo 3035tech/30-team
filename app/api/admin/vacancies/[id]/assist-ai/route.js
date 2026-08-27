@@ -7,7 +7,7 @@ import {
   requireCapability,
   verifySessionWithCapabilities,
 } from '../../../../../../lib/ae/require-admin';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { queryRead } from '../../../../../../lib/db';
 import { isOpenAiConfigured } from '../../../../../../lib/openai-chat';
 import { normalizeLocale } from '../../../../../../lib/i18n';
@@ -78,27 +78,27 @@ export async function POST(request, { params }) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
-    return apiError(request, 'UNAUTHORIZED', 401);
+    return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   if (!isOpenAiConfigured()) {
-    return apiError(request, 'RUBRIC_AI_NOT_CONFIGURED', 503);
+    return apiError(request, ERR.RUBRIC_AI_NOT_CONFIGURED, 503);
   }
 
   const ip = clientIpFromRequest(request);
   const rl = checkRateLimit(`assist-ai:${payload.userId || ip}`, 30, 15 * 60 * 1000);
   if (!rl.ok) {
-    return apiError(request, 'RATE_LIMIT', 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
   const vacancyId = params?.id;
-  if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
+  if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
   const vacancy = await loadVacancyScoped(vacancyId, scope);
-  if (!vacancy) return apiError(request, 'NOT_FOUND', 404);
+  if (!vacancy) return apiError(request, ERR.NOT_FOUND, 404);
 
   const body = await request.json().catch(() => ({}));
   const action = String(body.action || '').trim();
@@ -111,7 +111,7 @@ export async function POST(request, { params }) {
         Array.isArray(body.candidates) ? body.candidates : [],
         scope
       );
-      if (!candidates.length) return apiError(request, 'ASSIST_AI_NEED_CANDIDATES', 400);
+      if (!candidates.length) return apiError(request, ERR.ASSIST_AI_NEED_CANDIDATES, 400);
       const out = await suggestExecutiveNoteAi({ vacancy, candidates, locale });
       return NextResponse.json({ ok: true, action, executiveNote: out.executiveNote, model: out.model });
     }
@@ -122,7 +122,7 @@ export async function POST(request, { params }) {
         Array.isArray(body.candidates) ? body.candidates : [],
         scope
       );
-      if (!candidates.length) return apiError(request, 'ASSIST_AI_NEED_CANDIDATES', 400);
+      if (!candidates.length) return apiError(request, ERR.ASSIST_AI_NEED_CANDIDATES, 400);
       const out = await suggestShortlistAi({ vacancy, candidates, locale });
       return NextResponse.json({
         ok: true,
@@ -138,7 +138,7 @@ export async function POST(request, { params }) {
         Array.isArray(body.candidates) ? body.candidates : [],
         scope
       );
-      if (!candidates.length) return apiError(request, 'ASSIST_AI_NEED_CANDIDATES', 400);
+      if (!candidates.length) return apiError(request, ERR.ASSIST_AI_NEED_CANDIDATES, 400);
       const out = await suggestCandidateFieldsAi({ vacancy, candidates, locale });
       return NextResponse.json({ ok: true, action, fields: out.fields, model: out.model });
     }
@@ -176,7 +176,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    return apiError(request, 'INVALID_ACTION', 400);
+    return apiError(request, ERR.INVALID_ACTION, 400);
   } catch (e) {
     const code = e?.code || 'RUBRIC_AI_FAILED';
     if (code === 'ASSIST_AI_PARSE' || code === 'ASSIST_AI_NOTE_SHORT' || code === 'ASSIST_AI_DESC_SHORT') {

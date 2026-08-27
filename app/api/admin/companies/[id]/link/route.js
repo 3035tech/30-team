@@ -4,20 +4,20 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../lib/auth';
 import { query } from '../../../../../../lib/db';
 import crypto from 'node:crypto';
-import { apiError } from '../../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../../../lib/permissions';
 
 export async function POST(request, { params }) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const companyId = params?.id;
-  if (!companyId) return apiError(request, 'INVALID_COMPANY', 400);
+  if (!companyId) return apiError(request, ERR.INVALID_COMPANY, 400);
 
   const exists = await query(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [companyId]);
-  if (exists.rowCount === 0) return apiError(request, 'COMPANY_NOT_FOUND', 404);
+  if (exists.rowCount === 0) return apiError(request, ERR.COMPANY_NOT_FOUND, 404);
 
   await query(
     `UPDATE company_links

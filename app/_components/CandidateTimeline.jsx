@@ -3,20 +3,28 @@
 import { localeHtmlLang, t } from '../../lib/i18n';
 import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
 import { cn } from '../../lib/cn';
+import { PIPELINE_STAGE } from '../../lib/pipeline';
 import { rejectionReasonLabel } from '../dashboard/pipeline-prompts';
 
 /** Funil principal (ordem). Rejeitado/arquivado entram como desvio visual. */
-const HAPPY_PATH = ['new', 'interview', 'test_completed', 'screening', 'approved', 'hired'];
+const HAPPY_PATH = [
+  PIPELINE_STAGE.NEW,
+  PIPELINE_STAGE.INTERVIEW,
+  PIPELINE_STAGE.TEST_COMPLETED,
+  PIPELINE_STAGE.SCREENING,
+  PIPELINE_STAGE.APPROVED,
+  PIPELINE_STAGE.HIRED,
+];
 
 const STAGE_LABEL_KEY = {
-  new: 'recruiting.pipelineNew',
-  interview: 'recruiting.pipelineInterview',
-  test_completed: 'recruiting.pipelineTestCompleted',
-  screening: 'recruiting.pipelineScreening',
-  approved: 'recruiting.pipelineApproved',
-  hired: 'recruiting.pipelineHired',
-  rejected: 'recruiting.pipelineRejected',
-  archived: 'recruiting.pipelineArchived',
+  [PIPELINE_STAGE.NEW]: 'recruiting.pipelineNew',
+  [PIPELINE_STAGE.INTERVIEW]: 'recruiting.pipelineInterview',
+  [PIPELINE_STAGE.TEST_COMPLETED]: 'recruiting.pipelineTestCompleted',
+  [PIPELINE_STAGE.SCREENING]: 'recruiting.pipelineScreening',
+  [PIPELINE_STAGE.APPROVED]: 'recruiting.pipelineApproved',
+  [PIPELINE_STAGE.HIRED]: 'recruiting.pipelineHired',
+  [PIPELINE_STAGE.REJECTED]: 'recruiting.pipelineRejected',
+  [PIPELINE_STAGE.ARCHIVED]: 'recruiting.pipelineArchived',
 };
 
 function pipelineLabel(locale, code) {
@@ -100,23 +108,23 @@ function resolveCurrentStage(currentStage, events = []) {
     if (ev.type === 'pipeline.change' && ev.toStage && STAGE_LABEL_KEY[ev.toStage]) {
       return ev.toStage;
     }
-    if (ev.type === 'candidate.hired') return 'hired';
-    if (ev.type === 'assessment.completed') return 'test_completed';
+    if (ev.type === 'candidate.hired') return PIPELINE_STAGE.HIRED;
+    if (ev.type === 'assessment.completed') return PIPELINE_STAGE.TEST_COMPLETED;
   }
-  return 'new';
+  return PIPELINE_STAGE.NEW;
 }
 
 function collectVisited(events = []) {
-  const visited = new Set(['new']);
+  const visited = new Set([PIPELINE_STAGE.NEW]);
   for (const ev of events) {
     if (ev.type === 'pipeline.change') {
       if (ev.fromStage) visited.add(ev.fromStage);
       if (ev.toStage) visited.add(ev.toStage);
     }
     if (ev.type === 'assessment.completed' || ev.type === 'invite.completed') {
-      visited.add('test_completed');
+      visited.add(PIPELINE_STAGE.TEST_COMPLETED);
     }
-    if (ev.type === 'candidate.hired') visited.add('hired');
+    if (ev.type === 'candidate.hired') visited.add(PIPELINE_STAGE.HIRED);
   }
   return visited;
 }
@@ -129,10 +137,10 @@ function buildSteps(currentStage, events = []) {
   const visited = collectVisited(events);
   visited.add(stage);
 
-  if (stage === 'rejected' || stage === 'archived') {
+  if (stage === PIPELINE_STAGE.REJECTED || stage === PIPELINE_STAGE.ARCHIVED) {
     let peak = 0;
     for (const id of HAPPY_PATH) {
-      if (id === 'hired') continue;
+      if (id === PIPELINE_STAGE.HIRED) continue;
       if (visited.has(id)) peak = Math.max(peak, HAPPY_PATH.indexOf(id));
     }
     const branchEv = [...events].reverse().find(
@@ -245,7 +253,7 @@ export function CandidateTimeline({
   const stage = resolveCurrentStage(currentStage, events);
   const steps = buildSteps(stage, events);
   const rejectionEv = [...events].reverse().find(
-    (ev) => ev.type === 'pipeline.change' && ev.toStage === 'rejected' && ev.reason
+    (ev) => ev.type === 'pipeline.change' && ev.toStage === PIPELINE_STAGE.REJECTED && ev.reason
   );
 
   return (
@@ -258,7 +266,7 @@ export function CandidateTimeline({
           hollow
         />
         <LegendDot color={C.border} label={t(locale, 'recruiting.timelineLegendTodo')} />
-        {(stage === 'rejected' || stage === 'archived') && (
+        {(stage === PIPELINE_STAGE.REJECTED || stage === PIPELINE_STAGE.ARCHIVED) && (
           <LegendDot color={C.faint} label={t(locale, 'recruiting.timelineLegendSkipped')} />
         )}
       </div>
@@ -355,7 +363,7 @@ export function CandidateTimeline({
         </ol>
       </div>
 
-      {stage === 'rejected' && rejectionEv?.reason ? (
+      {stage === PIPELINE_STAGE.REJECTED && rejectionEv?.reason ? (
         <p className="mt-3 mb-0 w-full text-center text-xs text-danger">
           {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, rejectionEv.reason)}
         </p>

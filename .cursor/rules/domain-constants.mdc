@@ -1,0 +1,49 @@
+---
+description: Constantes string de domínio (ERR, status, pipeline) — reutilizar, não inventar literais nem enums TS
+alwaysApply: true
+---
+
+# Constantes de domínio (30Team)
+
+**Fonte canônica:** `AGENTS.md` § Constantes de domínio.
+
+## Regra
+
+Não usar TypeScript `enum`. Valores fechados são **constantes string** em `lib/`.
+
+Antes de escrever `'UNAUTHORIZED'`, `'employee'`, `'open'`, `'internal'`, `'ALREADY_SUBMITTED'`, etc.:
+
+1. **Reutilizar** o módulo certo (tabela abaixo).
+2. Se faltar o valor e for compartilhado → **estender** o módulo + i18n `errors.*` (pt-BR+en) se for erro de API.
+3. Só então criar constante nova no lugar canônico — nunca um mapa paralelo na rota/tab.
+
+| Precisa | Importar de |
+|---------|-------------|
+| `errorCode` / `apiError` | `ERR`, `httpStatusForError`, `apiErrorFromResult` — `lib/api-error.js` ou `lib/api-error-codes.js` |
+| employment / vaga / clima / roster / review / PDI / pulso | `lib/domain-status.js` (`EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `CLIMATE_*`, `ROSTER_*`, `PERFORMANCE_*`, `DEVELOPMENT_PLAN_*`, `TEAM_PULSE_STATUS`) |
+| Pipeline / rejeição | `lib/pipeline.js` |
+| Capabilities | `CAP` — `lib/permissions.js` |
+| Notif in-app | `NOTIF` — `lib/manager-notification-catalog.js` |
+
+## Exemplos
+
+```js
+// API
+import { apiError, apiErrorFromResult, ERR, httpStatusForError } from '../../../../lib/api-error';
+return apiError(request, ERR.UNAUTHORIZED, httpStatusForError(ERR.UNAUTHORIZED));
+// ou
+return apiErrorFromResult(request, result, { fallbackCode: ERR.NOT_FOUND });
+
+// Domínio / SQL (constante do código, não input)
+import { EMPLOYMENT_STATUS, VACANCY_STATUS } from '../domain-status.js';
+// ... WHERE employment_status = '${EMPLOYMENT_STATUS.EMPLOYEE}'
+if (vac.status === VACANCY_STATUS.OPEN) { /* ... */ }
+```
+
+## Proibido
+
+- `apiError(request, 'UNAUTHORIZED', 401)` com string solta em código **novo**
+- `errorCode: 'FOO'` literal em código **novo**
+- Ternário HTTP por string na rota quando `httpStatusForError` / `apiErrorFromResult` bastam
+- Segundo `const MY_ERRORS = {…}` na feature
+- `enum` TypeScript

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '../../../../../lib/api-error';
+import { apiError, ERR } from '../../../../../lib/api-error';
 import {
   CAP,
   getSessionPayload,
@@ -10,13 +10,13 @@ import { deactivateUser, updateUser } from '../../../../../lib/users-admin';
 
 export async function PATCH(request, { params }) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.userId;
   const userId = id ? parseInt(String(id), 10) : NaN;
-  if (!Number.isFinite(userId)) return apiError(request, 'INVALID_USER', 400);
+  if (!Number.isFinite(userId)) return apiError(request, ERR.INVALID_USER, 400);
 
   const body = await request.json().catch(() => ({}));
   const result = await updateUser({
@@ -36,13 +36,13 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const payload = await getSessionPayload();
-  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
-  if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+  if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.userId;
   const userId = id ? parseInt(String(id), 10) : NaN;
-  if (!Number.isFinite(userId)) return apiError(request, 'INVALID_USER', 400);
+  if (!Number.isFinite(userId)) return apiError(request, ERR.INVALID_USER, 400);
 
   const result = await deactivateUser({
     userId,
