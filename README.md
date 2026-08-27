@@ -133,7 +133,17 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/performance-reviews.js` (ciclos, goals, reviews, `autoGeneratePdiFromReview`)
 - Migration: `056_performance_reviews.sql` (tabelas `performance_cycles`, `performance_goals`, `performance_reviews`; estende `development_plan_items.source` para incluir `'performance_review'` e adiciona FK `performance_goal_id`)
 
-**Backlog:** B-1005 a B-1009 (sucessão, análise demissional, cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
+### B-1005 — Plano de Sucessão
+- **Critical Roles** (papéis críticos da empresa): título, descrição, área, nível de impacto (high/critical)
+- **Succession Plans** (sucessores por papel): candidato, prontidão (`not_ready`, `developing`, `ready`, `now`), notas, data-alvo
+- **Readiness Score**: combina HR Score (70%) + Leadership Potential (30%) para ranquear candidatos
+- Integração com `lib/hr-score.js` (B-1001) e `lib/leadership-analytics.js` (potencial de liderança já existente)
+- UI: `SuccessionAdminTab` (criar/listar papéis críticos, ver contadores de sucessores)
+- APIs: `/api/admin/succession/critical-roles` (CRUD roles), `/api/admin/succession/plans` (CRUD succession plans), `/api/admin/succession/critical-roles/[id]/successors` (list successors)
+- Lib: `lib/succession-plans.js` (CRUD roles/plans, `calculateSuccessionReadiness`, `getPotentialSuccessors`)
+- Migration: `057_succession_plans.sql` (tabelas `critical_roles`, `succession_plans`)
+
+**Backlog:** B-1006 a B-1009 (análise demissional, cultura organizacional, Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
 
 ---
 

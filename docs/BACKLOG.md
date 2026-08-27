@@ -163,9 +163,9 @@ _(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com r
 
 _(migration 056 + lib/performance-reviews.js + APIs + UI PerformanceReviewsAdminTab)_ Ciclo leve (gestor → colaborador; não 360). Metas no ciclo com outcome (`met`, `exceeded`, `develop`, `not_met`). Outcome `develop` gera item PDI automaticamente com `source: 'performance_review'` e `performance_goal_id`. Tabelas `performance_cycles`, `performance_goals`, `performance_reviews`. UI admin de ciclos + review form (draft → submitted).
 
-### B-1005 — Plano de sucessão
+### B-1005 — Plano de sucessão ✅ ENTREGUE
 
-Papéis críticos + sucessor(es) + prontidão. Reusar HR Score (B-1001) e `leadership-analytics` (já há score de conversa de sucessão). Não org chart pesado.
+_(migration 057 + lib/succession-plans.js + APIs + UI SuccessionAdminTab)_ Papéis críticos (`critical_roles`) com sucessores (`succession_plans`) + prontidão (`not_ready`, `developing`, `ready`, `now`). Readiness score combina HR Score (70%) + Leadership Potential (30%). Integra com `lib/hr-score.js` e `lib/leadership-analytics.js`. UI admin de papéis críticos + contador de sucessores.
 
 ### B-1006 — Análise demissional
 
