@@ -11,9 +11,10 @@ import { S } from '../dashboard-shared.jsx';
 
 export function AnalyticsTab({ session }) {
   const { t, locale } = useLocale();
-  const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends'
+  const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends' | 'compare'
   const [metrics, setMetrics] = useState(null);
   const [trends, setTrends] = useState(null);
+  const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -22,6 +23,11 @@ export function AnalyticsTab({ session }) {
     vacancyId: '',
   });
   const [trendMonths, setTrendMonths] = useState(12);
+  const [compareType, setCompareType] = useState('areas'); // 'areas' | 'periods' | 'rubrics'
+  const [compareParams, setCompareParams] = useState({
+    areaA: '',
+    areaB: '',
+  });
 
   useEffect(() => {
     if (activeView === 'metrics') {
@@ -29,6 +35,7 @@ export function AnalyticsTab({ session }) {
     } else if (activeView === 'trends') {
       loadTrends();
     }
+    // Compare loads on-demand via button
   }, [activeView]);
 
   async function loadMetrics() {
@@ -79,11 +86,45 @@ export function AnalyticsTab({ session }) {
     }
   }
 
+  async function loadComparison() {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.append('type', compareType);
+      
+      if (compareType === 'areas') {
+        if (!compareParams.areaA || !compareParams.areaB) {
+          throw new Error('Select both areas');
+        }
+        params.append('areaA', compareParams.areaA);
+        params.append('areaB', compareParams.areaB);
+      }
+      // Add other types as needed
+
+      const res = await fetch(`/api/admin/analytics/compare?${params}`);
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.error || 'Failed to load comparison');
+      }
+
+      setComparison(data.comparison);
+    } catch (err) {
+      console.error('Error loading comparison:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function applyFilters() {
     if (activeView === 'metrics') {
       loadMetrics();
-    } else {
+    } else if (activeView === 'trends') {
       loadTrends();
+    } else if (activeView === 'compare') {
+      loadComparison();
     }
   }
 
@@ -120,12 +161,20 @@ export function AnalyticsTab({ session }) {
           >
             {locale === 'pt-BR' ? 'Tendências' : 'Trends'}
           </button>
+          <button
+            className={activeView === 'compare' ? S.btnPrimary : S.btnGhost}
+            onClick={() => setActiveView('compare')}
+          >
+            {locale === 'pt-BR' ? 'Comparar' : 'Compare'}
+          </button>
         </div>
 
         <h2 className="font-display text-xl mb-4">
           {activeView === 'metrics'
             ? (locale === 'pt-BR' ? 'Métricas de Efetividade' : 'Effectiveness Metrics')
-            : (locale === 'pt-BR' ? 'Tendências Temporais' : 'Trends Over Time')}
+            : activeView === 'trends'
+            ? (locale === 'pt-BR' ? 'Tendências Temporais' : 'Trends Over Time')
+            : (locale === 'pt-BR' ? 'Comparativos' : 'Comparisons')}
         </h2>
 
         {/* Filtros */}
