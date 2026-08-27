@@ -1018,6 +1018,38 @@ async function main() {
       [hrUserId, String(companyId), JSON.stringify({ slug: SLUG, people: created.length })]
     ).catch(() => {});
 
+    // B-2400: sample LMS course + enroll first employee
+    const empIds = created
+      .filter((p) => EMPLOYEES.some((e) => e.key === p.key))
+      .map((p) => p.candidateId)
+      .filter(Boolean);
+    if (empIds.length) {
+      const courseIns = await client.query(
+        `INSERT INTO lms_courses (company_id, title, description, completion_pct, created_by_user_id)
+         VALUES ($1, $2, $3, 100, $4) RETURNING id`,
+        [
+          companyId,
+          'Onboarding cultural (demo)',
+          'Curso demo LMS básico — aulas por link.',
+          hrUserId,
+        ]
+      );
+      const courseId = courseIns.rows[0].id;
+      await client.query(
+        `INSERT INTO lms_lessons (company_id, course_id, title, content_url, content_kind, sort_order)
+         VALUES
+           ($1, $2, 'Bem-vindo à empresa', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'youtube', 0),
+           ($1, $2, 'Como usamos o 30Team', 'https://example.com/demo-lms-guide.pdf', 'pdf', 1)`,
+        [companyId, courseId]
+      );
+      await client.query(
+        `INSERT INTO lms_enrollments (company_id, course_id, candidate_id, enrolled_by_user_id)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (course_id, candidate_id) DO NOTHING`,
+        [companyId, courseId, empIds[0], hrUserId]
+      );
+    }
+
     await client.query('COMMIT');
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');

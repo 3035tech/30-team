@@ -47,6 +47,7 @@ const SECTIONS = [
   'b2000LightDepth',
   'b2200RosterGrids',
   'birthdays',
+  'lmsBasic',
   'access',
   'tips',
 ];
@@ -232,6 +233,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     b2000LightDepth: 6,
     b2200RosterGrids: 4,
     birthdays: 4,
+    lmsBasic: 4,
     access: 9,
     tips: 11,
   };

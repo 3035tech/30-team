@@ -143,6 +143,10 @@ const LearningResourcesAdminTab = dynamic(
   () => import('./tabs/LearningResourcesAdminTab').then((m) => ({ default: m.LearningResourcesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const LmsAdminTab = dynamic(
+  () => import('./tabs/LmsAdminTab').then((m) => ({ default: m.LmsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const CompanyBenefitsAdminTab = dynamic(
   () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -203,6 +207,7 @@ const TAB_TO_SECTION = {
   climate: 'people',
   'job-roles': 'catalogs',
   'learning-resources': 'catalogs',
+  lms: 'catalogs',
   'company-benefits': 'catalogs',
   users: 'account',
   companies: 'account',
@@ -875,6 +880,9 @@ export default function DashboardClient({
                     {showLearning ? (
                       <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
                     ) : null}
+                    {showLearning ? (
+                      <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
+                    ) : null}
                     {showBenefits ? (
                       <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
                     ) : null}
@@ -1363,6 +1371,7 @@ export default function DashboardClient({
               {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'lms' && showLearning && <LmsAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}

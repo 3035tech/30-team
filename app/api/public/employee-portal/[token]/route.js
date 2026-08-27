@@ -5,6 +5,7 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-lim
 import {
   getEmployeePortalView,
   submitEmployeePortalPrep,
+  submitEmployeePortalLessonComplete,
 } from '../../../../../lib/people/employee-portal';
 
 /** GET /api/public/employee-portal/[token] */
@@ -25,6 +26,7 @@ export async function GET(request, { params }) {
       plans: view.plans,
       recentAgreements: view.recentAgreements,
       oneOnOnePrompts: view.oneOnOnePrompts,
+      courses: view.courses || [],
       expiresAt: view.expiresAt,
       preparedAt: view.preparedAt,
       noteToManager: view.noteToManager,
@@ -38,7 +40,7 @@ export async function GET(request, { params }) {
   }
 }
 
-/** POST /api/public/employee-portal/[token] — mark prep + optional note */
+/** POST /api/public/employee-portal/[token] — prep 1:1 or complete LMS lesson */
 export async function POST(request, { params }) {
   try {
     const ip = clientIpFromRequest(request);
@@ -50,6 +52,27 @@ export async function POST(request, { params }) {
     const token = params?.token;
     if (!token) return apiError(request, ERR.NOT_FOUND, 404);
     const body = await request.json().catch(() => ({}));
+
+    if (body.action === 'completeLesson' || body.lessonId != null) {
+      const lessonId = parseInt(String(body.lessonId || ''), 10);
+      if (!Number.isFinite(lessonId)) return apiError(request, ERR.INVALID_DATA, 400);
+      const saved = await submitEmployeePortalLessonComplete(query, { token, lessonId });
+      if (!saved.ok) {
+        const code = saved.errorCode || 'NOT_FOUND';
+        const status =
+          code === 'UNAUTHORIZED' ? 403 : code === 'NOT_FOUND' ? 404 : code === 'EXPIRED' || code === 'REVOKED' ? 410 : 400;
+        return apiError(request, code, status);
+      }
+      return NextResponse.json({
+        ok: true,
+        lessonId,
+        progressPct: saved.progressPct,
+        isComplete: saved.isComplete,
+        completedLessons: saved.completedLessons,
+        totalLessons: saved.totalLessons,
+      });
+    }
+
     if (!body.prepared && body.noteToManager == null) {
       return apiError(request, ERR.INVALID_DATA, 400);
     }

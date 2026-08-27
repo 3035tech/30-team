@@ -400,6 +400,9 @@ _(entregue — B-2201 `RosterEmptyHint` em Equipe/Compat/Comparar/Grupos/Lideran
 ### Epic B-2300 — Aniversários ✅ ENTREGUE
 _(entregue — `candidates.birth_date` + `companies.anniversary_date` (`066`); tempo de casa = `candidates.start_date` (hire); card Overview `BirthdaysCard` + `GET /api/admin/upcoming-anniversaries`; Equipe edita nascimento; Empresas edita aniversário institucional; seed demo/eval com datas na janela.)_
 
+### Epic B-2400 — LMS básico ✅ ENTREGUE (MVP)
+_(entregue — `067` `lms_courses` / `lms_lessons` / `lms_enrollments` / `lms_lesson_completions`; aba Catálogos → Cursos; matrícula de employees; progresso + conclusão por %; “Meus cursos” no `/e` token. **Fora:** quiz, certificado, SCORM, player, login colaborador. Academy (`learning_resources`) continua catálogo PDI separado.)_
+
 ---
 
 ## Aberto — Observabilidade

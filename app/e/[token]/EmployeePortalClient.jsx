@@ -67,6 +67,29 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
     }
   };
 
+  const completeLesson = async (lessonId) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/public/employee-portal/${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'completeLesson', lessonId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'lesson');
+      const refresh = await fetch(
+        `/api/public/employee-portal/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`
+      );
+      const next = await refresh.json().catch(() => ({}));
+      if (refresh.ok) setData(next);
+      toast(t(locale, 'panel.employeePortal.lessonMarked'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <AppLoading variant="panel" />;
   if (error) {
     return (
@@ -126,6 +149,67 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                   {a.meetingDate ? String(a.meetingDate).slice(0, 10) : '—'}
                 </div>
                 <RichTextView html={a.nextSteps} className="mt-1 text-xs text-ink-muted" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.coursesTitle')}</h2>
+        {(data?.courses || []).length === 0 ? (
+          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.coursesEmpty')}</p>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {data.courses.map((course) => (
+              <li key={course.enrollmentId} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="font-ui text-sm text-ink">{course.title}</div>
+                  <span className="font-mono text-[11px] text-ink-muted">
+                    {course.progressPct}%
+                    {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
+                  </span>
+                </div>
+                {course.description ? (
+                  <p className={cn(S.muted, 'mt-1 text-xs')}>{course.description}</p>
+                ) : null}
+                <ul className="mt-2 m-0 list-none space-y-2 p-0">
+                  {(course.lessons || []).map((lesson) => (
+                    <li
+                      key={lesson.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-surface px-2.5 py-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-xs text-ink">
+                          {lesson.completed ? '✓ ' : '○ '}
+                          {lesson.title}
+                        </div>
+                        <a
+                          href={lesson.contentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-mono text-[11px] text-brand-600"
+                        >
+                          {t(locale, 'panel.employeePortal.openLesson')}
+                        </a>
+                      </div>
+                      {!lesson.completed ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-[11px]')}
+                          onClick={() => completeLesson(lesson.id)}
+                        >
+                          {t(locale, 'panel.employeePortal.markLessonDone')}
+                        </button>
+                      ) : (
+                        <span className="font-mono text-[10px] text-success">
+                          {t(locale, 'panel.employeePortal.lessonDone')}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
