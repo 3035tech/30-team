@@ -179,7 +179,7 @@ Leitura hedged a partir de clima + mix T1–T9 + pulso. Valores declarados (text
 
 _(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_ Catálogo simples de recursos de aprendizagem (título, descrição, tema, tipo, URL, duração). Tipos: course, article, video, book, workshop, mentoring, other. PDI pode linkar recursos via `development_plan_resource_links` (muitos-para-muitos) ou referenciar no texto. Sem player, sem SCORM, sem acompanhamento de progresso — apenas catálogo de ações/trilhas que o gestor pode apontar no plano de desenvolvimento.
 
-### B-1009 — Catálogo de benefícios (não clube/folha)
+### B-1009 — Catálogo de benefícios (não clube/folha) ✅ ENTREGUE
 
 Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta. Sem adesão, sem desconto em folha, sem “clube”.
 

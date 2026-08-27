@@ -138,6 +138,10 @@ const LearningResourcesAdminTab = dynamic(
   () => import('./tabs/LearningResourcesAdminTab').then((m) => ({ default: m.LearningResourcesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const CompanyBenefitsAdminTab = dynamic(
+  () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const LeadsAdminTab = dynamic(
   () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -1149,6 +1153,7 @@ export default function DashboardClient({
               {tab === 'succession' && showUsers && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'exit-analysis' && showUsers && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'learning-resources' && showUsers && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'company-benefits' && showUsers && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showUsers && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (

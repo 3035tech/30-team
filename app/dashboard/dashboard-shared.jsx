@@ -207,6 +207,7 @@ const DASHBOARD_TAB_NAV = {
   succession: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.succession' },
   'exit-analysis': { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.exitAnalysis' },
   'learning-resources': { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.learningResources' },
+  'company-benefits': { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.companyBenefits' },
   companies: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.companies' },
   users: { sectionKey: 'dashboard.sectionManagement', labelKey: 'dashboard.users' },
   help: { sectionKey: 'dashboard.sectionHelp', labelKey: 'dashboard.help' },

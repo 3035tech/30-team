@@ -169,7 +169,16 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/learning-resources.js` (CRUD, `linkResourceToPdi`, `unlinkResourceFromPdi`, `getPdiLinkedResources`)
 - Migration: `059_learning_resources.sql` (tabelas `learning_resources`, `development_plan_resource_links`)
 
-**Backlog:** B-1009 (catálogo de benefícios) — ver `docs/BACKLOG.md`.
+### B-1009 — Benefícios da Empresa (Company Benefits)
+- **Catálogo informativo** de benefícios oferecidos pela empresa: nome, descrição, categoria (livre), tipo (health/dental/vision/life_insurance/retirement/vacation/flexible_hours/remote_work/gym/meal_voucher/transport_voucher/education/daycare/other)
+- **Contexto de retenção/oferta**: lista serve como referência em conversas de retenção e na composição de ofertas de emprego
+- **Sem adesão, sem folha, sem clube**: não há sistema de inscrição, desconto em folha ou gestão de adesão. Apenas catálogo de benefícios que a empresa oferece
+- UI: `CompanyBenefitsAdminTab` (CRUD com filtro por categoria)
+- APIs: `/api/admin/company-benefits` (list com `?category=`, `?categories=true`, POST), `/api/admin/company-benefits/[id]` (GET, PATCH, DELETE)
+- Lib: `lib/company-benefits.js` (CRUD, `getCompanyBenefitCategories`)
+- Migration: `060_company_benefits.sql` (tabela `company_benefits`)
+
+**Epic B-1000 completo** (B-1001 a B-1009) ✅
 
 ---
 
