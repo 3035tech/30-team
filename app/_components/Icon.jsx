@@ -144,6 +144,20 @@ export function Icon({ name, className }) {
           <path d="M9 18l6-6-6-6" />
         </svg>
       );
+    case 'chevronDown':
+      return (
+        <svg {...props}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      );
+    case 'close':
+    case 'x':
+      return (
+        <svg {...props}>
+          <path d="M18 6 6 18" />
+          <path d="M6 6l12 12" />
+        </svg>
+      );
     case 'search':
       return (
         <svg {...props}>

@@ -143,6 +143,9 @@ textarea:focus-visible {
 .db-sidebar-collapse-toggle {
   display: flex;
 }
+.db-sidebar-close-mobile {
+  display: none;
+}
 
 @media (max-width: 768px) {
   .db-hamburger {
@@ -153,15 +156,16 @@ textarea:focus-visible {
     z-index: 110;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
     border: 1px solid rgba(26,22,37,.12);
-    background: rgba(255,255,255,.92);
+    background: rgba(255,255,255,.94);
     backdrop-filter: blur(10px);
     cursor: pointer;
     font-size: 18px;
     color: rgba(26,22,37,.7);
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
   }
   .db-sidebar {
     position: fixed !important;
@@ -170,12 +174,15 @@ textarea:focus-visible {
     bottom: 0;
     z-index: 100;
     transform: translateX(-100%);
-    box-shadow: 4px 0 20px rgba(0,0,0,.12);
+    box-shadow: 4px 0 24px rgba(0,0,0,.18);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    width: min(280px, 86vw) !important;
-    padding: 24px 14px 32px 18px !important;
-    padding-top: max(24px, env(safe-area-inset-top, 0px)) !important;
+    width: min(300px, 88vw) !important;
+    max-width: 320px;
+    padding: 20px 14px 32px 18px !important;
+    padding-top: max(20px, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
   }
   .db-sidebar.db-sidebar-open {
     transform: translateX(0);
@@ -183,14 +190,23 @@ textarea:focus-visible {
   .db-sidebar-collapse-toggle {
     display: none !important;
   }
+  .db-sidebar-close-mobile {
+    display: flex !important;
+  }
   .db-overlay {
     position: fixed;
     inset: 0;
     z-index: 99;
-    background: rgba(0,0,0,.4);
+    background: rgba(0,0,0,.45);
+    display: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .db-overlay.db-overlay-visible {
     display: block;
+  }
+  body.sidebar-open {
+    overflow: hidden;
+    touch-action: none;
   }
   .db-main {
     padding: 56px 14px 40px !important;

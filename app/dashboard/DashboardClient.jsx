@@ -171,6 +171,39 @@ const ProfileTab = dynamic(
 );
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
+const NAV_SECTIONS_KEY = '30team_nav_sections_open';
+
+const DEFAULT_NAV_SECTIONS = {
+  analysis: true,
+  recruiting: true,
+  people: true,
+  catalogs: true,
+  account: true,
+  help: true,
+};
+
+const TAB_TO_SECTION = {
+  overview: 'analysis',
+  team: 'analysis',
+  compatibility: 'analysis',
+  compare: 'analysis',
+  group: 'analysis',
+  leadership: 'analysis',
+  vacancies: 'recruiting',
+  'performance-reviews': 'people',
+  succession: 'people',
+  'exit-analysis': 'people',
+  motivators: 'people',
+  climate: 'people',
+  'job-roles': 'catalogs',
+  'learning-resources': 'catalogs',
+  'company-benefits': 'catalogs',
+  users: 'account',
+  companies: 'account',
+  leads: 'account',
+  help: 'help',
+  profile: 'account',
+};
 
 /** Tabs that use the shared assessment filter chrome (area/vacancy/hist). */
 const COHORT_TABS = new Set([
@@ -235,6 +268,7 @@ export default function DashboardClient({
   const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [navSectionsOpen, setNavSectionsOpen] = useState(DEFAULT_NAV_SECTIONS);
   const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
@@ -315,6 +349,17 @@ export default function DashboardClient({
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(NAV_SECTIONS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        setNavSectionsOpen((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return undefined;
     const mq = window.matchMedia('(min-width: 769px)');
     const apply = () => setIsDesktop(mq.matches);
@@ -328,15 +373,20 @@ export default function DashboardClient({
   }, []);
 
   useEffect(() => {
-    if (!sidebarOpen || isDesktop) return undefined;
+    if (!sidebarOpen || isDesktop) {
+      document.body.classList.remove('sidebar-open');
+      return undefined;
+    }
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('sidebar-open');
     const onKey = (e) => {
       if (e.key === 'Escape') setSidebarOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('sidebar-open');
       window.removeEventListener('keydown', onKey);
     };
   }, [sidebarOpen, isDesktop]);
@@ -356,6 +406,30 @@ export default function DashboardClient({
       return next;
     });
   };
+
+  const toggleNavSection = (key) => {
+    setNavSectionsOpen((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem(NAV_SECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Keep the section that owns the active tab expanded.
+  useEffect(() => {
+    const sec = TAB_TO_SECTION[tab];
+    if (!sec) return;
+    setNavSectionsOpen((prev) => {
+      if (prev[sec]) return prev;
+      const next = { ...prev, [sec]: true };
+      try {
+        localStorage.setItem(NAV_SECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, [tab]);
 
   useEffect(() => {
     try {
@@ -603,13 +677,37 @@ export default function DashboardClient({
     </button>
   );
 
-  const sectionLabel = (text) => (
-    navCollapsed ? (
-      <div className="mx-1 mb-2 mt-2.5 h-px bg-ink/[0.08]" aria-hidden />
-    ) : (
-      <span className={S.sidebarSection}>{text}</span>
-    )
-  );
+  const sectionLabel = (sectionKey, text) => {
+    if (navCollapsed) {
+      return <div className="mx-1 mb-2 mt-2.5 h-px bg-ink/[0.08]" aria-hidden />;
+    }
+    const open = navSectionsOpen[sectionKey] !== false;
+    return (
+      <button
+        type="button"
+        className={cn(
+          S.sidebarSection,
+          'mb-1 flex w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-0 text-left hover:text-ink'
+        )}
+        onClick={() => toggleNavSection(sectionKey)}
+        aria-expanded={open}
+        aria-controls={`nav-section-${sectionKey}`}
+      >
+        <span className="min-w-0 flex-1">{text}</span>
+        <Icon name={open ? 'chevronDown' : 'chevronRight'} className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
+      </button>
+    );
+  };
+
+  const sectionBody = (sectionKey, children) => {
+    const open = navCollapsed || navSectionsOpen[sectionKey] !== false;
+    if (!open) return null;
+    return (
+      <div id={`nav-section-${sectionKey}`} className="mb-1">
+        {children}
+      </div>
+    );
+  };
 
   return (
     <AppFeedbackProvider locale={locale}>
@@ -678,85 +776,113 @@ export default function DashboardClient({
             >
               <Icon name={navCollapsed ? 'expand' : 'collapse'} />
             </button>
+            <button
+              type="button"
+              className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted"
+              onClick={() => setSidebarOpen(false)}
+              aria-label={t(locale, 'common.closeMenu')}
+            >
+              <Icon name="close" />
+            </button>
           </div>
-          <nav className="flex-1">
-            {sectionLabel(t(locale, 'dashboard.sectionAnalysis'))}
-            {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
-              <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
-            ) : null}
-            {can(sessionAuth, CAP.TEAM_VIEW) ? (
-              <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
-            ) : null}
-            {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
-              <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
-            ) : null}
-            {can(sessionAuth, CAP.COMPARE_VIEW) ? (
-              <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
-            ) : null}
-            {can(sessionAuth, CAP.GROUP_VIEW) ? (
-              <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
-            ) : null}
-            {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
-              <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
-            ) : null}
+          <nav className="flex-1 overflow-y-auto overscroll-contain pb-4">
+            {sectionLabel('analysis', t(locale, 'dashboard.sectionAnalysis'))}
+            {sectionBody('analysis', (
+              <>
+                {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+                  <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
+                ) : null}
+                {can(sessionAuth, CAP.TEAM_VIEW) ? (
+                  <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+                ) : null}
+                {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
+                  <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
+                ) : null}
+                {can(sessionAuth, CAP.COMPARE_VIEW) ? (
+                  <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
+                ) : null}
+                {can(sessionAuth, CAP.GROUP_VIEW) ? (
+                  <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
+                ) : null}
+                {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
+                  <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
+                ) : null}
+              </>
+            ))}
 
             {showVacancies ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionRecruiting'))}
-                <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
+                {sectionLabel('recruiting', t(locale, 'dashboard.sectionRecruiting'))}
+                {sectionBody('recruiting', (
+                  <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
+                ))}
               </>
             ) : null}
 
             {showMotivators || showClimate || showUsers ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionPeople'))}
-                {showUsers ? (
-                  <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
-                ) : null}
-                {showUsers ? (
-                  <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
-                ) : null}
-                {showUsers ? (
-                  <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
-                ) : null}
-                {showMotivators ? (
-                  <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
-                ) : null}
-                {showClimate ? (
-                  <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
-                ) : null}
+                {sectionLabel('people', t(locale, 'dashboard.sectionPeople'))}
+                {sectionBody('people', (
+                  <>
+                    {showUsers ? (
+                      <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
+                    ) : null}
+                    {showUsers ? (
+                      <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
+                    ) : null}
+                    {showUsers ? (
+                      <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
+                    ) : null}
+                    {showMotivators ? (
+                      <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
+                    ) : null}
+                    {showClimate ? (
+                      <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
+                    ) : null}
+                  </>
+                ))}
               </>
             ) : null}
 
             {showUsers ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionCatalogs'))}
-                <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
-                <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
-                <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
+                {sectionLabel('catalogs', t(locale, 'dashboard.sectionCatalogs'))}
+                {sectionBody('catalogs', (
+                  <>
+                    <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
+                    <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
+                    <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
+                  </>
+                ))}
               </>
             ) : null}
 
             {showCompanies || showUsers || showLeads ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel(t(locale, 'dashboard.sectionAccount'))}
-                {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
-                {showCompanies ? (
-                  <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
-                ) : null}
-                {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                {sectionLabel('account', t(locale, 'dashboard.sectionAccount'))}
+                {sectionBody('account', (
+                  <>
+                    {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
+                    {showCompanies ? (
+                      <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
+                    ) : null}
+                    {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                  </>
+                ))}
               </>
             ) : null}
 
             <div className="my-2 h-px bg-ink/[0.08]" />
-            {sectionLabel(t(locale, 'dashboard.sectionHelp'))}
-            {can(sessionAuth, CAP.HELP_VIEW) ? (
-              <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
-            ) : null}
+            {sectionLabel('help', t(locale, 'dashboard.sectionHelp'))}
+            {sectionBody('help', (
+              can(sessionAuth, CAP.HELP_VIEW) ? (
+                <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
+              ) : null
+            ))}
           </nav>
         </aside>
 

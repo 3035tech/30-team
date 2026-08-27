@@ -354,6 +354,22 @@ _(entregue — B-1402 tokens + B-1403 migração dos selects ad hoc: page-size, 
 
 ---
 
+## Aberto — Tema / layout dark
+
+### B-1501 — Dark mode completo e confiável
+O toggle e a class `.dark` existem (`DarkModeProvider`, `app/dark-mode.css`, tokens Tailwind), mas **ainda não funciona bem** na prática: várias superfícies do dashboard (cards, chrome, overlays, formulários, kanban, PDF/print) ficam ilegíveis ou “meio claro”.
+
+**Instruções:**
+1. Auditoria visual por aba (Overview → Equipe → Vagas → Analytics) em viewport desktop + mobile.
+2. Completar overrides em `dark-mode.css` / tokens CSS vars para `bg-surface`, `canvas`, borders, `S.*`, dialogs, toasts.
+3. Garantir contraste AA em texto muted / labels / chips de pipeline (sem reinventar design system).
+4. Testar persistência `localStorage` + flash no load (script no `layout.jsx`).
+5. Não seguir preferência do SO por padrão (já é light até o usuário escolher).
+
+**Fora:** segundo tema custom por empresa; modo “auto” OS (opcional depois).
+
+---
+
 ## Notas
 
 - Qualidade/testes **B-001–B-006** entregues.
@@ -366,4 +382,4 @@ _(entregue — B-1402 tokens + B-1403 migração dos selects ad hoc: page-size, 
 - Epic **B-900** entregue (Sprint A/B/C — Overview atenção + Fit/briefing/report + mix/rubrica/clima).
 - Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).
 - **Onboarding Contextual** (Melhoria #1 — Sprint Quick Wins) entregue: tooltips contextuais, checklist de progresso (7 tarefas), empty states acionáveis, tour guiado opcional (5 steps). Ver `docs/onboarding-contextual.md`.
-- **UX/UI — Categoria Completa** (Melhorias #3-#9) entregue: Sistema Undo/Confirmação, Loading States rico, Mobile fixes completo (10 áreas), Busca global Cmd+K, Atalhos de teclado (j/k/g+tecla/?), Modo escuro. Ver `docs/ux-ui-improvements.md`.
+- **UX/UI — Categoria Completa** (Melhorias #3-#9) parcialmente: Undo/Confirmação, Loading, Mobile (drawer corrigido), Cmd+K, atalhos. **Modo escuro:** toggle existe mas layout ainda incompleto → **B-1501**.

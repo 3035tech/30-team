@@ -5,6 +5,7 @@ import {
   parseTeamSort,
   sqlTeamOrderBy,
   assessmentListWhereParts,
+  resolveCohortCompanyId,
   parsePipelineFilter,
   parseDateFilter,
   parseNameSearch,
@@ -24,6 +25,7 @@ import {
 import { buildOverviewMetrics } from '../../lib/overview-metrics';
 import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles';
 import { getOnboardingProgress } from '../../lib/onboarding-progress';
+import { isSuperAdminPayload } from '../../lib/permissions';
 
 /** Max rows in the vacancy filter dropdown (cohort tabs only). */
 const VACANCIES_FILTER_CAP = 200;
@@ -146,7 +148,11 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
 
     if (cos) {
       companiesForFilter = cos.rows;
-      if (rawCompany !== 'all') {
+      // Tenant-bound admin: only their company in the chrome (never "all tenants").
+      if (isAdmin && companyId != null && !isSuperAdminPayload(payload)) {
+        companiesForFilter = cos.rows.filter((x) => Number(x.id) === Number(companyId));
+        scopeCompanyFilter = Number(companyId);
+      } else if (rawCompany !== 'all') {
         const cid = parseInt(rawCompany, 10);
         if (Number.isFinite(cid) && companiesForFilter.some((x) => Number(x.id) === cid)) {
           scopeCompanyFilter = cid;
@@ -158,14 +164,17 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
       if (Number.isFinite(cid)) scopeCompanyFilter = cid;
     }
 
+    // Align vacancy/area chrome with cohort tenant (same rules as assessmentListWhereParts).
+    const effectiveCompanyId = resolveCohortCompanyId({ isAdmin, companyId, scopeCompanyFilter });
+    if (effectiveCompanyId != null && scopeCompanyFilter == null && isAdmin) {
+      scopeCompanyFilter = effectiveCompanyId;
+    }
+
     if (needVacanciesFilter) {
       const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
       const vParams = [];
-      if (!isAdmin) {
-        vParams.push(companyId);
-        vWhereParts.push(`v.company_id = $${vParams.length}`);
-      } else if (scopeCompanyFilter != null) {
-        vParams.push(scopeCompanyFilter);
+      if (effectiveCompanyId != null) {
+        vParams.push(effectiveCompanyId);
         vWhereParts.push(`v.company_id = $${vParams.length}`);
       }
       const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
@@ -187,11 +196,8 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
         if (Number.isFinite(selId) && !vacancies.some((x) => Number(x.id) === selId)) {
           const oneParams = [selId];
           let oneExtra = '';
-          if (!isAdmin) {
-            oneParams.push(companyId);
-            oneExtra = ` AND v.company_id = $2`;
-          } else if (scopeCompanyFilter != null) {
-            oneParams.push(scopeCompanyFilter);
+          if (effectiveCompanyId != null) {
+            oneParams.push(effectiveCompanyId);
             oneExtra = ` AND v.company_id = $2`;
           }
           const one = await queryRead(
@@ -226,11 +232,8 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
     if (needAreaCounts) {
       const countWhereParts = [];
       const cParams = [];
-      if (!isAdmin) {
-        cParams.push(companyId);
-        countWhereParts.push(`ass.company_id = $${cParams.length}`);
-      } else if (scopeCompanyFilter != null) {
-        cParams.push(scopeCompanyFilter);
+      if (effectiveCompanyId != null) {
+        cParams.push(effectiveCompanyId);
         countWhereParts.push(`ass.company_id = $${cParams.length}`);
       }
       const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';

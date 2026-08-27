@@ -38,7 +38,8 @@ export async function GET(request) {
   const selectedVacancy = (url.searchParams.get('vacancy') || 'all').toString();
   const rawCompany = (url.searchParams.get('company') || 'all').toString();
   let scopeCompanyFilter = null;
-  if (isAdmin && rawCompany !== 'all') {
+  // Super-admin may chip a company; tenant-bound admin is forced to home via resolveCohortCompanyId.
+  if (isAdmin && rawCompany !== 'all' && companyId == null) {
     const cid = parseInt(rawCompany, 10);
     if (Number.isFinite(cid)) {
       const ok = await queryRead(`SELECT id FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`, [cid]);

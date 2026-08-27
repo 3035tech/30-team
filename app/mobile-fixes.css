@@ -1,35 +1,16 @@
 /**
  * Mobile Fixes Críticos
  * UX/UX Melhoria #5 — Garantir usabilidade em mobile
+ *
+ * Sidebar drawer stacking/visibility lives in globals.css (.db-sidebar / .db-overlay).
+ * Do not lower z-index here — that broke the mobile menu (drawer under content).
  */
 
 /* =================================================================
-   1. SIDEBAR — Fechar automaticamente em mobile após navegação
+   1. SIDEBAR — body lock (class toggled from DashboardClient)
    ================================================================= */
 
 @media (max-width: 768px) {
-  /* Garantir que overlay cubra toda tela */
-  .db-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 39;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms ease-in-out;
-  }
-
-  .db-overlay-visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* Sidebar deve ficar acima do overlay */
-  .db-sidebar {
-    z-index: 40 !important;
-  }
-
-  /* Prevenir scroll do body quando sidebar aberta */
   body.sidebar-open {
     overflow: hidden;
   }

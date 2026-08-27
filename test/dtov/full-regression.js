@@ -75,6 +75,32 @@ async function runOfflineLibs() {
     return 'ok';
   });
 
+  await check('lib', 'cohort-company-scope', async () => {
+    const { resolveCohortCompanyId, assessmentListWhereParts } = await import(
+      '../../lib/assessment-filters.js'
+    );
+    if (resolveCohortCompanyId({ isAdmin: true, companyId: 12, scopeCompanyFilter: null }) !== 12) {
+      throw new Error('tenant-bound admin must default to home company');
+    }
+    if (resolveCohortCompanyId({ isAdmin: true, companyId: 12, scopeCompanyFilter: 99 }) !== 12) {
+      throw new Error('tenant-bound admin must ignore other company chip');
+    }
+    if (resolveCohortCompanyId({ isAdmin: true, companyId: null, scopeCompanyFilter: null }) != null) {
+      throw new Error('super-admin without chip must be unscoped');
+    }
+    const scoped = assessmentListWhereParts({
+      isAdmin: true,
+      companyId: 42,
+      scopeCompanyFilter: null,
+      selectedArea: 'all',
+      selectedVacancy: 'all',
+    });
+    if (!scoped.whereParts.some((p) => p.includes('ass.company_id')) || scoped.params[0] !== 42) {
+      throw new Error('assessmentListWhereParts missing tenant filter for bound admin');
+    }
+    return 'tenant-bound admin scoped';
+  });
+
   await check('lib', 'decision-brief-exports', async () => {
     const { readFile } = await import('node:fs/promises');
     const { fileURLToPath } = await import('node:url');
