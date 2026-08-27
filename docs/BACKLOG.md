@@ -134,22 +134,6 @@ Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma →
 
 _(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
 
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
-### B-1001 — Núcleo: HR Score + predições ✅ ENTREGUE
-
-_(migration 054 + lib/hr-score.js + APIs + UI Equipe/Overview)_ Consolida 7 sinais em score 0–100. Predições: risco, gaps PDI.
-
 
 ### B-1002 — Radar de rotatividade (multi-sinal) ✅ ENTREGUE
 
@@ -159,25 +143,25 @@ _(lib/turnover-radar.js + API `/api/admin/turnover-radar/company` + TurnoverRada
 
 _(migration 055 + lib/job-roles.js + APIs REST + i18n)_ Tabela `job_roles` com rubrica T1-T9. Vagas podem herdar cargo via FK `job_role_id`. CRUD completo (list, create, update, deactivate). UI de cadastro/listagem pendente para próximo ciclo.
 
-### B-1004 — Avaliação de desempenho + metas → PDI
+### B-1004 — Avaliação de desempenho + metas → PDI ✅ ENTREGUE
 
-Ciclo leve (gestor → colaborador; não 360). Metas no ciclo. Gap/outcome `develop` gera item PDI automaticamente (estender `ITEM_SOURCES`). Não AVD completa.
+_(migration 056 + lib/performance-reviews.js + APIs + PerformanceReviewsAdminTab)_ Ciclo leve (gestor → colaborador). Metas no ciclo. Gap/outcome `develop` gera item PDI automaticamente.
 
-### B-1005 — Plano de sucessão
+### B-1005 — Plano de sucessão ✅ ENTREGUE
 
-Papéis críticos + sucessor(es) + prontidão. Reusar HR Score (B-1001) e `leadership-analytics` (já há score de conversa de sucessão). Não org chart pesado.
+_(migration 057 + lib/succession-plans.js + APIs + SuccessionAdminTab)_ Papéis críticos + sucessor(es) + prontidão. Reusa HR Score (B-1001).
 
-### B-1006 — Análise demissional
+### B-1006 — Análise demissional ✅ ENTREGUE
 
-Registro de saída (motivo + texto) no `candidate` alumni. Agregar motivos × tipo/área (padrão C4). Leitura: o que corrigir na seleção (M1) e na gestão (M3/M4). Sem workflow de desligamento DP.
+_(migration 058 + lib/exit-analysis.js + APIs + ExitAnalysisAdminTab + ExitInsightsCard)_ Registro de saída (motivo + texto). Agrega motivos × tipo/área.
 
 ### B-1007 — Cultura organizacional
 
 Leitura hedged a partir de clima + mix T1–T9 + pulso. Valores declarados (texto rico da empresa, já há “sobre”) vs praticada (sinais). Sem segundo instrumento.
 
-### B-1008 — Academy leve (não LMS)
+### B-1008 — Academy leve ✅ ENTREGUE
 
-Catálogo curto de ações/trilhas (título, tema) que o PDI pode apontar. Sem player, sem SCORM, sem escola completa.
+_(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_ Catálogo de ações/trilhas que o PDI pode apontar. Não LMS.
 
 ### B-1009 — Catálogo de benefícios (não clube/folha)
 
@@ -185,9 +169,158 @@ Lista de benefícios da empresa (nome, ativo) para contexto de retenção/oferta
 
 ---
 
+## Aberto — Epic B-1100 (Analytics avançado)
+
+Transformar dados comportamentais em **inteligência acionável** para decisões estratégicas de RH. Foco: métricas de efetividade, tendências, comparativos e alertas proativos.
+
+**Princípios:**
+- Reusar dados já coletados (T1–T9, Motivadores, PDI, clima, turnover)
+- Export estruturado (não só CSV genérico)
+- Dashboards focados em **decisão**, não vanity metrics
+- Alertas baseados em thresholds (não só notificação pontual)
+
+**Fora deste Epic:** BI genérico (Metabase/Looker embed), data lake, ML custom, dashboards 100% customizáveis pelo usuário final.
+
+### Ordem de entrega
+
+1. **B-1101 — Métricas de efetividade (hiring ROI)**
+2. **B-1102 — Tendências temporais (time series)**
+3. **B-1103 — Comparativos (área, período, rubrica)**
+4. **B-1104 — Alertas e anomalias**
+5. **B-1105 — Export estruturado (JSON/Excel)**
+6. **B-1106 — API de métricas (externas/integrações)**
+7. **B-1107 — Relatórios agendados (email/PDF)**
+
+### B-1101 — Métricas de efetividade (hiring ROI)
+
+**O quê:** Dashboard com métricas de **impacto real** do processo seletivo:
+- **Time-to-hire** (dias: vaga aberta → contratação)
+- **Time-to-productivity** (dias até HR Score > 60 ou primeira review positiva)
+- **Custo-por-contratação** (opcional: campo manual)
+- **Taxa de retenção** (% contratados que ficam 6m/12m/24m)
+- **Fit médio contratados** vs **fit médio pool**
+- **Aderência rubrica** (fit T1–T9 contratados vs expectativa da vaga)
+
+**Onde:** nova aba **Analytics** no dashboard (ou sub-aba da Overview)
+
+**Saída:**
+- Cards com número + Δ período anterior
+- Gráfico de tendência (últimos 6/12 meses)
+- Drill-down por vaga/área/gestor
+- Export de métricas
+
+**Reuso:**
+- `vacancies` (created_at, deadline)
+- `candidates` + `hire_date` (já existe via B-700)
+- `hr_scores` (B-1001)
+- `assessments` + rubrica da vaga
+- `vacancy_links` (funil)
+
+### B-1102 — Tendências temporais (time series)
+
+**O quê:** Gráficos de **evolução ao longo do tempo**:
+- HR Score médio do time (mensal)
+- Turnover risk (% alto risco, mensal)
+- Clima médio (mensal)
+- PDI completion rate (mensal)
+- Contratações × desligamentos (mensal)
+
+**Onde:** aba Analytics, sub-seção "Tendências"
+
+**Saída:**
+- Line charts (últimos 12/24 meses)
+- Marcadores de eventos (ex: "ciclo de review Q2")
+- Filtro por área/grupo
+- Export PNG/CSV
+
+### B-1103 — Comparativos (área, período, rubrica)
+
+**O quê:** **Comparar** métricas entre segmentos:
+- Área A vs Área B (clima, HR Score, turnover)
+- Período A vs Período B (antes/depois de ação)
+- Rubrica A vs Rubrica B (fit médio, retenção)
+- Gestor A vs Gestor B (time-to-hire, retenção)
+
+**Onde:** aba Analytics, sub-seção "Comparativos"
+
+**Saída:**
+- Tabela side-by-side
+- Bar chart comparativo
+- Testes de significância (opcional: t-test se N > 30)
+- Export
+
+### B-1104 — Alertas e anomalias
+
+**O quê:** **Detecção proativa** de padrões anormais:
+- Clima caiu > 15% em 1 mês (área/empresa)
+- Turnover risk subiu > 20% em 1 trimestre
+- Time-to-hire > 90 dias (vaga específica)
+- HR Score médio < 50 (área)
+- PDI completion < 30% (empresa)
+
+**Onde:** notificações in-app + email digest
+
+**Saída:**
+- Alerta com contexto (o quê mudou, onde, quando)
+- Link para drill-down
+- Sugestão de ação (ex: "Revisar clima na área X")
+
+**Reuso:** `manager_notifications` (já existe), novo tipo `ANALYTICS_ALERT`
+
+### B-1105 — Export estruturado (JSON/Excel)
+
+**O quê:** Export **rico** além do CSV básico:
+- JSON (API-friendly, estruturado)
+- Excel com múltiplas abas (overview, detalhes, gráficos)
+- Filtros aplicados no export (não dump completo)
+
+**Onde:** botão "Export" em cada visão de Analytics
+
+**Saída:**
+- Arquivo baixável
+- Metadados (período, filtros, gerado em X)
+- Formato escolhido pelo usuário (CSV/JSON/XLSX)
+
+**Reuso:** `lib/export-assessments-csv.js` (já existe), estender
+
+### B-1106 — API de métricas (externas/integrações)
+
+**O quê:** **API REST** para expor métricas:
+- `GET /api/admin/analytics/metrics` (HR Score, clima, turnover)
+- `GET /api/admin/analytics/trends` (time series)
+- `GET /api/admin/analytics/comparisons` (segmentação)
+
+**Autenticação:** JWT de gestor (mesmo padrão `/api/admin/*`)
+
+**Saída:**
+- JSON estruturado
+- Paginação
+- Rate limiting
+- Documentação OpenAPI/Swagger (opcional)
+
+**Uso:** integrações com BI externo, automações, webhooks
+
+### B-1107 — Relatórios agendados (email/PDF)
+
+**O quê:** **Envio automático** de relatórios:
+- Weekly/monthly digest de métricas
+- PDF com gráficos + resumo executivo
+- Destinatários: direction/admin (configurável)
+
+**Onde:** config em Settings ou aba Analytics
+
+**Saída:**
+- Email com PDF anexo
+- HTML inline (charts + tabelas)
+- Botão "Ver no dashboard" (link direto)
+
+**Reuso:** `lib/mail.js`, crons (já há `manager-weekly-digest`)
+
+---
+
 ## Em andamento
 
-_(vazio — B-1000 registrado; aguardando fatia para implementar)_
+**B-1100 — Analytics avançado** (preparando B-1101)
 
 ---
 
