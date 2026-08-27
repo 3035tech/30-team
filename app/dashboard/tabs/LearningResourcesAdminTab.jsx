@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { RichTextView } from '../../_components/RichTextView';
+import { TagChips } from '../../_components/TagInput';
+import { formatTagList, parseTagList } from '../../lib/tag-list';
+import { S } from '../dashboard-shared';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [resources, setResources] = useState([]);
@@ -25,14 +29,13 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         filterType: 'Filtrar por tipo',
         allTypes: 'Todos os tipos',
         title_col: 'Título',
-        theme_col: 'Tema',
+        theme_col: 'Temas',
         type_col: 'Tipo',
         duration_col: 'Duração',
         actions_col: 'Ações',
         edit: 'Editar',
         deactivate: 'Desativar',
         confirmDeactivate: 'Desativar este recurso?',
-        // Resource types
         course: 'Curso',
         article: 'Artigo',
         video: 'Vídeo',
@@ -41,14 +44,20 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         mentoring: 'Mentoria',
         other: 'Outro',
         hours: 'h',
-        // Form
         formTitle: 'Recurso de Aprendizagem',
         formTitleLabel: 'Título',
         formDescLabel: 'Descrição',
-        formThemeLabel: 'Tema (ex: Liderança, Comunicação)',
+        formThemeLabel: 'Temas',
+        formThemeHelp: 'Digite e pressione Enter (ou vírgula). Cada tema vira uma tag removível.',
+        formThemePh: 'Ex.: Liderança',
         formTypeLabel: 'Tipo',
         formUrlLabel: 'URL (opcional)',
         formDurationLabel: 'Duração (horas, opcional)',
+        created: 'Recurso criado',
+        updated: 'Recurso atualizado',
+        deactivated: 'Recurso desativado',
+        loadError: 'Erro ao carregar recursos',
+        saveError: 'Erro ao salvar',
       },
       en: {
         title: 'Academy (Learning Resources)',
@@ -61,14 +70,13 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         filterType: 'Filter by type',
         allTypes: 'All types',
         title_col: 'Title',
-        theme_col: 'Theme',
+        theme_col: 'Themes',
         type_col: 'Type',
         duration_col: 'Duration',
         actions_col: 'Actions',
         edit: 'Edit',
         deactivate: 'Deactivate',
         confirmDeactivate: 'Deactivate this resource?',
-        // Resource types
         course: 'Course',
         article: 'Article',
         video: 'Video',
@@ -77,14 +85,20 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         mentoring: 'Mentoring',
         other: 'Other',
         hours: 'h',
-        // Form
         formTitle: 'Learning Resource',
         formTitleLabel: 'Title',
         formDescLabel: 'Description',
-        formThemeLabel: 'Theme (e.g., Leadership, Communication)',
+        formThemeLabel: 'Themes',
+        formThemeHelp: 'Type and press Enter (or comma). Each theme becomes a removable tag.',
+        formThemePh: 'e.g. Leadership',
         formTypeLabel: 'Type',
         formUrlLabel: 'URL (optional)',
         formDurationLabel: 'Duration (hours, optional)',
+        created: 'Resource created',
+        updated: 'Resource updated',
+        deactivated: 'Resource deactivated',
+        loadError: 'Failed to load resources',
+        saveError: 'Failed to save',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -108,8 +122,9 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       const res = await fetch(url);
       const data = await res.json();
       if (data.ok) setResources(data.resources || []);
-    } catch (err) {
-      toast('error', 'Erro ao carregar recursos');
+      else toast(t('loadError'), 'error');
+    } catch {
+      toast(t('loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -126,31 +141,77 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     }
   }
 
+  function resourceFields(resource) {
+    return [
+      {
+        name: 'title',
+        label: t('formTitleLabel'),
+        type: 'text',
+        required: true,
+        value: resource?.title || '',
+      },
+      {
+        name: 'description',
+        label: t('formDescLabel'),
+        type: 'richText',
+        required: false,
+        value: resource?.description || '',
+        minHeight: 120,
+      },
+      {
+        name: 'theme',
+        label: t('formThemeLabel'),
+        type: 'tags',
+        required: false,
+        value: parseTagList(resource?.theme),
+        placeholder: t('formThemePh'),
+        help: t('formThemeHelp'),
+        suggestions: themes,
+        maxTags: 10,
+        tagMax: 40,
+      },
+      {
+        name: 'resourceType',
+        label: t('formTypeLabel'),
+        type: 'select',
+        required: false,
+        value: resource?.resourceType || 'course',
+        options: [
+          { value: 'course', label: t('course') },
+          { value: 'article', label: t('article') },
+          { value: 'video', label: t('video') },
+          { value: 'book', label: t('book') },
+          { value: 'workshop', label: t('workshop') },
+          { value: 'mentoring', label: t('mentoring') },
+          { value: 'other', label: t('other') },
+        ],
+      },
+      { name: 'url', label: t('formUrlLabel'), type: 'text', required: false, value: resource?.url || '' },
+      {
+        name: 'durationHours',
+        label: t('formDurationLabel'),
+        type: 'text',
+        required: false,
+        value: resource?.durationHours != null ? String(resource.durationHours) : '',
+      },
+    ];
+  }
+
+  function payloadFromForm(result) {
+    return {
+      title: result.title,
+      description: result.description,
+      theme: formatTagList(result.theme),
+      resourceType: result.resourceType,
+      url: result.url,
+      durationHours: result.durationHours,
+    };
+  }
+
   async function handleCreate() {
     const result = await promptForm({
       title: t('formTitle'),
-      fields: [
-        { name: 'title', label: t('formTitleLabel'), type: 'text', required: true },
-        { name: 'description', label: t('formDescLabel'), type: 'textarea', required: false },
-        { name: 'theme', label: t('formThemeLabel'), type: 'text', required: false },
-        {
-          name: 'resourceType',
-          label: t('formTypeLabel'),
-          type: 'select',
-          required: false,
-          options: [
-            { value: 'course', label: t('course') },
-            { value: 'article', label: t('article') },
-            { value: 'video', label: t('video') },
-            { value: 'book', label: t('book') },
-            { value: 'workshop', label: t('workshop') },
-            { value: 'mentoring', label: t('mentoring') },
-            { value: 'other', label: t('other') },
-          ],
-        },
-        { name: 'url', label: t('formUrlLabel'), type: 'text', required: false },
-        { name: 'durationHours', label: t('formDurationLabel'), type: 'text', required: false },
-      ],
+      fields: resourceFields(null),
     });
     if (!result) return;
 
@@ -158,53 +219,25 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       const res = await fetch('/api/admin/learning-resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify(payloadFromForm(result)),
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', 'Recurso criado');
+        toast(t('created'), 'ok');
         loadResources();
         loadThemes();
       } else {
-        toast('error', 'Erro ao criar recurso');
+        toast(data.error || t('saveError'), 'error');
       }
-    } catch (err) {
-      toast('error', 'Erro ao criar recurso');
+    } catch {
+      toast(t('saveError'), 'error');
     }
   }
 
   async function handleEdit(resource) {
     const result = await promptForm({
       title: t('formTitle'),
-      fields: [
-        { name: 'title', label: t('formTitleLabel'), type: 'text', required: true, value: resource.title },
-        { name: 'description', label: t('formDescLabel'), type: 'textarea', required: false, value: resource.description },
-        { name: 'theme', label: t('formThemeLabel'), type: 'text', required: false, value: resource.theme },
-        {
-          name: 'resourceType',
-          label: t('formTypeLabel'),
-          type: 'select',
-          required: false,
-          value: resource.resourceType,
-          options: [
-            { value: 'course', label: t('course') },
-            { value: 'article', label: t('article') },
-            { value: 'video', label: t('video') },
-            { value: 'book', label: t('book') },
-            { value: 'workshop', label: t('workshop') },
-            { value: 'mentoring', label: t('mentoring') },
-            { value: 'other', label: t('other') },
-          ],
-        },
-        { name: 'url', label: t('formUrlLabel'), type: 'text', required: false, value: resource.url },
-        {
-          name: 'durationHours',
-          label: t('formDurationLabel'),
-          type: 'text',
-          required: false,
-          value: resource.durationHours || '',
-        },
-      ],
+      fields: resourceFields(resource),
     });
     if (!result) return;
 
@@ -212,18 +245,18 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       const res = await fetch(`/api/admin/learning-resources/${resource.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify(payloadFromForm(result)),
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', 'Recurso atualizado');
+        toast(t('updated'), 'ok');
         loadResources();
         loadThemes();
       } else {
-        toast('error', 'Erro ao atualizar recurso');
+        toast(data.error || t('saveError'), 'error');
       }
-    } catch (err) {
-      toast('error', 'Erro ao atualizar recurso');
+    } catch {
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -237,13 +270,13 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', 'Recurso desativado');
+        toast(t('deactivated'), 'ok');
         loadResources();
       } else {
-        toast('error', 'Erro ao desativar recurso');
+        toast(data.error || t('saveError'), 'error');
       }
-    } catch (err) {
-      toast('error', 'Erro ao desativar recurso');
+    } catch {
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -251,19 +284,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-ink">{t('title')}</h2>
         <p className="text-sm text-ink-muted mt-1">{t('subtitle')}</p>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 items-center flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         {isAdmin && (
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center gap-2 rounded-control bg-brand-500 px-4 py-2 text-sm text-white hover:bg-brand-600"
-          >
+          <button type="button" onClick={handleCreate} className={S.btnPrimary}>
             + {t('create')}
           </button>
         )}
@@ -271,7 +299,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           <select
             value={filterTheme}
             onChange={(e) => setFilterTheme(e.target.value)}
-            className="rounded-control border border-ink/20 bg-white px-3 py-2 text-sm text-ink"
+            aria-label={t('filterTheme')}
+            className={S.select}
           >
             <option value="">{t('allThemes')}</option>
             {themes.map((theme) => (
@@ -284,7 +313,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-control border border-ink/20 bg-white px-3 py-2 text-sm text-ink"
+          aria-label={t('filterType')}
+          className={S.select}
         >
           <option value="">{t('allTypes')}</option>
           <option value="course">{t('course')}</option>
@@ -297,13 +327,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         </select>
       </div>
 
-      {/* List */}
       {resources.length === 0 ? (
-        <EmptyState
-          title={t('noResources')}
-          description={t('noResourcesDesc')}
-          icon="📚"
-        />
+        <EmptyState title={t('noResources')} description={t('noResourcesDesc')} icon="📚" />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full">
@@ -330,21 +355,24 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
               {resources.map((res) => (
                 <tr key={res.id} className="hover:bg-canvas-alt/50">
                   <td className="px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-ink">{res.title}</p>
-                      {res.url && (
-                        <a
-                          href={res.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-brand-600 hover:text-brand-700"
-                        >
-                          Link →
-                        </a>
-                      )}
-                    </div>
+                    <p className="text-sm font-medium text-ink">{res.title}</p>
+                    {res.description ? (
+                      <RichTextView html={res.description} className="mt-0.5 text-xs text-ink-muted" />
+                    ) : null}
+                    {res.url ? (
+                      <a
+                        href={res.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-brand-600 hover:text-brand-700"
+                      >
+                        Link →
+                      </a>
+                    ) : null}
                   </td>
-                  <td className="px-4 py-3 text-sm text-ink-muted">{res.theme || '—'}</td>
+                  <td className="px-4 py-3">
+                    <TagChips tags={res.theme} />
+                  </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(res.resourceType)}</td>
                   <td className="px-4 py-3 text-sm text-ink-muted">
                     {res.durationHours ? `${res.durationHours}${t('hours')}` : '—'}
@@ -352,14 +380,16 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => handleEdit(res)}
-                        className="text-xs text-brand-600 hover:text-brand-700"
+                        className="min-h-touch text-xs text-brand-600 hover:text-brand-700"
                       >
                         {t('edit')}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDeactivate(res)}
-                        className="text-xs text-danger hover:text-danger/80"
+                        className="min-h-touch text-xs text-danger hover:text-danger/80"
                       >
                         {t('deactivate')}
                       </button>

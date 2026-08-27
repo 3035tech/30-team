@@ -302,6 +302,9 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
 | Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx`, `EmptyState.jsx` |
+| Tags / chips (tema Academy, etc.) | `app/_components/TagInput.jsx` (+ `type: 'tags'` no `PromptFormDialog`); `lib/tag-list.js` |
+| Busca de colaborador (nome → id) | `app/_components/EntitySearchSelect.jsx` (+ `type: 'entitySearch'`); `GET /api/admin/employees/search` |
+| Campos de data / datetime | `app/_components/DateField.jsx` (+ `type: 'date'` / `'datetime-local'` no `PromptFormDialog`) |
 | Links compartilháveis (copiar / abrir) | `app/_components/CopyableLink.jsx`, `lib/clipboard.js` |
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |

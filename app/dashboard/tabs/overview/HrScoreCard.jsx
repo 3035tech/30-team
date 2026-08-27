@@ -43,7 +43,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
     return (
       <div className={S.card}>
         <div className="flex items-center gap-2 text-ink-muted">
-          <Icon name="loader" className="h-4 w-4 animate-spin" />
+          <span className="spinner" aria-hidden />
           <span className="text-sm">{t(locale, 'hrScore.calculating')}</span>
         </div>
       </div>
@@ -66,18 +66,30 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
     return 'text-danger';
   };
 
+  const peopleLabel =
+    overall.total === 1
+      ? t(locale, 'hrScore.peopleOne')
+      : t(locale, 'hrScore.peopleMany', { n: overall.total });
+
   return (
     <div className={S.card}>
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="mb-1 text-base font-medium text-ink">
+          <h3 className="mb-1 flex items-center gap-1.5 text-base font-medium text-ink">
             {t(locale, 'hrScore.title')}
+            <span
+              className="inline-flex cursor-help text-ink-faint"
+              title={t(locale, 'hrScore.description')}
+              aria-label={t(locale, 'hrScore.description')}
+            >
+              <Icon name="infoCircle" className="h-3.5 w-3.5" />
+            </span>
           </h3>
           <p className="text-sm text-ink-muted">{t(locale, 'hrScore.companyOverview')}</p>
         </div>
         {isAdmin && (
           <button
+            type="button"
             onClick={async () => {
               if (!confirm(t(locale, 'hrScore.recalculate') + '?')) return;
               try {
@@ -93,9 +105,8 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                 alert(t(locale, 'hrScore.recalculateFailed'));
               }
             }}
-            className="rounded-control border border-ink/12 bg-white px-3 py-1.5 text-xs text-ink hover:bg-ink/5"
+            className={cn(S.btnGhost, 'px-3 py-1.5 text-xs')}
           >
-            <Icon name="refresh-cw" className="mr-1 inline h-3 w-3" />
             {t(locale, 'hrScore.recalculate')}
           </button>
         )}
@@ -107,25 +118,37 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
         </div>
       ) : (
         <>
-          {/* Score médio geral */}
           <div className="mb-6 flex items-center justify-between rounded-card border border-ink/8 bg-ink/[0.02] p-4">
             <div>
-              <div className="text-sm text-ink-muted">{t(locale, 'hrScore.avgScore')}</div>
-              <div className="text-xs text-ink-faint">
-                {overall.total} {overall.total === 1 ? 'pessoa' : 'pessoas'}
+              <div
+                className="cursor-help text-sm text-ink-muted"
+                title={t(locale, 'hrScore.avgScoreHint')}
+              >
+                {t(locale, 'hrScore.avgScore')}
               </div>
+              <div className="text-xs text-ink-faint">{peopleLabel}</div>
             </div>
             <div className="text-center">
-              <div className={cn('font-mono text-3xl font-bold', getScoreColor(overall.avgScore))}>
+              <div
+                className={cn(
+                  'cursor-help font-mono text-3xl font-bold tabular-nums',
+                  getScoreColor(overall.avgScore)
+                )}
+                title={t(locale, 'hrScore.avgScoreHint')}
+                aria-label={`${t(locale, 'hrScore.avgScore')}: ${overall.avgScore}. ${t(locale, 'hrScore.avgScoreHint')}`}
+              >
                 {overall.avgScore}
               </div>
-              <div className="text-xs text-ink-muted">
+              <div
+                className="cursor-help text-xs text-ink-muted"
+                title={t(locale, 'hrScore.scoreRangeHint')}
+                aria-label={`${overall.minScore}–${overall.maxScore}. ${t(locale, 'hrScore.scoreRangeHint')}`}
+              >
                 {overall.minScore}–{overall.maxScore}
               </div>
             </div>
           </div>
 
-          {/* Por área */}
           {byArea.length > 0 && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-medium text-ink">{t(locale, 'hrScore.byArea')}</h4>
@@ -135,7 +158,13 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                     <span className="text-ink">
                       {area.area} <span className="text-xs text-ink-faint">({area.count})</span>
                     </span>
-                    <span className={cn('font-mono text-sm font-medium', getScoreColor(area.avgScore))}>
+                    <span
+                      className={cn(
+                        'cursor-help font-mono text-sm font-medium tabular-nums',
+                        getScoreColor(area.avgScore)
+                      )}
+                      title={t(locale, 'hrScore.personScoreHint')}
+                    >
                       {area.avgScore}
                     </span>
                   </div>
@@ -144,24 +173,31 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
             </div>
           )}
 
-          {/* Top/Bottom performers */}
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Top */}
             {topPerformers.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-medium text-ink">
+                <h4
+                  className="mb-2 cursor-help text-sm font-medium text-ink"
+                  title={t(locale, 'hrScore.topPerformersHint')}
+                >
                   {t(locale, 'hrScore.topPerformers')}
                 </h4>
                 <ul className="space-y-1 text-xs">
                   {topPerformers.slice(0, 3).map((person) => (
-                    <li key={person.id} className="flex items-center justify-between">
+                    <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
                         href={`/dashboard?tab=team&candidateId=${person.id}`}
                         className="truncate text-ink hover:underline"
                       >
                         {person.fullName}
                       </Link>
-                      <span className={cn('ml-2 font-mono', getScoreColor(person.score))}>
+                      <span
+                        className={cn(
+                          'ml-2 cursor-help font-mono tabular-nums',
+                          getScoreColor(person.score)
+                        )}
+                        title={t(locale, 'hrScore.personScoreHint')}
+                      >
                         {person.score}
                       </span>
                     </li>
@@ -170,15 +206,17 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
               </div>
             )}
 
-            {/* Bottom */}
             {bottomPerformers.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-medium text-ink">
+                <h4
+                  className="mb-2 cursor-help text-sm font-medium text-ink"
+                  title={t(locale, 'hrScore.bottomPerformersHint')}
+                >
                   {t(locale, 'hrScore.bottomPerformers')}
                 </h4>
                 <ul className="space-y-1 text-xs">
                   {bottomPerformers.slice(0, 3).map((person) => (
-                    <li key={person.id} className="flex items-center justify-between">
+                    <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
                         href={`/dashboard?tab=team&candidateId=${person.id}`}
                         className="truncate text-ink hover:underline"
@@ -186,11 +224,23 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                         {person.fullName}
                       </Link>
                       <div className="ml-2 flex items-center gap-1">
-                        <span className={cn('font-mono', getScoreColor(person.score))}>
+                        <span
+                          className={cn(
+                            'cursor-help font-mono tabular-nums',
+                            getScoreColor(person.score)
+                          )}
+                          title={t(locale, 'hrScore.personScoreHint')}
+                        >
                           {person.score}
                         </span>
                         {person.turnoverRisk === 'high' && (
-                          <Icon name="alert-triangle" className="h-3 w-3 text-danger" title="High turnover risk" />
+                          <span
+                            className="inline-flex text-danger"
+                            title={t(locale, 'hrScore.highTurnoverHint')}
+                            aria-label={t(locale, 'hrScore.highTurnoverHint')}
+                          >
+                            <Icon name="alert" className="h-3 w-3" />
+                          </span>
                         )}
                       </div>
                     </li>
@@ -199,6 +249,8 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
               </div>
             )}
           </div>
+
+          <p className="mt-4 text-xs leading-snug text-ink-faint">{t(locale, 'hrScore.hedgingNote')}</p>
         </>
       )}
     </div>

@@ -4,31 +4,26 @@ import { CAP } from '../../../../../lib/ae/require-admin.js';
 import { apiError, apiErrorFromResult, ERR, httpStatusForError } from '../../../../../lib/api-error.js';
 import { z, zPositiveInt } from '../../../../../lib/validate.js';
 import {
-  getCompanyBenefit,
-  updateCompanyBenefit,
-  deactivateCompanyBenefit,
+  getBenefitCategory,
+  updateBenefitCategory,
+  deactivateBenefitCategory,
 } from '../../../../../lib/company-benefits.js';
 
 const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
-  name: z.string().trim().min(1).max(200).optional(),
-  description: z.string().max(4000).optional().nullable(),
-  categoryId: zPositiveInt.optional().nullable(),
-  /** @deprecated prefer categoryId */
-  category: z.string().trim().max(100).optional().nullable(),
-  benefitType: z.string().trim().max(80).optional().nullable(),
+  name: z.string().trim().min(1).max(100).optional(),
   active: z.boolean().optional(),
 });
 
-function parseBenefitId(params) {
+function parseCategoryId(params) {
   const id = Number(params?.id);
   return Number.isFinite(id) && id > 0 ? id : null;
 }
 
 /**
- * GET /api/admin/company-benefits/[id]
- * PATCH /api/admin/company-benefits/[id]
- * DELETE /api/admin/company-benefits/[id] — soft deactivate
+ * GET /api/admin/benefit-categories/[id]
+ * PATCH /api/admin/benefit-categories/[id]
+ * DELETE /api/admin/benefit-categories/[id] — soft deactivate
  */
 
 export const GET = withAdminApi(
@@ -36,18 +31,18 @@ export const GET = withAdminApi(
     cap: CAP.USERS_MANAGE,
     query: z.object({ companyId: zPositiveInt.optional() }),
     companyFrom: 'query',
-    logLabel: 'company-benefits/[id] GET',
+    logLabel: 'benefit-categories/[id] GET',
   },
   async ({ request, companyId, params }) => {
-    const benefitId = parseBenefitId(params);
-    if (!benefitId) {
+    const categoryId = parseCategoryId(params);
+    if (!categoryId) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const benefit = await getCompanyBenefit(null, { companyId, benefitId });
-    if (!benefit) {
-      return apiError(request, ERR.NOT_FOUND, httpStatusForError(ERR.NOT_FOUND));
+    const category = await getBenefitCategory(null, { companyId, categoryId });
+    if (!category) {
+      return apiError(request, ERR.BENEFIT_CATEGORY_NOT_FOUND, httpStatusForError(ERR.BENEFIT_CATEGORY_NOT_FOUND));
     }
-    return NextResponse.json({ ok: true, benefit }, { status: 200 });
+    return NextResponse.json({ ok: true, category }, { status: 200 });
   }
 );
 
@@ -56,27 +51,23 @@ export const PATCH = withAdminApi(
     cap: CAP.USERS_MANAGE,
     body: patchBodySchema,
     companyFrom: 'body',
-    logLabel: 'company-benefits/[id] PATCH',
+    logLabel: 'benefit-categories/[id] PATCH',
   },
   async ({ request, companyId, params, body }) => {
-    const benefitId = parseBenefitId(params);
-    if (!benefitId) {
+    const categoryId = parseCategoryId(params);
+    if (!categoryId) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = await updateCompanyBenefit(null, {
+    const result = await updateBenefitCategory(null, {
       companyId,
-      benefitId,
+      categoryId,
       name: body.name,
-      description: body.description,
-      categoryId: body.categoryId,
-      category: body.category,
-      benefitType: body.benefitType,
       active: body.active,
     });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.UPDATE_FAILED });
     }
-    return NextResponse.json({ ok: true, benefit: result.benefit }, { status: 200 });
+    return NextResponse.json({ ok: true, category: result.category }, { status: 200 });
   }
 );
 
@@ -85,14 +76,14 @@ export const DELETE = withAdminApi(
     cap: CAP.USERS_MANAGE,
     query: z.object({ companyId: zPositiveInt.optional() }),
     companyFrom: 'query',
-    logLabel: 'company-benefits/[id] DELETE',
+    logLabel: 'benefit-categories/[id] DELETE',
   },
   async ({ request, companyId, params }) => {
-    const benefitId = parseBenefitId(params);
-    if (!benefitId) {
+    const categoryId = parseCategoryId(params);
+    if (!categoryId) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = await deactivateCompanyBenefit(null, { companyId, benefitId });
+    const result = await deactivateBenefitCategory(null, { companyId, categoryId });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.DELETE_FAILED });
     }

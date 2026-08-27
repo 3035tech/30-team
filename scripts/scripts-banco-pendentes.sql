@@ -1081,3 +1081,62 @@ CREATE INDEX IF NOT EXISTS idx_vacancies_job_role
 
 INSERT INTO schema_migrations (name) VALUES ('055_job_roles.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 062 — Benefit categories catalog
+CREATE TABLE IF NOT EXISTS benefit_categories (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name                 TEXT NOT NULL,
+  active               BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT benefit_categories_name_len
+    CHECK (char_length(btrim(name)) >= 1 AND char_length(name) <= 100)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_benefit_categories_company_name_lower
+  ON benefit_categories (company_id, LOWER(btrim(name)));
+
+CREATE INDEX IF NOT EXISTS idx_benefit_categories_company_active
+  ON benefit_categories (company_id, active, updated_at DESC)
+  WHERE active = TRUE;
+
+ALTER TABLE company_benefits
+  ADD COLUMN IF NOT EXISTS category_id BIGINT REFERENCES benefit_categories(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_company_benefits_category_id
+  ON company_benefits (company_id, category_id)
+  WHERE category_id IS NOT NULL AND active = TRUE;
+
+INSERT INTO benefit_categories (company_id, name, active)
+SELECT DISTINCT b.company_id, btrim(b.category), TRUE
+FROM company_benefits b
+WHERE b.category IS NOT NULL
+  AND btrim(b.category) <> ''
+  AND NOT EXISTS (
+    SELECT 1 FROM benefit_categories c
+    WHERE c.company_id = b.company_id
+      AND LOWER(btrim(c.name)) = LOWER(btrim(b.category))
+  );
+
+UPDATE company_benefits b
+SET category_id = c.id
+FROM benefit_categories c
+WHERE b.category_id IS NULL
+  AND b.category IS NOT NULL
+  AND btrim(b.category) <> ''
+  AND c.company_id = b.company_id
+  AND LOWER(btrim(c.name)) = LOWER(btrim(b.category));
+
+INSERT INTO schema_migrations (name) VALUES ('062_benefit_categories.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 063 — learning theme tags length
+ALTER TABLE learning_resources DROP CONSTRAINT IF EXISTS learning_resources_theme_len;
+ALTER TABLE learning_resources
+  ADD CONSTRAINT learning_resources_theme_len
+  CHECK (theme IS NULL OR char_length(theme) <= 400);
+
+INSERT INTO schema_migrations (name) VALUES ('063_learning_theme_tags.sql')
+ON CONFLICT (name) DO NOTHING;

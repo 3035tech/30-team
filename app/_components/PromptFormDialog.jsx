@@ -12,18 +12,26 @@ import {
   dialogOverlayClass,
 } from './app-dialog-styles';
 import { RichTextEditor } from './RichTextEditor';
+import { DateField } from './DateField';
+import { TagInput } from './TagInput';
+import { EntitySearchSelect } from './EntitySearchSelect';
+import { parseTagList } from '../../lib/tag-list';
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
- *   key (or legacy name), label, defaultValue?,
- *   type?: 'text'|'password'|'textarea'|'richText'|'select'|'boolean'|'checkboxGroup'|'imageUpload',
+ *   key (or legacy name), label, defaultValue? (or legacy value?),
+ *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number',
  *   options?: [{value,label}],
+ *   suggestions?: string[], // tags
+ *   maxTags?: number, tagMax?: number, // tags
+ *   searchUrl?: string, minChars?: number, // entitySearch — stores id string
  *   showWhen?: (values) => boolean,
  *   placeholder?: string,
  *   help?: string,
  *   rows?: number,
  *   minHeight?: number, // richText
+ *   min?: string, max?: string, // date / datetime-local
  *   // imageUpload:
  *   uploadUrl?: string,
  *   storageConfigured?: boolean,
@@ -34,6 +42,9 @@ import { RichTextEditor } from './RichTextEditor';
  *   storageOffHelp?: string,
  * }]
  */
+function fieldInitial(f) {
+  return f.defaultValue !== undefined ? f.defaultValue : f.value;
+}
 function fieldKeyOf(f) {
   return f?.key || f?.name || '';
 }
@@ -65,18 +76,21 @@ export function PromptFormDialog({
     for (const f of fields) {
       const fieldKey = fieldKeyOf(f);
       if (!fieldKey) continue;
+      const initial = fieldInitial(f);
       if (f.type === 'checkboxGroup') {
-        init[fieldKey] = Array.isArray(f.defaultValue) ? [...f.defaultValue] : [];
+        init[fieldKey] = Array.isArray(initial) ? [...initial] : [];
+      } else if (f.type === 'tags') {
+        init[fieldKey] = Array.isArray(initial) ? [...initial] : parseTagList(initial);
       } else if (f.type === 'boolean') {
-        init[fieldKey] = f.defaultValue === true || f.defaultValue === 'true' || f.defaultValue === true;
+        init[fieldKey] = initial === true || initial === 'true';
       } else if (f.type === 'imageUpload') {
         init[fieldKey] = {
-          url: f.defaultValue ? String(f.defaultValue) : '',
+          url: initial ? String(initial) : '',
           file: null,
           removed: false,
         };
       } else {
-        init[fieldKey] = f.defaultValue != null ? String(f.defaultValue) : '';
+        init[fieldKey] = initial != null ? String(initial) : '';
       }
     }
     setValues(init);
@@ -111,7 +125,9 @@ export function PromptFormDialog({
   if (!mounted || !open) return null;
 
   const heading = title || t(locale, 'panel.common.editTitle');
-  const hasRichText = fields.some((f) => f.type === 'richText');
+  const hasWideFields = fields.some(
+    (f) => f.type === 'richText' || f.type === 'tags' || f.type === 'entitySearch'
+  );
 
   const toggleCheck = (key, value) => {
     setValues((prev) => {
@@ -323,6 +339,37 @@ export function PromptFormDialog({
       );
     }
 
+    if (f.type === 'tags') {
+      return (
+        <TagInput
+          value={Array.isArray(values[fk]) ? values[fk] : []}
+          onChange={(next) => setField(fk, next)}
+          placeholder={f.placeholder || ''}
+          locale={locale}
+          maxTags={f.maxTags || 12}
+          tagMax={f.tagMax || 40}
+          suggestions={f.suggestions || []}
+          aria-label={f.label}
+          disabled={Boolean(f.disabled)}
+        />
+      );
+    }
+
+    if (f.type === 'entitySearch') {
+      return (
+        <EntitySearchSelect
+          value={values[fk] ?? ''}
+          onChange={(id) => setField(fk, id)}
+          searchUrl={f.searchUrl}
+          locale={locale}
+          placeholder={f.placeholder || ''}
+          minChars={f.minChars || 1}
+          aria-label={f.label}
+          disabled={Boolean(f.disabled)}
+        />
+      );
+    }
+
     if (f.type === 'textarea') {
       return (
         <textarea
@@ -335,9 +382,24 @@ export function PromptFormDialog({
       );
     }
 
+    if (f.type === 'date' || f.type === 'datetime-local') {
+      return (
+        <DateField
+          mode={f.type === 'datetime-local' ? 'datetime-local' : 'date'}
+          value={values[fk] ?? ''}
+          onChange={(e) => setField(fk, e.target.value)}
+          min={f.min}
+          max={f.max}
+          required={Boolean(f.required)}
+          aria-label={f.label}
+          className={dialogFieldClass}
+        />
+      );
+    }
+
     return (
       <input
-        type={f.type === 'password' ? 'password' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'}
+        type={f.type === 'password' ? 'password' : f.type === 'number' ? 'number' : 'text'}
         value={values[fk] ?? ''}
         onChange={(e) => setField(fk, e.target.value)}
         placeholder={f.placeholder || ''}
@@ -363,7 +425,7 @@ export function PromptFormDialog({
           'prompt-form-card',
           dialogCardClass,
           'max-h-[90vh] overflow-y-auto',
-          hasRichText ? 'max-w-[560px]' : 'max-w-[520px]'
+          hasWideFields ? 'max-w-[560px]' : 'max-w-[520px]'
         )}
         onClick={(e) => e.stopPropagation()}
       >

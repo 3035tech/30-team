@@ -18,6 +18,7 @@ function statusChipClass(status) {
 
 /**
  * Admin: early-access / self-service leads (lista + status + metadata).
+ * Visível só para super admin (admin sem company_id).
  */
 export function LeadsAdminTab({ navigateDashboard, locale }) {
   const urlParams = useSearchParams();

@@ -2,20 +2,20 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../lib/auth.js';
 import { query } from '../../../../lib/db.js';
 import { apiError, ERR } from '../../../../lib/api-error.js';
-import { CAP, requireCapability } from '../../../../lib/permissions.js';
+import { CAP, requireCapability, isSuperAdminPayload } from '../../../../lib/permissions.js';
 import { verifySessionWithCapabilities } from '../../../../lib/user-capabilities.js';
 import { listEarlyAccessLeads } from '../../../../lib/admin-leads.js';
 
 /**
  * GET /api/admin/leads
- * Admin-only: early-access / self-service signup leads (cross-tenant).
+ * Super-admin only (admin sem company_id): early-access / self-service signup leads (cross-tenant).
  * Query: page, pageSize, status=all|pending|active|inactive, q=
  */
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.USERS_MANAGE)) {
+  if (!isSuperAdminPayload(payload) || !requireCapability(payload, CAP.USERS_MANAGE)) {
     return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 

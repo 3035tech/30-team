@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdminApi } from '../../../../lib/admin-api.js';
 import { CAP } from '../../../../lib/ae/require-admin.js';
-import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
+import { apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
 import { z, zPositiveInt, zQueryBool } from '../../../../lib/validate.js';
 import {
   listCompanyBenefits,
@@ -12,7 +12,9 @@ import {
 const listQuerySchema = z.object({
   companyId: zPositiveInt.optional(),
   includeInactive: zQueryBool,
-  category: z.string().trim().max(80).optional().nullable(),
+  categoryId: zPositiveInt.optional().nullable(),
+  /** @deprecated prefer categoryId */
+  category: z.string().trim().max(100).optional().nullable(),
   categories: zQueryBool,
   limit: z.coerce.number().int().min(1).max(200).optional().default(100),
 });
@@ -20,8 +22,10 @@ const listQuerySchema = z.object({
 const createBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(4000).optional().nullable(),
-  category: z.string().trim().max(80).optional().nullable(),
+  description: z.string().max(4000).optional().nullable(),
+  categoryId: zPositiveInt.optional().nullable(),
+  /** @deprecated prefer categoryId */
+  category: z.string().trim().max(100).optional().nullable(),
   benefitType: z.string().trim().max(80).optional().nullable(),
 });
 
@@ -46,6 +50,7 @@ export const GET = withAdminApi(
     const benefits = await listCompanyBenefits(null, {
       companyId,
       includeInactive: query.includeInactive,
+      categoryId: query.categoryId || null,
       category: query.category || null,
       limit: query.limit,
     });
@@ -65,6 +70,7 @@ export const POST = withAdminApi(
       companyId,
       name: body.name,
       description: body.description,
+      categoryId: body.categoryId,
       category: body.category,
       benefitType: body.benefitType,
       createdByUserId: payload.userId,

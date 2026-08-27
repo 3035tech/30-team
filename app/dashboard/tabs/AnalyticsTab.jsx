@@ -9,6 +9,7 @@ import { t } from '../../../lib/i18n.js';
 import { useLocale } from '../../../lib/useLocale.js';
 import { C } from '../../../lib/theme.js';
 import { S } from '../dashboard-shared.jsx';
+import { DateField } from '../../_components/DateField.jsx';
 
 export function AnalyticsTab({ session }) {
   const [locale] = useLocale();
@@ -185,22 +186,22 @@ export function AnalyticsTab({ session }) {
             <label className={S.label}>
               {locale === 'pt-BR' ? 'Data início' : 'Start date'}
             </label>
-            <input
-              type="date"
+            <DateField
               className={S.input}
               value={filters.startDate}
               onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+              aria-label={locale === 'pt-BR' ? 'Data início' : 'Start date'}
             />
           </div>
           <div>
             <label className={S.label}>
               {locale === 'pt-BR' ? 'Data fim' : 'End date'}
             </label>
-            <input
-              type="date"
+            <DateField
               className={S.input}
               value={filters.endDate}
               onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+              aria-label={locale === 'pt-BR' ? 'Data fim' : 'End date'}
             />
           </div>
           <div className="flex items-end">

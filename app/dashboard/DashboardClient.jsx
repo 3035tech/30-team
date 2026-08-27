@@ -8,11 +8,12 @@ import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { CAP, can, canSeeManagementSection, isAdminRole } from '../../lib/permissions';
+import { CAP, can, canSeeManagementSection, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
 import { VACANCY_STATUS } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
+import { DateField } from '../_components/DateField';
 
 import {
   PAGE_SIZE_OPTIONS,
@@ -252,6 +253,7 @@ export default function DashboardClient({
   };
 
   const isAdmin = isAdminRole(sessionAuth);
+  const showLeads = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
   /** Global search duplicates TeamTab; Leadership is chart-first — hide there. */
@@ -712,11 +714,11 @@ export default function DashboardClient({
                 {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
                 {showUsers ? <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} /> : null}
                 {showUsers ? <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} /> : null}
-                {showUsers ? <NavLink id="succession" icon="users" label={t(locale, 'succession.title')} /> : null}
-                {showUsers ? <NavLink id="exit-analysis" icon="users" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
-                {showUsers ? <NavLink id="learning-resources" icon="help" label={t(locale, 'dashboard.learningResources')} /> : null}
-                {showUsers ? <NavLink id="company-benefits" icon="briefcase" label={t(locale, 'dashboard.companyBenefits')} /> : null}
-                {showUsers ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                {showUsers ? <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} /> : null}
+                {showUsers ? <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
+                {showUsers ? <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} /> : null}
+                {showUsers ? <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} /> : null}
+                {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
               </>
             ) : showMotivators || showClimate ? (
               <>
@@ -966,18 +968,18 @@ export default function DashboardClient({
             </select>
             <div className="inline-flex items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-1.5">
               <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
-              <input
-                type="date"
+              <DateField
                 value={dateFrom}
                 onChange={(e) => { const v = e.target.value; setDateFrom(v); pushFilters({ dateFrom: v || null, dateTo: dateTo || null }); }}
-                className="min-w-[120px] border-none bg-transparent font-mono text-xs text-ink-muted outline-none"
+                aria-label={t(locale, 'dashboard.dateFromLabel')}
+                className="min-h-0 min-w-[120px] border-none bg-transparent px-0 py-0 font-mono text-xs text-ink-muted outline-none"
               />
               <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
-              <input
-                type="date"
+              <DateField
                 value={dateTo}
                 onChange={(e) => { const v = e.target.value; setDateTo(v); pushFilters({ dateFrom: dateFrom || null, dateTo: v || null }); }}
-                className="min-w-[120px] border-none bg-transparent font-mono text-xs text-ink-muted outline-none"
+                aria-label={t(locale, 'dashboard.dateToLabel')}
+                className="min-h-0 min-w-[120px] border-none bg-transparent px-0 py-0 font-mono text-xs text-ink-muted outline-none"
               />
             </div>
           </div>
@@ -1173,7 +1175,7 @@ export default function DashboardClient({
               {tab === 'exit-analysis' && showUsers && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'learning-resources' && showUsers && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'company-benefits' && showUsers && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'leads' && showUsers && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (
                 <ProfileTab

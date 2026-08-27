@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status';
+import { S } from '../dashboard-shared';
 
 export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { confirm, promptForm, toast } = useAppFeedback();
+  const { promptForm, toast } = useAppFeedback();
 
   function t(key) {
     const messages = {
@@ -21,13 +23,9 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Colaborador',
         exitType: 'Tipo',
         exitReason: 'Motivo',
-        actions: 'Ações',
-        edit: 'Editar',
-        // Exit types
         voluntary: 'Voluntária',
         involuntary: 'Involuntária',
         mutual: 'Acordo mútuo',
-        // Exit reasons
         better_offer: 'Proposta melhor',
         career_growth: 'Crescimento de carreira',
         compensation: 'Compensação',
@@ -44,13 +42,18 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         manager_relationship: 'Relação com gestor',
         lack_of_challenge: 'Falta de desafio',
         other: 'Outro',
-        // Form
         formTitle: 'Registrar Saída',
         formCandidate: 'Colaborador',
+        formCandidatePh: 'Buscar por nome…',
+        formCandidateHelp: 'Digite o nome e selecione na lista. O ID é gravado automaticamente.',
         formExitDate: 'Data da saída',
         formExitType: 'Tipo de saída',
         formExitReason: 'Motivo principal',
         formNotes: 'Notas (contexto, feedback)',
+        registered: 'Saída registrada',
+        loadError: 'Erro ao carregar saídas',
+        saveError: 'Erro ao registrar saída',
+        pickEmployee: 'Selecione um colaborador na busca.',
       },
       en: {
         title: 'Exit Analysis',
@@ -62,13 +65,9 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Employee',
         exitType: 'Type',
         exitReason: 'Reason',
-        actions: 'Actions',
-        edit: 'Edit',
-        // Exit types
         voluntary: 'Voluntary',
         involuntary: 'Involuntary',
         mutual: 'Mutual agreement',
-        // Exit reasons
         better_offer: 'Better offer',
         career_growth: 'Career growth',
         compensation: 'Compensation',
@@ -85,13 +84,18 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         manager_relationship: 'Manager relationship',
         lack_of_challenge: 'Lack of challenge',
         other: 'Other',
-        // Form
         formTitle: 'Register Exit',
         formCandidate: 'Employee',
+        formCandidatePh: 'Search by name…',
+        formCandidateHelp: 'Type a name and pick from the list. The ID is saved automatically.',
         formExitDate: 'Exit date',
         formExitType: 'Exit type',
         formExitReason: 'Main reason',
         formNotes: 'Notes (context, feedback)',
+        registered: 'Exit recorded',
+        loadError: 'Failed to load exits',
+        saveError: 'Failed to record exit',
+        pickEmployee: 'Select an employee from search.',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -108,43 +112,97 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       const res = await fetch(`/api/admin/exit-analysis?limit=100`);
       const data = await res.json();
       if (data.ok) setRecords(data.records || []);
-    } catch (err) {
-      toast('error', 'Erro ao carregar saídas');
+      else toast(t('loadError'), 'error');
+    } catch {
+      toast(t('loadError'), 'error');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleRegisterExit() {
-    // For simplicity, use promptForm with text inputs (not ideal UX, but quick)
-    // In production, this should be a custom drawer/modal with selects for employee, type, reason
+    const today = (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })();
+
     const result = await promptForm({
       title: t('formTitle'),
       fields: [
-        { name: 'candidateId', label: t('formCandidate') + ' (ID)', type: 'text', required: true },
-        { name: 'exitDate', label: t('formExitDate'), type: 'text', required: true },
-        { name: 'exitType', label: t('formExitType') + ' (voluntary/involuntary/mutual)', type: 'text', required: true },
-        { name: 'exitReason', label: t('formExitReason'), type: 'text', required: true },
-        { name: 'notes', label: t('formNotes'), type: 'textarea', required: false },
+        {
+          name: 'candidateId',
+          label: t('formCandidate'),
+          type: 'entitySearch',
+          required: true,
+          searchUrl: '/api/admin/employees/search',
+          placeholder: t('formCandidatePh'),
+          help: t('formCandidateHelp'),
+          minChars: 1,
+        },
+        {
+          name: 'exitDate',
+          label: t('formExitDate'),
+          type: 'date',
+          required: true,
+          defaultValue: today,
+        },
+        {
+          name: 'exitType',
+          label: t('formExitType'),
+          type: 'select',
+          required: true,
+          defaultValue: 'voluntary',
+          options: EXIT_TYPES.map((value) => ({ value, label: t(value) })),
+        },
+        {
+          name: 'exitReason',
+          label: t('formExitReason'),
+          type: 'select',
+          required: true,
+          defaultValue: 'other',
+          options: EXIT_REASONS.map((value) => ({ value, label: t(value) })),
+        },
+        {
+          name: 'notes',
+          label: t('formNotes'),
+          type: 'richText',
+          required: false,
+          minHeight: 120,
+        },
       ],
     });
     if (!result) return;
+
+    const candidateId = Number(result.candidateId);
+    if (!Number.isFinite(candidateId) || candidateId <= 0) {
+      toast(t('pickEmployee'), 'warning');
+      return;
+    }
 
     try {
       const res = await fetch('/api/admin/exit-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify({
+          candidateId,
+          exitDate: result.exitDate,
+          exitType: result.exitType,
+          exitReason: result.exitReason,
+          notes: result.notes,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', 'Saída registrada');
+        toast(t('registered'), 'ok');
         loadRecords();
       } else {
-        toast('error', 'Erro ao registrar saída');
+        toast(data.error || t('saveError'), 'error');
       }
-    } catch (err) {
-      toast('error', 'Erro ao registrar saída');
+    } catch {
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -158,31 +216,21 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-ink">{t('title')}</h2>
         <p className="text-sm text-ink-muted mt-1">{t('subtitle')}</p>
       </div>
 
-      {/* Actions */}
       {isAdmin && (
         <div className="flex gap-2">
-          <button
-            onClick={handleRegisterExit}
-            className="inline-flex items-center gap-2 rounded-control bg-brand-500 px-4 py-2 text-sm text-white hover:bg-brand-600"
-          >
+          <button type="button" onClick={handleRegisterExit} className={S.btnPrimary}>
             + {t('register')}
           </button>
         </div>
       )}
 
-      {/* List */}
       {records.length === 0 ? (
-        <EmptyState
-          title={t('noRecords')}
-          description={t('noRecordsDesc')}
-          icon="📊"
-        />
+        <EmptyState title={t('noRecords')} description={t('noRecordsDesc')} icon="📊" />
       ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
           <table className="w-full">
@@ -213,8 +261,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                         rec.exitType === 'voluntary'
                           ? 'bg-info/10 text-info'
                           : rec.exitType === 'involuntary'
-                          ? 'bg-danger/10 text-danger'
-                          : 'bg-warning/10 text-warning'
+                            ? 'bg-danger/10 text-danger'
+                            : 'bg-warning/10 text-warning'
                       }`}
                     >
                       {t(rec.exitType)}

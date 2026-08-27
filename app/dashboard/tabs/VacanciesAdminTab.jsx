@@ -25,6 +25,7 @@ import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/v
 import { VACANCY_STATUS } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
 import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
+import { DateField } from '../../_components/DateField';
 import { publicVacancyPath } from '../../../lib/public-job-url';
 import { formatPublicVacancyDate } from '../../../lib/public-vacancy-lifecycle';
 import { formatVacancySalaryRange, toDatetimeLocalValue } from '../vacancies/vacancy-admin-shared';
@@ -628,12 +629,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               </label>
               <label className={FIELD_LABEL}>
                 {t(locale, 'recruiting.targetDateLabel')}
-                <input
-                  type="date"
+                <DateField
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
                   aria-label={t(locale, 'recruiting.targetDateLabel')}
-                  className={cn(FIELD, "px-2 py-[9px]")}
+                  className={cn(FIELD, 'px-2 py-[9px]')}
                 />
               </label>
             </div>
@@ -825,8 +825,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </label>
                 <label className={FIELD_LABEL_INLINE}>
                   {t(locale, 'recruiting.targetDateLabel')}
-                  <input
-                    type="date"
+                  <DateField
                     value={editingVacancy.targetDate}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
                     aria-label={t(locale, 'recruiting.targetDateLabel')}
@@ -1300,8 +1299,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       <span className="font-mono text-xs text-ink-muted">
                         {t(locale, 'panel.admin.expiringOn')}
                       </span>
-                      <input
-                        type="datetime-local"
+                      <DateField
+                        mode="datetime-local"
                         value={linkExpiryEdit.value}
                         onChange={(e) =>
                           setLinkExpiryEdit((cur) =>
@@ -1310,7 +1309,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         }
                         disabled={loading}
                         aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
-                        className={cn(FIELD, "min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-[13px]")}
+                        className={cn(FIELD, 'min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-[13px]')}
                       />
                       <button type="button" onClick={saveLinkExpiry} disabled={loading}
                         className={cn("min-h-touch cursor-pointer rounded-control border border-success/35 bg-success/[0.09] px-3 py-2 font-mono text-xs text-success", loading && "opacity-60")}>

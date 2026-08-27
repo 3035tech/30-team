@@ -7,6 +7,13 @@ import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { Icon } from '../../../_components/Icon';
 
+const SIGNAL_META = {
+  climate: { emoji: '🌡️', labelKey: 'turnoverRadar.signalLabelClimate', hintKey: 'turnoverRadar.signalClimateHint' },
+  motivators: { emoji: '💪', labelKey: 'turnoverRadar.signalLabelMotivators', hintKey: 'turnoverRadar.signalMotivatorsHint' },
+  pdi: { emoji: '📈', labelKey: 'turnoverRadar.signalLabelPdi', hintKey: 'turnoverRadar.signalPdiHint' },
+  checkins: { emoji: '✅', labelKey: 'turnoverRadar.signalLabelCheckins', hintKey: 'turnoverRadar.signalCheckinsHint' },
+};
+
 /**
  * Card de Turnover Radar na Overview (B-1002)
  * Lista colaboradores em risco médio/alto
@@ -42,16 +49,16 @@ export default function TurnoverRadarCard({ locale, companyId }) {
   };
 
   const getRiskIcon = (risk) => {
-    if (risk === 'high') return 'alert-triangle';
-    if (risk === 'medium') return 'alert-circle';
-    return 'check-circle';
+    if (risk === 'high') return 'alert';
+    if (risk === 'medium') return 'infoCircle';
+    return 'check';
   };
 
   if (loading) {
     return (
       <div className={S.card}>
         <div className="flex items-center gap-2">
-          <Icon name="loader" className="h-4 w-4 animate-spin text-ink-muted" />
+          <span className="spinner text-ink-muted" aria-hidden />
           <span className="text-sm text-ink-muted">{t(locale, 'common.loading')}</span>
         </div>
       </div>
@@ -71,93 +78,116 @@ export default function TurnoverRadarCard({ locale, companyId }) {
     );
   }
 
+  const atRiskLabel =
+    data.risks.length === 1
+      ? t(locale, 'turnoverRadar.peopleAtRiskOne')
+      : t(locale, 'turnoverRadar.peopleAtRiskMany', { n: data.risks.length });
+
   return (
     <div className={S.card}>
-      {/* Header */}
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className="mb-1 text-base font-medium text-ink">
             {t(locale, 'turnoverRadar.title')}
           </h3>
-          <p className="text-sm text-ink-muted">
-            {data.risks.length} {data.risks.length === 1 ? 'pessoa' : 'pessoas'} em risco
-          </p>
+          <p className="text-sm text-ink-muted">{atRiskLabel}</p>
         </div>
       </div>
 
-      {/* Lista de riscos */}
       <div className="space-y-3">
-        {data.risks.slice(0, 8).map((person) => (
-          <div
-            key={person.candidateId}
-            className="flex items-start gap-3 rounded-card border border-ink/8 bg-ink/[0.02] p-3"
-          >
-            {/* Indicador de risco */}
-            <div className={cn('flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border', getRiskColor(person.risk))}>
-              <Icon name={getRiskIcon(person.risk)} className="h-4 w-4" />
-            </div>
+        {data.risks.slice(0, 8).map((person) => {
+          const riskLabel =
+            person.risk === 'high'
+              ? t(locale, 'turnoverRadar.riskHigh')
+              : person.risk === 'medium'
+                ? t(locale, 'turnoverRadar.riskMedium')
+                : t(locale, 'turnoverRadar.riskLow');
+          const riskScoreHint = t(locale, 'turnoverRadar.riskScoreHint');
 
-            {/* Info */}
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/dashboard?tab=team&candidateId=${person.candidateId}`}
-                    className="truncate font-medium text-ink hover:underline"
-                  >
-                    {person.candidateName}
-                  </Link>
-                  <Link
-                    href={`/dashboard?tab=team&candidateId=${person.candidateId}&section=journey`}
-                    title={locale === 'en' ? 'View PDI' : 'Ver PDI'}
-                    className="flex-shrink-0 inline-flex items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:bg-brand-500/[0.12]"
-                  >
-                    <Icon name="target" className="h-3 w-3" />
-                    PDI
-                  </Link>
-                </div>
-                <span className={cn('text-xs font-medium', getRiskColor(person.risk).split(' ')[0])}>
-                  {person.riskScore}
-                </span>
+          return (
+            <div
+              key={person.candidateId}
+              className="flex items-start gap-3 rounded-card border border-ink/8 bg-ink/[0.02] p-3"
+            >
+              <div
+                className={cn(
+                  'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border',
+                  getRiskColor(person.risk)
+                )}
+                title={riskLabel}
+                aria-label={riskLabel}
+              >
+                <Icon name={getRiskIcon(person.risk)} className="h-4 w-4" />
               </div>
 
-              {person.area && (
-                <div className="mb-2 text-xs text-ink-muted">{person.area}</div>
-              )}
-
-              {/* Sinais principais */}
-              <div className="flex flex-wrap gap-1">
-                {Object.entries(person.signals).map(([key, signal]) => {
-                  if (signal.score < 40) return null; // Só mostrar sinais relevantes
-                  return (
-                    <span
-                      key={key}
-                      className="rounded px-1.5 py-0.5 text-xs text-ink-muted"
-                      style={{ backgroundColor: 'rgba(124, 58, 237, 0.08)' }}
-                      title={`${key}: ${signal.score}`}
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link
+                      href={`/dashboard?tab=team&candidateId=${person.candidateId}`}
+                      className="truncate font-medium text-ink hover:underline"
                     >
-                      {key === 'climate' && '🌡️'}
-                      {key === 'motivators' && '💪'}
-                      {key === 'pdi' && '📈'}
-                      {key === 'checkins' && '✅'}
-                      {' '}{signal.score}
-                    </span>
-                  );
-                })}
+                      {person.candidateName}
+                    </Link>
+                    <Link
+                      href={`/dashboard?tab=team&candidateId=${person.candidateId}&section=journey`}
+                      title={t(locale, 'turnoverRadar.viewPdi')}
+                      aria-label={t(locale, 'turnoverRadar.viewPdi')}
+                      className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:bg-brand-500/[0.12]"
+                    >
+                      <Icon name="leadership" className="h-3 w-3" />
+                      PDI
+                    </Link>
+                  </div>
+                  <span
+                    className={cn(
+                      'cursor-help font-mono text-sm font-semibold tabular-nums',
+                      getRiskColor(person.risk).split(' ')[0]
+                    )}
+                    title={`${riskLabel}: ${person.riskScore}. ${riskScoreHint}`}
+                    aria-label={`${riskLabel}: ${person.riskScore}. ${riskScoreHint}`}
+                  >
+                    {person.riskScore}
+                  </span>
+                </div>
+
+                {person.area && (
+                  <div className="mb-2 text-xs text-ink-muted">{person.area}</div>
+                )}
+
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(person.signals || {}).map(([key, signal]) => {
+                    if (!signal || signal.score < 40) return null;
+                    const meta = SIGNAL_META[key];
+                    if (!meta) return null;
+                    const label = t(locale, meta.labelKey);
+                    const hint = t(locale, meta.hintKey);
+                    const tip = `${label}: ${signal.score}. ${hint}`;
+                    return (
+                      <span
+                        key={key}
+                        className="cursor-help rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 text-xs text-ink-muted"
+                        title={tip}
+                        aria-label={tip}
+                      >
+                        <span aria-hidden>{meta.emoji}</span> {signal.score}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Ver mais */}
       {data.risks.length > 8 && (
         <div className="mt-4 text-center">
           <Link
             href="/dashboard?tab=team&filter=turnover_risk"
             className="text-sm text-brand-600 hover:underline"
           >
-            Ver todos ({data.risks.length})
+            {t(locale, 'turnoverRadar.viewAll', { n: data.risks.length })}
           </Link>
         </div>
       )}

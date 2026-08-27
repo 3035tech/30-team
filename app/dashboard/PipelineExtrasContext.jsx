@@ -5,6 +5,7 @@ import { REJECTION_REASONS, normalizeStartDate } from '../../lib/pipeline';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { rejectionReasonLabel } from './pipeline-prompts';
+import { DateField } from '../_components/DateField';
 
 const PipelineExtrasContext = createContext(null);
 
@@ -107,12 +108,12 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
               >
                 {t(locale, 'recruiting.startDateLabel')}
               </label>
-              <input
+              <DateField
                 id="pipeline-hire-date"
-                type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className={cn(FIELD, 'cursor-pointer')}
+                aria-label={t(locale, 'recruiting.startDateLabel')}
               />
               <p className="mb-0 mt-2 text-xs leading-normal text-ink-faint">
                 {t(locale, 'recruiting.hireDateHint')}

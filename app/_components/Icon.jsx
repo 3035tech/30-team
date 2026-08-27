@@ -266,6 +266,63 @@ export function Icon({ name, className }) {
           <path d="m15 9-6 6" />
         </svg>
       );
+    case 'briefcase':
+    case 'jobRoles':
+      return (
+        <svg {...props}>
+          <rect x="3" y="8" width="18" height="12" rx="2" />
+          <path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <path d="M3 13h18" />
+        </svg>
+      );
+    case 'clipboard':
+    case 'performanceReviews':
+      return (
+        <svg {...props}>
+          <rect x="6" y="4" width="12" height="16" rx="2" />
+          <path d="M9 4.5V3.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 3.5v1" />
+          <path d="M9 10h6" />
+          <path d="M9 14h6" />
+        </svg>
+      );
+    case 'gift':
+    case 'benefits':
+      return (
+        <svg {...props}>
+          <rect x="4" y="10" width="16" height="10" rx="1.5" />
+          <path d="M12 10v10" />
+          <path d="M4 14h16" />
+          <path d="M12 10c-2.2 0-4-1.3-4-3s1.2-2.2 2.5-1.5C11.2 6 12 7.2 12 10Z" />
+          <path d="M12 10c2.2 0 4-1.3 4-3s-1.2-2.2-2.5-1.5C12.8 6 12 7.2 12 10Z" />
+        </svg>
+      );
+    case 'book':
+    case 'academy':
+      return (
+        <svg {...props}>
+          <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21.5Z" />
+          <path d="M5 5.5V21.5" />
+        </svg>
+      );
+    case 'exit':
+    case 'door':
+      return (
+        <svg {...props}>
+          <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+          <path d="M15 16l4-4-4-4" />
+          <path d="M19 12H10" />
+        </svg>
+      );
+    case 'succession':
+      return (
+        <svg {...props}>
+          <circle cx="8" cy="8" r="2.5" />
+          <circle cx="16" cy="8" r="2.5" />
+          <circle cx="12" cy="17" r="2.5" />
+          <path d="M9.5 10.2 11 14.5" />
+          <path d="M14.5 10.2 13 14.5" />
+        </svg>
+      );
     default:
       return null;
   }
