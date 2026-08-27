@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
-import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, resolveScopedCompanyId, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
 import {
   createTeamPulse,
   createTeamPulseInvite,
@@ -13,14 +13,6 @@ import {
   setTeamPulseStatus,
 } from '../../../../lib/people/team-pulses';
 
-function resolveCompanyId(scope, bodyCompanyId, searchCompanyId) {
-  if (scope.isAdmin) {
-    const raw = bodyCompanyId ?? searchCompanyId;
-    const n = Number(raw);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  return scope.companyId;
-}
 
 /** GET /api/admin/team-pulses?teamGroupId=&companyId= */
 export async function GET(request) {
@@ -33,7 +25,7 @@ export async function GET(request) {
     const url = new URL(request.url);
     const teamGroupId = url.searchParams.get('teamGroupId');
     const pulseId = url.searchParams.get('id');
-    const companyId = resolveCompanyId(scope, null, url.searchParams.get('companyId'));
+    const companyId = resolveScopedCompanyId(scope, url.searchParams.get('companyId'));
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     if (pulseId) {
@@ -69,7 +61,7 @@ export async function POST(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const body = await request.json().catch(() => ({}));
-    const companyId = resolveCompanyId(scope, body.companyId, null);
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     if (body.action === 'invite' || body.action === 'inviteBatch') {

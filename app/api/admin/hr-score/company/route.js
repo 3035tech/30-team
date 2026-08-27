@@ -1,123 +1,41 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '../../../../../lib/auth.js';
-import { queryRead } from '../../../../../lib/db.js';
+import { NextResponse } from 'next/server';
 import { apiError } from '../../../../../lib/api-error.js';
-import { hydrateSessionPayload } from '../../../../../lib/session.js';
-import { isManagerRole, isAdminRole } from '../../../../../lib/permissions.js';
-import { getCompanyScoresByArea } from '../../../../../lib/hr-score.js';
+import {
+  getSessionPayload,
+  getManagerScope,
+  requireManagerRole,
+  resolveScopedCompanyId,
+} from '../../../../../lib/ae/require-admin.js';
+import { getCompanyHrScoreRollup } from '../../../../../lib/hr-score.js';
 
 /**
  * GET /api/admin/hr-score/company?companyId=X
- * 
- * Retorna rollup de HR Scores por área da empresa.
- * Admin pode passar companyId; direction/hr usa a própria empresa.
+ * Company HR Score rollup (overall + top/bottom). Domain in lib/hr-score.js.
  */
 export async function GET(request) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('team30_session')?.value;
-    if (!token) {
-      return apiError(request, 'REQUIRED_LOGIN', 401);
+    const payload = await getSessionPayload();
+    if (!requireManagerRole(payload)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
+
+    const companyId = resolveScopedCompanyId(
+      scope,
+      new URL(request.url).searchParams.get('companyId')
+    );
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
+
+    const rollup = await getCompanyHrScoreRollup(companyId);
+    if (!rollup.ok) {
+      return apiError(request, rollup.errorCode || 'INTERNAL', rollup.errorCode === 'COMPANY_NOT_FOUND' ? 404 : 400);
     }
 
-    const rawPayload = verifyToken(token);
-    const payload = await hydrateSessionPayload(rawPayload);
-    if (!isManagerRole(payload)) {
-      return apiError(request, 'UNAUTHORIZED', 401);
-    }
-
-    const isAdmin = isAdminRole(payload);
-    const { searchParams } = new URL(request.url);
-    
-    let companyId;
-    if (isAdmin) {
-      const qCompanyId = searchParams.get('companyId');
-      companyId = qCompanyId ? parseInt(qCompanyId) : null;
-      if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
-      }
-    } else {
-      companyId = payload.companyId;
-      if (!companyId) {
-        return apiError(request, 'COMPANY_REQUIRED', 400);
-      }
-    }
-
-    // Buscar empresa
-    const companyRes = await queryRead(
-      `SELECT id, name FROM companies WHERE id = $1 AND deleted = FALSE LIMIT 1`,
-      [companyId]
-    );
-
-    if (companyRes.rowCount === 0) {
-      return apiError(request, 'COMPANY_NOT_FOUND', 404);
-    }
-
-    const company = companyRes.rows[0];
-
-    // Buscar scores agregados por área
-    const scoresByArea = await getCompanyScoresByArea(companyId);
-
-    // Buscar score médio geral
-    const overallRes = await queryRead(
-      `SELECT 
-         COUNT(h.id) as total,
-         ROUND(AVG(h.score)) as avg_score,
-         MIN(h.score) as min_score,
-         MAX(h.score) as max_score
-       FROM hr_scores h
-       JOIN candidates c ON c.id = h.candidate_id
-       WHERE h.company_id = $1
-         AND c.employee = TRUE
-         AND c.deleted = FALSE`,
-      [companyId]
-    );
-
-    const overall = {
-      total: parseInt(overallRes.rows[0]?.total || 0),
-      avgScore: parseInt(overallRes.rows[0]?.avg_score || 0),
-      minScore: parseInt(overallRes.rows[0]?.min_score || 0),
-      maxScore: parseInt(overallRes.rows[0]?.max_score || 0),
-    };
-
-    // Top 5 e Bottom 5
-    const topRes = await queryRead(
-      `SELECT 
-         c.id, c.full_name AS "fullName", c.area,
-         h.score, h.turnover_risk AS "turnoverRisk"
-       FROM hr_scores h
-       JOIN candidates c ON c.id = h.candidate_id
-       WHERE h.company_id = $1
-         AND c.employee = TRUE
-         AND c.deleted = FALSE
-       ORDER BY h.score DESC
-       LIMIT 5`,
-      [companyId]
-    );
-
-    const bottomRes = await queryRead(
-      `SELECT 
-         c.id, c.full_name AS "fullName", c.area,
-         h.score, h.turnover_risk AS "turnoverRisk"
-       FROM hr_scores h
-       JOIN candidates c ON c.id = h.candidate_id
-       WHERE h.company_id = $1
-         AND c.employee = TRUE
-         AND c.deleted = FALSE
-       ORDER BY h.score ASC
-       LIMIT 5`,
-      [companyId]
-    );
-
-    return Response.json({
-      company: {
-        id: company.id,
-        name: company.name,
-      },
-      overall,
-      byArea: scoresByArea,
-      topPerformers: topRes.rows,
-      bottomPerformers: bottomRes.rows,
+    return NextResponse.json({
+      company: rollup.company,
+      overall: rollup.overall,
+      byArea: rollup.byArea,
+      topPerformers: rollup.topPerformers,
+      bottomPerformers: rollup.bottomPerformers,
     });
   } catch (err) {
     console.error('[hr-score] GET company error:', err);

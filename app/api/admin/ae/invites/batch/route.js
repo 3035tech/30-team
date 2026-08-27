@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../../lib/db';
 import {
   CAP,
-  getManagerScope,
+  getManagerScope, resolveScopedCompanyId,
   getSessionPayload,
   publicAppUrl,
   requireCapability,
@@ -16,12 +16,6 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-
 import { apiError, localeFromRequest } from '../../../../../../lib/api-error';
 import { audit } from '../../../../../../lib/audit';
 
-function resolveCompanyId(payload, scope, bodyOrQueryCompanyId) {
-  if (!scope.isAdmin) return Number(scope.companyId);
-  const raw = bodyOrQueryCompanyId;
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : NaN;
-}
 
 /** GET /api/admin/ae/invites/batch — roster interno elegível para convite em lote */
 export async function GET(request) {
@@ -34,7 +28,7 @@ export async function GET(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const { searchParams } = new URL(request.url);
-    const companyId = resolveCompanyId(payload, scope, searchParams.get('companyId'));
+    const companyId = resolveScopedCompanyId(scope, searchParams.get('companyId'));
     if (!Number.isFinite(companyId)) {
       return apiError(request, 'INVALID_COMPANY', 400);
     }
@@ -69,7 +63,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const companyId = resolveCompanyId(payload, scope, body.companyId);
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!Number.isFinite(companyId)) {
       return apiError(request, 'INVALID_COMPANY', 400);
     }

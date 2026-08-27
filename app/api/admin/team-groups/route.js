@@ -4,19 +4,12 @@ import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import {
   CAP,
-  getManagerScope,
+  getManagerScope, resolveScopedCompanyId,
   getSessionPayload,
   requireCapability,
 } from '../../../../lib/ae/require-admin';
 import { createTeamGroup, listTeamGroups } from '../../../../lib/people/team-groups';
 
-function resolveCompanyId(scope, request, bodyCompanyId) {
-  if (!scope.isAdmin && scope.companyId != null) return Number(scope.companyId);
-  const url = new URL(request.url);
-  const q = url.searchParams.get('companyId') || bodyCompanyId;
-  const n = Number(q);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
 
 /** GET /api/admin/team-groups?companyId= */
 export async function GET(request) {
@@ -26,7 +19,7 @@ export async function GET(request) {
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-    const companyId = resolveCompanyId(scope, request, null);
+    const companyId = resolveScopedCompanyId(scope, new URL(request.url).searchParams.get('companyId'));
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     if (!scope.isAdmin && String(companyId) !== String(scope.companyId)) {
@@ -51,7 +44,7 @@ export async function POST(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const body = await request.json().catch(() => ({}));
-    const companyId = resolveCompanyId(scope, request, body.companyId);
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
     if (!scope.isAdmin && String(companyId) !== String(scope.companyId)) {
       return apiError(request, 'UNAUTHORIZED', 401);

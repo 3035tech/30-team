@@ -246,8 +246,10 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Teste T1–T9 | `app/_components/AssessmentFlow.jsx`, `lib/assessment-score.js`, `lib/data.js` |
 | Links públicos | `app/t`, `app/v`, `app/api/public/*`, `lib/vacancy-link.js` |
 | Dashboard | `app/dashboard/page.jsx`, `tabs/*`, `lib/overview-metrics.js`, `lib/compat-bundles.js` |
-| Vagas / pipeline | `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
-| Motivadores | `lib/ae/*` (incl. `create-motivators-invite`, `batch-motivators-invites`), `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
+| Vagas / pipeline | `lib/vacancies-admin.js`, `lib/vacancy-ranking.js`, `lib/pipeline.js`, `lib/hire.js`, `app/api/admin/vacancies/*` |
+| Submit T1–T9 (público) | `lib/assessment-submit.js`, `app/api/results` |
+| Usuários admin | `lib/users-admin.js`, `app/api/admin/users/*` |
+| Motivadores | `lib/ae/*` (incl. `analytics.js`, `create-motivators-invite`, `batch-motivators-invites`), `app/api/ae/*`, `app/api/admin/ae/*`, `scripts/seed-motivators-questions-v4.sql` |
 | People (1:1 / hipóteses / briefing / grupos salvos / scorecard / PDI) | `lib/people/*` (`decision-brief.js`, `team-groups.js`, `interview-scorecard.js`, `development-plans.js`), `PeopleManagementPanel`, `HrActionBrief`, Equipe, Grupos, `InterviewScorecardBlock`, `DevelopmentPlansBlock`, `migrations/022`, `040`, `041`, `042` |
 | Overview mix T1–T9 | `lib/overview-type-mix.js`, Overview heat grid |
 | Overview inteligência comportamental | `lib/people/team-behavioral-intel.js`, `load-team-behavioral-intel.js`, `TeamBehavioralIntelBlock`, Overview (`teamGroup`) |

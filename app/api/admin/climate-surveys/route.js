@@ -2,16 +2,9 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
 import { apiError } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
-import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
+import { CAP, getManagerScope, resolveScopedCompanyId, getSessionPayload, requireCapability } from '../../../../lib/ae/require-admin';
 import { createClimateSurvey, getClimateCompanyBenchmark, listClimateSurveys, climateMinResponses } from '../../../../lib/people/climate-surveys';
 
-function resolveCompanyId(scope, bodyCompanyId) {
-  if (scope.isAdmin) {
-    const cid = bodyCompanyId != null ? Number(bodyCompanyId) : Number(scope.companyId);
-    return Number.isFinite(cid) && cid > 0 ? cid : null;
-  }
-  return scope.companyId;
-}
 
 /** GET /api/admin/climate-surveys */
 export async function GET(request) {
@@ -22,12 +15,8 @@ export async function GET(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const url = new URL(request.url);
-    const companyId = scope.isAdmin
-      ? Number(url.searchParams.get('companyId') || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, 'COMPANY_REQUIRED', 400);
-    }
+    const companyId = resolveScopedCompanyId(scope, url.searchParams.get('companyId'));
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     if (url.searchParams.get('benchmark') === '1') {
       const bench = await getClimateCompanyBenchmark(query, { companyId });
@@ -52,7 +41,7 @@ export async function POST(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const body = await request.json().catch(() => ({}));
-    const companyId = resolveCompanyId(scope, body.companyId);
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     const created = await createClimateSurvey(query, {

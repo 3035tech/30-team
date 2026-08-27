@@ -1,150 +1,44 @@
 import { NextResponse } from 'next/server';
-import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
-import { cookies } from 'next/headers';
-import { COOKIE_NAME } from '../../../../../../lib/auth';
-import { query } from '../../../../../../lib/db';
-import { upsertCandidatePreInterview } from '../../../../../../lib/ae/candidate-upsert';
-import { normalizeCandidateProfile } from '../../../../../../lib/candidate-profile';
-import { sanitizeInterviewNotesHtml } from '../../../../../../lib/sanitize-html';
 import { apiError } from '../../../../../../lib/api-error';
-import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
+import {
+  CAP,
+  getSessionPayload,
+  getManagerScope,
+  requireCapability,
+} from '../../../../../../lib/ae/require-admin';
+import {
+  linkVacancyCandidate,
+  listVacancyCandidates,
+  loadVacancyForActor,
+} from '../../../../../../lib/vacancies-admin';
 
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-async function loadVacancyForActor(request, vacancyId, payload) {
-  const isAdmin = isAdminRole(payload);
-  const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return { error: apiError(request, 'UNAUTHORIZED', 401) };
-
-  if (!isAdmin) {
-    const owned = await query(
-      `SELECT v.id, v.company_id AS "companyId", v.title, v.status
-       FROM vacancies v
-       JOIN companies c ON c.id = v.company_id
-       WHERE v.id = $1 AND v.company_id = $2 AND v.deleted = FALSE AND c.deleted = FALSE
-       LIMIT 1`,
-      [vacancyId, companyId]
-    );
-    if (owned.rowCount === 0) return { error: apiError(request, 'UNAUTHORIZED', 401) };
-    return { vacancy: owned.rows[0], isAdmin };
-  }
-
-  const exists = await query(
-    `SELECT v.id, v.company_id AS "companyId", v.title, v.status
-     FROM vacancies v
-     JOIN companies c ON c.id = v.company_id
-     WHERE v.id = $1 AND v.deleted = FALSE AND c.deleted = FALSE
-     LIMIT 1`,
-    [vacancyId]
-  );
-  if (exists.rowCount === 0) return { error: apiError(request, 'VACANCY_NOT_FOUND', 404) };
-  return { vacancy: exists.rows[0], isAdmin };
+function actorErrorStatus(errorCode) {
+  if (errorCode === 'VACANCY_NOT_FOUND' || errorCode === 'NOT_FOUND') return 404;
+  return 401;
 }
 
 /** Lista candidatos pré-cadastrados na vaga + status eneagrama e Motivadores. */
 export async function GET(request, { params }) {
   try {
-    const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = await verifySessionWithCapabilities(token);
+    const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
 
-    const loaded = await loadVacancyForActor(request, vacancyId, payload);
-    if (loaded.error) return loaded.error;
+    const loaded = await loadVacancyForActor({
+      vacancyId,
+      isAdmin: scope.isAdmin,
+      companyId: scope.companyId,
+    });
+    if (!loaded.ok) {
+      return apiError(request, loaded.errorCode || 'UNAUTHORIZED', actorErrorStatus(loaded.errorCode));
+    }
 
-    const rows = await query(
-      `SELECT
-         vc.id,
-         vc.vacancy_id AS "vacancyId",
-         vc.candidate_id AS "candidateId",
-         vc.interview_notes AS "interviewNotes",
-         vc.offer_salary AS "offerSalary",
-         vc.offer_start_date AS "offerStartDate",
-         vc.offer_status AS "offerStatus",
-         vc.offer_notes AS "offerNotes",
-         vc.created_at AS "createdAt",
-         vc.updated_at AS "updatedAt",
-         c.full_name AS "fullName",
-         c.email,
-         c.phone,
-         c.linkedin_url AS "linkedinUrl",
-         c.city,
-         c.state,
-         c.salary_expectation AS "salaryExpectation",
-         c.availability,
-         c.source,
-         inv.id AS "inviteId",
-         inv.status AS "inviteStatus",
-         inv.sent_at AS "inviteSentAt",
-         inv.opened_at AS "inviteOpenedAt",
-         inv.completed_at AS "inviteCompletedAt",
-         ass.id AS "assessmentId",
-         ass.pipeline_stage AS "pipelineStage",
-         ass.top_type AS "topType",
-         mot_inv.id AS "motivatorsInviteId",
-         mot_inv.status AS "motivatorsInviteStatus",
-         mot_inv.sent_at AS "motivatorsInviteSentAt",
-         mot_inv.completed_at AS "motivatorsInviteCompletedAt",
-         mot_att.id AS "motivatorsAttemptId",
-         mot_att.completed_at AS "motivatorsCompletedAt"
-       FROM vacancy_candidates vc
-       JOIN candidates c ON c.id = vc.candidate_id
-       LEFT JOIN LATERAL (
-         SELECT ci.id, ci.status, ci.sent_at, ci.opened_at, ci.completed_at
-         FROM candidate_invites ci
-         WHERE ci.vacancy_id = vc.vacancy_id
-           AND (
-             ci.candidate_id = vc.candidate_id
-             OR (c.email IS NOT NULL AND LOWER(ci.candidate_email) = LOWER(c.email))
-           )
-           AND ci.status <> 'cancelled'
-         ORDER BY ci.sent_at DESC NULLS LAST, ci.id DESC
-         LIMIT 1
-       ) inv ON TRUE
-       LEFT JOIN LATERAL (
-         SELECT a.id, a.pipeline_stage, a.top_type
-         FROM assessments a
-         WHERE a.candidate_id = vc.candidate_id AND a.vacancy_id = vc.vacancy_id
-         ORDER BY a.created_at DESC
-         LIMIT 1
-       ) ass ON TRUE
-       LEFT JOIN LATERAL (
-         SELECT ai.id, ai.status, ai.sent_at, ai.completed_at
-         FROM ae_invites ai
-         JOIN ae_definitions d ON d.id = ai.definition_id AND LOWER(d.slug) = 'motivators'
-         WHERE ai.company_id = c.company_id
-           AND (
-             ai.candidate_id = vc.candidate_id
-             OR (c.email IS NOT NULL AND LOWER(ai.candidate_email) = LOWER(c.email))
-           )
-           AND ai.status <> 'cancelled'
-         ORDER BY
-           CASE ai.status WHEN 'completed' THEN 0 ELSE 1 END,
-           ai.completed_at DESC NULLS LAST,
-           ai.sent_at DESC NULLS LAST,
-           ai.id DESC
-         LIMIT 1
-       ) mot_inv ON TRUE
-       LEFT JOIN LATERAL (
-         SELECT a.id, a.completed_at
-         FROM ae_attempts a
-         JOIN ae_definitions d ON d.id = a.definition_id AND LOWER(d.slug) = 'motivators'
-         WHERE a.company_id = c.company_id
-           AND a.candidate_id = vc.candidate_id
-           AND a.status = 'completed'
-         ORDER BY a.completed_at DESC NULLS LAST, a.id DESC
-         LIMIT 1
-       ) mot_att ON TRUE
-       WHERE vc.vacancy_id = $1
-       ORDER BY vc.created_at DESC`,
-      [vacancyId]
-    );
-
-    return NextResponse.json({ items: rows.rows });
+    const items = await listVacancyCandidates(vacancyId);
+    return NextResponse.json({ items });
   } catch (error) {
     console.error(error);
     return apiError(request, 'INTERNAL', 500);
@@ -154,112 +48,34 @@ export async function GET(request, { params }) {
 /** Cadastra candidato (nome+email) na vaga após a entrevista. */
 export async function POST(request, { params }) {
   try {
-    const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = await verifySessionWithCapabilities(token);
+    const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, 'UNAUTHORIZED', 401);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const vacancyId = params?.id;
     if (!vacancyId) return apiError(request, 'INVALID_VACANCY', 400);
 
-    const loaded = await loadVacancyForActor(request, vacancyId, payload);
-    if (loaded.error) return loaded.error;
-    const { vacancy } = loaded;
-
-    const body = await request.json().catch(() => ({}));
-    const existingCandidateId =
-      body.candidateId != null && Number.isFinite(Number(body.candidateId))
-        ? Number(body.candidateId)
-        : null;
-
-    let up;
-    if (existingCandidateId) {
-      const existing = await query(
-        `SELECT id, full_name AS "fullName", email, phone, linkedin_url AS "linkedinUrl",
-                city, state, salary_expectation AS "salaryExpectation",
-                availability, source
-         FROM candidates
-         WHERE id = $1 AND company_id = $2
-         LIMIT 1`,
-        [existingCandidateId, vacancy.companyId]
-      );
-      if (!existing.rowCount) return apiError(request, 'NOT_FOUND', 404);
-      const row = existing.rows[0];
-      up = {
-        ok: true,
-        candidateId: row.id,
-        fullName: row.fullName,
-        email: row.email,
-        phone: row.phone,
-        linkedinUrl: row.linkedinUrl,
-        city: row.city,
-        state: row.state,
-        salaryExpectation: row.salaryExpectation,
-        availability: row.availability,
-        source: row.source,
-      };
-    } else {
-      const fullName = String(body.fullName || body.name || body.candidateName || '').trim();
-      const email = String(body.email || body.candidateEmail || '').trim().toLowerCase();
-
-      if (!fullName || fullName.length > 200) {
-        return apiError(request, 'CANDIDATE_NAME_REQUIRED', 400);
-      }
-      if (!email || !EMAIL_RE.test(email)) {
-        return apiError(request, 'INVALID_CANDIDATE_EMAIL', 400);
-      }
-
-      up = await upsertCandidatePreInterview({
-        companyId: vacancy.companyId,
-        fullName,
-        email,
-        profile: normalizeCandidateProfile(body),
-      });
-      if (!up.ok) return apiError(request, up.errorCode || 'INTERNAL', 400);
+    const loaded = await loadVacancyForActor({
+      vacancyId,
+      isAdmin: scope.isAdmin,
+      companyId: scope.companyId,
+    });
+    if (!loaded.ok) {
+      return apiError(request, loaded.errorCode || 'UNAUTHORIZED', actorErrorStatus(loaded.errorCode));
     }
 
-    const notes = sanitizeInterviewNotesHtml(body.interviewNotes ?? body.notes ?? null);
+    const body = await request.json().catch(() => ({}));
+    const result = await linkVacancyCandidate({
+      vacancy: loaded.vacancy,
+      body,
+      createdByUserId: payload?.userId,
+    });
+    if (!result.ok) {
+      return apiError(request, result.errorCode || 'INTERNAL', result.status || 400);
+    }
 
-    const createdBy = payload?.userId != null ? Number(payload.userId) : null;
-    const createdBySql = Number.isFinite(createdBy) ? createdBy : null;
-
-    const prior = await query(
-      `SELECT id FROM vacancy_candidates WHERE vacancy_id = $1 AND candidate_id = $2 LIMIT 1`,
-      [vacancy.id, up.candidateId]
-    );
-    const alreadyLinked = prior.rowCount > 0;
-
-    const link = await query(
-      `INSERT INTO vacancy_candidates (
-         vacancy_id, candidate_id, company_id, interview_notes, pipeline_stage, created_by_user_id
-       ) VALUES ($1, $2, $3, $4, 'interview', $5)
-       ON CONFLICT (vacancy_id, candidate_id)
-       DO UPDATE SET
-         interview_notes = COALESCE(EXCLUDED.interview_notes, vacancy_candidates.interview_notes),
-         pipeline_stage = COALESCE(vacancy_candidates.pipeline_stage, 'interview'),
-         updated_at = NOW()
-       RETURNING id, vacancy_id AS "vacancyId", candidate_id AS "candidateId",
-                 interview_notes AS "interviewNotes", pipeline_stage AS "pipelineStage",
-                 created_at AS "createdAt", updated_at AS "updatedAt"`,
-      [vacancy.id, up.candidateId, vacancy.companyId, notes, createdBySql]
-    );
-
-    return NextResponse.json(
-      {
-        ...link.rows[0],
-        alreadyLinked,
-        fullName: up.fullName,
-        email: up.email,
-        phone: up.phone,
-        linkedinUrl: up.linkedinUrl,
-        city: up.city,
-        state: up.state,
-        salaryExpectation: up.salaryExpectation,
-        availability: up.availability,
-        source: up.source,
-      },
-      { status: alreadyLinked ? 200 : 201 }
-    );
+    return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     console.error(error);
     return apiError(request, 'INTERNAL', 500);

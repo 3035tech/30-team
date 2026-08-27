@@ -5,7 +5,12 @@
 
 import { NextResponse } from 'next/server';
 import { apiError } from '../../../../lib/api-error.js';
-import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../lib/ae/require-admin.js';
+import {
+  getSessionPayload,
+  getManagerScope,
+  requireManagerRole,
+  resolveScopedCompanyId,
+} from '../../../../lib/ae/require-admin.js';
 import { listPerformanceCycles, createPerformanceCycle } from '../../../../lib/performance-reviews.js';
 import { audit } from '../../../../lib/audit.js';
 
@@ -16,16 +21,11 @@ export async function GET(request) {
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-    const companyId = scope.isAdmin
-      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, 'COMPANY_REQUIRED', 400);
-    }
-
     const url = new URL(request.url);
-    const limit = Number(url.searchParams.get('limit')) || 40;
+    const companyId = resolveScopedCompanyId(scope, url.searchParams.get('companyId'));
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
+    const limit = Number(url.searchParams.get('limit')) || 40;
     const cycles = await listPerformanceCycles(null, { companyId, limit });
     return NextResponse.json({ cycles });
   } catch (err) {
@@ -42,15 +42,10 @@ export async function POST(request) {
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
     const body = await request.json();
-    const companyId = scope.isAdmin
-      ? Number(body.companyId || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, 'COMPANY_REQUIRED', 400);
-    }
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
+    if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     const { title, description, status, periodStart, periodEnd } = body;
-
     if (!title || String(title).trim().length === 0) {
       return apiError(request, 'TITLE_REQUIRED', 400);
     }
@@ -72,10 +67,9 @@ export async function POST(request) {
     await audit({
       action: 'performance_cycle_create',
       actorUserId: payload.userId,
-      companyId,
       targetType: 'performance_cycle',
       targetId: result.cycle.id,
-      metadata: { title: result.cycle.title, status: result.cycle.status },
+      metadata: { companyId, title: result.cycle.title, status: result.cycle.status },
     });
 
     return NextResponse.json(result.cycle, { status: 201 });

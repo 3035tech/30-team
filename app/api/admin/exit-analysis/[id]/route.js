@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionPayload, getManagerScope, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
+import { getSessionPayload, getManagerScope, resolveScopedCompanyId, requireManagerRole } from '../../../../../lib/ae/require-admin.js';
 import { apiError } from '../../../../../lib/api-error.js';
 import { getExitRecord, updateExitRecord } from '../../../../../lib/exit-analysis.js';
 
@@ -8,19 +8,6 @@ import { getExitRecord, updateExitRecord } from '../../../../../lib/exit-analysi
  * PATCH /api/admin/exit-analysis/[id] — update exit record
  */
 
-function resolveCompanyId(request, scope, bodyCompanyId) {
-  if (scope.isAdmin) {
-    const fromQuery = new URL(request.url).searchParams.get('companyId');
-    const cid = bodyCompanyId != null
-      ? Number(bodyCompanyId)
-      : fromQuery != null
-        ? Number(fromQuery)
-        : Number(scope.companyId);
-    return Number.isFinite(cid) && cid > 0 ? cid : null;
-  }
-  const cid = Number(scope.companyId);
-  return Number.isFinite(cid) && cid > 0 ? cid : null;
-}
 
 export async function GET(request, { params }) {
   try {
@@ -29,7 +16,7 @@ export async function GET(request, { params }) {
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, 'UNAUTHORIZED', 401);
 
-    const companyId = resolveCompanyId(request, scope);
+    const companyId = resolveScopedCompanyId(scope, new URL(request.url).searchParams.get('companyId'));
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     const { id } = params;
@@ -64,7 +51,7 @@ export async function PATCH(request, { params }) {
       return apiError(request, 'INVALID_JSON', 400);
     }
 
-    const companyId = resolveCompanyId(request, scope, body.companyId);
+    const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!companyId) return apiError(request, 'COMPANY_REQUIRED', 400);
 
     const { id } = params;
