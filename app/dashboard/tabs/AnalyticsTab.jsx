@@ -24,8 +24,12 @@ export function AnalyticsTab({ session }) {
   const [trendMonths, setTrendMonths] = useState(12);
 
   useEffect(() => {
-    loadMetrics();
-  }, []);
+    if (activeView === 'metrics') {
+      loadMetrics();
+    } else if (activeView === 'trends') {
+      loadTrends();
+    }
+  }, [activeView]);
 
   async function loadMetrics() {
     setLoading(true);
@@ -52,8 +56,35 @@ export function AnalyticsTab({ session }) {
     }
   }
 
+  async function loadTrends() {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.append('months', trendMonths);
+
+      const res = await fetch(`/api/admin/analytics/trends?${params}`);
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.error || 'Failed to load trends');
+      }
+
+      setTrends(data.trends);
+    } catch (err) {
+      console.error('Error loading trends:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function applyFilters() {
-    loadMetrics();
+    if (activeView === 'metrics') {
+      loadMetrics();
+    } else {
+      loadTrends();
+    }
   }
 
   if (loading) {
@@ -75,11 +106,30 @@ export function AnalyticsTab({ session }) {
   return (
     <div className="space-y-6">
       <div className={S.card}>
+        {/* View Toggle */}
+        <div className="flex gap-2 mb-6">
+          <button
+            className={activeView === 'metrics' ? S.btnPrimary : S.btnGhost}
+            onClick={() => setActiveView('metrics')}
+          >
+            {locale === 'pt-BR' ? 'Métricas' : 'Metrics'}
+          </button>
+          <button
+            className={activeView === 'trends' ? S.btnPrimary : S.btnGhost}
+            onClick={() => setActiveView('trends')}
+          >
+            {locale === 'pt-BR' ? 'Tendências' : 'Trends'}
+          </button>
+        </div>
+
         <h2 className="font-display text-xl mb-4">
-          {locale === 'pt-BR' ? 'Métricas de Efetividade' : 'Effectiveness Metrics'}
+          {activeView === 'metrics'
+            ? (locale === 'pt-BR' ? 'Métricas de Efetividade' : 'Effectiveness Metrics')
+            : (locale === 'pt-BR' ? 'Tendências Temporais' : 'Trends Over Time')}
         </h2>
 
         {/* Filtros */}
+        {activeView === 'metrics' && (
         <div className="flex flex-wrap gap-4 mb-6">
           <div>
             <label className={S.label}>
@@ -109,8 +159,34 @@ export function AnalyticsTab({ session }) {
             </button>
           </div>
         </div>
+        )}
+
+        {activeView === 'trends' && (
+        <div className="flex gap-4 mb-6">
+          <div>
+            <label className={S.label}>
+              {locale === 'pt-BR' ? 'Período (meses)' : 'Period (months)'}
+            </label>
+            <select
+              className={S.select}
+              value={trendMonths}
+              onChange={(e) => setTrendMonths(parseInt(e.target.value))}
+            >
+              <option value="6">6 meses</option>
+              <option value="12">12 meses</option>
+              <option value="24">24 meses</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button className={S.btnPrimary} onClick={applyFilters}>
+              {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
+            </button>
+          </div>
+        </div>
+        )}
 
         {/* Cards de métricas */}
+        {activeView === 'metrics' && metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Time to Hire */}
           <MetricCard
@@ -164,6 +240,116 @@ export function AnalyticsTab({ session }) {
             locale={locale}
           />
         </div>
+        )}
+
+        {/* Tendências */}
+        {activeView === 'trends' && trends && (
+        <div className="space-y-6">
+          {/* HR Score Trend */}
+          <TrendChart
+            title={locale === 'pt-BR' ? 'HR Score Médio' : 'Average HR Score'}
+            data={trends.hrScore}
+            dataKey="avgScore"
+            label={locale === 'pt-BR' ? 'Score' : 'Score'}
+            color={C.brand}
+            locale={locale}
+          />
+
+          {/* Turnover Risk Trend */}
+          <TrendChart
+            title={locale === 'pt-BR' ? 'Risco de Rotatividade (%)' : 'Turnover Risk (%)'}
+            data={trends.turnoverRisk}
+            dataKey="highRiskPct"
+            label={locale === 'pt-BR' ? 'Alto Risco' : 'High Risk'}
+            color={C.danger}
+            locale={locale}
+          />
+
+          {/* Climate Trend */}
+          <TrendChart
+            title={locale === 'pt-BR' ? 'Clima Médio' : 'Average Climate'}
+            data={trends.climate}
+            dataKey="avgClimate"
+            label={locale === 'pt-BR' ? 'Clima' : 'Climate'}
+            color={C.success}
+            locale={locale}
+          />
+
+          {/* Hires vs Exits */}
+          <div className={S.cardTight}>
+            <div className="font-bold mb-3">
+              {locale === 'pt-BR' ? 'Contratações vs Desligamentos' : 'Hires vs Exits'}
+            </div>
+            <div className="h-48 flex items-end gap-1">
+              {trends.hiresVsExits.map((item, idx) => {
+                const maxValue = Math.max(...trends.hiresVsExits.map(i => Math.max(i.hires, i.exits)));
+                const hiresHeight = (item.hires / maxValue) * 100;
+                const exitsHeight = (item.exits / maxValue) * 100;
+                
+                return (
+                  <div key={idx} className="flex-1 flex flex-col gap-1" title={item.month}>
+                    <div
+                      className="bg-success/70"
+                      style={{ height: `${hiresHeight}%` }}
+                    />
+                    <div
+                      className="bg-danger/70"
+                      style={{ height: `${exitsHeight}%` }}
+                    />
+                    <div className="text-xs text-center" style={{ color: C.faint }}>
+                      {item.month.slice(5)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-4 mt-3 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-success/70" />
+                <span>{locale === 'pt-BR' ? 'Contratações' : 'Hires'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-danger/70" />
+                <span>{locale === 'pt-BR' ? 'Desligamentos' : 'Exits'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TrendChart({ title, data, dataKey, label, color, locale }) {
+  const maxValue = Math.max(...data.map(d => d[dataKey] || 0));
+  
+  return (
+    <div className={S.cardTight}>
+      <div className="font-bold mb-3">{title}</div>
+      <div className="h-32 flex items-end gap-1">
+        {data.map((item, idx) => {
+          const value = item[dataKey] || 0;
+          const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+          
+          return (
+            <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+              <div className="text-xs" style={{ color }}>{value > 0 ? value : ''}</div>
+              <div
+                className="w-full"
+                style={{
+                  height: `${height}%`,
+                  backgroundColor: color,
+                  opacity: 0.8,
+                }}
+                title={`${item.month}: ${value}`}
+              />
+              <div className="text-xs" style={{ color: C.faint }}>
+                {item.month.slice(5)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
