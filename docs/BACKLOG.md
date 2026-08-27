@@ -175,9 +175,9 @@ _(migration 058 + lib/exit-analysis.js + APIs + UI ExitAnalysisAdminTab + ExitIn
 
 Leitura hedged a partir de clima + mix T1–T9 + pulso. Valores declarados (texto rico da empresa, já há “sobre”) vs praticada (sinais). Sem segundo instrumento.
 
-### B-1008 — Academy leve (não LMS)
+### B-1008 — Academy leve (não LMS) ✅ ENTREGUE
 
-Catálogo curto de ações/trilhas (título, tema) que o PDI pode apontar. Sem player, sem SCORM, sem escola completa.
+_(migration 059 + lib/learning-resources.js + APIs + LearningResourcesAdminTab)_ Catálogo simples de recursos de aprendizagem (título, descrição, tema, tipo, URL, duração). Tipos: course, article, video, book, workshop, mentoring, other. PDI pode linkar recursos via `development_plan_resource_links` (muitos-para-muitos) ou referenciar no texto. Sem player, sem SCORM, sem acompanhamento de progresso — apenas catálogo de ações/trilhas que o gestor pode apontar no plano de desenvolvimento.
 
 ### B-1009 — Catálogo de benefícios (não clube/folha)
 

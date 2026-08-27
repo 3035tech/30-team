@@ -160,7 +160,16 @@ A partir da migration `054`, `055` e `056`:
 - API: `/api/admin/organizational-culture` (GET com `?summary=true` para rollup)
 - Lib: `lib/organizational-culture.js` (`getOrganizationalCulture`, `getCultureSummary`, `synthesizeCultureInsights`)
 
-**Backlog:** B-1008 a B-1009 (Academy leve, catálogo de benefícios) — ver `docs/BACKLOG.md`.
+### B-1008 — Academy (Learning Resources)
+- **Catálogo leve** de recursos de aprendizagem (não é LMS completo): título, descrição, tema, tipo (course/article/video/book/workshop/mentoring/other), URL externa, duração (horas)
+- **Link opcional com PDI**: tabela `development_plan_resource_links` (muitos-para-muitos) para sugerir ações concretas no plano, ou referência no texto do item PDI
+- **Sem player, sem SCORM, sem progresso**: apenas catálogo que o gestor pode apontar como ação de desenvolvimento
+- UI: `LearningResourcesAdminTab` (CRUD com filtro por tema)
+- APIs: `/api/admin/learning-resources` (list com `?theme=`, `?themes=true` para lista de temas, POST), `/api/admin/learning-resources/[id]` (GET, PATCH, DELETE)
+- Lib: `lib/learning-resources.js` (CRUD, `linkResourceToPdi`, `unlinkResourceFromPdi`, `getPdiLinkedResources`)
+- Migration: `059_learning_resources.sql` (tabelas `learning_resources`, `development_plan_resource_links`)
+
+**Backlog:** B-1009 (catálogo de benefícios) — ver `docs/BACKLOG.md`.
 
 ---
 
