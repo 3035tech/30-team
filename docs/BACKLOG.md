@@ -348,3 +348,4 @@ _(lib/analytics-scheduled-reports.js + API /api/cron/analytics-report)_
 - Epic **B-900** entregue (Sprint A/B/C — Overview atenção + Fit/briefing/report + mix/rubrica/clima).
 - Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).
 - **Onboarding Contextual** (Melhoria #1 — Sprint Quick Wins) entregue: tooltips contextuais, checklist de progresso (7 tarefas), empty states acionáveis, tour guiado opcional (5 steps). Ver `docs/onboarding-contextual.md`.
+- **UX/UI — Categoria Completa** (Melhorias #3-#9) entregue: Sistema Undo/Confirmação, Loading States rico, Mobile fixes completo (10 áreas), Busca global Cmd+K, Atalhos de teclado (j/k/g+tecla/?), Modo escuro. Ver `docs/ux-ui-improvements.md`.
