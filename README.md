@@ -278,7 +278,7 @@ npm run dev
 - URL canônica indexável: `/jobs/{slug}-{id}` (id = `vacancies.id`; JobPosting JSON-LD, Open Graph / Twitter com imagem da marca).
 - O link `/v/{token}` continua sendo o **assessment** (noindex; token pode rotacionar).
 - Flags na vaga: página pública, permitir indexação, mostrar empresa, mostrar salário.
-- Perfil da empresa (admin → Empresas): no modal criar/editar — `website`, texto “sobre”, flag **página pública de carreiras** (`public_profile_enabled`) e **logo** (preview no formulário; S3 → `logo_url` / `logo_key`). Canônica: `/companies/{slug}` (neutra pt/en). Sem opt-in → 404.
+- Perfil da empresa (admin → Empresas): no modal criar/editar — `website`, texto “sobre”, flag **página pública de carreiras** (`public_profile_enabled`) e **logo** (crop 1:1 + compressão no cliente ≤512 KB / lado ≤768 px; origem até 20 MB; S3 → `logo_url` / `logo_key`). Canônica: `/companies/{slug}` (neutra pt/en). Sem opt-in → 404.
 - Índice `/jobs`: busca, filtro de contrato, paginação; rodapé com **alerta de vagas** (`POST /api/public/job-alerts`). Cancelar: `/a/unsubscribe?token=…`. Ao publicar página pública (create ou ligar flag), dispara e-mail aos alertas ativos que casam com filtros — exige SMTP; sem SMTP é no-op e não bloqueia o save.
 - Agregadores SEO (automáticos): `/jobs/remote` e `/jobs/city/{slug}` só se houver ≥ `PUBLIC_JOB_AGGREGATOR_MIN_COUNT` vagas indexáveis (default **3**); sem massa → 404. Preencher modalidade/cidade no drawer. Sem JobPosting nestas listas.
 - Conteúdo exibido quando existir: título, empresa (logo se houver), tipo de contrato, modalidade/cidade, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.

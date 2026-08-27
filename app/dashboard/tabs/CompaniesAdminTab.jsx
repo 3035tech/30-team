@@ -12,6 +12,8 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { RichTextEditor } from '../../_components/RichTextEditor';
+import { CompanyLogoCropDialog } from '../../_components/CompanyLogoCropDialog';
+import { COMPANY_LOGO_ACCEPT } from '../../../lib/company-logo-limits';
 
 const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
 const FIELD_INPUT =
@@ -43,6 +45,7 @@ function CompanyLogoField({
   onError,
 }) {
   const blobUrlsRef = useRef([]);
+  const [cropFile, setCropFile] = useState(null);
 
   useEffect(() => () => {
     for (const u of blobUrlsRef.current) {
@@ -54,7 +57,7 @@ function CompanyLogoField({
   const off = storageConfigured === false;
   const preview = String(previewUrl || '').trim();
 
-  const onFile = async (file) => {
+  const uploadProcessed = async (file) => {
     if (!file) return;
     onError?.('');
     if (uploadUrl && storageConfigured !== false) {
@@ -126,13 +129,13 @@ function CompanyLogoField({
           >
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept={COMPANY_LOGO_ACCEPT}
               disabled={blocked}
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = '';
-                if (file) void onFile(file);
+                if (file) setCropFile(file);
               }}
             />
             {busy
@@ -163,6 +166,16 @@ function CompanyLogoField({
       {error ? (
         <p className="mb-0 mt-2 text-xs leading-snug text-danger">{error}</p>
       ) : null}
+      <CompanyLogoCropDialog
+        open={Boolean(cropFile)}
+        file={cropFile}
+        locale={locale}
+        onCancel={() => setCropFile(null)}
+        onApply={(processed) => {
+          setCropFile(null);
+          void uploadProcessed(processed);
+        }}
+      />
     </div>
   );
 }

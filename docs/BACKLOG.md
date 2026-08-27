@@ -356,6 +356,12 @@ _(entregue — B-1201–B-1204: Overview attention ← PDI/clima/sucessão/onboa
 
 ---
 
+## Aberto — Logo da empresa (UX de upload)
+
+_(entregue — B-1401: crop 1:1 + compressão cliente ≤512 KB / lado ≤768 px; origem até 20 MB; servidor mantém MIME+tamanho.)_
+
+---
+
 ## Notas
 
 - Qualidade/testes **B-001–B-006** entregues.

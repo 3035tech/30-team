@@ -309,6 +309,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css`, tokens `S.*` em `dashboard-shared.jsx` |
+| Logo empresa (S3) | `lib/company-logo.js`, `lib/company-logo-limits.js`, `lib/company-logo-client.js` (crop/compress), `CompanyLogoCropDialog`, `POST/DELETE …/companies/[id]/logo` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |

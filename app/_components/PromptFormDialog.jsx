@@ -16,6 +16,8 @@ import { DateField } from './DateField';
 import { TagInput } from './TagInput';
 import { EntitySearchSelect } from './EntitySearchSelect';
 import { parseTagList } from '../../lib/tag-list';
+import { CompanyLogoCropDialog } from './CompanyLogoCropDialog';
+import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
@@ -64,6 +66,7 @@ export function PromptFormDialog({
   const [values, setValues] = useState({});
   const [uploadBusyKey, setUploadBusyKey] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [cropTarget, setCropTarget] = useState(null); // { field, file }
   const blobUrlsRef = useRef([]);
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export function PromptFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    setCropTarget(null);
     const init = {};
     for (const f of fields) {
       const fieldKey = fieldKeyOf(f);
@@ -220,13 +224,13 @@ export function PromptFormDialog({
               >
                 <input
                   type="file"
-                  accept={f.accept || 'image/png,image/jpeg,image/webp'}
+                  accept={f.accept || COMPANY_LOGO_ACCEPT}
                   disabled={off || busy}
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     e.target.value = '';
-                    if (file) void onImageFile(f, file);
+                    if (file) setCropTarget({ field: f, file });
                   }}
                 />
                 {busy
@@ -410,75 +414,88 @@ export function PromptFormDialog({
   };
 
   return createPortal(
-    <div
-      className={cn('app-dialog-overlay', dialogOverlayClass)}
-      role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel?.();
-      }}
-    >
+    <>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="prompt-form-title"
-        className={cn(
-          'prompt-form-card',
-          dialogCardClass,
-          'max-h-[90vh] overflow-y-auto',
-          hasWideFields ? 'max-w-[560px]' : 'max-w-[520px]'
-        )}
-        onClick={(e) => e.stopPropagation()}
+        className={cn('app-dialog-overlay', dialogOverlayClass)}
+        role="presentation"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onCancel?.();
+        }}
       >
-        <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
-          30Team
-        </span>
-        <h2
-          id="prompt-form-title"
-          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prompt-form-title"
+          className={cn(
+            'prompt-form-card',
+            dialogCardClass,
+            'max-h-[90vh] overflow-y-auto',
+            hasWideFields ? 'max-w-[560px]' : 'max-w-[520px]'
+          )}
+          onClick={(e) => e.stopPropagation()}
         >
-          {heading}
-        </h2>
-        {message ? (
-          <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
-        ) : null}
-        <div className="mt-4 flex flex-col gap-3">
-          {visibleFields.map((f) => (
-            <div key={fieldKeyOf(f)} className="block">
-              {f.type !== 'boolean' ? (
-                <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
-              ) : null}
-              {renderControl(f)}
-              {f.help && f.type !== 'imageUpload' ? (
-                <p
-                  className={cn(
-                    'text-xs leading-[1.45] text-ink-muted',
-                    f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
-                  )}
-                >
-                  {f.help}
-                </p>
-              ) : null}
-              {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
-                <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        <div className="mt-[22px] flex justify-end gap-2.5">
-          <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>
-            {cancelLabel || t(locale, 'panel.common.cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSubmit?.(values)}
-            disabled={Boolean(uploadBusyKey)}
-            className={cn(dialogBtnPrimaryClass, uploadBusyKey && 'opacity-60')}
+          <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
+            30Team
+          </span>
+          <h2
+            id="prompt-form-title"
+            className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
           >
-            {confirmLabel || t(locale, 'panel.common.save')}
-          </button>
+            {heading}
+          </h2>
+          {message ? (
+            <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+          ) : null}
+          <div className="mt-4 flex flex-col gap-3">
+            {visibleFields.map((f) => (
+              <div key={fieldKeyOf(f)} className="block">
+                {f.type !== 'boolean' ? (
+                  <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
+                ) : null}
+                {renderControl(f)}
+                {f.help && f.type !== 'imageUpload' ? (
+                  <p
+                    className={cn(
+                      'text-xs leading-[1.45] text-ink-muted',
+                      f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
+                    )}
+                  >
+                    {f.help}
+                  </p>
+                ) : null}
+                {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
+                  <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="mt-[22px] flex justify-end gap-2.5">
+            <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>
+              {cancelLabel || t(locale, 'panel.common.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSubmit?.(values)}
+              disabled={Boolean(uploadBusyKey)}
+              className={cn(dialogBtnPrimaryClass, uploadBusyKey && 'opacity-60')}
+            >
+              {confirmLabel || t(locale, 'panel.common.save')}
+            </button>
+          </div>
         </div>
       </div>
-    </div>,
+      <CompanyLogoCropDialog
+        open={Boolean(cropTarget?.file)}
+        file={cropTarget?.file || null}
+        locale={locale}
+        onCancel={() => setCropTarget(null)}
+        onApply={(processed) => {
+          const field = cropTarget?.field;
+          setCropTarget(null);
+          if (field) void onImageFile(field, processed);
+        }}
+      />
+    </>,
     document.body
   );
 }

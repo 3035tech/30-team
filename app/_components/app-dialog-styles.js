@@ -2,6 +2,10 @@
 export const dialogOverlayClass =
   'fixed inset-0 z-[10060] box-border flex items-center justify-center bg-ink/45 p-6';
 
+/** Above prompt/confirm — e.g. logo crop stacked on company form. */
+export const dialogOverlayElevatedClass =
+  'fixed inset-0 z-[10070] box-border flex items-center justify-center bg-ink/45 p-6';
+
 export const dialogCardClass =
   'w-full max-w-[420px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog';
 
