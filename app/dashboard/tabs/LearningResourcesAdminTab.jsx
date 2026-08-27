@@ -1,12 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { TagChips } from '../../_components/TagInput';
 import { formatTagList, parseTagList } from '../../../lib/tag-list';
-import { S } from '../dashboard-shared';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [resources, setResources] = useState([]);
@@ -14,6 +15,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   const [loading, setLoading] = useState(true);
   const [filterTheme, setFilterTheme] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('title');
+  const [sortDir, setSortDir] = useState('asc');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   function t(key) {
@@ -108,6 +113,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     loadResources();
     loadThemes();
   }, [companyId, filterTheme, filterType]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterTheme, filterType]);
 
   async function loadResources() {
     if (!companyId) return;
@@ -280,6 +289,39 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     }
   }
 
+  const sortedResources = useMemo(() => {
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const rows = [...resources];
+    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    rows.sort((a, b) => {
+      if (sort === 'durationHours') {
+        const an = Number(a.durationHours) || 0;
+        const bn = Number(b.durationHours) || 0;
+        return (an - bn) * dirMul;
+      }
+      if (sort === 'resourceType') {
+        return String(t(a.resourceType) || '').localeCompare(String(t(b.resourceType) || ''), collator) * dirMul;
+      }
+      if (sort === 'theme') {
+        return String(a.theme || '').localeCompare(String(b.theme || ''), collator) * dirMul;
+      }
+      return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
+    });
+    return rows;
+  }, [resources, sort, sortDir, locale]);
+
+  const total = sortedResources.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = sortedResources.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
+
   if (loading) return <AppLoading />;
 
   return (
@@ -335,29 +377,32 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           onAction={isAdmin ? handleCreate : undefined}
         />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
+          <table className="w-full min-w-[640px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('title_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="theme" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('theme_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="resourceType" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('type_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="durationHours" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('duration_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+                >
                   {t('actions_col')}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {resources.map((res) => (
+              {pageRows.map((res) => (
                 <tr key={res.id} className="hover:bg-canvas-alt/50">
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-ink">{res.title}</p>
@@ -404,6 +449,21 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <AdminListPager
+              locale={locale}
+              page={safePage}
+              pageSize={pageSize}
+              total={total}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(ps) => {
+                setPageSize(ps);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

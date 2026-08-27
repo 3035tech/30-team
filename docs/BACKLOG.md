@@ -356,57 +356,16 @@ _(entregue — B-1402 tokens + B-1403 migração dos selects ad hoc: page-size, 
 
 ## Aberto — Tema / layout dark
 
-### B-1501 — Dark mode completo e confiável
-O toggle e a class `.dark` existem (`DarkModeProvider`, `app/dark-mode.css`, tokens Tailwind), mas **ainda não funciona bem** na prática: várias superfícies do dashboard (cards, chrome, overlays, formulários, kanban, PDF/print) ficam ilegíveis ou “meio claro”.
+### B-1501 — Dark mode completo e confiável _(usable no painel — follow-ups)_
+Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.card`/`bg-surface`, borders ink, sidebar/drawer mobile, dialogs, tabelas, `bg-white/*` leftovers, `--canvas-alt`). Não reescrever `theme.js` `C.*` globalmente.
 
-**Instruções:**
-1. Auditoria visual por aba (Overview → Equipe → Vagas → Analytics) em viewport desktop + mobile.
-2. Completar overrides em `dark-mode.css` / tokens CSS vars para `bg-surface`, `canvas`, borders, `S.*`, dialogs, toasts.
-3. Garantir contraste AA em texto muted / labels / chips de pipeline (sem reinventar design system).
-4. Testar persistência `localStorage` + flash no load (script no `layout.jsx`).
-5. Não seguir preferência do SO por padrão (já é light até o usuário escolher).
+**Follow-up (ainda aberto):**
+1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first.
+2. Hex inline `C.*` em charts / pills de pipeline com `style=`.
+3. Passada visual fina AA em chips de pipeline + Analytics (viewport mobile).
+4. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome.
 
 **Fora:** segundo tema custom por empresa; modo “auto” OS (opcional depois).
-
----
-
-## Aberto — Banco de talentos (applicants)
-
-### B-1601 — Banco de talentos a partir das candidaturas
-Hoje quem aplica a uma vaga vira `candidates` (+ assessment/pipeline daquela vaga). Existe “adicionar à vaga” (pool leve B-400) para religar alguém a outra abertura, mas **não há um banco de talentos dedicado**: RH precisa achar e reaproveitar no futuro **todas** as pessoas que já aplicaram (aprovadas, rejeitadas, arquivadas ou em funil), com busca/filtros e ação clara de “convidar / abrir em outra vaga”.
-
-**Instruções:**
-1. Escopo por `company_id` — nunca cruzar empresas.
-2. Superfície no painel (aba ou visão sob Recrutamento): listar candidatos que já tiveram candidatura/vínculo a vaga (`assessments.vacancy_id` / pipeline), não só colaboradores (`employment_status`).
-3. Filtros úteis: vaga de origem, estágio final, área, T1–T9, datas, texto (nome/e-mail); paginação + caps (padrão DBA).
-4. Ações: abrir perfil/briefing; **reusar no pool** (vincular a vaga aberta existente — estender o fluxo “adicionar à vaga”); opcional marcar “disponível no banco” / tags leves se já houver primitivo.
-5. Soft-delete / LGPD: respeitar retenção; não inventar segunda tabela de pessoa — hub continua `candidates`.
-6. Guia (`panel.help.*` pt-BR+en) + Dev→Test→Validate.
-
-**Já existe (não reinventar):** `candidates` como hub; “Adicionar à vaga (pool)” em PRODUCT-FEATURES; roster recruiting vs internal.
-
-**Fora:** ATS genérico com CV parsing; conta de candidato; merge por nome; segundo CRM paralelo.
-
----
-
-## Aberto — Capabilities / módulos do painel
-
-### B-1801 — CAPs granulares para módulos B-1000 (checklist de usuário)
-Hoje a checklist **“Módulos visíveis no painel”** (override em Usuários) só cobre as views “clássicas”: overview, team, compatibility, compare, group, leadership, vacancies, motivators, climate, help (`ASSIGNABLE_MODULE_CAPS`).
-
-As abas B-1000 — **Cargos, Avaliações, Sucessão, Análise demissional, Academy, Benefícios** (+ o pacote Usuários/Empresas/Leads) — usam o mesmo gate `CAP.USERS_MANAGE` (admin-only). RH/direção **não** conseguem receber só “Análise demissional” ou só “Benefícios” sem o pacote admin.
-
-**Instruções:**
-1. Criar CAPs dedicadas por módulo (ex.: `job_roles.view`, `performance.view`, `succession.view`, `exit_analysis.view`, `learning.view`, `benefits.view`) — constantes em `lib/permissions.js` (`CAP`, `TAB_CAPABILITY`, `ASSIGNABLE_MODULE_CAPS`, `ASSIGNABLE_MODULE_I18N` pt-BR+en).
-2. Defaults de role: decidir o que `hr`/`direction` ganham por padrão (provável: view dos B-1000 ligados a people/GP; **não** `users.manage` / `companies.manage`).
-3. Manter `USERS_MANAGE` / `COMPANIES_MANAGE` / Leads / Motivators config como admin-only (`ADMIN_ONLY_CAPS`).
-4. Atualizar nav (`DashboardClient`), APIs admin B-1000 (`requireCapability` / `withAdminApi`) e checklist do form de usuário — mesmo padrão do override atual (vazio = default da role).
-5. Migração/backfill: overrides existentes continuam válidos; não forçar whitelist incompleta.
-6. Guia (`panel.help.*` + hint em `userModulesHint`) pt-BR+en; Dev→Test→Validate (provar hr sem `users.manage` com CAP de exit/benefits).
-
-**Já existe:** `user_capability_overrides`, `ASSIGNABLE_MODULE_CAPS`, `TAB_CAPABILITY` → B-1000 hoje = `USERS_MANAGE`.
-
-**Fora:** capabilities em links públicos `/t` `/v` assessment; segundo ACL por empresa além de `company_id`; permissões por linha de candidato.
 
 ---
 
@@ -432,4 +391,4 @@ JSON stdout via `lib/monitoring.js` ligado a Postgres (`lib/db.js`), Redis (`lib
 - Epic **B-900** entregue (Sprint A/B/C — Overview atenção + Fit/briefing/report + mix/rubrica/clima).
 - Polish paleta **P2** entregue (`font-ui` chrome, ícones toast/notice, sync cores Motivadores `052`).
 - **Onboarding Contextual** (Melhoria #1 — Sprint Quick Wins) entregue: tooltips contextuais, checklist de progresso (7 tarefas), empty states acionáveis, tour guiado opcional (5 steps). Ver `docs/onboarding-contextual.md`.
-- **UX/UI — Categoria Completa** (Melhorias #3-#9) parcialmente: Undo/Confirmação, Loading, Mobile (drawer corrigido), Cmd+K, atalhos. **Modo escuro:** toggle existe mas layout ainda incompleto → **B-1501**.
+- **UX/UI — Categoria Completa** (Melhorias #3-#9) parcialmente: Undo/Confirmação, Loading, Mobile (drawer corrigido), Cmd+K, atalhos. **Modo escuro:** usable no painel; follow-ups (print/público/C.* inline) → **B-1501**.

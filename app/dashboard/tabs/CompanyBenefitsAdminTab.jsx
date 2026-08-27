@@ -1,17 +1,22 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { BENEFIT_TYPES } from '../../../lib/domain-status.js';
-import { S } from '../dashboard-shared';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
 
 export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [benefits, setBenefits] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   function t(key) {
@@ -164,6 +169,10 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   useEffect(() => {
     loadBenefits();
   }, [companyId, filterCategoryId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterCategoryId]);
 
   async function loadBenefits() {
     if (!companyId) return;
@@ -406,6 +415,31 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     }
   }
 
+  const sortedBenefits = useMemo(() => {
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const rows = [...benefits];
+    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    rows.sort((a, b) => {
+      const key = sort === 'category' ? 'category' : sort === 'benefitType' ? 'benefitType' : 'name';
+      const av = key === 'benefitType' ? t(a.benefitType) : a?.[key];
+      const bv = key === 'benefitType' ? t(b.benefitType) : b?.[key];
+      return String(av || '').localeCompare(String(bv || ''), collator) * dirMul;
+    });
+    return rows;
+  }, [benefits, sort, sortDir, locale]);
+
+  const total = sortedBenefits.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = sortedBenefits.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
+
   if (loading && benefits.length === 0) return <AppLoading />;
 
   return (
@@ -490,26 +524,29 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
           onAction={isAdmin ? handleCreate : undefined}
         />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-white">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
+          <table className="w-full min-w-[560px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('name_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="category" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('category_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <SortableTh columnKey="benefitType" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('type_col')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink-muted">
+                </SortableTh>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+                >
                   {t('actions_col')}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {benefits.map((ben) => (
+              {pageRows.map((ben) => (
                 <tr key={ben.id} className="hover:bg-canvas-alt/50">
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-ink">{ben.name}</p>
@@ -544,6 +581,21 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <AdminListPager
+              locale={locale}
+              page={safePage}
+              pageSize={pageSize}
+              total={total}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(ps) => {
+                setPageSize(ps);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

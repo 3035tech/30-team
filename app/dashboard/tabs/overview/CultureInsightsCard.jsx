@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { cn } from '../../../../lib/cn';
+import { S } from '../../dashboard-shared';
 
 export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -117,9 +119,9 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
 
   if (loading) {
     return (
-      <div className="rounded-card border border-ink/10 bg-white p-6">
+      <div className={S.card}>
         <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500" />
         </div>
       </div>
     );
@@ -127,35 +129,30 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
 
   if (!data || (!data.hasClimateData && !data.hasPulseData)) {
     return (
-      <div className="rounded-card border border-ink/10 bg-white p-6">
+      <div className={S.card}>
         <div className="mb-4">
-          <h3 className="text-base font-semibold text-ink">{t('title')}</h3>
-          <p className="text-xs text-ink-muted mt-0.5">{t('subtitle')}</p>
+          <h3 className={cn(S.cardTitle, 'mb-1')}>{t('title')}</h3>
+          <p className={S.cardSubtitle}>{t('subtitle')}</p>
         </div>
-        <p className="text-sm text-ink-muted">{t('noData')}</p>
-        <p className="text-xs text-ink-faint mt-1">{t('noDataDesc')}</p>
+        <p className={S.cardBody}>{t('noData')}</p>
+        <p className={cn(S.cardMuted, 'mt-1')}>{t('noDataDesc')}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-card border border-ink/10 bg-white p-6">
-      {/* Header */}
+    <div className={S.card}>
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h3 className="text-base font-semibold text-ink">{t('title')}</h3>
-          <p className="text-xs text-ink-muted mt-0.5">{t('subtitle')}</p>
+          <h3 className={cn(S.cardTitle, 'mb-1')}>{t('title')}</h3>
+          <p className={S.cardSubtitle}>{t('subtitle')}</p>
         </div>
       </div>
 
-      {/* Summary */}
       {!showFull && (
         <div className="space-y-4">
-          {/* Overall Health */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-label mb-2">
-              {t('overallHealth')}
-            </p>
+            <p className={S.cardSection}>{t('overallHealth')}</p>
             <span
               className={`inline-flex rounded px-3 py-1 text-sm font-medium ${getHealthColor(data.overallHealth)}`}
             >
@@ -163,38 +160,29 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             </span>
           </div>
 
-          {/* Dominant Archetype */}
           {data.dominantArchetype && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-label mb-2">
-                {t('dominantArchetype')}
-              </p>
-              <p className="text-sm text-ink">
+              <p className={S.cardSection}>{t('dominantArchetype')}</p>
+              <p className={S.cardBody}>
                 <span className="font-semibold">{data.dominantArchetype.type}</span> —{' '}
                 {data.dominantArchetype.percentage}% do time
               </p>
             </div>
           )}
 
-          {/* Hedging Note */}
           <div className="rounded-lg border border-ink/5 bg-canvas-alt/30 p-3">
-            <p className="text-xs text-ink-muted">{t('hedgingNote')}</p>
+            <p className={S.cardMuted}>{t('hedgingNote')}</p>
           </div>
 
-          {/* View Full Button */}
-          <button
-            onClick={loadFullInsights}
-            className="text-xs text-brand-600 hover:text-brand-700 font-medium"
-          >
+          <button type="button" onClick={loadFullInsights} className={S.cardLink}>
             {t('viewFull')} →
           </button>
         </div>
       )}
 
-      {/* Full Insights */}
       {showFull && data.fullCulture && (
         <div className="space-y-4">
-          <h4 className="text-sm font-semibold text-ink">{t('insightsTitle')}</h4>
+          <h4 className={cn(S.cardTitle, 'text-sm')}>{t('insightsTitle')}</h4>
           <div className="space-y-3">
             {data.fullCulture.insights.map((insight, idx) => {
               let actionLink = null;
@@ -208,22 +196,19 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
                   key={idx}
                   className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
                 >
-                  <span className="text-xl shrink-0">{getCategoryIcon(insight.category)}</span>
+                  <span className="shrink-0 text-xl">{getCategoryIcon(insight.category)}</span>
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-ink">{insight.description}</p>
+                      <p className={S.cardBody}>{insight.description}</p>
                       {actionLink && (
-                        <Link
-                          href={actionLink}
-                          className="flex-shrink-0 text-xs text-brand-600 hover:text-brand-700 font-medium"
-                        >
+                        <Link href={actionLink} className={cn(S.cardLink, 'flex-shrink-0')}>
                           {locale === 'en' ? 'View' : 'Ver'} →
                         </Link>
                       )}
                     </div>
-                    <p className="text-xs text-ink-muted mt-1">{insight.details}</p>
+                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.details}</p>
                     {insight.hedging && (
-                      <p className="text-xs text-ink-faint mt-1 italic">{insight.hedging}</p>
+                      <p className={cn(S.cardFaint, 'mt-1 italic')}>{insight.hedging}</p>
                     )}
                   </div>
                 </div>
@@ -231,11 +216,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             })}
           </div>
 
-          {/* Back to Summary Button */}
-          <button
-            onClick={() => setShowFull(false)}
-            className="text-xs text-brand-600 hover:text-brand-700 font-medium"
-          >
+          <button type="button" onClick={() => setShowFull(false)} className={S.cardLink}>
             ← {t('viewSummary')}
           </button>
         </div>

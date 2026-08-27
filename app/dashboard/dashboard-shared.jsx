@@ -328,6 +328,7 @@ const DASHBOARD_TAB_NAV = {
   group: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.group' },
   leadership: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.leadership' },
   vacancies: { sectionKey: 'dashboard.sectionRecruiting', labelKey: 'dashboard.vacancies' },
+  'talent-bank': { sectionKey: 'dashboard.sectionRecruiting', labelKey: 'dashboard.talentBank' },
   motivators: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.motivators' },
   climate: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.climate' },
   'job-roles': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.jobRoles' },

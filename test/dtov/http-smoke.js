@@ -313,6 +313,7 @@ export async function runHttpSmoke(baseUrl) {
     'group',
     'leadership',
     'vacancies',
+    'talent-bank',
   ]) {
     const { res, text } = await req(base, `/dashboard?tab=${tab}`, { cookie: hrCookie });
     // 200 page or 307/302 if middleware redirects oddly
@@ -335,6 +336,13 @@ export async function runHttpSmoke(baseUrl) {
       const open = vacancyList.find((v) => String(v?.status || '').toLowerCase() === 'open');
       vacancyId = open?.id || vacancyList[0]?.id || null;
       ok('vacancies', 'has-rows', `n=${vacancyList.length}`);
+    }
+  }
+  {
+    const { res, data } = await req(base, '/api/admin/talent-bank?page=1&pageSize=20', { cookie: hrCookie });
+    if (await expectStatus('talent-bank', 'list', res.status, 200)) {
+      const n = Array.isArray(data?.items) ? data.items.length : -1;
+      ok('talent-bank', 'has-shape', `n=${n} total=${data?.total ?? '?'}`);
     }
   }
   if (vacancyId) {

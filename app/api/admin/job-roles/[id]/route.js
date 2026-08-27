@@ -14,7 +14,7 @@ import { getJobRole, updateJobRole, deactivateJobRole } from '../../../../../lib
 export async function GET(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
+    if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
@@ -51,7 +51,7 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
+    if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
@@ -116,7 +116,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.USERS_MANAGE)) {
+    if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 

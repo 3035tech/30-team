@@ -154,6 +154,10 @@ const VacanciesAdminTab = dynamic(
   () => import('./tabs/VacanciesAdminTab').then((m) => ({ default: m.VacanciesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const TalentBankAdminTab = dynamic(
+  () => import('./tabs/TalentBankAdminTab').then((m) => ({ default: m.TalentBankAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const MotivatorsAdminTab = dynamic(() => import('./tabs/MotivatorsAdminTab'), {
   loading: () => <TabLoadingFallback />,
 });
@@ -190,6 +194,7 @@ const TAB_TO_SECTION = {
   group: 'analysis',
   leadership: 'analysis',
   vacancies: 'recruiting',
+  'talent-bank': 'recruiting',
   'performance-reviews': 'people',
   succession: 'people',
   'exit-analysis': 'people',
@@ -298,6 +303,14 @@ export default function DashboardClient({
   const showClimate = can(sessionAuth, CAP.CLIMATE_VIEW);
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
   const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
+  const showJobRoles = can(sessionAuth, CAP.JOB_ROLES_VIEW);
+  const showPerformance = can(sessionAuth, CAP.PERFORMANCE_VIEW);
+  const showSuccession = can(sessionAuth, CAP.SUCCESSION_VIEW);
+  const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
+  const showLearning = can(sessionAuth, CAP.LEARNING_VIEW);
+  const showBenefits = can(sessionAuth, CAP.BENEFITS_VIEW);
+  const showPeopleGp = showPerformance || showSuccession || showExitAnalysis;
+  const showCatalogs = showJobRoles || showLearning || showBenefits;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -815,24 +828,27 @@ export default function DashboardClient({
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('recruiting', t(locale, 'dashboard.sectionRecruiting'))}
                 {sectionBody('recruiting', (
-                  <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
+                  <>
+                    <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
+                    <NavLink id="talent-bank" icon="team" label={t(locale, 'dashboard.talentBank')} />
+                  </>
                 ))}
               </>
             ) : null}
 
-            {showMotivators || showClimate || showUsers ? (
+            {showMotivators || showClimate || showPeopleGp ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('people', t(locale, 'dashboard.sectionPeople'))}
                 {sectionBody('people', (
                   <>
-                    {showUsers ? (
+                    {showPerformance ? (
                       <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
                     ) : null}
-                    {showUsers ? (
+                    {showSuccession ? (
                       <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
                     ) : null}
-                    {showUsers ? (
+                    {showExitAnalysis ? (
                       <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
                     ) : null}
                     {showMotivators ? (
@@ -846,15 +862,21 @@ export default function DashboardClient({
               </>
             ) : null}
 
-            {showUsers ? (
+            {showCatalogs ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('catalogs', t(locale, 'dashboard.sectionCatalogs'))}
                 {sectionBody('catalogs', (
                   <>
-                    <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
-                    <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
-                    <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
+                    {showJobRoles ? (
+                      <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
+                    ) : null}
+                    {showLearning ? (
+                      <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
+                    ) : null}
+                    {showBenefits ? (
+                      <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
+                    ) : null}
                   </>
                 ))}
               </>
@@ -1314,6 +1336,9 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'vacancies' && showVacancies && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'talent-bank' && showVacancies && (
+                <TalentBankAdminTab locale={locale} companyId={sessionAuth?.companyId} />
+              )}
               {tab === 'motivators' && showMotivators && (
                 <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
               )}
@@ -1322,12 +1347,12 @@ export default function DashboardClient({
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'job-roles' && showUsers && <JobRolesAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
-              {tab === 'performance-reviews' && showUsers && <PerformanceReviewsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'succession' && showUsers && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'exit-analysis' && showUsers && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'learning-resources' && showUsers && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'company-benefits' && showUsers && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
+              {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (

@@ -26,7 +26,7 @@ const createBodySchema = z.object({
 
 export const GET = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.BENEFITS_VIEW,
     query: listQuerySchema,
     companyFrom: 'query',
     logLabel: 'benefit-categories GET',
@@ -43,7 +43,7 @@ export const GET = withAdminApi(
 
 export const POST = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.BENEFITS_VIEW,
     body: createBodySchema,
     companyFrom: 'body',
     logLabel: 'benefit-categories POST',

@@ -38,6 +38,7 @@
 :root {
   /* Semantic RGB channels for Tailwind (see dark-mode.css for .dark overrides) */
   --canvas: 245 244 247;
+  --canvas-alt: 237 235 242;
   --surface: 255 255 255;
   --ink: 26 22 37;
   --brand-50: 250 245 255;

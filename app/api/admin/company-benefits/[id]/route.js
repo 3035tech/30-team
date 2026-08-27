@@ -33,7 +33,7 @@ function parseBenefitId(params) {
 
 export const GET = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.BENEFITS_VIEW,
     query: z.object({ companyId: zPositiveInt.optional() }),
     companyFrom: 'query',
     logLabel: 'company-benefits/[id] GET',
@@ -53,7 +53,7 @@ export const GET = withAdminApi(
 
 export const PATCH = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.BENEFITS_VIEW,
     body: patchBodySchema,
     companyFrom: 'body',
     logLabel: 'company-benefits/[id] PATCH',
@@ -82,7 +82,7 @@ export const PATCH = withAdminApi(
 
 export const DELETE = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.BENEFITS_VIEW,
     query: z.object({ companyId: zPositiveInt.optional() }),
     companyFrom: 'query',
     logLabel: 'company-benefits/[id] DELETE',

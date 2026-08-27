@@ -17,11 +17,11 @@ const createBodySchema = z.object({
 
 /**
  * GET /api/admin/job-roles?companyId=X&includeInactive=false
- * Lista cargos — vacancies.manage (seleção em vagas) ou users.manage (aba admin).
+ * Lista cargos — vacancies.manage (seleção em vagas) ou job_roles.view (aba).
  */
 export const GET = withAdminApi(
   {
-    anyCap: [CAP.VACANCIES_MANAGE, CAP.USERS_MANAGE],
+    anyCap: [CAP.VACANCIES_MANAGE, CAP.JOB_ROLES_VIEW],
     query: listQuerySchema,
     companyFrom: 'query',
     logLabel: 'job-roles GET',
@@ -39,11 +39,11 @@ export const GET = withAdminApi(
 );
 
 /**
- * POST /api/admin/job-roles — cria cargo (users.manage)
+ * POST /api/admin/job-roles — cria cargo (job_roles.view)
  */
 export const POST = withAdminApi(
   {
-    cap: CAP.USERS_MANAGE,
+    cap: CAP.JOB_ROLES_VIEW,
     body: createBodySchema,
     companyFrom: 'body',
     logLabel: 'job-roles POST',

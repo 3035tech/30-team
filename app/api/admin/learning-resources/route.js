@@ -15,7 +15,7 @@ import {
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
-    const canManageCatalog = requireCapability(payload, CAP.USERS_MANAGE);
+    const canManageCatalog = requireCapability(payload, CAP.LEARNING_VIEW);
     const canViewTeam = requireCapability(payload, CAP.TEAM_VIEW);
     if (!canManageCatalog && !canViewTeam) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
@@ -58,7 +58,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireCapability(payload, CAP.LEARNING_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 

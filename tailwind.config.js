@@ -10,7 +10,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        canvas: {
+          DEFAULT: 'rgb(var(--canvas) / <alpha-value>)',
+          alt: 'rgb(var(--canvas-alt) / <alpha-value>)',
+        },
         surface: 'rgb(var(--surface) / <alpha-value>)',
         ink: {
           DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
