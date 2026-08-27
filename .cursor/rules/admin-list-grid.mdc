@@ -1,0 +1,60 @@
+---
+description: Padrão canônico de listagens/cadastros admin (grid sort + pager + CTAs)
+globs: app/dashboard/tabs/**/*.jsx,app/dashboard/dashboard-shared.jsx
+alwaysApply: false
+---
+
+# Listagens admin — grid canônico
+
+**Fonte de código:** `app/dashboard/dashboard-shared.jsx`  
+**Referência de tela:** `ExitAnalysisAdminTab.jsx` (sort + pager + Ver / editar / excluir).  
+**Canônico também em:** `AGENTS.md` § Listagens admin.
+
+## Obrigatório em tela de cadastro com listagem
+
+1. **Lista primeiro** — criar/editar atrás de botão (`AdminCreateButton` / drawer / `promptForm`). Sem formulário permanente no topo.
+2. **Tabela** com:
+   - `SortableTh` — título clicável + `▲`/`▼` (reordenação)
+   - `AdminActionsTh` — coluna Ações alinhada à direita
+   - `AdminListPager` — total + page size + Anterior/Próxima (`PAGE_SIZE_OPTIONS`)
+3. **Criar** — só `AdminCreateButton` (`S.btnPrimary` + ícone `plus`). Não inventar outro roxo / `+ ` solto.
+4. **Editar** — só `AdminEditButton` (lápis + tint brand).
+5. **Excluir / desativar / arquivar** — só `AdminDeleteButton` (lixeira + tint danger).
+6. **Ver** (opcional) — `AdminViewButton` (texto ghost).
+7. Ações na linha — dentro de `AdminActionsCell`.
+
+## Imports
+
+```js
+import {
+  S,
+  SortableTh,
+  AdminListPager,
+  AdminCreateButton,
+  AdminEditButton,
+  AdminDeleteButton,
+  AdminViewButton,
+  AdminActionsCell,
+  AdminActionsTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
+```
+
+## Anti-padrões
+
+- Links texto “Editar” / “Desativar” coloridos ad hoc
+- `BTN_ROW` local duplicado; `edit-2` / `trash-2` / `plus` inventados fora de `Icon`
+- Card-list **nova** quando a entidade é cadastro tabular (preferir tabela + pager)
+- Segundo pager / sort header inventado
+- CTA create com `btnBrandSoft` como ação primária de “Novo …”
+
+## Exceções (não forçar tabela)
+
+- **Vagas** — listagem rica (kanban/cards + muitas ações); ainda assim preferir `AdminCreateButton` / `AdminEditButton` / `AdminDeleteButton` onde couber.
+- **Kanban / pipeline** — drag-and-drop; não é grid tabular.
+- Listas **muito** curtas e hierárquicas (ex. categorias como chips) podem ficar fora da tabela principal, mas o CRUD da entidade principal segue o grid.
+
+## Sort client vs server
+
+- Lista já carregada / pequena → `clientSortNextDir` + slice + `AdminListPager`.
+- API paginada → passar `sort`/`sortDir`/`page`/`pageSize` na query (padrão Motivators / Users).

@@ -7,7 +7,17 @@ import { RichTextView } from '../../_components/RichTextView';
 import { TagChips } from '../../_components/TagInput';
 import { formatTagList, parseTagList } from '../../../lib/tag-list';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
-import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
+  AdminListPager,
+  S,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [resources, setResources] = useState([]);
@@ -333,9 +343,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
 
       <div className="flex flex-wrap items-center gap-2">
         {isAdmin && (
-          <button type="button" onClick={handleCreate} className={S.btnPrimary}>
-            + {t('create')}
-          </button>
+          <AdminCreateButton label={t('create')} onClick={handleCreate} />
         )}
         {themes.length > 0 && (
           <select
@@ -373,7 +381,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         <EmptyState
           title={t('noResources')}
           message={t('noResourcesDesc')}
-          actionLabel={isAdmin ? `+ ${t('create')}` : undefined}
+          actionLabel={isAdmin ? t('create') : undefined}
           onAction={isAdmin ? handleCreate : undefined}
         />
       ) : (
@@ -393,12 +401,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
                 <SortableTh columnKey="durationHours" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('duration_col')}
                 </SortableTh>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t('actions_col')}
-                </th>
+                <AdminActionsTh>{t('actions_col')}</AdminActionsTh>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
@@ -427,23 +430,11 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
                   <td className="px-4 py-3 text-sm text-ink-muted">
                     {res.durationHours ? `${res.durationHours}${t('hours')}` : '—'}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(res)}
-                        className="min-h-touch text-xs text-brand-600 hover:text-brand-700"
-                      >
-                        {t('edit')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivate(res)}
-                        className="min-h-touch text-xs text-danger hover:text-danger/80"
-                      >
-                        {t('deactivate')}
-                      </button>
-                    </div>
+                  <td className="px-4 py-3 text-right">
+                    <AdminActionsCell>
+                      <AdminEditButton label={t('edit')} onClick={() => handleEdit(res)} />
+                      <AdminDeleteButton label={t('deactivate')} onClick={() => handleDeactivate(res)} />
+                    </AdminActionsCell>
                   </td>
                 </tr>
               ))}

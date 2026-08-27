@@ -9,7 +9,7 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
-import { clientSortNextDir, PanelSubNav, S } from '../dashboard-shared';
+import { clientSortNextDir, PanelSubNav, S, AdminCreateButton } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
@@ -1425,14 +1425,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               {loading ? <span className="spinner" /> : null}
               {t(locale, 'recruiting.refresh')}
             </button>
-            <button
-              type="button"
+            <AdminCreateButton
+              label={t(locale, 'recruiting.createVacancyOpen')}
               onClick={() => { setEditingVacancy(null); setShowCreate(true); }}
-              aria-expanded={showCreate}
-              className={BTN_BRAND}
-            >
-              {t(locale, 'recruiting.createVacancyOpen')}
-            </button>
+            />
           </div>
         </div>
 

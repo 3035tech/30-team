@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
-import { Icon } from '../../_components/Icon';
 import { RichTextView } from '../../_components/RichTextView';
 import {
   dialogBtnGhostClass,
@@ -17,7 +16,17 @@ import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
 import { formatDisplayDate, toDateOnlyIso } from '../../../lib/format-display-date.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { cn } from '../../../lib/cn';
-import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
+  AdminListPager,
+  AdminViewButton,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 
 export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [records, setRecords] = useState([]);
@@ -422,9 +431,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
 
       {canWrite && (
         <div className="flex gap-2">
-          <button type="button" onClick={handleRegisterExit} className={S.btnPrimary}>
-            + {t('register')}
-          </button>
+          <AdminCreateButton label={t('register')} onClick={handleRegisterExit} />
         </div>
       )}
 
@@ -452,12 +459,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                 <SortableTh columnKey="exitReason" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('exitReason')}
                 </SortableTh>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-4 py-3 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t('actions')}
-                </th>
+                <AdminActionsTh>{t('actions')}</AdminActionsTh>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
@@ -480,39 +482,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                   </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(rec.exitReason)}</td>
                   <td className="px-4 py-3 text-right">
-                    <div className="inline-flex flex-wrap items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setViewRecord(rec)}
-                        className={cn(S.btnGhost, 'min-h-touch px-2 text-xs')}
-                        aria-label={t('view')}
-                        title={t('view')}
-                      >
-                        {t('view')}
-                      </button>
+                    <AdminActionsCell>
+                      <AdminViewButton label={t('view')} onClick={() => setViewRecord(rec)} />
                       {canWrite ? (
                         <>
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(rec)}
-                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs text-brand-600')}
-                            aria-label={t('edit')}
-                            title={t('edit')}
-                          >
-                            <Icon name="pencil" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(rec)}
-                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs text-danger')}
-                            aria-label={t('delete')}
-                            title={t('delete')}
-                          >
-                            <Icon name="trash" />
-                          </button>
+                          <AdminEditButton label={t('edit')} onClick={() => handleEdit(rec)} />
+                          <AdminDeleteButton label={t('delete')} onClick={() => handleDelete(rec)} />
                         </>
                       ) : null}
-                    </div>
+                    </AdminActionsCell>
                   </td>
                 </tr>
               ))}

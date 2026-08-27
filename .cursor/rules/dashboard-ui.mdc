@@ -12,7 +12,7 @@ Antes de qualquer mudança visual: seguir **UI/UX** em `AGENTS.md` e `.cursor/ru
 2. Cores e tipografia: `C`, `FONTS`, `PIPELINE_STAGE_COLORS` de `lib/theme.js`. Status semântico ≠ roxo da marca.
 3. Reutilizar `app/dashboard/dashboard-shared.jsx` e helpers das tabs; não copiar cards/chips/badges.
 3b. Notas livres: `RichTextEditor` / `RichTextView` + `sanitize-html` — não criar outro editor nem `<textarea>` paralelo para o mesmo tipo de campo.
-3c. Listagens admin: lista em evidência; criação/edição atrás de botão ou fluxo dedicado — não formulário permanente acima da tabela.
+3c. Listagens admin: lista em evidência; criação/edição atrás de botão ou fluxo dedicado — não formulário permanente acima da tabela. **Padrão canônico:** `.cursor/rules/admin-list-grid.mdc` — `SortableTh` + `AdminListPager` + `AdminCreateButton` / `AdminEditButton` / `AdminDeleteButton` (ver `dashboard-shared.jsx`; referência `ExitAnalysisAdminTab`).
 4. Dashboard: Server Component em `page.jsx` carrega **só a aba ativa**. Dados pesados (compat O(n²), ranking) só na aba que precisa.
 5. Tipos: `typeFullName` / `typeShortLabel` (`lib/type-en.js`) — não hardcodar nomes T1–T9.
 6. Pipeline no kanban: drag-and-drop atualiza o estágio; **sem** select de status no card.

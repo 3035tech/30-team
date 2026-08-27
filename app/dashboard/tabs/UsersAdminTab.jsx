@@ -6,16 +6,12 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
-import { clientSortNextDir, S, SortableTh, AdminListPager } from '../dashboard-shared';
+import { clientSortNextDir, S, SortableTh, AdminListPager, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 
-const BTN_PRIMARY =
-  'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
-const BTN_ROW =
-  'min-h-touch rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
 
 function moduleOptions(locale) {
   return ASSIGNABLE_MODULE_CAPS.map((cap) => ({
@@ -404,14 +400,11 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.usersList')}</span>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
+            <AdminCreateButton
+              label={t(locale, 'panel.admin.newUserBtn')}
               onClick={openCreateUser}
               disabled={loading}
-              className={cn(BTN_PRIMARY, loading && 'opacity-60')}
-            >
-              {t(locale, 'panel.admin.newUserBtn')}
-            </button>
+            />
             <button
               type="button"
               onClick={() => {
@@ -448,7 +441,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
-                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">{t(locale, 'panel.admin.colActions')}</th>
+                  <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
                 </tr>
               </thead>
               <tbody>
@@ -504,36 +497,25 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <AdminActionsCell>
                           {u.passwordSetupPending ? (
-                            <button
-                              type="button"
+                            <AdminViewButton
+                              label={t(locale, 'panel.admin.resendInvite')}
                               onClick={() => resendInvite(u.id, u.email)}
                               disabled={loading}
-                              title={t(locale, 'panel.admin.resendInvite')}
-                              className={cn(BTN_ROW, 'border-brand-500/25 bg-brand-500/[0.07] text-brand-500', loading && 'opacity-60')}
-                            >
-                              {t(locale, 'panel.admin.resendInvite')}
-                            </button>
+                            />
                           ) : null}
-                          <button
-                            type="button"
+                          <AdminEditButton
+                            label={t(locale, 'panel.admin.editUser')}
                             onClick={() => editUser(u)}
                             disabled={loading}
-                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
-                          >
-                            {t(locale, 'panel.admin.editUser')}
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <AdminDeleteButton
+                            label={t(locale, 'panel.admin.deactivate')}
                             onClick={() => deleteUser(u.id)}
                             disabled={loading}
-                            title={t(locale, 'panel.admin.deactivateTitle')}
-                            className={cn(BTN_ROW, 'border-danger/35 bg-danger/[0.08] text-danger', loading && 'opacity-60')}
-                          >
-                            {t(locale, 'panel.admin.deactivate')}
-                          </button>
-                        </div>
+                          />
+                        </AdminActionsCell>
                       </td>
                     </tr>
                   );

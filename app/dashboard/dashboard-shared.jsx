@@ -14,6 +14,7 @@ import {
   fieldTextareaClass,
   fieldCheckboxClass,
 } from '../_components/form-control-styles';
+import { Icon } from '../_components/Icon';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -42,6 +43,12 @@ const S = {
   /** Neutral / ghost actions (pagination, refresh, cancel) */
   btnGhost:
     'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-55',
+  /**
+   * Icon-only row action (edit / delete) — pair with AdminEditButton / AdminDeleteButton.
+   * ~40px hit target; border + tint by variant.
+   */
+  btnRowIcon:
+    'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 disabled:cursor-default disabled:opacity-50',
   muted: 'text-[13px] leading-relaxed text-ink-muted',
   faint: 'text-[12px] leading-snug text-ink-faint',
   stack: 'flex flex-col gap-4',
@@ -454,8 +461,114 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
   );
 }
 
+/** Strip a leading "+ " / "+" so create labels stay consistent with Icon plus. */
+function createLabelText(label) {
+  return String(label || '')
+    .replace(/^\s*\+\s*/, '')
+    .trim();
+}
+
+/**
+ * Primary create CTA for admin listagens — brand + plus icon.
+ * Reference: Exit Analysis / Benefícios / Academy.
+ */
+function AdminCreateButton({ label, onClick, disabled = false, className }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(S.btnPrimary, className)}
+    >
+      <Icon name="plus" className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      {createLabelText(label)}
+    </button>
+  );
+}
+
+/** Row edit — brand tint + pencil. */
+function AdminEditButton({ label, onClick, disabled = false, className }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        S.btnRowIcon,
+        'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
+        className
+      )}
+      aria-label={label}
+      title={label}
+    >
+      <Icon name="pencil" />
+    </button>
+  );
+}
+
+/** Row delete / deactivate / archive — danger tint + trash. */
+function AdminDeleteButton({ label, onClick, disabled = false, className }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        S.btnRowIcon,
+        'border-danger/35 bg-danger/[0.08] text-danger',
+        className
+      )}
+      aria-label={label}
+      title={label}
+    >
+      <Icon name="trash" />
+    </button>
+  );
+}
+
+/** Optional text action (e.g. Ver) — ghost, not icon-only. */
+function AdminViewButton({ label, onClick, disabled = false, className }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', className)}
+      aria-label={label}
+      title={label}
+    >
+      {label}
+    </button>
+  );
+}
+
+function AdminActionsCell({ children, className }) {
+  return (
+    <div className={cn('inline-flex flex-wrap items-center justify-end gap-1', className)}>
+      {children}
+    </div>
+  );
+}
+
+function AdminActionsTh({ children }) {
+  return (
+    <th
+      scope="col"
+      className="border-b border-ink/12 px-4 py-3 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+    >
+      {children}
+    </th>
+  );
+}
+
 export {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   Bar,
   CompatBadge,
   DashboardBreadcrumb,

@@ -6,7 +6,17 @@ import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { BENEFIT_TYPES } from '../../../lib/domain-status.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
-import { S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
+  AdminListPager,
+  S,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 
 export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [benefits, setBenefits] = useState([]);
@@ -454,9 +464,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-ink">{t('manageCategories')}</h3>
           {isAdmin && (
-            <button type="button" onClick={handleCreateCategory} className={S.btnBrandSoft}>
-              + {t('newCategory')}
-            </button>
+            <AdminCreateButton label={t('newCategory')} onClick={handleCreateCategory} />
           )}
         </div>
         {categories.length === 0 ? (
@@ -466,26 +474,17 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
             {categories.map((cat) => (
               <li
                 key={cat.id}
-                className="inline-flex items-center gap-2 rounded-control border border-ink/10 bg-canvas px-3 py-1.5 text-sm text-ink"
+                className="inline-flex items-center gap-1 rounded-control border border-ink/10 bg-canvas px-2 py-1 text-sm text-ink"
               >
-                <span>{cat.name}</span>
+                <span className="px-1">{cat.name}</span>
                 {isAdmin && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleEditCategory(cat)}
-                      className="text-xs text-brand-600 hover:text-brand-700"
-                    >
-                      {t('edit')}
-                    </button>
-                    <button
-                      type="button"
+                  <AdminActionsCell>
+                    <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
+                    <AdminDeleteButton
+                      label={t('deactivate')}
                       onClick={() => handleDeactivateCategory(cat)}
-                      className="text-xs text-danger hover:text-danger/80"
-                    >
-                      {t('deactivate')}
-                    </button>
-                  </>
+                    />
+                  </AdminActionsCell>
                 )}
               </li>
             ))}
@@ -495,9 +494,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
 
       <div className="flex flex-wrap items-center gap-2">
         {isAdmin && (
-          <button type="button" onClick={handleCreate} className={S.btnPrimary}>
-            + {t('create')}
-          </button>
+          <AdminCreateButton label={t('create')} onClick={handleCreate} />
         )}
         {categories.length > 0 && (
           <select
@@ -520,7 +517,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         <EmptyState
           title={t('noBenefits')}
           message={t('noBenefitsDesc')}
-          actionLabel={isAdmin ? `+ ${t('create')}` : undefined}
+          actionLabel={isAdmin ? t('create') : undefined}
           onAction={isAdmin ? handleCreate : undefined}
         />
       ) : (
@@ -537,12 +534,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                 <SortableTh columnKey="benefitType" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t('type_col')}
                 </SortableTh>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t('actions_col')}
-                </th>
+                <AdminActionsTh>{t('actions_col')}</AdminActionsTh>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
@@ -559,23 +551,11 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                   </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{ben.category || '—'}</td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(ben.benefitType)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(ben)}
-                        className="min-h-touch text-xs text-brand-600 hover:text-brand-700"
-                      >
-                        {t('edit')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivate(ben)}
-                        className="min-h-touch text-xs text-danger hover:text-danger/80"
-                      >
-                        {t('deactivate')}
-                      </button>
-                    </div>
+                  <td className="px-4 py-3 text-right">
+                    <AdminActionsCell>
+                      <AdminEditButton label={t('edit')} onClick={() => handleEdit(ben)} />
+                      <AdminDeleteButton label={t('deactivate')} onClick={() => handleDeactivate(ben)} />
+                    </AdminActionsCell>
                   </td>
                 </tr>
               ))}

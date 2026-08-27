@@ -23,6 +23,7 @@ Para **cada nova tela** (ou pedaço grande de UI):
  - Cadastro simples (criar/editar) → `promptForm` / `PromptFormDialog` (select, boolean, checkboxGroup, date)
  - Campos de data / datetime → `DateField` (`app/_components/DateField.jsx`); no `<input type="date">` solto
  - Controles nativos (select/input/checkbox) → `S.select` / `S.input` / `S.checkbox` ou `form-control-styles.js` + classes `.ui-select` / `.ui-field` / `.ui-checkbox` em `globals.css` (não reinventar borda ad hoc)
+ - Listagens admin (cadastro) → `SortableTh` + `AdminListPager` + `AdminCreateButton` / `AdminEditButton` / `AdminDeleteButton` / `AdminActionsCell` (`dashboard-shared`; regra `.cursor/rules/admin-list-grid.mdc`) — não links “Editar/Desativar” ad hoc nem segundo pager
  - Cadastro rico (ex. vagas) → `AdminRichFormDrawer`, não forçar no promptForm
  - Não inventar segundo design system
 

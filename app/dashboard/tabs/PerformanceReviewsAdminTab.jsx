@@ -4,57 +4,87 @@
  * Performance Reviews Admin Tab — manage cycles, goals, and reviews → PDI (B-1004).
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { PERFORMANCE_CYCLE_STATUS } from '../../../lib/domain-status.js';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import { toDateOnlyIso } from '../../../lib/format-display-date.js';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminEditButton,
+  AdminListPager,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 
-export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
+export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { confirm, promptForm, toast } = useAppFeedback();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('periodStart');
+  const [sortDir, setSortDir] = useState('desc');
+  const { promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
-    // Simplified i18n for demo - in production, use lib/i18n.js
     const messages = {
       'pt-BR': {
         title: 'Avaliações de Desempenho',
         subtitle: 'Ciclos, metas e avaliação → PDI',
         listEmpty: 'Nenhum ciclo cadastrado',
         createCycleButton: 'Novo Ciclo',
+        editCycleTitle: 'Editar ciclo',
         cycleTitle: 'Título do ciclo',
         cycleTitlePlaceholder: 'Ex: Avaliação 2026 S1',
         cycleDescription: 'Descrição',
         periodStart: 'Início',
         periodEnd: 'Fim',
+        status: 'Status',
         statusDraft: 'Rascunho',
         statusActive: 'Ativo',
         statusClosed: 'Fechado',
-        reviewsCount: 'avaliações',
+        reviewsCount: 'Avaliações',
         submittedCount: 'submetidas',
         createCycleSuccess: 'Ciclo criado com sucesso',
+        updateCycleSuccess: 'Ciclo atualizado',
         errorCycleTitleRequired: 'Título do ciclo é obrigatório',
-        autoPdiNote: '💡 Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
+        loadError: 'Erro ao carregar ciclos',
+        saveError: 'Erro ao salvar',
+        autoPdiNote: 'Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
+        edit: 'Editar',
+        actions: 'Ações',
+        titleCol: 'Título',
       },
       en: {
         title: 'Performance Reviews',
         subtitle: 'Cycles, goals, and review → PDI',
         listEmpty: 'No cycles registered',
         createCycleButton: 'New Cycle',
+        editCycleTitle: 'Edit cycle',
         cycleTitle: 'Cycle title',
         cycleTitlePlaceholder: 'E.g.: 2026 H1 Review',
         cycleDescription: 'Description',
         periodStart: 'Start',
         periodEnd: 'End',
+        status: 'Status',
         statusDraft: 'Draft',
         statusActive: 'Active',
         statusClosed: 'Closed',
-        reviewsCount: 'reviews',
+        reviewsCount: 'Reviews',
         submittedCount: 'submitted',
         createCycleSuccess: 'Cycle created successfully',
+        updateCycleSuccess: 'Cycle updated',
         errorCycleTitleRequired: 'Cycle title is required',
-        autoPdiNote: '💡 Outcome "Develop" automatically generates a PDI item for the employee',
+        loadError: 'Failed to load cycles',
+        saveError: 'Failed to save',
+        autoPdiNote: 'Outcome "Develop" automatically generates a PDI item for the employee',
+        edit: 'Edit',
+        actions: 'Actions',
+        titleCol: 'Title',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -73,26 +103,69 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
       setCycles(data.cycles || []);
     } catch (err) {
       console.error('Load cycles error:', err);
-      toast({ title: 'Erro ao carregar ciclos', level: 'error' });
+      toast(t('loadError'), 'error');
     } finally {
       setLoading(false);
     }
   }
 
+  function cycleFormFields(cycle) {
+    return [
+      {
+        name: 'title',
+        label: t('cycleTitle'),
+        placeholder: t('cycleTitlePlaceholder'),
+        required: true,
+        value: cycle?.title || '',
+      },
+      {
+        name: 'description',
+        label: t('cycleDescription'),
+        type: 'textarea',
+        rows: 3,
+        value: cycle?.description || '',
+      },
+      {
+        name: 'periodStart',
+        label: t('periodStart'),
+        type: 'date',
+        row: 'period',
+        value: toDateOnlyIso(cycle?.periodStart) || '',
+      },
+      {
+        name: 'periodEnd',
+        label: t('periodEnd'),
+        type: 'date',
+        row: 'period',
+        value: toDateOnlyIso(cycle?.periodEnd) || '',
+      },
+      ...(cycle
+        ? [
+            {
+              name: 'status',
+              label: t('status'),
+              type: 'select',
+              value: cycle.status || PERFORMANCE_CYCLE_STATUS.DRAFT,
+              options: [
+                { value: PERFORMANCE_CYCLE_STATUS.DRAFT, label: t('statusDraft') },
+                { value: PERFORMANCE_CYCLE_STATUS.ACTIVE, label: t('statusActive') },
+                { value: PERFORMANCE_CYCLE_STATUS.CLOSED, label: t('statusClosed') },
+              ],
+            },
+          ]
+        : []),
+    ];
+  }
+
   async function handleCreateCycle() {
     const result = await promptForm({
       title: t('createCycleButton'),
-      fields: [
-        { name: 'title', label: t('cycleTitle'), placeholder: t('cycleTitlePlaceholder'), required: true },
-        { name: 'description', label: t('cycleDescription'), type: 'textarea', rows: 3 },
-        { name: 'periodStart', label: t('periodStart'), type: 'date', row: 'period' },
-        { name: 'periodEnd', label: t('periodEnd'), type: 'date', row: 'period' },
-      ],
+      fields: cycleFormFields(null),
     });
     if (!result) return;
 
     if (!result.title || String(result.title).trim().length === 0) {
-      toast({ title: t('errorCycleTitleRequired'), level: 'error' });
+      toast(t('errorCycleTitleRequired'), 'error');
       return;
     }
 
@@ -103,11 +176,44 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
         body: JSON.stringify(result),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast({ title: t('createCycleSuccess'), level: 'success' });
+      toast(t('createCycleSuccess'), 'success');
       loadCycles();
     } catch (err) {
       console.error('Create cycle error:', err);
-      toast({ title: 'Erro ao criar ciclo', level: 'error' });
+      toast(t('saveError'), 'error');
+    }
+  }
+
+  async function handleEditCycle(cycle) {
+    const result = await promptForm({
+      title: t('editCycleTitle'),
+      fields: cycleFormFields(cycle),
+    });
+    if (!result) return;
+
+    if (!result.title || String(result.title).trim().length === 0) {
+      toast(t('errorCycleTitleRequired'), 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/performance-cycles/${cycle.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: result.title,
+          description: result.description,
+          periodStart: result.periodStart || null,
+          periodEnd: result.periodEnd || null,
+          status: result.status,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast(t('updateCycleSuccess'), 'success');
+      loadCycles();
+    } catch (err) {
+      console.error('Edit cycle error:', err);
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -117,16 +223,54 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
     return 'text-warning';
   }
 
+  function getStatusLabel(status) {
+    if (status === PERFORMANCE_CYCLE_STATUS.ACTIVE) return t('statusActive');
+    if (status === PERFORMANCE_CYCLE_STATUS.CLOSED) return t('statusClosed');
+    return t('statusDraft');
+  }
+
   function formatDate(dateStr) {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString(locale);
   }
 
+  const sortedCycles = useMemo(() => {
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const rows = [...cycles];
+    rows.sort((a, b) => {
+      if (sort === 'reviewCount') {
+        return ((Number(a.reviewCount) || 0) - (Number(b.reviewCount) || 0)) * dirMul;
+      }
+      if (sort === 'periodStart') {
+        const as = toDateOnlyIso(a.periodStart) || '';
+        const bs = toDateOnlyIso(b.periodStart) || '';
+        return as.localeCompare(bs) * dirMul;
+      }
+      if (sort === 'status') {
+        return String(a.status || '').localeCompare(String(b.status || ''), collator) * dirMul;
+      }
+      return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
+    });
+    return rows;
+  }, [cycles, sort, sortDir, locale]);
+
+  const total = sortedCycles.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = sortedCycles.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
+
   if (loading) return <AppLoading />;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-ink">{t('title')}</h1>
         <p className="text-sm text-ink-muted">{t('subtitle')}</p>
@@ -135,57 +279,86 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId, isAdmi
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleCreateCycle}
-          className="inline-flex min-h-touch items-center rounded-control bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
-        >
-          + {t('createCycleButton')}
-        </button>
+        <AdminCreateButton label={t('createCycleButton')} onClick={handleCreateCycle} />
       </div>
 
-      {/* List */}
       {cycles.length === 0 ? (
-        <EmptyState message={t('listEmpty')} />
+        <EmptyState
+          message={t('listEmpty')}
+          actionLabel={t('createCycleButton')}
+          onAction={handleCreateCycle}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {cycles.map((cycle) => (
-            <div
-              key={cycle.id}
-              className="rounded-card border border-ink/8 bg-canvas p-4 hover:border-ink/16"
-            >
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-base font-medium text-ink">{cycle.title}</h3>
-                    {cycle.description && (
-                      <p className="text-sm text-ink-muted">{cycle.description}</p>
-                    )}
-                  </div>
-                  <span className={`text-xs font-medium ${getStatusColor(cycle.status)}`}>
-                    {t(`status${cycle.status.charAt(0).toUpperCase() + cycle.status.slice(1)}`)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-4 text-xs text-ink-muted">
-                  {cycle.periodStart && (
-                    <span>
-                      {t('periodStart')}: {formatDate(cycle.periodStart)}
+        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
+          <table className="w-full min-w-[640px]">
+            <thead className="border-b border-ink/10 bg-canvas-alt">
+              <tr>
+                <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t('titleCol')}
+                </SortableTh>
+                <SortableTh columnKey="status" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t('status')}
+                </SortableTh>
+                <SortableTh columnKey="periodStart" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t('periodStart')}
+                </SortableTh>
+                <SortableTh columnKey="reviewCount" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t('reviewsCount')}
+                </SortableTh>
+                <AdminActionsTh>{t('actions')}</AdminActionsTh>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink/5">
+              {pageRows.map((cycle) => (
+                <tr key={cycle.id} className="hover:bg-canvas-alt/50">
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium text-ink">{cycle.title}</p>
+                    {cycle.description ? (
+                      <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{cycle.description}</p>
+                    ) : null}
+                    {cycle.periodEnd ? (
+                      <p className="mt-1 text-xs text-ink-faint">
+                        {t('periodEnd')}: {formatDate(cycle.periodEnd)}
+                      </p>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium ${getStatusColor(cycle.status)}`}>
+                      {getStatusLabel(cycle.status)}
                     </span>
-                  )}
-                  {cycle.periodEnd && (
-                    <span>
-                      {t('periodEnd')}: {formatDate(cycle.periodEnd)}
-                    </span>
-                  )}
-                  <span>
-                    {cycle.reviewCount || 0} {t('reviewsCount')} ({cycle.submittedCount || 0} {t('submittedCount')})
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-ink-muted">{formatDate(cycle.periodStart)}</td>
+                  <td className="px-4 py-3 text-sm text-ink-muted">
+                    {cycle.reviewCount || 0}
+                    {cycle.submittedCount != null
+                      ? ` (${cycle.submittedCount} ${t('submittedCount')})`
+                      : ''}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <AdminActionsCell>
+                      <AdminEditButton label={t('edit')} onClick={() => handleEditCycle(cycle)} />
+                    </AdminActionsCell>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 pb-3">
+            <AdminListPager
+              locale={locale}
+              page={safePage}
+              pageSize={pageSize}
+              total={total}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(ps) => {
+                setPageSize(ps);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

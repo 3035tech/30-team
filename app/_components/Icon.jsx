@@ -223,6 +223,14 @@ export function Icon({ name, className }) {
           <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
         </svg>
       );
+    case 'plus':
+    case 'add':
+      return (
+        <svg {...props}>
+          <path d="M12 5v14" />
+          <path d="M5 12h14" />
+        </svg>
+      );
     case 'trash':
       return (
         <svg {...props}>

@@ -117,6 +117,22 @@ Regra Cursor: `.cursor/rules/domain-constants.mdc` (alwaysApply).
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
 
+### Listagens admin (grid canônico)
+
+Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise demissional, Cargos, Sucessão, Avaliações, etc.) usam o mesmo chrome — **não** reinventar:
+
+| Peça | Componente / token |
+|------|-------------------|
+| Cabeçalho ordenável | `SortableTh` |
+| Paginação | `AdminListPager` (+ `PAGE_SIZE_OPTIONS`) |
+| Criar | `AdminCreateButton` (`S.btnPrimary` + ícone `plus`) |
+| Editar | `AdminEditButton` (lápis + brand) |
+| Excluir / desativar / arquivar | `AdminDeleteButton` (lixeira + danger) |
+| Ver (opcional) | `AdminViewButton` |
+| Célula de ações | `AdminActionsCell` + `AdminActionsTh` |
+
+Referência de tela: `ExitAnalysisAdminTab.jsx`. Regra Cursor: `.cursor/rules/admin-list-grid.mdc`. Exceção: Vagas (cards/kanban ricos) — ainda preferir os mesmos botões de criar/editar/excluir.
+
 **API Routes → `lib/`:** pastas entre `app/` e o `route.js` + 1 = quantidade de `../`. Ex.: `app/api/health/status/route.js` → `../../../../lib/…`. Detalhe: `.cursor/rules/api-and-auth.mdc`.
 
 **Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
@@ -310,6 +326,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css`, tokens `S.*` em `dashboard-shared.jsx` |
+| Listagens admin (grid) | `SortableTh`, `AdminListPager`, `AdminCreateButton`, `AdminEditButton`, `AdminDeleteButton`, `AdminActionsCell` / `Th` — `dashboard-shared.jsx`; regra `.cursor/rules/admin-list-grid.mdc`; referência `ExitAnalysisAdminTab` |
 | Logo empresa (S3) | `lib/company-logo.js`, `lib/company-logo-limits.js`, `lib/company-logo-client.js` (crop/compress), `CompanyLogoCropDialog`, `POST/DELETE …/companies/[id]/logo` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |

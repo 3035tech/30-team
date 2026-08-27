@@ -1,12 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
-import { S } from '../dashboard-shared';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
+  AdminListPager,
+  S,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
-import { Icon } from '../../_components/Icon';
+import { AppLoading } from '../../_components/AppLoading';
 import {
   AdminRichFormDrawer,
   dialogBtnGhostClass,
@@ -33,6 +44,10 @@ export function JobRolesAdminTab({ locale, companyId }) {
   const [drawerMode, setDrawerMode] = useState(null); // 'create' | 'edit' | null
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sort, setSort] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
 
   const loadRoles = async () => {
     if (!companyId) return;
@@ -164,6 +179,26 @@ export function JobRolesAdminTab({ locale, companyId }) {
     }
   };
 
+  const sortedRoles = useMemo(() => {
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const rows = [...roles];
+    rows.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), collator) * dirMul);
+    return rows;
+  }, [roles, sort, sortDir, locale]);
+
+  const total = sortedRoles.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = sortedRoles.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleSort = (columnKey) => {
+    const nextDir = clientSortNextDir(columnKey, sort, sortDir);
+    setSort(columnKey);
+    setSortDir(nextDir);
+    setPage(1);
+  };
+
   if (!companyId) {
     return (
       <div className={S.card}>
@@ -173,14 +208,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
   }
 
   if (loading && roles.length === 0) {
-    return (
-      <div className={S.card}>
-        <div className="flex items-center gap-2">
-          <Icon name="loader" className="h-4 w-4 animate-spin text-ink-muted" />
-          <span className="text-sm text-ink-muted">{t(locale, 'common.loading')}</span>
-        </div>
-      </div>
-    );
+    return <AppLoading />;
   }
 
   if (error) {
@@ -201,10 +229,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
             <h2 className="mb-1 text-lg font-medium text-ink">{t(locale, 'jobRoles.title')}</h2>
             <p className="text-sm text-ink-muted">{t(locale, 'jobRoles.subtitle')}</p>
           </div>
-          <button type="button" onClick={openCreate} className={S.btnPrimary}>
-            <Icon name="plus" className="mr-1.5 h-3.5 w-3.5" />
-            {t(locale, 'jobRoles.createButton')}
-          </button>
+          <AdminCreateButton label={t(locale, 'jobRoles.createButton')} onClick={openCreate} />
         </div>
       </div>
 
@@ -215,63 +240,72 @@ export function JobRolesAdminTab({ locale, companyId }) {
           onAction={openCreate}
         />
       ) : (
-        <div className="grid gap-3">
-          {roles.map((role) => {
-            const rubric = role.rubric && typeof role.rubric === 'object' ? role.rubric : {};
-            const rubricKeys = Object.keys(rubric).filter((k) => Number(rubric[k]) > 0);
-            return (
-              <div key={role.id} className={S.card}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="mb-1 font-medium text-ink">{role.name}</h3>
-                    {role.description ? (
-                      <p className="mb-2 text-sm text-ink-muted">{role.description}</p>
-                    ) : null}
-                    <div className="mb-2 flex flex-wrap gap-2 text-xs text-ink-faint">
-                      {rubricKeys.length > 0 ? (
-                        <span>
-                          {rubricKeys.length} {t(locale, 'jobRoles.rubricTypesCount')}
-                        </span>
-                      ) : (
-                        <span>{t(locale, 'jobRoles.rubricEmpty')}</span>
-                      )}
-                      {!role.active ? (
-                        <span className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-ink-muted">
-                          {t(locale, 'jobRoles.inactive')}
-                        </span>
+        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
+          <table className="w-full min-w-[480px]">
+            <thead className="border-b border-ink/10 bg-canvas-alt">
+              <tr>
+                <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                  {t(locale, 'jobRoles.nameLabel')}
+                </SortableTh>
+                <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink/5">
+              {pageRows.map((role) => {
+                const rubric = role.rubric && typeof role.rubric === 'object' ? role.rubric : {};
+                const rubricKeys = Object.keys(rubric).filter((k) => Number(rubric[k]) > 0);
+                return (
+                  <tr key={role.id} className="hover:bg-canvas-alt/50">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-ink">{role.name}</p>
+                      {role.description ? (
+                        <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{role.description}</p>
                       ) : null}
-                    </div>
-                    {rubricKeys.length > 0 ? (
-                      <RubricEditor value={rubric} locale={locale} compact />
-                    ) : null}
-                  </div>
-
-                  {role.active ? (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(role)}
-                        className={S.btnGhost}
-                        title={t(locale, 'jobRoles.editButton')}
-                        aria-label={t(locale, 'jobRoles.editButton')}
-                      >
-                        <Icon name="edit-2" className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivate(role)}
-                        className={S.btnGhost}
-                        title={t(locale, 'jobRoles.deactivateButton')}
-                        aria-label={t(locale, 'jobRoles.deactivateButton')}
-                      >
-                        <Icon name="trash-2" className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
+                      <p className="mt-1 text-xs text-ink-faint">
+                        {rubricKeys.length > 0
+                          ? `${rubricKeys.length} ${t(locale, 'jobRoles.rubricTypesCount')}`
+                          : t(locale, 'jobRoles.rubricEmpty')}
+                        {!role.active ? (
+                          <span className="ml-2 rounded bg-ink/10 px-1.5 py-0.5 font-mono text-ink-muted">
+                            {t(locale, 'jobRoles.inactive')}
+                          </span>
+                        ) : null}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {role.active ? (
+                        <AdminActionsCell>
+                          <AdminEditButton
+                            label={t(locale, 'jobRoles.editButton')}
+                            onClick={() => openEdit(role)}
+                          />
+                          <AdminDeleteButton
+                            label={t(locale, 'jobRoles.deactivateButton')}
+                            onClick={() => handleDeactivate(role)}
+                          />
+                        </AdminActionsCell>
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="px-4 pb-3">
+            <AdminListPager
+              locale={locale}
+              page={safePage}
+              pageSize={pageSize}
+              total={total}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(ps) => {
+                setPageSize(ps);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
 

@@ -6,7 +6,17 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { publicCompanyPath } from '../../../lib/public-job-url';
 import { parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
-import { clientSortNextDir, S, SortableTh, AdminListPager } from '../dashboard-shared';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminCreateButton,
+  AdminDeleteButton,
+  AdminEditButton,
+  AdminListPager,
+  S,
+  SortableTh,
+  clientSortNextDir,
+} from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
@@ -18,12 +28,8 @@ import { COMPANY_LOGO_ACCEPT } from '../../../lib/company-logo-limits';
 const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
 const FIELD_INPUT =
   'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
-const BTN_PRIMARY =
-  'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
-const BTN_ROW =
-  'rounded-control border px-2.5 py-2 font-mono text-[11px] disabled:cursor-default disabled:opacity-60';
 const DIALOG_BTN_GHOST =
   'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted disabled:cursor-default disabled:opacity-60';
 const DIALOG_BTN_PRIMARY =
@@ -425,14 +431,11 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.companiesList')}</span>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
+            <AdminCreateButton
+              label={t(locale, 'panel.admin.newCompanyBtn')}
               onClick={openCreateCompany}
               disabled={loading}
-              className={cn(BTN_PRIMARY, loading && 'opacity-60')}
-            >
-              {t(locale, 'panel.admin.newCompanyBtn')}
-            </button>
+            />
             <button
               type="button"
               onClick={loadCompanies}
@@ -462,7 +465,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
-                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">{t(locale, 'panel.admin.colLinkActions')}</th>
+                  <AdminActionsTh>{t(locale, 'panel.admin.colLinkActions')}</AdminActionsTh>
                 </tr>
               </thead>
               <tbody>
@@ -534,32 +537,26 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
+                        <AdminActionsCell>
+                          <AdminEditButton
+                            label={t(locale, 'panel.admin.edit')}
                             onClick={() => editCompany(c)}
                             disabled={loading}
-                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
-                          >
-                            {t(locale, 'panel.admin.edit')}
-                          </button>
+                          />
                           <button
                             type="button"
                             onClick={() => rotateLink(c.id)}
                             disabled={loading}
-                            className={cn(BTN_ROW, 'border-ink/12 bg-transparent text-ink-muted', loading && 'opacity-60')}
+                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', loading && 'opacity-60')}
                           >
                             {t(locale, 'panel.admin.rotateLink')}
                           </button>
-                          <button
-                            type="button"
+                          <AdminDeleteButton
+                            label={t(locale, 'panel.admin.archive')}
                             onClick={() => deleteCompany(c.id, c.name)}
                             disabled={loading}
-                            className={cn(BTN_ROW, 'border-danger/35 bg-danger/[0.08] text-danger', loading && 'opacity-60')}
-                          >
-                            {t(locale, 'panel.admin.archive')}
-                          </button>
-                        </div>
+                          />
+                        </AdminActionsCell>
                       </td>
                     </tr>
                   );
