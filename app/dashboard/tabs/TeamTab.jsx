@@ -29,7 +29,7 @@ import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
 import { EMPLOYMENT_STATUS, VACANCY_STATUS } from '../../../lib/domain-status.js';
-import { PIPELINE_STAGE } from '../../../lib/pipeline';
+import { PIPELINE_STAGE, PIPELINE_STAGES } from '../../../lib/pipeline';
 
 function nearbyCluster(scores) {
   return clusterCloseTypes(rankEnneagramScores(scores));
@@ -72,16 +72,7 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
   );
 }
 
-const PIPELINE_OPTIONS = [
-  'new',
-  'interview',
-  'test_completed',
-  'screening',
-  'approved',
-  'hired',
-  'rejected',
-  'archived',
-];
+const PIPELINE_OPTIONS = PIPELINE_STAGES;
 
 
 function fitBandLabel(locale, code) {
@@ -96,14 +87,14 @@ function fitBandLabel(locale, code) {
 
 function pipelineLabel(locale, code) {
   const map = {
-    new: 'recruiting.pipelineNew',
-    interview: 'recruiting.pipelineInterview',
-    test_completed: 'recruiting.pipelineTestCompleted',
-    screening: 'recruiting.pipelineScreening',
-    approved: 'recruiting.pipelineApproved',
-    hired: 'recruiting.pipelineHired',
-    rejected: 'recruiting.pipelineRejected',
-    archived: 'recruiting.pipelineArchived',
+    [PIPELINE_STAGE.NEW]: 'recruiting.pipelineNew',
+    [PIPELINE_STAGE.INTERVIEW]: 'recruiting.pipelineInterview',
+    [PIPELINE_STAGE.TEST_COMPLETED]: 'recruiting.pipelineTestCompleted',
+    [PIPELINE_STAGE.SCREENING]: 'recruiting.pipelineScreening',
+    [PIPELINE_STAGE.APPROVED]: 'recruiting.pipelineApproved',
+    [PIPELINE_STAGE.HIRED]: 'recruiting.pipelineHired',
+    [PIPELINE_STAGE.REJECTED]: 'recruiting.pipelineRejected',
+    [PIPELINE_STAGE.ARCHIVED]: 'recruiting.pipelineArchived',
   };
   return t(locale, map[code] || 'recruiting.pipelineNew');
 }
@@ -202,7 +193,7 @@ export function TeamTab({
   const [profileMsg, setProfileMsg] = useState('');
   const [profileMsgIsError, setProfileMsgIsError] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [bulkStage, setBulkStage] = useState('test_completed');
+  const [bulkStage, setBulkStage] = useState(PIPELINE_STAGE.TEST_COMPLETED);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
   const [bulkMsgIsError, setBulkMsgIsError] = useState(false);
@@ -523,7 +514,7 @@ export function TeamTab({
     }
   };
 
-  const getEffectiveStage = (r) => stageOverrides[String(r.assessmentId)] ?? r.pipelineStage ?? 'new';
+  const getEffectiveStage = (r) => stageOverrides[String(r.assessmentId)] ?? r.pipelineStage ?? PIPELINE_STAGE.NEW;
 
   const filtered = results;
   const activeSearch = (search || '').trim();
@@ -719,7 +710,7 @@ export function TeamTab({
                       const fitScore = r.vacancyFitScore010 ?? r.areaFitScore010;
                       const isDragging = draggingId === rid;
                       const days = daysInStage(r.stageEnteredAt || r.createdAt);
-                      const aging = stageAgingTone(days, r.pipelineStage || 'new');
+                      const aging = stageAgingTone(days, r.pipelineStage || PIPELINE_STAGE.NEW);
                       return (
                         <div
                           key={rid}
@@ -1204,7 +1195,7 @@ export function TeamTab({
                           <label className="flex items-center gap-1.5 text-xs text-ink-muted">
                             {t(locale, 'recruiting.stageLabel')}
                             <select
-                              value={a.pipelineStage || 'test_completed'}
+                              value={a.pipelineStage || PIPELINE_STAGE.TEST_COMPLETED}
                               disabled={!!stageBusy}
                               onChange={(e) => patchPipeline(a.id, e.target.value)}
                               className="rounded-md border border-ink/12 bg-transparent px-2 py-1 text-[11px] text-ink"

@@ -18,11 +18,16 @@ import {
   STRUCTURED_FIELD_MAX_CHARS,
   normalizeRecommendation,
 } from '../../lib/vacancy-report-shared';
+import { PIPELINE_STAGE } from '../../lib/pipeline';
 
 const REPORT_EXPIRY_DAYS = [7, 14, 30];
 const DEFAULT_REPORT_EXPIRY_DAYS = 14;
 
-const INTERVIEW_PLUS = new Set(['interview', 'approved', 'hired']);
+const INTERVIEW_PLUS = new Set([
+  PIPELINE_STAGE.INTERVIEW,
+  PIPELINE_STAGE.APPROVED,
+  PIPELINE_STAGE.HIRED,
+]);
 
 const NOTE_TEMPLATE_PT = `<p><strong>Quem avançar:</strong> …</p>
 <p><strong>Por quê (fit / contexto da vaga):</strong> …</p>

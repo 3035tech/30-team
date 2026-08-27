@@ -4,6 +4,7 @@ import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
+import { PIPELINE_STAGE } from '../../lib/pipeline';
 import { cn } from '../../lib/cn';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
@@ -170,14 +171,14 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
 };
 
 const KANBAN_STAGE_DEFS = [
-  { id: 'new', color: PIPELINE_STAGE_COLORS.new, labelKey: 'recruiting.pipelineNew' },
-  { id: 'interview', color: PIPELINE_STAGE_COLORS.interview, labelKey: 'recruiting.pipelineInterview' },
-  { id: 'test_completed', color: PIPELINE_STAGE_COLORS.test_completed, labelKey: 'recruiting.pipelineTestCompleted' },
-  { id: 'screening', color: PIPELINE_STAGE_COLORS.screening, labelKey: 'recruiting.pipelineScreening' },
-  { id: 'approved', color: PIPELINE_STAGE_COLORS.approved, labelKey: 'recruiting.pipelineApproved' },
-  { id: 'hired', color: PIPELINE_STAGE_COLORS.hired, labelKey: 'recruiting.pipelineHired' },
-  { id: 'rejected', color: PIPELINE_STAGE_COLORS.rejected, labelKey: 'recruiting.pipelineRejected' },
-  { id: 'archived', color: PIPELINE_STAGE_COLORS.archived, labelKey: 'recruiting.pipelineArchived' },
+  { id: PIPELINE_STAGE.NEW, color: PIPELINE_STAGE_COLORS.new, labelKey: 'recruiting.pipelineNew' },
+  { id: PIPELINE_STAGE.INTERVIEW, color: PIPELINE_STAGE_COLORS.interview, labelKey: 'recruiting.pipelineInterview' },
+  { id: PIPELINE_STAGE.TEST_COMPLETED, color: PIPELINE_STAGE_COLORS.test_completed, labelKey: 'recruiting.pipelineTestCompleted' },
+  { id: PIPELINE_STAGE.SCREENING, color: PIPELINE_STAGE_COLORS.screening, labelKey: 'recruiting.pipelineScreening' },
+  { id: PIPELINE_STAGE.APPROVED, color: PIPELINE_STAGE_COLORS.approved, labelKey: 'recruiting.pipelineApproved' },
+  { id: PIPELINE_STAGE.HIRED, color: PIPELINE_STAGE_COLORS.hired, labelKey: 'recruiting.pipelineHired' },
+  { id: PIPELINE_STAGE.REJECTED, color: PIPELINE_STAGE_COLORS.rejected, labelKey: 'recruiting.pipelineRejected' },
+  { id: PIPELINE_STAGE.ARCHIVED, color: PIPELINE_STAGE_COLORS.archived, labelKey: 'recruiting.pipelineArchived' },
 ];
 
 function getKanbanStages(locale = 'pt-BR') {
