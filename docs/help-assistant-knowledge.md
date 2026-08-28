@@ -49,6 +49,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Remuneração interna | `compensation` |
 | LMS / cursos | `lmsBasic` |
 
+**FAQ rápido — remuneração:** perguntas com “salário/aumento/reajuste + colaborador/equipe” (ou “lista de salários”) caem em `faqCompensation`. Link canônico da lista: `/dashboard?tab=compensation`; ficha: Equipe → Remuneração (`&section=compensation`). Folha/holerite continua fora de escopo.
+
 Detalhe operacional da jornada colaborador: [`employee-onboarding-journey.md`](./employee-onboarding-journey.md).
 
 ## Manutenção do prompt de produto

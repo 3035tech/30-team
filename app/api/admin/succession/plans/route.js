@@ -49,7 +49,9 @@ export async function POST(request) {
       return apiError(request, ERR.COMPANY_REQUIRED, 400);
     }
 
-    const { roleId, successorId, readiness, notes, targetDate } = body;
+    const roleId = Number(body.roleId);
+    const successorId = Number(body.successorId);
+    const { readiness, notes, targetDate } = body;
 
     if (!Number.isFinite(roleId) || roleId <= 0 || !Number.isFinite(successorId) || successorId <= 0) {
       return apiError(request, ERR.INVALID_PARAMS, 400);

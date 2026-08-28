@@ -170,6 +170,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
           <LinkBtn label={t(locale, 'panel.help.linkOverview')} onClick={() => go('overview')} />
           <LinkBtn label={t(locale, 'panel.help.linkVacancies')} onClick={() => go('vacancies')} />
           <LinkBtn label={t(locale, 'panel.help.linkTeam')} onClick={() => go('team')} />
+          <LinkBtn label={t(locale, 'panel.help.linkCompensation')} onClick={() => go('compensation')} />
           <LinkBtn label={t(locale, 'panel.help.linkGroup')} onClick={() => go('group')} />
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />
           <LinkBtn label={t(locale, 'panel.help.linkClimate')} onClick={() => go('climate')} />

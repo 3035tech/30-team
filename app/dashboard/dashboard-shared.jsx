@@ -330,6 +330,7 @@ const KANBAN_STAGES = getKanbanStages('pt-BR');
 const DASHBOARD_TAB_NAV = {
   overview: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.overview' },
   team: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.team' },
+  compensation: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compensation' },
   compatibility: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compatibility' },
   compare: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compare' },
   group: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.group' },

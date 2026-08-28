@@ -152,6 +152,10 @@ const CompanyBenefitsAdminTab = dynamic(
   () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const CompensationAdminTab = dynamic(
+  () => import('./tabs/CompensationAdminTab').then((m) => ({ default: m.CompensationAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const LeadsAdminTab = dynamic(
   () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -200,6 +204,7 @@ const DEFAULT_NAV_SECTIONS = {
 const TAB_TO_SECTION = {
   overview: 'analysis',
   team: 'analysis',
+  compensation: 'analysis',
   compatibility: 'analysis',
   compare: 'analysis',
   group: 'analysis',
@@ -323,6 +328,7 @@ export default function DashboardClient({
   const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
   const showLearning = can(sessionAuth, CAP.LEARNING_VIEW);
   const showBenefits = can(sessionAuth, CAP.BENEFITS_VIEW);
+  const showCompensation = can(sessionAuth, CAP.TEAM_VIEW);
   const showPeopleGp = showPerformance || showSuccession || showExitAnalysis;
   const showCatalogs = showJobRoles || showLearning || showBenefits;
   const showLmsSection = showLearning;
@@ -828,6 +834,9 @@ export default function DashboardClient({
                 ) : null}
                 {can(sessionAuth, CAP.TEAM_VIEW) ? (
                   <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+                ) : null}
+                {showCompensation ? (
+                  <NavLink id="compensation" icon="salary" label={t(locale, 'dashboard.compensation')} />
                 ) : null}
                 {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
                   <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
@@ -1413,6 +1422,16 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'compensation' && showCompensation && (
+                <CompensationAdminTab
+                  locale={locale}
+                  companyId={
+                    company && company !== 'all'
+                      ? Number(company)
+                      : (sessionAuth?.companyId ?? null)
+                  }
+                />
+              )}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'audit' && showAudit && (
                 <AuditAdminTab navigateDashboard={navigateWithOpts} locale={locale} />

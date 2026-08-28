@@ -352,6 +352,22 @@ export function Icon({ name, className }) {
           <path d="M14.5 10.2 13 14.5" />
         </svg>
       );
+    case 'refresh':
+    case 'refresh-cw':
+      return (
+        <svg {...props}>
+          <path d="M21 12a9 9 0 1 1-2.6-6.3" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      );
+    case 'salary':
+      return (
+        <svg {...props}>
+          <rect x="3" y="6" width="18" height="12" rx="2" />
+          <circle cx="12" cy="12" r="2.5" />
+          <path d="M7 12h0.01M17 12h0.01" />
+        </svg>
+      );
     default:
       return null;
   }

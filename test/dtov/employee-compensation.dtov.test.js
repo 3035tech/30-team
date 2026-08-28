@@ -8,6 +8,7 @@ import {
   createCompensationEvent,
   deleteCompensationEvent,
   listCompensationEvents,
+  listCompanyCompensationRoster,
   updateCompensationEvent,
 } from '../../lib/people/employee-compensation.js';
 
@@ -21,6 +22,12 @@ async function main() {
   );
   assert.ok(emp.rowCount > 0, 'need employee in DTOV seed');
   const person = emp.rows[0];
+
+  await query(
+    `DELETE FROM employee_compensation_events
+     WHERE company_id = $1 AND candidate_id = $2`,
+    [person.companyId, person.candidateId]
+  );
 
   const hire = await createCompensationEvent(query, {
     companyId: person.companyId,
@@ -49,6 +56,23 @@ async function main() {
   assert.equal(list.ok, true);
   assert.equal(list.items.length, 2);
   assert.equal(list.current.amount, '6200.00');
+
+  const roster = await listCompanyCompensationRoster(query, {
+    companyId: person.companyId,
+    employmentStatus: EMPLOYMENT_STATUS.EMPLOYEE,
+    hasSalary: 'with',
+    page: 1,
+    pageSize: 20,
+    sort: 'amount',
+    sortDir: 'desc',
+  });
+  assert.equal(roster.ok, true, roster.errorCode);
+  assert.ok(roster.total >= 1);
+  const row = roster.items.find((r) => Number(r.candidateId) === Number(person.candidateId));
+  assert.ok(row, 'roster includes employee');
+  assert.equal(row.current?.amount, '6200.00');
+  assert.ok(row.eventCount >= 2);
+  assert.equal(row.current?.effectiveDate, '2025-06-01');
 
   const upd = await updateCompensationEvent(query, {
     companyId: person.companyId,

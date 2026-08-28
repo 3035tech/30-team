@@ -99,36 +99,40 @@ export const POST = withAdminApi(
       },
     });
     if (body.notify !== false && result.enrolled > 0) {
-      await notifyCompanyManagers({
-        companyId,
-        type: NOTIF.LMS_ENROLLED,
-        entityType: 'lms_course',
-        entityId: courseId,
-        dedupeKey: `lms_enrolled:${courseId}:${Date.now()}`,
-        payload: {
-          courseId,
-          courseTitle: result.courseTitle,
-          enrolled: result.enrolled,
-        },
-      });
-      const { notifyCandidates, EMPLOYEE_NOTIF } = await import(
-        '../../../../../../../lib/employee-notifications.js'
-      );
-      const enrolledIds = Array.isArray(result.candidateIds) ? result.candidateIds : [];
-      if (enrolledIds.length) {
-        await notifyCandidates(query, {
+      try {
+        await notifyCompanyManagers({
           companyId,
-          candidateIds: enrolledIds,
-          type: EMPLOYEE_NOTIF.LMS_ENROLLED,
+          type: NOTIF.LMS_ENROLLED,
           entityType: 'lms_course',
           entityId: courseId,
-          dedupeKeyPrefix: `lms_enrolled:${courseId}`,
+          dedupeKey: `lms_enrolled:${courseId}:${Date.now()}`,
           payload: {
             courseId,
             courseTitle: result.courseTitle,
-            dueDate: result.dueDate || null,
+            enrolled: result.enrolled,
           },
         });
+        const { notifyCandidates, EMPLOYEE_NOTIF } = await import(
+          '../../../../../../../lib/employee-notifications.js'
+        );
+        const enrolledIds = Array.isArray(result.candidateIds) ? result.candidateIds : [];
+        if (enrolledIds.length) {
+          await notifyCandidates(null, {
+            companyId,
+            candidateIds: enrolledIds,
+            type: EMPLOYEE_NOTIF.LMS_ENROLLED,
+            entityType: 'lms_course',
+            entityId: courseId,
+            dedupeKeyPrefix: `lms_enrolled:${courseId}`,
+            payload: {
+              courseId,
+              courseTitle: result.courseTitle,
+              dueDate: result.dueDate || null,
+            },
+          });
+        }
+      } catch (notifyErr) {
+        console.error('[lms enrollments POST] notify failed', notifyErr);
       }
     }
     return NextResponse.json({

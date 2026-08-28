@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAdminApi } from '../../../../../../../../lib/admin-api.js';
-import { CAP } from '../../../../../../../../lib/ae/require-admin.js';
+import { CAP, resolveScopedCompanyId } from '../../../../../../../../lib/ae/require-admin.js';
 import {
   apiError,
   apiErrorFromResult,
@@ -11,6 +11,7 @@ import { createLmsLesson } from '../../../../../../../../lib/lms.js';
 import {
   isLmsStorageConfigured,
   uploadLmsLessonPdf,
+  LMS_PDF_MAX_BYTES,
 } from '../../../../../../../../lib/lms-asset.js';
 import { audit } from '../../../../../../../../lib/audit.js';
 import { checkRateLimit } from '../../../../../../../../lib/rate-limit.js';
@@ -28,7 +29,7 @@ export const POST = withAdminApi(
     requireCompany: false,
     logLabel: 'lms lesson pdf upload',
   },
-  async ({ request, payload, params }) => {
+  async ({ request, payload, scope, params }) => {
     const courseId = parseInt(String(params?.id || ''), 10);
     if (!Number.isFinite(courseId)) {
       return apiError(request, ERR.NOT_FOUND, httpStatusForError(ERR.NOT_FOUND));
@@ -52,23 +53,23 @@ export const POST = withAdminApi(
 
     const file = form.get('file');
     const title = String(form.get('title') || '').trim();
-    const companyIdRaw = form.get('companyId');
-    const companyId =
-      payload.role === 'admin' && companyIdRaw
-        ? parseInt(String(companyIdRaw), 10)
-        : payload.companyId;
+    const companyId = resolveScopedCompanyId(scope, form.get('companyId'));
 
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, ERR.UNAUTHORIZED, httpStatusForError(ERR.UNAUTHORIZED));
+    if (!companyId) {
+      return apiError(request, ERR.COMPANY_REQUIRED, httpStatusForError(ERR.COMPANY_REQUIRED));
     }
     if (!title) {
       return apiError(request, ERR.VALIDATION, httpStatusForError(ERR.VALIDATION));
     }
-    if (!file || typeof file.arrayBuffer !== 'function') {
-      return apiError(request, ERR.VALIDATION, httpStatusForError(ERR.VALIDATION));
+    if (!file || typeof file === 'string' || typeof file.arrayBuffer !== 'function') {
+      return apiError(request, ERR.INVALID_LMS_FILE_TYPE, httpStatusForError(ERR.INVALID_LMS_FILE_TYPE));
     }
 
     const buf = Buffer.from(await file.arrayBuffer());
+    if (buf.length > LMS_PDF_MAX_BYTES) {
+      return apiError(request, ERR.INVALID_LMS_FILE_SIZE, httpStatusForError(ERR.INVALID_LMS_FILE_SIZE));
+    }
+
     let uploaded;
     try {
       uploaded = await uploadLmsLessonPdf(companyId, courseId, {
@@ -81,11 +82,14 @@ export const POST = withAdminApi(
       if (code === 'STORAGE_NOT_CONFIGURED') {
         return apiError(request, ERR.STORAGE_NOT_CONFIGURED, httpStatusForError(ERR.STORAGE_NOT_CONFIGURED));
       }
-      if (code === 'INVALID_LMS_FILE_TYPE' || code === 'INVALID_LMS_FILE_SIZE') {
-        return apiError(request, ERR.VALIDATION, httpStatusForError(ERR.VALIDATION));
+      if (code === 'INVALID_LMS_FILE_TYPE') {
+        return apiError(request, ERR.INVALID_LMS_FILE_TYPE, httpStatusForError(ERR.INVALID_LMS_FILE_TYPE));
       }
-      console.error('lms pdf upload', e);
-      return apiError(request, ERR.CREATE_FAILED, httpStatusForError(ERR.CREATE_FAILED));
+      if (code === 'INVALID_LMS_FILE_SIZE') {
+        return apiError(request, ERR.INVALID_LMS_FILE_SIZE, httpStatusForError(ERR.INVALID_LMS_FILE_SIZE));
+      }
+      console.error('lms pdf upload', e?.cause || e);
+      return apiError(request, ERR.STORAGE_UPLOAD_FAILED, httpStatusForError(ERR.STORAGE_UPLOAD_FAILED));
     }
 
     const result = await createLmsLesson(null, {

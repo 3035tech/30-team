@@ -67,8 +67,30 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         expand: 'Ver sucessores',
         collapse: 'Ocultar',
         noSuccessors: 'Nenhum sucessor ainda',
+        noSuccessorsHint: 'Use “Adicionar sucessor” para vincular um colaborador a este papel.',
+        unknownPerson: 'Pessoa sem nome',
         confirmDeactivate: 'Desativar este papel crítico?',
         editRoleTitle: 'Editar papel crítico',
+        assignSuccessor: 'Adicionar sucessor',
+        successorCandidate: 'Colaborador',
+        successorCandidatePh: 'Buscar por nome ou e-mail…',
+        successorCandidateHelp: 'Só colaboradores ativos da empresa.',
+        readiness: 'Prontidão',
+        readinessNotReady: 'Não pronto',
+        readinessDeveloping: 'Em desenvolvimento',
+        readinessReady: 'Pronto (6–12m)',
+        readinessNow: 'Pronto agora',
+        notes: 'Notas de desenvolvimento',
+        targetDate: 'Data-alvo',
+        createPlanSuccess: 'Sucessor atribuído',
+        updatePlanSuccess: 'Prontidão atualizada',
+        deletePlanSuccess: 'Sucessor removido',
+        confirmRemoveSuccessor: 'Remover este sucessor do papel?',
+        removeSuccessor: 'Remover',
+        editReadiness: 'Alterar prontidão',
+        pickEmployee: 'Selecione um colaborador',
+        alreadyAssigned: 'Este colaborador já está atribuído a este papel',
+        openOnTeam: 'Abrir na Equipe',
       },
       en: {
         title: 'Succession',
@@ -99,21 +121,56 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         expand: 'View successors',
         collapse: 'Hide',
         noSuccessors: 'No successors yet',
+        noSuccessorsHint: 'Use “Add successor” to link an employee to this role.',
+        unknownPerson: 'Unnamed person',
         confirmDeactivate: 'Deactivate this critical role?',
         editRoleTitle: 'Edit critical role',
+        assignSuccessor: 'Add successor',
+        successorCandidate: 'Employee',
+        successorCandidatePh: 'Search by name or email…',
+        successorCandidateHelp: 'Active employees of this company only.',
+        readiness: 'Readiness',
+        readinessNotReady: 'Not ready',
+        readinessDeveloping: 'Developing',
+        readinessReady: 'Ready (6–12m)',
+        readinessNow: 'Ready now',
+        notes: 'Development notes',
+        targetDate: 'Target date',
+        createPlanSuccess: 'Successor assigned',
+        updatePlanSuccess: 'Readiness updated',
+        deletePlanSuccess: 'Successor removed',
+        confirmRemoveSuccessor: 'Remove this successor from the role?',
+        removeSuccessor: 'Remove',
+        editReadiness: 'Change readiness',
+        pickEmployee: 'Pick an employee',
+        alreadyAssigned: 'This employee is already assigned to this role',
+        openOnTeam: 'Open on Team',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
   };
 
+  function companyQs(prefix = '?') {
+    if (!companyId) return '';
+    return `${prefix}companyId=${companyId}`;
+  }
+
+  function employeesSearchUrl() {
+    return companyId
+      ? `/api/admin/employees/search?companyId=${companyId}`
+      : '/api/admin/employees/search';
+  }
+
   useEffect(() => {
+    setSuccessorsByRole({});
+    setExpandedRoles(new Set());
     loadRoles();
   }, [companyId]);
 
   async function loadRoles() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/succession/critical-roles?limit=40`);
+      const res = await fetch(`/api/admin/succession/critical-roles?limit=40${companyQs('&')}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setRoles(data.roles || []);
@@ -122,6 +179,24 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       toast(t('loadError'), 'error');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadSuccessors(roleId, { force = false } = {}) {
+    if (!force && successorsByRole[roleId]) return successorsByRole[roleId];
+    try {
+      const res = await fetch(
+        `/api/admin/succession/critical-roles/${roleId}/successors?limit=20${companyQs('&')}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list = data.successors || [];
+      setSuccessorsByRole((prev) => ({ ...prev, [roleId]: list }));
+      return list;
+    } catch (err) {
+      console.error('Load successors error:', err);
+      toast(t('loadError'), 'error');
+      return [];
     }
   }
 
@@ -171,10 +246,13 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       const res = await fetch('/api/admin/succession/critical-roles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify({
+          ...result,
+          ...(companyId ? { companyId } : {}),
+        }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast(t('createRoleSuccess'), 'success');
+      toast(t('createRoleSuccess'), 'ok');
       loadRoles();
     } catch (err) {
       console.error('Create role error:', err);
@@ -202,10 +280,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
           title: result.title,
           description: result.description,
           impactLevel: result.impactLevel,
+          ...(companyId ? { companyId } : {}),
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast(t('updateRoleSuccess'), 'success');
+      toast(t('updateRoleSuccess'), 'ok');
       loadRoles();
     } catch (err) {
       console.error('Edit role error:', err);
@@ -218,14 +297,182 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/admin/succession/critical-roles/${role.id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `/api/admin/succession/critical-roles/${role.id}${companyQs('?')}`,
+        { method: 'DELETE' }
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast(t('deactivateRoleSuccess'), 'success');
+      toast(t('deactivateRoleSuccess'), 'ok');
       loadRoles();
     } catch (err) {
       console.error('Deactivate role error:', err);
+      toast(t('saveError'), 'error');
+    }
+  }
+
+  function readinessOptions() {
+    return [
+      { value: 'not_ready', label: t('readinessNotReady') },
+      { value: 'developing', label: t('readinessDeveloping') },
+      { value: 'ready', label: t('readinessReady') },
+      { value: 'now', label: t('readinessNow') },
+    ];
+  }
+
+  async function handleAssignSuccessor(role) {
+    const result = await promptForm({
+      title: t('assignSuccessor'),
+      fields: [
+        {
+          name: 'successorId',
+          label: t('successorCandidate'),
+          type: 'entitySearch',
+          required: true,
+          searchUrl: employeesSearchUrl(),
+          placeholder: t('successorCandidatePh'),
+          help: t('successorCandidateHelp'),
+          minChars: 1,
+        },
+        {
+          name: 'readiness',
+          label: t('readiness'),
+          type: 'select',
+          required: true,
+          defaultValue: 'developing',
+          options: readinessOptions(),
+        },
+        {
+          name: 'targetDate',
+          label: t('targetDate'),
+          type: 'date',
+          required: false,
+        },
+        {
+          name: 'notes',
+          label: t('notes'),
+          type: 'textarea',
+          required: false,
+          rows: 3,
+          maxLength: 4000,
+        },
+      ],
+    });
+    if (!result) return;
+
+    const successorId = Number(result.successorId);
+    if (!Number.isFinite(successorId) || successorId <= 0) {
+      toast(t('pickEmployee'), 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/succession/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roleId: role.id,
+          successorId,
+          readiness: result.readiness,
+          notes: result.notes,
+          targetDate: result.targetDate || null,
+          ...(companyId ? { companyId } : {}),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        toast(t('alreadyAssigned'), 'warning');
+        return;
+      }
+      if (!res.ok) {
+        toast(data.error || t('saveError'), 'error');
+        return;
+      }
+      toast(t('createPlanSuccess'), 'ok');
+      await loadSuccessors(role.id, { force: true });
+      loadRoles();
+    } catch (err) {
+      console.error('Assign successor error:', err);
+      toast(t('saveError'), 'error');
+    }
+  }
+
+  async function handleEditSuccessor(role, successor) {
+    const result = await promptForm({
+      title: t('editReadiness'),
+      fields: [
+        {
+          name: 'readiness',
+          label: t('readiness'),
+          type: 'select',
+          required: true,
+          defaultValue: successor.readiness || 'developing',
+          options: readinessOptions(),
+        },
+        {
+          name: 'targetDate',
+          label: t('targetDate'),
+          type: 'date',
+          required: false,
+          defaultValue: successor.targetDate
+            ? String(successor.targetDate).slice(0, 10)
+            : '',
+        },
+        {
+          name: 'notes',
+          label: t('notes'),
+          type: 'textarea',
+          required: false,
+          rows: 3,
+          maxLength: 4000,
+          defaultValue: successor.notes || '',
+        },
+      ],
+    });
+    if (!result) return;
+
+    try {
+      const res = await fetch(`/api/admin/succession/plans/${successor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          readiness: result.readiness,
+          notes: result.notes,
+          targetDate: result.targetDate || null,
+          ...(companyId ? { companyId } : {}),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error || t('saveError'), 'error');
+        return;
+      }
+      toast(t('updatePlanSuccess'), 'ok');
+      await loadSuccessors(role.id, { force: true });
+    } catch (err) {
+      console.error('Edit successor error:', err);
+      toast(t('saveError'), 'error');
+    }
+  }
+
+  async function handleRemoveSuccessor(role, successor) {
+    const ok = await confirm({
+      message: t('confirmRemoveSuccessor'),
+      danger: true,
+      confirmLabel: t('removeSuccessor'),
+    });
+    if (!ok) return;
+
+    try {
+      const res = await fetch(
+        `/api/admin/succession/plans/${successor.id}${companyQs('?')}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast(t('deletePlanSuccess'), 'ok');
+      await loadSuccessors(role.id, { force: true });
+      loadRoles();
+    } catch (err) {
+      console.error('Remove successor error:', err);
       toast(t('saveError'), 'error');
     }
   }
@@ -255,21 +502,13 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   }
 
   function getReadinessLabel(readiness) {
-    const labels = {
-      'pt-BR': {
-        now: 'Pronto agora',
-        ready: 'Pronto',
-        developing: 'Em desenvolvimento',
-        not_ready: 'Não pronto',
-      },
-      en: {
-        now: 'Ready now',
-        ready: 'Ready',
-        developing: 'Developing',
-        not_ready: 'Not ready',
-      },
+    const map = {
+      now: 'readinessNow',
+      ready: 'readinessReady',
+      developing: 'readinessDeveloping',
+      not_ready: 'readinessNotReady',
     };
-    return labels[locale]?.[readiness] || labels['pt-BR'][readiness] || readiness;
+    return map[readiness] ? t(map[readiness]) : readiness;
   }
 
   async function toggleRole(roleId) {
@@ -278,17 +517,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       newExpanded.delete(roleId);
     } else {
       newExpanded.add(roleId);
-      if (!successorsByRole[roleId]) {
-        try {
-          const res = await fetch(`/api/admin/succession/critical-roles/${roleId}/successors?limit=20`);
-          if (res.ok) {
-            const data = await res.json();
-            setSuccessorsByRole((prev) => ({ ...prev, [roleId]: data.successors || [] }));
-          }
-        } catch (err) {
-          console.error('Load successors error:', err);
-        }
-      }
+      await loadSuccessors(roleId);
     }
     setExpandedRoles(newExpanded);
   }
@@ -429,12 +658,22 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                     {isExpanded ? (
                       <tr>
                         <td colSpan={4} className="bg-canvas-alt/40 px-4 py-3">
+                          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <AdminCreateButton
+                              label={t('assignSuccessor')}
+                              onClick={() => handleAssignSuccessor(role)}
+                            />
+                          </div>
                           {successors.length === 0 ? (
-                            <p className="text-center text-xs italic text-ink-muted">{t('noSuccessors')}</p>
+                            <div className="rounded-lg border border-dashed border-ink/15 bg-surface/60 px-3 py-4 text-center">
+                              <p className="text-xs font-medium text-ink-muted">{t('noSuccessors')}</p>
+                              <p className="mt-1 text-[11px] text-ink-faint">{t('noSuccessorsHint')}</p>
+                            </div>
                           ) : (
                             <ul className="flex flex-col gap-2">
                               {successors.map((successor) => {
                                 const colors = getReadinessColor(successor.readiness);
+                                const personId = successor.successorId || successor.candidateId;
                                 return (
                                   <li
                                     key={successor.id}
@@ -442,20 +681,22 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                   >
                                     <div className="min-w-0 flex-1">
                                       <span className="text-sm text-ink">
-                                        {successor.candidateName || 'N/A'}
+                                        {successor.successorName ||
+                                          successor.candidateName ||
+                                          t('unknownPerson')}
                                       </span>
-                                      {successor.candidateId ? (
+                                      {personId ? (
                                         <div className="mt-1 flex flex-wrap gap-2">
                                           <Link
-                                            href={`/dashboard?tab=team&candidate=${successor.candidateId}`}
+                                            href={`/dashboard?tab=team&candidate=${personId}`}
                                             className="font-mono text-[11px] text-brand-600 hover:underline"
                                           >
-                                            {locale === 'en' ? 'Open on Team' : 'Abrir na Equipe'}
+                                            {t('openOnTeam')}
                                           </Link>
                                           {(successor.readiness === 'developing' ||
                                             successor.readiness === 'not_ready') && (
                                             <Link
-                                              href={`/dashboard?tab=team&candidate=${successor.candidateId}&section=journey`}
+                                              href={`/dashboard?tab=team&candidate=${personId}&section=journey`}
                                               className="font-mono text-[11px] text-brand-600 hover:underline"
                                             >
                                               PDI
@@ -464,11 +705,21 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                         </div>
                                       ) : null}
                                     </div>
-                                    <span
-                                      className={`rounded-full border px-2 py-px font-mono text-[11px] ${colors.bg} ${colors.border} ${colors.text}`}
-                                    >
-                                      {getReadinessLabel(successor.readiness)}
-                                    </span>
+                                    <div className="flex shrink-0 items-center gap-1">
+                                      <span
+                                        className={`rounded-full border px-2 py-px font-mono text-[11px] ${colors.bg} ${colors.border} ${colors.text}`}
+                                      >
+                                        {getReadinessLabel(successor.readiness)}
+                                      </span>
+                                      <AdminEditButton
+                                        label={t('editReadiness')}
+                                        onClick={() => handleEditSuccessor(role, successor)}
+                                      />
+                                      <AdminDeleteButton
+                                        label={t('removeSuccessor')}
+                                        onClick={() => handleRemoveSuccessor(role, successor)}
+                                      />
+                                    </div>
                                   </li>
                                 );
                               })}

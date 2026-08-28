@@ -504,7 +504,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           </div>
         ) : (
           <div className="db-table-scroll mt-2.5 overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-xs">
+            <table className="w-full min-w-[960px] border-collapse text-xs">
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
@@ -512,7 +512,19 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
-                  <AdminActionsTh>{t(locale, 'panel.admin.colLinkActions')}</AdminActionsTh>
+                  <th
+                    scope="col"
+                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                  >
+                    {t(locale, 'panel.admin.colLinkT')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                  >
+                    {t(locale, 'panel.admin.colCareers')}
+                  </th>
+                  <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
                 </tr>
               </thead>
               <tbody>
@@ -526,64 +538,68 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   const createdAt = c.createdAt ? new Date(c.createdAt) : null;
                   return (
                     <tr key={c.id} className="border-b border-ink/[0.07]">
-                      <td className="px-3 py-3 font-mono text-ink-faint">#{c.id}</td>
-                      <td className="px-3 py-3 text-ink">
-                        <div className="flex items-center gap-2.5">
+                      <td className="px-3 py-2 align-middle font-mono text-ink-faint">#{c.id}</td>
+                      <td className="px-3 py-2 align-middle text-ink">
+                        <div className="flex items-center gap-2">
                           {c.logoUrl ? (
                             <img
                               src={c.logoUrl}
                               alt=""
-                              width={28}
-                              height={28}
+                              width={24}
+                              height={24}
                               className="shrink-0 rounded-md object-contain"
                             />
                           ) : null}
-                          <span>{c.name}</span>
+                          <span className="whitespace-nowrap">{c.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-3 font-mono text-ink-muted">{c.slug}</td>
-                      <td className="px-3 py-3 font-mono text-ink-muted">{c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
-                      <td className="whitespace-nowrap px-3 py-3 font-mono text-ink-faint">
-                        {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
+                      <td className="px-3 py-2 align-middle font-mono text-ink-muted whitespace-nowrap">{c.slug}</td>
+                      <td className="px-3 py-2 align-middle font-mono text-ink-muted">
+                        {c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}
                       </td>
-                      <td className="px-3 py-3 text-right">
-                        <div className="mb-2 flex flex-col items-end gap-1.5">
-                          {token ? (
-                            <CopyableLink
-                              url={link}
-                              locale={locale}
-                              compact
-                              showUrl={false}
-                              label={t(locale, 'panel.admin.linkAssessmentLabel')}
-                              disabled={loading}
-                              className="justify-end"
-                              openLabel={
-                                exp
-                                  ? `${t(locale, 'panel.common.openLink')} — ${t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}`
-                                  : undefined
-                              }
-                            />
-                          ) : (
-                            <span className="font-mono text-[11px] text-ink-faint">
-                              {t(locale, 'panel.admin.noLink')}
-                            </span>
-                          )}
-                          {publicOn && careersUrl ? (
-                            <CopyableLink
-                              url={careersUrl}
-                              locale={locale}
-                              compact
-                              showUrl={false}
-                              label={t(locale, 'panel.admin.companyPublicPageLabel')}
-                              disabled={loading}
-                              className="justify-end"
-                            />
-                          ) : (
-                            <span className="font-mono text-[11px] text-ink-faint">
-                              {t(locale, 'panel.admin.companyPublicPageOff')}
-                            </span>
-                          )}
-                        </div>
+                      <td className="whitespace-nowrap px-3 py-2 align-middle font-mono text-ink-faint">
+                        {createdAt
+                          ? createdAt.toLocaleDateString(dateLocale)
+                          : t(locale, 'panel.common.notApplicable')}
+                      </td>
+                      <td className="px-3 py-2 align-middle">
+                        {token ? (
+                          <CopyableLink
+                            url={link}
+                            locale={locale}
+                            compact
+                            showUrl={false}
+                            label={t(locale, 'panel.admin.linkAssessmentShort')}
+                            disabled={loading}
+                            openLabel={
+                              exp
+                                ? `${t(locale, 'panel.common.openLink')} — ${t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}`
+                                : undefined
+                            }
+                          />
+                        ) : (
+                          <span className="font-mono text-[11px] text-ink-faint">
+                            {t(locale, 'panel.admin.noLinkShort')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-middle">
+                        {publicOn && careersUrl ? (
+                          <CopyableLink
+                            url={careersUrl}
+                            locale={locale}
+                            compact
+                            showUrl={false}
+                            label={t(locale, 'panel.admin.companyPublicPageLabel')}
+                            disabled={loading}
+                          />
+                        ) : (
+                          <span className="font-mono text-[11px] text-ink-faint">
+                            {t(locale, 'panel.admin.companyPublicPageOffShort')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-middle text-right">
                         <AdminActionsCell>
                           <AdminEditButton
                             label={t(locale, 'panel.admin.edit')}
@@ -595,8 +611,10 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             onClick={() => rotateLink(c.id)}
                             disabled={loading}
                             className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', loading && 'opacity-60')}
+                            title={t(locale, 'panel.admin.rotateLink')}
+                            aria-label={t(locale, 'panel.admin.rotateLink')}
                           >
-                            {t(locale, 'panel.admin.rotateLink')}
+                            {t(locale, 'panel.admin.rotateLinkShort')}
                           </button>
                           <AdminDeleteButton
                             label={t(locale, 'panel.admin.archive')}

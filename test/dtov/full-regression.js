@@ -666,6 +666,18 @@ async function runOfflineLibs() {
     if (!faq || faq.source !== 'faq') throw new Error('faq miss');
     const journeyFaq = matchHelpFaq('jornada de chegada minha chegada', 'pt-BR');
     if (!journeyFaq || journeyFaq.section !== 'b700Onboarding') throw new Error('faq journey miss');
+    const compFaq = matchHelpFaq('onde vejo o salário do colaborador na equipe?', 'pt-BR');
+    if (!compFaq || compFaq.section !== 'compensation') throw new Error('faq compensation miss');
+    if (!String(compFaq.answer || '').includes('/dashboard?tab=compensation')) {
+      throw new Error('faq compensation missing list link');
+    }
+    if (matchHelpFaq('salário da vaga na página pública', 'pt-BR')?.section === 'compensation') {
+      throw new Error('faq compensation false positive vacancy');
+    }
+    if (isHelpOutOfScope('salário do colaborador na equipe')) {
+      throw new Error('false positive compensation scope');
+    }
+    if (!isHelpOutOfScope('folha de pagamento holerite')) throw new Error('scope payroll');
     const chunks = buildHelpChunks('pt-BR');
     if (chunks.length < HELP_GUIDE_SECTIONS.length - 2) {
       throw new Error(`chunks ${chunks.length} < sections ${HELP_GUIDE_SECTIONS.length}`);

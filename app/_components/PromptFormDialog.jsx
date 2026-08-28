@@ -21,12 +21,13 @@ import { EntitySearchSelect } from './EntitySearchSelect';
 import { parseTagList } from '../../lib/tag-list';
 import { CompanyLogoCropDialog } from './CompanyLogoCropDialog';
 import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
+import { digitsOnly, formatSalaryDisplay } from '../../lib/br-masks';
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key (or legacy name), label, defaultValue? (or legacy value?),
- *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number',
+ *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'salary',
  *   options?: [{value,label}],
  *   suggestions?: string[], // tags
  *   maxTags?: number, tagMax?: number, // tags
@@ -35,6 +36,7 @@ import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
  *   placeholder?: string,
  *   help?: string,
  *   rows?: number,
+ *   maxLength?: number, // textarea
  *   minHeight?: number, // richText
  *   min?: string, max?: string, // date / datetime-local
  *   row?: string, // same key → side-by-side on one row (e.g. start/end dates)
@@ -423,7 +425,24 @@ export function PromptFormDialog({
           onChange={(e) => setField(fk, e.target.value)}
           placeholder={f.placeholder || ''}
           rows={f.rows || 4}
+          maxLength={f.maxLength || undefined}
           className={dialogTextareaClass}
+        />
+      );
+    }
+
+    if (f.type === 'salary') {
+      const display = formatSalaryDisplay(values[fk] ?? '', locale);
+      return (
+        <input
+          type="text"
+          inputMode="numeric"
+          value={display}
+          onChange={(e) => setField(fk, digitsOnly(e.target.value).slice(0, 15))}
+          placeholder={f.placeholder || ''}
+          disabled={Boolean(f.disabled)}
+          className={cn(dialogFieldClass, f.disabled && 'cursor-default opacity-60')}
+          aria-label={f.label}
         />
       );
     }

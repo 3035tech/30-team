@@ -328,15 +328,28 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
 
   const uploadPdf = async (file) => {
     if (!selectedId || !file) return;
+    if (!companyId) {
+      toast(t(locale, 'errors.COMPANY_REQUIRED'), 'error');
+      return;
+    }
+    const name = String(file.name || '');
+    if (!/\.pdf$/i.test(name) && file.type && !String(file.type).includes('pdf')) {
+      toast(t(locale, 'errors.INVALID_LMS_FILE_TYPE'), 'error');
+      return;
+    }
+    if (Number(file.size) > 5 * 1024 * 1024) {
+      toast(t(locale, 'errors.INVALID_LMS_FILE_SIZE'), 'error');
+      return;
+    }
     const values = await promptForm({
       title: lmsText(locale, 'uploadPdf', 'Enviar PDF'),
       fields: [
         {
-          name: 'title',
+          key: 'title',
           label: t(locale, 'panel.lms.fieldTitle'),
           type: 'text',
           required: true,
-          defaultValue: file.name.replace(/\.pdf$/i, ''),
+          defaultValue: name.replace(/\.pdf$/i, ''),
         },
       ],
     });
@@ -353,9 +366,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
       );
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(
-          json?.error || lmsText(locale, 'storageNotConfigured', 'Armazenamento não configurado')
-        );
+        const code = json?.errorCode;
+        const localized = code ? t(locale, `errors.${code}`) : '';
+        const msg =
+          (localized && localized !== `errors.${code}` && localized) ||
+          json?.error ||
+          lmsText(locale, 'storageNotConfigured', 'Armazenamento não configurado');
+        throw new Error(msg);
       }
       toast(t(locale, 'panel.lms.lessonCreated'), 'ok');
       await loadDetail(selectedId);

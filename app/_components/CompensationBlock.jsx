@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { formatSalaryBr, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
+import { formatSalaryDisplay, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
 import { S, AdminCreateButton, AdminDeleteButton, AdminEditButton } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading } from './AppLoading';
@@ -54,6 +54,8 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
   const visible =
     employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
     employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
+
+  const money = (amount) => formatSalaryDisplay(amount, locale);
 
   const load = useCallback(async () => {
     if (!candidateId || !visible) {
@@ -107,6 +109,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
     },
     {
       key: 'amount',
+      type: 'salary',
       label: t(locale, 'panel.compensation.amountLabel'),
       placeholder: t(locale, 'panel.compensation.amountPh'),
       defaultValue: defaults.amount ? salaryToCentsDigits(defaults.amount) : '',
@@ -121,6 +124,9 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
     },
     {
       key: 'notes',
+      type: 'textarea',
+      rows: 3,
+      maxLength: 500,
       label: t(locale, 'panel.compensation.notesLabel'),
       placeholder: t(locale, 'panel.compensation.notesPh'),
       defaultValue: defaults.notes || '',
@@ -167,7 +173,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
     const ok = await confirm({
       title: t(locale, 'panel.compensation.importOfferTitle'),
       message: t(locale, 'panel.compensation.importOfferHint', {
-        amount: formatSalaryBr(offerHint?.offerSalary),
+        amount: money(offerHint?.offerSalary),
         date: formatDate(offerHint?.offerStartDate, locale),
       }),
       confirmLabel: t(locale, 'panel.compensation.importOfferConfirm'),
@@ -240,7 +246,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       title: t(locale, 'panel.compensation.deleteTitle'),
       message: t(locale, 'panel.compensation.deleteHint', {
         date: formatDate(row.effectiveDate, locale),
-        amount: formatSalaryBr(row.amount),
+        amount: money(row.amount),
       }),
       confirmLabel: t(locale, 'panel.compensation.deleteConfirm'),
       tone: 'danger',
@@ -303,9 +309,15 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
         <div className={cn(S.faint, 'text-[10px] uppercase tracking-wide')}>
           {t(locale, 'panel.compensation.currentLabel')}
         </div>
-        <div className="mt-0.5 font-display text-xl text-ink">
-          {current?.amount ? formatSalaryBr(current.amount) : t(locale, 'panel.compensation.noCurrent')}
-        </div>
+        {current?.amount ? (
+          <div className="mt-1 font-ui text-base font-medium tabular-nums text-ink">
+            {money(current.amount)}
+          </div>
+        ) : (
+          <div className={cn(S.muted, 'mt-1 text-sm')}>
+            {t(locale, 'panel.compensation.noCurrent')}
+          </div>
+        )}
         {current?.effectiveDate ? (
           <div className="mt-1 font-mono text-[11px] text-ink-muted">
             {t(locale, 'panel.compensation.since', { date: formatDate(current.effectiveDate, locale) })}
@@ -322,7 +334,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       {items.length === 0 ? (
         <EmptyState
           title={t(locale, 'panel.compensation.emptyTitle')}
-          hint={t(locale, 'panel.compensation.emptyHint')}
+          message={t(locale, 'panel.compensation.emptyHint')}
         />
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -332,7 +344,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
               className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
             >
               <div className="min-w-0">
-                <div className="font-ui text-sm text-ink">{formatSalaryBr(row.amount)}</div>
+                <div className="font-ui text-sm tabular-nums text-ink">{money(row.amount)}</div>
                 <div className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-[11px] text-ink-muted">
                   <span>{formatDate(row.effectiveDate, locale)}</span>
                   <span>{eventTypeLabel(locale, row.eventType)}</span>

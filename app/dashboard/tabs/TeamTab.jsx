@@ -1020,7 +1020,7 @@ export function TeamTab({
                     aria-label={locale === 'en' ? 'Recalculate HR Score' : 'Recalcular HR Score'}
                     className="inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-info/35 bg-info/[0.08] p-0 text-info"
                   >
-                    <Icon name="refresh-cw" />
+                    <Icon name="refresh" />
                   </button>
                 ) : null}
                 {r.candidateId ? (
@@ -1082,7 +1082,6 @@ export function TeamTab({
                 <IntegratedProfileSynthesis synthesis={synthesis} locale={locale} />
 
                 <div className="mb-4">
-                  <span className={cn(S.label, 'mb-2')}>{t(locale, 'panel.team.scoresByType')}</span>
                   {openCluster.size > 1 ? (
                     <p className="mb-2 mt-0 text-xs leading-snug text-ink-faint">
                       {t(locale, 'panel.team.scoresClusterHint')}

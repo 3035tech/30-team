@@ -313,12 +313,30 @@ export function JobRolesAdminTab({ locale, companyId }) {
           <EmptyState message={t(locale, 'panel.admin.noUsersMatch')} />
         ) : (
         <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[480px]">
+          <table className="w-full min-w-[720px]">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t(locale, 'jobRoles.nameLabel')}
                 </SortableTh>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                >
+                  {t(locale, 'jobRoles.colDescription')}
+                </th>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                >
+                  {t(locale, 'jobRoles.colRubric')}
+                </th>
+                <th
+                  scope="col"
+                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                >
+                  {t(locale, 'jobRoles.colStatus')}
+                </th>
                 <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
               </tr>
             </thead>
@@ -328,23 +346,31 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 const rubricKeys = Object.keys(rubric).filter((k) => Number(rubric[k]) > 0);
                 return (
                   <tr key={role.id} className="hover:bg-canvas-alt/50">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-ink">{role.name}</p>
-                      {role.description ? (
-                        <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{role.description}</p>
-                      ) : null}
-                      <p className="mt-1 text-xs text-ink-faint">
-                        {rubricKeys.length > 0
-                          ? `${rubricKeys.length} ${t(locale, 'jobRoles.rubricTypesCount')}`
-                          : t(locale, 'jobRoles.rubricEmpty')}
-                        {!role.active ? (
-                          <span className="ml-2 rounded bg-ink/10 px-1.5 py-0.5 font-mono text-ink-muted">
-                            {t(locale, 'jobRoles.inactive')}
-                          </span>
-                        ) : null}
-                      </p>
+                    <td className="px-3 py-2 align-middle text-sm font-medium text-ink whitespace-nowrap">
+                      {role.name}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="max-w-[280px] px-3 py-2 align-middle text-xs text-ink-muted">
+                      <span className="line-clamp-1" title={role.description || undefined}>
+                        {role.description || '—'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 align-middle font-mono text-[11px] text-ink-faint whitespace-nowrap">
+                      {rubricKeys.length > 0
+                        ? `${rubricKeys.length} ${t(locale, 'jobRoles.rubricTypesCount')}`
+                        : t(locale, 'jobRoles.rubricEmpty')}
+                    </td>
+                    <td className="px-3 py-2 align-middle whitespace-nowrap">
+                      {role.active ? (
+                        <span className="font-mono text-[11px] text-ink-muted">
+                          {t(locale, 'panel.common.yes')}
+                        </span>
+                      ) : (
+                        <span className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-ink-muted">
+                          {t(locale, 'jobRoles.inactive')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-middle text-right">
                       {role.active ? (
                         <AdminActionsCell>
                           <AdminEditButton

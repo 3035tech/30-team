@@ -344,6 +344,26 @@ _(entregue — B-1301: gate pré-FAQ/LLM + recusa i18n `offTopic`/`offTopicAgain
 
 ---
 
+## Aberto — Epic B-2600 (diagnóstico operacional com IA)
+
+Copiloto no painel para perguntas do tipo **“por que o João não aparece na minha lista?”** — não misturar com o assistente de Ajuda (só Guia).
+
+**Princípios (obrigatório):**
+- Escopo sempre pelo **`company_id` da sessão** (JWT / CAP); nunca confiar no texto do usuário para tenant; admin só com empresa selecionada.
+- **Sem SQL gerado pelo LLM** — tool calling sobre funções tipadas em `lib/` (`queryRead`, parametrizado, `LIMIT`/caps).
+- Somente leitura; audit de acesso; rate limit; sem vazar PII além do que o gestor já pode ver na tela (respeitar CAP, ex. remuneração).
+- IA só **redige** a resposta a partir do JSON do diagnóstico (hedged); não “adivinha” nem escreve no banco.
+
+### B-2601 — Diagnóstico “por que não vejo X?” (MVP Equipe)
+1. `lib/people/list-absence-diagnostics.js` (ou similar): homônimos no tenant, `employment_status`, roster/filtros da aba, soft delete/alumni, busca ativa.
+2. API fina (`POST /api/admin/help-diagnose` **ou** extensão controlada do `help-chat` com tools) + CAP adequada.
+3. UX: botão contextual na Equipe quando a busca não acha ninguém (preferível ao chat genérico no MVP); resposta com ação sugerida (abrir ficha, limpar filtro, etc.).
+4. i18n pt-BR+en, Guia + `HELP_GUIDE_SECTIONS`, audit; Dev → Test → Validate.
+
+**Depois do MVP (não bloquear B-2601):** mesmo padrão para Vagas/pipeline e Banco de talentos.
+
+---
+
 ## Aberto — Logo da empresa (UX de upload)
 
 _(entregue — B-1401: crop 1:1 + compressão cliente ≤512 KB / lado ≤768 px; origem até 20 MB; servidor mantém MIME+tamanho.)_
