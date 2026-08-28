@@ -16,7 +16,7 @@ test.describe('early-access signup', () => {
       timeout: 20000,
     });
 
-    await page.locator('#signup-name').fill('Thomas E2E');
+    await page.locator('#signup-fullname').fill('Thomas E2E');
     await page.locator('#signup-email').fill(email);
     await page.locator('#signup-company').fill(companyName);
     await page.locator('#signup-jobtitle').fill('Gerente');
