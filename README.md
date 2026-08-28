@@ -306,7 +306,7 @@ npm run dev
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`; `037` workplace; `039` logo).
 
-Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**.
+Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**. Assistente flutuante de Ajuda (IA): indexa o Guia — ver [`docs/help-assistant-knowledge.md`](./docs/help-assistant-knowledge.md).
 
 ---
 

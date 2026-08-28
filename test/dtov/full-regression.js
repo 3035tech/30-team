@@ -650,6 +650,7 @@ async function runOfflineLibs() {
       helpAnswerLooksOffTopic,
       answerHelpQuestion,
     } = await import('../../lib/help-assistant.js');
+    const { validateHelpGuideCoverage, HELP_GUIDE_SECTIONS } = await import('../../lib/help-sections.js');
     if (!isHelpOutOfScope('diagnóstico clínico')) throw new Error('scope clinical');
     if (!isHelpOutOfScope('receita de bolo de chocolate')) throw new Error('scope recipe');
     if (!isHelpOutOfScope('como está o clima amanhã?')) throw new Error('scope weather');
@@ -659,12 +660,22 @@ async function runOfflineLibs() {
     if (!helpAnswerLooksOffTopic('Aqui vai a receita de bolo com farinha e ovo')) {
       throw new Error('drift recipe');
     }
+    const cov = validateHelpGuideCoverage(['pt-BR', 'en']);
+    if (!cov.ok) throw new Error(`help guide gaps: ${cov.missing.slice(0, 5).join(', ')}`);
     const faq = matchHelpFaq('como criar uma vaga?', 'pt-BR');
     if (!faq || faq.source !== 'faq') throw new Error('faq miss');
+    const journeyFaq = matchHelpFaq('jornada de chegada minha chegada', 'pt-BR');
+    if (!journeyFaq || journeyFaq.section !== 'b700Onboarding') throw new Error('faq journey miss');
     const chunks = buildHelpChunks('pt-BR');
-    if (chunks.length < 10) throw new Error(`chunks ${chunks.length}`);
+    if (chunks.length < HELP_GUIDE_SECTIONS.length - 2) {
+      throw new Error(`chunks ${chunks.length} < sections ${HELP_GUIDE_SECTIONS.length}`);
+    }
     const top = retrieveHelpChunks('kanban pipeline contratação', chunks, 3);
     if (!top.length) throw new Error('retrieve empty');
+    const empTop = retrieveHelpChunks('colaborador minha chegada meet', chunks, 3);
+    if (!empTop.some((c) => c.section === 'employeeHome' || c.section === 'b700Onboarding')) {
+      throw new Error('retrieve employee journey empty');
+    }
     process.env.OPENAI_MOCK = '1';
     const ans = await answerHelpQuestion({ question: 'como criar uma vaga?', locale: 'pt-BR' });
     if (ans.source !== 'faq' || !ans.answer) throw new Error('answer');
@@ -676,7 +687,7 @@ async function runOfflineLibs() {
       history: [{ role: 'assistant', content: refused.answer }],
     });
     if (again.source !== 'guard') throw new Error('refuse again');
-    return `faq=${faq.id} chunks=${chunks.length} top=${top[0].section} guard=ok`;
+    return `faq=${faq.id} chunks=${chunks.length} sections=${HELP_GUIDE_SECTIONS.length} guard=ok`;
   });
 
   await check('lib', 'slugify-accents-specials', async () => {

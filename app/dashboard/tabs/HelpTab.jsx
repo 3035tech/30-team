@@ -8,51 +8,9 @@ import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
 import { HelpSystemMap } from '../../_components/HelpSystemMap';
+import { HELP_GUIDE_SECTIONS, HELP_SECTION_STEP_COUNTS } from '../../../lib/help-sections';
 
-const SECTIONS = [
-  'welcome',
-  'systemMap',
-  'navigation',
-  'links',
-  'flow',
-  'demoRoteiro',
-  'enneagram',
-  'vacancies',
-  'talentBank',
-  'publicVacancy',
-  'candidates',
-  'pipeline',
-  'team',
-  'behavioralIntel',
-  'people',
-  'climate',
-  'b600Pdi',
-  'b600Retention',
-  'b600Pulse',
-  'b600Employee',
-  'b600Fit',
-  'b700Onboarding',
-  'report',
-  'motivators',
-  'b1000HrScore',
-  'b1000TurnoverRadar',
-  'b1000JobRoles',
-  'b1000Performance',
-  'b1000Succession',
-  'b1000Exit',
-  'b1000Culture',
-  'b1000Academy',
-  'b1000Benefits',
-  'b1900Packaging',
-  'b2000LightDepth',
-  'b2200RosterGrids',
-  'birthdays',
-  'lmsBasic',
-  'employeeHome',
-  'compensation',
-  'access',
-  'tips',
-];
+const SECTIONS = HELP_GUIDE_SECTIONS;
 
 function TypeCatalog({ locale }) {
   const typeData = getTypeData(locale);
@@ -197,50 +155,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     if (typeof navigateDashboard === 'function') navigateDashboard({ tab });
   };
 
-  const stepCounts = {
-    welcome: 5,
-    systemMap: 0,
-    navigation: 7,
-    links: 9,
-    flow: 0,
-    demoRoteiro: 7,
-    enneagram: 7,
-    vacancies: 12,
-    talentBank: 3,
-    publicVacancy: 12,
-    candidates: 6,
-    pipeline: 8,
-    team: 6,
-    behavioralIntel: 6,
-    people: 11,
-    climate: 5,
-    b600Pdi: 7,
-    b600Retention: 6,
-    b600Pulse: 6,
-    b600Employee: 5,
-    b600Fit: 4,
-    b700Onboarding: 6,
-    report: 8,
-    motivators: 7,
-    b1000HrScore: 6,
-    b1000TurnoverRadar: 6,
-    b1000JobRoles: 6,
-    b1000Performance: 6,
-    b1000Succession: 6,
-    b1000Exit: 6,
-    b1000Culture: 6,
-    b1000Academy: 6,
-    b1000Benefits: 6,
-    b1900Packaging: 6,
-    b2000LightDepth: 6,
-    b2200RosterGrids: 4,
-    birthdays: 4,
-    lmsBasic: 4,
-    employeeHome: 5,
-    compensation: 3,
-    access: 9,
-    tips: 11,
-  };
+  const stepCounts = HELP_SECTION_STEP_COUNTS;
 
   return (
     <div className="flex flex-col gap-1.5">

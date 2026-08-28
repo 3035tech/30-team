@@ -226,9 +226,12 @@ Toda implementação de produto (feature, fluxo operacional novo no painel, muda
 |------------|-----------------|
 | **README** (raiz) e/ou `docs/` / `test/README.md` | Setup, arquitetura, comandos, URLs novas, ops (DTOV, migrate, etc.) |
 | **Guia do painel** (`HelpTab` + chaves `panel.help.*` em `lib/i18n.js`) | Explicação de **uso** para RH/direção/admin — **pt-BR e en** |
+| **Assistente de Ajuda (IA)** | Mesmo conteúdo indexado via `lib/help-sections.js` + `lib/help-assistant.js` (FAQ opcional); ver `docs/help-assistant-knowledge.md` |
 | Skill / regras | Se mudar processo de IA (ex. DTOV), espelhar em `.cursor/skills` / `AGENTS.md` |
 
-**Regra prática:** se um gestor precisa *saber fazer* algo novo no 30Team, entra no Guia (Ajuda). Se um dev/ops precisa *rodar/configurar*, entra no README/`docs`/`test/README.md`. Features só de backend sem UI ainda pedem pelo menos uma linha no README quando mudam URL, env ou schema relevante.
+**Regra prática:** se um gestor precisa *saber fazer* algo novo no 30Team, entra no Guia (Ajuda) **e** na base do assistente flutuante (mesmas chaves `panel.help.*`). Se um dev/ops precisa *rodar/configurar*, entra no README/`docs`/`test/README.md`. Features só de backend sem UI ainda pedem pelo menos uma linha no README quando mudam URL, env ou schema relevante.
+
+**Ordem no pipeline:** implementação → **Test pass** → atualizar Guia + assistente + docs → validação final. Não encerrar feature só com código.
 
 Não considerar a feature “pronta” só com código: falta doc + Ajuda = entrega incompleta (exceto docs-only / read-only / opt-out explícito do usuário).
 
@@ -283,7 +286,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não duplicar componentes **nem** funções/helpers que já existem (reutilizar / estender / extrair para `lib/` primeiro; ver § Reaproveitamento)
 - Não inventar literais de erro/status de domínio (`'UNAUTHORIZED'`, `'employee'`, `'open'`) nem enums TypeScript — usar `ERR` / `domain-status` / `pipeline` (ver § Constantes)
 - Não encerrar implementação de produto sem rodar Dev → Test → Validate (ou declarar skip/`blocked` válido; ver § Pós-implementação)
-- Não encerrar feature de uso sem atualizar README/`docs` e o Guia do painel (`panel.help.*` pt-BR+en) quando houver fluxo novo para gestor ou ops
+- Não encerrar feature de uso sem atualizar README/`docs`, Guia do painel (`panel.help.*` pt-BR+en) **e** base do assistente de Ajuda (`HELP_GUIDE_SECTIONS` / FAQ) quando houver fluxo novo para gestor ou ops
 
 ## Arquivos por tipo de tarefa
 
@@ -336,8 +339,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | LGPD | `docs/privacidade-lgpd-interno.md`, `app/api/admin/retention/purge` |
 | Security hardening | `docs/security-hardening-2026-08.md` |
 | SEO / vagas públicas | `docs/job-seo-and-distribution.md`, `app/jobs`, `lib/job-indexing.js`, Guia `panel.help.publicVacancy*` |
-| Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js` |
-| Assistente de Ajuda (só produto) | `lib/help-assistant.js`, `HelpAssistantWidget`, `POST /api/admin/help-chat` |
+| Guia / Help | `app/dashboard/tabs/HelpTab.jsx`, chaves `panel.help.*` em `lib/i18n.js`, `lib/help-sections.js` |
+| Assistente de Ajuda (só produto) | `lib/help-assistant.js`, `HelpAssistantWidget`, `POST /api/admin/help-chat`, `docs/help-assistant-knowledge.md` |
 | Backlog de ideias | `docs/BACKLOG.md` — adicionar ao pedir; remover ao implementar |
 
 ## Referências

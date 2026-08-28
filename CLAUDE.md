@@ -8,9 +8,10 @@ Instruções para Claude Code (e qualquer agente Anthropic) neste repositório.
 
 Depois de **qualquer** implementação de produto (feature, bug fix, migration, API, UI com comportamento):
 
-### 1. Documentação + Guia de Ajuda
+### 1. Documentação + Guia de Ajuda + assistente IA
 - Atualizar **README** / `docs/` / `test/README.md` quando houver setup, comando, URL ou ops novos.
-- Atualizar o **Guia do painel** (`app/dashboard/tabs/HelpTab.jsx` + `panel.help.*` em `lib/i18n.js`, **pt-BR e en**) com explicação de uso para gestores.
+- Atualizar o **Guia do painel** (`HelpTab` + `panel.help.*` em `lib/i18n.js`, **pt-BR e en**) com explicação de uso para gestores.
+- **Assistente flutuante de Ajuda:** indexar no mesmo conteúdo via `lib/help-sections.js` + FAQ opcional em `lib/help-assistant.js` — ver `docs/help-assistant-knowledge.md`.
 - Detalhe: `AGENTS.md` § Pós-implementação — documentação e Ajuda.
 
 ### 2. Pipeline Dev → Test → Validate

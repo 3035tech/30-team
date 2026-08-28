@@ -55,6 +55,7 @@ Use the **smallest** set that covers the change. Skip gates that cannot apply.
 - [ ] i18n both locales if copy added
 - [ ] **README / `docs/` / `test/README.md`** updated for new setup, URLs, or ops
 - [ ] **Guia do painel** (`HelpTab` + `panel.help.*` pt-BR+en) updated for new manager-facing flows
+- [ ] **Assistente de Ajuda (IA):** seção em `HELP_GUIDE_SECTIONS` (`lib/help-sections.js`); FAQ opcional em `lib/help-assistant.js` + `panel.helpAssist.faq*`; ver `docs/help-assistant-knowledge.md`
 - [ ] Migrations/docs noted for operator if schema changed
 - [ ] DTOV catalog updated if new durable data shape was introduced
 - [ ] DTOV torn down (or user informed if kept)

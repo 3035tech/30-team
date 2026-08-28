@@ -9,6 +9,8 @@ import { Icon } from '../_components/Icon';
 const SUGGESTIONS = [
   'panel.helpAssist.suggestCreateVacancy',
   'panel.helpAssist.suggestHire',
+  'panel.helpAssist.suggestEmployeeJourney',
+  'panel.helpAssist.suggestColaborador',
   'panel.helpAssist.suggestMotivators',
   'panel.helpAssist.suggestGuide',
 ];

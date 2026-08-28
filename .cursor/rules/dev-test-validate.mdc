@@ -10,7 +10,8 @@ alwaysApply: true
 Depois de **concluir** qualquer implementação de produto, o agente **deve** (sem esperar o usuário lembrar):
 
 1. Atualizar **documentação** (README / `docs/` / `test/README.md`) e o **Guia do painel** (`HelpTab` + `panel.help.*` em `lib/i18n.js`, **pt-BR e en**) quando houver uso novo para gestor ou setup/ops novo — ver `AGENTS.md` § documentação e Ajuda. Manter `docs/BACKLOG.md`: **adicionar** ideias pedidas; **remover** itens ao implementar.
-2. **Rodar imediatamente** o pipeline bounded **Dev → Test → Validate** — não adiar, não perguntar se “quer que eu rode”, não dar a feature como pronta antes do Test.
+2. **Alimentar o assistente de Ajuda (IA):** mesma entrega — seção em `lib/help-sections.js` (`HELP_GUIDE_SECTIONS`); FAQ opcional em `lib/help-assistant.js` + `panel.helpAssist.faq*`; checklist em `docs/help-assistant-knowledge.md`.
+3. **Rodar imediatamente** o pipeline bounded **Dev → Test → Validate** — não adiar, não perguntar se “quer que eu rode”, não dar a feature como pronta antes do Test.
 
 Entrega incompleta = código pronto **sem** pipeline (salvo skip/`blocked` válido abaixo).
 
@@ -40,5 +41,6 @@ Entrega incompleta = código pronto **sem** pipeline (salvo skip/`blocked` váli
 
 - Entregar feature sem Test/`pass` (ou `blocked` explícito)
 - Entregar feature de uso sem atualizar Guia e/ou README
+- Entregar feature de uso sem indexar no assistente de Ajuda (`HELP_GUIDE_SECTIONS` + Guia `panel.help.*`)
 - Expandir escopo durante rounds de fix
 - Apontar DTOV para Postgres de dev/RDS

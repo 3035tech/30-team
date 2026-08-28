@@ -146,7 +146,9 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Guia do painel (HelpTab) com passos por fluxo + catálogo T1–T9.
 - **Roteiro de demo (7 passos)** (`demoRoteiro`): assessment → Motivadores → Equipe/Dossier → Compat/Grupos → Overview → Avaliações/PDI → Cultura/Exit/Sucessão.
 - Mapa do sistema (HelpSystemMap): diagrama BPM em faixas + tabela de links públicos.
-- Assistente flutuante (HelpAssistantWidget): atalhos “onde clico?” + Guia.
+- Assistente flutuante (HelpAssistantWidget): FAQ + retrieval sobre **todo** o Guia (`HELP_GUIDE_SECTIONS` em `lib/help-sections.js`); ver `docs/help-assistant-knowledge.md`.
+- Jornada colaborador: checklist D1 (kit, acessos, Meet RH/gestor) + D30/D60/D90; colaborador vê **Minha chegada** em `/colaborador` — `docs/employee-onboarding-journey.md`.
+- 2FA opcional (gestor + colaborador); auditoria append-only (super admin).
 - Chrome admin consistente: empty states com 1 CTA; Vagas com `AdminEdit`/`AdminDelete`; dark `bg-surface` no painel (print/público light-first).
 - Roster empty com CTAs (Time interno → candidatos de vaga / todos); Overview “Sinais operacionais” lazy; busca por nome nas grids B-1000 + Empresas.
 - **Aniversários (B-2300):** Overview card (nascimento + tempo de casa via `start_date` + aniversário da empresa); `birth_date` na Equipe; `anniversary_date` em Empresas.

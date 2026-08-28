@@ -83,6 +83,7 @@ Dev may create the fixture file in the **same** fix round when Test reports `blo
 ### 3. Final validation (after Test `pass`)
 
 - One pass only: scope creep, security/tenant, public-token invariant, leftover TODOs, fixture catalog still coherent.
+- **Guia + assistente de Ajuda:** nova feature para gestor/RH → `panel.help.*` (pt-BR+en), seção em `lib/help-sections.js`; FAQ se pergunta frequente (`docs/help-assistant-knowledge.md`).
 - Prefer `code-reviewer` / Bugbot / Security Review when user asked for review depth.
 - **Do not** reopen feature work; file follow-ups as bullets.
 
