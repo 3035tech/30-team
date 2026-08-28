@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { query, pool } from '../../lib/db.js';
-import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, DEVELOPMENT_PLAN_ITEM_STATUS, DEVELOPMENT_PLAN_STATUS } from '../../lib/domain-status.js';
 import {
   completeEmployeePasswordSetup,
   consumeEmployeeMagicToken,
@@ -16,7 +16,23 @@ import {
   verifyEmployeeToken,
 } from '../../lib/employee-auth.js';
 import { getEmployeeHome } from '../../lib/employee-home.js';
-import { completeLmsLesson, createLmsCourse, createLmsLesson, enrollLmsCandidates } from '../../lib/lms.js';
+import { updateEmployeePdiItemStatus } from '../../lib/employee-pdi.js';
+import {
+  EMPLOYEE_NOTIF,
+  notifyCandidate,
+  listCandidateNotifications,
+} from '../../lib/employee-notifications.js';
+import {
+  addDevelopmentPlanItem,
+  createDevelopmentPlan,
+} from '../../lib/people/development-plans.js';
+import {
+  completeLmsLesson,
+  createLmsCourse,
+  createLmsLesson,
+  enrollLmsCandidates,
+  lmsEmbedUrl,
+} from '../../lib/lms.js';
 
 async function main() {
   const emp = await query(
@@ -98,9 +114,12 @@ async function main() {
     companyId: person.companyId,
     courseId: course.course.id,
     title: 'Lesson 1',
-    contentUrl: 'https://example.com/lesson',
+    contentUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    contentKind: 'youtube',
   });
   assert.equal(lesson.ok, true, lesson.errorCode);
+  assert.ok(lmsEmbedUrl(lesson.lesson.contentUrl, 'youtube')?.includes('embed/'));
+
   const enrolled = await enrollLmsCandidates(query, {
     companyId: person.companyId,
     courseId: course.course.id,
@@ -109,6 +128,40 @@ async function main() {
     mandatory: true,
   });
   assert.equal(enrolled.ok, true, enrolled.errorCode);
+
+  const plan = await createDevelopmentPlan(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    title: `DTOV PDI ${Date.now()}`,
+    status: DEVELOPMENT_PLAN_STATUS.ACTIVE,
+  });
+  assert.equal(plan.ok, true, plan.errorCode);
+  const item = await addDevelopmentPlanItem(query, {
+    companyId: person.companyId,
+    planId: plan.plan.id,
+    candidateId: person.candidateId,
+    title: 'DTOV item',
+    status: DEVELOPMENT_PLAN_ITEM_STATUS.TODO,
+  });
+  assert.equal(item.ok, true, item.errorCode);
+
+  const pdiNotif = await notifyCandidate(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    type: EMPLOYEE_NOTIF.PDI_UPDATED,
+    payload: { planTitle: plan.plan.title, planId: plan.plan.id },
+    dedupeKey: `dtov-pdi:${plan.plan.id}`,
+  });
+  assert.ok(pdiNotif.inserted >= 1);
+
+  const motNotif = await notifyCandidate(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    type: EMPLOYEE_NOTIF.MOTIVATORS_INVITE,
+    payload: { assessmentUrl: 'https://example.com/assessment/motivators/x' },
+    dedupeKey: `dtov-mot:${person.candidateId}`,
+  });
+  assert.ok(motNotif.inserted >= 1);
 
   const home = await getEmployeeHome(query, {
     companyId: person.companyId,
@@ -120,6 +173,18 @@ async function main() {
   assert.ok(Array.isArray(home.courses));
   assert.ok(home.company);
   assert.ok(home.courses.some((c) => c.courseId === course.course.id));
+  const ytCourse = home.courses.find((c) => c.courseId === course.course.id);
+  assert.ok(ytCourse.lessons?.some((l) => l.embedUrl && l.embedUrl.includes('youtube.com/embed')));
+  assert.ok(home.plans.some((p) => p.id === plan.plan.id));
+
+  const pdiDone = await updateEmployeePdiItemStatus(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    itemId: item.item.id,
+    status: DEVELOPMENT_PLAN_ITEM_STATUS.DONE,
+  });
+  assert.equal(pdiDone.ok, true, pdiDone.errorCode);
+  assert.equal(pdiDone.item.status, DEVELOPMENT_PLAN_ITEM_STATUS.DONE);
 
   const marked = await completeLmsLesson(query, {
     companyId: person.companyId,
@@ -127,6 +192,13 @@ async function main() {
     lessonId: lesson.lesson.id,
   });
   assert.equal(marked.ok, true);
+
+  const notifs = await listCandidateNotifications(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(notifs.ok, true);
+  assert.ok(notifs.unreadCount >= 2);
 
   console.log('employee-home.dtov.test.js OK');
   await pool.end().catch(() => {});

@@ -116,7 +116,7 @@ export const POST = withAdminApi(
       );
       const enrolledIds = Array.isArray(result.candidateIds) ? result.candidateIds : [];
       if (enrolledIds.length) {
-        await notifyCandidates({
+        await notifyCandidates(query, {
           companyId,
           candidateIds: enrolledIds,
           type: EMPLOYEE_NOTIF.LMS_ENROLLED,

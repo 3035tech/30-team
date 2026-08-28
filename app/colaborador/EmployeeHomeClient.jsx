@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { t } from '../../../lib/i18n';
-import { cn } from '../../../lib/cn';
-import { S } from '../../dashboard/dashboard-shared';
-import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading } from '../../_components/AppLoading';
-import { RichTextView } from '../../_components/RichTextView';
-import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../lib/domain-status';
+import { t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
+import { S } from '../dashboard/dashboard-shared';
+import { useAppFeedback } from '../_components/AppFeedback';
+import { AppLoading } from '../_components/AppLoading';
+import { RichTextView } from '../_components/RichTextView';
+import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
+
+const SECTION_KEYS = ['tasks', 'pdi', 'lms', 'oneOnOne', 'company'];
+const COLLAPSE_STORAGE = 'team30_employee_sections';
 
 function taskLabel(locale, task) {
   return t(locale, task.titleKey, task.titleValues || {});
@@ -20,8 +23,40 @@ function itemStatusLabel(locale, status) {
   return t(locale, 'employeeHome.pdiTodo');
 }
 
+function loadCollapsed() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(COLLAPSE_STORAGE);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function CollapsibleSection({ id, title, count, open, onToggle, children }) {
+  return (
+    <section id={id} className="mt-6 scroll-mt-20">
+      <button
+        type="button"
+        className="flex w-full min-h-touch items-center justify-between gap-2 rounded-control border border-ink/12 bg-canvas/60 px-3 py-2 text-left"
+        onClick={onToggle}
+        aria-expanded={open}
+      >
+        <span className={cn(S.label, 'm-0')}>
+          {title}
+          {count != null ? (
+            <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">({count})</span>
+          ) : null}
+        </span>
+        <span className="font-mono text-xs text-ink-muted">{open ? '▾' : '▸'}</span>
+      </button>
+      {open ? <div className="mt-3">{children}</div> : null}
+    </section>
+  );
+}
+
 /**
- * Authenticated collaborator home — tasks, PDI, LMS, 1:1, company.
+ * Authenticated collaborator home — collapsible sections, PDI actions, LMS player.
  */
 export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -29,6 +64,13 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [openMap, setOpenMap] = useState(() => {
+    const saved = loadCollapsed();
+    const next = {};
+    for (const k of SECTION_KEYS) next[k] = saved[k] !== false;
+    return next;
+  });
+  const [watching, setWatching] = useState(null); // { lessonId, embedUrl, title }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +94,18 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const toggleSection = (key) => {
+    setOpenMap((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem(COLLAPSE_STORAGE, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const lessonAction = async (lessonId, action) => {
     setBusy(true);
@@ -80,6 +134,25 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     }
   };
 
+  const pdiAction = async (itemId, status) => {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/employee/home', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updatePdiItem', itemId, status }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'pdi');
+      await load();
+      toast(t(locale, 'employeeHome.pdiStatusSaved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.pdiStatusError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <AppLoading variant="panel" />;
 
   const person = data?.person;
@@ -89,18 +162,47 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const agreements = data?.recentAgreements || [];
   const prompts = data?.oneOnOnePrompts || [];
   const company = data?.company;
+  const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="m-0 font-display text-2xl text-ink">
           {t(locale, 'employeeHome.hello', { name: person?.fullName || '' })}
         </h1>
         <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.hint')}</p>
       </div>
 
-      <section className="mt-8">
-        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'employeeHome.tasksTitle')}</h2>
+      <nav className="mb-2 flex flex-wrap gap-1.5" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
+        {[
+          { key: 'tasks', label: t(locale, 'employeeHome.tasksTitle'), href: '#tasks' },
+          { key: 'pdi', label: t(locale, 'panel.employeePortal.pdiTitle'), href: '#pdi' },
+          { key: 'lms', label: t(locale, 'employeeHome.lmsTitle'), href: '#lms' },
+          { key: 'oneOnOne', label: t(locale, 'panel.employeePortal.agreementsTitle'), href: '#oneOnOne' },
+          ...(hasCompany
+            ? [{ key: 'company', label: t(locale, 'employeeHome.companyTitle'), href: '#company' }]
+            : []),
+        ].map((chip) => (
+          <a
+            key={chip.key}
+            href={chip.href}
+            className={cn(S.filterChip, 'no-underline')}
+            onClick={() => {
+              if (!openMap[chip.key]) toggleSection(chip.key);
+            }}
+          >
+            {chip.label}
+          </a>
+        ))}
+      </nav>
+
+      <CollapsibleSection
+        id="tasks"
+        title={t(locale, 'employeeHome.tasksTitle')}
+        count={tasks.length}
+        open={openMap.tasks !== false}
+        onToggle={() => toggleSection('tasks')}
+      >
         {tasks.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'employeeHome.tasksEmpty')}</p>
         ) : (
@@ -127,23 +229,28 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   >
                     {t(locale, 'employeeHome.openTask')}
                   </a>
-                ) : task.href === '#lms' ? (
-                  <a href="#lms" className="mt-2 inline-flex font-mono text-[12px] text-brand-600">
-                    {t(locale, 'employeeHome.goToLms')}
-                  </a>
-                ) : task.href === '#pdi' ? (
-                  <a href="#pdi" className="mt-2 inline-flex font-mono text-[12px] text-brand-600">
-                    {t(locale, 'employeeHome.goToPdi')}
+                ) : task.href?.startsWith('#') ? (
+                  <a href={task.href} className="mt-2 inline-flex font-mono text-[12px] text-brand-600">
+                    {task.href === '#lms'
+                      ? t(locale, 'employeeHome.goToLms')
+                      : task.href === '#pdi'
+                        ? t(locale, 'employeeHome.goToPdi')
+                        : t(locale, 'employeeHome.openTask')}
                   </a>
                 ) : null}
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <section id="pdi" className="mt-10 scroll-mt-6">
-        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.pdiTitle')}</h2>
+      <CollapsibleSection
+        id="pdi"
+        title={t(locale, 'panel.employeePortal.pdiTitle')}
+        count={plans.length}
+        open={openMap.pdi !== false}
+        onToggle={() => toggleSection('pdi')}
+      >
         {plans.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.pdiEmpty')}</p>
         ) : (
@@ -154,17 +261,51 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 {plan.objective ? (
                   <p className={cn(S.muted, 'mt-1 m-0 text-xs')}>{plan.objective}</p>
                 ) : null}
-                <ul className="mt-2 m-0 list-none space-y-1.5 p-0">
+                <ul className="mt-2 m-0 list-none space-y-2 p-0">
                   {(plan.items || []).map((it) => (
-                    <li key={it.id} className="flex flex-wrap items-baseline justify-between gap-2 text-xs text-ink">
-                      <span>
+                    <li
+                      key={it.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-surface px-2.5 py-2"
+                    >
+                      <div className="min-w-0 text-xs text-ink">
                         {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
                         {it.title}
-                      </span>
-                      <span className="font-mono text-[10px] text-ink-faint">
-                        {itemStatusLabel(locale, it.status)}
-                        {it.dueDate ? ` · ${it.dueDate}` : ''}
-                      </span>
+                        <div className="mt-0.5 font-mono text-[10px] text-ink-faint">
+                          {itemStatusLabel(locale, it.status)}
+                          {it.dueDate ? ` · ${it.dueDate}` : ''}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {it.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className={cn(S.btnBrandSoft, 'min-h-touch text-[11px]')}
+                            onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DONE)}
+                          >
+                            {t(locale, 'employeeHome.pdiMarkDone')}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+                            onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.TODO)}
+                          >
+                            {t(locale, 'employeeHome.pdiMarkTodo')}
+                          </button>
+                        )}
+                        {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.TODO ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+                            onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DOING)}
+                          >
+                            {t(locale, 'employeeHome.pdiMarkDoing')}
+                          </button>
+                        ) : null}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -172,10 +313,39 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             ))}
           </ul>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <section id="lms" className="mt-10 scroll-mt-6">
-        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'employeeHome.lmsTitle')}</h2>
+      <CollapsibleSection
+        id="lms"
+        title={t(locale, 'employeeHome.lmsTitle')}
+        count={courses.length}
+        open={openMap.lms !== false}
+        onToggle={() => toggleSection('lms')}
+      >
+        {watching?.embedUrl ? (
+          <div className="mb-4 overflow-hidden rounded-control border border-ink/12 bg-ink/5">
+            <div className="flex items-center justify-between gap-2 px-3 py-2">
+              <span className="truncate text-xs text-ink">{watching.title}</span>
+              <button
+                type="button"
+                className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+                onClick={() => setWatching(null)}
+              >
+                {t(locale, 'employeeHome.closePlayer')}
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                title={watching.title}
+                src={watching.embedUrl}
+                className="h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        ) : null}
+
         {courses.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.coursesEmpty')}</p>
         ) : (
@@ -212,15 +382,37 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         <div className="text-xs text-ink">
                           {lesson.completed ? '✓ ' : '○ '}
                           {lesson.title}
+                          {lesson.contentKind && lesson.contentKind !== 'link' ? (
+                            <span className="ml-1 font-mono text-[10px] uppercase text-ink-faint">
+                              {lesson.contentKind}
+                            </span>
+                          ) : null}
                         </div>
-                        <a
-                          href={lesson.contentUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-[11px] text-brand-600"
-                        >
-                          {t(locale, 'panel.employeePortal.openLesson')}
-                        </a>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {lesson.embedUrl ? (
+                            <button
+                              type="button"
+                              className="border-none bg-transparent p-0 font-mono text-[11px] text-brand-600"
+                              onClick={() =>
+                                setWatching({
+                                  lessonId: lesson.id,
+                                  embedUrl: lesson.embedUrl,
+                                  title: lesson.title,
+                                })
+                              }
+                            >
+                              {t(locale, 'employeeHome.watchInApp')}
+                            </button>
+                          ) : null}
+                          <a
+                            href={lesson.contentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-[11px] text-brand-600"
+                          >
+                            {t(locale, 'panel.employeePortal.openLesson')}
+                          </a>
+                        </div>
                       </div>
                       {!lesson.completed ? (
                         <button
@@ -248,10 +440,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             ))}
           </ul>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <section className="mt-10">
-        <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.agreementsTitle')}</h2>
+      <CollapsibleSection
+        id="oneOnOne"
+        title={t(locale, 'panel.employeePortal.agreementsTitle')}
+        count={agreements.length + (prompts.length ? 1 : 0)}
+        open={openMap.oneOnOne !== false}
+        onToggle={() => toggleSection('oneOnOne')}
+      >
         {agreements.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>
             {t(locale, 'panel.employeePortal.agreementsEmpty')}
@@ -268,23 +465,28 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             ))}
           </ul>
         )}
-      </section>
+        {prompts.length > 0 ? (
+          <div className="mt-4">
+            <h3 className={cn(S.faint, 'mb-2 mt-0 text-[11px] uppercase tracking-wide')}>
+              {t(locale, 'panel.employeePortal.prepTitle')}
+            </h3>
+            <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
+            <ul className="m-0 list-disc space-y-1 pl-5 text-xs text-ink">
+              {prompts.map((p, i) => (
+                <li key={i}>{typeof p === 'string' ? p : p.text || p.prompt || String(p)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </CollapsibleSection>
 
-      {prompts.length > 0 ? (
-        <section className="mt-10">
-          <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.prepTitle')}</h2>
-          <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
-          <ul className="m-0 list-disc space-y-1 pl-5 text-xs text-ink">
-            {prompts.map((p, i) => (
-              <li key={i}>{typeof p === 'string' ? p : p.text || p.prompt || String(p)}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {company && (company.aboutHtml || (company.benefits || []).length > 0) ? (
-        <section className="mt-10">
-          <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'employeeHome.companyTitle')}</h2>
+      {hasCompany ? (
+        <CollapsibleSection
+          id="company"
+          title={t(locale, 'employeeHome.companyTitle')}
+          open={openMap.company !== false}
+          onToggle={() => toggleSection('company')}
+        >
           {company.aboutHtml ? (
             <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2 text-xs text-ink">
               <RichTextView html={company.aboutHtml} />
@@ -318,7 +520,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               </ul>
             </>
           ) : null}
-        </section>
+        </CollapsibleSection>
       ) : null}
     </div>
   );

@@ -260,7 +260,8 @@ npm run dev
 4. POST /api/results → grava no Postgres; vê o resultado na tela
 5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /colaborador/cadastrar-senha
-   → login e-mail/senha em /colaborador/login (cookie team30_employee_session; PDI + LMS + tarefas;
+   → login e-mail/senha em /colaborador/login (cookie team30_employee_session; PDI self-serve,
+   LMS com player YouTube/Vimeo, seções colapsáveis, notifs Motivadores/PDI/LMS;
    não acessa /dashboard). Magic link opcional. /e/<token> continua sem conta.
 ```
 

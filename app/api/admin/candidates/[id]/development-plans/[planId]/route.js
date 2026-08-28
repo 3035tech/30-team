@@ -28,6 +28,29 @@ async function loadCandidateScope(candidateId, scope) {
   return { candidate: c.rows[0] };
 }
 
+async function notifyEmployeePdi(companyId, candidateId, { planId, planTitle, itemTitle }) {
+  try {
+    const { notifyCandidate, EMPLOYEE_NOTIF } = await import(
+      '../../../../../../../lib/employee-notifications.js'
+    );
+    await notifyCandidate(query, {
+      companyId,
+      candidateId: Number(candidateId),
+      type: EMPLOYEE_NOTIF.PDI_UPDATED,
+      entityType: 'development_plan',
+      entityId: planId,
+      dedupeKey: `pdi_upd:${planId}:${Date.now()}`,
+      payload: {
+        planId,
+        planTitle: planTitle || itemTitle || 'PDI',
+        itemTitle: itemTitle || null,
+      },
+    });
+  } catch {
+    /* optional */
+  }
+}
+
 /** GET /api/admin/candidates/[id]/development-plans/[planId] */
 export async function GET(request, { params }) {
   try {
@@ -247,6 +270,11 @@ export async function PATCH(request, { params }) {
         planId,
         candidateId,
       });
+      await notifyEmployeePdi(loaded.candidate.companyId, candidateId, {
+        planId,
+        planTitle: plan?.title,
+        itemTitle: added.item.title,
+      });
       return NextResponse.json({ ok: true, plan, item: added.item });
     }
 
@@ -268,6 +296,11 @@ export async function PATCH(request, { params }) {
       targetType: 'candidate',
       targetId: candidateId,
       metadata: { planId },
+    });
+
+    await notifyEmployeePdi(loaded.candidate.companyId, candidateId, {
+      planId,
+      planTitle: updated.plan?.title,
     });
 
     return NextResponse.json({ ok: true, plan: updated.plan });

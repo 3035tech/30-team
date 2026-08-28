@@ -115,6 +115,21 @@ export async function POST(request, { params }) {
       metadata: { planId: created.plan.id },
     });
 
+    try {
+      const { notifyCandidate, EMPLOYEE_NOTIF } = await import('../../../../../../lib/employee-notifications.js');
+      await notifyCandidate(query, {
+        companyId: loaded.candidate.companyId,
+        candidateId: Number(candidateId),
+        type: EMPLOYEE_NOTIF.PDI_UPDATED,
+        entityType: 'development_plan',
+        entityId: created.plan.id,
+        dedupeKey: `pdi_created:${created.plan.id}`,
+        payload: { planTitle: created.plan.title, planId: created.plan.id },
+      });
+    } catch {
+      /* optional */
+    }
+
     return NextResponse.json({ ok: true, plan: created.plan }, { status: 201 });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

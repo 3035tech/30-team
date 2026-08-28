@@ -5,6 +5,8 @@ import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.
 import { getEmployeeSessionPayload } from '../../../../lib/employee-session.js';
 import { getEmployeeHome } from '../../../../lib/employee-home.js';
 import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
+import { updateEmployeePdiItemStatus } from '../../../../lib/employee-pdi.js';
+import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../../lib/domain-status.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +38,7 @@ export async function GET(request) {
   }
 }
 
-/** POST /api/employee/home — mark / unmark LMS lesson */
+/** POST /api/employee/home — LMS lesson or PDI item status */
 export async function POST(request) {
   try {
     const session = await getEmployeeSessionPayload();
@@ -55,6 +57,28 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+
+    if (body.action === 'updatePdiItem') {
+      const itemId = parseInt(String(body.itemId || ''), 10);
+      const status = String(body.status || '').trim();
+      if (!Number.isFinite(itemId)) return apiError(request, ERR.INVALID_DATA, 400);
+      const result = await updateEmployeePdiItemStatus(query, {
+        companyId: session.companyId,
+        candidateId: session.candidateId,
+        itemId,
+        status:
+          status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ||
+          status === DEVELOPMENT_PLAN_ITEM_STATUS.DOING ||
+          status === DEVELOPMENT_PLAN_ITEM_STATUS.TODO
+            ? status
+            : DEVELOPMENT_PLAN_ITEM_STATUS.DONE,
+      });
+      if (!result.ok) {
+        return apiErrorFromResult(request, result, { fallbackCode: ERR.NOT_FOUND });
+      }
+      return NextResponse.json({ ok: true, item: result.item });
+    }
+
     const lessonId = parseInt(String(body.lessonId || ''), 10);
     if (!Number.isFinite(lessonId)) {
       return apiError(request, ERR.INVALID_DATA, 400);
