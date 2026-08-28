@@ -34,6 +34,7 @@ import { HelpAssistantWidget } from './HelpAssistantWidget';
 import { OnboardingTour } from '../_components/OnboardingTour';
 import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../_components/KeyboardShortcuts';
 import OnboardingWizard from '../_components/OnboardingWizard';
+import { PersonaPlaybookCard } from '../_components/PersonaPlaybookCard';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -1232,6 +1233,11 @@ export default function DashboardClient({
             />
           ) : (
             <>
+              <PersonaPlaybookCard
+                tab={tab}
+                role={sessionAuth?.role || 'hr'}
+                locale={locale}
+              />
               {tab === 'leadership' && (
                 <LeadershipTab
                   analytics={analytics}

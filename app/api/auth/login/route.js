@@ -7,6 +7,56 @@ import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
 import { sign2faChallenge, roleMayUse2Fa } from '../../../../lib/manager-2fa.js';
 import { buildManagerLoginResponse } from '../../../../lib/manager-login-session.js';
 
+const LOGIN_USER_SQL = `SELECT
+         u.id,
+         u.email,
+         u.password_hash AS "passwordHash",
+         u.role,
+         u.locale,
+         u.active,
+         u.must_change_password AS "mustChangePassword",
+         u.password_setup_token AS "passwordSetupToken",
+         u.company_id AS "companyId",
+         u.deleted AS "userDeleted",
+         COALESCE(u.session_version, 1) AS "sessionVersion",
+         u.totp_enabled_at AS "totpEnabledAt",
+         c.deleted AS "companyDeleted"
+       FROM users u
+       LEFT JOIN companies c ON c.id = u.company_id
+       WHERE LOWER(u.email) = LOWER($1)
+       LIMIT 1`;
+
+/** Antes da migration 073 — evita 500 se totp_enabled_at ainda não existir. */
+const LOGIN_USER_SQL_LEGACY = `SELECT
+         u.id,
+         u.email,
+         u.password_hash AS "passwordHash",
+         u.role,
+         u.locale,
+         u.active,
+         u.must_change_password AS "mustChangePassword",
+         u.password_setup_token AS "passwordSetupToken",
+         u.company_id AS "companyId",
+         u.deleted AS "userDeleted",
+         COALESCE(u.session_version, 1) AS "sessionVersion",
+         NULL::timestamptz AS "totpEnabledAt",
+         c.deleted AS "companyDeleted"
+       FROM users u
+       LEFT JOIN companies c ON c.id = u.company_id
+       WHERE LOWER(u.email) = LOWER($1)
+       LIMIT 1`;
+
+async function loadUserForLogin(email) {
+  try {
+    return await query(LOGIN_USER_SQL, [email.trim()]);
+  } catch (err) {
+    if (err?.code === '42703') {
+      return query(LOGIN_USER_SQL_LEGACY, [email.trim()]);
+    }
+    throw err;
+  }
+}
+
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -27,27 +77,7 @@ export async function POST(request) {
       return apiError(request, ERR.REQUIRED_LOGIN, 400);
     }
 
-    const res = await query(
-      `SELECT
-         u.id,
-         u.email,
-         u.password_hash AS "passwordHash",
-         u.role,
-         u.locale,
-         u.active,
-         u.must_change_password AS "mustChangePassword",
-         u.password_setup_token AS "passwordSetupToken",
-         u.company_id AS "companyId",
-         u.deleted AS "userDeleted",
-         COALESCE(u.session_version, 1) AS "sessionVersion",
-         u.totp_enabled_at AS "totpEnabledAt",
-         c.deleted AS "companyDeleted"
-       FROM users u
-       LEFT JOIN companies c ON c.id = u.company_id
-       WHERE LOWER(u.email) = LOWER($1)
-       LIMIT 1`,
-      [email.trim()]
-    );
+    const res = await loadUserForLogin(email);
 
     const row0 = res.rows[0];
     const companyBlocked = row0?.role !== 'admin' && row0?.companyId && row0?.companyDeleted;

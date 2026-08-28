@@ -28,7 +28,7 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 | Item | Mudança |
 |------|---------|
 | Turnstile no signup | `lib/turnstile.js` + widget em `/signup`; opcional se `TURNSTILE_SECRET_KEY` unset |
-| Revogação no middleware | `session_version` via Redis + `GET /api/auth/session-edge`; dashboard/API admin revalidam |
+| Revogação no middleware | `session_version` via Redis + `GET /api/auth/session-edge`; dashboard/API admin revalidam. Fallback: se o self-fetch do middleware falhar, confia no JWT assinado; se Edge não validar JWT mas session-edge OK, deixa passar. |
 | Health status token | `/api/health/status` — só header/Bearer; `?token=` rejeitado |
 | Sanitizer HTML | Allowlist de tags em notas ricas (`allowlistInterviewNotesHtml`) |
 | HTTP smoke | employee login/home, compensation CRUD, middleware revoke, health query rejected |

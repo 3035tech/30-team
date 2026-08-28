@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { sanitizeLoginRedirect } from '../../lib/sanitize-login-redirect';
@@ -11,8 +11,6 @@ import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 
 import TurnstileField from '../_components/TurnstileField';
-
-const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
 const inputClass =
   'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink';
@@ -33,16 +31,36 @@ function LoginForm() {
   const [twoFaCode, setTwoFaCode] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
   const [locale, setLocale] = useLocale();
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/captcha-config');
+        const data = await res.json().catch(() => ({}));
+        if (cancelled || !res.ok) return;
+        setTurnstileRequired(Boolean(data.required));
+        setTurnstileSiteKey(String(data.siteKey || '').trim());
+      } catch {
+        /* Turnstile opcional — login segue sem CAPTCHA */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const login = async () => {
     if (!email || !password) return;
     setLoading(true); setError(''); setSuccess('');
     setTurnstileError(false);
-    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+    if (turnstileRequired && !turnstileToken) {
       setError(t(locale, 'errors.TURNSTILE_FAILED'));
       setTurnstileError(true);
       setLoading(false);
@@ -83,7 +101,7 @@ function LoginForm() {
     setLoading(true);
     setError('');
     setTurnstileError(false);
-    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+    if (turnstileRequired && !turnstileToken) {
       setError(t(locale, 'errors.TURNSTILE_FAILED'));
       setTurnstileError(true);
       setLoading(false);
@@ -127,7 +145,7 @@ function LoginForm() {
     setError('');
     setSuccess('');
     setTurnstileError(false);
-    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+    if (turnstileRequired && !turnstileToken) {
       setError(t(locale, 'errors.TURNSTILE_FAILED'));
       setTurnstileError(true);
       setLoading(false);
@@ -322,9 +340,9 @@ function LoginForm() {
         {success ? (
           <p className="-mt-2 mb-4 text-xs text-success">{success}</p>
         ) : null}
-        {TURNSTILE_SITE_KEY && !mustChangePassword ? (
+        {turnstileRequired && turnstileSiteKey && !mustChangePassword ? (
           <TurnstileField
-            siteKey={TURNSTILE_SITE_KEY}
+            siteKey={turnstileSiteKey}
             onToken={setTurnstileToken}
             onError={() => setTurnstileError(true)}
             errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}

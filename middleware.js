@@ -84,7 +84,7 @@ function isPublicEmployeeAuthPath(pathname) {
 
 const SESSION_EDGE_PATH = '/api/auth/session-edge';
 
-async function isManagerSessionLive(request) {
+async function sessionEdgeSaysLive(request) {
   try {
     const checkUrl = new URL(SESSION_EDGE_PATH, request.url);
     const res = await fetch(checkUrl, {
@@ -95,6 +95,22 @@ async function isManagerSessionLive(request) {
   } catch {
     return false;
   }
+}
+
+async function isManagerSessionLive(request, payload) {
+  try {
+    const checkUrl = new URL(SESSION_EDGE_PATH, request.url);
+    const res = await fetch(checkUrl, {
+      headers: { cookie: request.headers.get('cookie') || '' },
+      cache: 'no-store',
+    });
+    if (res.ok) return true;
+    if (res.status === 401) return false;
+  } catch {
+    /* Self-fetch do middleware falha em alguns deploys (ingress/edge) — ver fallback abaixo. */
+  }
+  const sv = Number(payload?.sv);
+  return Number.isFinite(sv) && sv >= 1;
 }
 
 export async function middleware(request) {
@@ -109,6 +125,9 @@ export async function middleware(request) {
     const payload = token ? await verifyTokenEdge(token) : null;
 
     if (!isManagerRole(payload)) {
+      if (token && (await sessionEdgeSaysLive(request))) {
+        return secureResponse(request, NextResponse.next());
+      }
       if (pathname.startsWith('/api/')) {
         return secureResponse(
           request,
@@ -120,7 +139,7 @@ export async function middleware(request) {
       return secureResponse(request, NextResponse.redirect(loginUrl));
     }
 
-    const live = await isManagerSessionLive(request);
+    const live = await isManagerSessionLive(request, payload);
     if (!live) {
       if (pathname.startsWith('/api/')) {
         return secureResponse(

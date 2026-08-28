@@ -19,6 +19,11 @@ import {
   normalizeRecommendation,
 } from '../../lib/vacancy-report-shared';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
+import {
+  REPORT_TEMPLATE_KINDS,
+  getReportNoteTemplate,
+  inferReportTemplateKind,
+} from '../../lib/vacancy-report-note-templates';
 
 const REPORT_EXPIRY_DAYS = [7, 14, 30];
 const DEFAULT_REPORT_EXPIRY_DAYS = 14;
@@ -28,16 +33,6 @@ const INTERVIEW_PLUS = new Set([
   PIPELINE_STAGE.APPROVED,
   PIPELINE_STAGE.HIRED,
 ]);
-
-const NOTE_TEMPLATE_PT = `<p><strong>Quem avançar:</strong> …</p>
-<p><strong>Por quê (fit / contexto da vaga):</strong> …</p>
-<p><strong>Alertas / pontos a explorar na entrevista:</strong> …</p>
-<p><strong>Próximo passo sugerido:</strong> …</p>`;
-
-const NOTE_TEMPLATE_EN = `<p><strong>Who to advance:</strong> …</p>
-<p><strong>Why (fit / role context):</strong> …</p>
-<p><strong>Watch-outs / interview probes:</strong> …</p>
-<p><strong>Suggested next step:</strong> …</p>`;
 
 /**
  * Generate / list / revoke public client report links for a vacancy.
@@ -72,6 +67,9 @@ export function VacancyClientReportBlock({
   const [editingReportId, setEditingReportId] = useState(null);
   const [editNoteDraft, setEditNoteDraft] = useState('');
   const [editBusy, setEditBusy] = useState(false);
+  const [reportTemplateKind, setReportTemplateKind] = useState('technical');
+  const [compositionRisks, setCompositionRisks] = useState(null);
+  const [compositionLoading, setCompositionLoading] = useState(false);
 
   const actionsLocked = Boolean(aiBusy) || Boolean(noteActionBusy);
 
@@ -115,6 +113,11 @@ export function VacancyClientReportBlock({
       setCandidates(Array.isArray(data.candidates) ? data.candidates : []);
       setVacancyMeta(data.vacancy || null);
       setRubricMeta(data.rubricSummary || null);
+      if (data.vacancy?.title) {
+        setReportTemplateKind(
+          inferReportTemplateKind({ title: data.vacancy.title, jobRoleName: '' })
+        );
+      }
       if (typeof data.vacancy?.clientReportShowSalary === 'boolean') {
         setShowSalary(Boolean(data.vacancy.clientReportShowSalary));
       }
@@ -177,6 +180,33 @@ export function VacancyClientReportBlock({
     () => candidates.filter((c) => selected.has(c.candidateId)),
     [candidates, selected]
   );
+
+  useEffect(() => {
+    if (!open || selected.size < 2) {
+      setCompositionRisks(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCompositionLoading(true);
+      try {
+        const ids = [...selected].join(',');
+        const res = await fetch(
+          `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/reports?compositionRisks=1&candidateIds=${encodeURIComponent(ids)}&locale=${encodeURIComponent(locale)}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) setCompositionRisks(data);
+        else if (!cancelled) setCompositionRisks(null);
+      } catch {
+        if (!cancelled) setCompositionRisks(null);
+      } finally {
+        if (!cancelled) setCompositionLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, vacancyId, selected, locale]);
 
   const ensureOverride = (c) => {
     setOverrides((prev) => {
@@ -266,7 +296,7 @@ export function VacancyClientReportBlock({
     }
     setNoteActionBusy('template');
     try {
-      writeNote(locale === 'en' ? NOTE_TEMPLATE_EN : NOTE_TEMPLATE_PT);
+      writeNote(getReportNoteTemplate(locale, reportTemplateKind));
       showOk(t(locale, 'panel.report.noteTemplateDone'));
     } finally {
       setNoteActionBusy('');
@@ -849,6 +879,19 @@ export function VacancyClientReportBlock({
           <div className="mt-3">
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="text-xs text-ink-muted">{t(locale, 'panel.report.noteRequiredLabel')}</span>
+              <select
+                value={reportTemplateKind}
+                onChange={(e) => setReportTemplateKind(e.target.value)}
+                className={S.selectCompact}
+                disabled={actionsLocked}
+                aria-label={t(locale, 'panel.report.templateKindLabel')}
+              >
+                {REPORT_TEMPLATE_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {t(locale, `panel.report.templateKind.${kind}`)}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={applyNoteTemplate}
@@ -1049,6 +1092,69 @@ export function VacancyClientReportBlock({
               </table>
             )}
           </div>
+
+          {selected.size >= 2 ? (
+            <div className="mt-3 rounded-control border border-warning/25 bg-warning/[0.05] px-3 py-2.5">
+              <span className={cn(S.label, 'mb-1')}>{t(locale, 'panel.report.compositionRisksTitle')}</span>
+              <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>{t(locale, 'panel.report.compositionRisksHint')}</p>
+              {compositionLoading ? (
+                <AppLoading locale={locale} variant="inline" />
+              ) : compositionRisks && !compositionRisks.empty ? (
+                <div className="space-y-2 text-xs text-ink-muted">
+                  {(compositionRisks.pairTensions || []).length > 0 ? (
+                    <div>
+                      <span className="font-mono text-[10px] uppercase text-warning">
+                        {t(locale, 'panel.report.compositionPairTensions')}
+                      </span>
+                      <ul className="m-0 mt-1 pl-4">
+                        {compositionRisks.pairTensions.map((row) => (
+                          <li key={`${row.candidateA.id}-${row.candidateB.id}`} className="mb-1">
+                            <strong className="text-ink">{row.title}</strong>
+                            {' — '}
+                            {row.candidateA.name || `T${row.candidateA.topType}`} ×{' '}
+                            {row.candidateB.name || `T${row.candidateB.topType}`}
+                            {row.desc ? `. ${row.desc}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {(compositionRisks.nucleusRisks || []).length > 0 ? (
+                    <div>
+                      <span className="font-mono text-[10px] uppercase text-warning">
+                        {t(locale, 'panel.report.compositionNucleusRisks')}
+                      </span>
+                      <ul className="m-0 mt-1 pl-4">
+                        {compositionRisks.nucleusRisks.map((row, i) => (
+                          <li key={`nr-${i}`} className="mb-1">
+                            {row.text || row.title || String(row)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {(compositionRisks.nucleusCompleters || []).length > 0 ? (
+                    <div>
+                      <span className="font-mono text-[10px] uppercase text-success">
+                        {t(locale, 'panel.report.compositionCompleters')}
+                      </span>
+                      <ul className="m-0 mt-1 pl-4">
+                        {compositionRisks.nucleusCompleters.map((row, i) => (
+                          <li key={`nc-${i}`} className="mb-1">
+                            {row.text || row.title || String(row)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className={cn(S.faint, 'm-0 text-xs italic')}>
+                  {t(locale, 'panel.report.compositionRisksEmpty')}
+                </p>
+              )}
+            </div>
+          ) : null}
 
           <div className="mt-3">
             <button

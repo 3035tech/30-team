@@ -10,8 +10,9 @@ import { AppLoading } from '../_components/AppLoading';
 import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
+import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
 
-const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'oneOnOne', 'company'];
+const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
 
 function taskLabel(locale, task) {
@@ -72,6 +73,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     return next;
   });
   const [watching, setWatching] = useState(null); // { lessonId, embedUrl, title }
+  const [prepNote, setPrepNote] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,6 +86,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
+      setPrepNote(json?.oneOnOnePrep?.noteToManager || '');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
       setData(null);
@@ -154,6 +157,32 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     }
   };
 
+  const prepAction = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/employee/home', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'submitOneOnOnePrep', noteToManager: prepNote }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'prep');
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              oneOnOnePrep: json.oneOnOnePrep || prev.oneOnOnePrep,
+            }
+          : prev
+      );
+      toast(t(locale, 'panel.employeePortal.prepDone'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.employeePortal.prepError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const refreshJourney = useCallback(
     (nextJourney) => {
       if (nextJourney) {
@@ -195,6 +224,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             : []),
           { key: 'pdi', label: t(locale, 'panel.employeePortal.pdiTitle'), href: '#pdi' },
           { key: 'lms', label: t(locale, 'employeeHome.lmsTitle'), href: '#lms' },
+          { key: 'surveys', label: t(locale, 'employeeHome.surveysTitle'), href: '#surveys' },
           { key: 'oneOnOne', label: t(locale, 'panel.employeePortal.agreementsTitle'), href: '#oneOnOne' },
           ...(hasCompany
             ? [{ key: 'company', label: t(locale, 'employeeHome.companyTitle'), href: '#company' }]
@@ -477,6 +507,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       </CollapsibleSection>
 
       <CollapsibleSection
+        id="surveys"
+        title={t(locale, 'employeeHome.surveysTitle')}
+        open={openMap.surveys !== false}
+        onToggle={() => toggleSection('surveys')}
+      >
+        <EmployeeSurveysSection locale={locale} />
+      </CollapsibleSection>
+
+      <CollapsibleSection
         id="oneOnOne"
         title={t(locale, 'panel.employeePortal.agreementsTitle')}
         count={agreements.length + (prompts.length ? 1 : 0)}
@@ -512,6 +551,38 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </ul>
           </div>
         ) : null}
+        <div className="mt-4 rounded-control border border-ink/12 bg-canvas/40 p-3">
+          <h3 className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h3>
+          <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
+          <label className="block text-xs text-ink-muted">
+            {t(locale, 'panel.employeePortal.noteLabel')}
+            <textarea
+              className={cn(S.input, 'mt-1 min-h-[80px] w-full')}
+              value={prepNote}
+              onChange={(e) => setPrepNote(e.target.value)}
+              maxLength={2000}
+              placeholder={t(locale, 'panel.employeePortal.notePh')}
+              disabled={busy}
+            />
+          </label>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={prepAction}
+              className={cn(S.btnPrimary, 'min-h-touch')}
+            >
+              {data?.oneOnOnePrep?.preparedAt
+                ? t(locale, 'panel.employeePortal.prepUpdate')
+                : t(locale, 'panel.employeePortal.prepConfirm')}
+            </button>
+            {data?.oneOnOnePrep?.preparedAt ? (
+              <span className="font-mono text-[11px] text-success">
+                {t(locale, 'panel.employeePortal.prepDone')}
+              </span>
+            ) : null}
+          </div>
+        </div>
       </CollapsibleSection>
 
       {hasCompany ? (

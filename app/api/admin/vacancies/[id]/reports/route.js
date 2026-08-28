@@ -9,6 +9,9 @@ import {
 } from '../../../../../../lib/vacancy-report';
 import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
+import { loadCompanyInternalNucleus } from '../../../../../../lib/people/company-nucleus.js';
+import { buildShortlistCompositionRisks } from '../../../../../../lib/shortlist-composition-risks.js';
+import { queryRead } from '../../../../../../lib/db.js';
 
 
 function appOrigin(request) {
@@ -36,6 +39,33 @@ export async function GET(request, { params }) {
     if (!vacancyId) return apiError(request, ERR.INVALID_VACANCY, 400);
 
     const { searchParams } = new URL(request.url);
+    if (searchParams.get('compositionRisks') === '1') {
+      const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
+      if (!source) return apiError(request, ERR.NOT_FOUND, 404);
+      const locale = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+      const rawIds = String(searchParams.get('candidateIds') || '')
+        .split(',')
+        .map((x) => Number(x.trim()))
+        .filter((n) => Number.isInteger(n) && n > 0);
+      const idSet = new Set(rawIds);
+      const shortlist = source.people
+        .filter((p) => idSet.has(p.candidateId))
+        .map((p) => ({
+          candidateId: p.candidateId,
+          name: p.name,
+          topType: p.topType,
+        }));
+      const nucleus = await loadCompanyInternalNucleus(queryRead, {
+        companyId: source.vacancy.companyId,
+      });
+      const risks = buildShortlistCompositionRisks({
+        locale,
+        shortlist,
+        nucleus: nucleus.map((n) => ({ id: n.id, name: n.name, topType: n.topType })),
+      });
+      return NextResponse.json({ vacancyId: Number(vacancyId), ...risks });
+    }
+
     if (searchParams.get('candidates') === '1') {
       const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
       if (!source) return apiError(request, ERR.NOT_FOUND, 404);

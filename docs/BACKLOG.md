@@ -409,17 +409,19 @@ _(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; m
 ### Epic B-2500 — Login colaborador + sessão LMS ✅ ENTREGUE
 _(entregue — `069`/`070`/`071`; set-password; hub; chrome tema/idioma/notif; perfil + senha; `candidate_notifications`; LMS enroll/overdue → inbox colaborador.)_
 
-### Epic B-2501 — Aprofundar sessão colaborador (parcial) ✅ ENTREGUE (corte 1)
-_(entregue neste corte — PDI self-serve marcar item; notif ao criar/atualizar PDI e ao enviar Motivadores; LMS com player YouTube/Vimeo na visão; seções colapsáveis por tipo no hub. **Ainda aberto:** prep 1:1 na sessão; clima/pulso autenticado; folha/ponto/docs.)_
+### Epic B-2501 — Sessão colaborador + packaging consultoria ✅ ENTREGUE (corte 2)
+_(migration `077`; prep 1:1 em `/colaborador`; clima/pulso autenticado + histórico; playbooks operacionais por persona no dashboard; `/r` com templates técnica/liderança/operacional + riscos de composição na shortlist. **Ainda fora:** folha/ponto/docs completos (DP).)_
 
 ### Epic B-2510 — Remuneração interna leve ✅ ENTREGUE
 _(migration `072`; `employee_compensation_events`; Equipe → aba Remuneração; salário vigente + timeline; import da oferta aceita; alumni só leitura. **Não** é folha/holerite/ponto.)_
 
 ### Aberto — Epic B-2501 (resto)
-Ideias ainda abertas pela sessão (não `/e` token):
-1. **Prep 1:1 na sessão** — nota ao gestor sem depender do `/e`.
-2. **Clima / pulso autenticado** — responder pesquisas logado + histórico.
+~~Ideias ainda abertas pela sessão (não `/e` token):~~
+~~1. **Prep 1:1 na sessão** — nota ao gestor sem depender do `/e`.~~
+~~2. **Clima / pulso autenticado** — responder pesquisas logado + histórico.~~
 3. **Fora ainda:** folha/ponto/docs completos (DP); remuneração interna leve entregue em B-2510; não misturar com `users` role.
+
+_(Itens 1–2 entregues no corte 2 B-2501 + playbooks + `/r` consultoria.)_
 
 ---
 

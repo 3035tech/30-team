@@ -1458,3 +1458,31 @@ CREATE INDEX IF NOT EXISTS idx_compensation_candidate_date
 
 INSERT INTO schema_migrations (name) VALUES ('072_employee_compensation.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 077_employee_prep_surveys.sql
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS one_on_one_prep_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS one_on_one_prep_note TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE candidates
+  DROP CONSTRAINT IF EXISTS candidates_one_on_one_prep_note_len;
+ALTER TABLE candidates
+  ADD CONSTRAINT candidates_one_on_one_prep_note_len
+  CHECK (char_length(one_on_one_prep_note) <= 2000);
+
+ALTER TABLE climate_survey_invites
+  ADD COLUMN IF NOT EXISTS candidate_id BIGINT REFERENCES candidates(id) ON DELETE SET NULL;
+
+ALTER TABLE team_pulse_invites
+  ADD COLUMN IF NOT EXISTS candidate_id BIGINT REFERENCES candidates(id) ON DELETE SET NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_climate_invites_survey_candidate
+  ON climate_survey_invites (survey_id, candidate_id)
+  WHERE candidate_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_team_pulse_invites_pulse_candidate
+  ON team_pulse_invites (pulse_id, candidate_id)
+  WHERE candidate_id IS NOT NULL;
+
+INSERT INTO schema_migrations (name) VALUES ('077_employee_prep_surveys.sql')
+ON CONFLICT (name) DO NOTHING;

@@ -57,6 +57,7 @@ export function PeopleManagementPanel({
   const [portalUrl, setPortalUrl] = useState('');
   const [followUps, setFollowUps] = useState([]);
   const [portalTokens, setPortalTokens] = useState([]);
+  const [sessionPrep, setSessionPrep] = useState(null);
   const { confirm, notice, toast, promptForm } = useAppFeedback();
 
   const loadFollowUps = useCallback(async () => {
@@ -79,9 +80,13 @@ export function PeopleManagementPanel({
         `/api/admin/candidates/${encodeURIComponent(candidateId)}/employee-portal`
       );
       const data = await res.json().catch(() => ({}));
-      if (res.ok) setPortalTokens(Array.isArray(data.items) ? data.items : []);
+      if (res.ok) {
+        setPortalTokens(Array.isArray(data.items) ? data.items : []);
+        setSessionPrep(data.sessionPrep || null);
+      }
     } catch {
       setPortalTokens([]);
+      setSessionPrep(null);
     }
   }, [candidateId]);
 
@@ -392,9 +397,24 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
-      {portalTokens.some((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim())) ? (
+      {portalTokens.some((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim())) ||
+      (sessionPrep?.preparedAt ||
+        (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim())) ? (
         <div className="mb-3 rounded-control border border-success/25 bg-success/[0.05] px-3 py-2">
           <span className={cn(S.label, 'mb-1')}>{t(locale, 'panel.employeePortal.managerFeedbackTitle')}</span>
+          {sessionPrep?.preparedAt || (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim()) ? (
+            <div className="mt-1 text-xs text-ink-muted">
+              <span className="font-mono text-[10px] uppercase text-brand-600">
+                {t(locale, 'panel.employeePortal.sessionPrepSource')}
+              </span>
+              {sessionPrep.preparedAt ? (
+                <span className="ml-2 font-mono text-[11px] text-success">
+                  {t(locale, 'panel.employeePortal.managerPrepared')}
+                </span>
+              ) : null}
+              {sessionPrep.noteToManager ? <p className="mb-0 mt-1">{sessionPrep.noteToManager}</p> : null}
+            </div>
+          ) : null}
           {portalTokens
             .filter((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim()))
             .slice(0, 2)

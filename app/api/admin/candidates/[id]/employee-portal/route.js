@@ -38,7 +38,22 @@ export async function GET(request, { params }) {
       companyId: loaded.candidate.companyId,
       candidateId,
     });
-    return NextResponse.json({ items });
+    const prepRow = await query(
+      `SELECT one_on_one_prep_at AS "preparedAt",
+              one_on_one_prep_note AS "noteToManager"
+       FROM candidates
+       WHERE id = $1
+       LIMIT 1`,
+      [candidateId]
+    );
+    const sessionPrep = prepRow.rows[0] || null;
+    const hasSessionPrep =
+      sessionPrep?.preparedAt ||
+      (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim());
+    return NextResponse.json({
+      items,
+      sessionPrep: hasSessionPrep ? sessionPrep : null,
+    });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('GET employee-portal', err);

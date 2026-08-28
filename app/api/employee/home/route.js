@@ -6,6 +6,7 @@ import { getEmployeeSessionPayload } from '../../../../lib/employee-session.js';
 import { getEmployeeHome } from '../../../../lib/employee-home.js';
 import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
 import { updateEmployeePdiItemStatus } from '../../../../lib/employee-pdi.js';
+import { submitEmployeeOneOnOnePrep } from '../../../../lib/employee-one-on-one-prep.js';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../../lib/domain-status.js';
 
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,24 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+
+    if (body.action === 'submitOneOnOnePrep') {
+      const result = await submitEmployeeOneOnOnePrep(query, {
+        companyId: session.companyId,
+        candidateId: session.candidateId,
+        noteToManager: body.noteToManager,
+      });
+      if (!result.ok) {
+        return apiErrorFromResult(request, result, { fallbackCode: ERR.UNAUTHORIZED });
+      }
+      return NextResponse.json({
+        ok: true,
+        oneOnOnePrep: {
+          preparedAt: result.preparedAt,
+          noteToManager: result.noteToManager,
+        },
+      });
+    }
 
     if (body.action === 'updatePdiItem') {
       const itemId = parseInt(String(body.itemId || ''), 10);
