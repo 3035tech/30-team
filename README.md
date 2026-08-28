@@ -258,6 +258,10 @@ npm run dev
 2. Página pública SEO (opcional): /jobs/<slug>-<id> → lê a vaga → CTA para o /v/…
 3. Índice: /j lista vagas públicas abertas 
 4. POST /api/results → grava no Postgres; vê o resultado na tela
+5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
+6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /colaborador/cadastrar-senha
+   → login e-mail/senha em /colaborador/login (cookie team30_employee_session; PDI + LMS + tarefas;
+   não acessa /dashboard). Magic link opcional. /e/<token> continua sem conta.
 ```
 
 ### Gestor no dashboard

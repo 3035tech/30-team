@@ -1346,3 +1346,49 @@ CREATE INDEX IF NOT EXISTS idx_dev_plan_lms_links_course
 
 INSERT INTO schema_migrations (name) VALUES ('068_lms_cohorts_due_pdi.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- 069_employee_login.sql
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS employee_login_tokens (
+  id                   BIGSERIAL PRIMARY KEY,
+  company_id           BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  candidate_id         BIGINT NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  token                TEXT NOT NULL,
+  expires_at           TIMESTAMPTZ NOT NULL,
+  used_at              TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by_user_id   BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT employee_login_tokens_token_len CHECK (char_length(token) >= 20 AND char_length(token) <= 128)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_employee_login_tokens_token
+  ON employee_login_tokens (token)
+  WHERE used_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_employee_login_tokens_candidate
+  ON employee_login_tokens (company_id, candidate_id, created_at DESC);
+
+COMMENT ON TABLE employee_login_tokens IS
+  'One-time magic links for employee session (/colaborador). Not manager JWT.';
+
+INSERT INTO schema_migrations (name) VALUES ('069_employee_login.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- 070_employee_password.sql
+-- =============================================================================
+
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS password_hash TEXT,
+  ADD COLUMN IF NOT EXISTS password_setup_token TEXT,
+  ADD COLUMN IF NOT EXISTS password_setup_expires_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS access_invited_at TIMESTAMPTZ;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_candidates_password_setup_token
+  ON candidates (password_setup_token)
+  WHERE password_setup_token IS NOT NULL;
+
+INSERT INTO schema_migrations (name) VALUES ('070_employee_password.sql')
+ON CONFLICT (name) DO NOTHING;

@@ -39,7 +39,8 @@ Não inventar merge por nome nem segundo hub paralelo.
 | /r/{token} | Relatório shortlist para o cliente (+ print/PDF) |
 | /clima/{token} | Pesquisa de clima anônima (um uso; Likert + texto descritivo) |
 | /pulso/{token} | Pulso curto de grupo (anônimo, um uso) |
-| /e/{token} | Espaço mínimo do colaborador (PDI + combinados + prep 1:1; sem conta) |
+| /e/{token} | Espaço mínimo do colaborador (PDI + combinados + prep 1:1 + LMS; sem conta) |
+| /colaborador | Sessão do colaborador (magic link; tarefas + LMS) |
 | /a/set-password , /a/unsubscribe | Setup/reset de senha / cancelar job alert |
 
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
@@ -91,7 +92,8 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Jornada contínua (HireJourneyBlock): D1 → check-ins → PDI na sub-aba Jornada.
 - Oferta mínima no funil (salário, data início, status proposed/accepted/declined, notas) — não é ATS de documentos.
 - Pulso de grupo: Grupos → grupo salvo → /pulso/{token}; interpretação hedged + mix T1–T9.
-- Link do colaborador /e/{token}: PDI, combinados, prep 1:1 (marcar preparação + nota ao gestor).
+- Link do colaborador /e/{token}: PDI, combinados, prep 1:1 (marcar preparação + nota ao gestor), LMS.
+- Sessão /colaborador (B-2500): magic link por e-mail; inbox (Motivadores, LMS, PDI) + marcar aulas.
 - Ranking: explicar Fit (pesos × T1–T9; exclusões) — VacancyFitDecisionStrip.
 - Retenção: lista de acompanhamentos + marcar revisão com nota.
 - Clima: ver seção Clima abaixo.
@@ -148,7 +150,8 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Chrome admin consistente: empty states com 1 CTA; Vagas com `AdminEdit`/`AdminDelete`; dark `bg-surface` no painel (print/público light-first).
 - Roster empty com CTAs (Time interno → candidatos de vaga / todos); Overview “Sinais operacionais” lazy; busca por nome nas grids B-1000 + Empresas.
 - **Aniversários (B-2300):** Overview card (nascimento + tempo de casa via `start_date` + aniversário da empresa); `birth_date` na Equipe; `anniversary_date` em Empresas.
-- **LMS (B-2400 + B-2401):** menu LMS → Cursos; aulas URL/PDF (S3); matrícula individual/lote/turma; prazo + obrigatório; progresso no `/e` (marcar/desmarcar); PDI↔curso; Overview/Equipe atraso; notifs + cron overdue. Academy continua catálogo PDI (sem progresso).
+- **LMS (B-2400 + B-2401):** menu LMS → Cursos; aulas URL/PDF (S3); matrícula individual/lote/turma; prazo + obrigatório; progresso no `/e` e em `/colaborador` (marcar/desmarcar); PDI↔curso; Overview/Equipe atraso; notifs + cron overdue. Academy continua catálogo PDI (sem progresso).
+- **Login colaborador (B-2500):** convite set-password → `/colaborador`; cookie `team30_employee_session`; hub PDI/LMS/tarefas/empresa. Equipe → Convidar acesso.
 
 ### Notificações e ops
 - Sino in-app (Eneagrama/Motivadores concluídos, retention_watch, kit pós-hire, digest semanal, prazo, vaga fechada).

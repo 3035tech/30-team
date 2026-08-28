@@ -254,13 +254,21 @@ function LoginForm() {
                 : t(locale, 'login.enter')}
         </button>
         {!mustChangePassword && mode === 'login' ? (
-          <button
-            type="button"
-            onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
-            className="mb-4 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-brand-600"
-          >
-            {t(locale, 'login.forgotPassword')}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
+              className="mb-3 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-brand-600"
+            >
+              {t(locale, 'login.forgotPassword')}
+            </button>
+            <a
+              href="/colaborador/login"
+              className="mb-4 block font-display text-xs text-ink-muted underline-offset-2 hover:text-brand-600 hover:underline"
+            >
+              {t(locale, 'login.employeeLogin')}
+            </a>
+          </>
         ) : null}
         {!mustChangePassword && mode === 'forgot' ? (
           <button

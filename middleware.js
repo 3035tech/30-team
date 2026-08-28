@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { COOKIE_NAME } from './lib/auth';
-import { verifyTokenEdge } from './lib/auth-edge';
+import { verifyTokenEdge, verifyEmployeeTokenEdge } from './lib/auth-edge';
 import { isManagerRole } from './lib/permissions';
 import { ERR } from './lib/api-error-codes';
+import { EMPLOYEE_COOKIE_NAME } from './lib/employee-auth-constants';
 import {
   JOB_ATTR_COOKIE,
   attributionCookieOptions,
@@ -60,6 +61,19 @@ function withJobAttributionCookie(request, response) {
   return response;
 }
 
+function isPublicEmployeeAuthPath(pathname) {
+  return (
+    pathname === '/colaborador/login' ||
+    pathname.startsWith('/colaborador/entrar') ||
+    pathname.startsWith('/colaborador/cadastrar-senha') ||
+    pathname === '/api/auth/employee/magic-link' ||
+    pathname === '/api/auth/employee/session' ||
+    pathname === '/api/auth/employee/login' ||
+    pathname === '/api/auth/employee/set-password' ||
+    pathname === '/api/auth/employee/forgot-password'
+  );
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
@@ -81,6 +95,29 @@ export async function middleware(request) {
       return withJobAttributionCookie(
         request,
         withSecurityHeaders(NextResponse.redirect(loginUrl))
+      );
+    }
+  }
+
+  // Collaborator hub — employee JWT only (never manager cookie alone).
+  if (
+    (pathname.startsWith('/colaborador') || pathname.startsWith('/api/employee')) &&
+    !isPublicEmployeeAuthPath(pathname)
+  ) {
+    const empToken = request.cookies.get(EMPLOYEE_COOKIE_NAME)?.value;
+    const emp = empToken ? await verifyEmployeeTokenEdge(empToken) : null;
+    if (!emp) {
+      if (pathname.startsWith('/api/')) {
+        return withJobAttributionCookie(
+          request,
+          withSecurityHeaders(
+            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
+          )
+        );
+      }
+      return withJobAttributionCookie(
+        request,
+        withSecurityHeaders(NextResponse.redirect(new URL('/colaborador/login', request.url)))
       );
     }
   }

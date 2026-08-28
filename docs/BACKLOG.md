@@ -404,7 +404,10 @@ _(entregue — `candidates.birth_date` + `companies.anniversary_date` (`066`); t
 _(entregue — `067` `lms_courses` / `lms_lessons` / `lms_enrollments` / `lms_lesson_completions`; menu LMS → Cursos; matrícula; progresso no `/e`. **Fora:** quiz, certificado, SCORM, player, login colaborador. Academy continua catálogo PDI separado.)_
 
 ### Epic B-2401 — LMS próximo corte ✅ ENTREGUE
-_(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; matrícula em lote (todos/grupo); PDF S3; reordenar/editar aulas; reset/desmarcar; notifs enrolled/overdue/completed; Overview/Equipe atraso; PDI↔curso com matrícula opcional e auto-done no PDI ao concluir; cron `lms-overdue-notifications`; resumo ops no curso. **Fora ainda:** quiz, certificado, SCORM, trilha multi-curso, login colaborador.)_
+_(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; matrícula em lote (todos/grupo); PDF S3; reordenar/editar aulas; reset/desmarcar; notifs enrolled/overdue/completed; Overview/Equipe atraso; PDI↔curso com matrícula opcional e auto-done no PDI ao concluir; cron `lms-overdue-notifications`; resumo ops no curso. **Fora ainda:** quiz, certificado, SCORM, trilha multi-curso.)_
+
+### Epic B-2500 — Login colaborador + sessão LMS ✅ ENTREGUE
+_(entregue — `069` `employee_login_tokens` + `070` senha em `candidates`; convite set-password → `/colaborador/cadastrar-senha`; login e-mail/senha + forgot + magic opcional; cookie `team30_employee_session`; hub PDI/LMS/tarefas/1:1/empresa; Equipe “Convidar acesso”; `/e` token continua. **Fora:** role em `users`, app DP completo.)_
 
 ---
 

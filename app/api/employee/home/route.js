@@ -1,0 +1,97 @@
+import { NextResponse } from 'next/server';
+import { query } from '../../../../lib/db.js';
+import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
+import { getEmployeeSessionPayload } from '../../../../lib/employee-session.js';
+import { getEmployeeHome } from '../../../../lib/employee-home.js';
+import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
+
+export const dynamic = 'force-dynamic';
+
+/** GET /api/employee/home — tasks + LMS for logged-in collaborator */
+export async function GET(request) {
+  try {
+    const session = await getEmployeeSessionPayload();
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+
+    const url = new URL(request.url);
+    const locale =
+      url.searchParams.get('locale') === 'en' || session.locale === 'en' ? 'en' : 'pt-BR';
+
+    const home = await getEmployeeHome(query, {
+      companyId: session.companyId,
+      candidateId: session.candidateId,
+      locale,
+    });
+    if (!home.ok) {
+      return apiErrorFromResult(request, home, { fallbackCode: ERR.UNAUTHORIZED });
+    }
+    return NextResponse.json(home);
+  } catch (err) {
+    if (err?.code === '42P01' || err?.code === '42703') {
+      return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
+    }
+    console.error('GET employee home', err);
+    return apiError(request, ERR.INTERNAL, 500);
+  }
+}
+
+/** POST /api/employee/home — mark / unmark LMS lesson */
+export async function POST(request) {
+  try {
+    const session = await getEmployeeSessionPayload();
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(
+      `employee-home:${session.candidateId}:${ip}`,
+      60,
+      10 * 60 * 1000
+    );
+    if (!rl.ok) {
+      return apiError(request, ERR.RATE_LIMIT, 429, {}, {
+        headers: { 'Retry-After': String(rl.retryAfterSec) },
+      });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const lessonId = parseInt(String(body.lessonId || ''), 10);
+    if (!Number.isFinite(lessonId)) {
+      return apiError(request, ERR.INVALID_DATA, 400);
+    }
+
+    const opts = {
+      companyId: session.companyId,
+      candidateId: session.candidateId,
+      lessonId,
+    };
+
+    let result;
+    if (body.action === 'uncompleteLesson') {
+      result = await uncompleteLmsLesson(query, opts);
+    } else if (body.action === 'completeLesson') {
+      result = await completeLmsLesson(query, opts);
+    } else {
+      return apiError(request, ERR.INVALID_DATA, 400);
+    }
+
+    if (!result.ok) {
+      return apiErrorFromResult(request, result, { fallbackCode: ERR.NOT_FOUND });
+    }
+    return NextResponse.json({
+      ok: true,
+      lessonId,
+      progressPct: result.progressPct,
+      isComplete: result.isComplete,
+      completedLessons: result.completedLessons,
+      totalLessons: result.totalLessons,
+      newlyCompleted: Boolean(result.newlyCompleted),
+    });
+  } catch (err) {
+    if (err?.code === '42P01' || err?.code === '42703') {
+      return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
+    }
+    console.error('POST employee home', err);
+    return apiError(request, ERR.INTERNAL, 500);
+  }
+}

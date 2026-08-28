@@ -10,7 +10,7 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 
 - Instrumento principal: avaliação inspirada no Eneagrama, tipos **T1–T9** (estilo de trabalho). **Não** é diagnóstico clínico nem substituto de entrevista técnica.
 - Instrumento secundário: **Motivadores** (Assessment Engine em `lib/ae/`).
-- Candidatos **não têm conta**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente), `/clima/<token>` (clima), `/pulso/<token>` (pulso de grupo), `/e/<token>` (espaço mínimo do colaborador pós-hire).
+- Candidatos **não têm conta de gestor**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente), `/clima/<token>` (clima), `/pulso/<token>` (pulso de grupo), `/e/<token>` (espaço mínimo pós-hire). Colaboradores (`employment_status = employee`) podem ter senha em `candidates` + sessão em `/colaborador` (cookie `team30_employee_session` — **não** acessa `/dashboard`; convite como set-password de usuário).
 - Gestores: `/login` → `/dashboard` (roles `admin` | `direction` | `hr`).
 
 ## Stack (obrigatória)
@@ -305,6 +305,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042`+`050` (Likert + texto descritivo) |
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
+| Sessão colaborador | `lib/employee-auth.js`, `/colaborador`, cookie `team30_employee_session`, `migrations/069`+`070` (senha + invite), LMS + PDI + tarefas |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |
 | Explicabilidade Fit | `lib/area-fit.js` (`withBreakdown`), ranking da vaga |
 | Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js` (incl. `retention_watch`, `hire_onboarding_kit`, `manager_weekly_digest`), `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications`, `notification-retention`, `manager-weekly-digest` |

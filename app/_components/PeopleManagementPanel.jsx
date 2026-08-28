@@ -295,6 +295,28 @@ export function PeopleManagementPanel({
     }
   };
 
+  const sendEmployeeAccess = async () => {
+    if (!candidateId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/employee-access`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locale }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'access');
+      toast(t(locale, 'panel.employeePortal.accessSent'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const remove = async (ooId) => {
     if (!candidateId || !ooId) return;
     const ok = await confirm({
@@ -351,6 +373,15 @@ export function PeopleManagementPanel({
           onClick={issueEmployeePortal}
         >
           {t(locale, 'panel.employeePortal.issueBtn')}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          className={cn(S.btnBrandSoft, 'min-h-touch text-[11px]')}
+          onClick={sendEmployeeAccess}
+          title={t(locale, 'panel.employeePortal.accessHint')}
+        >
+          {t(locale, 'panel.employeePortal.accessBtn')}
         </button>
       </div>
 
