@@ -74,6 +74,7 @@ A partir da versão com migrations `051`, `052` e `053`:
   - Token de ativação (72h) enviado por e-mail
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
 - **Admin Leads** (`/dashboard?tab=leads`) — cohort `/signup` para contato futuro (pendentes e ativos). Em **Usuários**, cadastro normal = Origem Painel; quem veio do onboarding = Early access (também aparece em Usuários quando já está no sistema).
+- **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Ver [`docs/audit-log.md`](docs/audit-log.md).
 - **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
 - **Inteligência comportamental** na Visão geral (`behavioralIntel`): no topo (funil recolhido); filtro ou **grupo salvo** (`teamGroup`); perfis, motivadores, forças/atenções (até 5), Top 5 e ações — agregado, hedged, sem nomes.
 - **Wizard de onboarding** (primeiro acesso):

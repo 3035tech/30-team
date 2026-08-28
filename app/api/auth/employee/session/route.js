@@ -70,12 +70,13 @@ export async function POST(request) {
       });
     }
 
-    return buildEmployeeLoginResponse({
+    return await buildEmployeeLoginResponse({
       candidateId: consumed.candidateId,
       companyId: consumed.companyId,
       email: consumed.email,
       locale,
       fullName: consumed.fullName,
+      request,
     });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

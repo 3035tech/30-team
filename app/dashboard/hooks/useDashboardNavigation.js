@@ -152,6 +152,26 @@ export function useDashboardNavigation({
     const leadsPageSize = PAGE_SIZE_OPTIONS.includes(Number(leadsPsRaw)) ? Number(leadsPsRaw) : 20;
     p.set('leadsPageSize', String(leadsPageSize));
 
+    const auditActorKind =
+      opts.auditActorKind !== undefined ? opts.auditActorKind : urlParams.get('auditActorKind') || 'all';
+    if (auditActorKind && auditActorKind !== 'all') p.set('auditActorKind', String(auditActorKind));
+    const auditCompanyId =
+      opts.auditCompanyId !== undefined ? opts.auditCompanyId : urlParams.get('auditCompanyId') || '';
+    if (auditCompanyId && auditCompanyId !== 'all') p.set('auditCompanyId', String(auditCompanyId));
+    const auditAction =
+      opts.auditAction !== undefined ? opts.auditAction : urlParams.get('auditAction') || '';
+    if (auditAction) p.set('auditAction', String(auditAction));
+    const auditQ = opts.auditQ !== undefined ? opts.auditQ : urlParams.get('auditQ') || '';
+    if (auditQ) p.set('auditQ', String(auditQ));
+    const auditPageRaw =
+      opts.auditPage != null ? opts.auditPage : parseInt(urlParams.get('auditPage') || '1', 10);
+    const auditPage = Number.isFinite(Number(auditPageRaw)) && Number(auditPageRaw) >= 1 ? Number(auditPageRaw) : 1;
+    p.set('auditPage', String(auditPage));
+    const auditPsRaw =
+      opts.auditPageSize != null ? opts.auditPageSize : parseInt(urlParams.get('auditPageSize') || '30', 10);
+    const auditPageSize = [20, 30, 50, 100].includes(Number(auditPsRaw)) ? Number(auditPsRaw) : 30;
+    p.set('auditPageSize', String(auditPageSize));
+
     const coPgSt = parseCompaniesPagination(merged);
     const coPg = opts.companiesPage != null ? opts.companiesPage : coPgSt.page;
     const coPs = opts.companiesPageSize != null ? opts.companiesPageSize : coPgSt.pageSize;

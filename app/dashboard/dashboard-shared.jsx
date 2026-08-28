@@ -348,6 +348,7 @@ const DASHBOARD_TAB_NAV = {
   companies: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.companies' },
   users: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.users' },
   leads: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.leads' },
+  audit: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.audit' },
   help: { sectionKey: 'dashboard.sectionHelp', labelKey: 'dashboard.help' },
   profile: { sectionKey: null, labelKey: 'dashboard.profile' },
 };

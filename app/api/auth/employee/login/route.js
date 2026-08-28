@@ -55,12 +55,13 @@ export async function POST(request) {
       });
     }
 
-    return buildEmployeeLoginResponse({
+    return await buildEmployeeLoginResponse({
       candidateId: result.candidateId,
       companyId: result.companyId,
       email: result.email,
       locale,
       fullName: result.fullName,
+      request,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

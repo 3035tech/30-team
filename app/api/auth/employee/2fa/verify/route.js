@@ -33,12 +33,13 @@ export async function POST(request) {
       return apiError(request, ERR.TWO_FA_NOT_ENABLED, httpStatusForError(ERR.TWO_FA_NOT_ENABLED));
     }
 
-    return buildEmployeeLoginResponse({
+    return await buildEmployeeLoginResponse({
       candidateId: challenge.candidateId,
       companyId: challenge.companyId,
       email: verified.person.email,
       locale,
       fullName: verified.person.fullName,
+      request,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

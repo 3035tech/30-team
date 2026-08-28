@@ -539,6 +539,17 @@ async function runOfflineLibs() {
     return 'totp + manager/employee optional ok';
   });
 
+  await check('lib', 'audit-log-admin', async () => {
+    const { parseAuditLogListParams } = await import('../../lib/audit-log-admin.js');
+    const { AUDIT_ACTOR_KIND } = await import('../../lib/audit.js');
+    const p = parseAuditLogListParams({ page: '2', pageSize: '30', actorKind: 'employee', q: 'login' });
+    if (p.page !== 2 || p.pageSize !== 30 || p.actorKind !== 'employee' || p.q !== 'login') {
+      throw new Error(`parse failed ${JSON.stringify(p)}`);
+    }
+    if (!AUDIT_ACTOR_KIND.MANAGER) throw new Error('missing actor kind');
+    return 'audit parse ok';
+  });
+
   await check('lib', 'vacancy-public-allow-index-default', async () => {
     const { parseVacancyDetailsFromBody } = await import('../../lib/vacancy-details.js');
     const created = parseVacancyDetailsFromBody({}, { forCreate: true });

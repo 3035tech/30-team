@@ -155,6 +155,10 @@ const LeadsAdminTab = dynamic(
   () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const AuditAdminTab = dynamic(
+  () => import('./tabs/AuditAdminTab').then((m) => ({ default: m.AuditAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const VacanciesAdminTab = dynamic(
   () => import('./tabs/VacanciesAdminTab').then((m) => ({ default: m.VacanciesAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -213,6 +217,7 @@ const TAB_TO_SECTION = {
   users: 'account',
   companies: 'account',
   leads: 'account',
+  audit: 'account',
   help: 'help',
   profile: 'account',
 };
@@ -301,6 +306,7 @@ export default function DashboardClient({
 
   const isAdmin = isAdminRole(sessionAuth);
   const showLeads = isSuperAdminPayload(sessionAuth);
+  const showAudit = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
   /** Global search duplicates TeamTab; Leadership is chart-first — hide there. */
@@ -906,7 +912,7 @@ export default function DashboardClient({
               </>
             ) : null}
 
-            {showCompanies || showUsers || showLeads ? (
+            {showCompanies || showUsers || showLeads || showAudit ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('account', t(locale, 'dashboard.sectionAccount'))}
@@ -917,6 +923,9 @@ export default function DashboardClient({
                       <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
                     ) : null}
                     {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                    {showAudit ? (
+                      <NavLink id="audit" icon="list" label={t(locale, 'dashboard.audit')} />
+                    ) : null}
                   </>
                 ))}
               </>
@@ -1399,6 +1408,9 @@ export default function DashboardClient({
               )}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'audit' && showAudit && (
+                <AuditAdminTab navigateDashboard={navigateWithOpts} locale={locale} />
+              )}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (
                 <ProfileTab
