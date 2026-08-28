@@ -9,8 +9,9 @@ import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
 import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
+import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 
-const SECTION_KEYS = ['tasks', 'pdi', 'lms', 'oneOnOne', 'company'];
+const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
 
 function taskLabel(locale, task) {
@@ -153,15 +154,28 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     }
   };
 
+  const refreshJourney = useCallback(
+    (nextJourney) => {
+      if (nextJourney) {
+        setData((prev) => (prev ? { ...prev, journey: nextJourney } : prev));
+      } else {
+        void load();
+      }
+    },
+    [load]
+  );
+
   if (loading) return <AppLoading variant="panel" />;
 
   const person = data?.person;
   const tasks = data?.tasks || [];
+  const journey = data?.journey;
   const courses = data?.courses || [];
   const plans = data?.plans || [];
   const agreements = data?.recentAgreements || [];
   const prompts = data?.oneOnOnePrompts || [];
   const company = data?.company;
+  const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
 
   return (
@@ -176,6 +190,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       <nav className="mb-2 flex flex-wrap gap-1.5" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
         {[
           { key: 'tasks', label: t(locale, 'employeeHome.tasksTitle'), href: '#tasks' },
+          ...(hasJourney
+            ? [{ key: 'journey', label: t(locale, 'employeeHome.journeyTitle'), href: '#journey' }]
+            : []),
           { key: 'pdi', label: t(locale, 'panel.employeePortal.pdiTitle'), href: '#pdi' },
           { key: 'lms', label: t(locale, 'employeeHome.lmsTitle'), href: '#lms' },
           { key: 'oneOnOne', label: t(locale, 'panel.employeePortal.agreementsTitle'), href: '#oneOnOne' },
@@ -235,7 +252,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       ? t(locale, 'employeeHome.goToLms')
                       : task.href === '#pdi'
                         ? t(locale, 'employeeHome.goToPdi')
-                        : t(locale, 'employeeHome.openTask')}
+                        : task.href === '#journey'
+                          ? t(locale, 'employeeHome.goToJourney')
+                          : t(locale, 'employeeHome.openTask')}
                   </a>
                 ) : null}
               </li>
@@ -243,6 +262,21 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           </ul>
         )}
       </CollapsibleSection>
+
+      {hasJourney ? (
+        <CollapsibleSection
+          id="journey"
+          title={t(locale, 'employeeHome.journeyTitle')}
+          open={openMap.journey !== false}
+          onToggle={() => toggleSection('journey')}
+        >
+          <EmployeeOnboardingJourneySection
+            locale={locale}
+            journey={journey}
+            onChanged={refreshJourney}
+          />
+        </CollapsibleSection>
+      ) : null}
 
       <CollapsibleSection
         id="pdi"

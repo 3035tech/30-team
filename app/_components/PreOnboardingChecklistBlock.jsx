@@ -9,6 +9,8 @@ import { EmptyState } from './EmptyState';
 import { AppLoading } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 
+const CALL_KEYS = new Set(['rh_onboarding_call', 'manager_onboarding']);
+
 /**
  * Pre-onboarding checklist (accesses / D1) — B-702.
  */
@@ -46,16 +48,71 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
 
   if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) return null;
 
+  const completeFields = (row, status) => {
+    const fields = [
+      {
+        key: 'notes',
+        type: 'textarea',
+        label: t(locale, 'panel.preOnboarding.notesLabel'),
+        placeholder: t(locale, 'panel.preOnboarding.notesPh'),
+      },
+    ];
+    if (CALL_KEYS.has(row.itemKey)) {
+      fields.unshift({
+        key: 'meetUrl',
+        type: 'text',
+        label: t(locale, 'panel.preOnboarding.meetUrlLabel'),
+        placeholder: t(locale, 'panel.preOnboarding.meetUrlPh'),
+        initialValue: row.meetUrl || '',
+      });
+    }
+    return fields;
+  };
+
   const complete = async (row, status) => {
     const values = await promptForm({
       title: t(locale, `panel.preOnboarding.item.${row.itemKey}`),
       confirmLabel: t(locale, 'panel.preOnboarding.completeConfirm'),
+      fields: completeFields(row, status),
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/pre-onboarding`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemId: row.id,
+            status,
+            notes: values.notes || '',
+            meetUrl: values.meetUrl,
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      toast(t(locale, 'panel.preOnboarding.saved'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.preOnboarding.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setMeetUrl = async (row) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.preOnboarding.meetUrlTitle'),
+      confirmLabel: t(locale, 'panel.preOnboarding.completeConfirm'),
       fields: [
         {
-          key: 'notes',
-          type: 'textarea',
-          label: t(locale, 'panel.preOnboarding.notesLabel'),
-          placeholder: t(locale, 'panel.preOnboarding.notesPh'),
+          key: 'meetUrl',
+          type: 'text',
+          label: t(locale, 'panel.preOnboarding.meetUrlLabel'),
+          placeholder: t(locale, 'panel.preOnboarding.meetUrlPh'),
+          initialValue: row.meetUrl || '',
         },
       ],
     });
@@ -67,7 +124,11 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: row.id, status, notes: values.notes || '' }),
+          body: JSON.stringify({
+            action: 'setMeetUrl',
+            itemId: row.id,
+            meetUrl: values.meetUrl,
+          }),
         }
       );
       const data = await res.json().catch(() => ({}));
@@ -108,6 +169,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
         <ul className="mt-3 m-0 flex list-none flex-col gap-1.5 p-0">
           {items.map((row) => {
             const done = row.status === 'done' || row.status === 'skipped';
+            const isCall = CALL_KEYS.has(row.itemKey);
             return (
               <li
                 key={row.id}
@@ -128,10 +190,35 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
                   <div className="font-mono text-[10px] text-ink-muted">
                     {t(locale, 'panel.preOnboarding.due', { date: row.dueDate || '—' })}
                     {done ? ` · ${t(locale, `panel.preOnboarding.status.${row.status}`)}` : ''}
+                    {row.employeeAckAt ? (
+                      <span className="ml-1 text-success">
+                        · {t(locale, 'panel.preOnboarding.employeeAcked')}
+                      </span>
+                    ) : null}
                   </div>
+                  {row.meetUrl ? (
+                    <a
+                      href={row.meetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-flex font-mono text-[10px] text-brand-600"
+                    >
+                      {t(locale, 'panel.preOnboarding.openMeet')}
+                    </a>
+                  ) : null}
                 </div>
                 {!done ? (
                   <div className="flex flex-wrap gap-1.5">
+                    {isCall ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={S.btnGhost}
+                        onClick={() => setMeetUrl(row)}
+                      >
+                        {t(locale, 'panel.preOnboarding.meetUrlBtn')}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       disabled={busy}

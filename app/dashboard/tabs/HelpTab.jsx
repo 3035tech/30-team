@@ -236,7 +236,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     b2200RosterGrids: 4,
     birthdays: 4,
     lmsBasic: 4,
-    employeeHome: 3,
+    employeeHome: 5,
     compensation: 3,
     access: 9,
     tips: 11,

@@ -7,6 +7,7 @@ import {
   ensurePreOnboardingChecklist,
   listPreOnboardingItems,
   updatePreOnboardingItem,
+  setPreOnboardingMeetUrl,
 } from '../../../../../../lib/people/pre-onboarding';
 
 async function loadCandidateScope(candidateId, scope) {
@@ -66,12 +67,28 @@ export async function PATCH(request, { params }) {
     const itemId = Number(body.itemId || body.id);
     if (!Number.isFinite(itemId) || itemId <= 0) return apiError(request, ERR.INVALID_ID, 400);
 
+    if (body.action === 'setMeetUrl') {
+      const result = await setPreOnboardingMeetUrl(query, {
+        companyId: loaded.candidate.companyId,
+        candidateId,
+        itemId,
+        meetUrl: body.meetUrl,
+      });
+      if (!result.ok) {
+        const code = result.errorCode || ERR.INVALID_DATA;
+        const status = code === ERR.NOT_FOUND ? 404 : 400;
+        return apiError(request, code, status);
+      }
+      return NextResponse.json({ item: result.item });
+    }
+
     const result = await updatePreOnboardingItem(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
       itemId,
       status: body.status,
       notes: body.notes,
+      meetUrl: body.meetUrl,
       completedByUserId: payload.userId || null,
     });
     if (!result.ok) {

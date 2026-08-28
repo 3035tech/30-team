@@ -56,6 +56,13 @@ export function OnboardingCheckinsBlock({
   const complete = async (row, status) => {
     const fields = [
       {
+        key: 'meetUrl',
+        type: 'text',
+        label: t(locale, 'panel.onboarding.meetUrlLabel'),
+        placeholder: t(locale, 'panel.onboarding.meetUrlPh'),
+        initialValue: row.meetUrl || '',
+      },
+      {
         key: 'outcome',
         type: 'select',
         label: t(locale, 'panel.onboarding.outcomeLabel'),
@@ -92,6 +99,7 @@ export function OnboardingCheckinsBlock({
             status,
             outcome: values.outcome || '',
             notes: values.notes || '',
+            meetUrl: values.meetUrl,
             locale,
             seedPdi: values.outcome === 'develop' || values.outcome === 'concern',
           }),
@@ -107,6 +115,46 @@ export function OnboardingCheckinsBlock({
       );
       await load();
       if (data.pdiItem && typeof onPdiChanged === 'function') onPdiChanged();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.onboarding.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setMeetUrl = async (row) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.onboarding.meetUrlTitle'),
+      confirmLabel: t(locale, 'panel.onboarding.completeConfirm'),
+      fields: [
+        {
+          key: 'meetUrl',
+          type: 'text',
+          label: t(locale, 'panel.onboarding.meetUrlLabel'),
+          placeholder: t(locale, 'panel.onboarding.meetUrlPh'),
+          initialValue: row.meetUrl || '',
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/onboarding-checkins`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'setMeetUrl',
+            checkinId: row.id,
+            meetUrl: values.meetUrl,
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      toast(t(locale, 'panel.onboarding.saved'), 'ok');
+      await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.onboarding.saveError'), 'error');
     } finally {
@@ -159,7 +207,22 @@ export function OnboardingCheckinsBlock({
                       ? ` · ${t(locale, `panel.onboarding.outcome.${row.outcome}`)}`
                       : ''}
                     {done ? ` · ${t(locale, `panel.onboarding.status.${row.status}`)}` : ''}
+                    {row.employeeAckAt ? (
+                      <span className="ml-1 text-success">
+                        · {t(locale, 'panel.onboarding.employeeAcked')}
+                      </span>
+                    ) : null}
                   </div>
+                  {row.meetUrl ? (
+                    <a
+                      href={row.meetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-flex font-mono text-[10px] text-brand-600"
+                    >
+                      {t(locale, 'panel.onboarding.openMeet')}
+                    </a>
+                  ) : null}
                   {done && !isRichTextEmpty(row.notes) ? (
                     <div className="mt-1.5 text-xs text-ink-muted">
                       <RichTextView html={row.notes} className="text-xs leading-snug text-ink-muted" />
@@ -168,6 +231,14 @@ export function OnboardingCheckinsBlock({
                 </div>
                 {!done ? (
                   <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className={S.btnGhost}
+                      onClick={() => setMeetUrl(row)}
+                    >
+                      {t(locale, 'panel.onboarding.meetUrlBtn')}
+                    </button>
                     <button
                       type="button"
                       disabled={busy}

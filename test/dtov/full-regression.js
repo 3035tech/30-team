@@ -192,6 +192,7 @@ async function runOfflineLibs() {
       'ensureOnboardingCheckins',
       'listOnboardingCheckins',
       'updateOnboardingCheckin',
+      'setOnboardingCheckinMeetUrl',
       'getCompanyOnboardingPulse',
     ]) {
       if (!src.includes(`export async function ${name}`)) throw new Error(`missing ${name}`);
@@ -202,7 +203,36 @@ async function runOfflineLibs() {
     );
     if (!mig.includes('employee_onboarding_checkins')) throw new Error('mig table');
     if (!mig.includes('onboarding')) throw new Error('mig source');
+    const mig076 = await fs.readFile(
+      new URL('../../migrations/076_employee_onboarding_journey.sql', import.meta.url),
+      'utf8'
+    );
+    if (!mig076.includes('access_sheet')) throw new Error('mig076 access_sheet');
+    if (!mig076.includes('employee_ack_at')) throw new Error('mig076 ack');
     return 'b701 onboarding ok';
+  });
+
+  await check('lib', 'employee-onboarding-journey', async () => {
+    const { PRE_ONBOARDING_KEYS } = await import('../../lib/people/pre-onboarding.js');
+    const {
+      getEmployeeOnboardingJourney,
+      buildOnboardingTasksFromJourney,
+      employeeAckOnboardingItem,
+    } = await import('../../lib/people/employee-onboarding-journey.js');
+    if (!PRE_ONBOARDING_KEYS.includes('access_sheet')) {
+      throw new Error('missing access_sheet key');
+    }
+    if (typeof getEmployeeOnboardingJourney !== 'function') throw new Error('missing get');
+    const empty = buildOnboardingTasksFromJourney({ hasJourney: false });
+    if (empty.length !== 0) throw new Error('expected no tasks');
+    const ackBad = await employeeAckOnboardingItem(null, {
+      companyId: 1,
+      candidateId: 1,
+      kind: 'nope',
+      itemId: 1,
+    });
+    if (ackBad.ok) throw new Error('expected ack reject');
+    return 'employee journey lib ok';
   });
 
   await check('lib', 'retention-watch-notif', async () => {

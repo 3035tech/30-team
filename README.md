@@ -269,8 +269,9 @@ npm run dev
 5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /colaborador/cadastrar-senha
    → login e-mail/senha em /colaborador/login (cookie team30_employee_session; PDI self-serve,
-   LMS com player YouTube/Vimeo, seções colapsáveis, notifs Motivadores/PDI/LMS;
-   não acessa /dashboard). Magic link opcional. /e/<token> continua sem conta.
+   LMS com player YouTube/Vimeo, jornada **Minha chegada** (D1 + D30/D60/D90), seções colapsáveis,
+   notifs Motivadores/PDI/LMS; não acessa /dashboard). Magic link opcional. Ver `docs/employee-onboarding-journey.md`.
+   /e/<token> continua sem conta.
 ```
 
 ### Gestor no dashboard

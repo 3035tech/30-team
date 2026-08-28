@@ -16,6 +16,11 @@ import {
   verifyEmployeeToken,
 } from '../../lib/employee-auth.js';
 import { getEmployeeHome } from '../../lib/employee-home.js';
+import {
+  employeeAckOnboardingItem,
+  getEmployeeOnboardingJourney,
+} from '../../lib/people/employee-onboarding-journey.js';
+import { setPreOnboardingMeetUrl } from '../../lib/people/pre-onboarding.js';
 import { updateEmployeePdiItemStatus } from '../../lib/employee-pdi.js';
 import {
   EMPLOYEE_NOTIF,
@@ -176,6 +181,45 @@ async function main() {
   const ytCourse = home.courses.find((c) => c.courseId === course.course.id);
   assert.ok(ytCourse.lessons?.some((l) => l.embedUrl && l.embedUrl.includes('youtube.com/embed')));
   assert.ok(home.plans.some((p) => p.id === plan.plan.id));
+
+  const journey = await getEmployeeOnboardingJourney(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(journey.ok, true, journey.errorCode);
+  assert.equal(journey.hasJourney, true);
+  assert.ok(journey.preItems.length >= 3);
+  assert.ok(journey.checkins.length >= 3);
+
+  const kit = journey.preItems.find((i) => i.itemKey === 'welcome_kit');
+  assert.ok(kit?.id);
+  const ack = await employeeAckOnboardingItem(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    kind: 'pre',
+    itemId: kit.id,
+  });
+  assert.equal(ack.ok, true);
+
+  const rhCall = journey.preItems.find((i) => i.itemKey === 'rh_onboarding_call');
+  assert.ok(rhCall?.id);
+  const meet = await setPreOnboardingMeetUrl(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    itemId: rhCall.id,
+    meetUrl: 'https://meet.google.com/dtov-test',
+  });
+  assert.equal(meet.ok, true);
+  assert.equal(meet.item.meetUrl, 'https://meet.google.com/dtov-test');
+
+  const home2 = await getEmployeeHome(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    locale: 'pt-BR',
+  });
+  assert.equal(home2.ok, true);
+  assert.ok(home2.journey?.preItems?.some((i) => i.meetUrl?.includes('meet.google.com')));
+  assert.ok(home2.tasks.some((t) => t.kind === 'onboarding_pre' || t.kind === 'onboarding_checkin'));
 
   const pdiDone = await updateEmployeePdiItemStatus(query, {
     companyId: person.companyId,

@@ -7,6 +7,7 @@ import {
   ensureOnboardingCheckins,
   listOnboardingCheckins,
   updateOnboardingCheckin,
+  setOnboardingCheckinMeetUrl,
 } from '../../../../../../lib/people/onboarding-checkins';
 
 async function loadCandidateScope(candidateId, scope) {
@@ -66,6 +67,21 @@ export async function PATCH(request, { params }) {
     const checkinId = Number(body.checkinId || body.id);
     if (!Number.isFinite(checkinId) || checkinId <= 0) return apiError(request, ERR.INVALID_ID, 400);
 
+    if (body.action === 'setMeetUrl') {
+      const result = await setOnboardingCheckinMeetUrl(query, {
+        companyId: loaded.candidate.companyId,
+        candidateId,
+        checkinId,
+        meetUrl: body.meetUrl,
+      });
+      if (!result.ok) {
+        const code = result.errorCode || ERR.INVALID_DATA;
+        const status = code === ERR.NOT_FOUND ? 404 : 400;
+        return apiError(request, code, status);
+      }
+      return NextResponse.json({ item: result.item });
+    }
+
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
     const result = await updateOnboardingCheckin(query, {
       companyId: loaded.candidate.companyId,
@@ -74,6 +90,7 @@ export async function PATCH(request, { params }) {
       status: body.status,
       outcome: body.outcome,
       notes: body.notes,
+      meetUrl: body.meetUrl,
       completedByUserId: payload.userId || null,
       seedPdi: Boolean(body.seedPdi),
       locale,
