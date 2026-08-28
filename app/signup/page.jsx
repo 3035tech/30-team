@@ -9,6 +9,9 @@ import { BrandMark } from '../_components/BrandMark';
 import LanguageSelect from '../_components/LanguageSelect';
 import { cn } from '../../lib/cn';
 import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
+import TurnstileField from '../_components/TurnstileField';
+
+const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
 const inputClass = `${fieldInputClass} w-full px-4 py-3 text-[15px] placeholder:text-ink-faint focus:border-brand-300 focus:bg-white`;
 const selectClass = `${fieldSelectClass} w-full px-4 py-3 text-[15px]`;
@@ -27,6 +30,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
 
   const handleChange = (field) => (e) => {
     setFormData({ ...formData, [field]: e.target.value });
@@ -36,6 +41,14 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setTurnstileError(false);
+
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      setTurnstileError(true);
+      setLoading(false);
+      return;
+    }
 
     try {
       // Captura sessionId de analytics se houver
@@ -50,6 +63,7 @@ export default function SignupPage() {
           ...formData,
           locale,
           sessionId,
+          turnstileToken: turnstileToken || undefined,
         }),
       });
 
@@ -213,6 +227,15 @@ export default function SignupPage() {
               {error}
             </div>
           )}
+
+          {TURNSTILE_SITE_KEY ? (
+            <TurnstileField
+              siteKey={TURNSTILE_SITE_KEY}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          ) : null}
 
           <button
             type="submit"

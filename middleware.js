@@ -13,18 +13,21 @@ import {
   parseAttributionFromSearchParams,
   searchHasAttribution,
 } from './lib/job-attribution';
+import { applyContentSecurityPolicyHeaders } from './lib/security-csp';
+import { isCrawlerNoIndexPath } from './lib/crawler-guard';
 
 /** Cabeçalhos de segurança (baseline + HSTS/CSP opcionais via env). */
-function withSecurityHeaders(response) {
+function withSecurityHeaders(response, { noindex = false } = {}) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-  const csp = process.env.CSP_REPORT_ONLY?.trim();
-  if (csp) {
-    response.headers.set('Content-Security-Policy-Report-Only', csp);
+  if (noindex) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   }
+
+  applyContentSecurityPolicyHeaders(response);
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
   const hstsOn =
@@ -39,6 +42,11 @@ function withSecurityHeaders(response) {
     );
   }
   return response;
+}
+
+function secureResponse(request, response) {
+  const noindex = isCrawlerNoIndexPath(request.nextUrl.pathname);
+  return withJobAttributionCookie(request, withSecurityHeaders(response, { noindex }));
 }
 
 function withJobAttributionCookie(request, response) {
@@ -74,8 +82,27 @@ function isPublicEmployeeAuthPath(pathname) {
   );
 }
 
+const SESSION_EDGE_PATH = '/api/auth/session-edge';
+
+async function isManagerSessionLive(request) {
+  try {
+    const checkUrl = new URL(SESSION_EDGE_PATH, request.url);
+    const res = await fetch(checkUrl, {
+      headers: { cookie: request.headers.get('cookie') || '' },
+      cache: 'no-store',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === SESSION_EDGE_PATH) {
+    return secureResponse(request, NextResponse.next());
+  }
 
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/api/admin')) {
     const token = request.cookies.get(COOKIE_NAME)?.value;
@@ -83,19 +110,27 @@ export async function middleware(request) {
 
     if (!isManagerRole(payload)) {
       if (pathname.startsWith('/api/')) {
-        return withJobAttributionCookie(
+        return secureResponse(
           request,
-          withSecurityHeaders(
-            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
-          )
+          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
         );
       }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return withJobAttributionCookie(
-        request,
-        withSecurityHeaders(NextResponse.redirect(loginUrl))
-      );
+      return secureResponse(request, NextResponse.redirect(loginUrl));
+    }
+
+    const live = await isManagerSessionLive(request);
+    if (!live) {
+      if (pathname.startsWith('/api/')) {
+        return secureResponse(
+          request,
+          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
+        );
+      }
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return secureResponse(request, NextResponse.redirect(loginUrl));
     }
   }
 
@@ -108,21 +143,19 @@ export async function middleware(request) {
     const emp = empToken ? await verifyEmployeeTokenEdge(empToken) : null;
     if (!emp) {
       if (pathname.startsWith('/api/')) {
-        return withJobAttributionCookie(
+        return secureResponse(
           request,
-          withSecurityHeaders(
-            NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
-          )
+          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
         );
       }
-      return withJobAttributionCookie(
+      return secureResponse(
         request,
-        withSecurityHeaders(NextResponse.redirect(new URL('/colaborador/login', request.url)))
+        NextResponse.redirect(new URL('/colaborador/login', request.url))
       );
     }
   }
 
-  return withJobAttributionCookie(request, withSecurityHeaders(NextResponse.next()));
+  return secureResponse(request, NextResponse.next());
 }
 
 export const config = {

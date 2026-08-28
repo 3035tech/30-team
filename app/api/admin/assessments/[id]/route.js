@@ -92,12 +92,12 @@ export async function PATCH(request, { params }) {
            WHEN $2 = '${PIPELINE_STAGE.HIRED}' THEN COALESCE(hired_at, NOW())
            ELSE hired_at
          END
-       WHERE id = $1
+       WHERE id = $1 ${!isAdmin ? 'AND company_id = $5' : ''}
        RETURNING id, pipeline_stage AS "pipelineStage",
                  rejection_reason AS "rejectionReason",
                  start_date AS "startDate",
                  hired_at AS "hiredAt"`,
-      [id, stage, rejectionReason, startDate]
+      !isAdmin ? [id, stage, rejectionReason, startDate, companyId] : [id, stage, rejectionReason, startDate]
     );
 
     await query(
@@ -197,7 +197,10 @@ export async function DELETE(request, { params }) {
 
     const inviteId = row.rows[0]?.inviteId;
 
-    await query(`DELETE FROM assessments WHERE id = $1`, [id]);
+    await query(
+      `DELETE FROM assessments WHERE id = $1 ${!isAdmin ? 'AND company_id = $2' : ''}`,
+      !isAdmin ? [id, companyId] : [id]
+    );
 
     if (inviteId != null) {
       await query(

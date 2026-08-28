@@ -7,9 +7,13 @@ import {
   EMPLOYEE_COOKIE_NAME,
   consumeEmployeeMagicToken,
   employeeSessionCookieOptions,
-  signEmployeeToken,
 } from '../../../../../lib/employee-auth.js';
 import { getEmployeeSessionPayload } from '../../../../../lib/employee-session.js';
+import {
+  employee2faRequired,
+  signEmployee2faChallenge,
+} from '../../../../../lib/employee-2fa.js';
+import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,19 +58,23 @@ export async function POST(request) {
       );
     }
 
-    const jwt = signEmployeeToken({
+    const needs2fa = await employee2faRequired(consumed.candidateId, consumed.companyId);
+    if (needs2fa) {
+      return NextResponse.json({
+        ok: true,
+        requires2fa: true,
+        challengeToken: signEmployee2faChallenge({
+          candidateId: consumed.candidateId,
+          companyId: consumed.companyId,
+        }),
+      });
+    }
+
+    return buildEmployeeLoginResponse({
       candidateId: consumed.candidateId,
       companyId: consumed.companyId,
       email: consumed.email,
       locale,
-    });
-    const jar = cookies();
-    jar.set(EMPLOYEE_COOKIE_NAME, jwt, employeeSessionCookieOptions());
-
-    return NextResponse.json({
-      ok: true,
-      candidateId: consumed.candidateId,
-      companyId: consumed.companyId,
       fullName: consumed.fullName,
     });
   } catch (err) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
@@ -24,6 +24,24 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPassword2, setNewPassword2] = useState('');
+  const [twoFaCanUse, setTwoFaCanUse] = useState(false);
+  const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+  const [twoFaSetupSecret, setTwoFaSetupSecret] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
+  const [twoFaBusy, setTwoFaBusy] = useState(false);
+
+  const load2fa = async () => {
+    try {
+      const res = await fetch('/api/me/2fa');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      setTwoFaCanUse(Boolean(data.canUse2Fa));
+      setTwoFaEnabled(Boolean(data.enabled));
+    } catch {
+      /* ignore */
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -37,10 +55,84 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       setDisplayName(u.displayName || '');
       setRole(u.role || '');
       setCompanyName(u.companyName || '');
+      await load2fa();
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const start2faSetup = async () => {
+    setTwoFaBusy(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch('/api/me/2fa', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || t(locale, 'panel.common.error'));
+      }
+      setTwoFaSetupSecret(data.secret || '');
+      setTwoFaCode('');
+      setMsg('');
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setTwoFaBusy(false);
+    }
+  };
+
+  const confirmEnable2fa = async () => {
+    if (!twoFaCode.trim()) return;
+    setTwoFaBusy(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch('/api/me/2fa', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: twoFaCode.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || t(locale, 'panel.common.error'));
+      }
+      setTwoFaEnabled(true);
+      setTwoFaSetupSecret('');
+      setTwoFaCode('');
+      setMsg(t(locale, 'dashboard.profile2faEnabledOk'));
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setTwoFaBusy(false);
+    }
+  };
+
+  const disable2fa = async () => {
+    if (!twoFaCode.trim() || !twoFaDisablePassword) return;
+    setTwoFaBusy(true);
+    setError('');
+    setMsg('');
+    try {
+      const res = await fetch('/api/me/2fa', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: twoFaCode.trim(), password: twoFaDisablePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || t(locale, 'panel.common.error'));
+      }
+      setTwoFaEnabled(false);
+      setTwoFaSetupSecret('');
+      setTwoFaCode('');
+      setTwoFaDisablePassword('');
+      setMsg(t(locale, 'dashboard.profile2faDisabledOk'));
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setTwoFaBusy(false);
     }
   };
 
@@ -172,6 +264,107 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 />
               </label>
             </div>
+
+            {twoFaCanUse ? (
+              <div className="mt-1 border-t border-ink/12 pt-3.5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profile2faSection')}</span>
+                  <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+                    {t(locale, 'dashboard.profile2faOptionalBadge')}
+                  </span>
+                </div>
+                <p className="mb-3 text-[13px] leading-relaxed text-ink-muted">
+                  {t(locale, 'dashboard.profile2faIntro')}
+                </p>
+                {twoFaEnabled ? (
+                  <div className="space-y-3">
+                    <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
+                    <label className="block">
+                      <span className="font-mono text-[11px] text-ink-faint">
+                        {t(locale, 'dashboard.profile2faCode')}
+                      </span>
+                      <input
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        value={twoFaCode}
+                        onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className={inputClass}
+                        maxLength={6}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-mono text-[11px] text-ink-faint">
+                        {t(locale, 'dashboard.profile2faDisablePassword')}
+                      </span>
+                      <input
+                        type="password"
+                        autoComplete="current-password"
+                        value={twoFaDisablePassword}
+                        onChange={(e) => setTwoFaDisablePassword(e.target.value)}
+                        className={inputClass}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={disable2fa}
+                      disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
+                      className={cn(
+                        'min-h-touch cursor-pointer rounded-control border border-danger/30 bg-danger/10 px-4 py-2.5 font-mono text-xs text-danger',
+                        (twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword) && 'cursor-default opacity-60'
+                      )}
+                    >
+                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
+                    </button>
+                  </div>
+                ) : twoFaSetupSecret ? (
+                  <div className="space-y-3">
+                    <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
+                    <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-[11px]">
+                      {twoFaSetupSecret}
+                    </code>
+                    <label className="block">
+                      <span className="font-mono text-[11px] text-ink-faint">
+                        {t(locale, 'dashboard.profile2faCode')}
+                      </span>
+                      <input
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        value={twoFaCode}
+                        onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className={inputClass}
+                        maxLength={6}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={confirmEnable2fa}
+                      disabled={twoFaBusy || twoFaCode.length !== 6}
+                      className={cn(
+                        'min-h-touch cursor-pointer rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-600',
+                        (twoFaBusy || twoFaCode.length !== 6) && 'cursor-default opacity-60'
+                      )}
+                    >
+                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-ink-muted">{t(locale, 'dashboard.profile2faDisabled')}</p>
+                    <button
+                      type="button"
+                      onClick={start2faSetup}
+                      disabled={twoFaBusy}
+                      className={cn(
+                        'min-h-touch cursor-pointer rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-600',
+                        twoFaBusy && 'cursor-default opacity-60'
+                      )}
+                    >
+                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {error ? (
               <p className="m-0 font-mono text-xs text-danger">{error}</p>

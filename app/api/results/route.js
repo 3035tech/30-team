@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../lib/db';
-import { verifyToken, COOKIE_NAME } from '../../../lib/auth';
+import { COOKIE_NAME } from '../../../lib/auth';
 import { cookies } from 'next/headers';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 import { apiError, ERR } from '../../../lib/api-error';
 import { JOB_ATTR_COOKIE } from '../../../lib/job-attribution';
 import { normalizeAssessmentTelemetry, submitAssessmentResult } from '../../../lib/assessment-submit';
+import { verifySessionWithCapabilities } from '../../../lib/session';
+
 
 // POST /api/results — salva resultado de um candidato (com área)
 export async function POST(request) {
@@ -60,7 +62,7 @@ export async function POST(request) {
 export async function GET(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
+  const payload = await verifySessionWithCapabilities(token);
 
   if (!payload || payload?.role !== 'admin') {
     return apiError(request, ERR.UNAUTHORIZED, 401);

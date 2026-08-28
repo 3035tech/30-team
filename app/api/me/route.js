@@ -5,6 +5,7 @@ import { query } from '../../../lib/db';
 import { LOCALE_COOKIE, normalizeLocale } from '../../../lib/i18n';
 import { apiError, ERR } from '../../../lib/api-error';
 import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../lib/session';
+import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 
 async function requireSession(request) {
   const cookieStore = cookies();
@@ -64,6 +65,14 @@ export async function PATCH(request) {
   if (error) return error;
 
   const body = await request.json().catch(() => ({}));
+  if (body.newPassword != null && String(body.newPassword).length > 0) {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`me-password:${payload.userId}:${ip}`, 10, 15 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+    }
+  }
+
   const current = await query(
     `SELECT id, email, role, company_id AS "companyId", password_hash AS "passwordHash", locale
      FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,

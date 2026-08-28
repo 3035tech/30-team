@@ -69,7 +69,8 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Landpage** (`/`) → CTA direto para `/signup` (sem `mailto`)
 - **Signup** cria automaticamente:
   - User pendente (`signup_pending = TRUE`, `onboarding_completed = FALSE`, role `direction`)
-  - Company nova (ou associa a existente por `@domain` se `SIGNUP_DOMAIN_MATCH=true`)
+  - Company nova (ou associa a existente por `@domain` se `SIGNUP_DOMAIN_MATCH=true` — **manter false em prod**; join usa role `hr`, não `direction`)
+  - Rate limit no signup (8/15min por IP); resposta `{ ok: true }` sem IDs no body
   - Token de ativação (72h) enviado por e-mail
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
 - **Admin Leads** (`/dashboard?tab=leads`) — cohort `/signup` para contato futuro (pendentes e ativos). Em **Usuários**, cadastro normal = Origem Painel; quem veio do onboarding = Early access (também aparece em Usuários quando já está no sistema).

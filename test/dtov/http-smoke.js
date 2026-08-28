@@ -26,6 +26,8 @@ const HR = {
 /** Demo employee (seed Todos os Dados) — used for People/1:1 HTTP coverage. */
 const FIXTURE_PEOPLE = {
   searchName: 'Elena Ferreira',
+  email: 'elena@todos-os-dados.demo',
+  password: 'ColabTest!2026',
 };
 
 const ADMIN = {
@@ -127,13 +129,21 @@ export async function runHttpSmoke(baseUrl) {
   }
   {
     const token = process.env.HEALTH_STATUS_TOKEN || '';
-    const { res, data } = await req(
-      base,
-      `/api/health/status${token ? `?token=${encodeURIComponent(token)}` : ''}`
-    );
-    // Sem token → 401; com token → 200/503
+    const { res, data } = await req(base, '/api/health/status', {
+      headers: token ? { 'X-Health-Status-Token': token } : {},
+    });
+    // Sem token → 401; com header → 200/503
     if (!token) await expectStatus('health', 'status-no-token', res.status, [401]);
     else await expectStatus('health', 'status-authed', res.status, [200, 503], data?.status || '');
+  }
+  {
+    const token = process.env.HEALTH_STATUS_TOKEN || '';
+    if (token) {
+      const { res } = await req(base, `/api/health/status?token=${encodeURIComponent(token)}`);
+      await expectStatus('health', 'status-query-rejected', res.status, [401]);
+    } else {
+      ok('health', 'status-query-rejected', 'skipped (no token)');
+    }
   }
 
   // ── Public JSON ───────────────────────────────────────────────────────
@@ -232,7 +242,21 @@ export async function runHttpSmoke(baseUrl) {
     if (res.status !== 200) fail('seo', 'robots', `status ${res.status}`);
     else if (!/sitemap/i.test(body)) fail('seo', 'robots', 'missing Sitemap line');
     else if (!/Disallow:\s*\/dashboard/i.test(body)) fail('seo', 'robots', 'missing dashboard disallow');
+    else if (/Disallow:\s*\/jobs/i.test(body)) fail('seo', 'robots-jobs-open', '/jobs must stay crawlable');
+    else if (!/Disallow:\s*\/t\//i.test(body)) fail('seo', 'robots-token-paths', 'missing /t/ disallow');
     else ok('seo', 'robots', `HTTP ${res.status}`);
+  }
+  {
+    const { res } = await req(base, `/v/${TOK.vacancyOpen}`);
+    const tag = String(res.headers.get('x-robots-tag') || '');
+    if (!/noindex/i.test(tag)) fail('seo', 'v-noindex-header', tag || 'missing');
+    else ok('seo', 'v-noindex-header', tag);
+  }
+  if (canonicalOpenPath) {
+    const { res } = await req(base, canonicalOpenPath);
+    const tag = String(res.headers.get('x-robots-tag') || '');
+    if (/noindex/i.test(tag)) fail('seo', 'jobs-no-noindex-header', tag);
+    else ok('seo', 'jobs-no-noindex-header', tag || 'absent');
   }
   {
     const { res, text } = await req(base, '/sitemap.xml');
@@ -294,6 +318,54 @@ export async function runHttpSmoke(baseUrl) {
   {
     const { res } = await req(base, '/api/me/notifications', { cookie: hrCookie });
     await expectStatus('auth', 'notifications', res.status, [200]);
+  }
+  // Session revocation: bumped session_version must reject /api/me/notifications
+  {
+    const { Client } = await import('pg');
+    const client = new Client({
+      host: process.env.POSTGRES_HOST || '127.0.0.1',
+      port: Number(process.env.POSTGRES_PORT || 55432),
+      database: process.env.POSTGRES_DB || 'enneagram_dtov',
+      user: process.env.POSTGRES_USER || 'dtov',
+      password: process.env.POSTGRES_PASSWORD || 'dtov_local_only',
+      ssl: false,
+    });
+    try {
+      await client.connect();
+      await client.query(
+        `UPDATE users SET session_version = session_version + 1 WHERE LOWER(email) = LOWER($1)`,
+        [HR.email]
+      );
+      const { res } = await req(base, '/api/me/notifications', { cookie: hrCookie });
+      await expectStatus('auth', 'notifications-revoked', res.status, [401]);
+      hrCookie = await login(base, HR);
+      ok('auth', 'login-hr-after-revoke', 'session renewed');
+      const { res: dashRevoked } = await req(base, '/dashboard?tab=overview', { cookie: hrCookie });
+      if (![200, 302, 307].includes(dashRevoked.status)) {
+        fail('auth', 'dashboard-after-relogin', `status ${dashRevoked.status}`);
+      } else {
+        ok('auth', 'dashboard-after-relogin', `HTTP ${dashRevoked.status}`);
+      }
+      await client.query(
+        `UPDATE users SET session_version = session_version + 1 WHERE LOWER(email) = LOWER($1)`,
+        [HR.email]
+      );
+      const { res: dashDead } = await req(base, '/dashboard?tab=overview', { cookie: hrCookie });
+      if (![302, 307, 401].includes(dashDead.status)) {
+        fail('auth', 'dashboard-revoked-middleware', `status ${dashDead.status}`);
+      } else {
+        ok('auth', 'dashboard-revoked-middleware', `HTTP ${dashDead.status}`);
+      }
+      hrCookie = await login(base, HR);
+    } catch (e) {
+      fail('auth', 'notifications-revoked', e?.message || e);
+    } finally {
+      try {
+        await client.end();
+      } catch {
+        /* ignore */
+      }
+    }
   }
   {
     const { res } = await req(base, '/api/me/locale', {
@@ -694,6 +766,106 @@ export async function runHttpSmoke(baseUrl) {
     fail('people', 'fixture-candidate', 'no candidate in HR company (demo seed missing?)');
   }
 
+  // Employee portal — password login + home API
+  {
+    const { Client } = await import('pg');
+    const bcrypt = await import('bcryptjs');
+    const client = new Client({
+      host: process.env.POSTGRES_HOST || '127.0.0.1',
+      port: Number(process.env.POSTGRES_PORT || 55432),
+      database: process.env.POSTGRES_DB || 'enneagram_dtov',
+      user: process.env.POSTGRES_USER || 'dtov',
+      password: process.env.POSTGRES_PASSWORD || 'dtov_local_only',
+      ssl: false,
+    });
+    try {
+      await client.connect();
+      const hash = bcrypt.default.hashSync(FIXTURE_PEOPLE.password, 10);
+      const upd = await client.query(
+        `UPDATE candidates
+         SET password_hash = $1, password_setup_token = NULL
+         WHERE LOWER(email) = LOWER($2) AND employment_status = 'employee'
+         RETURNING id, company_id AS "companyId"`,
+        [hash, FIXTURE_PEOPLE.email]
+      );
+      if (!upd.rowCount) {
+        fail('employee', 'password-seed', `${FIXTURE_PEOPLE.email} not found`);
+      } else {
+        ok('employee', 'password-seed', String(upd.rows[0].id));
+        const loginRes = await req(base, '/api/auth/employee/login', {
+          method: 'POST',
+          body: {
+            email: FIXTURE_PEOPLE.email,
+            password: FIXTURE_PEOPLE.password,
+            companyId: upd.rows[0].companyId,
+            locale: 'pt-BR',
+          },
+        });
+        const empCookie = cookieHeaderFromSetCookie(loginRes.setCookie);
+        if (!(loginRes.res.status === 200 && empCookie.includes('team30_employee_session'))) {
+          fail('employee', 'login', `status ${loginRes.res.status}`);
+        } else {
+          ok('employee', 'login', FIXTURE_PEOPLE.email);
+          const { res: homeRes, data: homeData } = await req(base, '/api/employee/home', {
+            cookie: empCookie,
+          });
+          if (await expectStatus('employee', 'home', homeRes.status, [200])) {
+            ok('employee', 'home-shape', homeData?.fullName ? 'ok' : 'minimal');
+          }
+          const { res: colPage } = await req(base, '/colaborador', { cookie: empCookie });
+          if (colPage.status === 200) ok('employee', 'hub-page', 'HTTP 200');
+          else fail('employee', 'hub-page', `status ${colPage.status}`);
+        }
+      }
+    } catch (e) {
+      fail('employee', 'flow', e?.message || e);
+    } finally {
+      try {
+        await client.end();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  // Internal compensation timeline (HR)
+  if (peopleCandidateId) {
+    const { res: compGet, data: compData } = await req(
+      base,
+      `/api/admin/candidates/${peopleCandidateId}/compensation`,
+      { cookie: hrCookie }
+    );
+    if (await expectStatus('compensation', 'get', compGet.status, [200])) {
+      ok('compensation', 'get-shape', Array.isArray(compData?.items) ? `n=${compData.items.length}` : 'items');
+    }
+    const { res: compPost, data: compPostData } = await req(
+      base,
+      `/api/admin/candidates/${peopleCandidateId}/compensation`,
+      {
+        method: 'POST',
+        cookie: hrCookie,
+        body: {
+          eventType: 'bonus',
+          amount: '1500.00',
+          effectiveDate: '2026-01-01',
+          notes: 'DTOV smoke bonus',
+        },
+      }
+    );
+    if (await expectStatus('compensation', 'create', compPost.status, [200, 201])) {
+      const eventId = compPostData?.event?.id;
+      ok('compensation', 'create-id', String(eventId || ''));
+      if (eventId) {
+        const { res: compDel } = await req(
+          base,
+          `/api/admin/candidates/${peopleCandidateId}/compensation/${eventId}`,
+          { method: 'DELETE', cookie: hrCookie }
+        );
+        await expectStatus('compensation', 'delete', compDel.status, [200, 204]);
+      }
+    }
+  }
+
   // Climate surveys (anonymous structure)
   {
     const { res: listRes, data: listData } = await req(base, '/api/admin/climate-surveys', { cookie: hrCookie });
@@ -923,14 +1095,14 @@ export async function runHttpSmoke(baseUrl) {
             locale: 'pt-BR',
           },
         });
-        if (!(res.status === 200 && data?.ok && data?.action === 'created')) {
+        if (!(res.status === 200 && data?.ok)) {
           fail(
             'signup',
             'create',
             `status ${res.status} body=${JSON.stringify(data).slice(0, 240)}`
           );
         } else {
-          ok('signup', 'create', `userId=${data.userId} companyId=${data.companyId}`);
+          ok('signup', 'create', 'ok');
         }
       }
 
@@ -984,7 +1156,7 @@ export async function runHttpSmoke(baseUrl) {
             locale: 'pt-BR',
           },
         });
-        if (!(res.status === 200 && data?.ok && data?.action === 'resent')) {
+        if (!(res.status === 200 && data?.ok)) {
           fail('signup', 'resent', `status ${res.status} ${JSON.stringify(data).slice(0, 160)}`);
         } else {
           const u2 = await client.query(

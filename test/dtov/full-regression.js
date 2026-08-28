@@ -466,6 +466,18 @@ async function runOfflineLibs() {
     if (/<script/i.test(clean)) throw new Error('script survived');
     if (!htmlToPlainText(clean).includes('oi')) throw new Error('text lost');
 
+    const xss = sanitizeInterviewNotesHtml(
+      '<p>ok</p><img src=x onerror=alert(1)><svg onload=alert(1)></svg><a href="javascript:evil">x</a>'
+    );
+    if (/<img|<svg|onerror|onload|javascript:/i.test(xss || '')) {
+      throw new Error(`unsafe html survived: ${xss}`);
+    }
+
+    const linkOk = sanitizeInterviewNotesHtml('<p><a href="https://example.com">site</a></p>');
+    if (!linkOk || !linkOk.includes('href="https://example.com"')) {
+      throw new Error(`safe link stripped: ${linkOk}`);
+    }
+
     const fromMd = normalizeAiRichTextHtml('```html\n## Sobre a vaga\n**Texto** com *marca*\n```');
     if (!fromMd || /```|\*\*|<strong|<em/i.test(fromMd)) {
       throw new Error(`markup leaked: ${fromMd}`);
@@ -474,6 +486,57 @@ async function runOfflineLibs() {
       throw new Error(`structure lost: ${fromMd}`);
     }
     return 'sanitized';
+  });
+
+  await check('lib', 'crawler-guard', async () => {
+    const { isCrawlerNoIndexPath, robotsDisallowPaths } = await import('../../lib/crawler-guard.js');
+    if (!isCrawlerNoIndexPath('/v/abc')) throw new Error('/v should noindex');
+    if (!isCrawlerNoIndexPath('/t/abc')) throw new Error('/t should noindex');
+    if (isCrawlerNoIndexPath('/jobs/engenheiro-1')) throw new Error('/jobs must stay indexable');
+    if (isCrawlerNoIndexPath('/jobs')) throw new Error('/jobs index must stay indexable');
+    if (isCrawlerNoIndexPath('/companies/acme')) throw new Error('/companies must stay indexable');
+    const dis = robotsDisallowPaths();
+    if (dis.some((p) => p.startsWith('/jobs'))) throw new Error('robots must not disallow jobs');
+    if (!dis.includes('/t/')) throw new Error('robots missing /t/');
+    const { buildRobotsRules, AI_CRAWLER_USER_AGENTS } = await import('../../lib/crawler-guard.js');
+    const rules = buildRobotsRules();
+    const gpt = rules.find((r) => r.userAgent === 'GPTBot');
+    if (!gpt || gpt.disallow !== '/' || !gpt.allow?.includes('/llms.txt')) {
+      throw new Error('GPTBot rules wrong');
+    }
+    if (AI_CRAWLER_USER_AGENTS.length < 5) throw new Error('AI crawlers list too short');
+    return 'jobs open, tokens blocked';
+  });
+
+  await check('lib', 'totp-optional-2fa', async () => {
+    const { generateTotpSecret, verifyTotpCode, buildOtpAuthUrl } = await import('../../lib/totp.js');
+    const { roleMayUse2Fa } = await import('../../lib/manager-2fa.js');
+    const {
+      signEmployee2faChallenge,
+      verifyEmployee2faChallenge,
+    } = await import('../../lib/employee-2fa.js');
+    if (!roleMayUse2Fa('admin') || !roleMayUse2Fa('hr') || !roleMayUse2Fa('direction')) {
+      throw new Error('managers should use 2FA');
+    }
+    const empChallenge = signEmployee2faChallenge({ candidateId: 1, companyId: 2 });
+    const empParsed = verifyEmployee2faChallenge(empChallenge);
+    if (!empParsed || empParsed.candidateId !== 1 || empParsed.companyId !== 2) {
+      throw new Error('employee challenge roundtrip failed');
+    }
+    const secret = generateTotpSecret();
+    if (secret.length < 16) throw new Error('short secret');
+    const url = buildOtpAuthUrl({ secret, email: 'a@b.com' });
+    if (!url.includes('otpauth://totp/')) throw new Error('bad otpauth url');
+    if (verifyTotpCode(secret, 'abc')) throw new Error('reject non-digit');
+    const vectorSecret = 'JBSWY3DPEHPK3PXP';
+    const orig = Date.now;
+    Date.now = () => 59 * 1000;
+    try {
+      if (!verifyTotpCode(vectorSecret, '996554')) throw new Error('RFC6238 vector failed');
+    } finally {
+      Date.now = orig;
+    }
+    return 'totp + manager/employee optional ok';
   });
 
   await check('lib', 'vacancy-public-allow-index-default', async () => {
@@ -610,6 +673,26 @@ async function runOfflineLibs() {
     return 'invite helpers ok';
   });
 
+  await check('lib', 'file-magic', async () => {
+    const { detectImageMimeFromBuffer, isPdfBuffer, bufferMatchesImageMime } = await import(
+      '../../lib/file-magic.js'
+    );
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
+    if (detectImageMimeFromBuffer(png) !== 'image/png') throw new Error('png');
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00]);
+    if (detectImageMimeFromBuffer(jpeg) !== 'image/jpeg') throw new Error('jpeg');
+    const webp = Buffer.concat([
+      Buffer.from('RIFF', 'ascii'),
+      Buffer.alloc(4),
+      Buffer.from('WEBP', 'ascii'),
+    ]);
+    if (detectImageMimeFromBuffer(webp) !== 'image/webp') throw new Error('webp');
+    const pdf = Buffer.from('%PDF-1.4\n');
+    if (!isPdfBuffer(pdf)) throw new Error('pdf');
+    if (bufferMatchesImageMime(Buffer.alloc(8), 'image/png')) throw new Error('empty png');
+    return 'magic bytes ok';
+  });
+
   await check('lib', 'company-logo-validate', async () => {
     const {
       assertValidCompanyLogoFile,
@@ -618,12 +701,24 @@ async function runOfflineLibs() {
       COMPANY_LOGO_MAX_BYTES,
     } = await import('../../lib/company-logo.js');
     if (isCompanyLogoStorageConfigured()) throw new Error('expected storage off in offline/DTOV default');
+    const pngSig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const pngBuf = Buffer.concat([pngSig, Buffer.alloc(92)]);
     const ok = assertValidCompanyLogoFile({
       mimeType: 'image/png',
-      size: 100,
-      buffer: Buffer.alloc(100),
+      size: pngBuf.length,
+      buffer: pngBuf,
     });
     if (ok.ext !== 'png') throw new Error('ext');
+    try {
+      assertValidCompanyLogoFile({
+        mimeType: 'image/png',
+        size: 100,
+        buffer: Buffer.alloc(100),
+      });
+      throw new Error('fake png should fail magic');
+    } catch (e) {
+      if (e?.code !== 'INVALID_LOGO_TYPE') throw e;
+    }
     try {
       assertValidCompanyLogoFile({ mimeType: 'image/svg+xml', size: 10 });
       throw new Error('svg should fail');

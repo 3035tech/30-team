@@ -10,6 +10,18 @@ import {
 /** GET /api/public/climate/[token] — anonymous survey form (no PII). */
 export async function GET(request, { params }) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`public-climate-get:${ip}`, 90, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(
+        request,
+        ERR.RATE_LIMIT,
+        429,
+        {},
+        { headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const token = params?.token;
     const resolved = await resolveClimateInviteByToken(query, token);
     if (!resolved.ok) {

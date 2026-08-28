@@ -22,6 +22,29 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [companies, setCompanies] = useState(null);
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [challengeToken, setChallengeToken] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+
+  const verify2fa = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/auth/employee/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeToken, code: twoFaCode, locale }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || t(locale, 'login.twoFaVerifying'));
+      setRequires2fa(false);
+      setChallengeToken('');
+      router.replace('/colaborador');
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const login = async (companyId = null) => {
     setBusy(true);
@@ -43,6 +66,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         return;
       }
       if (!res.ok) throw new Error(json?.error || t(locale, 'employeeHome.loginError'));
+      if (json.requires2fa && json.challengeToken) {
+        setRequires2fa(true);
+        setChallengeToken(json.challengeToken);
+        setCompanies(null);
+        return;
+      }
       setCompanies(null);
       router.replace('/colaborador');
     } catch (e) {
@@ -122,17 +151,54 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         <BrandMark size={36} withWordmark />
         <h1 className="mt-4 font-display text-2xl text-ink">{t(locale, 'employeeHome.loginTitle')}</h1>
         <p className={cn(S.muted, 'mt-2 text-sm')}>
-          {mode === 'forgot'
-            ? t(locale, 'employeeHome.forgotHint')
-            : mode === 'magic'
-              ? t(locale, 'employeeHome.loginHintMagic')
-              : t(locale, 'employeeHome.loginHint')}
+          {requires2fa
+            ? t(locale, 'login.twoFaIntro')
+            : mode === 'forgot'
+              ? t(locale, 'employeeHome.forgotHint')
+              : mode === 'magic'
+                ? t(locale, 'employeeHome.loginHintMagic')
+                : t(locale, 'employeeHome.loginHint')}
         </p>
       </div>
 
-      {sent && mode !== 'login' ? (
+      {sent && mode !== 'login' && !requires2fa ? (
         <div className="rounded-control border border-success/30 bg-success/5 p-4 text-sm text-ink">
           {mode === 'forgot' ? t(locale, 'employeeHome.forgotSentBody') : t(locale, 'employeeHome.linkSentBody')}
+        </div>
+      ) : requires2fa ? (
+        <div className="flex flex-col gap-3">
+          <label className="block text-xs text-ink-muted">
+            {t(locale, 'login.twoFaCode')}
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className={cn(S.input, 'mt-1 w-full')}
+              value={twoFaCode}
+              onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
+              maxLength={6}
+              disabled={busy}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busy || twoFaCode.length !== 6}
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center')}
+            onClick={verify2fa}
+          >
+            {busy ? t(locale, 'login.twoFaVerifying') : t(locale, 'login.twoFaSubmit')}
+          </button>
+          <button
+            type="button"
+            className="cursor-pointer border-none bg-transparent p-0 font-display text-xs text-ink-muted"
+            onClick={() => {
+              setRequires2fa(false);
+              setChallengeToken('');
+              setTwoFaCode('');
+            }}
+          >
+            ← {t(locale, 'employeeHome.backToPasswordLogin')}
+          </button>
         </div>
       ) : (
         <form
@@ -203,7 +269,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       )}
 
       <div className="mt-6 flex flex-col gap-2 text-center text-xs">
-        {mode === 'login' ? (
+        {!requires2fa && mode === 'login' ? (
           <>
             <button
               type="button"
@@ -228,7 +294,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
               {t(locale, 'employeeHome.useMagicLink')}
             </button>
           </>
-        ) : (
+        ) : !requires2fa ? (
           <button
             type="button"
             className="cursor-pointer border-none bg-transparent p-0 font-display text-ink-muted"
@@ -240,10 +306,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           >
             {t(locale, 'employeeHome.backToPasswordLogin')}
           </button>
-        )}
-        <Link href="/login" className="mt-2 text-brand-600 hover:underline">
-          {t(locale, 'employeeHome.managerLogin')}
-        </Link>
+        ) : null}
+        {!requires2fa ? (
+          <Link href="/login" className="mt-2 text-brand-600 hover:underline">
+            {t(locale, 'employeeHome.managerLogin')}
+          </Link>
+        ) : null}
       </div>
     </div>
   );

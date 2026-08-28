@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../lib/db';
-import {
-  verifyPassword,
-  signToken,
-  COOKIE_NAME,
-  MAX_AGE,
-  sessionCookieOptions,
-} from '../../../../lib/auth';
-import { audit } from '../../../../lib/audit';
-import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
-import { LOCALE_COOKIE, normalizeLocale } from '../../../../lib/i18n';
-import { apiError, ERR } from '../../../../lib/api-error';
+import { query } from '../../../../lib/db.js';
+import { verifyPassword } from '../../../../lib/auth.js';
+import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error.js';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
+import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
+import { sign2faChallenge, roleMayUse2Fa } from '../../../../lib/manager-2fa.js';
+import { buildManagerLoginResponse } from '../../../../lib/manager-login-session.js';
 
 export async function POST(request) {
   try {
@@ -20,7 +15,13 @@ export async function POST(request) {
       return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
     }
 
-    const { email, password } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+    if (!turnstile.ok) {
+      return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+    }
+
+    const { email, password } = body;
 
     if (!email || !password) {
       return apiError(request, ERR.REQUIRED_LOGIN, 400);
@@ -39,6 +40,7 @@ export async function POST(request) {
          u.company_id AS "companyId",
          u.deleted AS "userDeleted",
          COALESCE(u.session_version, 1) AS "sessionVersion",
+         u.totp_enabled_at AS "totpEnabledAt",
          c.deleted AS "companyDeleted"
        FROM users u
        LEFT JOIN companies c ON c.id = u.company_id
@@ -72,38 +74,15 @@ export async function POST(request) {
       /* best-effort */
     }
 
-    const locale = normalizeLocale(u.locale);
-    const sv = Number(u.sessionVersion) >= 1 ? Number(u.sessionVersion) : 1;
-    const token = signToken({
-      userId: u.id,
-      role: u.role,
-      companyId: u.companyId ?? null,
-      locale,
-      sv,
-    });
-    const response = NextResponse.json({
-      ok: true,
-      mustChangePassword: Boolean(u.mustChangePassword),
-    });
+    if (u.totpEnabledAt && roleMayUse2Fa(u.role)) {
+      return NextResponse.json({
+        ok: true,
+        requires2fa: true,
+        challengeToken: sign2faChallenge(u.id),
+      });
+    }
 
-    response.cookies.set(COOKIE_NAME, token, sessionCookieOptions({ maxAge: MAX_AGE }));
-    response.cookies.set(LOCALE_COOKIE, locale, {
-      httpOnly: false,
-      secure: sessionCookieOptions().secure,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365,
-      path: '/',
-    });
-
-    await audit({
-      actorUserId: u.id,
-      action: 'auth.login',
-      targetType: 'user',
-      targetId: u.id,
-      metadata: { email: u.email, role: u.role },
-    });
-
-    return response;
+    return buildManagerLoginResponse(u);
   } catch (error) {
     console.error('Erro no login:', error);
     return apiError(request, ERR.INTERNAL, 500);

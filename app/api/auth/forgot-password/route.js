@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { apiError, ERR } from '../../../../lib/api-error';
+import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { requestPasswordResetByEmail } from '../../../../lib/user-password-invite';
 import { audit } from '../../../../lib/audit';
 import { normalizeLocale } from '../../../../lib/i18n';
+import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,12 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => ({}));
+
+  const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+  if (!turnstile.ok) {
+    return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+  }
+
   const email = String(body.email || '').trim().toLowerCase();
   const locale = normalizeLocale(body.locale || 'pt-BR');
 

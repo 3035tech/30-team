@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { t } from '../../../lib/i18n';
+import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -26,6 +26,22 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
     birthDate: '',
   });
   const [pwd, setPwd] = useState({ current: '', next: '', confirm: '' });
+  const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+  const [twoFaSetupSecret, setTwoFaSetupSecret] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
+  const [twoFaBusy, setTwoFaBusy] = useState(false);
+
+  const load2fa = useCallback(async () => {
+    try {
+      const res = await fetch('/api/employee/me/2fa');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      setTwoFaEnabled(Boolean(data.enabled));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,16 +63,80 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         state: p.state || '',
         birthDate: p.birthDate || '',
       });
+      await load2fa();
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
     } finally {
       setLoading(false);
     }
-  }, [locale, router, toast]);
+  }, [locale, router, toast, load2fa]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const start2faSetup = async () => {
+    setTwoFaBusy(true);
+    try {
+      const res = await fetch('/api/employee/me/2fa', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || 'setup');
+      }
+      setTwoFaSetupSecret(data.secret || '');
+      setTwoFaCode('');
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.profileSaveError'), 'error');
+    } finally {
+      setTwoFaBusy(false);
+    }
+  };
+
+  const confirmEnable2fa = async () => {
+    setTwoFaBusy(true);
+    try {
+      const res = await fetch('/api/employee/me/2fa', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: twoFaCode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || 'enable');
+      }
+      setTwoFaSetupSecret('');
+      setTwoFaCode('');
+      setTwoFaEnabled(true);
+      toast(t(locale, 'dashboard.profile2faEnabledOk'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.profileSaveError'), 'error');
+    } finally {
+      setTwoFaBusy(false);
+    }
+  };
+
+  const disable2fa = async () => {
+    setTwoFaBusy(true);
+    try {
+      const res = await fetch('/api/employee/me/2fa', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: twoFaCode, password: twoFaDisablePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || 'disable');
+      }
+      setTwoFaEnabled(false);
+      setTwoFaCode('');
+      setTwoFaDisablePassword('');
+      toast(t(locale, 'dashboard.profile2faDisabledOk'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.profileSaveError'), 'error');
+    } finally {
+      setTwoFaBusy(false);
+    }
+  };
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -242,6 +322,91 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
           {t(locale, 'employeeHome.changePasswordSubmit')}
         </button>
       </form>
+
+      <div className="mt-10 border-t border-ink/10 pt-8">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h2 className={cn(S.label, 'm-0')}>{t(locale, 'dashboard.profile2faSection')}</h2>
+          <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+            {t(locale, 'dashboard.profile2faOptionalBadge')}
+          </span>
+        </div>
+        <p className="mb-3 text-sm leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faIntro')}</p>
+        {twoFaEnabled ? (
+          <div className="flex flex-col gap-3">
+            <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
+            <label className="block text-xs text-ink-muted">
+              {t(locale, 'dashboard.profile2faCode')}
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={cn(S.input, 'mt-1 w-full')}
+                value={twoFaCode}
+                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                disabled={twoFaBusy}
+              />
+            </label>
+            <label className="block text-xs text-ink-muted">
+              {t(locale, 'dashboard.profile2faDisablePassword')}
+              <input
+                type="password"
+                autoComplete="current-password"
+                className={cn(S.input, 'mt-1 w-full')}
+                value={twoFaDisablePassword}
+                onChange={(e) => setTwoFaDisablePassword(e.target.value)}
+                disabled={twoFaBusy}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
+              className={cn(S.btnBrandSoft, 'min-h-touch justify-center border-danger/30 text-danger')}
+              onClick={disable2fa}
+            >
+              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
+            </button>
+          </div>
+        ) : twoFaSetupSecret ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
+            <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-[11px]">
+              {twoFaSetupSecret}
+            </code>
+            <label className="block text-xs text-ink-muted">
+              {t(locale, 'dashboard.profile2faCode')}
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={cn(S.input, 'mt-1 w-full')}
+                value={twoFaCode}
+                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                disabled={twoFaBusy}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={twoFaBusy || twoFaCode.length !== 6}
+              className={cn(S.btnPrimary, 'min-h-touch justify-center')}
+              onClick={confirmEnable2fa}
+            >
+              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-ink-muted">{t(locale, 'dashboard.profile2faDisabled')}</p>
+            <button
+              type="button"
+              disabled={twoFaBusy}
+              className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}
+              onClick={start2faSetup}
+            >
+              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

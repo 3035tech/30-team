@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 /** GET — marca convite como aberto (idempotente). Público, sem dados sensíveis na resposta. */
 export async function GET(request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`invite-track:${ip}`, 120, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { ok: false, error: 'rate_limit' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const token = String(request.nextUrl.searchParams.get('token') || '').trim();
     if (!token) return NextResponse.json({ ok: false, error: 'missing_token' }, { status: 400 });
 

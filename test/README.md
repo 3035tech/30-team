@@ -65,6 +65,9 @@ Provas relevantes à página pública / funil / referral (epic B-100 / **B-126**
 | Browser | kanban vaga DnD (Nina new→interview) — `vacancy-kanban-dnd.spec.js` |
 | Browser | early-access `/signup` → set-password → login — `signup-early-access.spec.js` |
 | HTTP | early-access signup completo (create/resent/activate/login/409) — suite `signup` em `http-smoke.js` |
+| HTTP | session revocation (`notifications-revoked`, `dashboard-revoked-middleware`), health header-only, employee login/home, compensation — `http-smoke.js` |
+| HTTP | anti-crawler camada 1 (`robots.txt` tokens, `X-Robots-Tag` /v vs /jobs) — `http-smoke.js` |
+| Security (opcional) | OWASP ZAP baseline — `scripts/security-zap-baseline.sh`, `test/security/README.md` |
 
 Rodar tudo: `npm run dtov:full-app`.
 

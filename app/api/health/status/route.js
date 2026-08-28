@@ -11,16 +11,9 @@ export const dynamic = 'force-dynamic';
  * Pensado para Uptime Kuma.
  *
  * Auth (obrigatório) — HEALTH_STATUS_TOKEN:
- *   - ?token=<HEALTH_STATUS_TOKEN>
  *   - Authorization: Bearer <HEALTH_STATUS_TOKEN>
  *   - X-Health-Status-Token: <HEALTH_STATUS_TOKEN>
- *
- * HTTP:
- *   - 401 sem token / token inválido / token não configurado
- *   - 200 status=ok
- *   - 503 status=degraded|down  (Kuma HTTP monitor marca down)
- *
- * Exemplo Kuma: https://app/api/health/status?token=…
+ *   (não usar ?token= — vaza em logs/Referer)
  */
 export async function GET(request) {
   const ip = clientIpFromRequest(request);

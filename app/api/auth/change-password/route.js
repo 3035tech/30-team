@@ -12,11 +12,18 @@ import { query } from '../../../../lib/db';
 import { apiError, ERR } from '../../../../lib/api-error';
 import { audit } from '../../../../lib/audit';
 import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../../lib/session';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export async function POST(request) {
   const token = cookies().get(COOKIE_NAME)?.value;
   const session = await verifySessionWithCapabilities(token);
   if (!session?.userId) return apiError(request, ERR.UNAUTHORIZED, 401);
+
+  const ip = clientIpFromRequest(request);
+  const rl = await checkRateLimit(`change-password:${session.userId}:${ip}`, 10, 15 * 60 * 1000);
+  if (!rl.ok) {
+    return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
+  }
 
   const body = await request.json().catch(() => ({}));
   const currentPassword = String(body.currentPassword || '');

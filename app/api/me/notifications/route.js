@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { COOKIE_NAME, verifyToken } from '../../../../lib/auth';
+import { COOKIE_NAME } from '../../../../lib/auth';
 import { query } from '../../../../lib/db';
 import { apiError, ERR } from '../../../../lib/api-error';
+import { verifySessionWithCapabilities } from '../../../../lib/session';
 import {
   listNotificationsForUser,
   markAllNotificationsRead,
@@ -10,10 +11,10 @@ import {
 } from '../../../../lib/manager-notifications';
 import { notificationHref } from '../../../../lib/manager-notification-catalog';
 
-function requireSession(request) {
+async function requireSession(request) {
   const cookieStore = cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = token ? verifyToken(token) : null;
+  const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   return { payload };
 }
@@ -27,7 +28,7 @@ function withHref(row) {
 
 /** GET /api/me/notifications */
 export async function GET(request) {
-  const { payload, error } = requireSession(request);
+  const { payload, error } = await requireSession(request);
   if (error) return error;
 
   const url = new URL(request.url);
@@ -46,7 +47,7 @@ export async function GET(request) {
  * body: { id } | { all: true }
  */
 export async function PATCH(request) {
-  const { payload, error } = requireSession(request);
+  const { payload, error } = await requireSession(request);
   if (error) return error;
 
   const body = await request.json().catch(() => ({}));

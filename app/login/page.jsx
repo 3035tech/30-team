@@ -10,6 +10,10 @@ import { cn } from '../../lib/cn';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 
+import TurnstileField from '../_components/TurnstileField';
+
+const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
+
 const inputClass =
   'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink';
 
@@ -24,6 +28,11 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [challengeToken, setChallengeToken] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
@@ -32,14 +41,27 @@ function LoginForm() {
   const login = async () => {
     if (!email || !password) return;
     setLoading(true); setError(''); setSuccess('');
+    setTurnstileError(false);
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      setTurnstileError(true);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken: turnstileToken || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.requires2fa && data.challengeToken) {
+          setRequires2fa(true);
+          setChallengeToken(data.challengeToken);
+          setTwoFaCode('');
+          return;
+        }
         if (data.mustChangePassword) {
           setCurrentPassword(password);
           setMustChangePassword(true);
@@ -56,6 +78,46 @@ function LoginForm() {
     }
   };
 
+  const verify2fa = async () => {
+    if (!twoFaCode.trim() || !challengeToken) return;
+    setLoading(true);
+    setError('');
+    setTurnstileError(false);
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      setTurnstileError(true);
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken,
+          code: twoFaCode.trim(),
+          turnstileToken: turnstileToken || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.mustChangePassword) {
+          setRequires2fa(false);
+          setCurrentPassword(password);
+          setMustChangePassword(true);
+        } else {
+          router.push(redirect);
+        }
+      } else {
+        setError(data.errorCode ? errorMessage(locale, data.errorCode, data.error) : data.error || t(locale, 'login.connectionError'));
+      }
+    } catch {
+      setError(t(locale, 'login.connectionError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const requestReset = async () => {
     if (!email) {
       setError(errorMessage(locale, 'EMAIL_REQUIRED'));
@@ -64,11 +126,18 @@ function LoginForm() {
     setLoading(true);
     setError('');
     setSuccess('');
+    setTurnstileError(false);
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      setTurnstileError(true);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, locale }),
+        body: JSON.stringify({ email, locale, turnstileToken: turnstileToken || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -116,9 +185,11 @@ function LoginForm() {
 
   const titleKey = mustChangePassword
     ? 'login.changePasswordTitle'
-    : mode === 'forgot'
-      ? 'login.forgotTitle'
-      : 'login.title';
+    : requires2fa
+      ? 'login.twoFaTitle'
+      : mode === 'forgot'
+        ? 'login.forgotTitle'
+        : 'login.title';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-display text-ink">
@@ -136,9 +207,14 @@ function LoginForm() {
             <span key={line}>{i > 0 ? <br /> : null}{line}</span>
           ))}
         </h2>
-        {!mustChangePassword ? (
+        {!mustChangePassword && !requires2fa ? (
           <p className="mb-7 text-sm italic leading-[1.7] text-ink-muted">
             {t(locale, mode === 'forgot' ? 'login.forgotIntro' : 'login.intro')}
+          </p>
+        ) : null}
+        {requires2fa ? (
+          <p className="mb-7 text-sm italic leading-[1.7] text-ink-muted">
+            {t(locale, 'login.twoFaIntro')}
           </p>
         ) : null}
         {mustChangePassword ? (
@@ -176,6 +252,22 @@ function LoginForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && changePassword()}
+            />
+          </>
+        ) : requires2fa ? (
+          <>
+            <label htmlFor="login-2fa-code" className="mb-2 block text-xs text-ink-muted">
+              {t(locale, 'login.twoFaCode')}
+            </label>
+            <input
+              id="login-2fa-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className={cn(inputClass, error && 'border-danger')}
+              value={twoFaCode}
+              onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
+              maxLength={6}
             />
           </>
         ) : mode === 'forgot' ? (
@@ -230,6 +322,14 @@ function LoginForm() {
         {success ? (
           <p className="-mt-2 mb-4 text-xs text-success">{success}</p>
         ) : null}
+        {TURNSTILE_SITE_KEY && !mustChangePassword ? (
+          <TurnstileField
+            siteKey={TURNSTILE_SITE_KEY}
+            onToken={setTurnstileToken}
+            onError={() => setTurnstileError(true)}
+            errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+          />
+        ) : null}
         <button
           type="button"
           className={cn(
@@ -239,21 +339,43 @@ function LoginForm() {
           onClick={
             mustChangePassword
               ? changePassword
-              : mode === 'forgot'
-                ? requestReset
-                : login
+              : requires2fa
+                ? verify2fa
+                : mode === 'forgot'
+                  ? requestReset
+                  : login
           }
           disabled={loading}
         >
           {loading
-            ? (mode === 'forgot' ? t(locale, 'login.forgotSending') : t(locale, 'login.entering'))
+            ? (requires2fa
+              ? t(locale, 'login.twoFaVerifying')
+              : mode === 'forgot'
+                ? t(locale, 'login.forgotSending')
+                : t(locale, 'login.entering'))
             : mustChangePassword
               ? t(locale, 'login.changePasswordSubmit')
-              : mode === 'forgot'
-                ? t(locale, 'login.forgotSubmit')
-                : t(locale, 'login.enter')}
+              : requires2fa
+                ? t(locale, 'login.twoFaSubmit')
+                : mode === 'forgot'
+                  ? t(locale, 'login.forgotSubmit')
+                  : t(locale, 'login.enter')}
         </button>
-        {!mustChangePassword && mode === 'login' ? (
+        {requires2fa ? (
+          <button
+            type="button"
+            onClick={() => {
+              setRequires2fa(false);
+              setChallengeToken('');
+              setTwoFaCode('');
+              setError('');
+            }}
+            className="mb-4 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-ink-muted"
+          >
+            {t(locale, 'login.forgotBack')}
+          </button>
+        ) : null}
+        {!mustChangePassword && !requires2fa && mode === 'login' ? (
           <>
             <button
               type="button"
@@ -270,7 +392,7 @@ function LoginForm() {
             </a>
           </>
         ) : null}
-        {!mustChangePassword && mode === 'forgot' ? (
+        {!mustChangePassword && !requires2fa && mode === 'forgot' ? (
           <button
             type="button"
             onClick={() => { setMode('login'); setError(''); setSuccess(''); }}

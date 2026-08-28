@@ -8,13 +8,14 @@ function authorizedDetailed(request) {
   if (!secret) return false;
   const auth = request.headers.get('authorization');
   if (auth === `Bearer ${secret}`) return true;
-  const url = new URL(request.url);
-  return url.searchParams.get('token') === secret;
+  const hdr = (request.headers.get('x-health-metrics-token') || '').trim();
+  return hdr === secret;
 }
 
 /**
  * GET /api/health — liveness + ping ao Postgres.
- * Detalhes (filas do pool): Authorization: Bearer HEALTH_METRICS_SECRET ou ?token= (mesmo valor).
+ * Detalhes (filas do pool): Authorization: Bearer HEALTH_METRICS_SECRET
+ * ou header X-Health-Metrics-Token (não usar ?token= — vaza em logs/Referer).
  */
 export async function GET(request) {
   const started = Date.now();

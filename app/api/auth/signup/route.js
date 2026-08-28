@@ -7,14 +7,46 @@ import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error.js'
 import { isMailConfigured } from '../../../../lib/mail.js';
 import { generateUniqueCompanySlug } from '../../../../lib/slugify.js';
 import { trackLandingEvent } from '../../../../lib/landing-analytics.js';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
+import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
 
 /**
  * Self-service signup: cria user pendente + company (ou associa a existente).
  * POST /api/auth/signup
+ *
+ * Segurança:
+ * - Rate limit por IP
+ * - Conta já ativa → 409 (UX: orientar login; aceito vs anti-enum total)
+ * - SIGNUP_DOMAIN_MATCH=true: ao juntar company existente, role = hr (não direction)
  */
 export async function POST(request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`signup:${ip}`, 8, 15 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(
+        request,
+        ERR.RATE_LIMIT,
+        429,
+        {},
+        { headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
+
+    const turnstile = await verifyTurnstileToken({
+      token: body.turnstileToken,
+      remoteIp: ip,
+    });
+    if (!turnstile.ok) {
+      return apiError(
+        request,
+        ERR.TURNSTILE_FAILED,
+        httpStatusForError(ERR.TURNSTILE_FAILED)
+      );
+    }
+
     const {
       email,
       companyName,
@@ -63,7 +95,7 @@ export async function POST(request) {
       const user = existing.rows[0];
 
       if (!user.deleted && user.active && !user.signup_pending) {
-        // Usuário já ativo → não revelar (segurança), mas sugerir login
+        // Conta ativa: 409 para orientar login (tradeoff UX vs anti-enumeração).
         return apiError(request, ERR.EMAIL_ALREADY_REGISTERED, 409);
       }
 
@@ -87,7 +119,8 @@ export async function POST(request) {
           metadata: { email: emailClean, userId: user.id },
         });
 
-        return Response.json({ ok: true, action: 'resent' });
+        // Mesma forma de sucesso do create (sem IDs) — reduz distinção pending vs novo.
+        return Response.json({ ok: true });
       }
     }
 
@@ -96,7 +129,7 @@ export async function POST(request) {
     let companyId;
     let companyAction = 'created';
 
-    // Opção: buscar company existente por domain (opt-in via env)
+    // Opção: buscar company existente por domain (opt-in via env — manter false em prod salvo intenção explícita)
     if (process.env.SIGNUP_DOMAIN_MATCH === 'true') {
       const domainMatch = await query(
         `SELECT c.id
@@ -111,7 +144,6 @@ export async function POST(request) {
       );
 
       if (domainMatch.rowCount > 0) {
-        // Associar à company existente (colaborador novo)
         companyId = domainMatch.rows[0].id;
         companyAction = 'joined';
       }
@@ -129,9 +161,10 @@ export async function POST(request) {
       companyId = companyRes.rows[0].id;
     }
 
-    // Criar user pendente (active=FALSE até definir senha no link)
+    // Criar user pendente (active=FALSE até definir senha no link).
+    // Company nova → direction (dona do trial). Domain-match join → hr (menos privilégio).
     const passwordHash = await hashUnusablePassword();
-    const role = 'direction'; // early access usa direction
+    const role = companyAction === 'joined' ? 'hr' : 'direction';
     const signupMetadata = {
       companyName: String(companyName).trim(),
       fullName: String(fullName).trim(),
@@ -166,7 +199,6 @@ export async function POST(request) {
 
     // Analytics
     const userAgent = request.headers.get('user-agent') || null;
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || null;
 
     await trackLandingEvent({
       eventType: 'signup_complete',
@@ -175,7 +207,7 @@ export async function POST(request) {
       utmMedium,
       utmCampaign,
       userAgent,
-      ipAddress: ip,
+      ipAddress: ip === 'unknown' ? null : ip,
       metadata: {
         userId,
         companyId,
@@ -186,7 +218,8 @@ export async function POST(request) {
       },
     });
 
-    return Response.json({ ok: true, action: 'created', userId, companyId });
+    // Sem userId/companyId na resposta pública (menos vazamento + forma alinhada ao resent).
+    return Response.json({ ok: true });
   } catch (err) {
     console.error('[signup] Error:', err);
     return apiError(request, ERR.INTERNAL, 500);

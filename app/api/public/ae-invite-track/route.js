@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
+import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 /** GET /api/public/ae-invite-track?token= — marca convite como aberto. */
 export async function GET(request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`ae-invite-track:${ip}`, 120, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { ok: false },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const token = String(searchParams.get('token') || '').trim();
     if (!token) return NextResponse.json({ ok: false }, { status: 400 });

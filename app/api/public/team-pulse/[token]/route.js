@@ -10,6 +10,18 @@ import {
 /** GET /api/public/team-pulse/[token] */
 export async function GET(request, { params }) {
   try {
+    const ip = clientIpFromRequest(request);
+    const rl = await checkRateLimit(`public-team-pulse-get:${ip}`, 90, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return apiError(
+        request,
+        ERR.RATE_LIMIT,
+        429,
+        {},
+        { headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const token = params?.token;
     if (!token) return apiError(request, ERR.NOT_FOUND, httpStatusForError(ERR.NOT_FOUND));
     const loaded = await getPublicTeamPulseByToken(query, token);

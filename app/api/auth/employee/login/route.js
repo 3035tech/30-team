@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { query } from '../../../../../lib/db.js';
 import { apiError, ERR, httpStatusForError } from '../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
 import {
-  EMPLOYEE_COOKIE_NAME,
-  employeeSessionCookieOptions,
   loginEmployeeWithPassword,
-  signEmployeeToken,
 } from '../../../../../lib/employee-auth.js';
+import { query } from '../../../../../lib/db.js';
+import { signEmployee2faChallenge } from '../../../../../lib/employee-2fa.js';
+import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/auth/employee/login — email + password → cookie */
+/** POST /api/auth/employee/login — email + password → cookie (ou desafio 2FA) */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -46,18 +44,22 @@ export async function POST(request) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
-    const jwt = signEmployeeToken({
+    if (result.requires2fa) {
+      return NextResponse.json({
+        ok: true,
+        requires2fa: true,
+        challengeToken: signEmployee2faChallenge({
+          candidateId: result.candidateId,
+          companyId: result.companyId,
+        }),
+      });
+    }
+
+    return buildEmployeeLoginResponse({
       candidateId: result.candidateId,
       companyId: result.companyId,
       email: result.email,
       locale,
-    });
-    cookies().set(EMPLOYEE_COOKIE_NAME, jwt, employeeSessionCookieOptions());
-
-    return NextResponse.json({
-      ok: true,
-      candidateId: result.candidateId,
-      companyId: result.companyId,
       fullName: result.fullName,
     });
   } catch (err) {
