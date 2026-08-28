@@ -20,6 +20,7 @@ import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
+import { CompensationBlock } from '../../_components/CompensationBlock';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
@@ -226,7 +227,10 @@ export function TeamTab({
     if (!focusCandidateId) return;
     const cid = String(focusCandidateId);
     const section =
-      focusSection === 'journey' || focusSection === 'oneOnOne' || focusSection === 'briefing'
+      focusSection === 'journey' ||
+      focusSection === 'oneOnOne' ||
+      focusSection === 'briefing' ||
+      focusSection === 'compensation'
         ? focusSection
         : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === cid);
@@ -244,7 +248,10 @@ export function TeamTab({
     if (!focusCandidateId || !detail?.candidate) return;
     if (String(detail.candidate.id) !== String(focusCandidateId)) return;
     const section =
-      focusSection === 'journey' || focusSection === 'oneOnOne' || focusSection === 'briefing'
+      focusSection === 'journey' ||
+      focusSection === 'oneOnOne' ||
+      focusSection === 'briefing' ||
+      focusSection === 'compensation'
         ? focusSection
         : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
@@ -1109,6 +1116,15 @@ export function TeamTab({
                         { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabBriefing') },
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
+                        ...(detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
+                        detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI
+                          ? [
+                              {
+                                id: 'compensation',
+                                label: t(locale, 'panel.team.peopleSubTabCompensation'),
+                              },
+                            ]
+                          : []),
                       ]}
                     />
                     {peopleSubTab === 'dossier' ? (
@@ -1144,6 +1160,13 @@ export function TeamTab({
                         employmentStatus={detail.candidate.employmentStatus}
                         onRefresh={() => loadDetail(detail.candidate.id)}
                         section="journey"
+                      />
+                    ) : null}
+                    {peopleSubTab === 'compensation' ? (
+                      <CompensationBlock
+                        locale={locale}
+                        candidateId={detail.candidate.id}
+                        employmentStatus={detail.candidate.employmentStatus}
                       />
                     ) : null}
                   </>

@@ -306,6 +306,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
 | Sessão colaborador | `lib/employee-auth.js`, `/colaborador`, cookie `team30_employee_session`, `migrations/069`–`071` (senha, notif), perfil + chrome; PDI self-serve (`lib/employee-pdi.js`); LMS embed |
+| Remuneração interna | `lib/people/employee-compensation.js`, `CompensationBlock`, `migrations/072`, Equipe → aba Remuneração (não folha) |
 | Notif colaborador | `lib/employee-notifications.js`, `candidate_notifications`, LMS enroll/overdue, Motivadores invite, PDI create/update |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |
 | Explicabilidade Fit | `lib/area-fit.js` (`withBreakdown`), ranking da vaga |

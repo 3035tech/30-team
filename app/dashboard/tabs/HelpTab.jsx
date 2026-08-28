@@ -49,6 +49,7 @@ const SECTIONS = [
   'birthdays',
   'lmsBasic',
   'employeeHome',
+  'compensation',
   'access',
   'tips',
 ];
@@ -236,6 +237,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
     birthdays: 4,
     lmsBasic: 4,
     employeeHome: 3,
+    compensation: 3,
     access: 9,
     tips: 11,
   };

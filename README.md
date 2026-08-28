@@ -173,6 +173,12 @@ A partir da migration `054`, `055` e `056`:
 - Lib: `lib/company-benefits.js` (CRUD, `getCompanyBenefitCategories`)
 - Migration: `060_company_benefits.sql` (tabela `company_benefits`)
 
+### B-2510 — Remuneração interna (RH)
+- **Histórico leve** de salário e reajustes por colaborador — **não** é folha, holerite ou ponto
+- Equipe → ficha da pessoa (contratado/alumni) → aba **Remuneração**: salário vigente + timeline; import opcional da oferta aceita na vaga
+- APIs: `GET/POST /api/admin/candidates/[id]/compensation`, `PATCH/DELETE …/compensation/[eventId]`
+- Lib: `lib/people/employee-compensation.js`; migration `072_employee_compensation.sql`
+
 **Epic B-1000 completo** (B-1001 a B-1009) ✅
 
 ### Epic B-1200 — conectar + UX + profundidade
