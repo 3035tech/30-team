@@ -305,7 +305,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042`+`050` (Likert + texto descritivo) |
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
-| Sessão colaborador | `lib/employee-auth.js`, `/colaborador`, cookie `team30_employee_session`, `migrations/069`+`070` (senha + invite), LMS + PDI + tarefas |
+| Sessão colaborador | `lib/employee-auth.js`, `/colaborador`, cookie `team30_employee_session`, `migrations/069`–`071` (senha, notif), perfil + chrome |
+| Notif colaborador | `lib/employee-notifications.js`, `candidate_notifications`, LMS enroll/overdue |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |
 | Explicabilidade Fit | `lib/area-fit.js` (`withBreakdown`), ranking da vaga |
 | Notificações in-app | `lib/manager-notifications.js`, `lib/manager-notification-catalog.js` (incl. `retention_watch`, `hire_onboarding_kit`, `manager_weekly_digest`), `migrations/023`+`024`+`027`, crons `vacancy-deadline-notifications`, `notification-retention`, `manager-weekly-digest` |

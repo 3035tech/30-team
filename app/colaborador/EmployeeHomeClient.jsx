@@ -7,7 +7,6 @@ import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
-import { BrandMark } from '../../_components/BrandMark';
 import { RichTextView } from '../../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../lib/domain-status';
 
@@ -54,11 +53,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     void load();
   }, [load]);
 
-  const logout = async () => {
-    await fetch('/api/auth/employee/session', { method: 'DELETE' });
-    router.replace('/colaborador/login');
-  };
-
   const lessonAction = async (lessonId, action) => {
     setBusy(true);
     try {
@@ -97,21 +91,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const company = data?.company;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <BrandMark size={28} withWordmark />
-          <p className={cn(S.faint, 'mt-3 m-0 text-[11px] uppercase tracking-wide')}>
-            {person?.companyName || t(locale, 'employeeHome.eyebrow')}
-          </p>
-          <h1 className="m-0 mt-1 font-display text-2xl text-ink">
-            {t(locale, 'employeeHome.hello', { name: person?.fullName || '' })}
-          </h1>
-          <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.hint')}</p>
-        </div>
-        <button type="button" className={cn(S.btnGhost, 'min-h-touch')} onClick={logout}>
-          {t(locale, 'employeeHome.logout')}
-        </button>
+    <div className="mx-auto max-w-lg px-4 py-8">
+      <div className="mb-6">
+        <h1 className="m-0 font-display text-2xl text-ink">
+          {t(locale, 'employeeHome.hello', { name: person?.fullName || '' })}
+        </h1>
+        <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.hint')}</p>
       </div>
 
       <section className="mt-8">

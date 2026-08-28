@@ -407,7 +407,15 @@ _(entregue — `067` `lms_courses` / `lms_lessons` / `lms_enrollments` / `lms_le
 _(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; matrícula em lote (todos/grupo); PDF S3; reordenar/editar aulas; reset/desmarcar; notifs enrolled/overdue/completed; Overview/Equipe atraso; PDI↔curso com matrícula opcional e auto-done no PDI ao concluir; cron `lms-overdue-notifications`; resumo ops no curso. **Fora ainda:** quiz, certificado, SCORM, trilha multi-curso.)_
 
 ### Epic B-2500 — Login colaborador + sessão LMS ✅ ENTREGUE
-_(entregue — `069` `employee_login_tokens` + `070` senha em `candidates`; convite set-password → `/colaborador/cadastrar-senha`; login e-mail/senha + forgot + magic opcional; cookie `team30_employee_session`; hub PDI/LMS/tarefas/1:1/empresa; Equipe “Convidar acesso”; `/e` token continua. **Fora:** role em `users`, app DP completo.)_
+_(entregue — `069`/`070`/`071`; set-password; hub; chrome tema/idioma/notif; perfil + senha; `candidate_notifications`; LMS enroll/overdue → inbox colaborador.)_
+
+### Aberto — Epic B-2501 — Aprofundar sessão colaborador
+Ideias desbloqueadas pela sessão (não `/e` token):
+1. **PDI self-serve** — colaborador marca item feito / comenta (hoje só lê).
+2. **Prep 1:1 na sessão** — nota ao gestor sem depender do `/e`.
+3. **Clima / pulso autenticado** — responder pesquisas logado + histórico.
+4. **Notif de Motivadores / PDI** ao criar convite ou plano (catálogo já tem tipos).
+5. **Fora ainda:** folha/ponto/docs (DP); não misturar com `users` role.
 
 ---
 

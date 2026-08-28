@@ -111,6 +111,25 @@ export const POST = withAdminApi(
           enrolled: result.enrolled,
         },
       });
+      const { notifyCandidates, EMPLOYEE_NOTIF } = await import(
+        '../../../../../../../lib/employee-notifications.js'
+      );
+      const enrolledIds = Array.isArray(result.candidateIds) ? result.candidateIds : [];
+      if (enrolledIds.length) {
+        await notifyCandidates({
+          companyId,
+          candidateIds: enrolledIds,
+          type: EMPLOYEE_NOTIF.LMS_ENROLLED,
+          entityType: 'lms_course',
+          entityId: courseId,
+          dedupeKeyPrefix: `lms_enrolled:${courseId}`,
+          payload: {
+            courseId,
+            courseTitle: result.courseTitle,
+            dueDate: result.dueDate || null,
+          },
+        });
+      }
     }
     return NextResponse.json({
       ok: true,
