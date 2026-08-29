@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../_components/AppLoading';
@@ -210,12 +211,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="mb-4">
-        <h1 className="m-0 font-display text-2xl text-ink">
+    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-3xl">
+      <div className="mb-5">
+        <h1 className={S.pageTitle}>
           {t(locale, 'employeeHome.hello', { name: person?.fullName || '' })}
         </h1>
-        <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.hint')}</p>
+        <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.hint')}</p>
       </div>
 
       <nav className="mb-2 flex flex-wrap gap-1.5" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
@@ -259,7 +260,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {tasks.map((task) => (
               <li key={task.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
-                <div className="text-sm text-ink">{taskLabel(locale, task)}</div>
+                <div className={S.cardBody}>{taskLabel(locale, task)}</div>
                 {task.dueDate ? (
                   <div
                     className={cn(
@@ -267,7 +268,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       task.kind === 'lms_overdue' ? 'text-danger' : 'text-ink-faint'
                     )}
                   >
-                    {t(locale, 'employeeHome.dueBy', { date: task.dueDate })}
+                    {t(locale, 'employeeHome.dueBy', {
+                      date: formatDisplayDate(task.dueDate, locale),
+                    })}
                   </div>
                 ) : null}
                 {task.href && task.href.startsWith('http') ? (
@@ -275,12 +278,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     href={task.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex font-mono text-xs text-brand-600"
+                    className={cn(S.cardLink, 'mt-2')}
                   >
                     {t(locale, 'employeeHome.openTask')}
                   </a>
                 ) : task.href?.startsWith('#') ? (
-                  <a href={task.href} className="mt-2 inline-flex font-mono text-xs text-brand-600">
+                  <a href={task.href} className={cn(S.cardLink, 'mt-2')}>
                     {task.href === '#lms'
                       ? t(locale, 'employeeHome.goToLms')
                       : task.href === '#pdi'
@@ -326,9 +329,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {plans.map((plan) => (
               <li key={plan.id} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
-                <div className="font-ui text-sm text-ink">{plan.title}</div>
+                <div className={S.cardBody}>{plan.title}</div>
                 {plan.objective ? (
-                  <p className={cn(S.muted, 'mt-1 m-0 text-xs')}>{plan.objective}</p>
+                  <p className={cn(S.muted, 'mt-1 m-0')}>{plan.objective}</p>
                 ) : null}
                 <ul className="mt-2 m-0 list-none space-y-2 p-0">
                   {(plan.items || []).map((it) => (
@@ -336,12 +339,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       key={it.id}
                       className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
                     >
-                      <div className="min-w-0 text-xs text-ink">
+                      <div className={cn(S.cardMuted, 'min-w-0')}>
                         {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
                         {it.title}
                         <div className="mt-0.5 font-mono text-2xs text-ink-faint">
                           {itemStatusLabel(locale, it.status)}
-                          {it.dueDate ? ` · ${it.dueDate}` : ''}
+                          {it.dueDate ? ` · ${formatDisplayDate(it.dueDate, locale)}` : ''}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
@@ -535,22 +538,24 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {agreements.map((a) => (
-              <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5 text-sm text-ink">
+              <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                 {a.meetingDate ? (
-                  <div className="mb-1 font-mono text-2xs text-ink-faint">{a.meetingDate}</div>
+                  <div className="mb-1 font-mono text-2xs text-ink-faint">
+                    {formatDisplayDate(a.meetingDate, locale)}
+                  </div>
                 ) : null}
-                <div className="whitespace-pre-wrap text-xs">{a.nextSteps}</div>
+                <div className={cn(S.cardMuted, 'whitespace-pre-wrap')}>{a.nextSteps}</div>
               </li>
             ))}
           </ul>
         )}
         {prompts.length > 0 ? (
           <div className="mt-4">
-            <h3 className={cn(S.faint, 'mb-2 mt-0 text-2xs uppercase tracking-wide')}>
+            <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>
               {t(locale, 'panel.employeePortal.prepTitle')}
             </h3>
-            <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
-            <ul className="m-0 list-disc space-y-1 pl-5 text-xs text-ink">
+            <p className={cn(S.muted, 'mb-2 mt-0')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
+            <ul className="m-0 list-disc space-y-1 pl-5 text-prose text-ink">
               {prompts.map((p, i) => (
                 <li key={i}>{typeof p === 'string' ? p : p.text || p.prompt || String(p)}</li>
               ))}

@@ -150,8 +150,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <div className="mb-8 text-center">
         <BrandMark size={36} withWordmark />
-        <h1 className="mt-4 font-display text-2xl text-ink">{t(locale, 'employeeHome.loginTitle')}</h1>
-        <p className={cn(S.muted, 'mt-2 text-sm')}>
+        <h1 className={cn(S.pageTitle, 'mt-4')}>{t(locale, 'employeeHome.loginTitle')}</h1>
+        <p className={cn(S.muted, 'mt-2')}>
           {requires2fa
             ? t(locale, 'login.twoFaIntro')
             : mode === 'forgot'
@@ -190,7 +190,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           </button>
           <button
             type="button"
-            className="cursor-pointer border-none bg-transparent p-0 font-display text-xs text-ink-muted"
+            className="cursor-pointer border-none bg-transparent p-0 font-ui text-xs text-ink-muted"
             onClick={() => {
               setRequires2fa(false);
               setChallengeToken('');
@@ -266,12 +266,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         </form>
       )}
 
-      <div className="mt-6 flex flex-col gap-2 text-center text-xs">
+      <div className="mt-6 flex flex-col gap-2 text-center text-prose">
         {!requires2fa && mode === 'login' ? (
           <>
             <button
               type="button"
-              className="cursor-pointer border-none bg-transparent p-0 font-display text-brand-600"
+              className="cursor-pointer border-none bg-transparent p-0 font-ui text-brand-600"
               onClick={() => {
                 setMode('forgot');
                 setSent(false);
@@ -282,7 +282,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
             </button>
             <button
               type="button"
-              className="cursor-pointer border-none bg-transparent p-0 font-display text-ink-muted"
+              className="cursor-pointer border-none bg-transparent p-0 font-ui text-ink-muted"
               onClick={() => {
                 setMode('magic');
                 setSent(false);
@@ -295,7 +295,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         ) : !requires2fa ? (
           <button
             type="button"
-            className="cursor-pointer border-none bg-transparent p-0 font-display text-ink-muted"
+            className="cursor-pointer border-none bg-transparent p-0 font-ui text-ink-muted"
             onClick={() => {
               setMode('login');
               setSent(false);
@@ -306,7 +306,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           </button>
         ) : null}
         {!requires2fa ? (
-          <Link href="/login" className="mt-2 text-brand-600 hover:underline">
+          <Link href="/login" className="mt-2 font-ui text-brand-600 hover:underline">
             {t(locale, 'employeeHome.managerLogin')}
           </Link>
         ) : null}

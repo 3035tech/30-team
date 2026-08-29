@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 
@@ -75,8 +76,10 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
   return (
     <div className="flex flex-col gap-2">
       {journey.startDate ? (
-        <p className={cn(S.muted, 'm-0 text-xs')}>
-          {t(locale, 'employeeHome.journeyStart', { date: journey.startDate })}
+        <p className={cn(S.muted, 'm-0')}>
+          {t(locale, 'employeeHome.journeyStart', {
+            date: formatDisplayDate(journey.startDate, locale),
+          })}
         </p>
       ) : null}
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -98,10 +101,14 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-ink">{itemTitle(locale, item)}</div>
+                  <div className={S.cardBody}>{itemTitle(locale, item)}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted">
                     {item.dueDate ? (
-                      <span>{t(locale, 'employeeHome.dueBy', { date: item.dueDate })}</span>
+                      <span>
+                        {t(locale, 'employeeHome.dueBy', {
+                          date: formatDisplayDate(item.dueDate, locale),
+                        })}
+                      </span>
                     ) : null}
                     {statusBadge(locale, item)}
                     {item.employeeAckAt ? (
@@ -114,7 +121,7 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
                     href={item.meetUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className={cn(S.btnBrandSoft, 'shrink-0 text-xs no-underline')}
+                    className={cn(S.btnBrandSoft, 'shrink-0 text-prose no-underline')}
                   >
                     {t(locale, 'employeeHome.journeyOpenMeet')}
                   </a>
