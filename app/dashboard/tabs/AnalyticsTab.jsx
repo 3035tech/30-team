@@ -10,6 +10,7 @@ import { useLocale } from '../../../lib/useLocale.js';
 import { S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
 import { cn } from '../../../lib/cn.js';
 
 const TREND_TONE = {
@@ -186,11 +187,7 @@ export function AnalyticsTab({ session }) {
   }
 
   if (loading) {
-    return (
-      <div className={S.card}>
-        <p className={S.muted}>{t(locale, 'common.loading')}</p>
-      </div>
-    );
+    return <AppLoading locale={locale} variant="panel" />;
   }
 
   if (error) {
@@ -202,6 +199,7 @@ export function AnalyticsTab({ session }) {
   }
 
   return (
+    <ContentEnter animKey="ready">
     <div className="space-y-6">
       <div className={S.card}>
         {/* View Toggle */}
@@ -464,6 +462,7 @@ export function AnalyticsTab({ session }) {
         </div>
       </div>
     </div>
+    </ContentEnter>
   );
 }
 

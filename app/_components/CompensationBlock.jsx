@@ -8,6 +8,8 @@ import { S, AdminCreateButton, AdminDeleteButton, AdminEditButton } from '../das
 import { EmptyState } from './EmptyState';
 import { AppLoading } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
+import { RichTextView } from './RichTextView';
+import { isRichTextEmpty } from '../../lib/sanitize-html.js';
 import {
   COMPENSATION_EVENT_TYPE,
   EMPLOYMENT_STATUS,
@@ -124,9 +126,8 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
     },
     {
       key: 'notes',
-      type: 'textarea',
-      rows: 3,
-      maxLength: 500,
+      type: 'richText',
+      minHeight: 110,
       label: t(locale, 'panel.compensation.notesLabel'),
       placeholder: t(locale, 'panel.compensation.notesPh'),
       defaultValue: defaults.notes || '',
@@ -349,19 +350,24 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
                   <span>{formatDate(row.effectiveDate, locale)}</span>
                   <span>{eventTypeLabel(locale, row.eventType)}</span>
                 </div>
-                {row.notes ? (
-                  <p className={cn(S.muted, 'mb-0 mt-1 text-xs whitespace-pre-wrap')}>{row.notes}</p>
+                {!isRichTextEmpty(row.notes) ? (
+                  <div className="mt-1">
+                    <RichTextView
+                      html={row.notes}
+                      className="text-xs leading-snug text-ink-muted"
+                    />
+                  </div>
                 ) : null}
               </div>
               {!readOnly ? (
                 <div className="flex shrink-0 gap-1">
                   <AdminEditButton
-                    ariaLabel={t(locale, 'panel.compensation.editBtn')}
+                    label={t(locale, 'panel.compensation.editBtn')}
                     onClick={() => void editEvent(row)}
                     disabled={busy}
                   />
                   <AdminDeleteButton
-                    ariaLabel={t(locale, 'panel.compensation.deleteBtn')}
+                    label={t(locale, 'panel.compensation.deleteBtn')}
                     onClick={() => void removeEvent(row)}
                     disabled={busy}
                   />

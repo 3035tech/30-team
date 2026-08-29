@@ -1447,7 +1447,7 @@ CREATE TABLE IF NOT EXISTS employee_compensation_events (
   CONSTRAINT employee_compensation_events_amount_len
     CHECK (char_length(amount) <= 80),
   CONSTRAINT employee_compensation_events_notes_len
-    CHECK (char_length(notes) <= 500)
+    CHECK (char_length(notes) <= 4000)
 );
 
 CREATE INDEX IF NOT EXISTS idx_compensation_company_candidate_date
@@ -1485,4 +1485,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_team_pulse_invites_pulse_candidate
   WHERE candidate_id IS NOT NULL;
 
 INSERT INTO schema_migrations (name) VALUES ('077_employee_prep_surveys.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 078_compensation_notes_rich.sql
+ALTER TABLE employee_compensation_events
+  DROP CONSTRAINT IF EXISTS employee_compensation_events_notes_len;
+
+ALTER TABLE employee_compensation_events
+  ADD CONSTRAINT employee_compensation_events_notes_len
+    CHECK (char_length(notes) <= 4000);
+
+INSERT INTO schema_migrations (name) VALUES ('078_compensation_notes_rich.sql')
 ON CONFLICT (name) DO NOTHING;

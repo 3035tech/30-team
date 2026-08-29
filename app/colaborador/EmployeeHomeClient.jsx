@@ -6,7 +6,7 @@ import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
-import { AppLoading } from '../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../_components/AppLoading';
 import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
@@ -208,6 +208,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
 
   return (
+    <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-8">
       <div className="mb-4">
         <h1 className="m-0 font-display text-2xl text-ink">
@@ -628,5 +629,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         </CollapsibleSection>
       ) : null}
     </div>
+    </ContentEnter>
   );
 }

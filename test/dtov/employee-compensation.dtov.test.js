@@ -83,6 +83,16 @@ async function main() {
   assert.equal(upd.ok, true);
   assert.equal(upd.event.notes, 'DTOV raise updated');
 
+  const rich = await updateCompensationEvent(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    eventId: raise.event.id,
+    notes: '<p>Rich <strong>ok</strong></p><script>alert(1)</script>',
+  });
+  assert.equal(rich.ok, true);
+  assert.match(rich.event.notes, /<strong>/);
+  assert.doesNotMatch(rich.event.notes, /script/i);
+
   const del = await deleteCompensationEvent(query, {
     companyId: person.companyId,
     candidateId: person.candidateId,

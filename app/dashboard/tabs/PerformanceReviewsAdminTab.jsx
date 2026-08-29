@@ -356,7 +356,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     setPage(1);
   };
 
-  if (loading) return <AppLoading />;
+  if (loading) return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-6">

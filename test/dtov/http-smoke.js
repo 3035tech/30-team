@@ -311,9 +311,13 @@ export async function runHttpSmoke(baseUrl) {
     return results;
   }
 
+  let hrCompanyId = null;
   {
     const { res, data } = await req(base, '/api/me', { cookie: hrCookie });
     await expectStatus('auth', 'me-hr', res.status, 200, data?.email || data?.user?.email || '');
+    if (res.status === 200) {
+      hrCompanyId = data?.companyId || data?.user?.companyId || null;
+    }
   }
   {
     const { res } = await req(base, '/api/me/notifications', { cookie: hrCookie });
@@ -864,6 +868,47 @@ export async function runHttpSmoke(baseUrl) {
         await expectStatus('compensation', 'delete', compDel.status, [200, 204]);
       }
     }
+  }
+
+  // Overview intel + B-1000 list APIs (HR has OVERVIEW_VIEW; job-roles GET dual CAP)
+  if (hrCompanyId) {
+    const qs = `companyId=${encodeURIComponent(hrCompanyId)}`;
+    const { res: turnRes, data: turnData } = await req(
+      base,
+      `/api/admin/turnover-radar/company?${qs}&limit=10&minRisk=low`,
+      { cookie: hrCookie }
+    );
+    if (await expectStatus('turnover-radar', 'company', turnRes.status, [200])) {
+      const okShape =
+        Array.isArray(turnData?.risks) &&
+        typeof turnData?.truncated === 'boolean' &&
+        typeof turnData?.scanned === 'number';
+      ok('turnover-radar', 'shape', okShape ? `risks=${turnData.risks.length}` : 'bad-shape');
+      if (!okShape) fail('turnover-radar', 'shape', JSON.stringify(Object.keys(turnData || {})));
+    }
+
+    const { res: rolesRes, data: rolesData } = await req(base, `/api/admin/job-roles?${qs}`, {
+      cookie: hrCookie,
+    });
+    // HR may lack JOB_ROLES_VIEW — dual CAP allows VACANCIES_MANAGE; expect 200 or 401
+    if ([200, 401].includes(rolesRes.status)) {
+      if (rolesRes.status === 200) {
+        ok(
+          'job-roles',
+          'list',
+          Array.isArray(rolesData?.roles) ? `n=${rolesData.roles.length}` : 'shape'
+        );
+      } else {
+        ok('job-roles', 'list-denied', '401 expected without CAP');
+      }
+    } else {
+      fail('job-roles', 'list', `status ${rolesRes.status}`);
+    }
+
+    const { res: workRes } = await req(base, `/api/admin/multi-signal-workbench?${qs}`, {
+      cookie: hrCookie,
+    });
+    await expectStatus('multi-signal', 'workbench', workRes.status, [200, 401]);
   }
 
   // Climate surveys (anonymous structure)

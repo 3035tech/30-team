@@ -7,7 +7,7 @@ import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
 import { BR_STATES } from '../../../lib/candidate-profile';
 
@@ -199,6 +199,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   if (loading) return <AppLoading variant="panel" />;
 
   return (
+    <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-8">
       <Link href="/colaborador" className="font-mono text-[12px] text-brand-600 no-underline">
         ← {t(locale, 'employeeHome.backHome')}
@@ -408,5 +409,6 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         )}
       </div>
     </div>
+    </ContentEnter>
   );
 }

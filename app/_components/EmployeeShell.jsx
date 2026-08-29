@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLocale } from '../../lib/useLocale';
 import { AppFeedbackProvider } from './AppFeedback';
+import { ContentEnter } from './AppLoading';
 import { EmployeeTopBar } from './EmployeeTopBar';
 
 const PUBLIC_PATHS = ['/colaborador/login', '/colaborador/entrar', '/colaborador/cadastrar-senha'];
@@ -40,7 +41,11 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
   }, [isPublic, setLocale]);
 
   if (isPublic) {
-    return <AppFeedbackProvider locale={locale}>{children}</AppFeedbackProvider>;
+    return (
+      <AppFeedbackProvider locale={locale}>
+        <ContentEnter animKey={pathname}>{children}</ContentEnter>
+      </AppFeedbackProvider>
+    );
   }
 
   return (
@@ -52,7 +57,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
           displayName={displayName}
           companyName={company}
         />
-        {children}
+        <ContentEnter animKey={pathname}>{children}</ContentEnter>
       </div>
     </AppFeedbackProvider>
   );

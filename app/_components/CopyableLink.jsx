@@ -5,13 +5,14 @@ import { copyToClipboard } from '../../lib/clipboard';
 import { t } from '../../lib/i18n';
 import { useAppFeedbackOptional } from './AppFeedback';
 import { Icon } from './Icon';
+import { IconActionTip } from './IconActionTip';
 
 const iconActionClass =
   'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 disabled:cursor-default disabled:opacity-50';
 
 /**
  * Shareable URL for managers: clickable link + icon actions (copy / open).
- * Labels stay in aria-label + title; toast via AppFeedback when present.
+ * Labels stay in aria-label + title + IconActionTip (immediate hover); toast via AppFeedback when present.
  *
  * When `showUrl` is false and `label` is set (and not `iconOnly`), the label
  * itself opens the URL (compact list rows — no long URL wrapping).
@@ -122,35 +123,39 @@ export function CopyableLink({
             </span>
           )
         ) : null}
-        <button
-          type="button"
-          onClick={onCopy}
-          disabled={!canUse}
-          className={cn(
-            iconActionClass,
-            hit,
-            'border-brand-500/35 bg-brand-500/[0.09] text-brand-600'
-          )}
-          aria-label={copyText}
-          title={copyText}
-        >
-          <Icon name="copy" />
-        </button>
-        {showOpenIcon ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
+        <IconActionTip label={copyText}>
+          <button
+            type="button"
+            onClick={onCopy}
+            disabled={!canUse}
             className={cn(
               iconActionClass,
               hit,
-              'border-ink/12 bg-transparent text-ink-muted no-underline'
+              'border-brand-500/35 bg-brand-500/[0.09] text-brand-600'
             )}
-            aria-label={openText}
-            title={openText}
+            aria-label={copyText}
+            title={copyText}
           >
-            <Icon name="externalLink" />
-          </a>
+            <Icon name="copy" />
+          </button>
+        </IconActionTip>
+        {showOpenIcon ? (
+          <IconActionTip label={openText}>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                iconActionClass,
+                hit,
+                'border-ink/12 bg-transparent text-ink-muted no-underline'
+              )}
+              aria-label={openText}
+              title={openText}
+            >
+              <Icon name="externalLink" />
+            </a>
+          </IconActionTip>
         ) : null}
       </div>
     </div>

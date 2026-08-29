@@ -16,6 +16,7 @@ import {
   fieldCheckboxClass,
 } from '../_components/form-control-styles';
 import { Icon } from '../_components/Icon';
+import { IconActionTip } from '../_components/IconActionTip';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -493,40 +494,44 @@ function AdminCreateButton({ label, onClick, disabled = false, className }) {
 /** Row edit — brand tint + pencil. */
 function AdminEditButton({ label, onClick, disabled = false, className }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        S.btnRowIcon,
-        'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
-        className
-      )}
-      aria-label={label}
-      title={label}
-    >
-      <Icon name="pencil" />
-    </button>
+    <IconActionTip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          S.btnRowIcon,
+          'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
+          className
+        )}
+        aria-label={label}
+        title={label}
+      >
+        <Icon name="pencil" />
+      </button>
+    </IconActionTip>
   );
 }
 
 /** Row delete / deactivate / archive — danger tint + trash. */
 function AdminDeleteButton({ label, onClick, disabled = false, className }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        S.btnRowIcon,
-        'border-danger/35 bg-danger/[0.08] text-danger',
-        className
-      )}
-      aria-label={label}
-      title={label}
-    >
-      <Icon name="trash" />
-    </button>
+    <IconActionTip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          S.btnRowIcon,
+          'border-danger/35 bg-danger/[0.08] text-danger',
+          className
+        )}
+        aria-label={label}
+        title={label}
+      >
+        <Icon name="trash" />
+      </button>
+    </IconActionTip>
   );
 }
 
@@ -558,20 +563,22 @@ function AdminViewButton({
     );
   }
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        S.btnRowIcon,
-        'border-info/35 bg-info/[0.08] text-info',
-        className
-      )}
-      aria-label={label}
-      title={label}
-    >
-      <Icon name={icon} />
-    </button>
+    <IconActionTip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          S.btnRowIcon,
+          'border-info/35 bg-info/[0.08] text-info',
+          className
+        )}
+        aria-label={label}
+        title={label}
+      >
+        <Icon name={icon} />
+      </button>
+    </IconActionTip>
   );
 }
 
@@ -603,22 +610,26 @@ function AdminIconButton({
   );
   if (href && !disabled) {
     return (
-      <Link href={href} className={classes} aria-label={label} title={label}>
-        <Icon name={icon} />
-      </Link>
+      <IconActionTip label={label}>
+        <Link href={href} className={classes} aria-label={label} title={label}>
+          <Icon name={icon} />
+        </Link>
+      </IconActionTip>
     );
   }
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={classes}
-      aria-label={label}
-      title={label}
-    >
-      <Icon name={icon} />
-    </button>
+    <IconActionTip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={classes}
+        aria-label={label}
+        title={label}
+      >
+        <Icon name={icon} />
+      </button>
+    </IconActionTip>
   );
 }
 

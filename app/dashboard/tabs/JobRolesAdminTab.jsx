@@ -263,7 +263,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
   }
 
   if (loading && roles.length === 0) {
-    return <AppLoading />;
+    return <AppLoading variant="panel" />;
   }
 
   if (error) {

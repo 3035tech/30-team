@@ -466,7 +466,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     setPage(1);
   };
 
-  if (loading && benefits.length === 0) return <AppLoading />;
+  if (loading && benefits.length === 0) return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-6">

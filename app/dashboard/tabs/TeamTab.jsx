@@ -10,6 +10,7 @@ import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared'
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { DateField } from '../../_components/DateField';
+import { AppLoading } from '../../_components/AppLoading';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
@@ -1094,7 +1095,7 @@ export function TeamTab({
             {personTab === 'people' ? (
               <div>
                 {detailLoading ? (
-                  <p className="m-0 font-mono text-xs text-ink-muted">…</p>
+                  <AppLoading locale={locale} variant="inline" />
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
                   <>
                     <div className="mb-3 flex flex-wrap gap-2">
@@ -1189,7 +1190,7 @@ export function TeamTab({
                 <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
                   <span className={cn(S.label, 'mb-2 block')}>{t(locale, 'recruiting.assessmentsForCandidate')}</span>
                   {detailLoading ? (
-                    <p className="m-0 text-xs text-ink-muted">…</p>
+                    <AppLoading locale={locale} variant="inline" />
                   ) : detailErr ? (
                     <p className="m-0 text-xs text-danger">{detailErr}</p>
                   ) : detail?.assessments?.length ? (

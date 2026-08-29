@@ -348,7 +348,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     setPage(1);
   };
 
-  if (loading) return <AppLoading />;
+  if (loading) return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-6">

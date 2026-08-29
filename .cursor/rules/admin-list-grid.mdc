@@ -23,7 +23,7 @@ alwaysApply: false
 6. **Ver** — `AdminViewButton` (ícone olho + tint info). Ordem canônica na célula: **Ver → Editar → Excluir**.
 7. Ações na linha — dentro de `AdminActionsCell`.
 8. **Links compartilháveis** (`/t`, `/v`, carreiras, Motivadores) — `CopyableLink` com `iconOnly` + `compact` (ícones copiar/abrir; `label` só no tooltip). Não mostrar URL longa nem rótulo texto na célula do grid.
-9. **Ações secundárias** (abrir Equipe, reenviar, clonar, rotacionar link, reset) — `AdminIconButton` (`icon` + `label` em tooltip). Não inventar botão texto ghost ad hoc na coluna Ações.
+9. **Ações secundárias** (abrir Equipe, reenviar, clonar, rotacionar link, reset) — `AdminIconButton` (`icon` + `label`; hint imediato via `IconActionTip` + `title`/`aria-label`). Não inventar botão texto ghost ad hoc na coluna Ações.
 
 ## Imports
 

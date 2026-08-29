@@ -18,7 +18,7 @@ export function Skeleton({ className, count = 1 }) {
         <div
           key={i}
           className={cn(
-            'animate-pulse bg-gray-200 rounded',
+            'animate-pulse rounded bg-ink/[0.08]',
             className
           )}
         />

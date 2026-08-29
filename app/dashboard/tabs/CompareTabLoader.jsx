@@ -7,6 +7,7 @@ import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { CompareTab } from './CompareTab';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 
 export function CompareTabLoader({
@@ -65,11 +66,7 @@ export function CompareTabLoader({
   }, [filterQueryString, comparePage, comparePageSize, locale]);
 
   if (loading) {
-    return (
-      <div className={cn(S.card, 'p-10 text-center')}>
-        <p className="m-0 text-ink-muted">{t(locale, 'panel.compare.loading')}</p>
-      </div>
-    );
+    return <AppLoading locale={locale} variant="panel" label={t(locale, 'panel.compare.loading')} />;
   }
   if (err) {
     return (
@@ -83,6 +80,7 @@ export function CompareTabLoader({
   const totPg = meta.totalPages;
 
   return (
+    <ContentEnter animKey="ready">
     <div className="flex flex-col gap-3.5">
       {meta.total === 0 && !(search || '').trim() ? (
         <RosterEmptyHint
@@ -152,5 +150,6 @@ export function CompareTabLoader({
         </div>
       ) : null}
     </div>
+    </ContentEnter>
   );
 }

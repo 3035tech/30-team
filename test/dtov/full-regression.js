@@ -678,6 +678,14 @@ async function runOfflineLibs() {
       throw new Error('false positive compensation scope');
     }
     if (!isHelpOutOfScope('folha de pagamento holerite')) throw new Error('scope payroll');
+    const cohortFaq = matchHelpFaq('visão geral pede para escolher empresa', 'pt-BR');
+    if (!cohortFaq || cohortFaq.section !== 'dashboardCohort') throw new Error('faq cohort miss');
+    const hrFaq = matchHelpFaq('o que é o hr score?', 'pt-BR');
+    if (!hrFaq || hrFaq.section !== 'b1000HrScore') throw new Error('faq hr-score miss');
+    const turnFaq = matchHelpFaq('radar de rotatividade varredura limitada', 'pt-BR');
+    if (!turnFaq || turnFaq.section !== 'b1000TurnoverRadar') throw new Error('faq turnover miss');
+    const rolesFaq = matchHelpFaq('como criar um cargo com rubrica', 'pt-BR');
+    if (!rolesFaq || rolesFaq.section !== 'b1000JobRoles') throw new Error('faq job-roles miss');
     const chunks = buildHelpChunks('pt-BR');
     if (chunks.length < HELP_GUIDE_SECTIONS.length - 2) {
       throw new Error(`chunks ${chunks.length} < sections ${HELP_GUIDE_SECTIONS.length}`);
@@ -700,6 +708,33 @@ async function runOfflineLibs() {
     });
     if (again.source !== 'guard') throw new Error('refuse again');
     return `faq=${faq.id} chunks=${chunks.length} sections=${HELP_GUIDE_SECTIONS.length} guard=ok`;
+  });
+
+  await check('lib', 'perf-hotpaths-caps', async () => {
+    const { COMPAT_PAIR_PAYLOAD_CAP, buildCompatBundles } = await import('../../lib/compat-bundles.js');
+    const { JOB_ROLES_LIST_CAP } = await import('../../lib/job-roles.js');
+    const { LEADERSHIP_SCORES_SAMPLE_CAP, LEADERSHIP_POTENTIALS_SCAN_CAP } = await import(
+      '../../lib/leadership-analytics.js'
+    );
+    const { measureAsync, resetMetrics, getMetricsSnapshot } = await import('../../lib/monitoring.js');
+    if (COMPAT_PAIR_PAYLOAD_CAP > 150) throw new Error('pair payload cap too high');
+    if (JOB_ROLES_LIST_CAP !== 500) throw new Error('job roles cap');
+    if (LEADERSHIP_SCORES_SAMPLE_CAP > 1000) throw new Error('leadership scores cap');
+    if (LEADERSHIP_POTENTIALS_SCAN_CAP > 800) throw new Error('leadership potentials cap');
+    const people = Array.from({ length: 40 }, (_, i) => ({
+      assessmentId: i + 1,
+      candidateId: i + 1,
+      name: `P${i + 1}`,
+      topType: (i % 9) + 1,
+      areaLabel: 'Eng',
+    }));
+    const bundles = buildCompatBundles(people, 'pt-BR', { includePairs: true });
+    if (bundles.pairs.length > COMPAT_PAIR_PAYLOAD_CAP) throw new Error('pairs not capped');
+    resetMetrics();
+    const v = await measureAsync('test.fullRegression', async () => 1);
+    if (v !== 1) throw new Error('measureAsync');
+    if (!getMetricsSnapshot().dbQueries['op:test.fullRegression']) throw new Error('metric miss');
+    return `pairCap=${COMPAT_PAIR_PAYLOAD_CAP} rolesCap=${JOB_ROLES_LIST_CAP}`;
   });
 
   await check('lib', 'slugify-accents-specials', async () => {
@@ -1641,6 +1676,54 @@ async function runSqlSuite(client) {
     });
     if (!related.length) throw new Error('closed page should have related open public vacancies');
     return `related=${related.length}`;
+  });
+
+  await check('sql', 'b1000-tables-present', async () => {
+    const tables = [
+      'hr_scores',
+      'job_roles',
+      'performance_cycles',
+      'critical_roles',
+      'exit_records',
+      'learning_resources',
+      'company_benefits',
+      'employee_compensation_events',
+    ];
+    for (const name of tables) {
+      const r = await client.query(`SELECT to_regclass('public.${name}') AS reg`);
+      if (!r.rows[0]?.reg) throw new Error(`missing table ${name}`);
+    }
+    return tables.join(',');
+  });
+
+  await check('lib', 'turnover-radar-shape', async () => {
+    const { getCompanyTurnoverRisks } = await import('../../lib/turnover-radar.js');
+    const out = await getCompanyTurnoverRisks(companyId, { limit: 5, minRisk: 'low' });
+    if (!Array.isArray(out.risks)) throw new Error('risks array');
+    if (typeof out.truncated !== 'boolean') throw new Error('truncated');
+    if (typeof out.scanned !== 'number') throw new Error('scanned');
+    return `risks=${out.risks.length} scanned=${out.scanned}`;
+  });
+
+  await check('lib', 'job-roles-list-cap', async () => {
+    const { listCompanyJobRoles } = await import('../../lib/job-roles.js');
+    const out = await listCompanyJobRoles(companyId);
+    if (!Array.isArray(out.roles)) throw new Error('roles');
+    if (typeof out.truncated !== 'boolean') throw new Error('truncated');
+    return `n=${out.roles.length}`;
+  });
+
+  await check('lib', 'vacancy-candidates-paged', async () => {
+    const { listVacancyCandidates } = await import('../../lib/vacancies-admin.js');
+    const vac = await client.query(
+      `SELECT id FROM vacancies WHERE company_id = $1 AND deleted = FALSE ORDER BY id LIMIT 1`,
+      [companyId]
+    );
+    if (!vac.rowCount) throw new Error('no vacancy');
+    const list = await listVacancyCandidates(vac.rows[0].id, { page: 1, pageSize: 20 });
+    if (!Array.isArray(list.items)) throw new Error('items');
+    if (typeof list.total !== 'number') throw new Error('total');
+    return `items=${list.items.length} total=${list.total}`;
   });
 }
 

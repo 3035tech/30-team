@@ -28,7 +28,7 @@ import { DashboardBreadcrumb, getDashboardTabNav, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
-import { AppLoading } from '../_components/AppLoading';
+import { AppLoading, ContentEnter, NavLoadBar } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
 import { OnboardingTour } from '../_components/OnboardingTour';
@@ -952,7 +952,8 @@ export default function DashboardClient({
           </nav>
         </aside>
 
-        <div className="db-main max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
+        <div className="db-main relative max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
+          <NavLoadBar active={panelLoading} />
 
           <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
           {showGlobalSearch ? (
@@ -1072,10 +1073,13 @@ export default function DashboardClient({
           </div>
 
           {panelLoading ? (
-            <div role="status" aria-live="polite" className="min-h-[240px] py-12">
-              <AppLoading variant="panel" label={t(locale, 'dashboard.loadingPanel')} />
-            </div>
+            <AppLoading
+              locale={locale}
+              variant="panel"
+              label={t(locale, 'dashboard.loadingPanel')}
+            />
           ) : (
+          <ContentEnter animKey={tab}>
           <>
           {/* Filter row — essentials always on; advanced behind disclosure */}
           {showsCohortChrome ? (
@@ -1479,6 +1483,7 @@ export default function DashboardClient({
             </>
           )}
           </>
+          </ContentEnter>
           )}
         </div>
       </div>

@@ -48,10 +48,18 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Auditoria (super admin) | `access` (Step11) |
 | Remuneração interna | `compensation` |
 | LMS / cursos | `lmsBasic` |
+| Filtro de empresa / escala (admin Overview+Comparar) | `dashboardCohort` |
+| HR Score | `b1000HrScore` |
+| Radar de rotatividade | `b1000TurnoverRadar` |
+| Cargos | `b1000JobRoles` |
 
 **FAQ rápido — remuneração:** perguntas com “salário/aumento/reajuste + colaborador/equipe” (ou “lista de salários”) caem em `faqCompensation`. Link canônico da lista: `/dashboard?tab=compensation`; ficha: Equipe → Remuneração (`&section=compensation`). Folha/holerite continua fora de escopo.
 
+**FAQ rápido — coorte admin:** “escolher empresa”, “visão geral vazia”, “comparar pede empresa” → `faqDashboardCohort`. HR Score / radar / cargos → `faqHrScore`, `faqTurnoverRadar`, `faqJobRoles`.
+
 Detalhe operacional da jornada colaborador: [`employee-onboarding-journey.md`](./employee-onboarding-journey.md).
+
+Performance (ops): [`performance-hotpaths.md`](./performance-hotpaths.md) — `LOG_SLOW_MS`, `npm run dtov:explain`.
 
 ## Manutenção do prompt de produto
 

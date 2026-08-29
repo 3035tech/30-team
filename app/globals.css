@@ -439,6 +439,42 @@ textarea:focus-visible {
   }
 }
 
+/* Panel / route content enter — short, respects reduced motion */
+@keyframes ui-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ui-content-enter {
+  animation: ui-content-enter 180ms ease-out both;
+}
+@keyframes ui-nav-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+.ui-nav-indeterminate {
+  animation: ui-nav-indeterminate 1.05s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-content-enter {
+    animation: none;
+  }
+  .ui-nav-indeterminate {
+    animation: none;
+    width: 100%;
+    opacity: 0.55;
+  }
+}
+
 /* Mobile Fixes - UX/UX Melhoria #5 */
 @import url('./mobile-fixes.css');
 

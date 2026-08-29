@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -123,6 +123,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
   }
 
   return (
+    <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-10">
       <p className={cn(S.faint, 'm-0 text-[11px] uppercase tracking-wide')}>
         {t(locale, 'panel.employeePortal.eyebrow')}
@@ -315,5 +316,6 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
         </div>
       </section>
     </div>
+    </ContentEnter>
   );
 }

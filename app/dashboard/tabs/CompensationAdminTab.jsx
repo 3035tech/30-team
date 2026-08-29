@@ -120,7 +120,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
     );
   }
 
-  if (loading && items.length === 0) return <AppLoading />;
+  if (loading && items.length === 0) return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-4">

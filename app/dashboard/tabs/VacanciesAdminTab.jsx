@@ -31,6 +31,7 @@ import {
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
+import { AppLoading } from '../../_components/AppLoading';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import { VACANCY_STATUS } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
@@ -1049,9 +1050,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </p>
           ) : null}
           {(detailLoading || loading) && !v ? (
-            <p className="mt-3.5 font-mono text-[13px] text-ink-muted">
-              {t(locale, 'recruiting.loadingVacancy')}
-            </p>
+            <AppLoading
+              locale={locale}
+              variant="block"
+              label={t(locale, 'recruiting.loadingVacancy')}
+            />
           ) : null}
           {!detailLoading && !v && error ? (
             <button
