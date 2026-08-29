@@ -625,6 +625,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           help: t(locale, 'panel.climate.questionKindHelp'),
           options: [
             { value: 'likert', label: t(locale, 'panel.climate.questionKind.likert') },
+            { value: 'enps', label: t(locale, 'panel.climate.questionKind.enps') },
             { value: 'text', label: t(locale, 'panel.climate.questionKind.text') },
           ],
         },
@@ -1007,7 +1008,8 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           const scaleMin = Number(row.scaleMin) || 1;
                           const isText =
                             String(row.questionKind || '').toLowerCase() === 'text' ||
-                            row.mean == null;
+                            (row.mean == null && row.enpsScore == null);
+                          const isEnps = String(row.questionKind || '').toLowerCase() === 'enps';
                           return (
                             <li
                               key={row.questionId}
@@ -1016,9 +1018,20 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <span className="min-w-0 flex-1 text-sm leading-snug text-ink">
                                   {row.prompt}
+                                  {isEnps ? (
+                                    <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                                      {t(locale, 'panel.climate.enpsQuestionHint')}
+                                    </span>
+                                  ) : null}
                                 </span>
                                 <span className="shrink-0 font-ui text-xl tabular-nums text-ink">
-                                  {row.mean != null ? row.mean : '—'}
+                                  {isEnps
+                                    ? row.enpsScore != null
+                                      ? row.enpsScore
+                                      : '—'
+                                    : row.mean != null
+                                      ? row.mean
+                                      : '—'}
                                 </span>
                               </div>
                               {row.mean != null ? (
@@ -1029,6 +1042,10 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                                   locale={locale}
                                   size="sm"
                                 />
+                              ) : isEnps && row.enpsScore != null ? (
+                                <p className={cn(S.faint, 'm-0 mt-1.5')}>
+                                  {t(locale, 'panel.climate.enpsScoreHint', { n: row.responses || 0 })}
+                                </p>
                               ) : (
                                 <p className={cn(S.faint, 'm-0 mt-1.5')}>
                                   {isText

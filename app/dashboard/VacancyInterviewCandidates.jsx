@@ -16,6 +16,8 @@ import { InterviewScorecardBlock } from './vacancies/InterviewScorecardBlock';
 import { VacancyOfferBlock } from './vacancies/VacancyOfferBlock';
 import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
 import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
+import { CandidateCvBlock } from '../_components/CandidateCvBlock';
+import { VacancyInterviewSlotsBlock } from '../_components/VacancyInterviewSlotsBlock';
 
 const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-surface/80');
 const FIELD_SELECT = cn(S.select, 'min-w-0 flex-[1_1_180px] bg-surface/80');
@@ -414,6 +416,12 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           )}
 
           {row.candidateId ? (
+            <div className="mb-3">
+              <CandidateCvBlock candidateId={row.candidateId} locale={locale} embedded onApplied={() => onChanged?.()} />
+            </div>
+          ) : null}
+
+          {row.candidateId ? (
             <VacancyOfferBlock
               vacancyId={vacancyId}
               candidateId={row.candidateId}
@@ -800,6 +808,10 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       {err ? (
         <p className="mb-2.5 text-xs font-mono text-danger">{err}</p>
       ) : null}
+
+      <div className="mb-4">
+        <VacancyInterviewSlotsBlock vacancyId={vacancyId} candidates={items} locale={locale} />
+      </div>
 
       {loading ? (
         <p className="font-mono text-xs text-ink-muted">

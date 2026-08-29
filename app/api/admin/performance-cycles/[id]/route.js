@@ -52,7 +52,7 @@ export async function PATCH(request, { params }) {
       return apiError(request, ERR.INVALID_ID, 400);
     }
 
-    const { title, description, status, periodStart, periodEnd } = body;
+    const { title, description, status, periodStart, periodEnd, allowSelfReview, allowPeerReview } = body;
 
     const result = await updatePerformanceCycle(null, {
       companyId,
@@ -62,6 +62,8 @@ export async function PATCH(request, { params }) {
       status,
       periodStart,
       periodEnd,
+      allowSelfReview,
+      allowPeerReview,
     });
 
     if (!result.ok) {

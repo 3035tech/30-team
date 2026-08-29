@@ -231,6 +231,12 @@ export function PersonDossierBlock({
                 {d.performance.developCount > 0
                   ? ` · ${t(locale, 'panel.dossier.developGoals', { n: d.performance.developCount })}`
                   : ''}
+                {d.performance.sideReviewCount > 0
+                  ? ` · ${t(locale, 'panel.dossier.sideReviews', {
+                      n: d.performance.sideReviewSubmitted || 0,
+                      total: d.performance.sideReviewCount,
+                    })}`
+                  : ''}
               </p>
               {d.performance.developCount > 0 && typeof onGoSubTab === 'function' ? (
                 <div className="mt-2 flex flex-wrap gap-3">

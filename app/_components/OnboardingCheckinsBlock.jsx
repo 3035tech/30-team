@@ -71,6 +71,9 @@ export function OnboardingCheckinsBlock({
           { value: 'continue', label: t(locale, 'panel.onboarding.outcome.continue') },
           { value: 'develop', label: t(locale, 'panel.onboarding.outcome.develop') },
           { value: 'concern', label: t(locale, 'panel.onboarding.outcome.concern') },
+          { value: 'pass', label: t(locale, 'panel.onboarding.outcome.pass') },
+          { value: 'fail', label: t(locale, 'panel.onboarding.outcome.fail') },
+          { value: 'extend', label: t(locale, 'panel.onboarding.outcome.extend') },
         ],
       },
       {
@@ -101,14 +104,22 @@ export function OnboardingCheckinsBlock({
             notes: values.notes || '',
             meetUrl: values.meetUrl,
             locale,
-            seedPdi: values.outcome === 'develop' || values.outcome === 'concern',
+            seedPdi:
+              values.outcome === 'develop' ||
+              values.outcome === 'concern' ||
+              values.outcome === 'fail' ||
+              values.outcome === 'extend',
+            seedRetention:
+              values.outcome === 'concern' ||
+              values.outcome === 'fail' ||
+              values.outcome === 'extend',
           }),
         }
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       toast(
-        data.pdiItem
+        data.pdiItem || data.retentionFollowUp
           ? t(locale, 'panel.onboarding.savedWithPdi')
           : t(locale, 'panel.onboarding.saved'),
         'ok'

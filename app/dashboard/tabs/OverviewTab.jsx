@@ -694,6 +694,7 @@ export function OverviewTab({
       {data.peopleOps ? (() => {
         const pdi = data.peopleOps.pdi;
         const clima = data.peopleOps.climate;
+        const enps = data.peopleOps.enps;
         const ret = data.peopleOps.retention;
         const onb = data.peopleOps.onboarding;
         const queue = pdi?.queue || {};
@@ -728,6 +729,11 @@ export function OverviewTab({
             clima.draftSurveys > 0 ||
             clima.deltaVsPrevious != null ||
             clima.latestMean != null);
+        const hasEnps =
+          enps &&
+          !enps.suppressed &&
+          enps.score != null &&
+          Number.isFinite(Number(enps.score));
         const hasRet = ret && ret.count > 0;
         const signalN =
           overdueN +
@@ -1050,6 +1056,17 @@ export function OverviewTab({
                             </p>
                           </div>
                         ) : null}
+                      </li>
+                    ) : null}
+                    {hasEnps ? (
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                        {t(locale, 'panel.overview.enpsPulse', {
+                          score: enps.score,
+                          n: enps.responseCount,
+                        })}
+                        <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                          {t(locale, 'panel.overview.enpsHint')}
+                        </span>
                       </li>
                     ) : null}
                     {hasClima ? (

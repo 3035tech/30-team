@@ -151,6 +151,11 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       {band ? (
                         <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
                       ) : null}
+                      {r.textMatchScore != null ? (
+                        <div className="mt-1 font-mono text-[10px] text-ink-faint">
+                          {t(locale, 'recruiting.textMatchShort', { score: r.textMatchScore })}
+                        </div>
+                      ) : null}
                       {r.fitBreakdown ? (
                         <details className="mt-1 max-w-[240px]">
                           <summary className="cursor-pointer font-mono text-[10px] text-brand-600">

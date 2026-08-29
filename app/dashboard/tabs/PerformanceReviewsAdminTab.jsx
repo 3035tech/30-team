@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn';
+import { t as i18nT } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -20,10 +21,12 @@ import {
   AdminEditButton,
   AdminListPager,
   AdminViewButton,
+  AdminIconButton,
   S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
+import { NineBoxBlock } from './NineBoxBlock';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
@@ -75,6 +78,18 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         closeSuccess: 'Ciclo encerrado',
         actions: 'Ações',
         titleCol: 'Título',
+        allowSelfReview: 'Autoavaliação (180°)',
+        allowPeerReview: 'Avaliação de pares (360°)',
+        sideReviewButton: '180/360',
+        sideReviewTitle: 'Convites 180/360',
+        sideReviewCandidate: 'Colaborador',
+        sideReviewRole: 'Papel',
+        sideReviewRoleSelf: 'Autoavaliação',
+        sideReviewRolePeer: 'Par / colega',
+        sideReviewLabel: 'Nome do avaliador (opcional)',
+        sideReviewCreated: 'Convite criado',
+        sideReviewCapError: 'Limite de convites atingido para este colaborador',
+        sideReviewDisabled: 'Ative autoavaliação ou pares no ciclo primeiro',
       },
       en: {
         title: 'Performance Reviews',
@@ -114,6 +129,18 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         closeSuccess: 'Cycle closed',
         actions: 'Actions',
         titleCol: 'Title',
+        allowSelfReview: 'Self-assessment (180°)',
+        allowPeerReview: 'Peer review (360°)',
+        sideReviewButton: '180/360',
+        sideReviewTitle: '180/360 invites',
+        sideReviewCandidate: 'Employee',
+        sideReviewRole: 'Role',
+        sideReviewRoleSelf: 'Self-assessment',
+        sideReviewRolePeer: 'Peer / colleague',
+        sideReviewLabel: 'Reviewer name (optional)',
+        sideReviewCreated: 'Invite created',
+        sideReviewCapError: 'Invite cap reached for this employee',
+        sideReviewDisabled: 'Enable self or peer review on the cycle first',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -167,6 +194,18 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         type: 'date',
         row: 'period',
         value: toDateOnlyIso(cycle?.periodEnd) || '',
+      },
+      {
+        name: 'allowSelfReview',
+        label: t('allowSelfReview'),
+        type: 'boolean',
+        value: Boolean(cycle?.allowSelfReview),
+      },
+      {
+        name: 'allowPeerReview',
+        label: t('allowPeerReview'),
+        type: 'boolean',
+        value: Boolean(cycle?.allowPeerReview),
       },
       ...(cycle
         ? [
@@ -235,6 +274,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           periodStart: result.periodStart || null,
           periodEnd: result.periodEnd || null,
           status: result.status,
+          allowSelfReview: Boolean(result.allowSelfReview),
+          allowPeerReview: Boolean(result.allowPeerReview),
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -278,6 +319,80 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       /* view still shows cycle meta */
     }
     await notice({ title: cycle.title, message: lines.join('\n') });
+  }
+
+  async function handleSideReviewInvite(cycle) {
+    if (!cycle.allowSelfReview && !cycle.allowPeerReview) {
+      toast(t('sideReviewDisabled'), 'error');
+      return;
+    }
+    const roleOptions = [];
+    if (cycle.allowSelfReview) {
+      roleOptions.push({ value: 'self', label: t('sideReviewRoleSelf') });
+    }
+    if (cycle.allowPeerReview) {
+      roleOptions.push({ value: 'peer', label: t('sideReviewRolePeer') });
+    }
+    const result = await promptForm({
+      title: t('sideReviewTitle'),
+      fields: [
+        {
+          key: 'candidateId',
+          type: 'entitySearch',
+          label: t('sideReviewCandidate'),
+          searchUrl: '/api/admin/employees/search',
+          minChars: 2,
+          required: true,
+        },
+        {
+          key: 'role',
+          type: 'select',
+          label: t('sideReviewRole'),
+          required: true,
+          options: roleOptions,
+          initialValue: roleOptions[0]?.value || 'self',
+        },
+        {
+          key: 'reviewerLabel',
+          type: 'text',
+          label: t('sideReviewLabel'),
+          initialValue: '',
+        },
+      ],
+    });
+    if (!result?.candidateId) return;
+
+    try {
+      const res = await fetch(`/api/admin/performance-cycles/${cycle.id}/side-reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId: Number(result.candidateId),
+          role: result.role,
+          reviewerLabel: result.reviewerLabel,
+          companyId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data?.errorCode === 'ITEMS_CAP') {
+          toast(t('sideReviewCapError'), 'error');
+          return;
+        }
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      toast(t('sideReviewCreated'), 'success');
+      await notice({
+        title: t('sideReviewCreated'),
+        message: data.publicUrl
+          ? `${i18nT(locale, 'performanceReviews.sideReview.linkLabel')}:\n${data.publicUrl}`
+          : i18nT(locale, 'performanceReviews.sideReview.createdHint'),
+        tone: 'ok',
+      });
+    } catch (err) {
+      console.error('Side review invite error:', err);
+      toast(t('saveError'), 'error');
+    }
   }
 
   async function handleDeleteCycle(cycle) {
@@ -424,6 +539,13 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                     {cycle.description ? (
                       <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{cycle.description}</p>
                     ) : null}
+                    {cycle.allowSelfReview || cycle.allowPeerReview ? (
+                      <p className="mt-1 font-mono text-[10px] text-brand-600">
+                        {cycle.allowSelfReview ? t('allowSelfReview') : ''}
+                        {cycle.allowSelfReview && cycle.allowPeerReview ? ' · ' : ''}
+                        {cycle.allowPeerReview ? t('allowPeerReview') : ''}
+                      </p>
+                    ) : null}
                     {cycle.periodEnd ? (
                       <p className="mt-1 text-xs text-ink-faint">
                         {t('periodEnd')}: {formatDate(cycle.periodEnd)}
@@ -446,6 +568,14 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                     <AdminActionsCell>
                       <AdminViewButton label={t('view')} onClick={() => handleViewCycle(cycle)} />
                       <AdminEditButton label={t('edit')} onClick={() => handleEditCycle(cycle)} />
+                      {cycle.status !== PERFORMANCE_CYCLE_STATUS.CLOSED &&
+                      (cycle.allowSelfReview || cycle.allowPeerReview) ? (
+                        <AdminIconButton
+                          icon="link"
+                          label={t('sideReviewButton')}
+                          onClick={() => handleSideReviewInvite(cycle)}
+                        />
+                      ) : null}
                       {cycle.status !== PERFORMANCE_CYCLE_STATUS.CLOSED ? (
                         <AdminDeleteButton
                           label={t('delete')}
@@ -475,6 +605,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           </div>
         </div>
       )}
+      <NineBoxBlock locale={locale} companyId={companyId} />
     </div>
   );
 }

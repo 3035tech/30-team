@@ -486,47 +486,26 @@ Fonte: varredura pública [solides.com.br](https://solides.com.br) (home, soluç
 
 ### Gaps — itens abaixo
 
-### B-2701 — Empacotamento / preço público (GTM)
-Contraponto aos “Avulsos” e à demo obrigatória da Sólides.
-1. Página `/pricing` (ou seção landpage) com planos claros: faixas RH e, quando existirem, add-ons DP (**B-2721+**) / instrumento DISC (**B-2720**) — preço visível, sem “só demo”.
-2. Self-serve signup — alinhar copy “o que está incluso” vs módulos assignáveis / avulsos honestos.
-3. i18n pt-BR+en; atualizar landpage + Guia se a oferta mudar.
+### B-2701 — Empacotamento / preço público (GTM) ✅ ENTREGUE
+`/pricing` + landpage/signup links; planos early-access + add-ons “em breve”; Guia `panel.help.pricing*`.
 
-### B-2702 — eNPS (pulse de engajamento)
-Sólides: eNPS dedicado. Temos clima Likert + pulso de grupo — falta score eNPS clássico (−100…+100) com tendência.
-1. Campanha leve reusando infra de clima/pulso **ou** tipo de pergunta `enps` em survey existente.
-2. Agregação anônima por empresa/área; card Overview + Analytics tendência.
-3. Sem PII; tenant `company_id`; Guia + `HELP_GUIDE_SECTIONS`.
+### B-2702 — eNPS (pulse de engajamento) ✅ ENTREGUE
+`question_kind=enps` (0–10 → −100…+100); Overview + ClimateTab; migration `080`.
 
-### B-2703 — Matriz 9Box (performance × potencial)
-Sólides: 9Box avulso. Temos review + HR Score / leadership potential — falta grade 3×3 visual.
-1. Eixo Y = outcome/ciclo ou HR Score; eixo X = potencial (leadership / sucessão readiness) — **hedged**, não diagnóstico.
-2. UI Equipe ou Performance: plotar colaboradores do ciclo; drill-down para PDI/sucessão.
-3. Reusar scores existentes; pode combinar T1–T9 / Motivadores / DISC (**B-2720**) quando houver.
+### B-2703 — Matriz 9Box (performance × potencial) ✅ ENTREGUE
+`lib/people/nine-box.js` + `NineBoxBlock` na aba Avaliações; HR Score × potencial (leadership).
 
-### B-2704 — Avaliação 180° / 360° (opcional no ciclo)
-Hoje: só gestor → colaborador (B-1004).
-1. Extender ciclo: autoavaliação; pares/liderados opcionais (tokens como clima — anônimo ou identificado por config).
-2. Consolidar scores no review; gaps → item PDI.
-3. Capas: volumetria (LIMIT), sem N+1; i18n; Guia.
+### B-2704 — Avaliação 180° / 360° (opcional no ciclo) ✅ ENTREGUE
+Flags no ciclo + `performance_side_reviews` (self/peer por token); `/avaliacao/[token]`.
 
-### B-2705 — Avaliação de experiência (D30/D60/D90 formal)
-Temos check-ins pós-hire (B-700). Sólides: avaliação de período de experiência.
-1. Template de review ligado ao check-in / hire date (pass/fail/extend + notas).
-2. Outcome → PDI ou flag retenção; Overview “experiências a vencer”.
-3. Não misturar com admissão documental completa (isso é **B-2724**).
+### B-2705 — Avaliação de experiência (D30/D60/D90 formal) ✅ ENTREGUE
+Outcomes `pass`|`fail`|`extend` nos check-ins; PDI/retenção em fail/extend.
 
-### B-2706 — Triagem / parse de CV + match assistido (ATS leve)
-Sólides: triagem por IA de currículo. **Não** substituir T1–T9.
-1. Upload CV (PDF) → extrair texto → campos sugeridos no candidato (nome/e-mail/experiência) com confirmação humana.
-2. Opcional: score auxiliar “aderência textual à descrição da vaga” **separado** do Fit T1–T9 (rótulos claros).
-3. Sem inventar conta de candidato; storage S3; LGPD/retention.
+### B-2706 — Triagem / parse de CV + match assistido (ATS leve) ✅ ENTREGUE
+Upload PDF S3 + extract (`pdf-parse`); sugestão de campos; text-match ≠ Fit T1–T9; `CandidateCvBlock`.
 
-### B-2707 — Agenda de entrevistas (calendário leve)
-Gap clássico vs ATS (Gupy/Greenhouse) e vs Sólides (provas + fluxo).
-1. Slot na vaga/candidato: data/hora, link meet, status; notif gestor + e-mail candidato (token).
-2. Visão semana na vaga; sem virar Google Calendar sync no MVP (OAuth depois).
-3. Reusar `useAppFeedback` / DateField; i18n.
+### B-2707 — Agenda de entrevistas (calendário leve) ✅ ENTREGUE
+`interview_slots` + UI na vaga; notif gestores + e-mail candidato.
 
 ### B-2708 — Recrutamento conversacional WhatsApp (além do share)
 Hoje: botões share WhatsApp com UTM. Sólides: funil WhatsApp para micro/PME.

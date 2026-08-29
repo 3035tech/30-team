@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../lib/api-error.js';
 import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../lib/ae/require-admin.js';
 import { getPerformanceReview, updatePerformanceReview, listPerformanceGoals } from '../../../../lib/performance-reviews.js';
+import { listSideReviewsForCandidate } from '../../../../lib/performance-side-reviews.js';
 
 export async function GET(request) {
   try {
@@ -54,7 +55,13 @@ export async function GET(request) {
       candidateId,
     });
 
-    return NextResponse.json({ review: result.review, goals });
+    const sideReviews = await listSideReviewsForCandidate(null, {
+      companyId,
+      cycleId,
+      candidateId,
+    });
+
+    return NextResponse.json({ review: result.review, goals, sideReviews });
   } catch (err) {
     console.error('GET /api/admin/performance-reviews error:', err);
     return apiError(request, ERR.INTERNAL_ERROR, 500);

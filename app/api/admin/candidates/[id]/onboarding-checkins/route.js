@@ -83,16 +83,27 @@ export async function PATCH(request, { params }) {
     }
 
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const outcome = body.outcome || '';
     const result = await updateOnboardingCheckin(query, {
       companyId: loaded.candidate.companyId,
       candidateId,
       checkinId,
       status: body.status,
-      outcome: body.outcome,
+      outcome,
       notes: body.notes,
       meetUrl: body.meetUrl,
       completedByUserId: payload.userId || null,
-      seedPdi: Boolean(body.seedPdi),
+      seedPdi:
+        Boolean(body.seedPdi) ||
+        outcome === 'develop' ||
+        outcome === 'concern' ||
+        outcome === 'fail' ||
+        outcome === 'extend',
+      seedRetention:
+        Boolean(body.seedRetention) ||
+        outcome === 'fail' ||
+        outcome === 'extend' ||
+        outcome === 'concern',
       locale,
     });
     if (!result.ok) {
@@ -118,6 +129,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({
       item: result.item,
       pdiItem: result.pdiItem,
+      retentionFollowUp: result.retentionFollowUp || null,
     });
   } catch (err) {
     console.error('PATCH onboarding-checkins', err);

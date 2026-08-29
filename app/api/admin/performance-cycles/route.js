@@ -45,7 +45,7 @@ export async function POST(request) {
     const companyId = resolveScopedCompanyId(scope, body.companyId);
     if (!companyId) return apiError(request, ERR.COMPANY_REQUIRED, 400);
 
-    const { title, description, status, periodStart, periodEnd } = body;
+    const { title, description, status, periodStart, periodEnd, allowSelfReview, allowPeerReview } = body;
     if (!title || String(title).trim().length === 0) {
       return apiError(request, ERR.TITLE_REQUIRED, 400);
     }
@@ -57,6 +57,8 @@ export async function POST(request) {
       status,
       periodStart,
       periodEnd,
+      allowSelfReview: Boolean(allowSelfReview),
+      allowPeerReview: Boolean(allowPeerReview),
       createdByUserId: payload.userId,
     });
 

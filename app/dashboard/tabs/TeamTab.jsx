@@ -26,6 +26,7 @@ import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
+import { CandidateCvBlock } from '../../_components/CandidateCvBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
@@ -1289,6 +1290,16 @@ export function TeamTab({
             ) : null}
             {personTab === 'profile' ? (
               <div>
+                {detail?.candidate?.id ? (
+                  <div className="mb-4">
+                    <CandidateCvBlock
+                      candidateId={detail.candidate.id}
+                      locale={locale}
+                      embedded
+                      onApplied={() => loadDetail(detail.candidate.id)}
+                    />
+                  </div>
+                ) : null}
                 <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
                   <div className="mb-2.5 flex items-center gap-2.5">
                     <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.candidateProfile')}</span>

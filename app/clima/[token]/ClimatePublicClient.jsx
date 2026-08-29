@@ -11,6 +11,10 @@ function isTextQuestion(q) {
   return String(q?.questionKind || '').toLowerCase() === 'text';
 }
 
+function isEnpsQuestion(q) {
+  return String(q?.questionKind || '').toLowerCase() === 'enps';
+}
+
 function isAnswerComplete(q, value) {
   if (isTextQuestion(q)) {
     const text = String(value ?? '').trim();
@@ -127,6 +131,10 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
                 {textQ ? (
                   <span className="mt-1 block font-mono text-[10px] text-ink-faint">
                     {t(locale, 'panel.climate.publicTextHint')}
+                  </span>
+                ) : isEnpsQuestion(q) ? (
+                  <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                    {t(locale, 'panel.climate.publicEnpsHint')}
                   </span>
                 ) : null}
               </div>

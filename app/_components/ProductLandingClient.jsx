@@ -66,6 +66,12 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <LanguageSelect locale={locale} onChange={setLocale} compact />
             <Link
+              href="/pricing"
+              className="hidden min-h-touch items-center rounded-control border border-transparent px-3 py-2 text-sm text-ink-muted no-underline hover:text-ink sm:inline-flex"
+            >
+              {copy.navPricing}
+            </Link>
+            <Link
               href="/login"
               className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
             >
@@ -92,7 +98,12 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           <p className="mb-3 max-w-2xl text-lg leading-relaxed text-ink">{copy.heroLead}</p>
           <p className="mb-6 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{copy.heroBody}</p>
           <Ctas copy={copy} />
-          <p className="mt-4 text-sm text-ink-faint">{copy.heroFoot}</p>
+          <p className="mt-4 text-sm text-ink-faint">
+            {copy.heroFoot}{' '}
+            <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
+              {copy.navPricing}
+            </Link>
+          </p>
           <nav aria-label={copy.tocLabel} className="mt-8 flex flex-wrap gap-2">
             {toc.map((item) => (
               <a
@@ -258,6 +269,11 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           ))}
         </ul>
         <Ctas copy={copy} />
+        <p className="mt-3 text-sm text-ink-muted">
+          <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
+            {copy.navPricing} →
+          </Link>
+        </p>
         <p className="mt-3 text-xs text-ink-faint">
           {copy.earlyContact}{' '}
           <a
@@ -303,9 +319,14 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
       </main>
 
       <footer className="relative z-[1] border-t border-ink/8 py-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <span>{copy.footerBrand}</span>
-          <span>{copy.footerLegal}</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/pricing" className="text-ink-muted no-underline hover:text-ink">
+              {copy.footerPricing}
+            </Link>
+            <span>{copy.footerLegal}</span>
+          </div>
         </div>
       </footer>
     </div>

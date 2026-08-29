@@ -31,7 +31,9 @@ export async function GET(request, { params }) {
             hired_at AS "hiredAt", start_date AS "startDate",
             birth_date AS "birthDate",
             hired_vacancy_id AS "hiredVacancyId",
-            consent_at AS "consentAt", created_at AS "createdAt"
+            consent_at AS "consentAt", created_at AS "createdAt",
+            cv_url AS "cvUrl", cv_updated_at AS "cvUpdatedAt",
+            (cv_extracted_text IS NOT NULL AND cv_extracted_text <> '') AS "hasCvText"
      FROM candidates WHERE id = $1 LIMIT 1`,
     [id]
   );

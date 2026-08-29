@@ -384,6 +384,7 @@ async function runOfflineLibs() {
       'getClimateSurveyAggregate',
       'getClimateCompanyBenchmark',
       'getCompanyClimatePulse',
+      'getCompanyEnpsPulse',
       'climateMinResponses',
     ]) {
       if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {
@@ -412,6 +413,13 @@ async function runOfflineLibs() {
     }
     if (!clima.includes('DEFAULT_CLIMATE_TEXT_PROMPTS_PT') || !clima.includes('textByQuestion')) {
       throw new Error('climate text questions missing');
+    }
+    if (!clima.includes("'enps'") || !clima.includes('computeEnpsScore')) {
+      throw new Error('climate enps missing');
+    }
+    const nine = await readFile(join(root, 'lib', 'people', 'nine-box.js'), 'utf8');
+    if (!nine.includes('loadNineBoxForCompany') || !nine.includes('nineBoxCellIndex')) {
+      throw new Error('nine-box missing exports');
     }
     const mig050 = await readFile(join(root, 'migrations', '050_climate_text_questions.sql'), 'utf8');
     if (!mig050.includes('question_kind')) throw new Error('mig 050 missing kind');
