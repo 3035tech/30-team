@@ -238,6 +238,14 @@ textarea:focus-visible {
   .emp-main {
     padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
   }
+  .emp-topbar {
+    padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+  /* Sticky LMS player sits below hamburger + top bar on phones */
+  .emp-player {
+    top: max(5.5rem, calc(env(safe-area-inset-top, 0px) + 4.25rem)) !important;
+    z-index: 25;
+  }
   .db-page-title {
     font-size: 24px !important;
     line-height: 1.25 !important;
@@ -482,6 +490,21 @@ textarea:focus-visible {
     width: 100%;
     opacity: 0.55;
   }
+}
+
+/* Collaborator chrome — dark fine-tuning */
+.dark .emp-player {
+  border-color: rgb(var(--brand-500) / 0.35);
+  background-color: rgb(var(--surface));
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+}
+.dark .db-sidebar {
+  background: rgb(var(--surface) / 0.96);
+  border-color: rgb(var(--ink) / 0.14);
+}
+.dark .emp-topbar {
+  background-color: rgb(var(--canvas) / 0.92);
+  border-color: rgb(var(--ink) / 0.12);
 }
 
 /* Mobile + dark CSS are imported from app/layout.jsx (not @import here).

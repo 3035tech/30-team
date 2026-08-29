@@ -70,6 +70,7 @@ function badgeFor(itemId, badges) {
 export function EmployeeSidebar({
   locale,
   companyName = '',
+  companyLogoUrl = '',
   open = false,
   onClose,
 }) {
@@ -130,12 +131,36 @@ export function EmployeeSidebar({
           {!navCollapsed ? (
             <>
               <span className={cn(S.label, 'mt-2.5 block')}>{t(locale, 'employeeHome.sidebarLabel')}</span>
-              {companyName ? (
-                <span className="mt-1 block truncate font-ui text-xs text-ink-muted" title={companyName}>
-                  {companyName}
-                </span>
+              {companyName || companyLogoUrl ? (
+                <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                  {companyLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- remote company logo URL from S3
+                    <img
+                      src={companyLogoUrl}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="h-5 w-5 flex-shrink-0 rounded object-contain"
+                    />
+                  ) : null}
+                  {companyName ? (
+                    <span className="truncate font-ui text-xs text-ink-muted" title={companyName}>
+                      {companyName}
+                    </span>
+                  ) : null}
+                </div>
               ) : null}
             </>
+          ) : companyLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={companyLogoUrl}
+              alt={companyName || ''}
+              width={28}
+              height={28}
+              className="mt-2 h-7 w-7 rounded object-contain"
+              title={companyName || undefined}
+            />
           ) : null}
         </div>
         <button
@@ -187,6 +212,7 @@ export function EmployeeSidebar({
                       <Link
                         href={item.href}
                         title={navCollapsed ? t(locale, item.labelKey) : undefined}
+                        aria-current={active ? 'page' : undefined}
                         className={cn(
                           'relative flex min-h-touch items-center gap-2.5 rounded-control font-ui text-prose no-underline transition-colors',
                           navCollapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2',

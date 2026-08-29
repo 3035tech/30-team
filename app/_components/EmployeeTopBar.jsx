@@ -117,7 +117,7 @@ export function EmployeeTopBar({
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ink/10 bg-canvas/90 backdrop-blur">
+    <header className="emp-topbar sticky top-0 z-30 border-b border-ink/10 bg-canvas/90 backdrop-blur">
       <div
         ref={wrapRef}
         className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 pl-14 md:pl-4 lg:px-6"

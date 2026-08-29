@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
@@ -10,6 +10,11 @@ import { EmptyState } from './EmptyState';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
+
+function isQuestionAnswered(q, value) {
+  if (q.questionKind === 'text') return String(value || '').trim().length > 0;
+  return value != null && value !== '';
+}
 
 /**
  * Clima / pulso autenticados — B-2501.
@@ -47,8 +52,16 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
     void load();
   }, [load]);
 
+  const activeProgress = useMemo(() => {
+    if (!active) return { answered: 0, total: 0, complete: false };
+    const qs = active.questions || [];
+    const bag = answers[active.key] || {};
+    const answered = qs.filter((q) => isQuestionAnswered(q, bag[q.id])).length;
+    return { answered, total: qs.length, complete: qs.length > 0 && answered === qs.length };
+  }, [active, answers]);
+
   const submit = async () => {
-    if (!active?.token || !active?.kind) return;
+    if (!active?.token || !active?.kind || !activeProgress.complete) return;
     setBusy(true);
     try {
       const res = await fetch('/api/employee/surveys', {
@@ -82,7 +95,11 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
   const history = inbox?.history || [];
 
   if (!open.length && !history.length) {
-    return <EmptyState message={t(locale, 'employeeHome.surveysEmpty')} />;
+    return (
+      <div data-emp-empty tabIndex={-1} className="outline-none">
+        <EmptyState message={t(locale, 'employeeHome.surveysEmpty')} />
+      </div>
+    );
   }
 
   return (
@@ -118,6 +135,14 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
             <div>
               <div className="font-ui text-sm text-ink">{active.title}</div>
               <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'employeeHome.surveysAnonymousHint')}</p>
+              {activeProgress.total > 0 ? (
+                <p className="m-0 mt-1 font-mono text-2xs text-ink-faint">
+                  {t(locale, 'employeeHome.surveysProgress', {
+                    answered: activeProgress.answered,
+                    total: activeProgress.total,
+                  })}
+                </p>
+              ) : null}
             </div>
             <button
               type="button"
@@ -162,7 +187,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
           </div>
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !activeProgress.complete}
             className={cn(S.btnPrimary, 'mt-3 min-h-touch w-full sm:w-auto')}
             onClick={submit}
           >

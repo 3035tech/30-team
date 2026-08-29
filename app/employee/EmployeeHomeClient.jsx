@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -21,6 +21,7 @@ import { InlineCallout } from '../_components/InlineCallout';
 
 const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
+const LAST_LESSON_KEY = 'team30_employee_last_lesson';
 
 function taskLabel(locale, task) {
   return t(locale, task.titleKey, task.titleValues || {});
@@ -40,6 +41,50 @@ function loadCollapsed() {
   } catch {
     return {};
   }
+}
+
+function readLastLesson() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LAST_LESSON_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastLesson(payload) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!payload) localStorage.removeItem(LAST_LESSON_KEY);
+    else localStorage.setItem(LAST_LESSON_KEY, JSON.stringify(payload));
+  } catch {
+    /* ignore */
+  }
+}
+
+function patchLessonInCourses(courses, lessonId, completed) {
+  return (courses || []).map((course) => {
+    const lessons = (course.lessons || []).map((l) =>
+      l.id === lessonId ? { ...l, completed } : l
+    );
+    const done = lessons.filter((l) => l.completed).length;
+    const total = lessons.length;
+    const progressPct = total ? Math.round((done / total) * 100) : 0;
+    return {
+      ...course,
+      lessons,
+      progressPct,
+      isComplete: progressPct >= 100,
+    };
+  });
+}
+
+function patchPdiItem(plans, itemId, status) {
+  return (plans || []).map((plan) => ({
+    ...plan,
+    items: (plan.items || []).map((it) => (it.id === itemId ? { ...it, status } : it)),
+  }));
 }
 
 function CollapsibleSection({ id, title, count, open, onToggle, children, locale = 'pt-BR' }) {
@@ -62,6 +107,14 @@ function CollapsibleSection({ id, title, count, open, onToggle, children, locale
   );
 }
 
+function EmpEmpty({ children }) {
+  return (
+    <div data-emp-empty tabIndex={-1} className="outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
+      {children}
+    </div>
+  );
+}
+
 /**
  * Authenticated collaborator home — collapsible sections, PDI actions, LMS player.
  */
@@ -81,6 +134,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   });
   const [watching, setWatching] = useState(null); // { lessonId, embedUrl, title, contentKind, completed }
   const [prepNote, setPrepNote] = useState('');
+  const [loadFailed, setLoadFailed] = useState(false);
+  const lastLessonRestored = useRef(false);
 
   const load = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -94,9 +149,13 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
       setPrepNote(json?.oneOnOnePrep?.noteToManager || '');
+      setLoadFailed(false);
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
-      if (!silent) setData(null);
+      if (!silent) {
+        setData(null);
+        setLoadFailed(true);
+      }
     } finally {
       if (!silent) setLoading(false);
     }
@@ -105,6 +164,27 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Restore last in-app lesson after first successful load (once per session)
+  useEffect(() => {
+    if (lastLessonRestored.current || loading || !data?.courses?.length) return;
+    lastLessonRestored.current = true;
+    const last = readLastLesson();
+    if (!last?.lessonId) return;
+    for (const course of data.courses) {
+      const lesson = (course.lessons || []).find((l) => l.id === last.lessonId && l.embedUrl);
+      if (lesson) {
+        setWatching({
+          lessonId: lesson.id,
+          embedUrl: lesson.embedUrl,
+          title: lesson.title,
+          contentKind: lesson.contentKind || 'link',
+          completed: Boolean(lesson.completed),
+        });
+        break;
+      }
+    }
+  }, [loading, data]);
 
   // Escape closes sticky player
   useEffect(() => {
@@ -129,6 +209,13 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   };
 
   const lessonAction = async (lessonId, action) => {
+    const completed = action === 'completeLesson';
+    setData((prev) =>
+      prev ? { ...prev, courses: patchLessonInCourses(prev.courses, lessonId, completed) } : prev
+    );
+    if (watching?.lessonId === lessonId) {
+      setWatching((prev) => (prev ? { ...prev, completed } : prev));
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/employee/home', {
@@ -138,14 +225,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'lesson');
-      if (watching?.lessonId === lessonId) {
-        setWatching((prev) =>
-          prev
-            ? { ...prev, completed: action === 'completeLesson' }
-            : prev
-        );
-      }
-      await load({ silent: true });
       toast(
         t(
           locale,
@@ -157,12 +236,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       );
     } catch (e) {
       toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
+      await load({ silent: true });
     } finally {
       setBusy(false);
     }
   };
 
   const pdiAction = async (itemId, status) => {
+    setData((prev) =>
+      prev ? { ...prev, plans: patchPdiItem(prev.plans, itemId, status) } : prev
+    );
     setBusy(true);
     try {
       const res = await fetch('/api/employee/home', {
@@ -172,10 +255,10 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'pdi');
-      await load({ silent: true });
       toast(t(locale, 'employeeHome.pdiStatusSaved'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.pdiStatusError'), 'error');
+      await load({ silent: true });
     } finally {
       setBusy(false);
     }
@@ -237,6 +320,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       contentKind: lesson.contentKind || 'link',
       completed: Boolean(lesson.completed),
     });
+    writeLastLesson({ lessonId: lesson.id });
     if (typeof window !== 'undefined') {
       window.requestAnimationFrame(() => {
         const el =
@@ -278,6 +362,10 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     setActiveSection(id);
     openSection(id);
     scrollToSection(id);
+    window.setTimeout(() => {
+      const empty = document.querySelector(`#${id} [data-emp-empty]`);
+      if (empty && typeof empty.focus === 'function') empty.focus();
+    }, 280);
   }, [sectionFocus, loading, openSection, scrollToSection, setActiveSection]);
 
   // Nav badges only (menu always lists all functionalities)
@@ -344,28 +432,56 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
 
   if (loading) return <AppLoading variant="panel" />;
 
-  const tasks = data?.tasks || [];
-  const journey = data?.journey;
-  const courses = data?.courses || [];
-  const plans = data?.plans || [];
-  const agreements = data?.recentAgreements || [];
-  const prompts = data?.oneOnOnePrompts || [];
-  const company = data?.company;
+  if (loadFailed || !data) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <EmptyState
+          message={t(locale, 'employeeHome.loadError')}
+          actionLabel={t(locale, 'employeeHome.loadRetry')}
+          onAction={() => void load()}
+        />
+      </div>
+    );
+  }
+
+  const tasks = data.tasks || [];
+  const journey = data.journey;
+  const courses = data.courses || [];
+  const plans = data.plans || [];
+  const agreements = data.recentAgreements || [];
+  const prompts = data.oneOnOnePrompts || [];
+  const company = data.company;
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
   const isPdf = watching?.contentKind === 'pdf';
+  const startHere =
+    tasks.length > 0
+      ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
+      : surveyMeta.openCount > 0
+        ? { href: '#surveys', labelKey: 'employeeHome.startHereSurveys', count: surveyMeta.openCount }
+        : null;
 
   return (
     <ContentEnter animKey="ready">
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
         <div className="mb-6">
           <p className={cn(S.muted, 'm-0')}>{t(locale, 'employeeHome.hint')}</p>
+          {startHere ? (
+            <InlineCallout tone="info" className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <span>
+                {t(locale, startHere.labelKey, { count: startHere.count })}
+              </span>
+              <a href={startHere.href} className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
+                {t(locale, 'employeeHome.startHereCta')}
+              </a>
+            </InlineCallout>
+          ) : null}
         </div>
 
         {watching?.embedUrl ? (
           <div
             id="emp-video-player"
-            className="sticky top-14 z-20 mb-6 overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card"
+            className="emp-player sticky top-14 z-20 mb-6 overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
               <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{watching.title}</span>
@@ -392,7 +508,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 <button
                   type="button"
                   className={cn(S.btnGhost, 'min-h-touch shrink-0')}
-                  onClick={() => setWatching(null)}
+                  onClick={() => {
+                    setWatching(null);
+                  }}
                 >
                   {isPdf ? t(locale, 'employeeHome.closePdf') : t(locale, 'employeeHome.closePlayer')}
                 </button>
@@ -435,17 +553,19 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           {tasks.length === 0 ? (
-            <EmptyState
-              message={t(locale, 'employeeHome.tasksEmpty')}
-              actionLabel={
-                courses.length
-                  ? t(locale, 'employeeHome.emptyGoLms')
-                  : plans.length
-                    ? t(locale, 'employeeHome.emptyGoPdi')
-                    : undefined
-              }
-              actionHref={courses.length ? '#lms' : plans.length ? '#pdi' : undefined}
-            />
+            <EmpEmpty>
+              <EmptyState
+                message={t(locale, 'employeeHome.tasksEmpty')}
+                actionLabel={
+                  courses.length
+                    ? t(locale, 'employeeHome.emptyGoLms')
+                    : plans.length
+                      ? t(locale, 'employeeHome.emptyGoPdi')
+                      : undefined
+                }
+                actionHref={courses.length ? '#lms' : plans.length ? '#pdi' : undefined}
+              />
+            </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {tasks.map((task) => (
@@ -503,7 +623,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               onChanged={refreshJourney}
             />
           ) : (
-            <EmptyState message={t(locale, 'employeeHome.journeyEmptyHint')} />
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'employeeHome.journeyEmptyHint')} />
+            </EmpEmpty>
           )}
         </CollapsibleSection>
 
@@ -516,7 +638,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           {plans.length === 0 ? (
-            <EmptyState message={t(locale, 'employeeHome.pdiEmptyHint')} />
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'employeeHome.pdiEmptyHint')} />
+            </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {plans.map((plan) => {
@@ -602,7 +726,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           {courses.length === 0 ? (
-            <EmptyState message={t(locale, 'employeeHome.lmsEmptyHint')} />
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'employeeHome.lmsEmptyHint')} />
+            </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {courses.map((course) => (
@@ -727,7 +853,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           {agreements.length === 0 ? (
-            <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
+            </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {agreements.map((a) => (
@@ -801,7 +929,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           {!hasCompany ? (
-            <EmptyState message={t(locale, 'employeeHome.companyEmptyHint')} />
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'employeeHome.companyEmptyHint')} />
+            </EmpEmpty>
           ) : (
             <>
               {company.aboutHtml ? (

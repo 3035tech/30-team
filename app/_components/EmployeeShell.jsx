@@ -22,6 +22,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
   const [locale, setLocale] = useLocale(initialLocale);
   const [displayName, setDisplayName] = useState(personName);
   const [company, setCompany] = useState(companyName);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
         if (cancelled) return;
         setDisplayName(data.person?.fullName || '');
         setCompany(data.person?.companyName || '');
+        setCompanyLogoUrl(data.person?.companyLogoUrl || '');
         if (data.person?.preferredLocale) setLocale(data.person.preferredLocale);
       } catch {
         /* ignore */
@@ -85,6 +87,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
             <EmployeeSidebar
               locale={locale}
               companyName={company}
+              companyLogoUrl={companyLogoUrl}
               open={sidebarOpen}
               onClose={closeSidebar}
             />
