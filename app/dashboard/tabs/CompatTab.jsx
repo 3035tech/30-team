@@ -8,7 +8,7 @@ import { personListName } from '../../../lib/person-name';
 import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
-import { Icon } from '../../_components/Icon';
+import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 
 function PersonCard({ person, locale }) {
   const d = TYPE_DATA[person.topType] || {};
@@ -53,15 +53,14 @@ function Glossary({ locale, open, onToggle }) {
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-xs text-ink-muted',
+          'flex min-h-touch w-full max-w-md cursor-pointer items-center justify-between gap-3 rounded-control border border-ink/12 bg-transparent px-3 py-2 text-left',
           open && 'mb-2.5'
         )}
       >
-        {open ? t(locale, 'panel.compat.glossaryHide') : t(locale, 'panel.compat.glossaryShow')}
-        <Icon
-          name="chevronDown"
-          className={cn('ml-1.5 inline-block shrink-0 align-middle transition-transform duration-150', open && 'rotate-180')}
-        />
+        <span className="font-mono text-xs text-ink-muted">
+          {t(locale, 'panel.compat.glossaryTitle')}
+        </span>
+        <DisclosureToggle locale={locale} open={open} />
       </button>
       {open ? (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
@@ -286,16 +285,12 @@ export function CompatTab({
             type="button"
             onClick={() => setAdviceOpen((v) => !v)}
             className="flex w-full cursor-pointer items-center justify-between gap-3 border-none bg-transparent px-4 py-3 text-left"
+            aria-expanded={adviceOpen}
           >
             <span className="font-mono text-xs" style={{ color: playbook.color }}>
               {playbook.title}: {t(locale, 'panel.compat.playbookToggle')}
             </span>
-            <span className="inline-flex shrink-0 items-center text-ink-muted">
-              <Icon
-                name="chevronDown"
-                className={cn('shrink-0 transition-transform duration-150', adviceOpen && 'rotate-180')}
-              />
-            </span>
+            <DisclosureToggle locale={locale} open={adviceOpen} />
           </button>
           {adviceOpen ? (
             <p className="mx-4 mb-3.5 mt-0 text-prose leading-relaxed text-ink-muted">{playbook.body}</p>

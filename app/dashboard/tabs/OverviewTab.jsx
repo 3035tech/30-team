@@ -18,6 +18,10 @@ import MultiSignalWorkbenchCard from './overview/MultiSignalWorkbenchCard';
 import BirthdaysCard from './overview/BirthdaysCard';
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
+import {
+  DisclosureToggle,
+  disclosureToggleButtonClass,
+} from '../../_components/CollapsibleBlock';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -313,9 +317,11 @@ export function OverviewTab({
               className={opsIntelOpen ? S.btnGhost : S.btnBrandSoft}
               aria-expanded={opsIntelOpen}
             >
-              {opsIntelOpen
-                ? t(locale, 'panel.overview.opsIntelCollapse')
-                : t(locale, 'panel.overview.opsIntelExpand')}
+              {opsIntelOpen ? (
+                <DisclosureToggle locale={locale} open />
+              ) : (
+                t(locale, 'panel.overview.opsIntelExpand')
+              )}
             </button>
           </div>
           {opsIntelOpen ? (
@@ -485,12 +491,10 @@ export function OverviewTab({
           <button
             type="button"
             onClick={toggleRecruiting}
-            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-2xs text-ink-muted"
+            className={disclosureToggleButtonClass}
             aria-expanded={recruitingOpen}
           >
-            {recruitingOpen
-              ? t(locale, 'panel.overview.recruitingCollapse')
-              : t(locale, 'panel.overview.recruitingExpand')}
+            <DisclosureToggle locale={locale} open={recruitingOpen} />
           </button>
         </div>
         {!recruitingOpen ? (
@@ -766,12 +770,10 @@ export function OverviewTab({
                 <button
                   type="button"
                   onClick={togglePeopleOps}
-                  className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-2xs text-ink-muted"
+                  className={disclosureToggleButtonClass}
                   aria-expanded={peopleOpsOpen}
                 >
-                  {peopleOpsOpen
-                    ? t(locale, 'panel.overview.peopleOpsCollapse')
-                    : t(locale, 'panel.overview.peopleOpsExpand')}
+                  <DisclosureToggle locale={locale} open={peopleOpsOpen} />
                 </button>
               </div>
             </div>

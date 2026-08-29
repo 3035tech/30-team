@@ -6,7 +6,7 @@ import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { PLAYBOOK_IDS } from '../../lib/persona-playbooks.js';
-import { Icon } from './Icon';
+import { DisclosureToggle } from './CollapsibleBlock';
 
 const DISMISS_KEY = 'team30_playbook_dismissed';
 
@@ -106,14 +106,11 @@ export function PersonaPlaybookCard({ tab, role, locale = 'pt-BR' }) {
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            className={cn(S.btnGhost, 'min-h-touch inline-flex items-center gap-1 px-2 text-ink-muted')}
+            className={cn(S.btnGhost, 'min-h-touch inline-flex items-center px-2')}
             onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? t(locale, 'panel.common.expand') : t(locale, 'panel.common.collapse')}
+            aria-expanded={!collapsed}
           >
-            <Icon
-              name="chevronDown"
-              className={cn('shrink-0 transition-transform duration-150', !collapsed && 'rotate-180')}
-            />
+            <DisclosureToggle locale={locale} open={!collapsed} />
           </button>
           <button
             type="button"

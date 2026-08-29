@@ -7,6 +7,7 @@ import { t } from '../../../lib/i18n';
 import { S, AdminListPager } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 
 function formatActor(row, locale) {
   if (row.actorKind === 'employee') {
@@ -248,10 +249,11 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
                         {metaLine ? (
                           <button
                             type="button"
-                            className="mt-1 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-2xs text-brand-600"
+                            className="mt-1 inline-flex cursor-pointer items-center border-none bg-transparent p-0 text-left"
                             onClick={() => setExpandedId(open ? null : row.id)}
+                            aria-expanded={open}
                           >
-                            {open ? t(locale, 'panel.audit.hideMeta') : t(locale, 'panel.audit.showMeta')}
+                            <DisclosureToggle locale={locale} open={open} />
                           </button>
                         ) : null}
                         {open && row.metadata ? (

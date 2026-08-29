@@ -7,6 +7,7 @@ import { S } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
+import { DisclosureToggle } from './CollapsibleBlock';
 import { isItemDueOverdue, isPlanPeriodOverdue } from '../../lib/people/pdi-action-lines';
 import {
   DEVELOPMENT_PLAN_ITEM_STATUS,
@@ -683,11 +684,14 @@ export function DevelopmentPlansBlock({
                       </span>
                     ) : null}
                   </span>
-                  <span className={cn(S.faint, 'shrink-0 font-mono text-2xs')}>
+                  <span className={cn(S.faint, 'flex shrink-0 items-center gap-2 font-mono text-2xs')}>
                     {overdue ? (
-                      <span className="mr-1 text-warning">{t(locale, 'panel.pdi.overdue')}</span>
+                      <span className="text-warning">{t(locale, 'panel.pdi.overdue')}</span>
                     ) : null}
-                    {t(locale, `panel.pdi.status.${p.status}`)} · {p.doneCount}/{p.itemCount}
+                    <span>
+                      {t(locale, `panel.pdi.status.${p.status}`)} · {p.doneCount}/{p.itemCount}
+                    </span>
+                    <DisclosureToggle locale={locale} open={expandedId === p.id} />
                   </span>
                 </button>
                 {expandedId === p.id && detail ? (

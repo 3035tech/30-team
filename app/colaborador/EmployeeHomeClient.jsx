@@ -12,7 +12,7 @@ import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
-import { Icon } from '../_components/Icon';
+import { CollapsibleBlock } from '../_components/CollapsibleBlock';
 
 const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
@@ -40,29 +40,19 @@ function loadCollapsed() {
 function CollapsibleSection({ id, title, count, open, onToggle, children, locale = 'pt-BR' }) {
   return (
     <section id={id} className="mt-6 scroll-mt-20">
-      <button
-        type="button"
-        className="flex w-full min-h-touch items-center justify-between gap-3 rounded-control border border-ink/12 bg-canvas/60 px-3 py-2.5 text-left hover:bg-ink/[0.03]"
-        onClick={onToggle}
-        aria-expanded={open}
+      <CollapsibleBlock
+        locale={locale}
+        title={title}
+        count={count}
+        open={open}
+        onOpenChange={(next) => {
+          if (next !== open) onToggle();
+        }}
+        variant="card"
+        bordered={false}
       >
-        <span className={cn(S.label, 'm-0')}>
-          {title}
-          {count != null ? (
-            <span className="ml-2 font-mono text-2xs font-normal text-ink-faint">({count})</span>
-          ) : null}
-        </span>
-        <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
-          <span className="font-mono text-2xs font-medium tracking-wide">
-            {open ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
-          </span>
-          <Icon
-            name="chevronDown"
-            className={cn('shrink-0 transition-transform duration-150', open && 'rotate-180')}
-          />
-        </span>
-      </button>
-      {open ? <div className="mt-3">{children}</div> : null}
+        {children}
+      </CollapsibleBlock>
     </section>
   );
 }

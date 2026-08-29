@@ -8,7 +8,7 @@ import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
 import { HelpSystemMap } from '../../_components/HelpSystemMap';
-import { Icon } from '../../_components/Icon';
+import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { HELP_GUIDE_SECTIONS, HELP_SECTION_STEP_COUNTS } from '../../../lib/help-sections';
 
 const SECTIONS = HELP_GUIDE_SECTIONS;
@@ -214,13 +214,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
                 {t(locale, `panel.help.${key}Title`)}
               </span>
               <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
-                <span className="font-mono text-2xs font-medium tracking-wide">
-                  {isOpen ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
-                </span>
-                <Icon
-                  name="chevronDown"
-                  className={cn('shrink-0 transition-transform duration-150', isOpen && 'rotate-180')}
-                />
+                <DisclosureToggle locale={locale} open={isOpen} />
               </span>
             </button>
             {isOpen ? (

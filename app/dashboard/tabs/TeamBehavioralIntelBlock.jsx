@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
+import {
+  DisclosureToggle,
+  disclosureToggleButtonClass,
+} from '../../_components/CollapsibleBlock';
 
 const BCI_OPEN_KEY = '30team_overview_bci_open';
 
@@ -126,12 +130,10 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           <button
             type="button"
             onClick={toggleSection}
-            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-2xs text-ink-muted"
+            className={disclosureToggleButtonClass}
             aria-expanded={sectionOpen}
           >
-            {sectionOpen
-              ? t(locale, 'panel.overview.bci.collapse')
-              : t(locale, 'panel.overview.bci.expand')}
+            <DisclosureToggle locale={locale} open={sectionOpen} />
           </button>
         </div>
         {groupSelect}
@@ -260,14 +262,11 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                 {motivators.rest?.length > 0 ? (
                   <button
                     type="button"
-                    className="mt-3 cursor-pointer border-none bg-transparent font-mono text-2xs text-brand-500"
+                    className={cn(disclosureToggleButtonClass, 'mt-3 border-brand-500/20')}
                     onClick={() => setMotivatorsOpen((v) => !v)}
+                    aria-expanded={motivatorsOpen}
                   >
-                    {motivatorsOpen
-                      ? t(locale, 'panel.overview.bci.motivatorsCollapse')
-                      : t(locale, 'panel.overview.bci.motivatorsExpand', {
-                          n: motivators.rest.length,
-                        })}
+                    <DisclosureToggle locale={locale} open={motivatorsOpen} />
                   </button>
                 ) : null}
               </>

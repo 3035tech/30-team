@@ -7,7 +7,7 @@ import { t } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C } from '../../lib/theme';
 import { cn } from '../../lib/cn';
-import { Icon } from './Icon';
+import { DisclosureToggle } from './CollapsibleBlock';
 
 function MiniBar({ value, max, color, h = 6 }) {
   return (
@@ -62,7 +62,7 @@ export function TypeScoreChart({ scores, locale, highlightTypes, defaultCollapse
             </span>
           ) : null}
         </span>
-        <Icon name={sectionOpen ? 'collapse' : 'expand'} />
+        <DisclosureToggle locale={locale} open={sectionOpen} />
       </button>
 
       {sectionOpen ? (

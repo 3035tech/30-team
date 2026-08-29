@@ -8,6 +8,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
+import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
 import { C } from '../../../lib/theme';
 import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
@@ -1125,10 +1126,13 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                       onClick={() => setShowQuestions((v) => !v)}
                       aria-expanded={showQuestions}
                     >
-                      {t(locale, 'panel.climate.questions')}
-                      <span className="font-mono text-ink-faint">
-                        {showQuestions ? '−' : '+'} · {(detail.questions || []).length}
+                      <span>
+                        {t(locale, 'panel.climate.questions')}
+                        <span className="ml-1.5 font-mono text-ink-faint">
+                          ({(detail.questions || []).length})
+                        </span>
                       </span>
+                      <DisclosureToggle locale={locale} open={showQuestions} />
                     </button>
                     {showQuestions ? (
                       <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
@@ -1195,11 +1199,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                 <span className="text-left font-ui text-sm text-ink">
                   {t(locale, 'panel.climate.benchmarkTitle')}
                 </span>
-                <span className="font-mono text-ink-faint">
-                  {showCompare
-                    ? t(locale, 'panel.climate.compareHide')
-                    : t(locale, 'panel.climate.compareShow')}
-                </span>
+                <DisclosureToggle locale={locale} open={showCompare} />
               </button>
               {showCompare ? (
                 <div className="mt-4">

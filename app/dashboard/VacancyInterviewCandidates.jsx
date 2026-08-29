@@ -19,6 +19,7 @@ import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
 import { CandidateCvBlock } from '../_components/CandidateCvBlock';
 import { FormField, formFieldGrowClass, formFieldRowClass } from '../_components/FormField';
 import { VacancyInterviewSlotsBlock } from '../_components/VacancyInterviewSlotsBlock';
+import { DisclosureToggle, disclosureToggleButtonClass } from '../_components/CollapsibleBlock';
 
 const FIELD = cn(S.input, 'w-full bg-surface/80');
 const FIELD_SELECT = cn(S.select, 'w-full bg-surface/80');
@@ -328,9 +329,10 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           <button
             type="button"
             onClick={() => setExpanded((x) => !x)}
-            className="min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-xs text-ink-muted"
+            className={disclosureToggleButtonClass}
+            aria-expanded={expanded}
           >
-            {expanded ? t(locale, 'recruiting.hideNotes') : t(locale, 'recruiting.notesActions')}
+            <DisclosureToggle locale={locale} open={expanded} />
           </button>
           <button
             type="button"

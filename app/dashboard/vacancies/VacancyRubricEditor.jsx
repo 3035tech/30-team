@@ -8,6 +8,7 @@ import { FormField } from '../../_components/FormField';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
+import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { buildRubricContextDraft, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 
 const BTN_SM =
@@ -225,12 +226,15 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
           type="button"
           onClick={() => setAiOpen((o) => !o)}
           className={cn(
-            'cursor-pointer border-none bg-transparent p-0 font-mono text-2xs text-brand-500',
+            'flex w-full min-h-touch cursor-pointer items-center justify-between gap-3 border-none bg-transparent p-0 text-left',
             aiOpen && 'mb-2'
           )}
+          aria-expanded={aiOpen}
         >
-          {aiOpen ? '▾ ' : '▸ '}
-          {t(locale, 'recruiting.rubricAiTitle')}
+          <span className="font-mono text-2xs text-brand-500">
+            {t(locale, 'recruiting.rubricAiTitle')}
+          </span>
+          <DisclosureToggle locale={locale} open={aiOpen} />
         </button>
         {aiOpen ? (
           <>

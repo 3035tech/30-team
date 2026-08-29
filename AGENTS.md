@@ -156,7 +156,7 @@ Em **cada nova tela** e **antes de qualquer função nova**, o agente deve privi
    - Conteúdo que monta após navegação ou fetch → `ContentEnter` (`app/_components/AppLoading.jsx`)
    - Loading de painel / aba / Suspense → `AppLoading variant="panel"` (skeleton + texto; **não** spinner solto ou `…` ad hoc)
    - Troca de aba SSR do dashboard → `NavLoadBar` no shell (`DashboardClient`)
-   - Densidade / progressive disclosure em fichas → `CollapsibleBlock` (`app/_components/CollapsibleBlock.jsx`)
+   - Densidade / progressive disclosure em fichas → `CollapsibleBlock` / `DisclosureToggle` (`app/_components/CollapsibleBlock.jsx`) com labels `panel.common.expand` / `collapse` (nunca `+/−` ou `▾` sozinhos)
    - Hint em botão só-ícone → `IconActionTip` (já embutido nos `Admin*Button` / `CopyableLink`)
    - Classes CSS: `.ui-content-enter`, `.ui-nav-indeterminate` em `app/globals.css` (respeitam `prefers-reduced-motion`)
    - **Proibido** inventar segundo fade/spinner/skeleton paralelo
@@ -351,7 +351,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Funil / rejeição | `lib/pipeline.js` (`PIPELINE_STAGES`) |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
-| Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` (`AppLoading`, `ContentEnter`, `NavLoadBar`, `PanelPageSkeleton`, `Spinner`), `CollapsibleBlock.jsx`, `IconActionTip.jsx`, `EmptyState.jsx` |
+| Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` (`AppLoading`, `ContentEnter`, `NavLoadBar`, `PanelPageSkeleton`, `Spinner`), `CollapsibleBlock.jsx` (`DisclosureToggle`), `IconActionTip.jsx`, `EmptyState.jsx` |
 | Tags / chips (tema Academy, etc.) | `app/_components/TagInput.jsx` (+ `type: 'tags'` no `PromptFormDialog`); `lib/tag-list.js` |
 | Busca de colaborador (nome → id) | `app/_components/EntitySearchSelect.jsx` (+ `type: 'entitySearch'`); `GET /api/admin/employees/search` |
 | Campos de data / datetime | `app/_components/DateField.jsx` (+ `type: 'date'` / `'datetime-local'` no `PromptFormDialog`) |
