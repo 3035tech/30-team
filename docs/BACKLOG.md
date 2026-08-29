@@ -32,7 +32,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 **Princípio de prioridade:** empacotar o que já medimos > fechar fricção no funil RH > novos scores ou instrumentos.
 
-**Explicitamente fora (não abrir item):** segundo instrumento tipo DISC; conta de candidato; merge por nome; segundo hub paralelo a `candidates`.
+**Explicitamente fora (ainda):** conta de candidato; merge por nome; segundo hub paralelo a `candidates`. **DISC / DP** deixam de ser “proibido” — ver epic **B-2700** (**B-2720**, **B-2721+**).
 
 ---
 
@@ -105,7 +105,7 @@ _(epic fechado — itens A/B/C entregues.)_
 
 Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma → inteligência volta como decisão**, **sem** o Módulo 2 (DP). Hub continua `candidates`. Reusar o que já existe; não reconstruir ATS, PDI, clima, Motivadores nem Overview.
 
-**Fora (DP — não abrir item):** admissão documental, gestão de documentos, ponto, férias, ocorrências/saúde, holerite, quadro de tarefas RH legal, app do colaborador full (folha/ponto). Absenteísmo **não** entra como sinal do radar até haver fonte fora de DP.
+**Fora do epic B-1000 na época (DP):** admissão documental, GED, ponto, férias, holerite, app folha/ponto. Absenteísmo no radar ficou de fora até haver fonte DP. **Agora rastreados em B-2700** (DISC **B-2720**, DP **B-2721–B-2727**, benefícios clube **B-2731**) — um produto/login, não segundo app tipo Tangerino.
 
 **Já coberto (não reimplementar):**
 
@@ -439,9 +439,197 @@ _(migration `072`; `employee_compensation_events`; Equipe → aba Remuneração;
 ~~Ideias ainda abertas pela sessão (não `/e` token):~~
 ~~1. **Prep 1:1 na sessão** — nota ao gestor sem depender do `/e`.~~
 ~~2. **Clima / pulso autenticado** — responder pesquisas logado + histórico.~~
-3. **Fora ainda:** folha/ponto/docs completos (DP); remuneração interna leve entregue em B-2510; não misturar com `users` role.
+3. **Fora ainda neste epic:** DP completo e DISC — ver **B-2720+** / **B-2721+** no epic B-2700; remuneração interna leve entregue em B-2510; não misturar com `users` role.
 
 _(Itens 1–2 entregues no corte 2 B-2501 + playbooks + `/r` consultoria.)_
+
+---
+
+## Aberto — Epic B-2700 (gaps vs Sólides — ago/2026)
+
+Fonte: varredura pública [solides.com.br](https://solides.com.br) (home, soluções, planos, ponto/folha/Profiler/benefícios/NR-1). Marketing ≠ produto logado; preços por colab são sinais de terceiros.
+
+### Já cobrimos (job-to-be-done — **não** reabrir como cópia Sólides)
+
+| Família Sólides | 30Team hoje |
+|-----------------|-------------|
+| ATS leve (portal, funil Kanban, banco, carreiras `/jobs` `/companies`, indicação, share UTM) | Vagas + pipeline + Talent Bank + SEO + referral |
+| Match vaga × pessoa | Rubrica T1–T9 + Fit + ranking (sem “triagem de CV por IA”) |
+| Engenharia de cargos | `job_roles` + rubrica herdada na vaga |
+| Matcher / comparar pessoas | Compat + Comparativo + intel comportamental |
+| Gestão comportamental (fio condutor) | **T1–T9 + Motivadores** hoje; DISC/Profiler-like → **B-2720** |
+| App colaborador leve | `/colaborador` + `/e` hoje; folha/ponto no app → ondas DP **B-2721+** |
+| Benefícios (catálogo) | Company benefits hoje; cartão/marketplace → **B-2731** |
+| People analytics | Analytics B-1100 + Overview + digests |
+| IA assistida | Help + interpretativa hedged + workbench (não “40+ agentes” nem Folh.AI ainda) |
+
+**Cunha estratégica:** Sólides vende “all-in-one” com **dois logins** (RH × Tangerino/DP). Se formos a DP + DISC, preferir **um produto / um `candidates` / um login** — não repetir a dívida de aquisição.
+
+### Ordem sugerida (ondas)
+
+1. GTM + fricção ATS/engajamento (**B-2701–B-2716**)
+2. Instrumento adicional DISC-like (**B-2720**) — opcional ao T1–T9, não substituto
+3. DP em fatias (**B-2721–B-2730**) — ponto → férias/banco → docs/admissão → folha/eSocial por último
+4. Benefícios “clube” / cartão (**B-2731**) e NR-1 (**B-2714**) conforme demanda regulatória/parceiro
+
+### Gaps — itens abaixo
+
+### B-2701 — Empacotamento / preço público (GTM)
+Contraponto aos “Avulsos” e à demo obrigatória da Sólides.
+1. Página `/pricing` (ou seção landpage) com planos claros: faixas RH e, quando existirem, add-ons DP (**B-2721+**) / instrumento DISC (**B-2720**) — preço visível, sem “só demo”.
+2. Self-serve signup — alinhar copy “o que está incluso” vs módulos assignáveis / avulsos honestos.
+3. i18n pt-BR+en; atualizar landpage + Guia se a oferta mudar.
+
+### B-2702 — eNPS (pulse de engajamento)
+Sólides: eNPS dedicado. Temos clima Likert + pulso de grupo — falta score eNPS clássico (−100…+100) com tendência.
+1. Campanha leve reusando infra de clima/pulso **ou** tipo de pergunta `enps` em survey existente.
+2. Agregação anônima por empresa/área; card Overview + Analytics tendência.
+3. Sem PII; tenant `company_id`; Guia + `HELP_GUIDE_SECTIONS`.
+
+### B-2703 — Matriz 9Box (performance × potencial)
+Sólides: 9Box avulso. Temos review + HR Score / leadership potential — falta grade 3×3 visual.
+1. Eixo Y = outcome/ciclo ou HR Score; eixo X = potencial (leadership / sucessão readiness) — **hedged**, não diagnóstico.
+2. UI Equipe ou Performance: plotar colaboradores do ciclo; drill-down para PDI/sucessão.
+3. Reusar scores existentes; pode combinar T1–T9 / Motivadores / DISC (**B-2720**) quando houver.
+
+### B-2704 — Avaliação 180° / 360° (opcional no ciclo)
+Hoje: só gestor → colaborador (B-1004).
+1. Extender ciclo: autoavaliação; pares/liderados opcionais (tokens como clima — anônimo ou identificado por config).
+2. Consolidar scores no review; gaps → item PDI.
+3. Capas: volumetria (LIMIT), sem N+1; i18n; Guia.
+
+### B-2705 — Avaliação de experiência (D30/D60/D90 formal)
+Temos check-ins pós-hire (B-700). Sólides: avaliação de período de experiência.
+1. Template de review ligado ao check-in / hire date (pass/fail/extend + notas).
+2. Outcome → PDI ou flag retenção; Overview “experiências a vencer”.
+3. Não misturar com admissão documental completa (isso é **B-2724**).
+
+### B-2706 — Triagem / parse de CV + match assistido (ATS leve)
+Sólides: triagem por IA de currículo. **Não** substituir T1–T9.
+1. Upload CV (PDF) → extrair texto → campos sugeridos no candidato (nome/e-mail/experiência) com confirmação humana.
+2. Opcional: score auxiliar “aderência textual à descrição da vaga” **separado** do Fit T1–T9 (rótulos claros).
+3. Sem inventar conta de candidato; storage S3; LGPD/retention.
+
+### B-2707 — Agenda de entrevistas (calendário leve)
+Gap clássico vs ATS (Gupy/Greenhouse) e vs Sólides (provas + fluxo).
+1. Slot na vaga/candidato: data/hora, link meet, status; notif gestor + e-mail candidato (token).
+2. Visão semana na vaga; sem virar Google Calendar sync no MVP (OAuth depois).
+3. Reusar `useAppFeedback` / DateField; i18n.
+
+### B-2708 — Recrutamento conversacional WhatsApp (além do share)
+Hoje: botões share WhatsApp com UTM. Sólides: funil WhatsApp para micro/PME.
+1. MVP: templates de mensagem + deep-link `/v` / `/jobs` + tracking referral já existente.
+2. Depois: webhook provedor (Twilio/Z-API) opt-in — **só** se houver decisão de custo/ops; rate limit; sem spam.
+3. Pode reutilizar canal WhatsApp de ponto (**B-2721**) só com opt-in e templates separados.
+
+### B-2709 — Simulador / prep de entrevista para o candidato
+Sólides: Copilot Carreira. Nós: prep 1:1 é do colaborador/gestor.
+1. Página token na vaga: perguntas derivadas da rubrica/briefing (hedged); respostas só para o candidato (não grava score clínico).
+2. Opcional: gestor vê “preparou-se” sem conteúdo sensível.
+3. i18n; pode oferecer trilha DISC (**B-2720**) além da rubrica T1–T9.
+
+### B-2710 — Checagem de antecedentes (integração)
+1. Flag + provedor externo (API) no estágio screening/approved; status na ficha.
+2. Audit; sem armazenar relatório completo se o provedor hospedar.
+3. Fora do MVP se não houver parceiro — manter como integração, não build in-house.
+
+### B-2711 — Pesquisa salarial / benchmarks de mercado
+Sólides: avulso. Temos remuneração interna só.
+1. Campos opcionais: faixa de mercado manual ou import CSV por cargo/`job_roles`.
+2. Comparar salário vigente × faixa (Equipe Remuneração + Overview gap).
+3. Sem marketplace de benefícios.
+
+### B-2712 — Intranet / feed interno leve
+Sólides: Intranet + SuperApp. Temos hub colaborador sem mural.
+1. Posts da empresa (admin/hr): título, rich text, audiência empresa; lista em `/colaborador`.
+2. Sem chat; sem rede social completa.
+3. Soft delete; paginação.
+
+### B-2713 — LMS profundidade (quiz / certificado)
+Já listado como fora de B-2401 — **promover a item** se priorizarmos paridade Academy Sólides.
+1. Quiz por aula; certificado PDF ao concluir curso obrigatório.
+2. Ainda sem SCORM/player proprietário.
+3. Reusar enrollments/completions.
+
+### B-2714 — NR-1 / riscos psicossociais (conformidade)
+Sólides 2026: PGR + eSocial S-2240. Urgência regulatória de venda.
+1. Decisão: (a) parceria/white-label, ou (b) módulo leve inventário + questionário + laudo export — **sem** prometer validade jurídica sozinhos.
+2. Se (b): reusar clima/Likert; export PDF; audit; Guia “não substitui SESMT”.
+3. Integração eSocial alinhada à onda folha (**B-2726**) se ambos existirem.
+
+### B-2715 — Multi-CNPJ / hierarquia enterprise
+Sólides fraco em enterprise; oportunidade se atacarmos o gap inverso (PME → grupo).
+1. Grupo econômico: várias `companies` sob conta holding; admin vê agregados; hr fica no tenant.
+2. Escopo DBA forte (índices, caps); não quebrar isolamento atual.
+3. Só após demanda real de cliente.
+
+### B-2716 — Feedback contínuo (reconhecimento / feed)
+Já “fora” em B-2000 tipo Feedz — registrar como gap Sólides/engajamento.
+1. MVP: kudos leves (de→para, texto curto) visíveis no `/colaborador` + digest.
+2. Sem substituir 1:1/PDI.
+3. Prioridade baixa vs 2702–2705.
+
+---
+
+### Onda instrumento — DISC / Profiler-like
+
+### B-2720 — Instrumento comportamental tipo DISC (além de T1–T9)
+Sólides: Profiler (DISC + teorias) como fio condutor. Hoje só T1–T9 + Motivadores.
+1. Banco de perguntas + scoring no servidor (`lib/` dedicado, espelhar padrão `lib/ae/`); tipos/dimensões DISC (ou subset) com linguagem **hedged** (“tende a”).
+2. Convite por token (como Motivadores); resultado na ficha `candidates`; opcional reaplicar ~6 meses.
+3. Plugar em Fit/Matcher/radar/9Box **como sinal adicional**, sem apagar T1–T9; i18n; Guia “não é diagnóstico clínico”.
+4. Decisão legal/IP: conteúdo próprio ou licença — não copiar Profiler.
+
+---
+
+### Onda DP (Departamento Pessoal) — unificado no mesmo produto
+
+Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`, `dp.folha`, …); `/colaborador` consome holerite/ponto sem segundo login. Fatias abaixo — **não** big-bang.
+
+### B-2721 — Ponto digital (MVP)
+1. Batida web/app + geolocalização opcional; espelho do dia; aprovação de inconsistências pelo gestor.
+2. Escalas simples (turno fixo); export CSV.
+3. Facial / offline / WhatsApp ponto = fase 2 do mesmo item ou follow-up.
+
+### B-2722 — Banco de horas / horas extras
+1. Regras configuráveis por empresa; saldo por colaborador; lançamentos manuais + derivados do ponto (**B-2721**).
+2. Aprovação RH; relatório mensal.
+3. Depende de B-2721 para cálculo automático.
+
+### B-2723 — Férias e afastamentos
+1. Solicitação no `/colaborador`; saldo; aprovação gestor/RH; calendário do time.
+2. Tipos: férias, atestado, licença (taxonomia fechada).
+3. Integra eventos de folha quando **B-2726** existir.
+
+### B-2724 — Admissão digital + GED + assinatura
+1. Checklist pós-hire (docs: RG, contrato, etc.); upload S3; status por documento.
+2. Assinatura eletrônica (provedor) com trilha de auditoria; validade jurídica = via parceiro, não “inventar ICP”.
+3. Liga funil `hired` → pasta do colaborador no mesmo `candidate_id`.
+
+### B-2725 — Equipe de campo (rota / check-in / reembolso)
+1. Check-in geolocalizado em visitas; rota do dia; fotos opcionais.
+2. Reembolsos com comprovante + aprovação.
+3. Reusar ponto (**B-2721**) onde fizer sentido.
+
+### B-2726 — Folha de pagamento + eSocial + holerite
+1. Eventos de folha (proventos/descontos) a partir de ponto/férias/banco; fechamento mensal.
+2. Integração eSocial (Portaria 671 / eventos relevantes) — provável parceiro ou motor dedicado; escopo jurídico pesado.
+3. Holerite digital no `/colaborador`; central do contador (acesso read-only por CAP).
+4. **Folh.AI / BPO** = add-on depois (agentes + fila humana).
+
+### B-2727 — WhatsApp operacional DP
+1. Lembretes de batida, aprovação de férias, envio de holerite link (opt-in).
+2. Mesmo provedor que **B-2708** se possível; templates e filas separados de recrutamento.
+
+---
+
+### Onda benefícios “clube” (além do catálogo)
+
+### B-2731 — Benefícios operacionais (cartão / parceiros / telemedicina)
+Além do catálogo B-1009.
+1. Decisão: parceria (Mastercard multibenefícios, Unimed, etc.) vs build mínimo de elegibilidade + deep-link.
+2. Módulo reembolso de benefício; telemedicina via parceiro embed.
+3. Empréstimo consignado / seguro = só marketplace; não carregar risco de crédito in-house.
 
 ---
 
