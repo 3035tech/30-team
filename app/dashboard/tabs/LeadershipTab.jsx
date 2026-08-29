@@ -8,8 +8,8 @@ import { C } from '../../../lib/theme';
 import { Icon } from '../../_components/Icon';
 import { Bar, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { cn } from '../../../lib/cn';
-import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
-import { ROSTER_SCOPE } from '../../../lib/domain-status';
+import { EmptyState } from '../../_components/EmptyState';
+import { ContentEnter } from '../../_components/AppLoading';
 import { StatMetricTile } from '../../_components/StatMetricTile';
 
 const BAND_KEYS = {
@@ -45,17 +45,16 @@ function summaryPeople(leadershipPotentials, cap = 8) {
 export function LeadershipTab({
   analytics,
   locale = 'pt-BR',
-  roster = null,
-  navigateDashboard = null,
+  roster: _roster = null,
+  navigateDashboard: _navigateDashboard = null,
 }) {
   const [viewMode, setViewMode] = useState('summary');
   const hasData = analytics && analytics.kpis && analytics.kpis.assessments > 0;
   if (!hasData) {
     return (
-      <RosterEmptyHint
-        locale={locale}
-        roster={roster || ROSTER_SCOPE.INTERNAL}
-        navigateDashboard={navigateDashboard}
+      <EmptyState
+        title={t(locale, 'panel.leadership.emptyTitle')}
+        message={t(locale, 'panel.leadership.emptyBody')}
       />
     );
   }
@@ -138,7 +137,7 @@ export function LeadershipTab({
       </div>
 
       {viewMode === 'summary' ? (
-        <>
+        <ContentEnter animKey="summary" className="flex flex-col gap-4">
           {topPeople.length > 0 ? (
             <div className={S.card}>
               <span className={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
@@ -194,9 +193,9 @@ export function LeadershipTab({
               </div>
             )}
           </div>
-        </>
+        </ContentEnter>
       ) : (
-        <>
+        <ContentEnter animKey="detail" className="flex flex-col gap-4">
           {leadershipPotentials.length > 0 ? (
             <div className={S.card}>
               <span className={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
@@ -380,7 +379,7 @@ export function LeadershipTab({
               {t(locale, 'panel.leadership.execFootnote')}
             </p>
           </div>
-        </>
+        </ContentEnter>
       )}
     </div>
   );

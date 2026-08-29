@@ -1,14 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminCreateButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { StatusToneChip } from '../../_components/StatusToneChip';
@@ -53,7 +54,7 @@ function statusBadge(locale, status) {
   );
 }
 
-function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
+function InviteForm({ locale, isAdmin, companies, companyId, onSent, onActionsReady }) {
   const { promptForm, toast } = useAppFeedback();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -249,42 +250,25 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
     }
   };
 
+  const openInviteRef = useRef(openInvite);
+  openInviteRef.current = openInvite;
+  const openBatchInviteRef = useRef(openBatchInvite);
+  openBatchInviteRef.current = openBatchInvite;
+
+  useEffect(() => {
+    onActionsReady?.({
+      openInvite: (...args) => openInviteRef.current(...args),
+      openBatchInvite: (...args) => openBatchInviteRef.current(...args),
+      busy,
+    });
+  }, [onActionsReady, busy]);
+
+  if (!err && !msg) return null;
+
   return (
     <div className={cn(S.card, 'mb-5')}>
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="min-w-0">
-          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
-          <p className="mb-0 mt-1 text-2xs leading-snug text-ink-muted">
-            {t(locale, 'panel.motivatorsAdmin.invite.batchHint')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={openBatchInvite}
-            disabled={busy}
-            className={cn(
-              'min-h-touch rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500',
-              busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-            )}
-          >
-            {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.batchOpenBtn')}
-          </button>
-          <button
-            type="button"
-            onClick={openInvite}
-            disabled={busy}
-            className={cn(
-              'min-h-touch rounded-lg border-none bg-brand-500 px-4 py-2 font-mono text-xs text-white',
-              busy ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-            )}
-          >
-            {busy ? t(locale, 'panel.motivatorsAdmin.invite.sending') : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')}
-          </button>
-        </div>
-      </div>
-      {err ? <p className="mt-2 text-xs text-danger">{err}</p> : null}
-      {msg ? <p className="mt-2 text-xs text-success">{msg}</p> : null}
+      {err ? <p className="m-0 text-xs text-danger">{err}</p> : null}
+      {msg ? <p className={cn('m-0 text-xs text-success', err && 'mt-2')}>{msg}</p> : null}
     </div>
   );
 }
@@ -394,8 +378,11 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
           <option value="cancelled">{t(locale, 'panel.motivatorsAdmin.invites.statusCancelled')}</option>
         </AdminListFilterSelect>
       </AdminListFilters>
-      {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
-      <AdminTableShell minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
+      {loading ? (
+        <AppLoading variant="panel" label={t(locale, 'panel.motivatorsAdmin.invites.loading')} />
+      ) : (
+        <>
+          <AdminTableShell minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -462,21 +449,25 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               );
             })}
           </tbody>
-      </AdminTableShell>
-        <AdminListPager
-          locale={locale}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          loading={loading}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          onPageChange={setPage}
-          onPageSizeChange={(ps) => {
-            setPageSize(ps);
-            setPage(1);
-          }}
-        />
-      {!loading && items.length === 0 ? <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
+          </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+          {items.length === 0 ? (
+            <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -1005,6 +996,11 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
   const [moduleStatus, setModuleStatus] = useState(null);
   const [setupBusy, setSetupBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [inviteActions, setInviteActions] = useState(null);
+
+  const handleInviteActionsReady = useCallback((actions) => {
+    setInviteActions(actions);
+  }, []);
 
   useEffect(() => {
     fetch('/api/admin/ae/status')
@@ -1012,6 +1008,10 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
       .then(setModuleStatus)
       .catch(() => {});
   }, [refreshKey]);
+
+  useEffect(() => {
+    if (view !== 'invites') setInviteActions(null);
+  }, [view]);
 
   const runSetup = async () => {
     setSetupBusy(true);
@@ -1044,6 +1044,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
   };
 
   const visibleViews = getViews(locale).filter((v) => !v.adminOnly || isAdmin);
+  const inviteBusy = Boolean(inviteActions?.busy);
 
   return (
     <div>
@@ -1058,6 +1059,31 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
       <AdminPageHeader
         title={t(locale, 'panel.motivatorsAdmin.title')}
         subtitle={t(locale, 'panel.motivatorsAdmin.intro')}
+        actions={
+          view === 'invites' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => inviteActions?.openBatchInvite?.()}
+                disabled={!inviteActions || inviteBusy}
+                className={cn(S.btnBrandSoft, 'min-h-touch disabled:cursor-not-allowed disabled:opacity-50')}
+              >
+                {inviteBusy
+                  ? t(locale, 'panel.motivatorsAdmin.invite.sending')
+                  : t(locale, 'panel.motivatorsAdmin.invite.batchOpenBtn')}
+              </button>
+              <AdminCreateButton
+                label={
+                  inviteBusy
+                    ? t(locale, 'panel.motivatorsAdmin.invite.sending')
+                    : t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')
+                }
+                onClick={() => inviteActions?.openInvite?.()}
+                disabled={!inviteActions || inviteBusy}
+              />
+            </>
+          ) : null
+        }
       />
 
       {moduleStatus && !moduleStatus.ready ? (
@@ -1083,22 +1109,31 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         tabs={visibleViews.map((v) => ({ id: v.id, label: v.label }))}
       />
 
-      {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
-      {view === 'invites' ? (
-        <>
-          <InviteForm locale={locale} isAdmin={isAdmin} companies={companies} companyId={companyFilter !== 'all' ? companyFilter : ''} onSent={() => setRefreshKey((k) => k + 1)} />
-          <InvitesList locale={locale} refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
-        </>
-      ) : null}
-      {view === 'results' ? (
-        <ResultsList
-          locale={locale}
-          isAdmin={isAdmin}
-          companyFilter={companyFilter}
-          focusAttemptId={focusAttemptId}
-        />
-      ) : null}
-      {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
+      <ContentEnter animKey={view}>
+        {view === 'dashboard' ? <AnalyticsPanel locale={locale} isAdmin={isAdmin} companyFilter={companyFilter} /> : null}
+        {view === 'invites' ? (
+          <>
+            <InviteForm
+              locale={locale}
+              isAdmin={isAdmin}
+              companies={companies}
+              companyId={companyFilter !== 'all' ? companyFilter : ''}
+              onSent={() => setRefreshKey((k) => k + 1)}
+              onActionsReady={handleInviteActionsReady}
+            />
+            <InvitesList locale={locale} refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
+          </>
+        ) : null}
+        {view === 'results' ? (
+          <ResultsList
+            locale={locale}
+            isAdmin={isAdmin}
+            companyFilter={companyFilter}
+            focusAttemptId={focusAttemptId}
+          />
+        ) : null}
+        {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
+      </ContentEnter>
     </div>
   );
 }

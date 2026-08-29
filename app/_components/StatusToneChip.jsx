@@ -38,8 +38,8 @@ export function statusToneClass(tone, opts = {}) {
         : 'bg-info/10 text-info';
     case 'brand':
       return bordered
-        ? 'border-brand-500/25 bg-brand-500/10 text-brand-600'
-        : 'bg-brand-500/10 text-brand-600';
+        ? 'border-brand-500/25 bg-brand-500/10 text-brand-500'
+        : 'bg-brand-500/10 text-brand-500';
     case 'neutral':
     default:
       return bordered

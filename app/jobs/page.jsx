@@ -1,11 +1,13 @@
 import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, normalizeLocale, t } from '../../lib/i18n';
 import { normalizeEmploymentType } from '../../lib/vacancy-employment-type';
+import { normalizeWorkplaceModality } from '../../lib/vacancy-workplace';
 import {
   defaultPublicOgImageUrl,
   listOpenPublicVacancies,
   PUBLIC_JOB_PATH_PREFIX,
 } from '../../lib/public-vacancy-posting';
+import { listPublicCityCounts } from '../../lib/public-job-aggregators';
 import { PublicVacanciesIndexView } from '../_components/PublicVacancyPosting';
 
 export async function generateMetadata({ searchParams } = {}) {
@@ -50,16 +52,21 @@ export default async function PublicJobsIndexPage({ searchParams }) {
   const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
   const q = String(searchParams?.q || '').trim().slice(0, 120);
   const employmentType = normalizeEmploymentType(searchParams?.employmentType);
+  const workplaceModality = normalizeWorkplaceModality(searchParams?.workplaceModality);
   const pageRaw = parseInt(String(searchParams?.page || '1'), 10);
   const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
 
-  const result = await listOpenPublicVacancies({
-    q: q || null,
-    employmentType,
-    page,
-    pageSize: 12,
-    includeTotal: true,
-  });
+  const [result, cityChips] = await Promise.all([
+    listOpenPublicVacancies({
+      q: q || null,
+      employmentType,
+      workplaceModality,
+      page,
+      pageSize: 12,
+      includeTotal: true,
+    }),
+    listPublicCityCounts({ minCount: 1, limit: 5 }),
+  ]);
 
   return (
     <PublicVacanciesIndexView
@@ -68,7 +75,12 @@ export default async function PublicJobsIndexPage({ searchParams }) {
       total={result.total}
       page={result.page}
       pageSize={result.pageSize}
-      filters={{ q, employmentType: employmentType || '' }}
+      filters={{
+        q,
+        employmentType: employmentType || '',
+        workplaceModality: workplaceModality || '',
+      }}
+      cityChips={cityChips}
     />
   );
 }

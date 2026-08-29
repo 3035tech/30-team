@@ -7,17 +7,22 @@ import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { brandMarkSrc } from '../../lib/brand';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
-import { formatWorkplaceLabel } from '../../lib/vacancy-workplace';
+import {
+  formatWorkplaceLabel,
+  VACANCY_WORKPLACE_MODALITIES,
+  workplaceModalityLabelKey,
+} from '../../lib/vacancy-workplace';
 import { formatVacancySalaryRangeDisplay } from '../../lib/br-masks';
 import { PublicVacancyShareBar } from './PublicVacancyShareBar';
 import { FormField, formFieldRowClass } from './FormField';
+import { EmptyState } from './EmptyState';
 import {
   formatPublicVacancyDate,
   publicVacancyCanApply,
   publicVacancyClosedReason,
   publicVacancyShowsClosedExperience,
 } from '../../lib/public-vacancy-lifecycle';
-import { publicCompanyPath } from '../../lib/public-job-url';
+import { publicCompanyPath, publicRemoteAggregatorPath } from '../../lib/public-job-url';
 import { useEffect, useRef, useState } from 'react';
 
 function trackJobFunnel(eventType, vacancyId) {
@@ -42,7 +47,7 @@ function trackJobFunnel(eventType, vacancyId) {
 }
 
 const SC = {
-  shell: 'relative box-border min-h-screen bg-canvas font-display text-ink',
+  shell: 'relative box-border min-h-screen bg-canvas font-display text-ink [color-scheme:light]',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
   card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
@@ -50,6 +55,8 @@ const SC = {
   select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink',
   btnPrimary:
     'min-h-touch items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-xs font-medium text-white',
+  filterChip:
+    'inline-flex min-h-touch items-center rounded-full border border-ink/12 bg-ink/[0.04] px-3 py-1.5 font-mono text-2xs text-ink-muted no-underline hover:border-brand-500/30 hover:text-brand-500',
 };
 
 function MetaChip({ children }) {
@@ -396,23 +403,28 @@ export function PublicVacanciesIndexView({
   basePath = '/jobs',
   showSearchForm = true,
   showJobAlert = true,
+  cityChips = [],
 }) {
   const q = String(filters.q || '');
   const employmentType = String(filters.employmentType || '');
+  const workplaceModality = String(filters.workplaceModality || '');
   const totalPages = Math.max(1, Math.ceil(Number(total) / Math.max(1, pageSize)));
-  const hasFilters = Boolean(q || employmentType);
+  const hasFilters = Boolean(q || employmentType || workplaceModality);
   const emptyMsg = hasFilters
     ? t(locale, 'publicVacancy.indexEmptyFiltered')
     : t(locale, 'publicVacancy.indexEmpty');
   const heading = title || t(locale, 'publicVacancy.indexTitle');
   const lead = intro || t(locale, 'publicVacancy.indexIntro');
   const listBase = String(basePath || '/jobs').replace(/\/$/, '') || '/jobs';
+  const remotePath = publicRemoteAggregatorPath();
+  const clearHref = listBase;
 
   function hrefForPage(p) {
     const params = new URLSearchParams();
     if (showSearchForm) {
       if (q) params.set('q', q);
       if (employmentType) params.set('employmentType', employmentType);
+      if (workplaceModality) params.set('workplaceModality', workplaceModality);
     }
     if (p > 1) params.set('page', String(p));
     const qs = params.toString();
@@ -437,6 +449,7 @@ export function PublicVacanciesIndexView({
           filters: {
             q: q || undefined,
             employmentType: employmentType || undefined,
+            workplaceModality: workplaceModality || undefined,
           },
         }),
         credentials: 'same-origin',
@@ -476,7 +489,7 @@ export function PublicVacanciesIndexView({
         {showSearchForm ? (
         <form
           method="get"
-          action="/jobs"
+          action={listBase}
           className={cn(SC.card, 'mb-4 flex flex-col gap-3')}
         >
           <FormField label={t(locale, 'publicVacancy.indexSearchLabel')}>
@@ -492,7 +505,7 @@ export function PublicVacanciesIndexView({
           <div className={cn(formFieldRowClass, 'gap-3')}>
             <FormField
               label={t(locale, 'publicVacancy.indexEmploymentLabel')}
-              className="min-w-0 flex-[1_1_180px]"
+              className="min-w-0 flex-[1_1_160px]"
             >
               <select name="employmentType" defaultValue={employmentType} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
@@ -500,6 +513,22 @@ export function PublicVacanciesIndexView({
                 <option value="pj">{t(locale, 'recruiting.employmentType_pj')}</option>
                 <option value="internship">{t(locale, 'recruiting.employmentType_internship')}</option>
                 <option value="cooperative">{t(locale, 'recruiting.employmentType_cooperative')}</option>
+              </select>
+            </FormField>
+            <FormField
+              label={t(locale, 'publicVacancy.indexWorkplaceLabel')}
+              className="min-w-0 flex-[1_1_160px]"
+            >
+              <select name="workplaceModality" defaultValue={workplaceModality} className={SC.select}>
+                <option value="">{t(locale, 'publicVacancy.indexWorkplaceAll')}</option>
+                {VACANCY_WORKPLACE_MODALITIES.map((mod) => {
+                  const key = workplaceModalityLabelKey(mod);
+                  return (
+                    <option key={mod} value={mod}>
+                      {key ? t(locale, key) : mod}
+                    </option>
+                  );
+                })}
               </select>
             </FormField>
             <button
@@ -510,13 +539,26 @@ export function PublicVacanciesIndexView({
             </button>
             {hasFilters ? (
               <Link
-                href="/jobs"
+                href={clearHref}
                 className="inline-flex min-h-[44px] shrink-0 items-center self-end px-3.5 text-sm text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexClearFilters')}
               </Link>
             ) : null}
           </div>
+          <nav
+            aria-label={t(locale, 'publicVacancy.indexModalityNav')}
+            className="flex flex-wrap gap-2"
+          >
+            <Link href={remotePath} className={SC.filterChip}>
+              {t(locale, 'recruiting.workplaceModality_remote')}
+            </Link>
+            {(cityChips || []).slice(0, 5).map((chip) => (
+              <Link key={chip.slug || chip.path} href={chip.path} className={SC.filterChip}>
+                {chip.city}
+              </Link>
+            ))}
+          </nav>
         </form>
         ) : null}
 
@@ -529,25 +571,42 @@ className="mb-3.5 mt-0 font-mono text-xs text-ink-muted"
             </p>
           ) : null}
           {!items.length ? (
-            <p className="m-0 text-ink-muted">{emptyMsg}</p>
+            <EmptyState
+              message={emptyMsg}
+              actionLabel={
+                hasFilters
+                  ? t(locale, 'publicVacancy.indexClearFilters')
+                  : t(locale, 'publicVacancy.browseOpenCta')
+              }
+              actionHref={hasFilters ? clearHref : '/jobs'}
+            />
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {items.map((item) => (
-                <li key={item.vacancyId}>
-                  <div
+              {items.map((item) => {
+                const empKey = employmentTypeLabelKey(item.employmentType);
+                const empLabel = empKey ? t(locale, empKey) : null;
+                const workplaceLabel = formatWorkplaceLabel(
+                  {
+                    workplaceModality: item.workplaceModality,
+                    workplaceCity: item.workplaceCity,
+                    workplaceState: item.workplaceState,
+                  },
+                  locale,
+                  t
+                );
+                const meta = [empLabel, workplaceLabel].filter(Boolean).join(' · ');
+                return (
+                  <li key={item.vacancyId}>
+                    <div
 className="rounded-xl border border-ink/12 px-[18px] py-4"
-                  >
-                    <Link
-                      href={item.path}
-className="block text-lg text-ink no-underline"
                     >
-                      {item.title}
-                    </Link>
-                    {(() => {
-                      const empKey = employmentTypeLabelKey(item.employmentType);
-                      const empLabel = empKey ? t(locale, empKey) : null;
-                      if (!item.companyName && !empLabel) return null;
-                      return (
+                      <Link
+                        href={item.path}
+className="block text-lg text-ink no-underline"
+                      >
+                        {item.title}
+                      </Link>
+                      {item.companyName || meta ? (
                         <div
 className="mt-1.5 font-mono text-xs text-ink-muted"
                         >
@@ -561,14 +620,14 @@ className="mt-1.5 font-mono text-xs text-ink-muted"
                           ) : item.companyName ? (
                             <span>{item.companyName}</span>
                           ) : null}
-                          {item.companyName && empLabel ? ' · ' : null}
-                          {empLabel}
+                          {item.companyName && meta ? ' · ' : null}
+                          {meta}
                         </div>
-                      );
-                    })()}
-                  </div>
-                </li>
-              ))}
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -753,7 +812,11 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
             {t(locale, 'publicVacancy.companyOpenRoles')}
           </h2>
           {!items.length ? (
-            <p className="m-0 text-ink-muted">{t(locale, 'publicVacancy.companyNoOpenRoles')}</p>
+            <EmptyState
+              message={t(locale, 'publicVacancy.companyNoOpenRoles')}
+              actionLabel={t(locale, 'publicVacancy.browseOpenCta')}
+              actionHref="/jobs"
+            />
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {items.map((item) => {

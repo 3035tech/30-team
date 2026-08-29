@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
-import { S } from '../dashboard-shared';
+import { AdminCreateButton, AdminPageHeader, S } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
@@ -741,15 +741,17 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
 
   return (
     <div className={S.stack}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 max-w-2xl">
-          <h2 className="m-0 font-ui text-xl font-semibold text-ink">{t(locale, 'panel.climate.pageTitle')}</h2>
-          <p className={cn(S.muted, 'm-0 mt-1 text-sm')}>{t(locale, 'panel.climate.pageHint')}</p>
-        </div>
-        <button type="button" disabled={busy} onClick={createSurvey} className={cn(S.btnPrimary, 'min-h-touch shrink-0')}>
-          {t(locale, 'panel.climate.createBtn')}
-        </button>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.climate.pageTitle')}
+        subtitle={t(locale, 'panel.climate.pageHint')}
+        actions={
+          <AdminCreateButton
+            label={t(locale, 'panel.climate.createBtn')}
+            onClick={createSurvey}
+            disabled={busy}
+          />
+        }
+      />
 
       {isAdmin && companies.length > 0 ? (
         <label className={cn(S.label, 'mb-0 flex max-w-xs flex-col gap-1')}>
@@ -870,7 +872,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                   <p className={cn(S.muted, 'm-0 max-w-sm text-sm')}>{t(locale, 'panel.climate.pickHint')}</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-5">
+                <ContentEnter animKey={String(selectedId || detail.id)} className="flex flex-col gap-5">
                   <header className="border-b border-ink/10 pb-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -1190,7 +1192,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                       </ul>
                     ) : null}
                   </section>
-                </div>
+                </ContentEnter>
               )}
             </div>
           </div>

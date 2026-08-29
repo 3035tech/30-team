@@ -31,7 +31,7 @@ import {
 import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import { VACANCY_STATUS } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
@@ -1067,7 +1067,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           {(detailLoading || loading) && !v ? (
             <AppLoading
               locale={locale}
-              variant="block"
+              variant="panel"
               label={t(locale, 'recruiting.loadingVacancy')}
             />
           ) : null}
@@ -1243,6 +1243,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 ) : null}
               </div>
 
+              <ContentEnter animKey={detailSection}>
               {detailSection === 'pipeline' ? (
                 <VacancyKanbanBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
               ) : null}
@@ -1413,6 +1414,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   )}
                 </div>
               ) : null}
+              </ContentEnter>
             </div>
           </>
         ) : null}

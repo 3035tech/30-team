@@ -367,6 +367,9 @@ Copiloto no painel para perguntas do tipo **“por que o João não aparece na m
 - IA só **redige** a resposta a partir do JSON do diagnóstico (hedged); não “adivinha” nem escreve no banco.
 
 ### B-2601 — Diagnóstico “por que não vejo X?” (MVP Equipe)
+**Parcial (UX):** Equipe já mostra `EmptyState` com copy de filtros/roster vazios + limpar busca (`panel.team.emptyFiltered*` / `noResultsFor`). Roster zero continua em `RosterEmptyHint`.
+
+**Ainda aberto (API/IA):**
 1. `lib/people/list-absence-diagnostics.js` (ou similar): homônimos no tenant, `employment_status`, roster/filtros da aba, soft delete/alumni, busca ativa.
 2. API fina (`POST /api/admin/help-diagnose` **ou** extensão controlada do `help-chat` com tools) + CAP adequada.
 3. UX: botão contextual na Equipe quando a busca não acha ninguém (preferível ao chat genérico no MVP); resposta com ação sugerida (abrir ficha, limpar filtro, etc.).
@@ -392,10 +395,10 @@ _(entregue — B-1402 tokens + B-1403 migração dos selects ad hoc: page-size, 
 Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.card`/`bg-surface`, borders ink, sidebar/drawer mobile, dialogs, tabelas, `bg-white/*` leftovers, `--canvas-alt`). Não reescrever `theme.js` `C.*` globalmente.
 
 **Follow-up (ainda aberto):**
-1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first.
+1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first (`color-scheme: light` em careers + assessment).
 2. Hex inline `C.*` em charts / pills de pipeline com `style=` (parcial: Analytics texto/métricas → tokens TW em B-2103; barras dinâmicas T1–T9/Motivadores ainda usam cor do tipo).
-3. Passada visual fina AA em chips de pipeline + Analytics (viewport mobile).
-4. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome.
+3. Passada visual fina AA em chips de pipeline + Analytics (viewport mobile). `StatusToneChip` brand já usa `text-brand-500` (melhor no dark).
+4. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome. Docs: não confundir com `prefers-color-scheme`.
 
 **Fora:** segundo tema custom por empresa; modo “auto” OS (opcional depois).
 

@@ -13,6 +13,7 @@ import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
 import { CollapsibleBlock } from '../_components/CollapsibleBlock';
+import { EmptyState } from '../_components/EmptyState';
 
 const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
@@ -253,7 +254,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         locale={locale}
       >
         {tasks.length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'employeeHome.tasksEmpty')}</p>
+          <EmptyState message={t(locale, 'employeeHome.tasksEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {tasks.map((task) => (
@@ -320,7 +321,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         locale={locale}
       >
         {plans.length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.pdiEmpty')}</p>
+          <EmptyState message={t(locale, 'panel.employeePortal.pdiEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {plans.map((plan) => (
@@ -333,7 +334,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   {(plan.items || []).map((it) => (
                     <li
                       key={it.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-surface px-2.5 py-2"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
                     >
                       <div className="min-w-0 text-xs text-ink">
                         {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
@@ -416,7 +417,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         ) : null}
 
         {courses.length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.coursesEmpty')}</p>
+          <EmptyState message={t(locale, 'panel.employeePortal.coursesEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {courses.map((course) => (
@@ -445,7 +446,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   {(course.lessons || []).map((lesson) => (
                     <li
                       key={lesson.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-surface px-2.5 py-2"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
                     >
                       <div className="min-w-0">
                         <div className="text-xs text-ink">
@@ -530,9 +531,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         locale={locale}
       >
         {agreements.length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>
-            {t(locale, 'panel.employeePortal.agreementsEmpty')}
-          </p>
+          <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {agreements.map((a) => (

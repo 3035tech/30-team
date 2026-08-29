@@ -22,6 +22,7 @@ import {
   DisclosureToggle,
   disclosureToggleButtonClass,
 } from '../../_components/CollapsibleBlock';
+import { ContentEnter } from '../../_components/AppLoading';
 import { StatMetricTile } from '../../_components/StatMetricTile';
 import { MeterBar } from '../../_components/MeterBar';
 
@@ -255,6 +256,56 @@ export function OverviewTab({
         <OnboardingChecklist initialProgress={onboardingProgress} />
       )}
 
+      <div className={S.card}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className={cn(S.label, 'mb-0')}>
+            {t(locale, 'panel.overview.attentionTitle')}
+          </span>
+          <span className="font-mono text-2xs text-ink-muted">
+            {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
+          </span>
+        </div>
+        {(data.attention || []).length === 0 ? (
+          <p className="m-0 text-prose italic text-ink-muted">
+            {t(locale, 'panel.overview.attentionEmpty')}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {(data.attention || []).map((item) => {
+              const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => item.nav && go(item.nav)}
+                  className={cn(
+                    'flex flex-wrap items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left',
+                    pr.card,
+                    item.nav ? 'cursor-pointer' : 'cursor-default'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'min-w-[52px] font-mono text-2xs uppercase tracking-wide',
+                      pr.label
+                    )}
+                  >
+                    {t(locale, `panel.overview.priority.${item.priority}`)}
+                  </span>
+                  <span className="min-w-0 flex-[1_1_180px] text-prose text-ink">
+                    {t(locale, item.titleKey)}
+                  </span>
+                  <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
+                  <span className="font-mono text-2xs text-ink-faint">
+                    {t(locale, 'panel.overview.daysAgo', { n: item.days ?? 0 })}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <TeamBehavioralIntelBlock
         locale={locale}
         intel={data.behavioralIntel}
@@ -302,6 +353,7 @@ export function OverviewTab({
             </button>
           </div>
           {opsIntelOpen ? (
+            <ContentEnter animKey="opsIntel">
             <div className="mt-3.5 flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <TurnoverRadarCard locale={locale} companyId={companyId} />
@@ -317,6 +369,7 @@ export function OverviewTab({
                 <CultureInsightsCard locale={locale} companyId={companyId} />
               </div>
             </div>
+            </ContentEnter>
           ) : null}
         </div>
       ) : null}
@@ -406,56 +459,6 @@ export function OverviewTab({
       </div>
 
       <div className={S.card}>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <span className={cn(S.label, 'mb-0')}>
-            {t(locale, 'panel.overview.attentionTitle')}
-          </span>
-          <span className="font-mono text-2xs text-ink-muted">
-            {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
-          </span>
-        </div>
-        {(data.attention || []).length === 0 ? (
-          <p className="m-0 text-prose italic text-ink-muted">
-            {t(locale, 'panel.overview.attentionEmpty')}
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {(data.attention || []).map((item) => {
-              const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => item.nav && go(item.nav)}
-                  className={cn(
-                    'flex flex-wrap items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left',
-                    pr.card,
-                    item.nav ? 'cursor-pointer' : 'cursor-default'
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'min-w-[52px] font-mono text-2xs uppercase tracking-wide',
-                      pr.label
-                    )}
-                  >
-                    {t(locale, `panel.overview.priority.${item.priority}`)}
-                  </span>
-                  <span className="min-w-0 flex-[1_1_180px] text-prose text-ink">
-                    {t(locale, item.titleKey)}
-                  </span>
-                  <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
-                  <span className="font-mono text-2xs text-ink-faint">
-                    {t(locale, 'panel.overview.daysAgo', { n: item.days ?? 0 })}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className={S.card}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
             <span className={cn(S.label, 'mb-0')}>
@@ -482,6 +485,7 @@ export function OverviewTab({
             })}
           </p>
         ) : (
+          <ContentEnter animKey="recruiting">
           <div className="flex flex-col gap-4">
 
       <div>
@@ -670,6 +674,7 @@ export function OverviewTab({
       </div>
 
           </div>
+          </ContentEnter>
         )}
       </div>
 
@@ -763,6 +768,7 @@ export function OverviewTab({
             ) : null}
 
             {peopleOpsOpen ? (
+              <ContentEnter animKey="peopleOps">
               <div className="mt-3 border-t border-ink/10 pt-3">
                 <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
                 {!hasPdi && !hasClima && !hasRet && !hasOnb && !hasEnps ? (
@@ -1098,6 +1104,7 @@ export function OverviewTab({
                   </ul>
                 )}
               </div>
+              </ContentEnter>
             ) : null}
           </div>
         );

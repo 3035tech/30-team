@@ -9,6 +9,8 @@ import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
+import { ContentEnter } from '../../_components/AppLoading';
+import { EmptyState } from '../../_components/EmptyState';
 
 function PersonCard({ person, locale }) {
   const d = TYPE_DATA[person.topType] || {};
@@ -299,14 +301,14 @@ export function CompatTab({
       ) : null}
 
       {display.length === 0 ? (
-        <div className={cn(S.card, 'p-10 text-center')}>
-          <p className="m-0 italic text-ink-muted">{t(locale, 'panel.compat.emptyCategory')}</p>
-          <p className="mt-2.5 mb-0 text-prose leading-snug text-ink-faint">
-            {t(locale, 'panel.compat.emptyHint')}
-          </p>
-        </div>
+        <ContentEnter animKey={`empty-${section}`}>
+          <EmptyState
+            title={t(locale, 'panel.compat.emptyCategory')}
+            message={t(locale, 'panel.compat.emptyHint')}
+          />
+        </ContentEnter>
       ) : (
-        <>
+        <ContentEnter animKey={`${section}|${pg}|${compatPageSize}`}>
           <p className="mb-3 mt-0 font-mono text-xs text-ink-faint">
             {t(locale, 'panel.compat.listHint')}
           </p>
@@ -397,7 +399,7 @@ export function CompatTab({
               </div>
             </div>
           ) : null}
-        </>
+        </ContentEnter>
       )}
     </div>
   );

@@ -20,8 +20,8 @@ Checklist para validar as melhorias implementadas. Execute em **desktop** (Chrom
 - [ ] Transição smooth em scroll
 
 **Edge Cases:**
-- [ ] Primeira visita: respeita `prefers-color-scheme`
-- [ ] Limpar localStorage: volta ao system default
+- [ ] Primeira visita: default light (preferência só em `localStorage` `team30_dark_mode`; não segue `prefers-color-scheme`)
+- [ ] Limpar localStorage: volta ao default light
 
 ---
 

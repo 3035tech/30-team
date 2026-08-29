@@ -6,11 +6,12 @@ import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
+import { AdminListSearch, getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { DateField } from '../../_components/DateField';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { EmptyState } from '../../_components/EmptyState';
 import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
@@ -190,6 +191,7 @@ export function TeamTab({
   focusSection = null,
   listFilter = null,
   onClearListFilter = null,
+  navigateDashboard = null,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -281,8 +283,8 @@ export function TeamTab({
     }
   }, [detail, focusCandidateId, focusSection, results]);
 
-  const commitSearch = () => {
-    const trimmed = searchDraft.trim();
+  const commitSearch = (next) => {
+    const trimmed = String(next != null ? next : searchDraft).trim();
     if (trimmed === (search || '').trim()) return;
     if (typeof onSearch === 'function') onSearch(trimmed || null);
   };
@@ -586,24 +588,18 @@ export function TeamTab({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative">
-        <input
-          type="search"
+      <div className="flex flex-wrap items-end gap-2.5">
+        <AdminListSearch
+          locale={locale}
           value={searchDraft}
-          onChange={(e) => setSearchDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commitSearch();
-          }}
-          onBlur={commitSearch}
+          onChange={setSearchDraft}
+          onSubmit={commitSearch}
           placeholder={t(locale, 'dashboard.searchPlaceholder')}
-          aria-label={t(locale, 'panel.team.searchAriaLabel')}
-          className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-10 pr-4 font-ui text-sm text-ink outline-none"
+          label={t(locale, 'panel.team.searchAriaLabel')}
+          className="min-w-[12rem] max-w-none grow"
         />
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base text-ink-faint">
-          ⌕
-        </span>
         {activeSearch ? (
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-2xs text-ink-faint">
+          <span className="mb-2.5 font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
         ) : null}
@@ -829,11 +825,44 @@ export function TeamTab({
               );
             })}
           </div>
-          {filtered.length === 0 && activeSearch && (
-            <div className="p-10 text-center text-sm italic text-ink-muted">
-              {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
-            </div>
-          )}
+          {filtered.length === 0 && activeSearch ? (
+            <EmptyState
+              message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
+              actionLabel={t(locale, 'panel.common.clearFilters')}
+              onAction={() => {
+                setSearchDraft('');
+                if (typeof onSearch === 'function') onSearch(null);
+              }}
+            />
+          ) : null}
+          {filtered.length === 0 && !activeSearch ? (
+            <EmptyState
+              title={t(locale, 'panel.team.emptyFilteredTitle')}
+              message={t(locale, 'panel.team.emptyFilteredBody')}
+              actionLabel={
+                listFilter && typeof onClearListFilter === 'function'
+                  ? t(locale, 'panel.team.clearListFilter')
+                  : typeof navigateDashboard === 'function'
+                    ? t(locale, 'panel.common.clearFilters')
+                    : undefined
+              }
+              onAction={
+                listFilter && typeof onClearListFilter === 'function'
+                  ? onClearListFilter
+                  : typeof navigateDashboard === 'function'
+                    ? () =>
+                        navigateDashboard({
+                          tab: 'team',
+                          filter: null,
+                          pipeline: null,
+                          vacancy: null,
+                          roster: null,
+                          search: null,
+                        })
+                    : undefined
+              }
+            />
+          ) : null}
         </div>
       )}
 
@@ -880,9 +909,42 @@ export function TeamTab({
         </div>
       )}
       {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
-        <div className="p-10 text-center text-sm italic text-ink-muted">
-          {t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
-        </div>
+        <EmptyState
+          message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
+          actionLabel={t(locale, 'panel.common.clearFilters')}
+          onAction={() => {
+            setSearchDraft('');
+            if (typeof onSearch === 'function') onSearch(null);
+          }}
+        />
+      ) : null}
+      {viewMode === 'list' && filtered.length === 0 && !activeSearch ? (
+        <EmptyState
+          title={t(locale, 'panel.team.emptyFilteredTitle')}
+          message={t(locale, 'panel.team.emptyFilteredBody')}
+          actionLabel={
+            listFilter && typeof onClearListFilter === 'function'
+              ? t(locale, 'panel.team.clearListFilter')
+              : typeof navigateDashboard === 'function'
+                ? t(locale, 'panel.common.clearFilters')
+                : undefined
+          }
+          onAction={
+            listFilter && typeof onClearListFilter === 'function'
+              ? onClearListFilter
+              : typeof navigateDashboard === 'function'
+                ? () =>
+                    navigateDashboard({
+                      tab: 'team',
+                      filter: null,
+                      pipeline: null,
+                      vacancy: null,
+                      roster: null,
+                      search: null,
+                    })
+                : undefined
+          }
+        />
       ) : null}
       {focusCandidateId
         && detail?.candidate
@@ -1063,7 +1125,7 @@ export function TeamTab({
               ]}
             />
             {personTab === 'style' ? (
-              <div>
+              <ContentEnter animKey="style">
                 <EnneagramCross scores={openRow.scores} locale={locale} />
                 <IntegratedProfileSynthesis synthesis={synthesis} locale={locale} />
 
@@ -1075,10 +1137,10 @@ export function TeamTab({
                   ) : null}
                   <TypeScoreChart scores={openRow.scores} locale={locale} highlightTypes={openCluster} />
                 </div>
-              </div>
+              </ContentEnter>
             ) : null}
             {personTab === 'people' ? (
-              <div>
+              <ContentEnter animKey="people">
                 {detailLoading ? (
                   <AppLoading locale={locale} variant="inline" />
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
@@ -1111,58 +1173,62 @@ export function TeamTab({
                           : []),
                       ]}
                     />
-                    {peopleSubTab === 'briefing' || peopleSubTab === 'dossier' ? (
-                      <div className="space-y-4">
-                        <PersonDossierBlock
+                    <ContentEnter
+                      animKey={peopleSubTab === 'dossier' ? 'briefing' : peopleSubTab}
+                    >
+                      {peopleSubTab === 'briefing' || peopleSubTab === 'dossier' ? (
+                        <div className="space-y-4">
+                          <PersonDossierBlock
+                            locale={locale}
+                            candidateId={detail.candidate.id}
+                            companyId={detail.candidate.companyId}
+                            onGoSubTab={setPeopleSubTab}
+                            embedded
+                          />
+                          <HrActionBrief
+                            locale={locale}
+                            brief={detail.people?.decisionBrief}
+                            personName={openRow.name}
+                            omitHypotheses
+                          />
+                        </div>
+                      ) : null}
+                      {peopleSubTab === 'oneOnOne' ? (
+                        <PeopleManagementPanel
                           locale={locale}
                           candidateId={detail.candidate.id}
-                          companyId={detail.candidate.companyId}
-                          onGoSubTab={setPeopleSubTab}
-                          embedded
+                          people={detail.people}
+                          employmentStatus={detail.candidate.employmentStatus}
+                          onRefresh={() => loadDetail(detail.candidate.id)}
+                          section="oneOnOne"
                         />
-                        <HrActionBrief
+                      ) : null}
+                      {peopleSubTab === 'journey' ? (
+                        <PeopleManagementPanel
                           locale={locale}
-                          brief={detail.people?.decisionBrief}
-                          personName={openRow.name}
-                          omitHypotheses
+                          candidateId={detail.candidate.id}
+                          people={detail.people}
+                          employmentStatus={detail.candidate.employmentStatus}
+                          onRefresh={() => loadDetail(detail.candidate.id)}
+                          section="journey"
                         />
-                      </div>
-                    ) : null}
-                    {peopleSubTab === 'oneOnOne' ? (
-                      <PeopleManagementPanel
-                        locale={locale}
-                        candidateId={detail.candidate.id}
-                        people={detail.people}
-                        employmentStatus={detail.candidate.employmentStatus}
-                        onRefresh={() => loadDetail(detail.candidate.id)}
-                        section="oneOnOne"
-                      />
-                    ) : null}
-                    {peopleSubTab === 'journey' ? (
-                      <PeopleManagementPanel
-                        locale={locale}
-                        candidateId={detail.candidate.id}
-                        people={detail.people}
-                        employmentStatus={detail.candidate.employmentStatus}
-                        onRefresh={() => loadDetail(detail.candidate.id)}
-                        section="journey"
-                      />
-                    ) : null}
-                    {peopleSubTab === 'compensation' ? (
-                      <CompensationBlock
-                        locale={locale}
-                        candidateId={detail.candidate.id}
-                        employmentStatus={detail.candidate.employmentStatus}
-                      />
-                    ) : null}
+                      ) : null}
+                      {peopleSubTab === 'compensation' ? (
+                        <CompensationBlock
+                          locale={locale}
+                          candidateId={detail.candidate.id}
+                          employmentStatus={detail.candidate.employmentStatus}
+                        />
+                      ) : null}
+                    </ContentEnter>
                   </>
                 ) : (
                   <p className="m-0 text-xs text-ink-muted">—</p>
                 )}
-              </div>
+              </ContentEnter>
             ) : null}
             {personTab === 'history' ? (
-              <div>
+              <ContentEnter animKey="history">
                 <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
                   <span className={cn(S.label, 'mb-2 block text-center')}>{t(locale, 'recruiting.timelineTitle')}</span>
                   <CandidateTimeline
@@ -1264,10 +1330,10 @@ export function TeamTab({
                     <p className="m-0 text-xs text-ink-muted">—</p>
                   )}
                 </div>
-              </div>
+              </ContentEnter>
             ) : null}
             {personTab === 'profile' ? (
-              <div>
+              <ContentEnter animKey="profile">
                 {detail?.candidate?.id ? (
                   <div className="mb-4">
                     <CandidateCvBlock
@@ -1648,7 +1714,7 @@ export function TeamTab({
                   )}
                 </div>
                 ) : null}
-              </div>
+              </ContentEnter>
             ) : null}
           </div>
         ) : null}

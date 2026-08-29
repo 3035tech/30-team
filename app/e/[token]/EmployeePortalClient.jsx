@@ -8,6 +8,7 @@ import { FormField } from '../../_components/FormField';
 import { RichTextView } from '../../_components/RichTextView';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { EmptyState } from '../../_components/EmptyState';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 
@@ -140,7 +141,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       <section className="mt-8">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.pdiTitle')}</h2>
         {(data?.plans || []).length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.pdiEmpty')}</p>
+          <EmptyState message={t(locale, 'panel.employeePortal.pdiEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {data.plans.map((p) => (
@@ -166,13 +167,11 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       <section className="mt-8">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.agreementsTitle')}</h2>
         {(data?.recentAgreements || []).length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>
-            {t(locale, 'panel.employeePortal.agreementsEmpty')}
-          </p>
+          <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {data.recentAgreements.map((a) => (
-              <li key={a.id} className="rounded-control border border-ink/12 bg-white/40 px-3 py-2">
+              <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2">
                 <div className="font-mono text-2xs text-ink-faint">
                   {a.meetingDate ? String(a.meetingDate).slice(0, 10) : '—'}
                 </div>
@@ -186,7 +185,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       <section className="mt-8">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.coursesTitle')}</h2>
         {(data?.courses || []).length === 0 ? (
-          <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.coursesEmpty')}</p>
+          <EmptyState message={t(locale, 'panel.employeePortal.coursesEmpty')} />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {data.courses.map((course) => (
@@ -231,7 +230,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                   {(course.lessons || []).map((lesson) => (
                     <li
                       key={lesson.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-surface px-2.5 py-2"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
                     >
                       <div className="min-w-0">
                         <div className="text-xs text-ink">
@@ -294,7 +293,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
         </section>
       ) : null}
 
-      <section className="mt-8 rounded-control border border-ink/12 bg-canvas/40 p-3">
+      <section className="mt-8 rounded-control border border-ink/12 bg-canvas/50 p-3">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h2>
         <p className={cn(S.muted, 'mb-2 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
         <FormField label={t(locale, 'panel.employeePortal.noteLabel')}>

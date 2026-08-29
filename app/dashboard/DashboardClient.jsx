@@ -1312,6 +1312,7 @@ export default function DashboardClient({
                     focusSection={urlParams.get('section')}
                     listFilter={selectedListFilter || urlParams.get('filter')}
                     onClearListFilter={() => pushFilters({ filter: null })}
+                    navigateDashboard={navigateWithOpts}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });

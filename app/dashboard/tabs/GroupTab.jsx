@@ -11,6 +11,8 @@ import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
+import { ContentEnter } from '../../_components/AppLoading';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
 import { StatusToneChip } from '../../_components/StatusToneChip';
@@ -423,15 +425,17 @@ export function GroupTab({
         </div>
 
         {resolvedCompanyId && activeSavedId ? (
-          <TeamPulseBlock
-            locale={locale}
-            companyId={resolvedCompanyId}
-            teamGroupId={activeSavedId}
-          />
+          <ContentEnter animKey={`saved-${activeSavedId}`}>
+            <TeamPulseBlock
+              locale={locale}
+              companyId={resolvedCompanyId}
+              teamGroupId={activeSavedId}
+            />
+          </ContentEnter>
         ) : null}
 
         {groupIntel ? (
-          <div className="mt-3">
+          <ContentEnter animKey={`intel-${activeSavedId || groupBase?.assessmentId || 'x'}`} className="mt-3">
             <TeamTensionNarrativeBlock
               locale={locale}
               intel={groupIntel}
@@ -440,7 +444,7 @@ export function GroupTab({
               navigateDashboard={navigateDashboard}
               dense
             />
-          </div>
+          </ContentEnter>
         ) : null}
 
         <span className={cn(S.label, 'mt-[18px]')}>{t(locale, 'panel.group.basePerson')}</span>
@@ -510,7 +514,7 @@ export function GroupTab({
             {t(locale, 'panel.group.pickBaseFirst')}
           </p>
         ) : (
-          <>
+          <ContentEnter animKey={`base-${groupBase.assessmentId}`}>
             <div className="my-2.5 mb-3.5 flex flex-wrap gap-2.5">
               <input
                 value={search}
@@ -549,7 +553,10 @@ export function GroupTab({
             </div>
 
             {nucleusAdvice && !nucleusAdvice.empty ? (
-              <div className="mb-4 rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-3.5 py-3">
+              <ContentEnter
+                animKey={`nucleus-${groupBase?.assessmentId || 'b'}-${(groupIds || []).join(',')}`}
+                className="mb-4 rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-3.5 py-3"
+              >
                 <div className="mb-1 font-mono text-2xs uppercase tracking-wider text-brand-600">
                   {t(locale, 'panel.group.nucleusTitle')}
                 </div>
@@ -616,7 +623,7 @@ export function GroupTab({
                     </ul>
                   </div>
                 ) : null}
-              </div>
+              </ContentEnter>
             ) : nucleusAdvice && groupIds.length > 0 ? (
               <p className="mb-3 mt-0 text-xs italic text-ink-faint">
                 {t(locale, 'panel.group.nucleusEmpty')}
@@ -706,31 +713,62 @@ export function GroupTab({
               )}
 
               <div className="mt-3.5">
-                <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.group.internalTensions')}</span>
                 {groupTensions.length === 0 ? (
-                  <p className="text-xs italic text-ink-faint">{t(locale, 'panel.group.noTensions')}</p>
+                  <>
+                    <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.group.internalTensions')}</span>
+                    <p className="text-xs italic text-ink-faint">{t(locale, 'panel.group.noTensions')}</p>
+                  </>
+                ) : groupTensions.length > 3 ? (
+                  <CollapsibleBlock
+                    locale={locale}
+                    title={t(locale, 'panel.group.internalTensions')}
+                    count={groupTensions.length}
+                    defaultOpen={false}
+                    variant="plain"
+                  >
+                    <div className="flex flex-col gap-2 pt-2">
+                      {groupTensions.slice(0, 8).map((p, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-control border border-danger/20 bg-danger/[0.06] px-3 py-2.5"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <TypeBadge type={p.a.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.a.name.split(' ')[0]}</span>
+                            <span className="text-ink-faint">×</span>
+                            <TypeBadge type={p.b.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.b.name.split(' ')[0]}</span>
+                          </div>
+                          <div className="mt-1.5 text-xs leading-snug text-ink-muted">
+                            {p.compat.desc}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleBlock>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {groupTensions.slice(0, 8).map((p, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-control border border-danger/20 bg-danger/[0.06] px-3 py-2.5"
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <TypeBadge type={p.a.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.a.name.split(' ')[0]}</span>
-                          <span className="text-ink-faint">×</span>
-                          <TypeBadge type={p.b.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.b.name.split(' ')[0]}</span>
+                  <>
+                    <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.group.internalTensions')}</span>
+                    <div className="flex flex-col gap-2">
+                      {groupTensions.slice(0, 8).map((p, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-control border border-danger/20 bg-danger/[0.06] px-3 py-2.5"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <TypeBadge type={p.a.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.a.name.split(' ')[0]}</span>
+                            <span className="text-ink-faint">×</span>
+                            <TypeBadge type={p.b.topType} locale={locale} compact /><span className="text-xs text-ink-muted">{p.b.name.split(' ')[0]}</span>
+                          </div>
+                          <div className="mt-1.5 text-xs leading-snug text-ink-muted">
+                            {p.compat.desc}
+                          </div>
                         </div>
-                        <div className="mt-1.5 text-xs leading-snug text-ink-muted">
-                          {p.compat.desc}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
-          </>
+          </ContentEnter>
         )}
       </div>
     </div>
