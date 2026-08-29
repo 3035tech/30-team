@@ -1,31 +1,10 @@
 /**
  * Dark mode — CSS variables drive Tailwind tokens (canvas / ink / surface).
- * Class `dark` on <html> (see DarkModeProvider). Default preference: light.
+ * Class `dark` on <html> (see DarkModeProvider). Light defaults live in globals.css `:root`.
+ * Loaded AFTER globals.css from app/layout.jsx (do not @import at end of globals — browsers ignore that).
  */
 
-:root {
-  --canvas: 245 244 247;
-  --canvas-alt: 237 235 242;
-  --surface: 255 255 255;
-  --ink: 26 22 37;
-  --brand-50: 250 245 255;
-  --brand-100: 243 232 255;
-  --brand-200: 233 213 255;
-  --brand-300: 199 154 219;
-  --brand-400: 173 93 205;
-  --brand-500: 137 48 184;
-  --brand-600: 118 51 155;
-  --brand-700: 80 37 116;
-  --brand-800: 59 7 100;
-  --brand-900: 46 10 74;
-  --success: 21 128 61;
-  --danger: 220 38 38;
-  --warning: 217 119 6;
-  --info: 2 132 199;
-  --soft: 100 116 139;
-  color-scheme: light;
-}
-
+html.dark,
 .dark {
   --canvas: 18 16 22;
   --canvas-alt: 24 22 30;
@@ -51,6 +30,7 @@
   color: rgb(var(--ink) / 0.92);
 }
 
+html.dark body,
 .dark body {
   background-color: rgb(var(--canvas));
   color: rgb(var(--ink) / 0.92);

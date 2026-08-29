@@ -59,6 +59,7 @@
   --color-focus-ring: #8930B8;
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
+  color-scheme: light;
 }
 
 button:focus-visible,
@@ -475,8 +476,5 @@ textarea:focus-visible {
   }
 }
 
-/* Mobile Fixes - UX/UX Melhoria #5 */
-@import url('./mobile-fixes.css');
-
-/* Dark Mode - UX/UX Melhoria #9 */
-@import url('./dark-mode.css');
+/* Mobile + dark CSS are imported from app/layout.jsx (not @import here).
+ * Native CSS ignores @import after other rules, so dark mode never applied. */

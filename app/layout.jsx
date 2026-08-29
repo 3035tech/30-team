@@ -1,4 +1,6 @@
 import './globals.css';
+import './mobile-fixes.css';
+import './dark-mode.css';
 import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
 import { DarkModeProvider } from './_components/DarkModeProvider';
