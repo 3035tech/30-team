@@ -196,6 +196,48 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     [load]
   );
 
+  const openWatch = useCallback((lesson) => {
+    if (!lesson?.embedUrl) return;
+    setOpenMap((prev) => {
+      if (prev.lms !== false) return prev;
+      const next = { ...prev, lms: true };
+      try {
+        localStorage.setItem(COLLAPSE_STORAGE, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+    setWatching({
+      lessonId: lesson.id,
+      embedUrl: lesson.embedUrl,
+      title: lesson.title,
+    });
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        const el =
+          document.getElementById('emp-video-player') || document.getElementById('lms');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const onHash = () => {
+      const id = (window.location.hash || '').replace(/^#/, '');
+      if (!id || !SECTION_KEYS.includes(id)) return;
+      if (openMap[id] === false) toggleSection(id);
+      window.requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
+    onHash();
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per hash / load
+  }, [loading]);
+
   if (loading) return <AppLoading variant="panel" />;
 
   const person = data?.person;
@@ -211,40 +253,43 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-3xl">
-      <div className="mb-5">
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
+      <div className="mb-6">
+        <p className={cn(S.label, 'mb-1')}>{t(locale, 'employeeHome.eyebrow')}</p>
         <h1 className={S.pageTitle}>
           {t(locale, 'employeeHome.hello', { name: person?.fullName || '' })}
         </h1>
         <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.hint')}</p>
       </div>
 
-      <nav className="mb-2 flex flex-wrap gap-1.5" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
-        {[
-          { key: 'tasks', label: t(locale, 'employeeHome.tasksTitle'), href: '#tasks' },
-          ...(hasJourney
-            ? [{ key: 'journey', label: t(locale, 'employeeHome.journeyTitle'), href: '#journey' }]
-            : []),
-          { key: 'pdi', label: t(locale, 'panel.employeePortal.pdiTitle'), href: '#pdi' },
-          { key: 'lms', label: t(locale, 'employeeHome.lmsTitle'), href: '#lms' },
-          { key: 'surveys', label: t(locale, 'employeeHome.surveysTitle'), href: '#surveys' },
-          { key: 'oneOnOne', label: t(locale, 'panel.employeePortal.agreementsTitle'), href: '#oneOnOne' },
-          ...(hasCompany
-            ? [{ key: 'company', label: t(locale, 'employeeHome.companyTitle'), href: '#company' }]
-            : []),
-        ].map((chip) => (
-          <a
-            key={chip.key}
-            href={chip.href}
-            className={cn(S.filterChip, 'no-underline')}
-            onClick={() => {
-              if (!openMap[chip.key]) toggleSection(chip.key);
-            }}
-          >
-            {chip.label}
-          </a>
-        ))}
-      </nav>
+      {watching?.embedUrl ? (
+        <div
+          id="emp-video-player"
+          className="mb-6 overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-sm"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
+            <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{watching.title}</span>
+            <button
+              type="button"
+              className={cn(S.btnGhost, 'min-h-touch shrink-0')}
+              onClick={() => setWatching(null)}
+            >
+              {t(locale, 'employeeHome.closePlayer')}
+            </button>
+          </div>
+          <div className="aspect-video w-full bg-black">
+            <iframe
+              title={watching.title}
+              src={`${watching.embedUrl}${watching.embedUrl.includes('?') ? '&' : '?'}rel=0`}
+              className="h-full w-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
+          <p className={cn(S.faint, 'm-0 px-3 py-2')}>{t(locale, 'employeeHome.watchInAppHint')}</p>
+        </div>
+      ) : null}
 
       <CollapsibleSection
         id="tasks"
@@ -395,30 +440,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         onToggle={() => toggleSection('lms')}
         locale={locale}
       >
-        {watching?.embedUrl ? (
-          <div className="mb-4 overflow-hidden rounded-control border border-ink/12 bg-ink/5">
-            <div className="flex items-center justify-between gap-2 px-3 py-2">
-              <span className="truncate text-xs text-ink">{watching.title}</span>
-              <button
-                type="button"
-                className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
-                onClick={() => setWatching(null)}
-              >
-                {t(locale, 'employeeHome.closePlayer')}
-              </button>
-            </div>
-            <div className="aspect-video w-full bg-black">
-              <iframe
-                title={watching.title}
-                src={watching.embedUrl}
-                className="h-full w-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        ) : null}
-
         {courses.length === 0 ? (
           <EmptyState message={t(locale, 'panel.employeePortal.coursesEmpty')} />
         ) : (
@@ -426,7 +447,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             {courses.map((course) => (
               <li key={course.enrollmentId} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="font-ui text-sm text-ink">{course.title}</div>
+                  <div className={S.cardBody}>{course.title}</div>
                   <span className="font-mono text-2xs text-ink-muted">
                     {course.progressPct}%
                     {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
@@ -441,7 +462,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   >
                     {course.overdue
                       ? t(locale, 'panel.employeePortal.courseOverdue')
-                      : t(locale, 'panel.employeePortal.courseDue', { date: course.dueDate })}
+                      : t(locale, 'panel.employeePortal.courseDue', {
+                          date: formatDisplayDate(course.dueDate, locale),
+                        })}
                     {course.mandatory ? ` · ${t(locale, 'panel.employeePortal.courseMandatory')}` : ''}
                   </p>
                 ) : null}
@@ -449,10 +472,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   {(course.lessons || []).map((lesson) => (
                     <li
                       key={lesson.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
+                      className={cn(
+                        'flex flex-wrap items-center justify-between gap-2 rounded-control border px-2.5 py-2',
+                        watching?.lessonId === lesson.id
+                          ? 'border-brand-500/40 bg-brand-500/[0.06]'
+                          : 'border-ink/8 bg-canvas/40'
+                      )}
                     >
-                      <div className="min-w-0">
-                        <div className="text-xs text-ink">
+                      <div className="min-w-0 flex-1">
+                        <div className={S.cardMuted}>
                           {lesson.completed ? '✓ ' : '○ '}
                           {lesson.title}
                           {lesson.contentKind && lesson.contentKind !== 'link' ? (
@@ -461,18 +489,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-1 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                           {lesson.embedUrl ? (
                             <button
                               type="button"
-                              className="border-none bg-transparent p-0 font-mono text-2xs text-brand-600"
-                              onClick={() =>
-                                setWatching({
-                                  lessonId: lesson.id,
-                                  embedUrl: lesson.embedUrl,
-                                  title: lesson.title,
-                                })
-                              }
+                              className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                              onClick={() => openWatch(lesson)}
                             >
                               {t(locale, 'employeeHome.watchInApp')}
                             </button>
@@ -481,7 +503,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             href={lesson.contentUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="font-mono text-2xs text-brand-600"
+                            className={cn(S.btnGhost, 'min-h-touch text-2xs no-underline')}
                           >
                             {t(locale, 'panel.employeePortal.openLesson')}
                           </a>

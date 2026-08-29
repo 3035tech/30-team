@@ -26,6 +26,7 @@ function formatWhen(iso, locale) {
 
 /**
  * Collaborator chrome — theme, locale, notifications, profile menu.
+ * Brand lives in the sidebar; this bar stays compact for notebook/desktop.
  */
 export function EmployeeTopBar({
   locale,
@@ -117,21 +118,24 @@ export function EmployeeTopBar({
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/10 bg-canvas/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-ink/10 bg-canvas/90 backdrop-blur">
       <div
         ref={wrapRef}
-        className="mx-auto flex max-w-lg flex-wrap items-center justify-between gap-2 px-4 py-2.5"
+        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 pl-14 md:pl-4 lg:px-6"
       >
-        <Link href="/employee" className="flex min-w-0 items-center gap-2 no-underline">
-          <BrandMark size={24} withWordmark />
+        <div className="flex min-w-0 items-center gap-2 md:hidden">
+          <BrandMark size={22} withWordmark href="/employee" />
           {companyName ? (
-            <span className="hidden truncate font-mono text-2xs text-ink-faint sm:inline">
-              {companyName}
-            </span>
+            <span className="truncate font-mono text-2xs text-ink-faint">{companyName}</span>
           ) : null}
-        </Link>
+        </div>
+        <p className="m-0 hidden min-w-0 truncate font-ui text-prose text-ink-muted md:block">
+          {displayName
+            ? t(locale, 'employeeHome.hello', { name: displayName })
+            : t(locale, 'employeeHome.eyebrow')}
+        </p>
 
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5">
           <LanguageSelect locale={locale} onChange={persistLocale} compact />
           <DarkModeToggle />
 
@@ -168,7 +172,7 @@ export function EmployeeTopBar({
                   ) : null}
                 </div>
                 {items.length === 0 ? (
-                  <p className={cn(S.faint, 'm-0 px-1 py-3 text-xs')}>
+                  <p className={cn(S.faint, 'm-0 px-1 py-3')}>
                     {t(locale, 'employeeHome.notificationsEmpty')}
                   </p>
                 ) : (
@@ -183,7 +187,7 @@ export function EmployeeTopBar({
                           )}
                           onClick={() => markReadAndGo(item)}
                         >
-                          <div className="text-xs text-ink">
+                          <div className="text-prose text-ink">
                             {t(locale, item.copy?.titleKey || 'employeeHome.notifGenericTitle', item.copy?.values)}
                           </div>
                           <div className="mt-0.5 text-2xs text-ink-muted">

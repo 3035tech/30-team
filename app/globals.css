@@ -235,6 +235,9 @@ textarea:focus-visible {
     width: 100%;
     box-sizing: border-box;
   }
+  .emp-main {
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  }
   .db-page-title {
     font-size: 24px !important;
     line-height: 1.25 !important;
