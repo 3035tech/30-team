@@ -138,7 +138,7 @@ Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise de
 | Link compartilhável | `CopyableLink` `iconOnly` |
 | Célula de ações | `AdminActionsCell` + `AdminActionsTh` |
 
-Referência de tela: `ExitAnalysisAdminTab.jsx`. Regra Cursor: `.cursor/rules/admin-list-grid.mdc`. Exceção: Vagas (cards/kanban ricos) — ainda preferir os mesmos botões de criar/editar/excluir.
+Referência de tela: `ExitAnalysisAdminTab.jsx`. Regra Cursor: `.cursor/rules/admin-list-grid.mdc`. Filtros de coluna: `AdminListFilters` + `AdminListFilterSelect`. Exceção: Vagas (cards/kanban) — ainda preferir os mesmos botões de criar/editar/excluir.
 
 **API Routes → `lib/`:** pastas entre `app/` e o `route.js` + 1 = quantidade de `../`. Ex.: `app/api/health/status/route.js` → `../../../../lib/…`. Detalhe: `.cursor/rules/api-and-auth.mdc`.
 

@@ -13,6 +13,7 @@ import { CopyableLink } from '../../_components/CopyableLink';
 import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -368,23 +369,23 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         message={notice?.message || ''}
         onClose={() => setNotice(null)}
       />
-      <div className="mb-4 flex flex-wrap justify-between gap-2.5">
-        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
-        <select
+      <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
+      <AdminListFilters aria-label={t(locale, 'panel.motivatorsAdmin.invites.title')}>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.motivatorsAdmin.invites.colStatus')}
           value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
+          onChange={(v) => {
+            setStatus(v);
             setPage(1);
           }}
-          className={S.select}
         >
           <option value="all">{t(locale, 'panel.motivatorsAdmin.invites.allStatuses')}</option>
           <option value="sent">{t(locale, 'panel.motivatorsAdmin.invites.statusSent')}</option>
           <option value="opened">{t(locale, 'panel.motivatorsAdmin.invites.statusOpened')}</option>
           <option value="completed">{t(locale, 'panel.motivatorsAdmin.invites.statusCompleted')}</option>
           <option value="cancelled">{t(locale, 'panel.motivatorsAdmin.invites.statusCancelled')}</option>
-        </select>
-      </div>
+        </AdminListFilterSelect>
+      </AdminListFilters>
       {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
       <AdminTableShell minWidth="640px">
           <thead>

@@ -1,5 +1,5 @@
 ---
-description: Padrão canônico de listagens/cadastros admin (grid sort + pager + CTAs)
+description: Padrão canônico de listagens/cadastros admin (grid sort + pager + CTAs + filtros de coluna numa linha)
 globs: app/dashboard/tabs/**/*.jsx,app/dashboard/dashboard-shared.jsx
 alwaysApply: false
 ---
