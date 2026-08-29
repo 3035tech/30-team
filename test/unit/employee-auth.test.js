@@ -27,6 +27,7 @@ const jwt = signEmployeeToken({
   companyId: 7,
   email: 'colab@example.com',
   locale: 'en',
+  sv: 3,
 });
 const payload = verifyEmployeeToken(jwt);
 assert.ok(isEmployeeSessionPayload(payload));
@@ -34,6 +35,7 @@ assert.equal(payload.candidateId, 42);
 assert.equal(payload.companyId, 7);
 assert.equal(payload.email, 'colab@example.com');
 assert.equal(payload.locale, 'en');
+assert.equal(payload.sv, 3);
 assert.equal(payload.kind, EMPLOYEE_KIND);
 
 assert.equal(verifyEmployeeToken('not-a-jwt'), null);

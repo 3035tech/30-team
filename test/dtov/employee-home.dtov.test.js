@@ -77,6 +77,7 @@ async function main() {
     password: 'ColabTest!2026',
   });
   assert.equal(completed.ok, true, completed.errorCode);
+  assert.ok(Number(completed.sessionVersion) >= 1);
 
   const login = await loginEmployeeWithPassword(query, {
     email: person.email,
@@ -101,13 +102,17 @@ async function main() {
   );
   const consumed = await consumeEmployeeMagicToken(query, { token: magic });
   assert.equal(consumed.ok, true);
+  const consumedAgain = await consumeEmployeeMagicToken(query, { token: magic });
+  assert.equal(consumedAgain.ok, false);
 
   const jwt = signEmployeeToken({
     candidateId: person.candidateId,
     companyId: person.companyId,
     email: person.email,
+    sv: completed.sessionVersion || 1,
   });
   assert.ok(verifyEmployeeToken(jwt));
+  assert.equal(verifyEmployeeToken(jwt).sv, completed.sessionVersion || 1);
 
   const course = await createLmsCourse(query, {
     companyId: person.companyId,
@@ -155,7 +160,7 @@ async function main() {
     candidateId: person.candidateId,
     type: EMPLOYEE_NOTIF.PDI_UPDATED,
     payload: { planTitle: plan.plan.title, planId: plan.plan.id },
-    dedupeKey: `dtov-pdi:${plan.plan.id}`,
+    dedupeKey: `dtov-pdi:${plan.plan.id}:${Date.now()}`,
   });
   assert.ok(pdiNotif.inserted >= 1);
 
@@ -164,7 +169,7 @@ async function main() {
     candidateId: person.candidateId,
     type: EMPLOYEE_NOTIF.MOTIVATORS_INVITE,
     payload: { assessmentUrl: 'https://example.com/assessment/motivators/x' },
-    dedupeKey: `dtov-mot:${person.candidateId}`,
+    dedupeKey: `dtov-mot:${person.candidateId}:${Date.now()}`,
   });
   assert.ok(motNotif.inserted >= 1);
 

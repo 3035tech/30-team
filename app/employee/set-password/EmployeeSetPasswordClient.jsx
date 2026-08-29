@@ -13,6 +13,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import TurnstileField from '../../_components/TurnstileField';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -27,6 +28,31 @@ function SetPasswordForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [tokenError, setTokenError] = useState('');
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [challengeToken, setChallengeToken] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/captcha-config');
+        const data = await res.json().catch(() => ({}));
+        if (cancelled || !res.ok) return;
+        setTurnstileRequired(Boolean(data.required));
+        setTurnstileSiteKey(String(data.siteKey || '').trim());
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,22 +84,28 @@ function SetPasswordForm() {
     };
   }, [token]);
 
-  const submit = async () => {
-    if (!password || password.length < 8) {
-      setError(t(locale, 'errors.PASSWORD_TOO_SHORT'));
-      return;
+  const ensureCaptcha = () => {
+    if (turnstileRequired && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      return false;
     }
-    if (password !== confirm) {
-      setError(t(locale, 'login.changePasswordMismatch'));
-      return;
-    }
+    return true;
+  };
+
+  const verify2fa = async () => {
+    if (!ensureCaptcha()) return;
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/employee/set-password', {
+      const res = await fetch('/api/auth/employee/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password, locale }),
+        body: JSON.stringify({
+          challengeToken,
+          code: twoFaCode,
+          locale,
+          turnstileToken: turnstileToken || undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -93,14 +125,64 @@ function SetPasswordForm() {
     }
   };
 
+  const submit = async () => {
+    if (!password || password.length < 8) {
+      setError(t(locale, 'errors.PASSWORD_TOO_SHORT'));
+      return;
+    }
+    if (password !== confirm) {
+      setError(t(locale, 'login.changePasswordMismatch'));
+      return;
+    }
+    if (!ensureCaptcha()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/employee/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          password,
+          locale,
+          turnstileToken: turnstileToken || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          data.errorCode
+            ? errorMessage(locale, data.errorCode, data.error)
+            : data.error || t(locale, 'login.connectionError')
+        );
+        return;
+      }
+      if (data.requires2fa && data.challengeToken) {
+        setRequires2fa(true);
+        setChallengeToken(data.challengeToken);
+        return;
+      }
+      setSuccess(true);
+      setTimeout(() => router.replace('/employee'), 800);
+    } catch {
+      setError(t(locale, 'login.connectionError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PublicNarrowShell variant="form" locale={locale} maxWidthClass="max-w-md" className="min-h-screen py-12">
       <div className="mb-6 flex items-center justify-between gap-3">
         <BrandMark size={32} withWordmark />
         <LanguageSelect locale={locale} onChange={setLocale} compact />
       </div>
-      <h1 className={S.pageTitle}>{t(locale, 'employeeHome.setPasswordTitle')}</h1>
-      <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.setPasswordHint')}</p>
+      <h1 className={S.pageTitle}>
+        {requires2fa ? t(locale, 'login.twoFaTitle') : t(locale, 'employeeHome.setPasswordTitle')}
+      </h1>
+      <p className={cn(S.muted, 'mt-2')}>
+        {requires2fa ? t(locale, 'login.twoFaIntro') : t(locale, 'employeeHome.setPasswordHint')}
+      </p>
 
       {checking ? (
         <div className="mt-6">
@@ -119,6 +201,42 @@ function SetPasswordForm() {
         <InlineCallout tone="success" className="mt-6">
           {t(locale, 'employeeHome.setPasswordOk')}
         </InlineCallout>
+      ) : requires2fa ? (
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <FormField label={t(locale, 'login.twoFaCode')}>
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className={cn(S.input, 'w-full')}
+              value={twoFaCode}
+              onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
+              maxLength={6}
+              disabled={loading}
+            />
+          </FormField>
+          {turnstileRequired && turnstileSiteKey ? (
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          ) : null}
+          {error ? (
+            <InlineCallout tone="danger" role="alert">
+              {error}
+            </InlineCallout>
+          ) : null}
+          <button
+            type="button"
+            disabled={loading || twoFaCode.length !== 6}
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center')}
+            onClick={verify2fa}
+          >
+            {loading ? t(locale, 'login.twoFaVerifying') : t(locale, 'login.twoFaSubmit')}
+          </button>
+        </div>
       ) : (
         <div className="mt-6 flex w-full flex-col gap-3">
           {emailMasked ? (
@@ -147,6 +265,14 @@ function SetPasswordForm() {
               onKeyDown={(e) => e.key === 'Enter' && submit()}
             />
           </FormField>
+          {turnstileRequired && turnstileSiteKey ? (
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          ) : null}
           {error ? (
             <InlineCallout tone="danger" role="alert">
               {error}

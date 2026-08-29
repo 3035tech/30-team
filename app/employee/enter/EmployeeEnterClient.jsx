@@ -7,9 +7,10 @@ import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
+import TurnstileField from '../../_components/TurnstileField';
 
 /**
- * Consume magic-link token → set employee cookie (ou desafio 2FA) → redirect /employee
+ * Consume magic-link token → set employee cookie (ou desafio 2FA se ativo) → redirect /employee
  */
 export default function EmployeeEnterClient() {
   const router = useRouter();
@@ -19,7 +20,29 @@ export default function EmployeeEnterClient() {
   const [challengeToken, setChallengeToken] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
   const [busy, setBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const locale = params.get('locale') === 'en' ? 'en' : 'pt-BR';
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/captcha-config');
+        const data = await res.json().catch(() => ({}));
+        if (cancelled || !res.ok) return;
+        setTurnstileRequired(Boolean(data.required));
+        setTurnstileSiteKey(String(data.siteKey || '').trim());
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const token = params.get('token');
@@ -55,12 +78,22 @@ export default function EmployeeEnterClient() {
   }, [params, locale, router]);
 
   const verify2fa = async () => {
+    if (turnstileRequired && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      return;
+    }
     setBusy(true);
+    setError('');
     try {
       const res = await fetch('/api/auth/employee/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challengeToken, code: twoFaCode, locale }),
+        body: JSON.stringify({
+          challengeToken,
+          code: twoFaCode,
+          locale,
+          turnstileToken: turnstileToken || undefined,
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || '2fa');
@@ -72,7 +105,7 @@ export default function EmployeeEnterClient() {
     }
   };
 
-  if (error) {
+  if (error && !requires2fa) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <p className="m-0 text-sm text-ink-muted">{error}</p>
@@ -100,6 +133,17 @@ export default function EmployeeEnterClient() {
             disabled={busy}
           />
         </FormField>
+        {turnstileRequired && turnstileSiteKey ? (
+          <div className="mt-4">
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          </div>
+        ) : null}
+        {error ? <p className="mt-3 m-0 text-prose text-danger">{error}</p> : null}
         <button
           type="button"
           disabled={busy || twoFaCode.length !== 6}

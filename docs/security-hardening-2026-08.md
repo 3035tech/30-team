@@ -42,15 +42,25 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 | 2FA TOTP **opcional** | Migration `073_user_totp_2fa.sql` (gestores) + `074_candidate_totp_2fa.sql` (colaboradores); ativa/desativa no perfil; login só pede código se `totp_enabled_at` preenchido |
 | Bots de IA no robots.txt | `AI_CRAWLER_USER_AGENTS` em `lib/crawler-guard.js` — Disallow `/` com Allow `/llms.txt` (GPTBot, ClaudeBot, etc.) |
 
+## Correções aplicadas (fase 5 — auth colaborador)
+
+| Item | Mudança |
+|------|---------|
+| Set-password sem bypass 2FA | Se `totp_enabled_at` ativo → `{ requires2fa, challengeToken }` sem cookie; senão auto-login com JWT `sv` |
+| Turnstile no login colaborador | `POST` login / magic / forgot / set-password / 2fa/verify + `TurnstileField` em `/employee/login` e set-password |
+| `candidates.session_version` | Migration `081`; JWT claim `sv`; `GET /api/auth/employee/session-edge` + middleware; bump em troca/reset de senha e desativar 2FA |
+| Magic consume atômico | `UPDATE … WHERE used_at IS NULL … RETURNING` (sem TOCTOU) |
+| Anti-enumeração | magic/forgot públicos respondem `{ ok: true }` (sem `sent`); delay ~500 ms em falha de login; RL por e-mail + peek set-password |
+
 ### 2FA (opcional por usuário)
 
 - **Default:** desligado — login com e-mail/senha (+ Turnstile se configurado).
 - **Ativar:** Perfil → Configurar 2FA → escanear QR/secret → confirmar código de 6 dígitos.
 - **Desativar:** Perfil → senha atual + código TOTP.
 - **Gestores:** `/dashboard` perfil → `GET/PATCH/DELETE /api/me/2fa`; login em `/api/auth/login` + `/api/auth/2fa/verify`.
-- **Colaboradores:** `/employee/profile` → `GET/PATCH/DELETE /api/employee/me/2fa`; login em `/api/auth/employee/login` + `/api/auth/employee/2fa/verify` (link mágico também exige 2FA se ativo).
+- **Colaboradores:** `/employee/profile` → `GET/PATCH/DELETE /api/employee/me/2fa`; login em `/api/auth/employee/login` + `/api/auth/employee/2fa/verify` (link mágico e set-password também exigem 2FA **só se** ativo).
 
-Não há política global que force 2FA — cada gestor escolhe.
+Não há política global que force 2FA — cada gestor/colaborador escolhe.
 
 ## Fluxos públicos (sem login)
 

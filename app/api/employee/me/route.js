@@ -58,6 +58,7 @@ export async function PATCH(request) {
       companyId: session.companyId,
       email: result.person.email || session.email,
       locale,
+      sv: session.sv,
     });
     const jar = cookies();
     jar.set(EMPLOYEE_COOKIE_NAME, jwt, employeeSessionCookieOptions());

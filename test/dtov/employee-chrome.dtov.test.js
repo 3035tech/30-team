@@ -71,7 +71,7 @@ async function main() {
     candidateId: person.candidateId,
     type: EMPLOYEE_NOTIF.LMS_ENROLLED,
     payload: { courseTitle: 'DTOV Course' },
-    dedupeKey: `dtov-lms:${person.candidateId}`,
+    dedupeKey: `dtov-lms:${person.candidateId}:${Date.now()}`,
   });
   assert.ok(n.inserted >= 1);
 

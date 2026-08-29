@@ -1577,3 +1577,13 @@ CREATE INDEX IF NOT EXISTS idx_interview_slots_company_starts ON interview_slots
 
 INSERT INTO schema_migrations (name) VALUES ('080_solides_gaps_2702_2707.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 081 — candidate session_version (colaborador JWT revocation)
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 1;
+
+COMMENT ON COLUMN candidates.session_version IS
+  'Bumped on password change/reset/disable-2FA; JWT claim sv must match.';
+
+INSERT INTO schema_migrations (name) VALUES ('081_candidate_session_version.sql')
+ON CONFLICT (name) DO NOTHING;

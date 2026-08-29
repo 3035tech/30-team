@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { query } from '../../../../../lib/db.js';
 import { apiError, ERR, httpStatusForError } from '../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
+import { verifyTurnstileToken } from '../../../../../lib/turnstile.js';
 import { requestEmployeePasswordReset } from '../../../../../lib/employee-auth.js';
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/auth/employee/forgot-password — re-issue set-password email */
+/** POST /api/auth/employee/forgot-password — re-issue set-password email (no sent enumeration) */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -18,9 +19,23 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+    if (!turnstile.ok) {
+      return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+    }
+
     const email = String(body.email || '').trim().toLowerCase();
     const companyId = body.companyId != null ? parseInt(String(body.companyId), 10) : null;
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+
+    if (email) {
+      const rlEmail = await checkRateLimit(`employee-forgot-email:${email}`, 6, 15 * 60 * 1000);
+      if (!rlEmail.ok) {
+        return apiError(request, ERR.RATE_LIMIT, httpStatusForError(ERR.RATE_LIMIT), {}, {
+          headers: { 'Retry-After': String(rlEmail.retryAfterSec) },
+        });
+      }
+    }
 
     const result = await requestEmployeePasswordReset(query, {
       email,
@@ -36,12 +51,15 @@ export async function POST(request) {
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      sent: Boolean(result.sent),
-      ambiguous: Boolean(result.ambiguous),
-      companies: result.companies || undefined,
-    });
+    if (result.ambiguous) {
+      return NextResponse.json({
+        ok: true,
+        ambiguous: true,
+        companies: result.companies || [],
+      });
+    }
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
       return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

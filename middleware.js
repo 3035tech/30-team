@@ -79,13 +79,16 @@ function isPublicEmployeeSurface(pathname) {
     isPublicEmployeeAuthPath(pathname) ||
     pathname === '/api/auth/employee/magic-link' ||
     pathname === '/api/auth/employee/session' ||
+    pathname === '/api/auth/employee/session-edge' ||
     pathname === '/api/auth/employee/login' ||
     pathname === '/api/auth/employee/set-password' ||
-    pathname === '/api/auth/employee/forgot-password'
+    pathname === '/api/auth/employee/forgot-password' ||
+    pathname === '/api/auth/employee/2fa/verify'
   );
 }
 
 const SESSION_EDGE_PATH = '/api/auth/session-edge';
+const EMPLOYEE_SESSION_EDGE_PATH = '/api/auth/employee/session-edge';
 
 async function sessionEdgeSaysLive(request) {
   try {
@@ -116,10 +119,26 @@ async function isManagerSessionLive(request, payload) {
   return Number.isFinite(sv) && sv >= 1;
 }
 
+async function isEmployeeSessionLive(request, payload) {
+  try {
+    const checkUrl = new URL(EMPLOYEE_SESSION_EDGE_PATH, request.url);
+    const res = await fetch(checkUrl, {
+      headers: { cookie: request.headers.get('cookie') || '' },
+      cache: 'no-store',
+    });
+    if (res.ok) return true;
+    if (res.status === 401) return false;
+  } catch {
+    /* Self-fetch falha em alguns deploys — fallback: claim sv presente. */
+  }
+  const sv = Number(payload?.sv);
+  return Number.isFinite(sv) && sv >= 1;
+}
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === SESSION_EDGE_PATH) {
+  if (pathname === SESSION_EDGE_PATH || pathname === EMPLOYEE_SESSION_EDGE_PATH) {
     return secureResponse(request, NextResponse.next());
   }
 
@@ -164,6 +183,19 @@ export async function middleware(request) {
     const empToken = request.cookies.get(EMPLOYEE_COOKIE_NAME)?.value;
     const emp = empToken ? await verifyEmployeeTokenEdge(empToken) : null;
     if (!emp) {
+      if (pathname.startsWith('/api/')) {
+        return secureResponse(
+          request,
+          NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
+        );
+      }
+      return secureResponse(
+        request,
+        NextResponse.redirect(new URL(EMPLOYEE_PATH.LOGIN, request.url))
+      );
+    }
+    const live = await isEmployeeSessionLive(request, emp);
+    if (!live) {
       if (pathname.startsWith('/api/')) {
         return secureResponse(
           request,

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { apiError, ERR, httpStatusForError } from '../../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
+import { verifyTurnstileToken } from '../../../../../../lib/turnstile.js';
 import {
   verifyEmployee2faChallenge,
   verifyEmployee2faLogin,
@@ -9,7 +9,7 @@ import { buildEmployeeLoginResponse } from '../../../../../../lib/employee-login
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/auth/employee/2fa/verify — conclui login colaborador após senha + código TOTP */
+/** POST /api/auth/employee/2fa/verify — conclui login colaborador após senha + código TOTP (só se 2FA ativo) */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -19,6 +19,11 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+    if (!turnstile.ok) {
+      return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+    }
+
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
     const challenge = verifyEmployee2faChallenge(body.challengeToken);
     if (!challenge) {

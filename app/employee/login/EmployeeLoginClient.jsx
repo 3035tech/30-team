@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { t } from '../../../lib/i18n';
@@ -12,10 +12,11 @@ import { FormField } from '../../_components/FormField';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import { SegmentedControl } from '../../_components/SegmentedControl';
+import TurnstileField from '../../_components/TurnstileField';
 
 /**
  * Collaborator login — password primary; forgot + magic via SegmentedControl.
- * Reuses PublicNarrowShell / FormField / S / InlineCallout (same family as /login + public flows).
+ * 2FA only when the account has totp_enabled_at (optional).
  */
 export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -29,14 +30,54 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const [requires2fa, setRequires2fa] = useState(false);
   const [challengeToken, setChallengeToken] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/captcha-config');
+        const data = await res.json().catch(() => ({}));
+        if (cancelled || !res.ok) return;
+        setTurnstileRequired(Boolean(data.required));
+        setTurnstileSiteKey(String(data.siteKey || '').trim());
+      } catch {
+        /* Turnstile opcional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const captchaPayload = () => ({
+    turnstileToken: turnstileToken || undefined,
+  });
+
+  const ensureCaptcha = () => {
+    if (turnstileRequired && !turnstileToken) {
+      toast(t(locale, 'errors.TURNSTILE_FAILED'), 'error');
+      return false;
+    }
+    return true;
+  };
 
   const verify2fa = async () => {
+    if (!ensureCaptcha()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/auth/employee/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challengeToken, code: twoFaCode, locale }),
+        body: JSON.stringify({
+          challengeToken,
+          code: twoFaCode,
+          locale,
+          ...captchaPayload(),
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || t(locale, 'login.twoFaVerifying'));
@@ -51,6 +92,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   };
 
   const login = async (companyId = null) => {
+    if (!ensureCaptcha()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/auth/employee/login', {
@@ -61,6 +103,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           password,
           locale,
           ...(companyId ? { companyId } : {}),
+          ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -86,6 +129,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   };
 
   const sendForgot = async (companyId = null) => {
+    if (!ensureCaptcha()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/auth/employee/forgot-password', {
@@ -95,6 +139,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           email,
           locale,
           ...(companyId ? { companyId } : {}),
+          ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -115,6 +160,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   };
 
   const sendMagic = async (companyId = null) => {
+    if (!ensureCaptcha()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/auth/employee/magic-link', {
@@ -124,6 +170,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           email,
           locale,
           ...(companyId ? { companyId } : {}),
+          ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -210,6 +257,14 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
               disabled={busy}
             />
           </FormField>
+          {turnstileRequired && turnstileSiteKey ? (
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          ) : null}
           <button
             type="button"
             disabled={busy || twoFaCode.length !== 6}
@@ -263,6 +318,15 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
                 disabled={busy}
               />
             </FormField>
+          ) : null}
+
+          {turnstileRequired && turnstileSiteKey ? (
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
           ) : null}
 
           {companies?.length ? (
