@@ -43,7 +43,7 @@ import { EMPLOYMENT_STATUS, ROSTER_SCOPE } from '../../../lib/domain-status.js';
 import { PIPELINE_STAGE, PIPELINE_STAGES } from '../../../lib/pipeline';
 import {
   ABSENCE_SUGGESTION,
-} from '../../../lib/people/list-absence-diagnostics.js';
+} from '../../../lib/people/list-absence-diagnostics-core.js';
 
 function nearbyCluster(scores) {
   return clusterCloseTypes(rankEnneagramScores(scores));

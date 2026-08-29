@@ -11,7 +11,7 @@ import {
   ABSENCE_SUGGESTION,
   buildAbsenceDiagnostics,
   classifyRosterVisibility,
-} from '../../lib/people/list-absence-diagnostics.js';
+} from '../../lib/people/list-absence-diagnostics-core.js';
 import { PIPELINE_STAGE_COLORS_DARK, getPipelineStageColor } from '../../lib/theme.js';
 
 describe('B-2601 absence diagnostics', () => {
