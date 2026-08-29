@@ -5,7 +5,7 @@ import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
-import { AppLoading } from './AppLoading';
+import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
@@ -67,6 +67,7 @@ export function OnboardingCheckinsBlock({
         type: 'select',
         label: t(locale, 'panel.onboarding.outcomeLabel'),
         required: status === 'done',
+        help: t(locale, 'panel.onboarding.outcomeHelp'),
         options: [
           { value: 'continue', label: t(locale, 'panel.onboarding.outcome.continue') },
           { value: 'develop', label: t(locale, 'panel.onboarding.outcome.develop') },
@@ -190,7 +191,8 @@ export function OnboardingCheckinsBlock({
           />
         </div>
       ) : (
-        <ul className="mt-3 m-0 flex list-none flex-col gap-1.5 p-0">
+        <ContentEnter className="mt-3">
+        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {items.map((row) => {
             const done = row.status === 'done' || row.status === 'skipped';
             return (
@@ -272,6 +274,7 @@ export function OnboardingCheckinsBlock({
             );
           })}
         </ul>
+        </ContentEnter>
       )}
     </section>
   );

@@ -163,7 +163,7 @@ export function CandidateCvBlock({
             <div className="mb-3 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 {cv.cvUrl ? (
-                  <CopyableLink href={cv.cvUrl} label={t(locale, 'recruiting.cvOpenPdf')} compact />
+                  <CopyableLink url={cv.cvUrl} label={t(locale, 'recruiting.cvOpenPdf')} compact locale={locale} />
                 ) : null}
                 {cv.cvUpdatedAt ? (
                   <span className="font-mono text-[11px] text-ink-faint">
@@ -198,7 +198,7 @@ export function CandidateCvBlock({
               </div>
             </div>
           ) : (
-            <div className="mb-3">
+            <div className="mb-3 space-y-2">
               <button
                 type="button"
                 disabled={uploading}
@@ -207,6 +207,7 @@ export function CandidateCvBlock({
               >
                 {uploading ? t(locale, 'recruiting.cvUploading') : t(locale, 'recruiting.cvUpload')}
               </button>
+              <p className="m-0 text-xs text-ink-muted">{t(locale, 'recruiting.cvEmptyHint')}</p>
             </div>
           )}
 

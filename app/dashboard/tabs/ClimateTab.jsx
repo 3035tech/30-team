@@ -1143,7 +1143,12 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                                 {t(
                                   locale,
                                   `panel.climate.questionKind.${
-                                    String(q.questionKind || '').toLowerCase() === 'text' ? 'text' : 'likert'
+                                    (() => {
+                                      const k = String(q.questionKind || '').toLowerCase();
+                                      if (k === 'text') return 'text';
+                                      if (k === 'enps') return 'enps';
+                                      return 'likert';
+                                    })()
                                   }`
                                 )}
                               </span>

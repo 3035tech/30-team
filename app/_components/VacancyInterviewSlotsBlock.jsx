@@ -7,6 +7,7 @@ import { S, AdminDeleteButton } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { CopyableLink } from './CopyableLink';
+import { CollapsibleBlock } from './CollapsibleBlock';
 
 function startOfWeek(d) {
   const x = new Date(d);
@@ -182,8 +183,18 @@ export function VacancyInterviewSlotsBlock({
   };
 
   const weekLabel = `${weekStart.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')} – ${new Date(weekEnd.getTime() - 1).toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')}`;
+  const scheduledCount = items.filter((s) => s.status === 'scheduled').length;
 
   return (
+    <CollapsibleBlock
+      key={loading ? 'slots-loading' : `slots-${scheduledCount}`}
+      locale={locale}
+      title={t(locale, 'recruiting.interviewSlotsTitle')}
+      defaultOpen={loading || scheduledCount > 0}
+      count={!loading ? scheduledCount : null}
+      className="mb-3"
+      bordered={false}
+    >
     <div className={cn(S.cardTight, 'p-3.5')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.interviewSlotsTitle')}</span>
@@ -208,7 +219,10 @@ export function VacancyInterviewSlotsBlock({
       {!loading && !err ? (
         <ContentEnter>
           {items.length === 0 ? (
-            <p className="m-0 text-xs italic text-ink-faint">{t(locale, 'recruiting.interviewSlotsEmpty')}</p>
+            <div className="space-y-2">
+              <p className="m-0 text-xs italic text-ink-faint">{t(locale, 'recruiting.interviewSlotsEmpty')}</p>
+              <p className="m-0 text-xs text-ink-muted">{t(locale, 'recruiting.interviewSlotsEmptyHint')}</p>
+            </div>
           ) : (
             <ul className="m-0 list-none space-y-2 p-0">
               {items.map((slot) => (
@@ -232,7 +246,7 @@ export function VacancyInterviewSlotsBlock({
                       </p>
                       {slot.meetUrl ? (
                         <div className="mt-1">
-                          <CopyableLink href={slot.meetUrl} label={t(locale, 'recruiting.interviewSlotsMeetLink')} compact />
+                          <CopyableLink url={slot.meetUrl} label={t(locale, 'recruiting.interviewSlotsMeetLink')} compact locale={locale} />
                         </div>
                       ) : null}
                       {slot.notes ? (
@@ -257,5 +271,6 @@ export function VacancyInterviewSlotsBlock({
         </ContentEnter>
       ) : null}
     </div>
+    </CollapsibleBlock>
   );
 }

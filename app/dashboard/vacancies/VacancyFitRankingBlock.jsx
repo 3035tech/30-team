@@ -145,15 +145,25 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                       )}
                     </td>
                     <td className="p-2.5">
-                      <span className={cn('font-mono font-bold', scoreTone(r.vacancyFitScore010))}>
-                        {r.vacancyFitScore010}/10
-                      </span>
-                      {band ? (
-                        <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
-                      ) : null}
+                      <div>
+                        <span className="block font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                          {t(locale, 'recruiting.fitScoreLabel')}
+                        </span>
+                        <span className={cn('font-mono font-bold', scoreTone(r.vacancyFitScore010))}>
+                          {r.vacancyFitScore010}/10
+                        </span>
+                        {band ? (
+                          <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
+                        ) : null}
+                      </div>
                       {r.textMatchScore != null ? (
-                        <div className="mt-1 font-mono text-[10px] text-ink-faint">
-                          {t(locale, 'recruiting.textMatchShort', { score: r.textMatchScore })}
+                        <div className="mt-2 rounded-md border border-ink/10 bg-ink/[0.03] px-2 py-1.5">
+                          <span className="block font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                            {t(locale, 'recruiting.textMatchLabel')}
+                          </span>
+                          <span className="font-mono text-[11px] text-ink-muted">
+                            {t(locale, 'recruiting.textMatchShort', { score: r.textMatchScore })}
+                          </span>
                         </div>
                       ) : null}
                       {r.fitBreakdown ? (

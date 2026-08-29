@@ -507,6 +507,8 @@ Upload PDF S3 + extract (`pdf-parse`); sugestão de campos; text-match ≠ Fit T
 ### B-2707 — Agenda de entrevistas (calendário leve) ✅ ENTREGUE
 `interview_slots` + UI na vaga; notif gestores + e-mail candidato.
 
+**Polish de adoção (ago/2026):** Overview eNPS clicável + empty gate; badge eNPS no Clima; 9Box i18n/`CollapsibleBlock` + CTA Equipe; dossier com `PerformanceReviewBlock` + sideReview counts; outcomes D30–D90 com help leve vs formal; ranking Fit vs textMatch separados; CV/slots `CopyableLink` (`url`); Help steps `cvUpload`/`interviewSlots` (pt+en); slots colapsáveis quando vazios.
+
 ### B-2708 — Recrutamento conversacional WhatsApp (além do share)
 Hoje: botões share WhatsApp com UTM. Sólides: funil WhatsApp para micro/PME.
 1. MVP: templates de mensagem + deep-link `/v` / `/jobs` + tracking referral já existente.

@@ -69,7 +69,10 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
         {review ? (
           <>
             <p className="m-0 text-xs text-ink-muted">
-              {t(locale, 'performanceReviews.reviewTitle')} · {review.status}
+              {t(locale, 'performanceReviews.reviewTitle')} ·{' '}
+              {review.status === 'submitted'
+                ? t(locale, 'performanceReviews.reviewSubmitted')
+                : t(locale, 'performanceReviews.reviewDraft')}
             </p>
             {goals.length > 0 ? (
               <ul className="mt-2 m-0 flex list-none flex-col gap-1.5 p-0">
@@ -117,7 +120,11 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
                       {roleLabel}
                       {sr.reviewerLabel ? ` · ${sr.reviewerLabel}` : ''}
                     </span>
-                    <span className="font-mono text-[10px] text-ink-muted">{sr.status}</span>
+                    <span className="font-mono text-[10px] text-ink-muted">
+                      {sr.status === 'submitted'
+                        ? t(locale, 'performanceReviews.sideReview.statusSubmitted')
+                        : t(locale, 'performanceReviews.sideReview.statusPending')}
+                    </span>
                     {sr.status === 'pending' && url ? (
                       <CopyableLink url={url} locale={locale} iconOnly compact label={roleLabel} />
                     ) : null}

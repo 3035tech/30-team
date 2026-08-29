@@ -7,6 +7,7 @@ import { S } from '../dashboard/dashboard-shared';
 import { TypeBadge } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { CollapsibleBlock } from './CollapsibleBlock';
+import { PerformanceReviewBlock } from './PerformanceReviewBlock';
 
 /**
  * Dossier unificado da pessoa (B-1901) + botão IA (B-1904).
@@ -227,7 +228,10 @@ export function PersonDossierBlock({
           {d.performance ? (
             <>
               <p className="mt-2 mb-0 text-[13px] text-ink">
-                {d.performance.cycleTitle || '—'} · {d.performance.status}
+                {d.performance.cycleTitle || '—'} ·{' '}
+                {d.performance.isSubmitted
+                  ? t(locale, 'performanceReviews.reviewSubmitted')
+                  : t(locale, 'performanceReviews.reviewDraft')}
                 {d.performance.developCount > 0
                   ? ` · ${t(locale, 'panel.dossier.developGoals', { n: d.performance.developCount })}`
                   : ''}
@@ -256,11 +260,29 @@ export function PersonDossierBlock({
                   </button>
                 </div>
               ) : null}
+              {d.performance.cycleId && candidateId ? (
+                <div className="mt-3">
+                  <PerformanceReviewBlock
+                    locale={locale}
+                    cycleId={d.performance.cycleId}
+                    candidateId={candidateId}
+                    companyId={companyId || d.candidate?.companyId}
+                  />
+                </div>
+              ) : null}
             </>
           ) : (
-            <p className="mt-2 mb-0 text-[13px] text-ink-faint">
-              {t(locale, 'panel.dossier.performanceEmpty')}
-            </p>
+            <>
+              <p className="mt-2 mb-0 text-[13px] text-ink-faint">
+                {t(locale, 'panel.dossier.performanceEmpty')}
+              </p>
+              <a
+                href="/dashboard?tab=performance-reviews"
+                className="mt-2 inline-flex min-h-touch items-center font-mono text-[11px] text-brand-500 hover:underline"
+              >
+                {t(locale, 'panel.dossier.openPerformance')}
+              </a>
+            </>
           )}
         </section>
 

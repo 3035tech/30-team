@@ -785,7 +785,7 @@ export function OverviewTab({
             {peopleOpsOpen ? (
               <div className="mt-3 border-t border-ink/10 pt-3">
                 <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
-                {!hasPdi && !hasClima && !hasRet && !hasOnb ? (
+                {!hasPdi && !hasClima && !hasRet && !hasOnb && !hasEnps ? (
                   <p className="m-0 text-[13px] italic text-ink-muted">
                     {t(locale, 'panel.overview.peopleOpsEmpty')}
                   </p>
@@ -1059,14 +1059,24 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasEnps ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
-                        {t(locale, 'panel.overview.enpsPulse', {
-                          score: enps.score,
-                          n: enps.responseCount,
-                        })}
-                        <span className="mt-1 block font-mono text-[11px] text-ink-muted">
-                          {t(locale, 'panel.overview.enpsHint')}
-                        </span>
+                      <li>
+                        <button
+                          type="button"
+                          className="w-full cursor-pointer rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-left text-[13px] text-ink hover:border-ink/20 hover:bg-ink/[0.03]"
+                          onClick={() => go({ tab: 'climate' })}
+                          aria-label={t(locale, 'panel.overview.openClimate')}
+                        >
+                          {t(locale, 'panel.overview.enpsPulse', {
+                            score: enps.score,
+                            n: enps.responseCount,
+                          })}
+                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                            {t(locale, 'panel.overview.enpsHint')}
+                          </span>
+                          <span className="mt-1.5 block font-mono text-[10px] text-brand-600">
+                            {t(locale, 'panel.overview.enpsOpenClimate')}
+                          </span>
+                        </button>
                       </li>
                     ) : null}
                     {hasClima ? (
