@@ -27,6 +27,7 @@
 -- DESTRUTIVO só para slug=todos-os-dados-demo.
 -- v_i_confirm_purge := TRUE (tenant demo isolado).
 -- Se "current transaction is aborted" (25P02): rode ROLLBACK; e execute de novo.
+-- O ROLLBACK abaixo pode emitir WARNING "no transaction in progress" — ignore.
 -- =============================================================================
 
 ROLLBACK;
@@ -41,6 +42,7 @@ DECLARE
   v_i_confirm_purge BOOLEAN := TRUE;
 
   v_company_id   BIGINT;
+  v_purge_id     BIGINT;
   v_hr_id        BIGINT;
   v_dir_id       BIGINT;
   v_vac_open     BIGINT;
@@ -167,12 +169,13 @@ BEGIN
       'ABORTADO: defina v_i_confirm_purge := TRUE. Apaga apenas slug=todos-os-dados-demo.';
   END IF;
 
-  SELECT id INTO v_company_id
-  FROM companies
-  WHERE LOWER(slug) = 'todos-os-dados-demo' AND deleted = FALSE
-  LIMIT 1;
+  -- Inclui company soft-deleted (deleted=TRUE): senão o INSERT de users
+  -- colide com idx_users_email_unique (hr@ / direction@ ainda ativos).
+  FOR v_purge_id IN
+    SELECT id FROM companies WHERE LOWER(slug) = 'todos-os-dados-demo' ORDER BY id
+  LOOP
+    v_company_id := v_purge_id;
 
-  IF v_company_id IS NOT NULL THEN
     SELECT COUNT(*)::int INTO v_non_demo
     FROM users
     WHERE company_id = v_company_id
@@ -334,6 +337,41 @@ BEGIN
       USING users u WHERE o.user_id = u.id AND u.company_id = v_company_id;
     DELETE FROM users WHERE company_id = v_company_id;
     DELETE FROM companies WHERE id = v_company_id;
+  END LOOP;
+
+  -- Logins demo órfãos (empresa soft-deleted / slug mudou sem purge)
+  DELETE FROM user_capability_overrides o
+    USING users u
+   WHERE o.user_id = u.id
+     AND LOWER(u.email) IN (
+       'hr@todos-os-dados.demo',
+       'direction@todos-os-dados.demo'
+     );
+  DELETE FROM users
+   WHERE LOWER(email) IN (
+     'hr@todos-os-dados.demo',
+     'direction@todos-os-dados.demo'
+   );
+
+  -- Tokens fixos / batch da demo (órfãos fora do company_id purge)
+  DELETE FROM company_links WHERE token LIKE '%todosdados%';
+  DELETE FROM vacancy_links WHERE token LIKE '%todosdados%';
+  DELETE FROM candidate_invites WHERE token LIKE '%todosdados%';
+  DELETE FROM ae_invites WHERE token LIKE '%todosdados%';
+  IF to_regclass('public.vacancy_report_shares') IS NOT NULL THEN
+    DELETE FROM vacancy_report_shares WHERE token LIKE '%todosdados%';
+  END IF;
+  IF to_regclass('public.employee_portal_tokens') IS NOT NULL THEN
+    DELETE FROM employee_portal_tokens WHERE token LIKE '%todosdados%';
+  END IF;
+  IF to_regclass('public.climate_survey_invites') IS NOT NULL THEN
+    DELETE FROM climate_survey_invites WHERE token LIKE '%todosdados%';
+  END IF;
+  IF to_regclass('public.team_pulse_invites') IS NOT NULL THEN
+    DELETE FROM team_pulse_invites WHERE token LIKE '%todosdados%';
+  END IF;
+  IF to_regclass('public.performance_side_reviews') IS NOT NULL THEN
+    DELETE FROM performance_side_reviews WHERE token LIKE '%todosdados%';
   END IF;
 
   -- ---- Company + users ----
@@ -1359,7 +1397,21 @@ $html$,
        NOW() - INTERVAL '12 hours'),
       (v_company_id, v_colab_id, 'generic',
        jsonb_build_object('message', 'Lembrete demo: revise Minha chegada e confirme o kit D1.'),
-       NULL, NULL, 'generic:demo-arrival', NOW() - INTERVAL '6 hours');
+       NULL, NULL, 'generic:demo-arrival', NOW() - INTERVAL '6 hours'),
+      (v_company_id, v_colab_id, 'pdi_updated',
+       jsonb_build_object('planTitle', 'PDI Demo: Lucas', 'itemTitle', 'Prática: feedback no 1:1'),
+       'development_plan', v_plan_id, 'pdi_upd2:' || COALESCE(v_plan_id::text, '0'),
+       NOW() - INTERVAL '4 hours'),
+      (v_company_id, v_colab_id, 'generic',
+       jsonb_build_object('message', 'Há um novo documento no Espaço do colaborador. Confira quando puder.'),
+       NULL, NULL, 'generic:demo-doc', NOW() - INTERVAL '2 hours'),
+      (v_company_id, v_colab_id, 'lms_enrolled',
+       jsonb_build_object('courseTitle', 'Segurança da informação (demo)', 'courseId', v_course_id),
+       'lms_course', v_course_id, 'lms_enroll2:' || COALESCE(v_course_id::text, '0'),
+       NOW() - INTERVAL '1 hour'),
+      (v_company_id, v_colab_id, 'motivators_invite',
+       jsonb_build_object('assessmentUrl', '/assessment/motivators/' || v_ae_tok),
+       'ae_invite', NULL, 'motivators_invite:demo:remind', NOW() - INTERVAL '30 minutes');
   END IF;
 
   -- Referral + funnel

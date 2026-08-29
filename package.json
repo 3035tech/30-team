@@ -14,6 +14,8 @@
     "db:seed-demo-30pay:confirm": "CONFIRM_DEMO_PURGE=1 node --env-file=.env scripts/seed-demo-30pay.js",
     "db:seed-demo-todos-os-dados": "node --env-file=.env scripts/seed-demo-todos-os-dados.js",
     "db:seed-demo-todos-os-dados:confirm": "CONFIRM_DEMO_PURGE=1 node --env-file=.env scripts/seed-demo-todos-os-dados.js",
+    "db:seed-demo-client-jobs-board": "node --env-file=.env scripts/seed-demo-client-jobs-board.js",
+    "db:seed-demo-client-jobs-board:confirm": "CONFIRM_DEMO_PURGE=1 node --env-file=.env scripts/seed-demo-client-jobs-board.js",
     "db:seed-motivators": "node scripts/seed-motivators-questions.js",
     "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",
     "db:seed-motivators-all": "node scripts/seed-motivators-questions.js && node scripts/seed-motivators-templates.js",

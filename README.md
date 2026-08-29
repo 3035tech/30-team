@@ -200,8 +200,9 @@ A partir da migration `054`, `055` e `056`:
 | `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
 | `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
-| `scripts/seed-demo-todos-os-dados.sql` | **Seed completo de apresentação** (migrations ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee` (`todos-os-dados-demo`) |
+| `scripts/seed-demo-todos-os-dados.sql` | **Seed completo de apresentação** (migrations ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee` (`todos-os-dados-demo`). Inbox HR: ~12 tipos `NOTIF`; colab: ~10 no `/employee` |
 | `npm run db:seed-demo-todos-os-dados:confirm` | Mesmo tenant via JS (DTOV / local); exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
+| `npm run db:seed-demo-client-jobs-board:confirm` | **Board `/jobs` para demo com cliente**: 10 empresas (`demo-board-*`) + 50 vagas públicas com descrição HTML completa; não toca Todos os Dados / Eval |
 
 ```bash
 # Migrações incrementais
@@ -219,8 +220,15 @@ psql "$DATABASE_URL" -f scripts/seed-eval-20-employees.sql
 # HR:           hr@todos-os-dados.demo / DemoTodosDados!2026          → /login
 # Direction:    direction@todos-os-dados.demo / DemoTodosDados!2026   → /login
 # Colaborador:  colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee
+# Notifs:       HR inbox ~12 tipos NOTIF; colaborador ~10 no /employee
 psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
 # ou: npm run db:seed-demo-todos-os-dados:confirm
+
+# Board /jobs para demo com cliente (10 empresas · 50 vagas públicas)
+# Não apaga Todos os Dados / Eval — só slugs demo-board-*
+# Login exemplo: hr@demo-board-nortech.demo / DemoBoard!2026
+npm run db:seed-demo-client-jobs-board:confirm
+# Abrir: /jobs
 ```
 
 ---

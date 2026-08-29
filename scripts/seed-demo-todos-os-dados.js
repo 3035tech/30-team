@@ -488,12 +488,12 @@ async function main() {
     await client.query('BEGIN');
 
     const existing = await client.query(
-      `SELECT id FROM companies WHERE LOWER(slug) = $1 AND deleted = FALSE LIMIT 1`,
+      `SELECT id FROM companies WHERE LOWER(slug) = $1 ORDER BY id`,
       [SLUG]
     );
-    let companyId = existing.rows[0]?.id || null;
 
-    if (companyId) {
+    for (const row of existing.rows) {
+      const companyId = row.id;
       const badUsers = await client.query(
         `SELECT COUNT(*)::int AS n FROM users
          WHERE company_id = $1 AND email NOT ILIKE '%.demo' AND deleted = FALSE`,
@@ -639,6 +639,31 @@ async function main() {
       await client.query(`DELETE FROM companies WHERE id = $1`, [companyId]);
     }
 
+    // Orphan demo logins (soft-deleted company / email left behind)
+    await client.query(
+      `DELETE FROM user_capability_overrides o
+         USING users u
+        WHERE o.user_id = u.id
+          AND LOWER(u.email) IN (LOWER($1), LOWER($2))`,
+      [HR_EMAIL, DIR_EMAIL]
+    );
+    await client.query(
+      `DELETE FROM users WHERE LOWER(email) IN (LOWER($1), LOWER($2))`,
+      [HR_EMAIL, DIR_EMAIL]
+    );
+
+    // Fixed demo tokens left behind (soft-deleted company / partial seed)
+    const tokenLike = '%todosdados%';
+    await client.query(`DELETE FROM company_links WHERE token LIKE $1`, [tokenLike]);
+    await client.query(`DELETE FROM vacancy_links WHERE token LIKE $1`, [tokenLike]);
+    await client.query(`DELETE FROM candidate_invites WHERE token LIKE $1`, [tokenLike]);
+    await client.query(`DELETE FROM ae_invites WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM vacancy_report_shares WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM employee_portal_tokens WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM climate_survey_invites WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM team_pulse_invites WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM performance_side_reviews WHERE token LIKE $1`, [tokenLike]);
+
     const co = await client.query(
       `INSERT INTO companies (
          name, slug, active, deleted, anniversary_date,
@@ -653,7 +678,7 @@ async function main() {
         '<p><strong>Todos os Dados</strong> é a empresa demo do 30Team para apresentações.</p><p>Recrutamento T1–T9, Motivadores, People e LMS.</p>',
       ]
     );
-    companyId = co.rows[0].id;
+    const companyId = co.rows[0].id;
 
     const pwdHash = await bcrypt.hash(PASSWORD, 10);
 
@@ -1759,7 +1784,6 @@ async function main() {
         entityId: elena.candidateId,
         dedupe: `turnover:${elena.candidateId}`,
         hoursAgo: 30,
-        read: true,
       });
       managerNotifs.push({
         type: 'enneagram_completed',
@@ -1774,7 +1798,6 @@ async function main() {
         entityId: elena.candidateId,
         dedupe: `enneagram:dir:${elena.candidateId}`,
         hoursAgo: 28,
-        read: true,
       });
     }
     if (colaborador) {
@@ -1977,6 +2000,38 @@ async function main() {
           dedupe: 'generic:demo-arrival',
           hoursAgo: 6,
         },
+        {
+          type: 'pdi_updated',
+          payload: { planTitle: 'PDI Demo: Lucas', itemTitle: 'Prática: feedback no 1:1' },
+          entityType: 'development_plan',
+          entityId: lastPlanId,
+          dedupe: `pdi_upd2:${lastPlanId || 0}`,
+          hoursAgo: 4,
+        },
+        {
+          type: 'generic',
+          payload: { message: 'Há um novo documento no Espaço do colaborador. Confira quando puder.' },
+          entityType: null,
+          entityId: null,
+          dedupe: 'generic:demo-doc',
+          hoursAgo: 2,
+        },
+        {
+          type: 'lms_enrolled',
+          payload: { courseTitle: 'Segurança da informação (demo)', courseId },
+          entityType: 'lms_course',
+          entityId: courseId,
+          dedupe: `lms_enroll2:${courseId || 0}`,
+          hoursAgo: 1,
+        },
+        {
+          type: 'motivators_invite',
+          payload: { assessmentUrl: `${appUrl}/assessment/motivators/${TOK.aeInvite}` },
+          entityType: 'ae_invite',
+          entityId: null,
+          dedupe: 'motivators_invite:demo:remind',
+          hoursAgo: 1,
+        },
       ];
       for (const n of candNotifs) {
         await deleteIfExists(
@@ -2044,6 +2099,17 @@ async function main() {
     console.log(`  Senha (todos):  ${PASSWORD}`);
     console.log(`  Pessoas:        ${created.length}`);
     console.log(`  Motivadores:    ${motivatorsDefId ? 'ok' : 'PULAR — npm run db:seed-motivators'}`);
+    {
+      const hrTypes = [
+        ...new Set(managerNotifs.filter((n) => n.recipient === hrUserId).map((n) => n.type)),
+      ];
+      console.log(
+        `  Notifs HR:      ${managerNotifs.filter((n) => n.recipient === hrUserId).length} · ${hrTypes.length} tipos (${hrTypes.join(', ')})`
+      );
+      if (colaborador) {
+        console.log('  Notifs colab:   ~10 no inbox /employee (tipos EMPLOYEE_NOTIF)');
+      }
+    }
     console.log('');
     console.log('  Links:');
     console.log(`    Painel:        ${appUrl}/login`);
