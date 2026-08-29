@@ -989,6 +989,60 @@ export async function runHttpSmoke(baseUrl) {
       ok('admin', 'companies-logo-flag', String(companiesBody.logoStorageConfigured));
     }
     const firstCo = Array.isArray(companiesBody.items) ? companiesBody.items[0] : null;
+    if (firstCo?.slug) {
+      const qsOwn = new URLSearchParams({
+        checkSlug: String(firstCo.slug),
+        excludeId: String(firstCo.id),
+      });
+      const { res: checkOwn, data: ownBody } = await req(
+        base,
+        `/api/admin/companies?${qsOwn.toString()}`,
+        { cookie: adminCookie }
+      );
+      await expectStatus('admin', 'companies-check-slug-own', checkOwn.status, 200);
+      if (ownBody?.available !== true) {
+        fail('admin', 'companies-check-slug-own-available', JSON.stringify(ownBody));
+      } else {
+        ok('admin', 'companies-check-slug-own-available', ownBody.slug || firstCo.slug);
+      }
+
+      const other = (companiesBody.items || []).find(
+        (c) => c?.id && c.id !== firstCo.id && c.slug
+      );
+      if (other?.slug) {
+        const qsTaken = new URLSearchParams({
+          checkSlug: String(other.slug),
+          excludeId: String(firstCo.id),
+        });
+        const { res: checkTaken, data: takenBody } = await req(
+          base,
+          `/api/admin/companies?${qsTaken.toString()}`,
+          { cookie: adminCookie }
+        );
+        await expectStatus('admin', 'companies-check-slug-taken', checkTaken.status, 200);
+        if (takenBody?.available !== false) {
+          fail('admin', 'companies-check-slug-taken-flag', JSON.stringify(takenBody));
+        } else {
+          ok('admin', 'companies-check-slug-taken-flag', takenBody.slug || other.slug);
+        }
+
+        const { res: patchClash, data: patchBody } = await req(
+          base,
+          `/api/admin/companies/${firstCo.id}`,
+          {
+            method: 'PATCH',
+            cookie: adminCookie,
+            body: { slug: other.slug },
+          }
+        );
+        await expectStatus('admin', 'companies-patch-slug-clash', patchClash.status, 409);
+        if (patchBody?.errorCode && patchBody.errorCode !== 'SLUG_TAKEN') {
+          fail('admin', 'companies-patch-slug-clash-code', JSON.stringify(patchBody));
+        } else {
+          ok('admin', 'companies-patch-slug-clash-code', patchBody?.errorCode || '409');
+        }
+      }
+    }
     if (firstCo?.id) {
       const { res: logoGet } = await req(
         base,

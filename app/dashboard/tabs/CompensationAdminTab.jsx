@@ -21,6 +21,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { Icon } from '../../_components/Icon';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -247,13 +248,19 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                     <AdminActionsCell>
                       <AdminViewButton
                         label={t(locale, 'panel.compensationRoster.historyBtn')}
+                        icon="list"
                         onClick={() => setHistoryPerson(row)}
                       />
                       <Link
                         href={`/dashboard?tab=team&candidate=${row.candidateId}&section=compensation`}
-                        className={cn(S.btnGhost, 'min-h-touch px-2 text-xs')}
+                        className={cn(
+                          S.btnRowIcon,
+                          'border-brand-500/35 bg-brand-500/[0.09] text-brand-600'
+                        )}
+                        aria-label={t(locale, 'panel.compensationRoster.openTeam')}
+                        title={t(locale, 'panel.compensationRoster.openTeam')}
                       >
-                        {t(locale, 'panel.compensationRoster.openTeam')}
+                        <Icon name="team" />
                       </Link>
                     </AdminActionsCell>
                   </td>

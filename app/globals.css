@@ -138,6 +138,19 @@ textarea:focus-visible {
 .db-sidebar {
   transition: width 0.2s ease, padding 0.2s ease, transform 0.25s ease;
 }
+/* Desktop: sidebar pinned to viewport; only the nav list scrolls. */
+@media (min-width: 769px) {
+  .db-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+}
 .db-overlay {
   display: none;
 }
@@ -176,7 +189,8 @@ textarea:focus-visible {
     z-index: 100;
     transform: translateX(-100%);
     box-shadow: 4px 0 24px rgba(0,0,0,.18);
-    overflow-y: auto;
+    /* Header stays put; scroll lives on .db-sidebar-nav */
+    overflow: hidden;
     -webkit-overflow-scrolling: touch;
     width: min(300px, 88vw) !important;
     max-width: 320px;

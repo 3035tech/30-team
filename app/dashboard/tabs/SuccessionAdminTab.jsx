@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { RichTextView } from '../../_components/RichTextView';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import {
@@ -19,6 +20,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -350,10 +352,9 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         {
           name: 'notes',
           label: t('notes'),
-          type: 'textarea',
+          type: 'richText',
           required: false,
-          rows: 3,
-          maxLength: 4000,
+          minHeight: 100,
         },
       ],
     });
@@ -420,10 +421,9 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         {
           name: 'notes',
           label: t('notes'),
-          type: 'textarea',
+          type: 'richText',
           required: false,
-          rows: 3,
-          maxLength: 4000,
+          minHeight: 100,
           defaultValue: successor.notes || '',
         },
       ],
@@ -640,13 +640,10 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <AdminActionsCell>
-                          <button
-                            type="button"
+                          <AdminViewButton
+                            label={isExpanded ? t('collapse') : t('expand')}
                             onClick={() => toggleRole(role.id)}
-                            className="min-h-touch rounded-control px-2 text-xs text-brand-600 hover:bg-brand-500/10"
-                          >
-                            {isExpanded ? t('collapse') : t('expand')}
-                          </button>
+                          />
                           <AdminEditButton label={t('edit')} onClick={() => handleEditRole(role)} />
                           <AdminDeleteButton
                             label={t('deactivate')}
@@ -702,6 +699,14 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                               PDI
                                             </Link>
                                           )}
+                                        </div>
+                                      ) : null}
+                                      {htmlToPlainText(successor.notes || '').trim() ? (
+                                        <div className="mt-2">
+                                          <RichTextView
+                                            html={successor.notes}
+                                            className="rounded-control border border-ink/8 bg-canvas px-2 py-1.5 text-xs"
+                                          />
                                         </div>
                                       ) : null}
                                     </div>

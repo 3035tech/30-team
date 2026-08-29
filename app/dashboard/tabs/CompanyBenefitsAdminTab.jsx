@@ -15,6 +15,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -30,7 +31,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   const [sort, setSort] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
-  const { confirm, promptForm, toast } = useAppFeedback();
+  const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   function t(key) {
     const messages = {
@@ -54,6 +55,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         type_col: 'Tipo',
         actions_col: 'Ações',
         edit: 'Editar',
+        view: 'Ver',
         deactivate: 'Desativar',
         confirmDeactivate: 'Desativar este benefício?',
         confirmDeactivateCategory: 'Desativar esta categoria? Benefícios vinculados mantêm o vínculo.',
@@ -122,6 +124,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         type_col: 'Type',
         actions_col: 'Actions',
         edit: 'Edit',
+        view: 'View',
         deactivate: 'Deactivate',
         confirmDeactivate: 'Deactivate this benefit?',
         confirmDeactivateCategory: 'Deactivate this category? Linked benefits keep the link.',
@@ -492,6 +495,10 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                 <span className="px-1">{cat.name}</span>
                 {isAdmin && (
                   <AdminActionsCell>
+                    <AdminViewButton
+                      label={t('view')}
+                      onClick={() => notice({ title: cat.name, message: cat.name })}
+                    />
                     <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
                     <AdminDeleteButton
                       label={t('deactivate')}
@@ -584,6 +591,21 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(ben.benefitType)}</td>
                   <td className="px-4 py-3 text-right">
                     <AdminActionsCell>
+                      <AdminViewButton
+                        label={t('view')}
+                        onClick={() =>
+                          notice({
+                            title: ben.name,
+                            message: [
+                              ben.category ? `${t('category_col')}: ${ben.category}` : null,
+                              `${t('type_col')}: ${t(ben.benefitType)}`,
+                              ben.description ? String(ben.description).replace(/<[^>]+>/g, ' ').trim() : null,
+                            ]
+                              .filter(Boolean)
+                              .join('\n'),
+                          })
+                        }
+                      />
                       <AdminEditButton label={t('edit')} onClick={() => handleEdit(ben)} />
                       <AdminDeleteButton label={t('deactivate')} onClick={() => handleDeactivate(ben)} />
                     </AdminActionsCell>

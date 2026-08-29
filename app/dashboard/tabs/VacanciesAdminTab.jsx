@@ -1092,6 +1092,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         url={link}
                         locale={locale}
                         label={t(locale, 'recruiting.enneagramLinkLabel')}
+                        showUrl={false}
+                        compact
                         disabled={loading}
                       />
                       {exp ? (
@@ -1113,6 +1115,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         url={publicPageLink}
                         locale={locale}
                         label={t(locale, 'recruiting.publicPageLinkLabel')}
+                        showUrl={false}
+                        compact
                         disabled={loading}
                       />
                       {!v.publicPageEnabled ? (
@@ -1519,115 +1523,133 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               const exp = v.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
               return (
                 <div key={v.id} className="rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5">
-                  {/* Header da vaga */}
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm text-ink">
-                        <span className="mr-2 font-mono text-xs text-ink-faint">#{v.id}</span>
-                        <strong className="font-normal">{v.title}</strong>
-                        <span
-                          className={cn(
-                            'ml-2.5 rounded-lg border px-2 py-0.5 font-mono text-[11px]',
-                            v.status === VACANCY_STATUS.OPEN
-                              ? 'border-success/30 bg-success/[0.12] text-success'
-                              : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
-                          )}
-                        >
-                          {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
-                        </span>
-                        {isAdmin && (
-                          <span className="ml-2.5 font-mono text-xs text-ink-faint">
-                            · {v.companyName}
-                          </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
+                      <span className="font-mono text-xs text-ink-faint">#{v.id}</span>
+                      <strong className="font-medium">{v.title}</strong>
+                      <span
+                        className={cn(
+                          'rounded-lg border px-2 py-0.5 font-mono text-[11px]',
+                          v.status === VACANCY_STATUS.OPEN
+                            ? 'border-success/30 bg-success/[0.12] text-success'
+                            : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
                         )}
-                      </div>
-                      {token ? (
-                        <div className="mt-1.5">
-                          <CopyableLink url={link} locale={locale} compact disabled={loading} />
-                        </div>
-                      ) : (
-                        <div className="mt-1.5 font-mono text-xs text-ink-faint">
-                          {t(locale, 'recruiting.noActiveLink')}
-                        </div>
-                      )}
-                      {token && exp ? (
-                        <div className="mt-1 font-mono text-[11px] text-ink-faint">
-                          {t(locale, 'recruiting.expiresAt', { when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') })}
-                        </div>
+                      >
+                        {v.status === VACANCY_STATUS.OPEN
+                          ? t(locale, 'recruiting.openStatus')
+                          : t(locale, 'recruiting.closedStatus')}
+                      </span>
+                      {isAdmin ? (
+                        <span className="font-mono text-xs text-ink-faint">· {v.companyName}</span>
                       ) : null}
-                      <div className="mt-1.5 flex flex-wrap gap-3">
-                        {v.positionsCount != null && v.positionsCount > 0 && (
-                          <span className={META}>
-                            {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
-                          </span>
-                        )}
-                        {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
-                          <span className={META}>
-                            {t(locale, 'recruiting.targetDate', {
-                              date: formatPublicVacancyDate(v.targetDate, locale),
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                      {v.positionsCount != null && v.positionsCount > 0 ? (
+                        <span className={META}>
+                          {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
+                        </span>
+                      ) : null}
+                      {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
+                        <span className={META}>
+                          {t(locale, 'recruiting.targetDate', {
+                            date: formatPublicVacancyDate(v.targetDate, locale),
+                          })}
+                        </span>
+                      ) : null}
+                      {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
+                        <span className={META}>
+                          {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {token ? (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                        <CopyableLink
+                          url={link}
+                          locale={locale}
+                          label={t(locale, 'recruiting.enneagramLinkLabel')}
+                          showUrl={false}
+                          compact
+                          disabled={loading}
+                        />
+                        {exp ? (
+                          <span className="font-mono text-[11px] text-ink-faint">
+                            {t(locale, 'recruiting.expiresAt', {
+                              when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
                             })}
                           </span>
                         ) : null}
-                        {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
-                          <span className={META}>
-                            {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
-                          </span>
-                        ) : null}
                       </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id) })}
-                        className={BTN_BRAND_SOFT}
-                      >
-                        {t(locale, 'recruiting.viewCandidates')}
-                      </button>
-                      <AdminActionsCell>
-                        <AdminEditButton
-                          label={t(locale, 'recruiting.editVacancy')}
-                          onClick={() => editVacancy(v)}
-                          disabled={loading}
-                        />
-                        <AdminDeleteButton
-                          label={t(locale, 'recruiting.archiveVacancy')}
-                          onClick={() => archiveVacancy(v.id, v.title)}
-                          disabled={loading}
-                        />
-                      </AdminActionsCell>
-                      <button
-                        type="button"
-                        onClick={() => cloneVacancyAction(v)}
+                    ) : (
+                      <div className="mt-2 font-mono text-xs text-ink-faint">
+                        {t(locale, 'recruiting.noActiveLink')}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id) })}
+                      className={BTN_BRAND_SOFT}
+                    >
+                      {t(locale, 'recruiting.viewCandidates')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openVacancyDetail(v.id)}
+                      className="min-h-touch cursor-pointer rounded-control border border-success/25 bg-success/[0.08] px-2.5 py-2 font-mono text-xs text-success"
+                      title={t(locale, 'recruiting.openDetailsTitle')}
+                    >
+                      {t(locale, 'recruiting.details')}
+                    </button>
+                    <AdminActionsCell>
+                      <AdminEditButton
+                        label={t(locale, 'recruiting.editVacancy')}
+                        onClick={() => editVacancy(v)}
                         disabled={loading}
-                        className={cn(BTN_GHOST, loading && "opacity-60")}
-                      >
-                        {t(locale, 'recruiting.cloneVacancy')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVacancyStatus(v.id, v.status === VACANCY_STATUS.OPEN ? VACANCY_STATUS.CLOSED : VACANCY_STATUS.OPEN)}
+                      />
+                      <AdminDeleteButton
+                        label={t(locale, 'recruiting.archiveVacancy')}
+                        onClick={() => archiveVacancy(v.id, v.title)}
                         disabled={loading}
-                        className={cn(BTN_GHOST, loading && "opacity-60")}
-                      >
-                        {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => rotateLink(v.id)}
-                        disabled={loading}
-                        className={cn(BTN_GHOST, loading && "opacity-60")}
-                      >
-                        {t(locale, 'recruiting.rotateLink')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openVacancyDetail(v.id)}
-                        className="min-h-touch cursor-pointer rounded-control border border-success/25 bg-success/[0.08] px-2.5 py-2 font-mono text-xs text-success"
-                        title={t(locale, 'recruiting.openDetailsTitle')}
-                      >
-                        {t(locale, 'recruiting.details')}
-                      </button>
-                    </div>
+                      />
+                    </AdminActionsCell>
+                    <button
+                      type="button"
+                      onClick={() => cloneVacancyAction(v)}
+                      disabled={loading}
+                      className={cn(BTN_GHOST, loading && 'opacity-60')}
+                    >
+                      {t(locale, 'recruiting.cloneVacancy')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVacancyStatus(
+                          v.id,
+                          v.status === VACANCY_STATUS.OPEN
+                            ? VACANCY_STATUS.CLOSED
+                            : VACANCY_STATUS.OPEN
+                        )
+                      }
+                      disabled={loading}
+                      className={cn(BTN_GHOST, loading && 'opacity-60')}
+                    >
+                      {v.status === VACANCY_STATUS.OPEN
+                        ? t(locale, 'recruiting.closeVacancy')
+                        : t(locale, 'recruiting.reopenVacancy')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rotateLink(v.id)}
+                      disabled={loading}
+                      className={cn(BTN_GHOST, loading && 'opacity-60')}
+                    >
+                      {t(locale, 'recruiting.rotateLink')}
+                    </button>
                   </div>
                 </div>
               );

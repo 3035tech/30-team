@@ -529,18 +529,46 @@ function AdminDeleteButton({ label, onClick, disabled = false, className }) {
   );
 }
 
-/** Optional text action (e.g. Ver) — ghost, not icon-only. */
-function AdminViewButton({ label, onClick, disabled = false, className }) {
+/**
+ * Row view — default: info tint + eye (pair with Edit / Delete).
+ * Pass `asText` for rare text CTAs that reuse this slot (e.g. resend invite).
+ */
+function AdminViewButton({
+  label,
+  onClick,
+  disabled = false,
+  className,
+  asText = false,
+  icon = 'eye',
+}) {
+  if (asText) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', className)}
+        aria-label={label}
+        title={label}
+      >
+        {label}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', className)}
+      className={cn(
+        S.btnRowIcon,
+        'border-info/35 bg-info/[0.08] text-info',
+        className
+      )}
       aria-label={label}
       title={label}
     >
-      {label}
+      <Icon name={icon} />
     </button>
   );
 }

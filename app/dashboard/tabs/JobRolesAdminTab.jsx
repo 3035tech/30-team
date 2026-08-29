@@ -11,6 +11,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -373,6 +374,25 @@ export function JobRolesAdminTab({ locale, companyId }) {
                     <td className="px-3 py-2 align-middle text-right">
                       {role.active ? (
                         <AdminActionsCell>
+                          <AdminViewButton
+                            label={t(locale, 'jobRoles.viewButton')}
+                            onClick={() =>
+                              notice({
+                                title: role.name,
+                                message: [
+                                  role.description || t(locale, 'jobRoles.noDescription'),
+                                  '',
+                                  Object.keys(role.rubric || {}).length
+                                    ? t(locale, 'jobRoles.rubricLabel') +
+                                      ': ' +
+                                      Object.entries(role.rubric)
+                                        .map(([k, v]) => `${k} ${v}%`)
+                                        .join(', ')
+                                    : t(locale, 'jobRoles.rubricEmpty'),
+                                ].join('\n'),
+                              })
+                            }
+                          />
                           <AdminEditButton
                             label={t(locale, 'jobRoles.editButton')}
                             onClick={() => openEdit(role)}
@@ -382,7 +402,19 @@ export function JobRolesAdminTab({ locale, companyId }) {
                             onClick={() => handleDeactivate(role)}
                           />
                         </AdminActionsCell>
-                      ) : null}
+                      ) : (
+                        <AdminActionsCell>
+                          <AdminViewButton
+                            label={t(locale, 'jobRoles.viewButton')}
+                            onClick={() =>
+                              notice({
+                                title: role.name,
+                                message: role.description || t(locale, 'jobRoles.noDescription'),
+                              })
+                            }
+                          />
+                        </AdminActionsCell>
+                      )}
                     </td>
                   </tr>
                 );

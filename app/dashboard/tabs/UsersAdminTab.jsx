@@ -39,7 +39,7 @@ function companySelectOptions(locale, companyOptions) {
 }
 
 export function UsersAdminTab({ navigateDashboard, locale }) {
-  const { promptForm } = useAppFeedback();
+  const { promptForm, notice } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
@@ -308,6 +308,24 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     }
   };
 
+  const viewUser = async (u) => {
+    const companyLabel =
+      u.companyName ||
+      (u.companyId != null ? `#${u.companyId}` : t(locale, 'panel.common.notApplicable'));
+    const lines = [
+      String(u.email || ''),
+      `${t(locale, 'panel.admin.colRole')}: ${u.role || '—'}`,
+      `${t(locale, 'panel.admin.colCompany')}: ${companyLabel}`,
+      `${t(locale, 'panel.admin.colUserActive')}: ${
+        u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')
+      }`,
+    ];
+    await notice({
+      title: u.displayName || u.email || `#${u.id}`,
+      message: lines.join('\n'),
+    });
+  };
+
   const editUser = async (u) => {
     const values = await promptForm({
       title: t(locale, 'panel.admin.editUserTitle'),
@@ -554,8 +572,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                               label={t(locale, 'panel.admin.resendInvite')}
                               onClick={() => resendInvite(u.id, u.email)}
                               disabled={loading}
+                              asText
                             />
-                          ) : null}
+                          ) : (
+                            <AdminViewButton
+                              label={t(locale, 'panel.admin.viewUser')}
+                              onClick={() => viewUser(u)}
+                              disabled={loading}
+                            />
+                          )}
                           <AdminEditButton
                             label={t(locale, 'panel.admin.editUser')}
                             onClick={() => editUser(u)}

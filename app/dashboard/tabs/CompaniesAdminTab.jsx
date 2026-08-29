@@ -13,6 +13,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -199,7 +200,7 @@ function emptyCompanyForm() {
 }
 
 export function CompaniesAdminTab({ navigateDashboard, locale }) {
-  const { confirm } = useAppFeedback();
+  const { confirm, notice } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
@@ -225,10 +226,67 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState('');
   const [formSaving, setFormSaving] = useState(false);
+  /** idle | checking | ok | taken | invalid */
+  const [slugStatus, setSlugStatus] = useState('idle');
+  const [slugNormalized, setSlugNormalized] = useState('');
+  const slugCheckSeq = useRef(0);
 
   useEffect(() => {
     setSearchDraft(companiesQ);
   }, [companiesQ]);
+
+  useEffect(() => {
+    if (drawerMode !== 'create' && drawerMode !== 'edit') {
+      setSlugStatus('idle');
+      setSlugNormalized('');
+      return undefined;
+    }
+
+    const raw = String(form.slug || '').trim();
+    if (!raw) {
+      // Create: empty slug is ok (server derives from name). Edit: empty is invalid.
+      setSlugStatus(drawerMode === 'create' ? 'idle' : 'invalid');
+      setSlugNormalized('');
+      return undefined;
+    }
+
+    const excludeId = drawerMode === 'edit' && editingCompany?.id ? Number(editingCompany.id) : null;
+    const ownSlug =
+      drawerMode === 'edit' && editingCompany?.slug
+        ? String(editingCompany.slug).toLowerCase()
+        : '';
+
+    const seq = ++slugCheckSeq.current;
+    setSlugStatus('checking');
+    const timer = window.setTimeout(async () => {
+      try {
+        const qs = new URLSearchParams({ checkSlug: raw });
+        if (Number.isFinite(excludeId) && excludeId > 0) qs.set('excludeId', String(excludeId));
+        const res = await fetch(`/api/admin/companies?${qs.toString()}`);
+        const data = await res.json().catch(() => ({}));
+        if (seq !== slugCheckSeq.current) return;
+        if (!res.ok) {
+          setSlugStatus('idle');
+          return;
+        }
+        const normalized = String(data.slug || '').toLowerCase();
+        setSlugNormalized(data.slug || '');
+        if (data.invalid) {
+          setSlugStatus('invalid');
+          return;
+        }
+        if (ownSlug && normalized === ownSlug) {
+          setSlugStatus('ok');
+          return;
+        }
+        setSlugStatus(data.available ? 'ok' : 'taken');
+      } catch {
+        if (seq === slugCheckSeq.current) setSlugStatus('idle');
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [form.slug, drawerMode, editingCompany?.id, editingCompany?.slug]);
 
   const pushCompaniesSearch = (q) => {
     if (!navigateDashboard) return;
@@ -321,6 +379,14 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const submitCompanyForm = async () => {
     const nextName = String(form.name || '').trim();
     if (!nextName) return;
+    if (slugStatus === 'taken' || slugStatus === 'invalid') {
+      setError(
+        slugStatus === 'taken'
+          ? t(locale, 'panel.admin.companySlugTaken')
+          : t(locale, 'panel.admin.companySlugInvalid')
+      );
+      return;
+    }
 
     setFormSaving(true);
     setError('');
@@ -339,9 +405,15 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             anniversaryDate: String(form.anniversaryDate || '').trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.createCompanyFailed'));
-        if (pendingLogoFile && data?.id && logoStorageConfigured) {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            data?.error ||
+              (res.status === 409
+                ? t(locale, 'errors.SLUG_TAKEN')
+                : t(locale, 'panel.admin.createCompanyFailed'))
+          );
+        }        if (pendingLogoFile && data?.id && logoStorageConfigured) {
           const fd = new FormData();
           fd.append('file', pendingLogoFile);
           const up = await fetch(`/api/admin/companies/${encodeURIComponent(data.id)}/logo`, {
@@ -372,15 +444,27 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             anniversaryDate: String(form.anniversaryDate || '').trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.updateCompanyFailed'));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            data?.error ||
+              (res.status === 409
+                ? t(locale, 'errors.SLUG_TAKEN')
+                : t(locale, 'panel.admin.updateCompanyFailed'))
+          );
+        }
         setMsg(t(locale, 'panel.admin.companyUpdated'));
         closeDrawer();
         await loadCompanies();
         setTimeout(() => setMsg(''), 1600);
       }
     } catch (e) {
-      setError(e?.message || t(locale, 'panel.common.error'));
+      const message = e?.message || t(locale, 'panel.common.error');
+      setError(message);
+      // Surface empty-body 500s as a readable toast, not the raw JSON parse error.
+      if (/Unexpected end of JSON|Failed to execute 'json'/i.test(String(message))) {
+        setError(t(locale, 'panel.admin.updateCompanyFailed'));
+      }
     } finally {
       setFormSaving(false);
     }
@@ -601,6 +685,24 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                       </td>
                       <td className="px-3 py-2 align-middle text-right">
                         <AdminActionsCell>
+                          <AdminViewButton
+                            label={t(locale, 'panel.admin.view')}
+                            onClick={() =>
+                              notice({
+                                title: c.name,
+                                message: [
+                                  c.slug ? `slug: ${c.slug}` : null,
+                                  c.website || null,
+                                  c.active
+                                    ? t(locale, 'panel.common.yes')
+                                    : t(locale, 'panel.common.no'),
+                                ]
+                                  .filter(Boolean)
+                                  .join('\n'),
+                              })
+                            }
+                            disabled={loading}
+                          />
                           <AdminEditButton
                             label={t(locale, 'panel.admin.edit')}
                             onClick={() => editCompany(c)}
@@ -675,10 +777,25 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             <button
               type="button"
               onClick={() => void submitCompanyForm()}
-              disabled={formSaving || logoBusy || loading || !String(form.name || '').trim()}
+              disabled={
+                formSaving ||
+                logoBusy ||
+                loading ||
+                !String(form.name || '').trim() ||
+                slugStatus === 'taken' ||
+                slugStatus === 'invalid' ||
+                slugStatus === 'checking'
+              }
               className={cn(
                 DIALOG_BTN_PRIMARY,
-                (formSaving || logoBusy || loading || !String(form.name || '').trim()) && 'opacity-60'
+                (formSaving ||
+                  logoBusy ||
+                  loading ||
+                  !String(form.name || '').trim() ||
+                  slugStatus === 'taken' ||
+                  slugStatus === 'invalid' ||
+                  slugStatus === 'checking') &&
+                  'opacity-60'
               )}
             >
               {formSaving ? <span className="spinner" /> : null}
@@ -710,13 +827,47 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             <input
               value={form.slug}
               onChange={(e) => setFormField('slug', e.target.value)}
+              onBlur={() => {
+                if (slugNormalized && slugNormalized !== String(form.slug || '').trim()) {
+                  setFormField('slug', slugNormalized);
+                }
+              }}
               placeholder={t(locale, 'panel.admin.companySlugPlaceholder')}
               disabled={formSaving}
-              className={FIELD_INPUT}
+              aria-invalid={slugStatus === 'taken' || slugStatus === 'invalid'}
+              className={cn(
+                FIELD_INPUT,
+                slugStatus === 'ok' && 'border-success/50 focus:border-success',
+                slugStatus === 'taken' && 'border-danger/50 focus:border-danger',
+                slugStatus === 'invalid' && 'border-warning/50 focus:border-warning'
+              )}
             />
-            <span className="text-[11px] leading-snug text-ink-muted">
-              {t(locale, 'panel.admin.companySlugHelp')}
-            </span>
+            {slugStatus === 'checking' ? (
+              <span className="text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.admin.companySlugChecking')}
+              </span>
+            ) : null}
+            {slugStatus === 'ok' ? (
+              <span className="text-[11px] leading-snug text-success">
+                {t(locale, 'panel.admin.companySlugAvailable')}
+                {slugNormalized ? ` (${slugNormalized})` : ''}
+              </span>
+            ) : null}
+            {slugStatus === 'taken' ? (
+              <span className="text-[11px] leading-snug text-danger">
+                {t(locale, 'panel.admin.companySlugTaken')}
+              </span>
+            ) : null}
+            {slugStatus === 'invalid' && String(form.slug || '').trim() ? (
+              <span className="text-[11px] leading-snug text-warning">
+                {t(locale, 'panel.admin.companySlugInvalid')}
+              </span>
+            ) : null}
+            {slugStatus === 'idle' || (slugStatus === 'invalid' && !String(form.slug || '').trim()) ? (
+              <span className="text-[11px] leading-snug text-ink-muted">
+                {t(locale, 'panel.admin.companySlugHelp')}
+              </span>
+            ) : null}
           </label>
           <label className={FIELD_LABEL}>
             {t(locale, 'panel.admin.editCompanyWebsite')}

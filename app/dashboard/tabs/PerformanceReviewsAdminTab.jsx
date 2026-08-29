@@ -16,8 +16,10 @@ import {
   AdminActionsCell,
   AdminActionsTh,
   AdminCreateButton,
+  AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -31,7 +33,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [sort, setSort] = useState('periodStart');
   const [sortDir, setSortDir] = useState('desc');
   const [nameQ, setNameQ] = useState('');
-  const { promptForm, toast } = useAppFeedback();
+  const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
     const messages = {
@@ -65,6 +67,12 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           'Entre ciclos, use 1:1 na Equipe para feedback contínuo — metas “Desenvolver” também pedem conversa.',
         continuousFeedbackCta: 'Abrir Equipe',
         edit: 'Editar',
+        view: 'Ver',
+        delete: 'Excluir / encerrar',
+        confirmDelete:
+          'Rascunho sem avaliações será excluído. Ciclos com avaliações serão apenas encerrados. Continuar?',
+        deleteSuccess: 'Ciclo removido',
+        closeSuccess: 'Ciclo encerrado',
         actions: 'Ações',
         titleCol: 'Título',
       },
@@ -98,6 +106,12 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           'Between cycles, use Team 1:1s for continuous feedback — “Develop” goals also need a conversation.',
         continuousFeedbackCta: 'Open Team',
         edit: 'Edit',
+        view: 'View',
+        delete: 'Delete / close',
+        confirmDelete:
+          'Drafts with no reviews are deleted. Cycles with reviews are closed only. Continue?',
+        deleteSuccess: 'Cycle deleted',
+        closeSuccess: 'Cycle closed',
         actions: 'Actions',
         titleCol: 'Title',
       },
@@ -228,6 +242,62 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       loadCycles();
     } catch (err) {
       console.error('Edit cycle error:', err);
+      toast(t('saveError'), 'error');
+    }
+  }
+
+  async function handleViewCycle(cycle) {
+    const lines = [
+      `${t('status')}: ${getStatusLabel(cycle.status)}`,
+      `${t('periodStart')}: ${formatDate(cycle.periodStart)}`,
+      `${t('periodEnd')}: ${formatDate(cycle.periodEnd)}`,
+      `${t('reviewsCount')}: ${cycle.reviewCount || 0}` +
+        (cycle.submittedCount != null ? ` (${cycle.submittedCount} ${t('submittedCount')})` : ''),
+    ];
+    if (cycle.description) lines.push('', String(cycle.description).trim());
+    try {
+      const res = await fetch(
+        `/api/admin/performance-cycles/${cycle.id}/reviews?limit=20${
+          companyId ? `&companyId=${companyId}` : ''
+        }`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const reviews = data.reviews || [];
+        if (reviews.length) {
+          lines.push('', '—');
+          for (const r of reviews.slice(0, 12)) {
+            lines.push(
+              `• ${r.candidateName || r.candidateEmail || `#${r.candidateId}`} — ${r.status}`
+            );
+          }
+          if (reviews.length > 12) lines.push(`… +${reviews.length - 12}`);
+        }
+      }
+    } catch {
+      /* view still shows cycle meta */
+    }
+    await notice({ title: cycle.title, message: lines.join('\n') });
+  }
+
+  async function handleDeleteCycle(cycle) {
+    const ok = await confirm({
+      message: t('confirmDelete'),
+      danger: true,
+      confirmLabel: t('delete'),
+    });
+    if (!ok) return;
+    try {
+      const res = await fetch(
+        `/api/admin/performance-cycles/${cycle.id}${companyId ? `?companyId=${companyId}` : ''}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      toast(data.mode === 'closed' ? t('closeSuccess') : t('deleteSuccess'), 'ok');
+      loadCycles();
+    } catch (err) {
+      console.error('Delete cycle error:', err);
       toast(t('saveError'), 'error');
     }
   }
@@ -374,7 +444,14 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <AdminActionsCell>
+                      <AdminViewButton label={t('view')} onClick={() => handleViewCycle(cycle)} />
                       <AdminEditButton label={t('edit')} onClick={() => handleEditCycle(cycle)} />
+                      {cycle.status !== PERFORMANCE_CYCLE_STATUS.CLOSED ? (
+                        <AdminDeleteButton
+                          label={t('delete')}
+                          onClick={() => handleDeleteCycle(cycle)}
+                        />
+                      ) : null}
                     </AdminActionsCell>
                   </td>
                 </tr>

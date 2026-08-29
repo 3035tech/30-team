@@ -20,7 +20,7 @@ alwaysApply: false
 3. **Criar** — só `AdminCreateButton` (`S.btnPrimary` + ícone `plus`). Não inventar outro roxo / `+ ` solto.
 4. **Editar** — só `AdminEditButton` (lápis + tint brand).
 5. **Excluir / desativar / arquivar** — só `AdminDeleteButton` (lixeira + tint danger).
-6. **Ver** (opcional) — `AdminViewButton` (texto ghost).
+6. **Ver** — `AdminViewButton` (ícone olho + tint info). Ordem canônica na célula: **Ver → Editar → Excluir**.
 7. Ações na linha — dentro de `AdminActionsCell`.
 
 ## Imports

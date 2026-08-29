@@ -785,7 +785,7 @@ export default function DashboardClient({
         >
           <div
             className={cn(
-              'mb-2 flex gap-2',
+              'mb-2 flex flex-shrink-0 gap-2',
               navCollapsed ? 'flex-col items-center justify-center' : 'flex-row items-start justify-between'
             )}
           >
@@ -825,7 +825,7 @@ export default function DashboardClient({
               <Icon name="close" />
             </button>
           </div>
-          <nav className="flex-1 overflow-y-auto overscroll-contain pb-4">
+          <nav className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
             {sectionLabel('analysis', t(locale, 'dashboard.sectionAnalysis'))}
             {sectionBody('analysis', (
               <>

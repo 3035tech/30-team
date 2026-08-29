@@ -9,11 +9,10 @@ import { apiError, ERR } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
 import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
 import { isCompanyLogoStorageConfigured } from '../../../../lib/company-logo';
-import { slugify as slugifyRaw } from '../../../../lib/slugify';
-
-function slugify(input) {
-  return slugifyRaw(input, { maxLength: 48 });
-}
+import {
+  checkCompanySlugAvailable,
+  generateUniqueCompanySlug,
+} from '../../../../lib/slugify';
 
 async function ensureActiveLink(companyId) {
   const existing = await queryRead(
@@ -47,6 +46,20 @@ export async function GET(request) {
        ORDER BY LOWER(name) ASC`
     );
     return NextResponse.json(r.rows);
+  }
+
+  const checkSlugRaw = url.searchParams.get('checkSlug');
+  if (checkSlugRaw != null) {
+    const excludeId = Number(url.searchParams.get('excludeId'));
+    const result = await checkCompanySlugAvailable(checkSlugRaw, {
+      excludeId: Number.isFinite(excludeId) ? excludeId : null,
+    });
+    return NextResponse.json({
+      ok: true,
+      available: result.available,
+      invalid: result.invalid,
+      slug: result.slug,
+    });
   }
 
   const pageRaw = parseInt(url.searchParams.get('page') || '1', 10);
@@ -114,43 +127,65 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
-
-  const body = await request.json().catch(() => ({}));
-  const name = String(body.name || '').trim();
-  const slug = slugify(body.slug || name);
-  if (!name || !slug) return apiError(request, ERR.NAME_REQUIRED, 400);
-
-  let profile;
   try {
-    profile = parseCompanyProfileFromBody(body, { forCreate: true });
-  } catch (e) {
-    if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
-    if (e?.code === 'INVALID_DATE') return apiError(request, ERR.INVALID_DATE, 400);
-    throw e;
+    const cookieStore = cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    const payload = await verifySessionWithCapabilities(token);
+    if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
+
+    const body = await request.json().catch(() => ({}));
+    const name = String(body.name || '').trim();
+    if (!name) return apiError(request, ERR.NAME_REQUIRED, 400);
+
+    const slugInput = String(body.slug || '').trim();
+    let slug;
+    if (slugInput) {
+      const taken = await checkCompanySlugAvailable(slugInput);
+      if (taken.invalid) return apiError(request, ERR.INVALID_SLUG, 400);
+      if (!taken.available) return apiError(request, ERR.SLUG_TAKEN, 409);
+      slug = taken.slug;
+    } else {
+      slug = await generateUniqueCompanySlug(name);
+    }
+    if (!slug) return apiError(request, ERR.NAME_REQUIRED, 400);
+
+    let profile;
+    try {
+      profile = parseCompanyProfileFromBody(body, { forCreate: true });
+    } catch (e) {
+      if (e?.code === 'INVALID_WEBSITE') return apiError(request, ERR.INVALID_WEBSITE, 400);
+      if (e?.code === 'INVALID_DATE') return apiError(request, ERR.INVALID_DATE, 400);
+      throw e;
+    }
+
+    let ins;
+    try {
+      ins = await query(
+        `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled, anniversary_date)
+         VALUES ($1, $2, TRUE, $3, $4, $5, $6)
+         RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
+                   public_profile_enabled AS "publicProfileEnabled",
+                   anniversary_date AS "anniversaryDate",
+                   logo_url AS "logoUrl", created_at AS "createdAt"`,
+        [
+          name,
+          slug,
+          profile.website,
+          profile.aboutHtml,
+          profile.publicProfileEnabled === true,
+          profile.anniversaryDate ?? null,
+        ]
+      );
+    } catch (err) {
+      if (err?.code === '23505') return apiError(request, ERR.SLUG_TAKEN, 409);
+      throw err;
+    }
+
+    const linkToken = await ensureActiveLink(ins.rows[0].id);
+    return NextResponse.json({ ...ins.rows[0], activeToken: linkToken }, { status: 201 });
+  } catch (err) {
+    console.error('POST /api/admin/companies error:', err);
+    return apiError(request, ERR.INTERNAL_ERROR, 500);
   }
-
-  const ins = await query(
-    `INSERT INTO companies (name, slug, active, website, about_html, public_profile_enabled, anniversary_date)
-     VALUES ($1, $2, TRUE, $3, $4, $5, $6)
-     RETURNING id, name, slug, active, website, about_html AS "aboutHtml",
-               public_profile_enabled AS "publicProfileEnabled",
-               anniversary_date AS "anniversaryDate",
-               logo_url AS "logoUrl", created_at AS "createdAt"`,
-    [
-      name,
-      slug,
-      profile.website,
-      profile.aboutHtml,
-      profile.publicProfileEnabled === true,
-      profile.anniversaryDate ?? null,
-    ]
-  );
-
-  const linkToken = await ensureActiveLink(ins.rows[0].id);
-  return NextResponse.json({ ...ins.rows[0], activeToken: linkToken }, { status: 201 });
 }
 

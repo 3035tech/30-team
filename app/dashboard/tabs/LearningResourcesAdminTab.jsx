@@ -16,6 +16,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminViewButton,
   S,
   SortableTh,
   clientSortNextDir,
@@ -32,7 +33,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   const [sort, setSort] = useState('title');
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
-  const { confirm, promptForm, toast } = useAppFeedback();
+  const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   function t(key) {
     const messages = {
@@ -55,6 +56,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         duration_col: 'Duração',
         actions_col: 'Ações',
         edit: 'Editar',
+        view: 'Ver',
         deactivate: 'Desativar',
         confirmDeactivate: 'Desativar este recurso?',
         course: 'Curso',
@@ -99,6 +101,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         duration_col: 'Duration',
         actions_col: 'Actions',
         edit: 'Edit',
+        view: 'View',
         deactivate: 'Deactivate',
         confirmDeactivate: 'Deactivate this resource?',
         course: 'Course',
@@ -463,6 +466,24 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
                   </td>
                   <td className="px-4 py-3 text-right">
                     <AdminActionsCell>
+                      <AdminViewButton
+                        label={t('view')}
+                        onClick={() =>
+                          notice({
+                            title: res.title,
+                            message: [
+                              `${t('type_col')}: ${t(res.resourceType)}`,
+                              res.theme?.length ? `${t('theme_col')}: ${formatTagList(res.theme)}` : null,
+                              res.durationHours != null
+                                ? `${t('duration_col')}: ${res.durationHours}${t('hours')}`
+                                : null,
+                              res.url || null,
+                            ]
+                              .filter(Boolean)
+                              .join('\n'),
+                          })
+                        }
+                      />
                       <AdminEditButton label={t('edit')} onClick={() => handleEdit(res)} />
                       <AdminDeleteButton label={t('deactivate')} onClick={() => handleDeactivate(res)} />
                     </AdminActionsCell>
