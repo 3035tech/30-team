@@ -5,7 +5,7 @@ import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
-import { C, PIPELINE_STAGE_COLORS } from '../../lib/theme';
+import { C, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_COLORS_DARK } from '../../lib/theme';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
 import { cn } from '../../lib/cn';
 import {
@@ -312,10 +312,12 @@ const KANBAN_STAGE_DEFS = [
   { id: PIPELINE_STAGE.ARCHIVED, color: PIPELINE_STAGE_COLORS.archived, labelKey: 'recruiting.pipelineArchived' },
 ];
 
-function getKanbanStages(locale = 'pt-BR') {
+function getKanbanStages(locale = 'pt-BR', { isDark = false } = {}) {
   return KANBAN_STAGE_DEFS.map((s) => ({
     id: s.id,
-    color: s.color,
+    color: isDark
+      ? (PIPELINE_STAGE_COLORS_DARK[s.id] || s.color)
+      : s.color,
     label: t(locale, s.labelKey),
   }));
 }

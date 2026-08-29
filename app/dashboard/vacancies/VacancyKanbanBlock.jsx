@@ -5,6 +5,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { PIPELINE_STAGE } from '../../../lib/pipeline';
+import { useDarkMode } from '../../_components/DarkModeProvider';
 import { getKanbanStages } from '../dashboard-shared';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
@@ -18,7 +19,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [moving, setMoving] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
-  const stages = getKanbanStages(locale);
+  const { isDark } = useDarkMode();
+  const stages = getKanbanStages(locale, { isDark });
   const { requestPipelineExtras } = usePipelineExtras();
 
   useEffect(() => {

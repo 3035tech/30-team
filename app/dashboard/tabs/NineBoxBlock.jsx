@@ -100,6 +100,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
               >
                 {CELL_ORDER.map((cellId) => {
                   const people = Array.isArray(cells[String(cellId)]) ? cells[String(cellId)] : [];
+                  const empty = people.length === 0;
                   return (
                     <div
                       key={cellId}
@@ -110,25 +111,33 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
                         <span className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
                           {t(locale, `nineBox.cellLabel.${cellId}`)}
                         </span>
-                        <span className="font-mono text-2xs text-ink-muted">{people.length}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {people.slice(0, 8).map((p) => (
-                          <a
-                            key={p.candidateId}
-                            href={`/dashboard?tab=team&candidateId=${p.candidateId}`}
-                            className="max-w-full truncate rounded-full border border-brand-500/25 bg-brand-500/[0.08] px-2 py-0.5 text-2xs text-brand-800 hover:bg-brand-500/15"
-                            title={t(locale, 'nineBox.openPerson', { name: p.name })}
-                          >
-                            {p.name}
-                          </a>
-                        ))}
-                        {people.length > 8 ? (
-                          <span className="self-center font-mono text-2xs text-ink-faint">
-                            {t(locale, 'nineBox.more', { n: people.length - 8 })}
-                          </span>
+                        {!empty ? (
+                          <span className="font-mono text-2xs text-ink-muted">{people.length}</span>
                         ) : null}
                       </div>
+                      {empty ? (
+                        <p className="m-0 mt-auto font-mono text-2xs text-ink-faint">
+                          {t(locale, 'nineBox.cellEmpty')}
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {people.slice(0, 8).map((p) => (
+                            <a
+                              key={p.candidateId}
+                              href={`/dashboard?tab=team&candidateId=${p.candidateId}`}
+                              className="max-w-full truncate rounded-full border border-brand-500/25 bg-brand-500/[0.08] px-2 py-0.5 text-2xs text-brand-800 hover:bg-brand-500/15"
+                              title={t(locale, 'nineBox.openPerson', { name: p.name })}
+                            >
+                              {p.name}
+                            </a>
+                          ))}
+                          {people.length > 8 ? (
+                            <span className="self-center font-mono text-2xs text-ink-faint">
+                              {t(locale, 'nineBox.more', { n: people.length - 8 })}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

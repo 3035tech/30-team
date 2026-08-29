@@ -25,6 +25,7 @@ import {
 import { ContentEnter } from '../../_components/AppLoading';
 import { StatMetricTile } from '../../_components/StatMetricTile';
 import { MeterBar } from '../../_components/MeterBar';
+import { EmptyState } from '../../_components/EmptyState';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -266,9 +267,31 @@ export function OverviewTab({
           </span>
         </div>
         {(data.attention || []).length === 0 ? (
-          <p className="m-0 text-prose italic text-ink-muted">
-            {t(locale, 'panel.overview.attentionEmpty')}
-          </p>
+          <ContentEnter animKey="overview-attention-empty">
+            <EmptyState
+              message={t(locale, 'panel.overview.attentionEmpty')}
+              actionLabel={
+                typeof navigateDashboard === 'function'
+                  ? t(locale, 'panel.overview.attentionEmptyCtaVacancies')
+                  : undefined
+              }
+              onAction={
+                typeof navigateDashboard === 'function'
+                  ? () => go({ tab: 'vacancies' })
+                  : undefined
+              }
+              secondaryActionLabel={
+                typeof navigateDashboard === 'function'
+                  ? t(locale, 'panel.overview.attentionEmptyCtaTeam')
+                  : undefined
+              }
+              onSecondaryAction={
+                typeof navigateDashboard === 'function'
+                  ? () => go({ tab: 'team' })
+                  : undefined
+              }
+            />
+          </ContentEnter>
         ) : (
           <div className="flex flex-col gap-2">
             {(data.attention || []).map((item) => {

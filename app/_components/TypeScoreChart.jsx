@@ -12,11 +12,11 @@ import { DisclosureToggle } from './CollapsibleBlock';
 function MiniBar({ value, max, color, h = 6 }) {
   return (
     <div
-      className="w-full overflow-hidden bg-ink/[0.08]"
+      className="ui-meter-track w-full overflow-hidden bg-ink/[0.08]"
       style={{ height: h, borderRadius: h / 2 }}
     >
       <div
-        className="h-full"
+        className="ui-meter-fill h-full"
         style={{
           width: `${(value / Math.max(max, 1)) * 100}%`,
           background: color,
@@ -41,7 +41,7 @@ export function TypeScoreChart({ scores, locale, highlightTypes, defaultCollapse
   const top = ranked[0];
 
   return (
-    <div>
+    <div className="ui-type-score-chart">
       <button
         type="button"
         onClick={() => setSectionOpen((v) => !v)}

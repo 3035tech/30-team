@@ -12,6 +12,7 @@ import { DateField } from '../../_components/DateField.jsx';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
+import { EmptyState } from '../../_components/EmptyState';
 import { cn } from '../../../lib/cn.js';
 import { StatMetricTile } from '../../_components/StatMetricTile';
 
@@ -21,7 +22,18 @@ const TREND_TONE = {
   success: { bar: 'bg-success', value: 'text-success' },
 };
 
-export function AnalyticsTab({ session }) {
+function isMetricsEmpty(metrics) {
+  if (!metrics) return true;
+  const hireCount = metrics.timeToHire?.count || 0;
+  const prodCount = metrics.timeToProductivity?.count || 0;
+  const ret6 = metrics.retention?.sixMonths?.hiredCount || 0;
+  const ret12 = metrics.retention?.twelveMonths?.hiredCount || 0;
+  const fitHired = metrics.fitComparison?.hiredCount || 0;
+  const rubricCount = metrics.rubricAdherence?.count || 0;
+  return hireCount + prodCount + ret6 + ret12 + fitHired + rubricCount === 0;
+}
+
+export function AnalyticsTab({ session: _session, navigateDashboard }) {
   const [locale] = useLocale();
   const { toast } = useAppFeedback();
   const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends' | 'compare'
@@ -152,7 +164,7 @@ export function AnalyticsTab({ session }) {
     try {
       const params = new URLSearchParams();
       params.append('type', compareType);
-      
+
       if (compareType === 'areas') {
         if (!compareParams.areaA || !compareParams.areaB) {
           throw new Error('Select both areas');
@@ -200,199 +212,212 @@ export function AnalyticsTab({ session }) {
     );
   }
 
+  const viewTitle =
+    activeView === 'metrics'
+      ? t(locale, 'panel.analytics.titleMetrics')
+      : activeView === 'trends'
+        ? t(locale, 'panel.analytics.titleTrends')
+        : t(locale, 'panel.analytics.titleCompare');
+
+  const metricsEmpty = activeView === 'metrics' && isMetricsEmpty(metrics);
+  const canNav = typeof navigateDashboard === 'function';
+
   return (
-    <ContentEnter animKey="ready">
+    <ContentEnter animKey={activeView}>
     <div className="space-y-6">
       <div className={S.card}>
         {/* View Toggle */}
         <div className="flex gap-2 mb-6">
           <button
+            type="button"
             className={activeView === 'metrics' ? S.btnPrimary : S.btnGhost}
             onClick={() => setActiveView('metrics')}
           >
-            {locale === 'pt-BR' ? 'Métricas' : 'Metrics'}
+            {t(locale, 'panel.analytics.viewMetrics')}
           </button>
           <button
+            type="button"
             className={activeView === 'trends' ? S.btnPrimary : S.btnGhost}
             onClick={() => setActiveView('trends')}
           >
-            {locale === 'pt-BR' ? 'Tendências' : 'Trends'}
+            {t(locale, 'panel.analytics.viewTrends')}
           </button>
           <button
+            type="button"
             className={activeView === 'compare' ? S.btnPrimary : S.btnGhost}
             onClick={() => setActiveView('compare')}
           >
-            {locale === 'pt-BR' ? 'Comparar' : 'Compare'}
+            {t(locale, 'panel.analytics.viewCompare')}
           </button>
         </div>
 
-        <h2 className="font-display text-xl mb-4">
-          {activeView === 'metrics'
-            ? (locale === 'pt-BR' ? 'Métricas de Efetividade' : 'Effectiveness Metrics')
-            : activeView === 'trends'
-            ? (locale === 'pt-BR' ? 'Tendências Temporais' : 'Trends Over Time')
-            : (locale === 'pt-BR' ? 'Comparativos' : 'Comparisons')}
-        </h2>
+        <h2 className="font-display text-xl mb-4">{viewTitle}</h2>
 
         {/* Filtros */}
         {activeView === 'metrics' && (
         <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
           <FormField
             as="div"
-            label={locale === 'pt-BR' ? 'Data início' : 'Start date'}
+            label={t(locale, 'panel.analytics.startDate')}
           >
             <DateField
               className={S.input}
               value={filters.startDate}
               onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              aria-label={locale === 'pt-BR' ? 'Data início' : 'Start date'}
+              aria-label={t(locale, 'panel.analytics.startDate')}
             />
           </FormField>
           <FormField
             as="div"
-            label={locale === 'pt-BR' ? 'Data fim' : 'End date'}
+            label={t(locale, 'panel.analytics.endDate')}
           >
             <DateField
               className={S.input}
               value={filters.endDate}
               onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              aria-label={locale === 'pt-BR' ? 'Data fim' : 'End date'}
+              aria-label={t(locale, 'panel.analytics.endDate')}
             />
           </FormField>
-          <button className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
-            {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
+          <button type="button" className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
+            {t(locale, 'panel.analytics.apply')}
           </button>
         </div>
         )}
 
         {activeView === 'trends' && (
         <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
-          <FormField label={locale === 'pt-BR' ? 'Período (meses)' : 'Period (months)'}>
+          <FormField label={t(locale, 'panel.analytics.periodMonths')}>
             <select
               className={S.select}
               value={trendMonths}
               onChange={(e) => setTrendMonths(parseInt(e.target.value))}
             >
-              <option value="6">6 meses</option>
-              <option value="12">12 meses</option>
-              <option value="24">24 meses</option>
+              <option value="6">{t(locale, 'panel.analytics.months6')}</option>
+              <option value="12">{t(locale, 'panel.analytics.months12')}</option>
+              <option value="24">{t(locale, 'panel.analytics.months24')}</option>
             </select>
           </FormField>
-          <button className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
-            {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
+          <button type="button" className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
+            {t(locale, 'panel.analytics.apply')}
           </button>
         </div>
         )}
 
         {/* Cards de métricas */}
-        {activeView === 'metrics' && metrics && (
+        {activeView === 'metrics' && metrics && metricsEmpty ? (
+          <div className="space-y-3">
+            <EmptyState
+              title={t(locale, 'panel.analytics.emptyTitle')}
+              message={t(locale, 'panel.analytics.emptyBody')}
+              actionLabel={canNav ? t(locale, 'panel.analytics.emptyCtaVacancies') : undefined}
+              onAction={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
+            />
+            {canNav ? (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className={S.btnGhost}
+                  onClick={() => navigateDashboard({ tab: 'team' })}
+                >
+                  {t(locale, 'panel.analytics.emptyCtaTeam')}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {activeView === 'metrics' && metrics && !metricsEmpty ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Time to Hire */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Time-to-Hire' : 'Time-to-Hire'}
-            value={`${metrics.timeToHire.avgDays} dias`}
-            subtitle={`${metrics.timeToHire.count} contratações`}
+            title={t(locale, 'panel.analytics.timeToHire')}
+            value={t(locale, 'panel.analytics.daysValue', { n: metrics.timeToHire.avgDays })}
+            subtitle={t(locale, 'panel.analytics.hiresCount', { n: metrics.timeToHire.count })}
             trend={metrics.timeToHire.trend}
             locale={locale}
           />
 
-          {/* Time to Productivity */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Time-to-Productivity' : 'Time-to-Productivity'}
-            value={`${metrics.timeToProductivity.avgDays} dias`}
-            subtitle={`${metrics.timeToProductivity.count} registros`}
+            title={t(locale, 'panel.analytics.timeToProductivity')}
+            value={t(locale, 'panel.analytics.daysValue', { n: metrics.timeToProductivity.avgDays })}
+            subtitle={t(locale, 'panel.analytics.recordsCount', { n: metrics.timeToProductivity.count })}
             locale={locale}
           />
 
-          {/* Retenção 6m */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Retenção 6 meses' : '6-month Retention'}
+            title={t(locale, 'panel.analytics.retention6m')}
             value={`${metrics.retention.sixMonths.rate}%`}
             subtitle={`${metrics.retention.sixMonths.retainedCount}/${metrics.retention.sixMonths.hiredCount}`}
             locale={locale}
           />
 
-          {/* Retenção 12m */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Retenção 12 meses' : '12-month Retention'}
+            title={t(locale, 'panel.analytics.retention12m')}
             value={`${metrics.retention.twelveMonths.rate}%`}
             subtitle={`${metrics.retention.twelveMonths.retainedCount}/${metrics.retention.twelveMonths.hiredCount}`}
             locale={locale}
           />
 
-          {/* Fit Contratados */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Fit Médio Contratados' : 'Avg Hired Fit'}
+            title={t(locale, 'panel.analytics.avgHiredFit')}
             value={`${metrics.fitComparison.hiredAvgFit.toFixed(1)}/10`}
-            subtitle={locale === 'pt-BR' 
-              ? `Pool: ${metrics.fitComparison.poolAvgFit.toFixed(1)} | Δ ${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`
-              : `Pool: ${metrics.fitComparison.poolAvgFit.toFixed(1)} | Δ ${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`
-            }
+            subtitle={t(locale, 'panel.analytics.fitPoolDelta', {
+              pool: metrics.fitComparison.poolAvgFit.toFixed(1),
+              delta: `${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`,
+            })}
             locale={locale}
           />
 
-          {/* Aderência Rubrica */}
           <MetricCard
-            title={locale === 'pt-BR' ? 'Aderência Rubrica' : 'Rubric Adherence'}
+            title={t(locale, 'panel.analytics.rubricAdherence')}
             value={`${metrics.rubricAdherence.avgAdherence.toFixed(1)}/10`}
-            subtitle={`${metrics.rubricAdherence.count} contratações`}
+            subtitle={t(locale, 'panel.analytics.hiresCount', { n: metrics.rubricAdherence.count })}
             locale={locale}
           />
         </div>
-        )}
+        ) : null}
 
         {/* Tendências */}
         {activeView === 'trends' && trends && (
         <div className="space-y-6">
-          {/* HR Score Trend */}
           <TrendChart
-            title={locale === 'pt-BR' ? 'HR Score Médio' : 'Average HR Score'}
+            title={t(locale, 'panel.analytics.hrScoreAvg')}
             data={trends.hrScore}
             dataKey="avgScore"
-            label={locale === 'pt-BR' ? 'Score' : 'Score'}
             tone="brand"
-            locale={locale}
           />
 
-          {/* Turnover Risk Trend */}
           <TrendChart
-            title={locale === 'pt-BR' ? 'Risco de Rotatividade (%)' : 'Turnover Risk (%)'}
+            title={t(locale, 'panel.analytics.turnoverRisk')}
             data={trends.turnoverRisk}
             dataKey="highRiskPct"
-            label={locale === 'pt-BR' ? 'Alto Risco' : 'High Risk'}
             tone="danger"
-            locale={locale}
           />
 
-          {/* Climate Trend */}
           <TrendChart
-            title={locale === 'pt-BR' ? 'Clima Médio' : 'Average Climate'}
+            title={t(locale, 'panel.analytics.climateAvg')}
             data={trends.climate}
             dataKey="avgClimate"
-            label={locale === 'pt-BR' ? 'Clima' : 'Climate'}
             tone="success"
-            locale={locale}
           />
 
-          {/* Hires vs Exits */}
           <div className={S.cardTight}>
             <div className="font-bold mb-3">
-              {locale === 'pt-BR' ? 'Contratações vs Desligamentos' : 'Hires vs Exits'}
+              {t(locale, 'panel.analytics.hiresVsExits')}
             </div>
             <div className="h-48 flex items-end gap-1">
               {trends.hiresVsExits.map((item, idx) => {
                 const maxValue = Math.max(...trends.hiresVsExits.map(i => Math.max(i.hires, i.exits)));
                 const hiresHeight = (item.hires / maxValue) * 100;
                 const exitsHeight = (item.exits / maxValue) * 100;
-                
+
                 return (
                   <div key={idx} className="flex-1 flex flex-col gap-1" title={item.month}>
                     <div
-                      className="bg-success/70"
+                      className="ui-analytics-bar bg-success/70"
                       style={{ height: `${hiresHeight}%` }}
                     />
                     <div
-                      className="bg-danger/70"
+                      className="ui-analytics-bar bg-danger/70"
                       style={{ height: `${exitsHeight}%` }}
                     />
                     <div className="text-xs text-center text-ink-faint">
@@ -405,11 +430,11 @@ export function AnalyticsTab({ session }) {
             <div className="flex gap-4 mt-3 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-success/70" />
-                <span>{locale === 'pt-BR' ? 'Contratações' : 'Hires'}</span>
+                <span>{t(locale, 'panel.analytics.hires')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-danger/70" />
-                <span>{locale === 'pt-BR' ? 'Desligamentos' : 'Exits'}</span>
+                <span>{t(locale, 'panel.analytics.exits')}</span>
               </div>
             </div>
           </div>
@@ -460,7 +485,7 @@ export function AnalyticsTab({ session }) {
   );
 }
 
-function TrendChart({ title, data, dataKey, label, tone = 'brand', locale }) {
+function TrendChart({ title, data, dataKey, tone = 'brand' }) {
   const maxValue = Math.max(...data.map(d => d[dataKey] || 0));
   const tones = TREND_TONE[tone] || TREND_TONE.brand;
 
@@ -474,9 +499,9 @@ function TrendChart({ title, data, dataKey, label, tone = 'brand', locale }) {
 
           return (
             <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-              <div className={cn('text-xs', tones.value)}>{value > 0 ? value : ''}</div>
+              <div className={cn('text-xs font-mono', tones.value)}>{value > 0 ? value : ''}</div>
               <div
-                className={cn('w-full opacity-80', tones.bar)}
+                className={cn('ui-analytics-bar w-full opacity-80', tones.bar)}
                 style={{ height: `${height}%` }}
                 title={`${item.month}: ${value}`}
               />
@@ -506,7 +531,7 @@ function MetricCard({ title, value, subtitle, trend, locale }) {
       />
       {trend !== undefined && trendText ? (
         <div className={cn('mt-2 text-sm', trendClass)}>
-          {trendText} {locale === 'pt-BR' ? 'vs período anterior' : 'vs previous period'}
+          {trendText} {t(locale, 'panel.analytics.vsPrevious')}
         </div>
       ) : null}
     </div>

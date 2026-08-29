@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { BrandMark } from './BrandMark';
 import { InlineCallout } from './InlineCallout';
+import { Icon } from './Icon';
 
 const STEPS = [
-  { id: 'welcome', icon: '👋' },
-  { id: 'vacancy', icon: '📋' },
-  { id: 'invite', icon: '✉️' },
-  { id: 'done', icon: '🎉' },
+  { id: 'welcome', icon: 'sparkles' },
+  { id: 'vacancy', icon: 'vacancies' },
+  { id: 'invite', icon: 'team' },
+  { id: 'done', icon: 'check' },
 ];
 
 /**
@@ -23,7 +23,6 @@ const STEPS = [
 export default function OnboardingWizard({ locale, userName, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completing, setCompleting] = useState(false);
-  const router = useRouter();
 
   const step = STEPS[currentStep];
 
@@ -96,7 +95,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
         <div className="p-8">
           {step.id === 'welcome' && (
             <div className="text-center">
-              <div className="mb-4 text-5xl">{step.icon}</div>
+              <div className="mb-4 flex justify-center text-brand-500">
+                <Icon name={step.icon} className="h-12 w-12" />
+              </div>
               <h2 className="mb-3 text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.welcome.title', { name: userName })}
               </h2>
@@ -122,7 +123,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
           {step.id === 'vacancy' && (
             <div>
-              <div className="mb-4 text-center text-5xl">{step.icon}</div>
+              <div className="mb-4 flex justify-center text-brand-500">
+                <Icon name={step.icon} className="h-12 w-12" />
+              </div>
               <h2 className="mb-3 text-center text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.vacancy.title')}
               </h2>
@@ -132,7 +135,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
               <div className="mb-6 space-y-3 rounded-card border border-ink/8 bg-ink/[0.02] p-4">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">📝</span>
+                  <span className="mt-0.5 shrink-0 text-brand-500">
+                    <Icon name="pencil" className="h-6 w-6" />
+                  </span>
                   <div>
                     <h3 className="mb-1 text-sm font-medium text-ink">
                       {t(locale, 'onboarding.vacancy.step1Title')}
@@ -143,7 +148,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">🎯</span>
+                  <span className="mt-0.5 shrink-0 text-brand-500">
+                    <Icon name="leadership" className="h-6 w-6" />
+                  </span>
                   <div>
                     <h3 className="mb-1 text-sm font-medium text-ink">
                       {t(locale, 'onboarding.vacancy.step2Title')}
@@ -154,7 +161,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">📊</span>
+                  <span className="mt-0.5 shrink-0 text-brand-500">
+                    <Icon name="chart" className="h-6 w-6" />
+                  </span>
                   <div>
                     <h3 className="mb-1 text-sm font-medium text-ink">
                       {t(locale, 'onboarding.vacancy.step3Title')}
@@ -186,7 +195,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
           {step.id === 'invite' && (
             <div>
-              <div className="mb-4 text-center text-5xl">{step.icon}</div>
+              <div className="mb-4 flex justify-center text-brand-500">
+                <Icon name={step.icon} className="h-12 w-12" />
+              </div>
               <h2 className="mb-3 text-center text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.invite.title')}
               </h2>
@@ -196,7 +207,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
               <div className="mb-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-card border border-ink/8 bg-ink/[0.02] p-4">
-                  <div className="mb-2 text-2xl">👥</div>
+                  <div className="mb-2 text-brand-500">
+                    <Icon name="users" className="h-6 w-6" />
+                  </div>
                   <h3 className="mb-1 text-sm font-medium text-ink">
                     {t(locale, 'onboarding.invite.teamTitle')}
                   </h3>
@@ -213,7 +226,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 </div>
 
                 <div className="rounded-card border border-ink/8 bg-ink/[0.02] p-4">
-                  <div className="mb-2 text-2xl">🔗</div>
+                  <div className="mb-2 text-brand-500">
+                    <Icon name="externalLink" className="h-6 w-6" />
+                  </div>
                   <h3 className="mb-1 text-sm font-medium text-ink">
                     {t(locale, 'onboarding.invite.linkTitle')}
                   </h3>
@@ -240,7 +255,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
           {step.id === 'done' && (
             <div className="text-center">
-              <div className="mb-4 text-5xl">{step.icon}</div>
+              <div className="mb-4 flex justify-center text-brand-500">
+                <Icon name={step.icon} className="h-12 w-12" />
+              </div>
               <h2 className="mb-3 text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.done.title')}
               </h2>
@@ -253,7 +270,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   href="/dashboard?tab=overview"
                   className="rounded-card border border-ink/8 bg-ink/[0.02] p-4 no-underline hover:border-brand-300"
                 >
-                  <div className="mb-2 text-2xl">📊</div>
+                  <div className="mb-2 text-brand-500">
+                    <Icon name="overview" className="h-6 w-6" />
+                  </div>
                   <h3 className="mb-1 text-sm font-medium text-ink">
                     {t(locale, 'onboarding.done.overviewTitle')}
                   </h3>
@@ -266,7 +285,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   href="/dashboard?tab=help"
                   className="rounded-card border border-ink/8 bg-ink/[0.02] p-4 no-underline hover:border-brand-300"
                 >
-                  <div className="mb-2 text-2xl">📖</div>
+                  <div className="mb-2 text-brand-500">
+                    <Icon name="help" className="h-6 w-6" />
+                  </div>
                   <h3 className="mb-1 text-sm font-medium text-ink">
                     {t(locale, 'onboarding.done.helpTitle')}
                   </h3>

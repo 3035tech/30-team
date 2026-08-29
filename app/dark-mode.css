@@ -374,9 +374,51 @@
   border-color: rgb(var(--ink) / 0.18);
 }
 
+/* Dashboard chrome leftovers still using literal white */
+.dark .bg-white\/20 {
+  background-color: rgb(var(--ink) / 0.14);
+}
+
+.dark .db-main .bg-white,
+.dark .db-sidebar .bg-white,
+.dark [data-dashboard] .bg-white {
+  background-color: rgb(var(--surface));
+}
+
+/* Meter / score bars: stronger track + brighter fills on dark */
+.dark .ui-meter-track {
+  background-color: rgb(var(--ink) / 0.16) !important;
+}
+
+.dark .ui-meter-fill {
+  filter: saturate(1.2) brightness(1.28);
+}
+
+.dark .ui-type-score-chart .ui-meter-fill {
+  filter: saturate(1.25) brightness(1.35);
+}
+
+.dark .ui-analytics-bar {
+  opacity: 1 !important;
+  filter: saturate(1.15) brightness(1.2);
+}
+
+.dark .ui-analytics-bar.bg-success\/70 {
+  background-color: rgb(var(--success) / 0.9);
+}
+
+.dark .ui-analytics-bar.bg-danger\/70 {
+  background-color: rgb(var(--danger) / 0.9);
+}
+
+/* Kanban stage headers: ensure border/text contrast when hex is muted */
+.dark .kanban-scroll [style*='border-top'] {
+  border-color: rgb(var(--ink) / 0.22);
+}
+
 /*
- * Remaining gaps (follow-up, not blocking “usable” dashboard):
- * - PDF / print (@media print) and public assessment flows
- * - Inline C.* hex backgrounds (charts, pipeline stage pills with style=)
+ * Remaining gaps (B-1501 follow-up):
+ * - PDF / print (@media print) and public assessment flows (light-first)
+ * - Dynamic T1–T9 type hex in TYPE_DATA (intentional; meter fill filter helps)
  * - Marketing /login radial glow atmosphere
  */

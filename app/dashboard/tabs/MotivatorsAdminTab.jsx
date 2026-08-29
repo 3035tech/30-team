@@ -15,6 +15,7 @@ import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { EmptyState } from '../../_components/EmptyState';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -273,7 +274,7 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent, onActionsRe
   );
 }
 
-function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
+function InvitesList({ locale, refreshKey, isAdmin, companyFilter, onCreateInvite }) {
   const { confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -380,6 +381,18 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
       </AdminListFilters>
       {loading ? (
         <AppLoading variant="panel" label={t(locale, 'panel.motivatorsAdmin.invites.loading')} />
+      ) : items.length === 0 ? (
+        <ContentEnter animKey={`invites-empty|${status}`}>
+          <EmptyState
+            message={t(locale, 'panel.motivatorsAdmin.invites.empty')}
+            actionLabel={
+              typeof onCreateInvite === 'function'
+                ? t(locale, 'panel.motivatorsAdmin.invite.openInviteBtn')
+                : undefined
+            }
+            onAction={typeof onCreateInvite === 'function' ? onCreateInvite : undefined}
+          />
+        </ContentEnter>
       ) : (
         <>
           <AdminTableShell minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
@@ -463,9 +476,6 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               setPage(1);
             }}
           />
-          {items.length === 0 ? (
-            <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p>
-          ) : null}
         </>
       )}
     </div>
@@ -1121,7 +1131,13 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
               onSent={() => setRefreshKey((k) => k + 1)}
               onActionsReady={handleInviteActionsReady}
             />
-            <InvitesList locale={locale} refreshKey={refreshKey} isAdmin={isAdmin} companyFilter={companyFilter} />
+            <InvitesList
+              locale={locale}
+              refreshKey={refreshKey}
+              isAdmin={isAdmin}
+              companyFilter={companyFilter}
+              onCreateInvite={() => inviteActions?.openInvite?.()}
+            />
           </>
         ) : null}
         {view === 'results' ? (

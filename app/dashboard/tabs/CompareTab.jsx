@@ -9,6 +9,7 @@ import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { S, TypeBadge, AdminListSearch } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { ContentEnter } from '../../_components/AppLoading';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 
@@ -309,90 +310,92 @@ export function CompareTab({
           )}
         </div>
 
-        <InsightStrip locale={locale} visible={visibleSorted} />
+        <ContentEnter animKey={`${nSel}|${sortBy.key}|${sortBy.dir}|${(search || '').trim()}`}>
+          <InsightStrip locale={locale} visible={visibleSorted} />
 
-        {visible.length === 0 ? (
-          <EmptyState message={t(locale, 'panel.compare.noneSelected')} />
-        ) : (
-          <div className="overflow-x-auto db-table-scroll">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr>
-                  <th
-                    onClick={() => toggleSort('name')}
-                    className="sticky left-0 z-[1] cursor-pointer select-none border-b border-ink/12 bg-surface px-3 py-2.5 text-left font-normal font-mono text-ink-muted"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      {t(locale, 'panel.compare.personCol')}
-                      <span className="text-2xs text-ink-faint">{sortMark('name')}</span>
-                    </span>
-                  </th>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
+          {visible.length === 0 ? (
+            <EmptyState message={t(locale, 'panel.compare.noneSelected')} />
+          ) : (
+            <div className="overflow-x-auto db-table-scroll">
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr>
                     <th
-                      key={typeNum}
-                      onClick={() => toggleSort(typeNum)}
-                      title={typeHintTooltip(typeNum, locale)}
-                      className="min-w-[52px] cursor-pointer select-none border-b border-ink/12 px-1 py-2 text-center font-normal"
-                      style={{ color: TYPE_DATA[typeNum].color }}
+                      onClick={() => toggleSort('name')}
+                      className="sticky left-0 z-[1] cursor-pointer select-none border-b border-ink/12 bg-surface px-3 py-2.5 text-left font-normal font-mono text-ink-muted"
                     >
-                      <span className="flex flex-col items-center gap-0.5">
-                        <span className="text-sm">{TYPE_DATA[typeNum].emoji}</span>
-                        <span className="font-mono text-2xs tracking-wide">
-                          T{typeNum}
-                        </span>
-                        <span className="min-h-3 text-2xs text-ink-faint">{sortMark(typeNum)}</span>
+                      <span className="inline-flex items-center gap-2">
+                        {t(locale, 'panel.compare.personCol')}
+                        <span className="text-2xs text-ink-faint">{sortMark('name')}</span>
                       </span>
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleSorted.map((r, i) => {
-                  const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => scoreOf(r, n));
-                  const maxS = Math.max(...scores, 1);
-                  return (
-                    <tr key={String(r.assessmentId) || i} className="border-b border-ink/[0.07]">
-                      <td className="sticky left-0 z-[1] min-w-[180px] max-w-[280px] bg-surface px-3 py-2.5 text-ink">
-                        <span title={r.name} className="inline-flex w-full min-w-0 items-center gap-2">
-                          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                            {personListName(r.name)}
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
+                      <th
+                        key={typeNum}
+                        onClick={() => toggleSort(typeNum)}
+                        title={typeHintTooltip(typeNum, locale)}
+                        className="min-w-[52px] cursor-pointer select-none border-b border-ink/12 px-1 py-2 text-center font-normal"
+                        style={{ color: TYPE_DATA[typeNum].color }}
+                      >
+                        <span className="flex flex-col items-center gap-0.5">
+                          <span className="text-sm">{TYPE_DATA[typeNum].emoji}</span>
+                          <span className="font-mono text-2xs tracking-wide">
+                            T{typeNum}
                           </span>
-                          <TypeBadge type={r.topType} locale={locale} compact />
+                          <span className="min-h-3 text-2xs text-ink-faint">{sortMark(typeNum)}</span>
                         </span>
-                      </td>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => {
-                        const s = Math.round(scoreOf(r, typeNum));
-                        const pct = Math.round((s / maxS) * 100);
-                        const isTop = r.topType === typeNum;
-                        return (
-                          <td key={typeNum} className="p-1.5 text-center">
-                            <div
-                              title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
-                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-2xs"
-                              style={{
-                                background: isTop
-                                  ? TYPE_DATA[typeNum].color
-                                  : `${TYPE_DATA[typeNum].color}${Math.max(20, Math.round(pct * 1.5))
-                                      .toString(16)
-                                      .padStart(2, '0')}`,
-                                border: isTop ? `2px solid ${TYPE_DATA[typeNum].color}` : `1px solid ${C.border}`,
-                                boxShadow: isTop ? `0 0 0 2px ${TYPE_DATA[typeNum].color}33` : 'none',
-                                color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
-                                fontWeight: isTop ? 600 : 400,
-                              }}
-                            >
-                              {s}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleSorted.map((r, i) => {
+                    const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => scoreOf(r, n));
+                    const maxS = Math.max(...scores, 1);
+                    return (
+                      <tr key={String(r.assessmentId) || i} className="border-b border-ink/[0.07]">
+                        <td className="sticky left-0 z-[1] min-w-[180px] max-w-[280px] bg-surface px-3 py-2.5 text-ink">
+                          <span title={r.name} className="inline-flex w-full min-w-0 items-center gap-2">
+                            <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                              {personListName(r.name)}
+                            </span>
+                            <TypeBadge type={r.topType} locale={locale} compact />
+                          </span>
+                        </td>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => {
+                          const s = Math.round(scoreOf(r, typeNum));
+                          const pct = Math.round((s / maxS) * 100);
+                          const isTop = r.topType === typeNum;
+                          return (
+                            <td key={typeNum} className="p-1.5 text-center">
+                              <div
+                                title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
+                                className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-2xs"
+                                style={{
+                                  background: isTop
+                                    ? TYPE_DATA[typeNum].color
+                                    : `${TYPE_DATA[typeNum].color}${Math.max(20, Math.round(pct * 1.5))
+                                        .toString(16)
+                                        .padStart(2, '0')}`,
+                                  border: isTop ? `2px solid ${TYPE_DATA[typeNum].color}` : `1px solid ${C.border}`,
+                                  boxShadow: isTop ? `0 0 0 2px ${TYPE_DATA[typeNum].color}33` : 'none',
+                                  color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
+                                  fontWeight: isTop ? 600 : 400,
+                                }}
+                              >
+                                {s}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ContentEnter>
         <div className="mt-4 flex flex-wrap items-center gap-3.5 text-2xs text-ink-faint">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-3.5 w-3.5 rounded-full border-2 border-brand-500 bg-brand-500 ring-2 ring-brand-500/20" />

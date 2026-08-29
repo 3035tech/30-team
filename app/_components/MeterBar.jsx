@@ -34,7 +34,7 @@ export function MeterBar({
 
   return (
     <div
-      className={cn('w-full overflow-hidden', trackClassName, className)}
+      className={cn('ui-meter-track w-full overflow-hidden', trackClassName, className)}
       style={{ height, borderRadius: height / 2 }}
       role={ariaLabel ? 'meter' : undefined}
       aria-label={ariaLabel}
@@ -43,7 +43,7 @@ export function MeterBar({
       aria-valuemax={ariaLabel ? 100 : undefined}
     >
       <div
-        className={cn('h-full transition-[width] duration-200', !color && toneClass)}
+        className={cn('ui-meter-fill h-full transition-[width] duration-200', !color && toneClass)}
         style={fillStyle}
       />
     </div>

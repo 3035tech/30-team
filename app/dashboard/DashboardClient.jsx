@@ -1313,6 +1313,8 @@ export default function DashboardClient({
                     listFilter={selectedListFilter || urlParams.get('filter')}
                     onClearListFilter={() => pushFilters({ filter: null })}
                     navigateDashboard={navigateWithOpts}
+                    roster={roster || ROSTER_SCOPE.INTERNAL}
+                    pipelineFilter={pipeline && pipeline !== 'all' ? pipeline : null}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });

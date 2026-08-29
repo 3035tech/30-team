@@ -98,7 +98,7 @@ export function SystemNoticeModal({
             >
               {heading}
             </h2>
-            <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
+            <p className="mb-0 mt-3 whitespace-pre-line text-sm leading-[1.55] text-ink-muted">{message}</p>
           </div>
         </div>
         <div className="mt-[22px] flex justify-end">

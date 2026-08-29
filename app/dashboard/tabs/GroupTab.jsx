@@ -16,6 +16,7 @@ import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { EmptyState } from '../../_components/EmptyState';
 
 export function GroupTab({
   results,
@@ -323,7 +324,7 @@ export function GroupTab({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div className={S.card}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.title')}</span>
@@ -377,7 +378,10 @@ export function GroupTab({
           {!resolvedCompanyId ? (
             <p className="m-0 text-xs text-ink-muted">{t(locale, 'panel.group.saveNeedCompany')}</p>
           ) : savedGroups.length === 0 ? (
-            <p className="m-0 text-xs italic text-ink-faint">{t(locale, 'panel.group.savedEmpty')}</p>
+            <EmptyState
+              className="px-3 py-5"
+              message={t(locale, 'panel.group.savedEmpty')}
+            />
           ) : (
             <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
               {savedGroups.map((g) => {

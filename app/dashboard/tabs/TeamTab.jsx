@@ -18,6 +18,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { daysInStage, stageAgingTone } from '../vacancies/vacancy-admin-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { useDarkMode } from '../../_components/DarkModeProvider';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
@@ -38,8 +39,11 @@ import { StatusToneChip } from '../../_components/StatusToneChip';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
-import { EMPLOYMENT_STATUS } from '../../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, ROSTER_SCOPE } from '../../../lib/domain-status.js';
 import { PIPELINE_STAGE, PIPELINE_STAGES } from '../../../lib/pipeline';
+import {
+  ABSENCE_SUGGESTION,
+} from '../../../lib/people/list-absence-diagnostics.js';
 
 function nearbyCluster(scores) {
   return clusterCloseTypes(rankEnneagramScores(scores));
@@ -192,6 +196,8 @@ export function TeamTab({
   listFilter = null,
   onClearListFilter = null,
   navigateDashboard = null,
+  roster = ROSTER_SCOPE.INTERNAL,
+  pipelineFilter = null,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -222,8 +228,11 @@ export function TeamTab({
   const [stageOverrides, setStageOverrides] = useState({});
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
+  const [diagnoseBusy, setDiagnoseBusy] = useState(false);
   const { requestPipelineExtras } = usePipelineExtras();
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+  const { isDark } = useDarkMode();
+  const kanbanStages = getKanbanStages(locale, { isDark });
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -287,6 +296,114 @@ export function TeamTab({
     const trimmed = String(next != null ? next : searchDraft).trim();
     if (trimmed === (search || '').trim()) return;
     if (typeof onSearch === 'function') onSearch(trimmed || null);
+  };
+
+  const clearActiveSearch = () => {
+    setSearchDraft('');
+    if (typeof onSearch === 'function') onSearch(null);
+  };
+
+  const reasonLabel = (code) => {
+    const key = `panel.team.diagnoseReason.${code}`;
+    const label = t(locale, key);
+    return label === key ? code : label;
+  };
+
+  const runAbsenceDiagnose = async () => {
+    const q = String(search || searchDraft || '').trim();
+    if (!q || diagnoseBusy) return;
+    setDiagnoseBusy(true);
+    try {
+      const res = await fetch('/api/admin/help-diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q,
+          roster: roster || ROSTER_SCOPE.INTERNAL,
+          listFilter: listFilter || null,
+          pipeline: pipelineFilter || null,
+          ...(companyId ? { companyId: Number(companyId) } : {}),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || t(locale, 'panel.team.diagnoseError'));
+      }
+      const reasonLines = (data.reasons || [])
+        .map((r) => `· ${reasonLabel(r.code)}`)
+        .join('\n');
+      const candidateLines = (data.candidates || [])
+        .slice(0, 4)
+        .map((c) => {
+          const status = c.employmentStatus
+            ? t(locale, `panel.team.employment.${c.employmentStatus}`)
+            : '';
+          return `· ${c.name}${status ? ` (${status})` : ''}`;
+        })
+        .join('\n');
+      const bodyParts = [
+        reasonLines || t(locale, 'panel.team.diagnoseNoReasons'),
+        candidateLines
+          ? `\n${t(locale, 'panel.team.diagnoseFoundPeople')}\n${candidateLines}`
+          : '',
+      ].filter(Boolean);
+      await notice({
+        title: t(locale, 'panel.team.diagnoseTitle'),
+        message: bodyParts.join('\n'),
+        tone: 'info',
+      });
+
+      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+      for (const s of suggestions) {
+        if (s.action === ABSENCE_SUGGESTION.SWITCH_ROSTER && s.roster && typeof navigateDashboard === 'function') {
+          const ok = await confirm({
+            title: t(locale, 'panel.team.diagnoseSuggestRosterTitle'),
+            message: t(locale, 'panel.team.diagnoseSuggestRosterBody', {
+              roster:
+                s.roster === ROSTER_SCOPE.RECRUITING
+                  ? t(locale, 'dashboard.rosterRecruiting')
+                  : s.roster === ROSTER_SCOPE.ALL
+                    ? t(locale, 'dashboard.rosterAll')
+                    : t(locale, 'dashboard.rosterInternal'),
+            }),
+            confirmLabel: t(locale, 'panel.team.diagnoseSwitchRoster'),
+          });
+          if (ok) {
+            navigateDashboard({ tab: 'team', roster: s.roster, search: q });
+          }
+          break;
+        }
+        if (s.action === ABSENCE_SUGGESTION.OPEN_PERSON && s.candidateId && typeof navigateDashboard === 'function') {
+          const person = (data.candidates || []).find((c) => Number(c.id) === Number(s.candidateId));
+          const ok = await confirm({
+            title: t(locale, 'panel.team.diagnoseSuggestOpenTitle'),
+            message: t(locale, 'panel.team.diagnoseSuggestOpenBody', {
+              name: person?.name || `#${s.candidateId}`,
+            }),
+            confirmLabel: t(locale, 'panel.team.diagnoseOpenPerson'),
+          });
+          if (ok) {
+            navigateDashboard({
+              tab: 'team',
+              candidate: s.candidateId,
+              search: null,
+              roster: person?.inRecruiting && !person?.inInternal
+                ? ROSTER_SCOPE.RECRUITING
+                : roster,
+            });
+          }
+          break;
+        }
+        if (s.action === ABSENCE_SUGGESTION.CLEAR_FILTERS && typeof navigateDashboard === 'function') {
+          toast(t(locale, 'panel.team.diagnoseHintClearFilters'), 'info');
+          break;
+        }
+      }
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.team.diagnoseError'), 'error');
+    } finally {
+      setDiagnoseBusy(false);
+    }
   };
 
   const sortColumns = [
@@ -678,7 +795,7 @@ export function TeamTab({
       {viewMode === 'kanban' && (
         <div className="kanban-scroll -mx-6 overflow-x-auto px-6 pb-4 [-webkit-overflow-scrolling:touch]">
           <div className="flex min-w-max items-start gap-3">
-            {getKanbanStages(locale).map((stage) => {
+            {kanbanStages.map((stage) => {
               const items = filtered.filter((r) => getEffectiveStage(r) === stage.id);
               const isDropTarget = dragOverStage === stage.id;
               return (
@@ -828,11 +945,11 @@ export function TeamTab({
           {filtered.length === 0 && activeSearch ? (
             <EmptyState
               message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
-              actionLabel={t(locale, 'panel.common.clearFilters')}
-              onAction={() => {
-                setSearchDraft('');
-                if (typeof onSearch === 'function') onSearch(null);
-              }}
+              actionLabel={t(locale, 'panel.team.diagnoseCta')}
+              actionDisabled={diagnoseBusy}
+              onAction={runAbsenceDiagnose}
+              secondaryActionLabel={t(locale, 'panel.common.clearFilters')}
+              onSecondaryAction={clearActiveSearch}
             />
           ) : null}
           {filtered.length === 0 && !activeSearch ? (
@@ -911,11 +1028,11 @@ export function TeamTab({
       {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
         <EmptyState
           message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
-          actionLabel={t(locale, 'panel.common.clearFilters')}
-          onAction={() => {
-            setSearchDraft('');
-            if (typeof onSearch === 'function') onSearch(null);
-          }}
+          actionLabel={t(locale, 'panel.team.diagnoseCta')}
+          actionDisabled={diagnoseBusy}
+          onAction={runAbsenceDiagnose}
+          secondaryActionLabel={t(locale, 'panel.common.clearFilters')}
+          onSecondaryAction={clearActiveSearch}
         />
       ) : null}
       {viewMode === 'list' && filtered.length === 0 && !activeSearch ? (

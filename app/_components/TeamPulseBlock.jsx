@@ -6,8 +6,9 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
-import { AppLoading } from './AppLoading';
+import { AppLoading, ContentEnter } from './AppLoading';
 import { TEAM_PULSE_STATUS } from '../../lib/domain-status.js';
+import { EmptyState } from './EmptyState';
 
 /**
  * Short pulse for a saved team group (B-603).
@@ -152,7 +153,14 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
       </div>
 
       {items.length === 0 ? (
-        <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.pulse.empty')}</p>
+        <ContentEnter animKey="pulse-empty">
+          <EmptyState
+            message={t(locale, 'panel.pulse.empty')}
+            actionLabel={t(locale, 'panel.pulse.createBtn')}
+            onAction={createPulse}
+            actionDisabled={busy}
+          />
+        </ContentEnter>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {items.map((p) => (

@@ -3,9 +3,9 @@
  * viewBox 24×24, rendered 18×18 — matches former NavIcon.
  */
 export function Icon({ name, className }) {
+  const sizedByClass = className && /\b(?:h-|w-|size-)/.test(className);
   const props = {
-    width: 18,
-    height: 18,
+    ...(sizedByClass ? {} : { width: 18, height: 18 }),
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',

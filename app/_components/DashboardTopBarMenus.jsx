@@ -7,6 +7,8 @@ import { notificationCopySpec, notificationVisual, NOTIF } from '../../lib/manag
 import { GlobalSearch } from './GlobalSearch';
 import { DarkModeToggle } from './DarkModeProvider';
 import { statusToneClass } from './StatusToneChip';
+import { EmptyState } from './EmptyState';
+import { ContentEnter } from './AppLoading';
 
 function formatWhen(iso, locale) {
   if (!iso) return '';
@@ -304,9 +306,27 @@ export function DashboardTopBarMenus({
             </div>
             <div className="max-h-[360px] overflow-y-auto">
               {items.length === 0 ? (
-                <p className="m-0 p-4 text-xs text-ink-muted">
-                  {t(locale, 'dashboard.notificationsEmpty')}
-                </p>
+                <ContentEnter animKey="notif-empty">
+                  <div className="p-3">
+                    <EmptyState
+                      className="px-3 py-5"
+                      message={t(locale, 'dashboard.notificationsEmpty')}
+                      actionLabel={
+                        typeof navigateToTab === 'function'
+                          ? t(locale, 'dashboard.notificationsEmptyCta')
+                          : undefined
+                      }
+                      onAction={
+                        typeof navigateToTab === 'function'
+                          ? () => {
+                              setNotifOpen(false);
+                              navigateToTab('overview');
+                            }
+                          : undefined
+                      }
+                    />
+                  </div>
+                </ContentEnter>
               ) : items.map((item) => {
                 const visual = notificationVisual(item.type, item.payload || {});
                 return (
