@@ -123,6 +123,15 @@ export function Icon({ name, className }) {
           <path d="M12 17h.01" />
         </svg>
       );
+    case 'sparkles':
+    case 'ai':
+      return (
+        <svg {...props}>
+          <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+          <path d="M18.5 13.5l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7.7-2.1z" />
+          <path d="M5.5 14.5l.55 1.65 1.65.55-1.65.55-.55 1.65-.55-1.65-1.65-.55 1.65-.55.55-1.65z" />
+        </svg>
+      );
     case 'logout':
       return (
         <svg {...props}>

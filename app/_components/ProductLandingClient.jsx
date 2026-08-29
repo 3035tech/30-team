@@ -49,6 +49,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
     { href: '#resultados', label: copy.outcomesLabel },
     { href: '#produto', label: copy.pillarsLabel },
     { href: '#vs', label: copy.compareLabel },
+    { href: '#origem', label: copy.builderLabel },
     { href: '#oferta', label: copy.earlyLabel },
   ];
 
@@ -235,6 +236,22 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           </div>
         </section>
 
+        <section id="origem" className="border-y border-ink/8 bg-canvas/80 py-14" aria-labelledby="builder-title">
+          <div className="mx-auto max-w-5xl px-5 sm:px-8">
+            <SectionLabel>{copy.builderLabel}</SectionLabel>
+            <h2 id="builder-title" className="mb-6 mt-0 max-w-2xl text-2xl font-normal text-ink sm:text-[1.75rem]">
+              {copy.builderTitle}
+            </h2>
+            <div className="flex max-w-2xl flex-col gap-4">
+              {(copy.builderParagraphs || []).map((p) => (
+                <p key={p.slice(0, 48)} className="m-0 text-base leading-relaxed text-ink-muted">
+                  {p}
+                </p>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="how-title">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <SectionLabel>{copy.howLabel}</SectionLabel>
@@ -331,13 +348,20 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
       </main>
 
       <footer className="relative z-[1] border-t border-ink/8 py-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <span>{copy.footerBrand}</span>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link href="/pricing" className="text-ink-muted no-underline hover:text-ink">
-              {copy.footerPricing}
-            </Link>
-            <span>{copy.footerLegal}</span>
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 text-xs text-ink-faint sm:px-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <div className="min-w-0 max-w-xl">
+              <span className="font-ui text-sm text-ink-muted">{copy.footerBrand}</span>
+              {copy.footerCred ? (
+                <p className="mb-0 mt-1.5 text-xs leading-relaxed text-ink-faint">{copy.footerCred}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-4 sm:justify-end">
+              <Link href="/pricing" className="text-ink-muted no-underline hover:text-ink">
+                {copy.footerPricing}
+              </Link>
+              <span>{copy.footerLegal}</span>
+            </div>
           </div>
         </div>
       </footer>

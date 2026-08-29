@@ -1,6 +1,6 @@
 # Assistente de Ajuda — base de conhecimento
 
-O widget flutuante (**Ajuda do 30Team**) responde só sobre uso do produto. A fonte de verdade é o **Guia do painel** (`panel.help.*` em `lib/i18n.js`), indexada por `lib/help-assistant.js`.
+O botão flutuante **“Pergunte à IA”** / **“Ask AI”** (canto inferior direito) abre um **chat com assistente de IA** do produto. Não confundir com a aba **Ajuda** do menu (Guia em texto fixo). A fonte de verdade continua o **Guia do painel** (`panel.help.*` em `lib/i18n.js`), indexada por `lib/help-assistant.js`.
 
 ## Arquitetura
 

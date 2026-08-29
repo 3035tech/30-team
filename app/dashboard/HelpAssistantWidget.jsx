@@ -16,7 +16,8 @@ const SUGGESTIONS = [
 ];
 
 /**
- * Floating product-help assistant (B-801) — Guia / navigation only.
+ * Floating AI product-help assistant (B-801) — Guia / navigation only.
+ * Labelled as AI so RH does not confuse it with a static FAQ page.
  */
 export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
   const [open, setOpen] = useState(false);
@@ -79,8 +80,17 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
         >
           <div className="flex items-center justify-between gap-2 border-b border-ink/10 bg-canvas/80 px-3 py-2.5">
             <div className="min-w-0">
-              <div className="font-ui text-sm font-semibold text-ink">{t(locale, 'panel.helpAssist.title')}</div>
-              <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'panel.helpAssist.subtitle')}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-ui text-sm font-semibold text-ink">
+                  {t(locale, 'panel.helpAssist.title')}
+                </span>
+                <span className="inline-flex items-center rounded-control border border-brand-500/30 bg-brand-500/10 px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase tracking-wide text-brand-600">
+                  {t(locale, 'panel.helpAssist.badge')}
+                </span>
+              </div>
+              <p className="m-0 mt-0.5 font-mono text-2xs text-ink-faint">
+                {t(locale, 'panel.helpAssist.subtitle')}
+              </p>
             </div>
             <button
               type="button"
@@ -96,6 +106,9 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
             {messages.length === 0 ? (
               <div className="flex flex-col gap-2">
                 <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.helpAssist.empty')}</p>
+                <p className="m-0 font-mono text-2xs text-ink-faint">
+                  {t(locale, 'panel.helpAssist.emptyHint')}
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {SUGGESTIONS.map((key) => (
                     <button
@@ -169,9 +182,13 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label={t(locale, 'panel.helpAssist.open')}
+        title={t(locale, 'panel.helpAssist.open')}
       >
-        <Icon name="help" className="h-[18px] w-[18px] shrink-0 text-white" />
+        <Icon name="sparkles" className="h-[18px] w-[18px] shrink-0 text-white" />
         <span className="hidden sm:inline">{t(locale, 'panel.helpAssist.fab')}</span>
+        <span className="inline-flex items-center rounded-full bg-white/20 px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase tracking-wide text-white sm:hidden">
+          {t(locale, 'panel.helpAssist.badge')}
+        </span>
       </button>
     </div>
   );
