@@ -254,7 +254,7 @@ export function OverviewTab({
 
       {/* Onboarding Checklist */}
       {onboardingProgress && onboardingProgress.progress < 100 && (
-        <OnboardingChecklist initialProgress={onboardingProgress} />
+        <OnboardingChecklist locale={locale} initialProgress={onboardingProgress} />
       )}
 
       <div className={S.card}>
@@ -409,9 +409,18 @@ export function OverviewTab({
           />
         </div>
         {mixTotalRaw === 0 ? (
-          <p className="m-0 text-prose text-ink-faint">
-            {t(locale, 'panel.overview.typeMixEmpty')}
-          </p>
+          <div>
+            <p className="m-0 text-prose text-ink-faint">
+              {t(locale, 'panel.overview.typeMixEmpty')}
+            </p>
+            <button
+              type="button"
+              className={cn(S.btnBrandSoft, 'mt-3 min-h-touch')}
+              onClick={() => go({ tab: 'vacancies' })}
+            >
+              {t(locale, 'panel.overview.typeMixEmptyCta')}
+            </button>
+          </div>
         ) : (
           <>
             <div role="img" aria-label={t(locale, 'panel.overview.typeHeatAria')}>

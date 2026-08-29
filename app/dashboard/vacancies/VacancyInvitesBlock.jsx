@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { EmptyState } from '../../_components/EmptyState';
 import { inviteStatusLabel } from './vacancy-admin-shared';
 
 export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
@@ -76,8 +77,15 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
 
   if (!rows.length && !err) {
     return (
-      <div className="mt-2.5 font-mono text-xs text-ink-faint">
-        {t(locale, 'recruiting.inviteListTitle')}: —
+      <div className="mt-2.5">
+        <span className="mb-1.5 block font-mono text-xs text-ink-muted">
+          {t(locale, 'recruiting.inviteListTitle')}
+        </span>
+        <EmptyState
+          title={t(locale, 'recruiting.inviteEmptyTitle')}
+          message={t(locale, 'recruiting.inviteEmptyBody')}
+          className="py-4"
+        />
       </div>
     );
   }

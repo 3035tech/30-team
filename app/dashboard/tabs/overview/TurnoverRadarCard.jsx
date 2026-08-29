@@ -93,7 +93,10 @@ export default function TurnoverRadarCard({ locale, companyId }) {
     return (
       <div className={S.card}>
         <h3 className={cn(S.cardTitle, 'mb-2')}>{t(locale, 'turnoverRadar.title')}</h3>
-        <div className={cn('py-6 text-center', S.cardMuted)}>{t(locale, 'turnoverRadar.noRisks')}</div>
+        <p className={cn(S.cardMuted, 'm-0 mb-3')}>{t(locale, 'turnoverRadar.noRisks')}</p>
+        <Link href="/dashboard?tab=team" className={cn(S.cardLink, 'inline-flex min-h-touch items-center')}>
+          {t(locale, 'turnoverRadar.openTeamCta')}
+        </Link>
       </div>
     );
   }

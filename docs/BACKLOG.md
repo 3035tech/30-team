@@ -639,25 +639,10 @@ JSON stdout via `lib/monitoring.js` ligado a Postgres (`lib/db.js`), Redis (`lib
 
 ## Aberto — Polish residual (pós waves 1–12 / demo beta)
 
-Scan pós-polish ([Scan leftover polish](ca404aa3-6fd0-435b-bd8f-40e265504a34)). Beta demo OK; leftovers de alto valor:
-
-### B-2901 — Share WhatsApp a partir do painel Vagas
-Reusar `buildJobShareCopy` / `PublicVacancyShareBar` no card da vaga (hoje só `CopyableLink` `/v` + `/jobs`). Um clique WA no painel para demo de sourcing. **S**
-
-### B-2902 — GlobalSearch / Cmd+K 100% i18n
-`app/_components/GlobalSearch.jsx`: trigger e placeholders hardcoded (`Buscar`, etc.) → `t()` pt-BR+en. **S**
-
-### B-2903 — Diagnóstico “por que não aparece?” em Vagas + Banco
-Estender padrão **B-2601** (`list-absence-diagnostics` + CTA) para pipeline/kanban e Talent Bank. Já notado em B-2601 “depois do MVP”. **M**
+_(B-2901 WhatsApp Vagas · B-2902 GlobalSearch i18n · B-2903 diagnose Banco · B-2905 kanban mobile select · B-2906 VacancyInvites EmptyState · adoção Overview/checklist/HrScore `candidate=` · playbook `vacancies` · Guia `firstWeek` — entregues ago/2026.)_
 
 ### B-2904 — Dark: chips T1–T9 / Compare
 Follow-up **B-1501**: `CompareTab` / chips `TYPE_DATA` legíveis no dark (sem reescrever `C.*` global). **S**
-
-### B-2905 — Kanban mobile: mudar estágio sem drag
-`VacancyKanbanBlock.jsx`: além do HTML5 drag, tap/menu para mover estágio (tablet/demo). **M**
-
-### B-2906 — EmptyState em VacancyInvitesBlock
-Trocar empty `: —` por `EmptyState` + i18n (alinhado aos empties das waves). **S**
 
 **Skip (explícito):** aliases `/climate`/`/pulse`; DISC/DP.
 

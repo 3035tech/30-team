@@ -34,7 +34,7 @@ alwaysApply: false
 4. **Editar** — só `AdminEditButton` (lápis + tint brand).
 5. **Excluir / desativar / arquivar** — só `AdminDeleteButton` (lixeira + tint danger).
 6. **Ver** — `AdminViewButton` (ícone olho + tint info). Ordem canônica na célula: **Ver → Editar → Excluir**.
-7. Ações na linha — dentro de `AdminActionsCell`.
+7. Ações na linha — dentro de `AdminActionsCell` (`inline-flex` + `flex-nowrap` + `justify-end`): ícones **sempre lado a lado**, alinhados à direita sob `AdminActionsTh`. Não usar `flex-col` / `flex-wrap` ad hoc na coluna Ações (infla a altura da linha). `<td className="… text-right">`.
 8. **Links compartilháveis** (`/t`, `/v`, carreiras, Motivadores) — `CopyableLink` com `iconOnly` + `compact` (ícones copiar/abrir; `label` só no tooltip). Não mostrar URL longa nem rótulo texto na célula do grid.
 9. **Ações secundárias** (abrir Equipe, reenviar, clonar, rotacionar link, reset) — `AdminIconButton` (`icon` + `label`; hint imediato via `IconActionTip` + `title`/`aria-label`). Não inventar botão texto ghost ad hoc na coluna Ações.
 

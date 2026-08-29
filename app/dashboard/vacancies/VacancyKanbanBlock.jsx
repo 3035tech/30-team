@@ -11,6 +11,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
 import { formatRelativeAgo, inviteStatusShort, daysInStage, stageAgingTone } from './vacancy-admin-shared';
 import { VacancyOfferBlock } from './VacancyOfferBlock';
+import { EmptyState } from '../../_components/EmptyState';
 
 export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
@@ -121,9 +122,10 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
       {err ? <p className="mb-2.5 mt-0 font-mono text-xs text-danger">{err}</p> : null}
 
       {!loading && !hasAny ? (
-        <p className="text-xs italic text-ink-faint">
-          {t(locale, 'recruiting.pipelineEmpty')}
-        </p>
+        <EmptyState
+          title={t(locale, 'recruiting.pipelineEmpty')}
+          className="py-4"
+        />
       ) : null}
 
       {hasAny && (
@@ -311,6 +313,28 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                               {t(locale, 'recruiting.withNotes')}
                             </div>
                           ) : null}
+                          <label className="mt-2 block md:hidden">
+                            <span className="sr-only">{t(locale, 'recruiting.moveToStage')}</span>
+                            <select
+                              className="ui-select w-full min-h-touch rounded-control border border-ink/12 bg-canvas px-2 py-1.5 font-mono text-2xs text-ink"
+                              value={r.pipelineStage || 'new'}
+                              disabled={isBusy}
+                              aria-label={t(locale, 'recruiting.moveToStageHint')}
+                              title={t(locale, 'recruiting.moveToStageHint')}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                if (!next || next === (r.pipelineStage || 'new')) return;
+                                void moveTo(r, next);
+                              }}
+                            >
+                              {stages.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                         </div>
                       );
                     })}

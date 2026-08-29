@@ -44,7 +44,7 @@ function stageLabel(locale, stage) {
  * Talent bank — reuse people who already applied / linked to a vacancy.
  */
 export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
-  const { promptForm, toast } = useAppFeedback();
+  const { promptForm, toast, notice } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -59,6 +59,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   const [sort, setSort] = useState('lastActivityAt');
   const [sortDir, setSortDir] = useState('desc');
   const [vacancyOptions, setVacancyOptions] = useState([]);
+  const [diagnoseBusy, setDiagnoseBusy] = useState(false);
 
   const loadVacancies = useCallback(async () => {
     try {
@@ -126,6 +127,57 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   const applySearch = () => {
     setQ(qDraft.trim());
     setPage(1);
+  };
+
+  const reasonLabel = (code) => {
+    const key = `panel.team.diagnoseReason.${code}`;
+    const label = t(locale, key);
+    return label === key ? code : label;
+  };
+
+  const runAbsenceDiagnose = async () => {
+    const query = String(q || qDraft || '').trim();
+    if (!query || diagnoseBusy) return;
+    setDiagnoseBusy(true);
+    try {
+      const res = await fetch('/api/admin/help-diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q: query,
+          roster: 'all',
+          listFilter: null,
+          pipeline: stage || null,
+          ...(companyId ? { companyId: Number(companyId) } : {}),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || t(locale, 'panel.talentBank.diagnoseError'));
+      }
+      const reasonLines = (data.reasons || [])
+        .map((r) => `· ${reasonLabel(r.code)}`)
+        .join('\n');
+      const candidateLines = (data.candidates || [])
+        .slice(0, 4)
+        .map((c) => `· ${c.name || ''}`)
+        .join('\n');
+      await notice({
+        title: t(locale, 'panel.talentBank.diagnoseTitle'),
+        message: [
+          reasonLines || t(locale, 'panel.talentBank.diagnoseNoReasons'),
+          candidateLines
+            ? `\n${t(locale, 'panel.talentBank.diagnoseFoundPeople')}\n${candidateLines}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.talentBank.diagnoseError'), 'error');
+    } finally {
+      setDiagnoseBusy(false);
+    }
   };
 
   const addToVacancy = async (candidateId, personName) => {
@@ -280,8 +332,19 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
 
       {!loading && !error && items.length === 0 ? (
         <EmptyState
-          title={t(locale, 'panel.talentBank.emptyTitle')}
-          message={t(locale, 'panel.talentBank.emptyBody')}
+          title={
+            q
+              ? t(locale, 'panel.talentBank.emptySearchTitle')
+              : t(locale, 'panel.talentBank.emptyTitle')
+          }
+          message={
+            q
+              ? t(locale, 'panel.talentBank.emptySearchBody')
+              : t(locale, 'panel.talentBank.emptyBody')
+          }
+          actionLabel={q ? t(locale, 'panel.talentBank.diagnoseCta') : undefined}
+          onAction={q ? runAbsenceDiagnose : undefined}
+          actionDisabled={diagnoseBusy}
         />
       ) : null}
 

@@ -186,7 +186,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                   {topPerformers.slice(0, 3).map((person) => (
                     <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
-                        href={`/dashboard?tab=team&candidateId=${person.id}`}
+                        href={`/dashboard?tab=team&candidate=${person.id}`}
                         className={cn(S.cardRowTitle, 'hover:underline')}
                       >
                         {person.fullName}
@@ -219,7 +219,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
                   {bottomPerformers.slice(0, 3).map((person) => (
                     <li key={person.id} className="flex items-center justify-between gap-2">
                       <Link
-                        href={`/dashboard?tab=team&candidateId=${person.id}`}
+                        href={`/dashboard?tab=team&candidate=${person.id}`}
                         className={cn(S.cardRowTitle, 'hover:underline')}
                       >
                         {person.fullName}

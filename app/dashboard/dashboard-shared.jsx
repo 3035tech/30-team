@@ -632,8 +632,15 @@ function AdminIconButton({
 }
 
 function AdminActionsCell({ children, className }) {
+  /* inline-flex + nowrap: keep Ver/Editar/Excluir side-by-side in every admin grid
+     (flex-wrap + narrow Ações column was stacking icons and inflating row height). */
   return (
-    <div className={cn('flex w-full flex-wrap items-center justify-end gap-1', className)}>
+    <div
+      className={cn(
+        'inline-flex max-w-none flex-nowrap items-center justify-end gap-1 whitespace-nowrap',
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -643,7 +650,7 @@ function AdminActionsTh({ children }) {
   return (
     <th
       scope="col"
-      className="w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
+      className="w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right align-middle font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
     >
       {children}
     </th>

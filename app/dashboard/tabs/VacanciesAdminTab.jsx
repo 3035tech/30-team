@@ -46,6 +46,7 @@ import { VacancyFormSection } from '../vacancies/VacancyFormSection';
 import { VacancyDescriptionAssistBar } from '../vacancies/VacancyDescriptionAssistBar';
 import { VacancyInviteByEmail } from '../vacancies/VacancyInviteByEmail';
 import { VacancyInvitesBlock } from '../vacancies/VacancyInvitesBlock';
+import { VacancyWhatsAppShareButton } from '../vacancies/VacancyWhatsAppShareButton';
 import { VacancyRubricEditor } from '../vacancies/VacancyRubricEditor';
 import { VacancyFitRankingBlock } from '../vacancies/VacancyFitRankingBlock';
 import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalyticsBlock';
@@ -1138,6 +1139,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         iconOnly
                         compact
                         disabled={loading}
+                      />
+                      <VacancyWhatsAppShareButton
+                        locale={locale}
+                        pageUrl={publicPageLink}
+                        title={v.title}
+                        companyName={v.companyName}
+                        disabled={loading || !v.publicPageEnabled}
                       />
                       {!v.publicPageEnabled ? (
                         <span className={META_FAINT}>

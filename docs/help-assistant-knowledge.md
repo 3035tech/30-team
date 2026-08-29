@@ -48,6 +48,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Auditoria (super admin) | `access` (Step11) |
 | Remuneração interna | `compensation` |
 | LMS / cursos | `lmsBasic` |
+| Primeira semana (risco · fit · PDI) | `firstWeek` |
+| Roteiro demo | `demoRoteiro` |
 | Filtro de empresa / escala (admin Overview+Comparar) | `dashboardCohort` |
 | HR Score | `b1000HrScore` |
 | Radar de rotatividade | `b1000TurnoverRadar` |
