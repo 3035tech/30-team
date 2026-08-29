@@ -6,6 +6,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { TagChips } from '../../_components/TagInput';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { formatTagList, parseTagList } from '../../../lib/tag-list';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
@@ -19,7 +20,6 @@ import {
   AdminPageHeader,
   AdminTableShell,
   AdminViewButton,
-  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -354,9 +354,15 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminPageHeader title={t('title')} subtitle={t('subtitle')} />
+      <AdminPageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          isAdmin ? <AdminCreateButton label={t('create')} onClick={handleCreate} /> : null
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <AdminListFilters aria-label={t('title')}>
         <AdminListSearch
           locale={locale}
           value={nameQ}
@@ -367,15 +373,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           placeholder={t('searchNamePh')}
           showButton={false}
         />
-        {isAdmin && (
-          <AdminCreateButton label={t('create')} onClick={handleCreate} />
-        )}
-        {themes.length > 0 && (
-          <select
+        {themes.length > 0 ? (
+          <AdminListFilterSelect
+            label={t('theme_col')}
             value={filterTheme}
-            onChange={(e) => setFilterTheme(e.target.value)}
-            aria-label={t('filterTheme')}
-            className={S.select}
+            onChange={(v) => {
+              setFilterTheme(v);
+              setPage(1);
+            }}
           >
             <option value="">{t('allThemes')}</option>
             {themes.map((theme) => (
@@ -383,13 +388,15 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
                 {theme}
               </option>
             ))}
-          </select>
-        )}
-        <select
+          </AdminListFilterSelect>
+        ) : null}
+        <AdminListFilterSelect
+          label={t('type_col')}
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          aria-label={t('filterType')}
-          className={S.select}
+          onChange={(v) => {
+            setFilterType(v);
+            setPage(1);
+          }}
         >
           <option value="">{t('allTypes')}</option>
           <option value="course">{t('course')}</option>
@@ -399,8 +406,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           <option value="workshop">{t('workshop')}</option>
           <option value="mentoring">{t('mentoring')}</option>
           <option value="other">{t('other')}</option>
-        </select>
-      </div>
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {resources.length === 0 ? (
         <div className="flex flex-col gap-3">

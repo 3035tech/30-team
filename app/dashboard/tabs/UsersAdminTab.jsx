@@ -7,6 +7,7 @@ import { t } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
 import { clientSortNextDir, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminTh, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton } from '../dashboard-shared';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { StatusToneChip } from '../../_components/StatusToneChip';
@@ -49,6 +50,10 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   const { page: usersPage, pageSize: usersPageSize } = parseUsersPagination(sp);
   const listSort = parseUsersSort(sp);
   const usersQ = String(sp.usersQ || '').trim();
+  const usersRole = String(sp.usersRole || '').trim();
+  const usersActive = String(sp.usersActive || '').trim();
+  const usersCompany = String(sp.usersCompany || '').trim();
+  const hasUsersFilter = Boolean(usersQ || usersRole || usersActive || usersCompany);
 
   const [loading, setLoading] = useState(false);
   const [searchDraft, setSearchDraft] = useState(usersQ);
@@ -113,6 +118,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         });
         const q = String(snap.usersQ || '').trim();
         if (q) qs.set('q', q);
+        const role = String(snap.usersRole || '').trim();
+        if (role) qs.set('role', role);
+        const active = String(snap.usersActive || '').trim();
+        if (active) qs.set('active', active);
+        const companyId = String(snap.usersCompany || '').trim();
+        if (companyId) qs.set('companyId', companyId);
         const ru = await fetch(`/api/admin/users?${qs.toString()}`);
         const du = await ru.json();
         if (!ru.ok) throw new Error(du?.error || t(locale, 'panel.admin.loadUsersFailed'));
@@ -144,6 +155,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     });
     const q = String(snap.usersQ || '').trim();
     if (q) qs.set('q', q);
+    const role = String(snap.usersRole || '').trim();
+    if (role) qs.set('role', role);
+    const active = String(snap.usersActive || '').trim();
+    if (active) qs.set('active', active);
+    const companyId = String(snap.usersCompany || '').trim();
+    if (companyId) qs.set('companyId', companyId);
     setLoading(true);
     setError('');
     try {
@@ -457,24 +474,80 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           </div>
         </div>
         <div className="mt-3">
-          <AdminListSearch
-            locale={locale}
-            value={searchDraft}
-            onChange={setSearchDraft}
-            onSubmit={(v) => pushUsersSearch(String(v || '').trim())}
-            placeholder={t(locale, 'panel.admin.usersSearchPh')}
-          />
+          <AdminListFilters aria-label={t(locale, 'panel.admin.usersList')}>
+            <AdminListSearch
+              locale={locale}
+              value={searchDraft}
+              onChange={setSearchDraft}
+              onSubmit={(v) => pushUsersSearch(String(v || '').trim())}
+              placeholder={t(locale, 'panel.admin.usersSearchPh')}
+            />
+            <AdminListFilterSelect
+              label={t(locale, 'panel.admin.filterRole')}
+              value={usersRole}
+              onChange={(v) => {
+                if (!navigateDashboard) return;
+                navigateDashboard({
+                  usersRole: v || null,
+                  usersPage: 1,
+                  tab: 'users',
+                });
+              }}
+            >
+              <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+              <option value="hr">hr</option>
+              <option value="direction">direction</option>
+              <option value="admin">admin</option>
+            </AdminListFilterSelect>
+            <AdminListFilterSelect
+              label={t(locale, 'panel.admin.filterActive')}
+              value={usersActive}
+              onChange={(v) => {
+                if (!navigateDashboard) return;
+                navigateDashboard({
+                  usersActive: v || null,
+                  usersPage: 1,
+                  tab: 'users',
+                });
+              }}
+            >
+              <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+              <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+              <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+            </AdminListFilterSelect>
+            {companyOptions.length > 0 ? (
+              <AdminListFilterSelect
+                label={t(locale, 'panel.admin.filterCompany')}
+                value={usersCompany}
+                onChange={(v) => {
+                  if (!navigateDashboard) return;
+                  navigateDashboard({
+                    usersCompany: v || null,
+                    usersPage: 1,
+                    tab: 'users',
+                  });
+                }}
+              >
+                <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+                {companyOptions.map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </option>
+                ))}
+              </AdminListFilterSelect>
+            ) : null}
+          </AdminListFilters>
         </div>
         {usersTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
               message={
-                usersQ
+                hasUsersFilter
                   ? t(locale, 'panel.admin.noUsersMatch')
                   : t(locale, 'panel.admin.noUsersYet')
               }
-              actionLabel={usersQ ? undefined : t(locale, 'panel.admin.createUserBtn')}
-              onAction={usersQ ? undefined : openCreateUser}
+              actionLabel={hasUsersFilter ? undefined : t(locale, 'panel.admin.createUserBtn')}
+              onAction={hasUsersFilter ? undefined : openCreateUser}
               actionDisabled={loading}
             />
           </div>

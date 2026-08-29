@@ -23,6 +23,9 @@ export async function GET(request) {
     sort: url.searchParams.get('sort') || 'createdAt',
     sortDir: url.searchParams.get('sortDir') || 'desc',
     q: url.searchParams.get('q') || '',
+    role: url.searchParams.get('role') || '',
+    active: url.searchParams.get('active') || '',
+    filterCompanyId: url.searchParams.get('companyId') || '',
     isAdmin: scope.isAdmin,
     companyId: scope.companyId,
   });

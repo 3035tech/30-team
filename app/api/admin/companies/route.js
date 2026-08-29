@@ -73,6 +73,7 @@ export async function GET(request) {
   const orderSql = sqlCompaniesOrderBy(sort, dir);
   const qRaw = String(url.searchParams.get('q') || '').trim().slice(0, 80);
   const q = qRaw.length >= 1 ? qRaw : '';
+  const activeRaw = String(url.searchParams.get('active') || '').trim().toLowerCase();
 
   const whereParts = ['c.deleted = FALSE'];
   const params = [];
@@ -80,6 +81,11 @@ export async function GET(request) {
     params.push(`%${q}%`);
     const i = params.length;
     whereParts.push(`(c.name ILIKE $${i} OR COALESCE(c.slug, '') ILIKE $${i})`);
+  }
+  if (activeRaw === '1' || activeRaw === 'true' || activeRaw === 'active') {
+    whereParts.push('c.active = TRUE');
+  } else if (activeRaw === '0' || activeRaw === 'false' || activeRaw === 'inactive') {
+    whereParts.push('c.active = FALSE');
   }
   const whereSql = whereParts.join(' AND ');
 

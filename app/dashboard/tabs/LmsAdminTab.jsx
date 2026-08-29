@@ -8,6 +8,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
 import { FormField } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { EntitySearchSelect } from '../../_components/EntitySearchSelect';
 import { CopyableLink } from '../../_components/CopyableLink';
 import {
@@ -17,6 +18,7 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminIconButton,
+  AdminListSearch,
   AdminPageHeader,
   AdminTableShell,
   AdminTh,
@@ -43,6 +45,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
   const pdfInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState([]);
+  const [courseQ, setCourseQ] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
@@ -597,6 +601,14 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
 
   if (loading) return <AppLoading variant="panel" />;
 
+  const filteredCourses = courses.filter((c) => {
+    if (activeFilter === 'active' && !c.active) return false;
+    if (activeFilter === 'inactive' && c.active) return false;
+    const q = String(courseQ || '').trim().toLowerCase();
+    if (!q) return true;
+    return String(c.title || '').toLowerCase().includes(q);
+  });
+
   return (
     <div className={S.stack}>
       <AdminPageHeader
@@ -615,6 +627,24 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className={S.cardTight}>
+            <AdminListFilters aria-label={t(locale, 'panel.lms.title')}>
+              <AdminListSearch
+                locale={locale}
+                value={courseQ}
+                onChange={setCourseQ}
+                placeholder={t(locale, 'panel.lms.searchCoursePh')}
+                showButton={false}
+              />
+              <AdminListFilterSelect
+                label={t(locale, 'panel.admin.filterActive')}
+                value={activeFilter}
+                onChange={setActiveFilter}
+              >
+                <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+                <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+                <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+              </AdminListFilterSelect>
+            </AdminListFilters>
             <AdminTableShell minWidth="480px">
               <thead>
                 <tr className="border-b border-ink/10">
@@ -625,7 +655,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                 </tr>
               </thead>
               <tbody>
-                {courses.map((c) => (
+                {filteredCourses.map((c) => (
                   <tr
                     key={c.id}
                     className={cn(

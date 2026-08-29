@@ -13,6 +13,7 @@ import { RichTextView } from '../../_components/RichTextView';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -39,6 +40,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const [sort, setSort] = useState('title');
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
+  const [impactFilter, setImpactFilter] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
@@ -59,6 +61,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         impactLevel: 'Nível de impacto',
         impactHigh: 'Alto',
         impactCritical: 'Crítico',
+        filterAll: 'Todos',
         successorsCount: 'Sucessores',
         createRoleSuccess: 'Papel crítico criado',
         updateRoleSuccess: 'Papel atualizado',
@@ -114,6 +117,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         impactLevel: 'Impact level',
         impactHigh: 'High',
         impactCritical: 'Critical',
+        filterAll: 'All',
         successorsCount: 'Successors',
         createRoleSuccess: 'Critical role created',
         updateRoleSuccess: 'Role updated',
@@ -532,6 +536,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
     const collator = locale === 'en' ? 'en' : 'pt-BR';
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...roles].filter((row) => {
+      if (impactFilter && row.impactLevel !== impactFilter) return false;
       if (!q) return true;
       return String(row.title || '').toLowerCase().includes(q);
     });
@@ -546,7 +551,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
     });
     return rows;
-  }, [roles, sort, sortDir, locale, nameQ]);
+  }, [roles, sort, sortDir, locale, nameQ, impactFilter]);
 
   const total = sortedRoles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -571,16 +576,30 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       />
 
       {roles.length > 0 ? (
-        <AdminListSearch
-          locale={locale}
-          value={nameQ}
-          onChange={(v) => {
-            setNameQ(v);
-            setPage(1);
-          }}
-          placeholder={t('searchNamePh')}
-          showButton={false}
-        />
+        <AdminListFilters aria-label={t('title')}>
+          <AdminListSearch
+            locale={locale}
+            value={nameQ}
+            onChange={(v) => {
+              setNameQ(v);
+              setPage(1);
+            }}
+            placeholder={t('searchNamePh')}
+            showButton={false}
+          />
+          <AdminListFilterSelect
+            label={t('impactLevel')}
+            value={impactFilter}
+            onChange={(v) => {
+              setImpactFilter(v);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('filterAll')}</option>
+            <option value="high">{t('impactHigh')}</option>
+            <option value="critical">{t('impactCritical')}</option>
+          </AdminListFilterSelect>
+        </AdminListFilters>
       ) : null}
 
       {roles.length === 0 ? (

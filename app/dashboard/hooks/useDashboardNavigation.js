@@ -138,6 +138,15 @@ export function useDashboardNavigation({
     const usersQ =
       opts.usersQ !== undefined ? opts.usersQ : urlParams.get('usersQ') || '';
     if (usersQ) p.set('usersQ', String(usersQ));
+    const usersRole =
+      opts.usersRole !== undefined ? opts.usersRole : urlParams.get('usersRole') || '';
+    if (usersRole) p.set('usersRole', String(usersRole));
+    const usersActive =
+      opts.usersActive !== undefined ? opts.usersActive : urlParams.get('usersActive') || '';
+    if (usersActive) p.set('usersActive', String(usersActive));
+    const usersCompany =
+      opts.usersCompany !== undefined ? opts.usersCompany : urlParams.get('usersCompany') || '';
+    if (usersCompany) p.set('usersCompany', String(usersCompany));
 
     const leadsStatus =
       opts.leadsStatus !== undefined ? opts.leadsStatus : urlParams.get('leadsStatus') || 'all';
@@ -183,6 +192,11 @@ export function useDashboardNavigation({
     const companiesQ =
       opts.companiesQ !== undefined ? opts.companiesQ : urlParams.get('companiesQ') || '';
     if (companiesQ) p.set('companiesQ', String(companiesQ));
+    const companiesActive =
+      opts.companiesActive !== undefined
+        ? opts.companiesActive
+        : urlParams.get('companiesActive') || '';
+    if (companiesActive) p.set('companiesActive', String(companiesActive));
 
     const resolvedTab =
       opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';

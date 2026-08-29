@@ -22,6 +22,7 @@ import {
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { DateField } from '../../_components/DateField';
 import { EmptyState } from '../../_components/EmptyState';
@@ -211,6 +212,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const { page: companiesPage, pageSize: companiesPageSize } = parseCompaniesPagination(sp);
   const listSort = parseCompaniesSort(sp);
   const companiesQ = String(sp.companiesQ || '').trim();
+  const companiesActive = String(sp.companiesActive || '').trim();
+  const hasCompaniesFilter = Boolean(companiesQ || companiesActive);
   const [searchDraft, setSearchDraft] = useState(companiesQ);
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
 
@@ -321,6 +324,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       });
       const q = String(snap.companiesQ || '').trim();
       if (q) qs.set('q', q);
+      const active = String(snap.companiesActive || '').trim();
+      if (active) qs.set('active', active);
       const res = await fetch(`/api/admin/companies?${qs.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.loadCompaniesFailed'));
@@ -554,24 +559,42 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           </div>
         </div>
         <div className="mt-3">
-          <AdminListSearch
-            locale={locale}
-            value={searchDraft}
-            onChange={setSearchDraft}
-            onSubmit={(v) => pushCompaniesSearch(String(v || '').trim())}
-            placeholder={t(locale, 'panel.admin.companiesSearchPh')}
-          />
+          <AdminListFilters aria-label={t(locale, 'panel.admin.companiesList')}>
+            <AdminListSearch
+              locale={locale}
+              value={searchDraft}
+              onChange={setSearchDraft}
+              onSubmit={(v) => pushCompaniesSearch(String(v || '').trim())}
+              placeholder={t(locale, 'panel.admin.companiesSearchPh')}
+            />
+            <AdminListFilterSelect
+              label={t(locale, 'panel.admin.filterActive')}
+              value={companiesActive}
+              onChange={(v) => {
+                if (!navigateDashboard) return;
+                navigateDashboard({
+                  companiesActive: v || null,
+                  companiesPage: 1,
+                  tab: 'companies',
+                });
+              }}
+            >
+              <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+              <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+              <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+            </AdminListFilterSelect>
+          </AdminListFilters>
         </div>
         {companiesTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
               message={
-                companiesQ
+                hasCompaniesFilter
                   ? t(locale, 'panel.admin.noUsersMatch')
                   : t(locale, 'panel.admin.noCompaniesYet')
               }
-              actionLabel={companiesQ ? undefined : t(locale, 'panel.admin.createCompanyTitle')}
-              onAction={companiesQ ? undefined : openCreateCompany}
+              actionLabel={hasCompaniesFilter ? undefined : t(locale, 'panel.admin.createCompanyTitle')}
+              onAction={hasCompaniesFilter ? undefined : openCreateCompany}
               actionDisabled={loading}
             />
           </div>

@@ -6,7 +6,8 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S, AdminListPager, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { FormField } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 
 function formatActor(row, locale) {
@@ -136,21 +137,19 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
         subtitle={t(locale, 'panel.audit.intro')}
       />
 
-      <div className={cn(formFieldRowClass, 'gap-3')}>
-        <FormField label={t(locale, 'panel.audit.filterActorKind')}>
-          <select
-            className={cn(S.select, 'min-w-[140px]')}
-            value={filters.actorKind}
-            onChange={(e) => pushFilters({ actorKind: e.target.value, page: 1 })}
-          >
-            <option value="all">{t(locale, 'panel.audit.actorKindAll')}</option>
-            <option value="manager">{t(locale, 'panel.audit.actorKindManager')}</option>
-            <option value="employee">{t(locale, 'panel.audit.actorKindEmployee')}</option>
-            <option value="system">{t(locale, 'panel.audit.actorKindSystem')}</option>
-            <option value="public">{t(locale, 'panel.audit.actorKindPublic')}</option>
-          </select>
-        </FormField>
-        <FormField label={t(locale, 'panel.audit.filterCompanyId')}>
+      <AdminListFilters aria-label={t(locale, 'panel.audit.title')}>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.audit.filterActorKind')}
+          value={filters.actorKind}
+          onChange={(v) => pushFilters({ actorKind: v, page: 1 })}
+        >
+          <option value="all">{t(locale, 'panel.audit.actorKindAll')}</option>
+          <option value="manager">{t(locale, 'panel.audit.actorKindManager')}</option>
+          <option value="employee">{t(locale, 'panel.audit.actorKindEmployee')}</option>
+          <option value="system">{t(locale, 'panel.audit.actorKindSystem')}</option>
+          <option value="public">{t(locale, 'panel.audit.actorKindPublic')}</option>
+        </AdminListFilterSelect>
+        <FormField label={t(locale, 'panel.audit.filterCompanyId')} className="min-w-[7rem] shrink-0">
           <input
             className={cn(S.input, 'w-28')}
             inputMode="numeric"
@@ -162,7 +161,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
             }}
           />
         </FormField>
-        <FormField label={t(locale, 'panel.audit.filterAction')}>
+        <FormField label={t(locale, 'panel.audit.filterAction')} className="min-w-[11rem] shrink-0">
           <input
             className={cn(S.input, 'min-w-[180px]')}
             value={actionDraft}
@@ -173,7 +172,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
             }}
           />
         </FormField>
-        <FormField label={t(locale, 'panel.audit.filterSearch')} className="min-w-[200px] flex-1">
+        <FormField label={t(locale, 'panel.audit.filterSearch')} className="min-w-[200px] shrink-0 flex-1">
           <input
             className={cn(S.input, 'w-full')}
             value={qDraft}
@@ -191,7 +190,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
         >
           {t(locale, 'panel.audit.applyFilters')}
         </button>
-      </div>
+      </AdminListFilters>
 
       {error ? <p className="m-0 font-mono text-xs text-danger">{error}</p> : null}
       {loading ? <p className={cn(S.muted, 'text-sm')}>{t(locale, 'panel.common.loading')}</p> : null}

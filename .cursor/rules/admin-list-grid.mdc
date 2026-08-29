@@ -19,7 +19,14 @@ alwaysApply: false
    - `AdminTh` — coluna estática (não ordenável)
    - `AdminActionsTh` — coluna Ações alinhada à direita
    - `AdminListPager` — total + page size + Anterior/Próxima (`PAGE_SIZE_OPTIONS`)
-2b. **Cabeçalho** — `AdminPageHeader` (título + subtítulo + actions). **Busca** — `AdminListSearch`.
+2b. **Cabeçalho** — `AdminPageHeader` (título + subtítulo + actions).
+2c. **Filtros (obrigatório)** — uma **única linha** horizontal com `AdminListFilters` (`app/_components/AdminListFilters.jsx`):
+   - Filhos: `AdminListSearch` + `AdminListFilterSelect` (0–3 selects relevantes).
+   - Só filtros alinhados a **colunas da tabela** (status, tipo, ativo, empresa, motivo…). Não inventar filtros para Ações / notas / id.
+   - Avaliar listagem a listagem o que é útil; max ~3 selects + busca para caber numa linha (`flex-nowrap` + `overflow-x-auto`).
+   - Lista **server-paginated** → filtro na API/SQL (não só na página atual). Lista já carregada → filtro no `useMemo` com a busca.
+   - CTAs de criar ficam no `AdminPageHeader` / fora da barra de filtros.
+   - Reusar labels compartilhados quando couber: `panel.admin.filterActive` / `filterAll` / `filterActiveYes` / `filterActiveNo` / `filterRole` / `filterCompany`.
 3. **Criar** — só `AdminCreateButton` (`S.btnPrimary` + ícone `plus`). Não inventar outro roxo / `+ ` solto.
 4. **Editar** — só `AdminEditButton` (lápis + tint brand).
 5. **Excluir / desativar / arquivar** — só `AdminDeleteButton` (lixeira + tint danger).
@@ -45,6 +52,13 @@ import {
 } from '../dashboard-shared';
 ```
 
+## Imports (filtros)
+
+```js
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { AdminListSearch, … } from '../dashboard-shared';
+```
+
 ## Anti-padrões
 
 - Links texto “Editar” / “Desativar” coloridos ad hoc
@@ -52,10 +66,14 @@ import {
 - Card-list **nova** quando a entidade é cadastro tabular (preferir tabela + pager)
 - Segundo pager / sort header inventado
 - CTA create com `btnBrandSoft` como ação primária de “Novo …”
+- Filtros em **duas+ linhas** ou `flex-wrap` empilhando selects (usar `AdminListFilters`)
+- Só busca sem selects quando a tabela tem colunas categóricas relevantes (status/ativo/tipo…)
+- Filtro client-only em listagem **paginada no servidor** (resultados incompletos)
+- Select de filtro sem label (`FormField` / `AdminListFilterSelect`)
 
 ## Exceções (não forçar tabela)
 
-- **Vagas** — listagem rica (kanban/cards + muitas ações); ainda assim preferir `AdminCreateButton` / `AdminEditButton` / `AdminDeleteButton` onde couber.
+- **Vagas** — listagem rica (kanban/cards + muitas ações); ainda assim preferir `AdminCreateButton` / `AdminEditButton` / `AdminDeleteButton` onde couber. Filtros de coluna no padrão `AdminListFilters` são opcionais aqui (já há filtro por vaga na URL).
 - **Kanban / pipeline** — drag-and-drop; não é grid tabular.
 - Listas **muito** curtas e hierárquicas (ex. categorias como chips) podem ficar fora da tabela principal, mas o CRUD da entidade principal segue o grid.
 

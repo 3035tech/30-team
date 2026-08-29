@@ -30,6 +30,7 @@ import {
 } from '../../_components/AdminRichFormDrawer';
 import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { fieldInputClass } from '../../_components/form-control-styles';
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
@@ -55,6 +56,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
   const [sort, setSort] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
 
   const loadRoles = async () => {
     if (!companyId) return;
@@ -239,12 +241,14 @@ export function JobRolesAdminTab({ locale, companyId }) {
     const collator = locale === 'en' ? 'en' : 'pt-BR';
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...roles].filter((r) => {
+      if (activeFilter === 'active' && !r.active) return false;
+      if (activeFilter === 'inactive' && r.active) return false;
       if (!q) return true;
       return String(r.name || '').toLowerCase().includes(q);
     });
     rows.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), collator) * dirMul);
     return rows;
-  }, [roles, sort, sortDir, locale, nameQ]);
+  }, [roles, sort, sortDir, locale, nameQ, activeFilter]);
 
   const total = sortedRoles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -297,16 +301,30 @@ export function JobRolesAdminTab({ locale, companyId }) {
         />
       ) : (
         <>
-        <AdminListSearch
-          locale={locale}
-          value={nameQ}
-          onChange={(v) => {
-            setNameQ(v);
-            setPage(1);
-          }}
-          placeholder={t(locale, 'panel.admin.nameSearchPh')}
-          showButton={false}
-        />
+        <AdminListFilters aria-label={t(locale, 'jobRoles.title')}>
+          <AdminListSearch
+            locale={locale}
+            value={nameQ}
+            onChange={(v) => {
+              setNameQ(v);
+              setPage(1);
+            }}
+            placeholder={t(locale, 'panel.admin.nameSearchPh')}
+            showButton={false}
+          />
+          <AdminListFilterSelect
+            label={t(locale, 'panel.admin.filterActive')}
+            value={activeFilter}
+            onChange={(v) => {
+              setActiveFilter(v);
+              setPage(1);
+            }}
+          >
+            <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+            <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+            <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+          </AdminListFilterSelect>
+        </AdminListFilters>
         {sortedRoles.length === 0 ? (
           <EmptyState message={t(locale, 'panel.admin.noUsersMatch')} />
         ) : (

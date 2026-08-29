@@ -12,6 +12,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { PERFORMANCE_CYCLE_STATUS } from '../../../lib/domain-status.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { toDateOnlyIso } from '../../../lib/format-display-date.js';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -38,6 +39,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [sort, setSort] = useState('periodStart');
   const [sortDir, setSortDir] = useState('desc');
   const [nameQ, setNameQ] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   const t = (key) => {
@@ -60,6 +62,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         statusDraft: 'Rascunho',
         statusActive: 'Ativo',
         statusClosed: 'Fechado',
+        filterAll: 'Todos',
         reviewsCount: 'Avaliações',
         submittedCount: 'submetidas',
         createCycleSuccess: 'Ciclo criado com sucesso',
@@ -111,6 +114,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         statusDraft: 'Draft',
         statusActive: 'Active',
         statusClosed: 'Closed',
+        filterAll: 'All',
         reviewsCount: 'Reviews',
         submittedCount: 'submitted',
         createCycleSuccess: 'Cycle created successfully',
@@ -441,6 +445,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     const collator = locale === 'en' ? 'en' : 'pt-BR';
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...cycles].filter((row) => {
+      if (statusFilter && row.status !== statusFilter) return false;
       if (!q) return true;
       return String(row.title || '').toLowerCase().includes(q);
     });
@@ -459,7 +464,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       return String(a.title || '').localeCompare(String(b.title || ''), collator) * dirMul;
     });
     return rows;
-  }, [cycles, sort, sortDir, locale, nameQ]);
+  }, [cycles, sort, sortDir, locale, nameQ, statusFilter]);
 
   const total = sortedCycles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -492,16 +497,31 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         </a>
       </InlineCallout>
 
-      <AdminListSearch
-        locale={locale}
-        value={nameQ}
-        onChange={(v) => {
-          setNameQ(v);
-          setPage(1);
-        }}
-        placeholder={t('searchNamePh')}
-        showButton={false}
-      />
+      <AdminListFilters aria-label={t('title')}>
+        <AdminListSearch
+          locale={locale}
+          value={nameQ}
+          onChange={(v) => {
+            setNameQ(v);
+            setPage(1);
+          }}
+          placeholder={t('searchNamePh')}
+          showButton={false}
+        />
+        <AdminListFilterSelect
+          label={t('status')}
+          value={statusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
+          <option value="">{t('filterAll')}</option>
+          <option value={PERFORMANCE_CYCLE_STATUS.DRAFT}>{t('statusDraft')}</option>
+          <option value={PERFORMANCE_CYCLE_STATUS.ACTIVE}>{t('statusActive')}</option>
+          <option value={PERFORMANCE_CYCLE_STATUS.CLOSED}>{t('statusClosed')}</option>
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {cycles.length === 0 ? (
         <EmptyState

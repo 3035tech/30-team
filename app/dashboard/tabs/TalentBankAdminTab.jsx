@@ -21,7 +21,7 @@ import {
   clientSortNextDir,
   TypeBadge,
 } from '../dashboard-shared';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 
 const STAGE_I18N = {
   new: 'recruiting.pipelineNew',
@@ -202,7 +202,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t(locale, 'panel.talentBank.intro')}
       />
 
-      <div className={cn(formFieldRowClass, 'gap-3')}>
+      <AdminListFilters aria-label={t(locale, 'panel.talentBank.title')}>
         <AdminListSearch
           locale={locale}
           value={qDraft}
@@ -212,58 +212,52 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
           className="min-w-[200px] flex-1 items-end self-end"
           inputClassName="w-full max-w-none"
         />
-        <FormField label={t(locale, 'panel.talentBank.filterVacancy')}>
-          <select
-            value={vacancyId}
-            onChange={(e) => {
-              setVacancyId(e.target.value);
-              setPage(1);
-            }}
-            className={S.select}
-          >
-            <option value="">{t(locale, 'panel.talentBank.allVacancies')}</option>
-            {vacancyOptions.map((v) => (
-              <option key={v.id} value={String(v.id)}>
-                {v.title || `#${v.id}`}
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label={t(locale, 'panel.talentBank.filterStage')}>
-          <select
-            value={stage}
-            onChange={(e) => {
-              setStage(e.target.value);
-              setPage(1);
-            }}
-            className={S.select}
-          >
-            <option value="">{t(locale, 'panel.talentBank.allStages')}</option>
-            {PIPELINE_STAGES.map((s) => (
-              <option key={s} value={s}>
-                {stageLabel(locale, s)}
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label={t(locale, 'panel.talentBank.filterType')}>
-          <select
-            value={topType}
-            onChange={(e) => {
-              setTopType(e.target.value);
-              setPage(1);
-            }}
-            className={S.select}
-          >
-            <option value="">{t(locale, 'panel.talentBank.allTypes')}</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-              <option key={n} value={String(n)}>
-                T{n}
-              </option>
-            ))}
-          </select>
-        </FormField>
-      </div>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.talentBank.filterVacancy')}
+          value={vacancyId}
+          onChange={(v) => {
+            setVacancyId(v);
+            setPage(1);
+          }}
+        >
+          <option value="">{t(locale, 'panel.talentBank.allVacancies')}</option>
+          {vacancyOptions.map((v) => (
+            <option key={v.id} value={String(v.id)}>
+              {v.title || `#${v.id}`}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.talentBank.filterStage')}
+          value={stage}
+          onChange={(v) => {
+            setStage(v);
+            setPage(1);
+          }}
+        >
+          <option value="">{t(locale, 'panel.talentBank.allStages')}</option>
+          {PIPELINE_STAGES.map((s) => (
+            <option key={s} value={s}>
+              {stageLabel(locale, s)}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.talentBank.filterType')}
+          value={topType}
+          onChange={(v) => {
+            setTopType(v);
+            setPage(1);
+          }}
+        >
+          <option value="">{t(locale, 'panel.talentBank.allTypes')}</option>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <option key={n} value={String(n)}>
+              T{n}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
       {loading ? (

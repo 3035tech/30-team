@@ -8,6 +8,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import {
   dialogBtnGhostClass,
   dialogBtnPrimaryClass,
@@ -43,6 +44,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [sort, setSort] = useState('exitDate');
   const [sortDir, setSortDir] = useState('desc');
   const [nameQ, setNameQ] = useState('');
+  const [exitTypeFilter, setExitTypeFilter] = useState('');
+  const [exitReasonFilter, setExitReasonFilter] = useState('');
   const { promptForm, toast, confirm } = useAppFeedback();
 
   /** Tab already gated by USERS_MANAGE; allow write for hr/direction too. */
@@ -64,6 +67,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Colaborador',
         exitType: 'Tipo',
         exitReason: 'Motivo',
+        filterAll: 'Todos',
         actions: 'Ações',
         view: 'Ver',
         edit: 'Editar',
@@ -143,6 +147,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         candidateName: 'Employee',
         exitType: 'Type',
         exitReason: 'Reason',
+        filterAll: 'All',
         actions: 'Actions',
         view: 'View',
         edit: 'Edit',
@@ -411,6 +416,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
     const dirMul = sortDir === 'asc' ? 1 : -1;
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...records].filter((row) => {
+      if (exitTypeFilter && row.exitType !== exitTypeFilter) return false;
+      if (exitReasonFilter && row.exitReason !== exitReasonFilter) return false;
       if (!q) return true;
       return String(row.candidateName || '').toLowerCase().includes(q);
     });
@@ -425,7 +432,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       return String(av || '').localeCompare(String(bv || ''), locale === 'en' ? 'en' : 'pt-BR') * dirMul;
     });
     return rows;
-  }, [records, sort, sortDir, locale, nameQ]);
+  }, [records, sort, sortDir, locale, nameQ, exitTypeFilter, exitReasonFilter]);
 
   const total = sortedRecords.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -454,16 +461,48 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       />
 
       {records.length > 0 ? (
-        <AdminListSearch
-          locale={locale}
-          value={nameQ}
-          onChange={(v) => {
-            setNameQ(v);
-            setPage(1);
-          }}
-          placeholder={t('searchNamePh')}
-          showButton={false}
-        />
+        <AdminListFilters aria-label={t('title')}>
+          <AdminListSearch
+            locale={locale}
+            value={nameQ}
+            onChange={(v) => {
+              setNameQ(v);
+              setPage(1);
+            }}
+            placeholder={t('searchNamePh')}
+            showButton={false}
+          />
+          <AdminListFilterSelect
+            label={t('exitType')}
+            value={exitTypeFilter}
+            onChange={(v) => {
+              setExitTypeFilter(v);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('filterAll')}</option>
+            {EXIT_TYPES.map((value) => (
+              <option key={value} value={value}>
+                {t(value)}
+              </option>
+            ))}
+          </AdminListFilterSelect>
+          <AdminListFilterSelect
+            label={t('exitReason')}
+            value={exitReasonFilter}
+            onChange={(v) => {
+              setExitReasonFilter(v);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('filterAll')}</option>
+            {EXIT_REASONS.map((value) => (
+              <option key={value} value={value}>
+                {t(value)}
+              </option>
+            ))}
+          </AdminListFilterSelect>
+        </AdminListFilters>
       ) : null}
 
       {records.length === 0 ? (

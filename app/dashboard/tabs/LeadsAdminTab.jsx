@@ -7,7 +7,7 @@ import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 
 function leadStatusTone(status) {
@@ -115,19 +115,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
         subtitle={t(locale, 'panel.leads.intro')}
       />
 
-      <div className={cn(formFieldRowClass, 'gap-3')}>
-        <FormField label={t(locale, 'panel.leads.filterStatus')}>
-          <select
-            value={filters.status}
-            onChange={(e) => pushFilters({ status: e.target.value, page: 1 })}
-            className={S.select}
-          >
-            <option value="all">{t(locale, 'panel.leads.statusAll')}</option>
-            <option value="pending">{t(locale, 'panel.leads.statusPending')}</option>
-            <option value="active">{t(locale, 'panel.leads.statusActive')}</option>
-            <option value="inactive">{t(locale, 'panel.leads.statusInactive')}</option>
-          </select>
-        </FormField>
+      <AdminListFilters aria-label={t(locale, 'panel.leads.title')}>
         <AdminListSearch
           locale={locale}
           value={qDraft}
@@ -137,7 +125,17 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
           className="min-w-[200px] flex-1 items-end self-end"
           inputClassName="w-full max-w-none"
         />
-      </div>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.leads.filterStatus')}
+          value={filters.status}
+          onChange={(v) => pushFilters({ status: v, page: 1 })}
+        >
+          <option value="all">{t(locale, 'panel.leads.statusAll')}</option>
+          <option value="pending">{t(locale, 'panel.leads.statusPending')}</option>
+          <option value="active">{t(locale, 'panel.leads.statusActive')}</option>
+          <option value="inactive">{t(locale, 'panel.leads.statusInactive')}</option>
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
       {loading ? <p className={S.muted}>{t(locale, 'common.loading')}</p> : null}

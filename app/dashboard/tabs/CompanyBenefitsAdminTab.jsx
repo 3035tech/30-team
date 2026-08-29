@@ -5,6 +5,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { BENEFIT_TYPES } from '../../../lib/domain-status.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
@@ -28,6 +29,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [filterBenefitType, setFilterBenefitType] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('name');
@@ -52,6 +54,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         noCategories: 'Nenhuma categoria ainda. Crie uma antes de classificar benefícios.',
         filterCategory: 'Filtrar por categoria',
         allCategories: 'Todas as categorias',
+        allTypes: 'Todos os tipos',
         name_col: 'Nome',
         category_col: 'Categoria',
         type_col: 'Tipo',
@@ -121,6 +124,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         noCategories: 'No categories yet. Create one before classifying benefits.',
         filterCategory: 'Filter by category',
         allCategories: 'All categories',
+        allTypes: 'All types',
         name_col: 'Name',
         category_col: 'Category',
         type_col: 'Type',
@@ -443,6 +447,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     const dirMul = sortDir === 'asc' ? 1 : -1;
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...benefits].filter((row) => {
+      if (filterBenefitType && row.benefitType !== filterBenefitType) return false;
       if (!q) return true;
       return String(row.name || '').toLowerCase().includes(q);
     });
@@ -454,7 +459,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       return String(av || '').localeCompare(String(bv || ''), collator) * dirMul;
     });
     return rows;
-  }, [benefits, sort, sortDir, locale, nameQ]);
+  }, [benefits, sort, sortDir, locale, nameQ, filterBenefitType]);
 
   const total = sortedBenefits.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -472,7 +477,13 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminPageHeader title={t('title')} subtitle={t('subtitle')} />
+      <AdminPageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          isAdmin ? <AdminCreateButton label={t('create')} onClick={handleCreate} /> : null
+        }
+      />
 
       {/* Categories first — list before linking to benefits */}
       <section className={S.cardTight}>
@@ -511,7 +522,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         )}
       </section>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <AdminListFilters aria-label={t('title')}>
         <AdminListSearch
           locale={locale}
           value={nameQ}
@@ -522,15 +533,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
           placeholder={t('searchNamePh')}
           showButton={false}
         />
-        {isAdmin && (
-          <AdminCreateButton label={t('create')} onClick={handleCreate} />
-        )}
-        {categories.length > 0 && (
-          <select
+        {categories.length > 0 ? (
+          <AdminListFilterSelect
+            label={t('category_col')}
             value={filterCategoryId}
-            onChange={(e) => setFilterCategoryId(e.target.value)}
-            aria-label={t('filterCategory')}
-            className={S.select}
+            onChange={(v) => {
+              setFilterCategoryId(v);
+              setPage(1);
+            }}
           >
             <option value="">{t('allCategories')}</option>
             {categories.map((cat) => (
@@ -538,9 +548,24 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                 {cat.name}
               </option>
             ))}
-          </select>
-        )}
-      </div>
+          </AdminListFilterSelect>
+        ) : null}
+        <AdminListFilterSelect
+          label={t('type_col')}
+          value={filterBenefitType}
+          onChange={(v) => {
+            setFilterBenefitType(v);
+            setPage(1);
+          }}
+        >
+          <option value="">{t('allTypes')}</option>
+          {BENEFIT_TYPES.map((value) => (
+            <option key={value} value={value}>
+              {t(value)}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {benefits.length === 0 ? (
         <div className="flex flex-col gap-3">

@@ -62,7 +62,7 @@ Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`
 | Copy sem ` — ` | `.cursor/rules/copy-no-emdash.mdc` |
 | DBA / performance | `AGENTS.md` § DBA e performance, `.cursor/rules/dba-performance.mdc` |
 | Dashboard JSX | `.cursor/rules/dashboard-ui.mdc` |
-| Listagens admin (sort/pager/CTAs) | `.cursor/rules/admin-list-grid.mdc`, `dashboard-shared` (`SortableTh`, `AdminListPager`, `AdminCreateButton` / `Edit` / `Delete`) |
+| Listagens admin (sort/pager/CTAs/filtros) | `.cursor/rules/admin-list-grid.mdc`, `dashboard-shared` + `AdminListFilters` / `AdminListFilterSelect` |
 | Reutilizar (UI + funções) | `AGENTS.md` § Reaproveitamento, `.cursor/rules/reuse-before-create.mdc` |
 | API / auth | `.cursor/rules/api-and-auth.mdc` |
 | SQL / schema | `.cursor/rules/sql-schema.mdc` |

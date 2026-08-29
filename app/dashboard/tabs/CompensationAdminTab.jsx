@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
-import { cn } from '../../../lib/cn';
 import { formatSalaryDisplay } from '../../../lib/br-masks';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { EMPLOYMENT_STATUS } from '../../../lib/domain-status.js';
@@ -22,7 +21,7 @@ import {
 } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -134,7 +133,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t(locale, 'panel.compensationRoster.subtitle')}
       />
 
-      <div className={cn(formFieldRowClass, 'gap-2')}>
+      <AdminListFilters aria-label={t(locale, 'panel.compensationRoster.title')}>
         <AdminListSearch
           locale={locale}
           value={qDraft}
@@ -144,39 +143,35 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           className="min-w-[12rem] flex-1 items-end self-end"
           inputClassName="w-full max-w-none"
         />
-        <FormField label={t(locale, 'panel.compensationRoster.statusLabel')}>
-          <select
-            className={S.select}
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value={EMPLOYMENT_STATUS.EMPLOYEE}>
-              {t(locale, 'panel.compensationRoster.statusEmployee')}
-            </option>
-            <option value={EMPLOYMENT_STATUS.ALUMNI}>
-              {t(locale, 'panel.compensationRoster.statusAlumni')}
-            </option>
-            <option value="all">{t(locale, 'panel.compensationRoster.statusAll')}</option>
-          </select>
-        </FormField>
-        <FormField label={t(locale, 'panel.compensationRoster.hasSalaryLabel')}>
-          <select
-            className={S.select}
-            value={hasSalary}
-            onChange={(e) => {
-              setHasSalary(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">{t(locale, 'panel.compensationRoster.hasSalaryAll')}</option>
-            <option value="with">{t(locale, 'panel.compensationRoster.hasSalaryWith')}</option>
-            <option value="without">{t(locale, 'panel.compensationRoster.hasSalaryWithout')}</option>
-          </select>
-        </FormField>
-      </div>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.compensationRoster.statusLabel')}
+          value={statusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
+          <option value={EMPLOYMENT_STATUS.EMPLOYEE}>
+            {t(locale, 'panel.compensationRoster.statusEmployee')}
+          </option>
+          <option value={EMPLOYMENT_STATUS.ALUMNI}>
+            {t(locale, 'panel.compensationRoster.statusAlumni')}
+          </option>
+          <option value="all">{t(locale, 'panel.compensationRoster.statusAll')}</option>
+        </AdminListFilterSelect>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.compensationRoster.hasSalaryLabel')}
+          value={hasSalary}
+          onChange={(v) => {
+            setHasSalary(v);
+            setPage(1);
+          }}
+        >
+          <option value="all">{t(locale, 'panel.compensationRoster.hasSalaryAll')}</option>
+          <option value="with">{t(locale, 'panel.compensationRoster.hasSalaryWith')}</option>
+          <option value="without">{t(locale, 'panel.compensationRoster.hasSalaryWithout')}</option>
+        </AdminListFilterSelect>
+      </AdminListFilters>
 
       {items.length === 0 ? (
         <EmptyState
