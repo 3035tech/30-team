@@ -4,14 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
+import { FormField } from './FormField';
+import { ScaleRatingButtons } from './ScaleRatingButtons';
+import { EmptyState } from './EmptyState';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
-import { FormField } from './FormField';
 
 /**
  * Clima / pulso autenticados — B-2501.
+ * @param {(meta: { openCount: number, hasAny: boolean }) => void} [onMeta]
  */
-export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
+export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [inbox, setInbox] = useState(null);
@@ -26,13 +30,18 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'load');
       setInbox(json);
+      const openCount =
+        (json?.openClimate?.length || 0) + (json?.openPulse?.length || 0);
+      const hasAny = openCount > 0 || (json?.history?.length || 0) > 0;
+      onMeta?.({ openCount, hasAny });
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.surveysLoadError'), 'error');
       setInbox(null);
+      onMeta?.({ openCount: 0, hasAny: false });
     } finally {
       setLoading(false);
     }
-  }, [locale, toast]);
+  }, [locale, toast, onMeta]);
 
   useEffect(() => {
     void load();
@@ -73,9 +82,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
   const history = inbox?.history || [];
 
   if (!open.length && !history.length) {
-    return (
-      <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'employeeHome.surveysEmpty')}</p>
-    );
+    return <EmptyState message={t(locale, 'employeeHome.surveysEmpty')} />;
   }
 
   return (
@@ -136,16 +143,16 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
                     }
                   />
                 ) : (
-                  <input
-                    type="range"
+                  <ScaleRatingButtons
                     min={q.scaleMin ?? 1}
                     max={q.scaleMax ?? 5}
-                    className="w-full"
-                    value={answers[active.key]?.[q.id] ?? q.scaleMin ?? 1}
-                    onChange={(e) =>
+                    value={answers[active.key]?.[q.id] ?? null}
+                    ariaLabel={q.prompt}
+                    disabled={busy}
+                    onChange={(n) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        [active.key]: { ...(prev[active.key] || {}), [q.id]: Number(e.target.value) },
+                        [active.key]: { ...(prev[active.key] || {}), [q.id]: n },
                       }))
                     }
                   />
@@ -175,7 +182,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
                 ✓ {h.title}
                 {h.submittedAt ? (
                   <span className="ml-1 font-mono text-2xs text-ink-faint">
-                    {String(h.submittedAt).slice(0, 10)}
+                    {formatDisplayDate(h.submittedAt, locale)}
                   </span>
                 ) : null}
               </li>

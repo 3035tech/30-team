@@ -37,7 +37,7 @@ function statusBadge(locale, item) {
 }
 
 /**
- * Minha chegada — timeline D1 + D30/D60/D90 no espaço do colaborador.
+ * Minha chegada — vertical timeline D1 + D30/D60/D90.
  */
 export function EmployeeOnboardingJourneySection({ locale, journey, onChanged }) {
   const { toast } = useAppFeedback();
@@ -74,7 +74,7 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
   ];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {journey.startDate ? (
         <p className={cn(S.muted, 'm-0')}>
           {t(locale, 'employeeHome.journeyStart', {
@@ -82,65 +82,89 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
           })}
         </p>
       ) : null}
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {timeline.map((item) => {
+      <ol className="relative m-0 list-none space-y-0 p-0 pl-1">
+        {timeline.map((item, idx) => {
           const key = `${item.kind}-${item.id}`;
           const ackLabel =
             item.ackType === 'received'
               ? t(locale, 'employeeHome.journeyAckReceived')
               : t(locale, 'employeeHome.journeyAckCall');
+          const done = Boolean(item.hrDone || item.employeeAckAt);
+          const last = idx === timeline.length - 1;
           return (
-            <li
-              key={key}
-              className={cn(
-                'rounded-control border px-3 py-2.5',
-                item.overdue && !item.hrDone
-                  ? 'border-warning/30 bg-warning/[0.05]'
-                  : 'border-ink/12 bg-canvas/50'
-              )}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className={S.cardBody}>{itemTitle(locale, item)}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted">
-                    {item.dueDate ? (
-                      <span>
-                        {t(locale, 'employeeHome.dueBy', {
-                          date: formatDisplayDate(item.dueDate, locale),
-                        })}
-                      </span>
-                    ) : null}
-                    {statusBadge(locale, item)}
-                    {item.employeeAckAt ? (
-                      <span className="text-success">{t(locale, 'employeeHome.journeyAcked')}</span>
-                    ) : null}
-                  </div>
-                </div>
-                {item.meetUrl ? (
-                  <a
-                    href={item.meetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={cn(S.btnBrandSoft, 'shrink-0 text-prose no-underline')}
-                  >
-                    {t(locale, 'employeeHome.journeyOpenMeet')}
-                  </a>
+            <li key={key} className="relative flex gap-3 pb-4 last:pb-0">
+              <div className="relative flex w-4 flex-shrink-0 flex-col items-center">
+                <span
+                  className={cn(
+                    'z-[1] mt-1.5 h-3 w-3 rounded-full border-2',
+                    done
+                      ? 'border-success bg-success'
+                      : item.overdue
+                        ? 'border-warning bg-warning/30'
+                        : 'border-brand-500 bg-canvas'
+                  )}
+                  aria-hidden
+                />
+                {!last ? (
+                  <span className="absolute top-5 bottom-[-4px] w-px bg-ink/15" aria-hidden />
                 ) : null}
               </div>
-              {item.canAck && !item.employeeAckAt ? (
-                <button
-                  type="button"
-                  disabled={busyId === key}
-                  className={cn(S.btnGhost, 'mt-2 text-xs')}
-                  onClick={() => ack(item)}
-                >
-                  {ackLabel}
-                </button>
-              ) : null}
+              <div
+                className={cn(
+                  'min-w-0 flex-1 rounded-control border px-3 py-2.5',
+                  item.overdue && !item.hrDone
+                    ? 'border-warning/30 bg-warning/[0.05]'
+                    : 'border-ink/12 bg-canvas/50'
+                )}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className={S.cardBody}>{itemTitle(locale, item)}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted">
+                      {item.phase === 'd1' ? (
+                        <span className="text-ink-faint">{t(locale, 'employeeHome.journeyPhaseD1')}</span>
+                      ) : (
+                        <span className="text-ink-faint">{t(locale, 'employeeHome.journeyPhasePost')}</span>
+                      )}
+                      {item.dueDate ? (
+                        <span>
+                          {t(locale, 'employeeHome.dueBy', {
+                            date: formatDisplayDate(item.dueDate, locale),
+                          })}
+                        </span>
+                      ) : null}
+                      {statusBadge(locale, item)}
+                      {item.employeeAckAt ? (
+                        <span className="text-success">{t(locale, 'employeeHome.journeyAcked')}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  {item.meetUrl ? (
+                    <a
+                      href={item.meetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={cn(S.btnBrandSoft, 'shrink-0 text-prose no-underline')}
+                    >
+                      {t(locale, 'employeeHome.journeyOpenMeet')}
+                    </a>
+                  ) : null}
+                </div>
+                {item.canAck && !item.employeeAckAt ? (
+                  <button
+                    type="button"
+                    disabled={busyId === key}
+                    className={cn(S.btnGhost, 'mt-2 text-xs')}
+                    onClick={() => ack(item)}
+                  >
+                    {ackLabel}
+                  </button>
+                ) : null}
+              </div>
             </li>
           );
         })}
-      </ul>
+      </ol>
     </div>
   );
 }

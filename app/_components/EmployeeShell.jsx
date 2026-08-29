@@ -10,6 +10,7 @@ import { AppFeedbackProvider } from './AppFeedback';
 import { ContentEnter } from './AppLoading';
 import { EmployeeTopBar } from './EmployeeTopBar';
 import { EmployeeSidebar } from './EmployeeSidebar';
+import { EmployeeNavProvider } from './EmployeeNavContext';
 import { Icon } from './Icon';
 
 /**
@@ -22,7 +23,6 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
   const [displayName, setDisplayName] = useState(personName);
   const [company, setCompany] = useState(companyName);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeHash, setActiveHash] = useState('');
 
   useEffect(() => {
     if (isPublic) return;
@@ -46,14 +46,6 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
   }, [isPublic, setLocale]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const syncHash = () => setActiveHash((window.location.hash || '').replace(/^#/, ''));
-    syncHash();
-    window.addEventListener('hashchange', syncHash);
-    return () => window.removeEventListener('hashchange', syncHash);
-  }, [pathname]);
-
-  useEffect(() => {
     if (typeof document === 'undefined') return undefined;
     document.body.classList.toggle('sidebar-open', sidebarOpen);
     return () => document.body.classList.remove('sidebar-open');
@@ -71,45 +63,46 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
 
   return (
     <AppFeedbackProvider locale={locale}>
-      <div className="relative min-h-screen bg-canvas font-ui text-ink">
-        <button
-          type="button"
-          className="db-hamburger"
-          onClick={() => setSidebarOpen(true)}
-          aria-label={t(locale, 'common.openMenu')}
-          aria-expanded={sidebarOpen}
-          aria-controls="employee-sidebar"
-        >
-          <Icon name="menu" />
-        </button>
-        <div
-          className={cn('db-overlay', sidebarOpen && 'db-overlay-visible')}
-          onClick={closeSidebar}
-          aria-hidden={!sidebarOpen}
-        />
-
-        <div className="relative z-[1] flex min-h-screen">
-          <EmployeeSidebar
-            locale={locale}
-            companyName={company}
-            open={sidebarOpen}
-            onClose={closeSidebar}
-            activeHash={activeHash}
+      <EmployeeNavProvider>
+        <div className="relative min-h-screen bg-canvas font-ui text-ink">
+          <button
+            type="button"
+            className="db-hamburger"
+            onClick={() => setSidebarOpen(true)}
+            aria-label={t(locale, 'common.openMenu')}
+            aria-expanded={sidebarOpen}
+            aria-controls="employee-sidebar"
+          >
+            <Icon name="menu" />
+          </button>
+          <div
+            className={cn('db-overlay', sidebarOpen && 'db-overlay-visible')}
+            onClick={closeSidebar}
+            aria-hidden={!sidebarOpen}
           />
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <EmployeeTopBar
+          <div className="relative z-[1] flex min-h-screen">
+            <EmployeeSidebar
               locale={locale}
-              onLocaleChange={setLocale}
-              displayName={displayName}
               companyName={company}
+              open={sidebarOpen}
+              onClose={closeSidebar}
             />
-            <main className="emp-main min-w-0 flex-1">
-              <ContentEnter animKey={pathname}>{children}</ContentEnter>
-            </main>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+              <EmployeeTopBar
+                locale={locale}
+                onLocaleChange={setLocale}
+                displayName={displayName}
+                companyName={company}
+              />
+              <main className="emp-main min-w-0 flex-1">
+                <ContentEnter animKey={pathname}>{children}</ContentEnter>
+              </main>
+            </div>
           </div>
         </div>
-      </div>
+      </EmployeeNavProvider>
     </AppFeedbackProvider>
   );
 }

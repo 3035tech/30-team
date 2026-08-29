@@ -5,24 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { BrandMark } from './BrandMark';
 import { DarkModeToggle } from './DarkModeProvider';
 import LanguageSelect from './LanguageSelect';
+import { EmptyState } from './EmptyState';
 import { Icon } from './Icon';
-
-function formatWhen(iso, locale) {
-  try {
-    return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
+import { useEmployeeNav } from './EmployeeNavContext';
 
 /**
  * Collaborator chrome — theme, locale, notifications, profile menu.
@@ -35,6 +25,7 @@ export function EmployeeTopBar({
   companyName,
 }) {
   const router = useRouter();
+  const { focusSection } = useEmployeeNav();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [items, setItems] = useState([]);
@@ -99,7 +90,15 @@ export function EmployeeTopBar({
       /* ignore */
     }
     setNotifOpen(false);
-    router.push(item.href || '/employee');
+    const href = item.href || '/employee';
+    const hash = href.includes('#') ? href.split('#')[1] : '';
+    if (hash && (href.startsWith('/employee#') || href === `#${hash}`)) {
+      router.push('/employee');
+      // After navigation, focus expands + scrolls even if already on home
+      window.setTimeout(() => focusSection(hash), 0);
+    } else {
+      router.push(href);
+    }
     void loadNotifs();
   };
 
@@ -172,9 +171,15 @@ export function EmployeeTopBar({
                   ) : null}
                 </div>
                 {items.length === 0 ? (
-                  <p className={cn(S.faint, 'm-0 px-1 py-3')}>
-                    {t(locale, 'employeeHome.notificationsEmpty')}
-                  </p>
+                  <EmptyState
+                    className="border-0 bg-transparent px-2 py-4"
+                    message={t(locale, 'employeeHome.notificationsEmpty')}
+                    actionLabel={t(locale, 'employeeHome.notificationsEmptyCta')}
+                    onAction={() => {
+                      setNotifOpen(false);
+                      router.push('/employee#tasks');
+                    }}
+                  />
                 ) : (
                   <ul className="m-0 max-h-72 list-none overflow-y-auto p-0">
                     {items.map((item) => (
@@ -194,7 +199,7 @@ export function EmployeeTopBar({
                             {t(locale, item.copy?.bodyKey || 'employeeHome.notifGenericBody', item.copy?.values)}
                           </div>
                           <div className="mt-1 font-mono text-2xs text-ink-faint">
-                            {formatWhen(item.createdAt, locale)}
+                            {formatDisplayDateTime(item.createdAt, locale, { fallback: '' })}
                           </div>
                         </button>
                       </li>

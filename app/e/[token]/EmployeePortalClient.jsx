@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
+import { formatDisplayDate } from '../../../lib/format-display-date';
 import { S } from '../../dashboard/dashboard-shared';
 import { FormField } from '../../_components/FormField';
 import { RichTextView } from '../../_components/RichTextView';
@@ -11,6 +12,9 @@ import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import { EmptyState } from '../../_components/EmptyState';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { BrandMark } from '../../_components/BrandMark';
+import { InlineCallout } from '../../_components/InlineCallout';
+import Link from 'next/link';
 
 export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
   const { toast } = useAppFeedback();
@@ -19,6 +23,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
   const [data, setData] = useState(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [watching, setWatching] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +76,14 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
     }
   };
 
+  const refreshPortal = async () => {
+    const refresh = await fetch(
+      `/api/public/employee-portal/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`
+    );
+    const next = await refresh.json().catch(() => ({}));
+    if (refresh.ok) setData(next);
+  };
+
   const completeLesson = async (lessonId) => {
     setBusy(true);
     try {
@@ -81,11 +94,10 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'lesson');
-      const refresh = await fetch(
-        `/api/public/employee-portal/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`
-      );
-      const next = await refresh.json().catch(() => ({}));
-      if (refresh.ok) setData(next);
+      if (watching?.lessonId === lessonId) {
+        setWatching((prev) => (prev ? { ...prev, completed: true } : prev));
+      }
+      await refreshPortal();
       toast(t(locale, 'panel.employeePortal.lessonMarked'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
@@ -104,11 +116,10 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'lesson');
-      const refresh = await fetch(
-        `/api/public/employee-portal/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`
-      );
-      const next = await refresh.json().catch(() => ({}));
-      if (refresh.ok) setData(next);
+      if (watching?.lessonId === lessonId) {
+        setWatching((prev) => (prev ? { ...prev, completed: false } : prev));
+      }
+      await refreshPortal();
       toast(t(locale, 'panel.employeePortal.lessonUnmarked'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
@@ -117,19 +128,35 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
     }
   };
 
+  const openWatch = (lesson) => {
+    if (!lesson?.embedUrl) return;
+    setWatching({
+      lessonId: lesson.id,
+      embedUrl: lesson.embedUrl,
+      title: lesson.title,
+      contentKind: lesson.contentKind || 'link',
+      completed: Boolean(lesson.completed),
+    });
+  };
+
   if (loading) {
-    return <PublicNarrowShell variant="loading" locale={locale} />;
+    return <PublicNarrowShell variant="loading" locale={locale} maxWidthClass="max-w-3xl" />;
   }
   if (error) {
     return (
-      <PublicNarrowShell variant="error" locale={locale} className="text-center">
+      <PublicNarrowShell variant="error" locale={locale} className="text-center" maxWidthClass="max-w-3xl">
         <p className="m-0 text-sm text-ink-muted">{error}</p>
       </PublicNarrowShell>
     );
   }
 
+  const isPdf = watching?.contentKind === 'pdf';
+
   return (
-    <PublicNarrowShell variant="form" locale={locale}>
+    <PublicNarrowShell variant="form" locale={locale} maxWidthClass="max-w-3xl">
+      <div className="mb-4">
+        <BrandMark size={28} withWordmark title={t(locale, 'panel.employeePortal.eyebrow')} />
+      </div>
       <p className={cn(S.faint, 'm-0 text-2xs uppercase tracking-wide')}>
         {t(locale, 'panel.employeePortal.eyebrow')}
       </p>
@@ -137,6 +164,58 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
         {t(locale, 'panel.employeePortal.hello', { name: data?.personName || '' })}
       </h1>
       <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'panel.employeePortal.hint')}</p>
+      <InlineCallout tone="info" className="mt-3">
+        <span className="block">{t(locale, 'panel.employeePortal.tokenChromeHint')}</span>
+        <Link
+          href="/employee/login"
+          className={cn(S.btnBrandSoft, 'mt-2 inline-flex min-h-touch no-underline')}
+        >
+          {t(locale, 'panel.employeePortal.goToSessionLogin')}
+        </Link>
+      </InlineCallout>
+
+      {watching?.embedUrl ? (
+        <div className="mt-6 overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
+            <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{watching.title}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {!watching.completed ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                  onClick={() => completeLesson(watching.lessonId)}
+                >
+                  {t(locale, 'panel.employeePortal.markLessonDone')}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={cn(S.btnGhost, 'min-h-touch')}
+                onClick={() => setWatching(null)}
+              >
+                {isPdf ? t(locale, 'employeeHome.closePdf') : t(locale, 'employeeHome.closePlayer')}
+              </button>
+            </div>
+          </div>
+          {isPdf ? (
+            <div className="h-[min(60vh,480px)] w-full bg-canvas">
+              <iframe title={watching.title} src={watching.embedUrl} className="h-full w-full border-0" />
+            </div>
+          ) : (
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                title={watching.title}
+                src={`${watching.embedUrl}${watching.embedUrl.includes('?') ? '&' : '?'}rel=0`}
+                className="h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <section className="mt-8">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.pdiTitle')}</h2>
@@ -153,7 +232,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                     <li key={it.id} className="text-xs text-ink-muted">
                       {it.status === 'done' ? '✓ ' : '○ '}
                       {it.title}
-                      {it.dueDate ? ` · ${String(it.dueDate).slice(0, 10)}` : ''}
+                      {it.dueDate ? ` · ${formatDisplayDate(it.dueDate, locale)}` : ''}
                       {it.ownerLabel ? ` · ${it.ownerLabel}` : ''}
                     </li>
                   ))}
@@ -173,7 +252,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
             {data.recentAgreements.map((a) => (
               <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2">
                 <div className="font-mono text-2xs text-ink-faint">
-                  {a.meetingDate ? String(a.meetingDate).slice(0, 10) : '—'}
+                  {a.meetingDate ? formatDisplayDate(a.meetingDate, locale) : '—'}
                 </div>
                 <RichTextView html={a.nextSteps} className="mt-1 text-xs text-ink-muted" />
               </li>
@@ -211,7 +290,9 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                   <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-2xs">
                     {course.dueDate ? (
                       <StatusToneChip tone="neutral" bordered={false}>
-                        {t(locale, 'panel.employeePortal.courseDue', { date: course.dueDate })}
+                        {t(locale, 'panel.employeePortal.courseDue', {
+                          date: formatDisplayDate(course.dueDate, locale),
+                        })}
                       </StatusToneChip>
                     ) : null}
                     {course.mandatory ? (
@@ -237,14 +318,27 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                           {lesson.completed ? '✓ ' : '○ '}
                           {lesson.title}
                         </div>
-                        <a
-                          href={lesson.contentUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-2xs text-brand-600"
-                        >
-                          {t(locale, 'panel.employeePortal.openLesson')}
-                        </a>
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          {lesson.embedUrl ? (
+                            <button
+                              type="button"
+                              className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                              onClick={() => openWatch(lesson)}
+                            >
+                              {lesson.contentKind === 'pdf'
+                                ? t(locale, 'employeeHome.viewPdfInApp')
+                                : t(locale, 'employeeHome.watchInApp')}
+                            </button>
+                          ) : null}
+                          <a
+                            href={lesson.contentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-touch items-center font-mono text-2xs text-brand-600"
+                          >
+                            {t(locale, 'panel.employeePortal.openLesson')}
+                          </a>
+                        </div>
                       </div>
                       {!lesson.completed ? (
                         <button

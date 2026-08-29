@@ -9,10 +9,13 @@ import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { BrandMark } from '../../_components/BrandMark';
 import { FormField } from '../../_components/FormField';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { SegmentedControl } from '../../_components/SegmentedControl';
 
 /**
- * Collaborator login — password primary (invite = set-password email).
- * Optional: forgot password · magic link for those who prefer.
+ * Collaborator login — password primary; forgot + magic via SegmentedControl.
+ * Reuses PublicNarrowShell / FormField / S / InlineCallout (same family as /login + public flows).
  */
 export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -146,26 +149,53 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     else void sendMagic(companyId);
   };
 
+  const switchMode = (next) => {
+    setMode(next);
+    setSent(false);
+    setCompanies(null);
+  };
+
+  const modeHint =
+    requires2fa
+      ? t(locale, 'login.twoFaIntro')
+      : mode === 'forgot'
+        ? t(locale, 'employeeHome.forgotHint')
+        : mode === 'magic'
+          ? t(locale, 'employeeHome.loginHintMagic')
+          : t(locale, 'employeeHome.loginHint');
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <div className="mb-8 text-center">
-        <BrandMark size={36} withWordmark />
+    <PublicNarrowShell
+      variant="form"
+      locale={locale}
+      maxWidthClass="max-w-md"
+      className="flex min-h-screen flex-col justify-center py-12"
+    >
+      <div className="mb-6 text-center">
+        <BrandMark size={36} withWordmark className="justify-center" />
         <h1 className={cn(S.pageTitle, 'mt-4')}>{t(locale, 'employeeHome.loginTitle')}</h1>
-        <p className={cn(S.muted, 'mt-2')}>
-          {requires2fa
-            ? t(locale, 'login.twoFaIntro')
-            : mode === 'forgot'
-              ? t(locale, 'employeeHome.forgotHint')
-              : mode === 'magic'
-                ? t(locale, 'employeeHome.loginHintMagic')
-                : t(locale, 'employeeHome.loginHint')}
-        </p>
+        <p className={cn(S.muted, 'mt-2')}>{modeHint}</p>
       </div>
 
+      {!requires2fa && !sent ? (
+        <SegmentedControl
+          className="mb-4 w-full justify-center"
+          size="sm"
+          aria-label={t(locale, 'employeeHome.loginModeAria')}
+          value={mode}
+          onChange={switchMode}
+          options={[
+            { id: 'login', label: t(locale, 'employeeHome.enter') },
+            { id: 'forgot', label: t(locale, 'employeeHome.forgotPassword') },
+            { id: 'magic', label: t(locale, 'employeeHome.useMagicLinkShort') },
+          ]}
+        />
+      ) : null}
+
       {sent && mode !== 'login' && !requires2fa ? (
-        <div className="rounded-control border border-success/30 bg-success/5 p-4 text-sm text-ink">
+        <InlineCallout tone="success">
           {mode === 'forgot' ? t(locale, 'employeeHome.forgotSentBody') : t(locale, 'employeeHome.linkSentBody')}
-        </div>
+        </InlineCallout>
       ) : requires2fa ? (
         <div className="flex flex-col gap-3">
           <FormField label={t(locale, 'login.twoFaCode')}>
@@ -190,19 +220,19 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           </button>
           <button
             type="button"
-            className="cursor-pointer border-none bg-transparent p-0 font-ui text-xs text-ink-muted"
+            className={cn(S.btnGhost, 'min-h-touch w-full justify-center')}
             onClick={() => {
               setRequires2fa(false);
               setChallengeToken('');
               setTwoFaCode('');
             }}
           >
-            ← {t(locale, 'employeeHome.backToPasswordLogin')}
+            {t(locale, 'employeeHome.backToPasswordLogin')}
           </button>
         </div>
       ) : (
         <form
-          className="flex flex-col gap-3"
+          className="flex w-full flex-col gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             if (mode === 'login') void login();
@@ -237,7 +267,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
 
           {companies?.length ? (
             <div className="flex flex-col gap-2">
-              <p className="m-0 text-xs text-ink-muted">{t(locale, 'employeeHome.pickCompany')}</p>
+              <InlineCallout tone="info">{t(locale, 'employeeHome.pickCompany')}</InlineCallout>
               {companies.map((c) => (
                 <button
                   key={c.companyId}
@@ -266,51 +296,23 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         </form>
       )}
 
-      <div className="mt-6 flex flex-col gap-2 text-center text-prose">
-        {!requires2fa && mode === 'login' ? (
-          <>
-            <button
-              type="button"
-              className="cursor-pointer border-none bg-transparent p-0 font-ui text-brand-600"
-              onClick={() => {
-                setMode('forgot');
-                setSent(false);
-                setCompanies(null);
-              }}
-            >
-              {t(locale, 'employeeHome.forgotPassword')}
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer border-none bg-transparent p-0 font-ui text-ink-muted"
-              onClick={() => {
-                setMode('magic');
-                setSent(false);
-                setCompanies(null);
-              }}
-            >
-              {t(locale, 'employeeHome.useMagicLink')}
-            </button>
-          </>
-        ) : !requires2fa ? (
-          <button
-            type="button"
-            className="cursor-pointer border-none bg-transparent p-0 font-ui text-ink-muted"
-            onClick={() => {
-              setMode('login');
-              setSent(false);
-              setCompanies(null);
-            }}
-          >
-            {t(locale, 'employeeHome.backToPasswordLogin')}
-          </button>
-        ) : null}
-        {!requires2fa ? (
-          <Link href="/login" className="mt-2 font-ui text-brand-600 hover:underline">
+      {sent && !requires2fa ? (
+        <button
+          type="button"
+          className={cn(S.btnGhost, 'mt-4 min-h-touch w-full justify-center')}
+          onClick={() => switchMode('login')}
+        >
+          {t(locale, 'employeeHome.backToPasswordLogin')}
+        </button>
+      ) : null}
+
+      {!requires2fa ? (
+        <p className="mt-6 text-center">
+          <Link href="/login" className="font-ui text-prose text-brand-600 no-underline hover:underline">
             {t(locale, 'employeeHome.managerLogin')}
           </Link>
-        ) : null}
-      </div>
-    </div>
+        </p>
+      ) : null}
+    </PublicNarrowShell>
   );
 }

@@ -10,6 +10,9 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import { StatusToneChip } from '../../_components/StatusToneChip';
+import { InlineCallout } from '../../_components/InlineCallout';
 import { BR_STATES } from '../../../lib/candidate-profile';
 
 export function EmployeeProfileClient({ locale = 'pt-BR' }) {
@@ -201,202 +204,226 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
-      <Link href="/employee" className="font-mono text-xs text-brand-600 no-underline">
-        ← {t(locale, 'employeeHome.backHome')}
-      </Link>
-      <h1 className="mt-3 font-display text-2xl text-ink">{t(locale, 'employeeHome.profileTitle')}</h1>
-      <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.profileHint')}</p>
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
+        <Link href="/employee" className={cn(S.cardLink, 'inline-flex')}>
+          ← {t(locale, 'employeeHome.backHome')}
+        </Link>
+        <h1 className={cn(S.pageTitle, 'mt-3')}>{t(locale, 'employeeHome.profileTitle')}</h1>
+        <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.profileHint')}</p>
 
-      <form className="mt-6 flex flex-col gap-3" onSubmit={saveProfile}>
-        <FormField label={t(locale, 'employeeHome.fullNameLabel')}>
-          <input
-            className={cn(S.input, 'w-full')}
-            value={form.fullName}
-            onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-            required
-            disabled={busy}
-          />
-        </FormField>
-        <FormField label={t(locale, 'employeeHome.emailLabel')}>
-          <input className={cn(S.input, 'w-full opacity-70')} value={form.email} disabled readOnly />
-        </FormField>
-        <FormField label={t(locale, 'employeeHome.phoneLabel')}>
-          <input
-            className={cn(S.input, 'w-full')}
-            value={form.phone}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            disabled={busy}
-          />
-        </FormField>
-        <FormField label={t(locale, 'employeeHome.linkedinLabel')}>
-          <input
-            className={cn(S.input, 'w-full')}
-            value={form.linkedinUrl}
-            onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
-            disabled={busy}
-          />
-        </FormField>
-        <div className={cn(formFieldRowClass, 'gap-3')}>
-          <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0 flex-1">
-            <input
-              className={cn(S.input, 'w-full')}
-              value={form.city}
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              disabled={busy}
-            />
-          </FormField>
-          <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0 flex-1">
-            <select
-              className={cn(S.select, 'w-full')}
-              value={form.state}
-              onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              disabled={busy}
-            >
-              <option value="">—</option>
-              {BR_STATES.map((s) => (
-                <option key={s.uf} value={s.uf}>
-                  {s.uf}
-                </option>
-              ))}
-            </select>
-          </FormField>
+        <div className="mt-6 flex flex-col gap-4">
+          <CollapsibleBlock
+            locale={locale}
+            title={t(locale, 'employeeHome.profileSectionContact')}
+            variant="card"
+            bordered={false}
+            defaultOpen
+          >
+            <form className="flex flex-col gap-3" onSubmit={saveProfile}>
+              <FormField label={t(locale, 'employeeHome.fullNameLabel')}>
+                <input
+                  className={cn(S.input, 'w-full')}
+                  value={form.fullName}
+                  onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                  required
+                  disabled={busy}
+                />
+              </FormField>
+              <FormField label={t(locale, 'employeeHome.emailLabel')}>
+                <input className={cn(S.input, 'w-full opacity-70')} value={form.email} disabled readOnly />
+              </FormField>
+              <FormField label={t(locale, 'employeeHome.phoneLabel')}>
+                <input
+                  className={cn(S.input, 'w-full')}
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  disabled={busy}
+                />
+              </FormField>
+              <FormField label={t(locale, 'employeeHome.linkedinLabel')}>
+                <input
+                  className={cn(S.input, 'w-full')}
+                  value={form.linkedinUrl}
+                  onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
+                  disabled={busy}
+                />
+              </FormField>
+              <div className={cn(formFieldRowClass, 'gap-3')}>
+                <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0 flex-1">
+                  <input
+                    className={cn(S.input, 'w-full')}
+                    value={form.city}
+                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                    disabled={busy}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0 flex-1">
+                  <select
+                    className={cn(S.select, 'w-full')}
+                    value={form.state}
+                    onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                    disabled={busy}
+                  >
+                    <option value="">—</option>
+                    {BR_STATES.map((s) => (
+                      <option key={s.uf} value={s.uf}>
+                        {s.uf}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+              <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')}>
+                <DateField
+                  className={cn(S.input, 'w-full')}
+                  value={form.birthDate}
+                  onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value || '' }))}
+                  disabled={busy}
+                />
+              </FormField>
+              <button type="submit" disabled={busy} className={cn(S.btnPrimary, 'min-h-touch justify-center')}>
+                {t(locale, 'employeeHome.saveProfile')}
+              </button>
+            </form>
+          </CollapsibleBlock>
+
+          <CollapsibleBlock
+            locale={locale}
+            title={t(locale, 'employeeHome.changePasswordTitle')}
+            variant="card"
+            bordered={false}
+            defaultOpen={false}
+          >
+            <form className="flex flex-col gap-3" onSubmit={changePassword}>
+              <FormField label={t(locale, 'employeeHome.currentPasswordLabel')}>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  className={cn(S.input, 'w-full')}
+                  value={pwd.current}
+                  onChange={(e) => setPwd((p) => ({ ...p, current: e.target.value }))}
+                  disabled={busy}
+                  required
+                />
+              </FormField>
+              <FormField label={t(locale, 'employeeHome.passwordLabel')}>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  className={cn(S.input, 'w-full')}
+                  value={pwd.next}
+                  onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
+                  disabled={busy}
+                  required
+                />
+              </FormField>
+              <FormField label={t(locale, 'employeeHome.confirmPasswordLabel')}>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  className={cn(S.input, 'w-full')}
+                  value={pwd.confirm}
+                  onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))}
+                  disabled={busy}
+                  required
+                />
+              </FormField>
+              <button type="submit" disabled={busy} className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}>
+                {t(locale, 'employeeHome.changePasswordSubmit')}
+              </button>
+            </form>
+          </CollapsibleBlock>
+
+          <CollapsibleBlock
+            locale={locale}
+            title={t(locale, 'dashboard.profile2faSection')}
+            headerAside={
+              <StatusToneChip tone={twoFaEnabled ? 'success' : 'neutral'} bordered={false}>
+                {t(locale, 'dashboard.profile2faOptionalBadge')}
+              </StatusToneChip>
+            }
+            variant="card"
+            bordered={false}
+            defaultOpen={false}
+          >
+            <InlineCallout tone="info" className="mb-3">
+              {t(locale, 'dashboard.profile2faIntro')}
+            </InlineCallout>
+            {twoFaEnabled ? (
+              <div className="flex flex-col gap-3">
+                <p className="m-0 font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
+                <FormField label={t(locale, 'dashboard.profile2faCode')}>
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    className={cn(S.input, 'w-full')}
+                    value={twoFaCode}
+                    onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    disabled={twoFaBusy}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    className={cn(S.input, 'w-full')}
+                    value={twoFaDisablePassword}
+                    onChange={(e) => setTwoFaDisablePassword(e.target.value)}
+                    disabled={twoFaBusy}
+                  />
+                </FormField>
+                <button
+                  type="button"
+                  disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
+                  className={cn(S.btnBrandSoft, 'min-h-touch justify-center border-danger/30 text-danger')}
+                  onClick={disable2fa}
+                >
+                  {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
+                </button>
+              </div>
+            ) : twoFaSetupSecret ? (
+              <div className="flex flex-col gap-3">
+                <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'dashboard.profile2faSecretHint')}</p>
+                <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
+                  {twoFaSetupSecret}
+                </code>
+                <FormField label={t(locale, 'dashboard.profile2faCode')}>
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    className={cn(S.input, 'w-full')}
+                    value={twoFaCode}
+                    onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    disabled={twoFaBusy}
+                  />
+                </FormField>
+                <button
+                  type="button"
+                  disabled={twoFaBusy || twoFaCode.length !== 6}
+                  className={cn(S.btnPrimary, 'min-h-touch justify-center')}
+                  onClick={confirmEnable2fa}
+                >
+                  {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'dashboard.profile2faDisabled')}</p>
+                <button
+                  type="button"
+                  disabled={twoFaBusy}
+                  className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}
+                  onClick={start2faSetup}
+                >
+                  {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
+                </button>
+              </div>
+            )}
+          </CollapsibleBlock>
         </div>
-        <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')}>
-          <DateField
-            className={cn(S.input, 'w-full')}
-            value={form.birthDate}
-            onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value || '' }))}
-            disabled={busy}
-          />
-        </FormField>
-        <button type="submit" disabled={busy} className={cn(S.btnPrimary, 'min-h-touch justify-center')}>
-          {t(locale, 'employeeHome.saveProfile')}
-        </button>
-      </form>
-
-      <form className="mt-10 flex flex-col gap-3 border-t border-ink/10 pt-8" onSubmit={changePassword}>
-        <h2 className={cn(S.label, 'm-0')}>{t(locale, 'employeeHome.changePasswordTitle')}</h2>
-        <FormField label={t(locale, 'employeeHome.currentPasswordLabel')}>
-          <input
-            type="password"
-            autoComplete="current-password"
-            className={cn(S.input, 'w-full')}
-            value={pwd.current}
-            onChange={(e) => setPwd((p) => ({ ...p, current: e.target.value }))}
-            disabled={busy}
-            required
-          />
-        </FormField>
-        <FormField label={t(locale, 'employeeHome.passwordLabel')}>
-          <input
-            type="password"
-            autoComplete="new-password"
-            className={cn(S.input, 'w-full')}
-            value={pwd.next}
-            onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
-            disabled={busy}
-            required
-          />
-        </FormField>
-        <FormField label={t(locale, 'employeeHome.confirmPasswordLabel')}>
-          <input
-            type="password"
-            autoComplete="new-password"
-            className={cn(S.input, 'w-full')}
-            value={pwd.confirm}
-            onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))}
-            disabled={busy}
-            required
-          />
-        </FormField>
-        <button type="submit" disabled={busy} className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}>
-          {t(locale, 'employeeHome.changePasswordSubmit')}
-        </button>
-      </form>
-
-      <div className="mt-10 border-t border-ink/10 pt-8">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h2 className={cn(S.label, 'm-0')}>{t(locale, 'dashboard.profile2faSection')}</h2>
-          <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
-            {t(locale, 'dashboard.profile2faOptionalBadge')}
-          </span>
-        </div>
-        <p className="mb-3 text-sm leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faIntro')}</p>
-        {twoFaEnabled ? (
-          <div className="flex flex-col gap-3">
-            <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
-            <FormField label={t(locale, 'dashboard.profile2faCode')}>
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                className={cn(S.input, 'w-full')}
-                value={twoFaCode}
-                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                disabled={twoFaBusy}
-              />
-            </FormField>
-            <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
-              <input
-                type="password"
-                autoComplete="current-password"
-                className={cn(S.input, 'w-full')}
-                value={twoFaDisablePassword}
-                onChange={(e) => setTwoFaDisablePassword(e.target.value)}
-                disabled={twoFaBusy}
-              />
-            </FormField>
-            <button
-              type="button"
-              disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
-              className={cn(S.btnBrandSoft, 'min-h-touch justify-center border-danger/30 text-danger')}
-              onClick={disable2fa}
-            >
-              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
-            </button>
-          </div>
-        ) : twoFaSetupSecret ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
-            <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
-              {twoFaSetupSecret}
-            </code>
-            <FormField label={t(locale, 'dashboard.profile2faCode')}>
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                className={cn(S.input, 'w-full')}
-                value={twoFaCode}
-                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                disabled={twoFaBusy}
-              />
-            </FormField>
-            <button
-              type="button"
-              disabled={twoFaBusy || twoFaCode.length !== 6}
-              className={cn(S.btnPrimary, 'min-h-touch justify-center')}
-              onClick={confirmEnable2fa}
-            >
-              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-ink-muted">{t(locale, 'dashboard.profile2faDisabled')}</p>
-            <button
-              type="button"
-              disabled={twoFaBusy}
-              className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}
-              onClick={start2faSetup}
-            >
-              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
-            </button>
-          </div>
-        )}
       </div>
-    </div>
     </ContentEnter>
   );
 }

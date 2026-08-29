@@ -11,6 +11,8 @@ import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
 import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -92,31 +94,35 @@ function SetPasswordForm() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
+    <PublicNarrowShell variant="form" locale={locale} maxWidthClass="max-w-md" className="min-h-screen py-12">
       <div className="mb-6 flex items-center justify-between gap-3">
         <BrandMark size={32} withWordmark />
         <LanguageSelect locale={locale} onChange={setLocale} compact />
       </div>
-      <h1 className="m-0 font-display text-2xl text-ink">{t(locale, 'employeeHome.setPasswordTitle')}</h1>
-      <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.setPasswordHint')}</p>
+      <h1 className={S.pageTitle}>{t(locale, 'employeeHome.setPasswordTitle')}</h1>
+      <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.setPasswordHint')}</p>
 
       {checking ? (
-        <AppLoading variant="panel" />
-      ) : tokenError ? (
         <div className="mt-6">
-          <p className="text-sm text-danger">
+          <AppLoading variant="panel" />
+        </div>
+      ) : tokenError ? (
+        <div className="mt-6 flex flex-col gap-3">
+          <InlineCallout tone="danger" role="alert">
             {errorMessage(locale, tokenError, t(locale, 'employeeHome.invalidLink'))}
-          </p>
-          <Link href="/employee/login" className="mt-3 inline-block text-sm text-brand-600">
+          </InlineCallout>
+          <Link href="/employee/login" className={cn(S.btnBrandSoft, 'min-h-touch justify-center no-underline')}>
             {t(locale, 'employeeHome.backToLogin')}
           </Link>
         </div>
       ) : success ? (
-        <p className="mt-6 text-sm text-success">{t(locale, 'employeeHome.setPasswordOk')}</p>
+        <InlineCallout tone="success" className="mt-6">
+          {t(locale, 'employeeHome.setPasswordOk')}
+        </InlineCallout>
       ) : (
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-6 flex w-full flex-col gap-3">
           {emailMasked ? (
-            <p className={cn(S.faint, 'm-0 text-xs')}>
+            <p className={cn(S.faint, 'm-0')}>
               {t(locale, 'employeeHome.emailLabel')}: {emailMasked}
             </p>
           ) : null}
@@ -141,7 +147,11 @@ function SetPasswordForm() {
               onKeyDown={(e) => e.key === 'Enter' && submit()}
             />
           </FormField>
-          {error ? <p className="m-0 text-xs text-danger">{error}</p> : null}
+          {error ? (
+            <InlineCallout tone="danger" role="alert">
+              {error}
+            </InlineCallout>
+          ) : null}
           <button
             type="button"
             disabled={loading}
@@ -152,7 +162,7 @@ function SetPasswordForm() {
           </button>
         </div>
       )}
-    </div>
+    </PublicNarrowShell>
   );
 }
 
