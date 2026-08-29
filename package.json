@@ -24,6 +24,7 @@
     "dtov:migrate": "node test/dtov/harness.js migrate",
     "dtov:seed": "node test/dtov/harness.js seed",
     "dtov:smoke": "node test/dtov/harness.js smoke",
+    "dtov:explain": "DTOV=1 node scripts/explain-hotpaths.js",
     "dtov:status": "node test/dtov/harness.js status",
     "dtov:full": "node test/dtov/harness.js reset && DTOV=1 node test/dtov/full-regression.js",
     "dtov:full-app": "node test/dtov/run-full-app.js",

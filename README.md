@@ -427,6 +427,8 @@ Principais (lista completa em `.env.example`):
 | `REDIS_KEY_PREFIX` | Prefixo das chaves de rate limit (default `team30`) |
 | `LOG_LEVEL` | Logs JSON stdout: `debug`/`info`/`warn`/`error` (default `info`) |
 | `LOG_SLOW_MS` | Threshold de query/op lenta em ms (default `1000`) |
+
+Hot paths / EXPLAIN: [`docs/performance-hotpaths.md`](docs/performance-hotpaths.md) (`npm run dtov:explain` no DTOV).
 | `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Sentry (org `3035tech-9t`, project `30team`); vazio = desligado |
 | `SENTRY_AUTH_TOKEN` | Upload de source maps no `next build` (CI/prod) |
 | `SENTRY_ENVIRONMENT` | Tag de ambiente no Sentry (default `NODE_ENV`) |

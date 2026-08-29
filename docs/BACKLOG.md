@@ -75,6 +75,10 @@ _(entregue — hero logo+nome+CTA, breadcrumb `/j` → empresa, meta local/faixa
 
 Sprint de escala sem rewrite: batch HR Score + núcleo único; `LIMIT`/página em candidatos da vaga; compat top-N pairs no payload; bloquear admin `company=all` em Overview/Compat; Overview sem LATERAL por vaga aberta (stats em batch nas 8 listadas); Turnover scan cap 500 + flag `truncated`; `area_stats` sem write-on-read no dashboard; caps job-roles/`forSelect`/leadership; ranking vaga cap 200; histograma T1–T9 só em Compat/Overview (Equipe só `COUNT`).
 
+### B-2801 — Performance P2 (medir + EXPLAIN + baseline) ✅ ENTREGUE
+
+Baseline documentada (`docs/performance-hotpaths.md`): SSR por aba, caps, export stream, `PG_POOL_MAX`, índices `006`/`061`. `measureAsync` nos hot paths + breadcrumb Sentry em slow; `npm run dtov:explain` (`scripts/explain-hotpaths.js`) para checklist EXPLAIN no DTOV.
+
 ### B-202 — (opcional) caps/API restantes do audit
 _(fechado como “monitorar prod” — sem gap aberto claro.)_ Já entregue: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps, indexes `061`. Reabrir só com evidência de produção.
 

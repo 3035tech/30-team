@@ -27,6 +27,7 @@ import { OVERVIEW_FUNNEL_STAGES } from '../../lib/overview-constants.js';
 import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles';
 import { getOnboardingProgress } from '../../lib/onboarding-progress';
 import { isSuperAdminPayload } from '../../lib/permissions';
+import { measureAsync } from '../../lib/monitoring.js';
 
 /** Max rows in the vacancy filter dropdown (cohort tabs only). */
 const VACANCIES_FILTER_CAP = 200;
@@ -431,10 +432,12 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
            LIMIT $${lightParams.length}`,
           lightParams
         );
-        const bundles = buildCompatBundles(lightRes.rows, locale, {
-          peopleCap: COMPAT_PEOPLE_CAP,
-          includePairs: needCompatPairs,
-        });
+        const bundles = await measureAsync('dashboard.compatBundles', async () =>
+          buildCompatBundles(lightRes.rows, locale, {
+            peopleCap: COMPAT_PEOPLE_CAP,
+            includePairs: needCompatPairs,
+          })
+        );
         const capped = listTotal > COMPAT_PEOPLE_CAP;
         if (needCompatPairs) {
           compatMetrics = {
@@ -454,21 +457,23 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       }
 
       if (needOverview) {
-        overviewMetrics = await buildOverviewMetrics({
-          isAdmin,
-          companyId,
-          scopeCompanyFilter,
-          selectedArea,
-          selectedVacancy,
-          enneagram,
-          dateFrom: selectedDateFrom,
-          dateTo: selectedDateTo,
-          nameSearch,
-          typeCount: typeCountAgg,
-          rosterScope: selectedRoster,
-          locale,
-          teamGroupId: selectedTeamGroup,
-        });
+        overviewMetrics = await measureAsync('dashboard.overviewMetrics', () =>
+          buildOverviewMetrics({
+            isAdmin,
+            companyId,
+            scopeCompanyFilter,
+            selectedArea,
+            selectedVacancy,
+            enneagram,
+            dateFrom: selectedDateFrom,
+            dateTo: selectedDateTo,
+            nameSearch,
+            typeCount: typeCountAgg,
+            rosterScope: selectedRoster,
+            locale,
+            teamGroupId: selectedTeamGroup,
+          })
+        );
 
         // Onboarding progress (only for non-admins viewing their own company)
         if (!isAdmin && companyId) {

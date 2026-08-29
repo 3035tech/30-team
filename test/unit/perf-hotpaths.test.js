@@ -5,11 +5,24 @@ import assert from 'node:assert/strict';
 import { COMPAT_PAIR_PAYLOAD_CAP, buildCompatBundles } from '../../lib/compat-bundles.js';
 import { JOB_ROLES_LIST_CAP } from '../../lib/job-roles.js';
 import { LEADERSHIP_SCORES_SAMPLE_CAP, LEADERSHIP_POTENTIALS_SCAN_CAP } from '../../lib/leadership-analytics.js';
+import {
+  measureAsync,
+  slowThresholdMs,
+  resetMetrics,
+  getMetricsSnapshot,
+} from '../../lib/monitoring.js';
 
 assert.ok(COMPAT_PAIR_PAYLOAD_CAP <= 150);
 assert.equal(JOB_ROLES_LIST_CAP, 500);
 assert.ok(LEADERSHIP_SCORES_SAMPLE_CAP <= 1000);
 assert.ok(LEADERSHIP_POTENTIALS_SCAN_CAP <= 800);
+assert.ok(slowThresholdMs() >= 50);
+
+resetMetrics();
+const timed = await measureAsync('test.perfHotpaths', async () => 42);
+assert.equal(timed, 42);
+const snap = getMetricsSnapshot();
+assert.ok(snap.dbQueries['op:test.perfHotpaths'] >= 1);
 
 const people = [];
 for (let i = 1; i <= 30; i += 1) {
