@@ -109,12 +109,12 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
   return (
     <div className={S.stack}>
       <div>
-        <h2 className="m-0 font-display text-xl font-normal text-ink">{t(locale, 'panel.leads.title')}</h2>
+        <h2 className={S.pageTitle}>{t(locale, 'panel.leads.title')}</h2>
         <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.leads.intro')}</p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.leads.filterStatus')}
           <select
             value={filters.status}
@@ -127,7 +127,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             <option value="inactive">{t(locale, 'panel.leads.statusInactive')}</option>
           </select>
         </label>
-        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.leads.filterSearch')}
           <input
             type="search"
@@ -164,22 +164,22 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colWhen')}
                   </th>
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colLead')}
                   </th>
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colOrigin')}
                   </th>
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colCompany')}
                   </th>
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colStatus')}
                   </th>
-                  <th className="px-3 py-2.5 font-mono text-[11px] font-normal uppercase text-ink-faint">
+                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
                     {t(locale, 'panel.leads.colMeta')}
                   </th>
                 </tr>
@@ -193,22 +193,22 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                     <td className="px-3 py-3">
                       <div className="font-medium text-ink">{row.fullName || '—'}</div>
                       <div className="text-xs text-ink-muted">{row.email}</div>
-                      <div className="mt-0.5 font-mono text-[10px] text-ink-faint">
+                      <div className="mt-0.5 font-mono text-2xs text-ink-faint">
                         #{row.id} · {row.role}
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="inline-block rounded-control border border-info/25 bg-info/10 px-2 py-0.5 font-mono text-[10px] text-info">
+                      <span className="inline-block rounded-control border border-info/25 bg-info/10 px-2 py-0.5 font-mono text-2xs text-info">
                         {t(locale, `panel.leads.origin.${row.origin || 'self_service'}`)}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-sm text-ink">
                       {row.companyName || '—'}
                       {row.companyId != null ? (
-                        <div className="font-mono text-[10px] text-ink-faint">#{row.companyId}</div>
+                        <div className="font-mono text-2xs text-ink-faint">#{row.companyId}</div>
                       ) : null}
                       {row.companySignupAutoCreated ? (
-                        <div className="mt-0.5 text-[10px] text-ink-faint">
+                        <div className="mt-0.5 text-2xs text-ink-faint">
                           {t(locale, 'panel.leads.autoCompany')}
                         </div>
                       ) : null}
@@ -216,19 +216,19 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                     <td className="px-3 py-3">
                       <span
                         className={cn(
-                          'inline-block rounded-control border px-2 py-0.5 font-mono text-[10px] uppercase',
+                          'inline-block rounded-control border px-2 py-0.5 font-mono text-2xs uppercase',
                           statusChipClass(row.status)
                         )}
                       >
                         {t(locale, `panel.leads.status.${row.status}`)}
                       </span>
                       {row.passwordSetupPending ? (
-                        <div className="mt-1 text-[10px] text-warning">
+                        <div className="mt-1 text-2xs text-warning">
                           {t(locale, 'panel.leads.setupPending')}
                         </div>
                       ) : null}
                       {row.onboardingCompleted ? (
-                        <div className="mt-1 text-[10px] text-ink-faint">
+                        <div className="mt-1 text-2xs text-ink-faint">
                           {t(locale, 'panel.leads.wizardDone')}
                         </div>
                       ) : null}

@@ -73,7 +73,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'panel.birthdays.title')}</h3>
-          <p className="m-0 text-[12px] leading-snug text-ink-muted">
+          <p className="m-0 text-xs leading-snug text-ink-muted">
             {t(locale, 'panel.birthdays.subtitle', { days: data.windowDays || 14 })}
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
 
       {company ? (
         <div className="mb-3 rounded-control border border-brand-500/20 bg-brand-500/[0.06] px-3 py-2.5">
-          <p className="m-0 font-mono text-[10px] uppercase tracking-wide text-brand-600">
+          <p className="m-0 font-mono text-2xs uppercase tracking-wide text-brand-600">
             {t(locale, 'panel.birthdays.kindCompany')}
           </p>
           <p className="mt-1 mb-0 text-sm text-ink">
@@ -110,7 +110,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
       ) : null}
 
       {empty ? (
-        <p className="m-0 text-[13px] italic text-ink-faint">{t(locale, 'panel.birthdays.empty')}</p>
+        <p className="m-0 text-prose italic text-ink-faint">{t(locale, 'panel.birthdays.empty')}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {items.map((row) => (
@@ -136,7 +136,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
                 ) : (
                   <span className="text-sm font-medium text-ink">{row.fullName}</span>
                 )}
-                <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                <span className="ml-2 font-mono text-2xs uppercase tracking-wide text-ink-faint">
                   {row.kind === 'birth'
                     ? t(locale, 'panel.birthdays.kindBirth')
                     : t(locale, 'panel.birthdays.kindWork')}

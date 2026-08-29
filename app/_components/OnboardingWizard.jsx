@@ -99,7 +99,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <h2 className="mb-3 text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.welcome.title', { name: userName })}
               </h2>
-              <p className="mb-6 text-[15px] leading-relaxed text-ink-muted">
+              <p className="mb-6 text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.welcome.body')}
               </p>
               <div className="mb-4 rounded-control border border-info/20 bg-info/10 px-4 py-3 text-left text-sm text-ink-muted">
@@ -112,7 +112,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               </div>
               <button
                 onClick={handleNext}
-                className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-[15px] text-white"
+                className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-base text-white"
               >
                 {t(locale, 'onboarding.welcome.cta')} →
               </button>
@@ -125,7 +125,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <h2 className="mb-3 text-center text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.vacancy.title')}
               </h2>
-              <p className="mb-6 text-center text-[15px] leading-relaxed text-ink-muted">
+              <p className="mb-6 text-center text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.vacancy.body')}
               </p>
 
@@ -169,13 +169,13 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 <Link
                   href="/dashboard?tab=vacancies"
                   onClick={() => markComplete()}
-                  className="flex-1 rounded-control border border-brand-500 bg-brand-500 px-4 py-3 text-center text-[15px] text-white no-underline hover:bg-brand-600"
+                  className="flex-1 rounded-control border border-brand-500 bg-brand-500 px-4 py-3 text-center text-base text-white no-underline hover:bg-brand-600"
                 >
                   {t(locale, 'onboarding.vacancy.createCta')}
                 </Link>
                 <button
                   onClick={handleNext}
-                  className="flex-1 rounded-control border border-ink/12 bg-white px-4 py-3 text-[15px] text-ink hover:bg-ink/5"
+                  className="flex-1 rounded-control border border-ink/12 bg-white px-4 py-3 text-base text-ink hover:bg-ink/5"
                 >
                   {t(locale, 'onboarding.vacancy.skipCta')}
                 </button>
@@ -189,7 +189,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <h2 className="mb-3 text-center text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.invite.title')}
               </h2>
-              <p className="mb-6 text-center text-[15px] leading-relaxed text-ink-muted">
+              <p className="mb-6 text-center text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.invite.body')}
               </p>
 
@@ -230,7 +230,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
               <button
                 onClick={handleNext}
-                className="w-full rounded-control border border-ink/12 bg-white px-4 py-3 text-[15px] text-ink hover:bg-ink/5"
+                className="w-full rounded-control border border-ink/12 bg-white px-4 py-3 text-base text-ink hover:bg-ink/5"
               >
                 {t(locale, 'onboarding.invite.skipCta')}
               </button>
@@ -243,7 +243,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <h2 className="mb-3 text-2xl font-normal text-ink">
                 {t(locale, 'onboarding.done.title')}
               </h2>
-              <p className="mb-6 text-[15px] leading-relaxed text-ink-muted">
+              <p className="mb-6 text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.done.body')}
               </p>
 
@@ -279,7 +279,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 onClick={handleComplete}
                 disabled={completing}
                 className={cn(
-                  'w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-[15px] text-white',
+                  'w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-base text-white',
                   completing && 'cursor-default opacity-60'
                 )}
               >

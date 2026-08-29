@@ -144,7 +144,7 @@ export function BrCitySelect({
         {loading && hasUf ? (
           <span
             aria-live="polite"
-            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] opacity-70"
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-2xs opacity-70"
           >
             …
           </span>
@@ -166,7 +166,7 @@ export function BrCitySelect({
                     setOpen(false);
                   }}
                   className={cn(
-                    'block w-full cursor-pointer border-none px-3 py-2 text-left font-inherit text-[13px] text-inherit',
+                    'block w-full cursor-pointer border-none px-3 py-2 text-left font-inherit text-prose text-inherit',
                     name === cityValue ? 'bg-ink/[0.06]' : 'bg-transparent'
                   )}
                 >

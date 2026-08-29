@@ -201,7 +201,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   return (
     <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-8">
-      <Link href="/colaborador" className="font-mono text-[12px] text-brand-600 no-underline">
+      <Link href="/colaborador" className="font-mono text-xs text-brand-600 no-underline">
         ← {t(locale, 'employeeHome.backHome')}
       </Link>
       <h1 className="mt-3 font-display text-2xl text-ink">{t(locale, 'employeeHome.profileTitle')}</h1>
@@ -327,7 +327,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
       <div className="mt-10 border-t border-ink/10 pt-8">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <h2 className={cn(S.label, 'm-0')}>{t(locale, 'dashboard.profile2faSection')}</h2>
-          <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+          <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
             {t(locale, 'dashboard.profile2faOptionalBadge')}
           </span>
         </div>
@@ -370,7 +370,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         ) : twoFaSetupSecret ? (
           <div className="flex flex-col gap-3">
             <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
-            <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-[11px]">
+            <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
               {twoFaSetupSecret}
             </code>
             <label className="block text-xs text-ink-muted">

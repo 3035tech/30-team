@@ -28,7 +28,7 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
     <label
       className={cn(
         'inline-flex items-center gap-2 text-ink-muted',
-        compact ? 'text-[11px]' : 'text-xs'
+        compact ? 'text-2xs' : 'text-xs'
       )}
     >
       <span className="font-mono uppercase tracking-wide">{t(current, 'common.language')}</span>

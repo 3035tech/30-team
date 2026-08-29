@@ -64,7 +64,7 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         {sections.map(([key, labelKey]) => (
           <div key={key}>
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint">
+            <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
               {t(locale, labelKey)}
             </span>
             <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-xs leading-snug text-ink-muted">
@@ -595,11 +595,11 @@ export function TeamTab({
           aria-label={t(locale, 'panel.team.searchAriaLabel')}
           className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-10 pr-4 font-ui text-sm text-ink outline-none"
         />
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-faint">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base text-ink-faint">
           ⌕
         </span>
         {activeSearch ? (
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-[11px] text-ink-faint">
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
         ) : null}
@@ -626,7 +626,7 @@ export function TeamTab({
         aria-label={t(locale, 'panel.team.sortAria')}
         className="flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] px-4 py-3"
       >
-        <label className="flex cursor-pointer items-center gap-1.5 font-mono text-[11px] text-ink-muted">
+        <label className="flex cursor-pointer items-center gap-1.5 font-mono text-2xs text-ink-muted">
           <input
             type="checkbox"
             checked={allSelected}
@@ -636,7 +636,7 @@ export function TeamTab({
           />
           {t(locale, 'panel.team.all')}
         </label>
-        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
+        <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
           {t(locale, 'panel.team.sortBy')}
         </span>
         {viewMode === 'list' && sortColumns.map(({ k, labelKey }) => {
@@ -683,7 +683,7 @@ export function TeamTab({
           ))}
           </div>
           {viewMode === 'kanban' ? (
-            <p className="m-0 max-w-[320px] text-right text-[11px] leading-snug text-ink-faint">
+            <p className="m-0 max-w-[320px] text-right text-2xs leading-snug text-ink-faint">
               {t(locale, 'panel.team.teamKanbanHint')}
             </p>
           ) : null}
@@ -778,13 +778,13 @@ export function TeamTab({
                         >
                           <div className="mb-2 flex items-center gap-2">
                             <span className="shrink-0 text-xl leading-none">{d.emoji}</span>
-                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-[13px] leading-snug text-ink">
+                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-prose leading-snug text-ink">
                               {titleCasePersonName(r.name)}
                             </span>
                             {days != null && aging ? (
                               <span
                                 className={cn(
-                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px]',
+                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-2xs',
                                   aging === 'danger'
                                     ? 'border-danger/30 bg-danger/[0.09] text-danger'
                                     : 'border-warning/30 bg-warning/[0.1] text-warning'
@@ -795,7 +795,7 @@ export function TeamTab({
                               </span>
                             ) : days != null && days > 0 ? (
                               <span
-                                className="shrink-0 font-mono text-[10px] text-ink-faint"
+                                className="shrink-0 font-mono text-2xs text-ink-faint"
                                 title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
                               >
                                 {t(locale, 'recruiting.stageAgingDays', { n: days })}
@@ -806,14 +806,14 @@ export function TeamTab({
                             <TypeBadge type={r.topType} locale={locale} compact />
                             <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                             {r.areaLabel && (
-                              <span className="rounded-full border border-ink/12 bg-ink/[0.05] px-[7px] py-0.5 font-mono text-[11px] text-ink-muted">
+                              <span className="rounded-full border border-ink/12 bg-ink/[0.05] px-[7px] py-0.5 font-mono text-2xs text-ink-muted">
                                 {r.areaLabel}
                               </span>
                             )}
                             {fitScore != null && (
                               <span
                                 className={cn(
-                                  'rounded-full border px-[7px] py-0.5 font-mono text-[11px]',
+                                  'rounded-full border px-[7px] py-0.5 font-mono text-2xs',
                                   fitScore >= 7
                                     ? 'border-success/30 bg-success/10 text-success'
                                     : fitScore >= 4
@@ -826,7 +826,7 @@ export function TeamTab({
                             )}
                           </div>
                           {r.vacancyTitle && (
-                            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] text-ink-faint">
+                            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs text-ink-faint">
                               {r.vacancyTitle}
                             </div>
                           )}
@@ -859,7 +859,7 @@ export function TeamTab({
 
       {viewMode === 'list' && selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-brand-500/25 bg-brand-500/[0.04] px-4 py-3">
-          <span className="font-mono text-[13px] text-brand-500">
+          <span className="font-mono text-prose text-brand-500">
             {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
           </span>
           <select
@@ -953,18 +953,18 @@ export function TeamTab({
               <div className="shrink-0 text-lg leading-none">{d.emoji}</div>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span className="text-[15px] leading-snug text-ink">
+                  <span className="text-base leading-snug text-ink">
                     {titleCasePersonName(r.name)}
                   </span>
                   {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
-                    <span className="rounded-full border border-success/35 px-1.5 py-px font-mono text-[10px] text-success">
+                    <span className="rounded-full border border-success/35 px-1.5 py-px font-mono text-2xs text-success">
                       {t(locale, 'recruiting.employmentEmployee')}
                     </span>
                   ) : null}
                   {createdLabel ? (
                     <span
                       title={t(locale, 'dashboard.teamListDateHelp')}
-                      className="font-mono text-[11px] text-ink-faint"
+                      className="font-mono text-2xs text-ink-faint"
                     >
                       {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
                     </span>
@@ -974,26 +974,26 @@ export function TeamTab({
                   <TypeBadge type={r.topType} locale={locale} compact />
                   <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
-                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-px font-mono text-[11px] text-ink-muted">
+                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-px font-mono text-2xs text-ink-muted">
                       {r.areaLabel}
                     </span>
                   )}
                   {r.pipelineStage ? (
-                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2 py-px font-mono text-[11px] text-brand-600">
+                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2 py-px font-mono text-2xs text-brand-600">
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
                     </span>
                   ) : null}
                   {r.fitLabel && (
-                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2 py-px font-mono text-[11px] text-brand-600">
+                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2 py-px font-mono text-2xs text-brand-600">
                       {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
                     </span>
                   )}
                   {showVacancyFit ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-[11px] text-success">
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-2xs text-success">
                       {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
                     </span>
                   ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-[11px] text-success">
+                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-2xs text-success">
                       {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
                     </span>
                   ) : null}
@@ -1049,7 +1049,7 @@ export function TeamTab({
                     <Icon name="trash" />
                   </button>
                 ) : null}
-                <span className="font-mono text-[11px] text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
+                <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
               </div>
             </div>
           </div>
@@ -1216,7 +1216,7 @@ export function TeamTab({
                             {isAdmin && (a.fillDurationMs != null || a.copyEventCount != null) && (
                               <div
                                 className={cn(
-                                  'mt-1.5 font-mono text-[11px] leading-snug',
+                                  'mt-1.5 font-mono text-2xs leading-snug',
                                   isSuspiciouslyFast(a.fillDurationMs) || (a.copyEventCount || 0) > 0
                                     ? 'text-warning'
                                     : 'text-ink-faint'
@@ -1233,17 +1233,17 @@ export function TeamTab({
                               </div>
                             )}
                             {a.rejectionReason ? (
-                              <div className="mt-1 font-mono text-[11px] text-danger">
+                              <div className="mt-1 font-mono text-2xs text-danger">
                                 {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, a.rejectionReason)}
                               </div>
                             ) : null}
                             {a.startDate && a.pipelineStage === PIPELINE_STAGE.HIRED ? (
-                              <div className="mt-1 font-mono text-[11px] text-success">
+                              <div className="mt-1 font-mono text-2xs text-success">
                                 {t(locale, 'recruiting.startDateLabel')}: {a.startDate}
                               </div>
                             ) : null}
                             {a.pipelineHistory?.length > 0 && (
-                              <div className="mt-1 font-mono text-[10px] leading-loose text-ink-faint">
+                              <div className="mt-1 font-mono text-2xs leading-loose text-ink-faint">
                                 {a.pipelineHistory.map((h, i) => (
                                   <span key={i} className="mr-2.5">
                                     {h.fromStage || '—'} → {h.toStage}
@@ -1314,7 +1314,7 @@ export function TeamTab({
                           setProfileMsg('');
                           setNotesMsg('');
                         }}
-                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-[11px] text-ink-muted"
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-2xs text-ink-muted"
                       >
                         {t(locale, 'panel.team.editNote')}
                       </button>
@@ -1356,7 +1356,7 @@ export function TeamTab({
                         );
                       }
                       return (
-                        <div className="font-mono text-[13px] leading-relaxed text-ink">
+                        <div className="font-mono text-prose leading-relaxed text-ink">
                           {c?.phone ? <div>{formatPhoneBr(c.phone)}</div> : null}
                           {locBits ? <div>{locBits}</div> : null}
                           {c?.linkedinUrl ? (
@@ -1388,7 +1388,7 @@ export function TeamTab({
                               {detail.lmsOverdue.map((course) => (
                                 <li
                                   key={course.enrollmentId}
-                                  className="w-fit rounded-full bg-danger/10 px-2 py-1 text-[11px] text-danger"
+                                  className="w-fit rounded-full bg-danger/10 px-2 py-1 text-2xs text-danger"
                                 >
                                   {t(locale, 'panel.team.lmsOverdue', {
                                     title: course.courseTitle,
@@ -1478,7 +1478,7 @@ export function TeamTab({
                           />
                         </label>
                         {detail?.candidate?.startDate ? (
-                          <p className="m-0 min-w-0 flex-[1_1_160px] font-mono text-[11px] leading-snug text-ink-muted">
+                          <p className="m-0 min-w-0 flex-[1_1_160px] font-mono text-2xs leading-snug text-ink-muted">
                             {t(locale, 'panel.team.workAnniversary')}:{' '}
                             {String(detail.candidate.startDate).slice(0, 10)}
                             <span className="mt-0.5 block text-ink-faint">
@@ -1527,7 +1527,7 @@ export function TeamTab({
                     </div>
                   )}
                   {profileMsg ? (
-                    <p className={cn('mt-2 mb-0 font-mono text-[11px]', profileMsgIsError ? 'text-danger' : 'text-success')}>
+                    <p className={cn('mt-2 mb-0 font-mono text-2xs', profileMsgIsError ? 'text-danger' : 'text-success')}>
                       {profileMsg}
                     </p>
                   ) : null}
@@ -1541,7 +1541,7 @@ export function TeamTab({
                       <button
                         type="button"
                         onClick={() => { setNotesDraft(detail?.candidate?.hrNotes || ''); setNotesEditing(true); setNotesMsg(''); }}
-                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-[11px] text-ink-muted"
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-2xs text-ink-muted"
                       >
                         {detail?.candidate?.hrNotes && !isRichTextEmpty(detail.candidate.hrNotes)
                           ? t(locale, 'panel.team.editNote')

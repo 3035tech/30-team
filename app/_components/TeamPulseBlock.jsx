@@ -163,7 +163,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
                 onClick={() => openPulse(p.id)}
               >
                 <span className="text-sm text-ink">{p.title}</span>
-                <span className="font-mono text-[11px] text-ink-faint">
+                <span className="font-mono text-2xs text-ink-faint">
                   {t(locale, `panel.pulse.status.${p.status}`)} · {p.responseCount || 0}
                 </span>
               </button>
@@ -204,7 +204,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
           ) : null}
           {aggregate?.ready ? (
             <div className="rounded-control border border-ink/10 bg-canvas/50 px-3 py-2">
-              <p className="m-0 font-mono text-[11px] text-ink-muted">
+              <p className="m-0 font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.pulse.overall', {
                   n: aggregate.overallMean,
                   r: aggregate.responseCount,
@@ -216,7 +216,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
                 </p>
               ) : null}
               {aggregate.reading?.mixText ? (
-                <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-faint">
+                <p className="mb-0 mt-1 text-2xs leading-snug text-ink-faint">
                   {aggregate.reading.mixText}
                 </p>
               ) : null}

@@ -193,14 +193,14 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   return (
     <div className={S.stack}>
       <div>
-        <h2 className="m-0 font-display text-xl font-normal text-ink">
+        <h2 className={S.pageTitle}>
           {t(locale, 'panel.talentBank.title')}
         </h2>
         <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.talentBank.intro')}</p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.talentBank.filterSearch')}
           <input
             type="search"
@@ -216,7 +216,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
             className={S.input}
           />
         </label>
-        <label className="flex flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.talentBank.filterVacancy')}
           <select
             value={vacancyId}
@@ -234,7 +234,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.talentBank.filterStage')}
           <select
             value={stage}
@@ -252,7 +252,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 font-mono text-[11px] text-ink-faint">
+        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.talentBank.filterType')}
           <select
             value={topType}
@@ -343,7 +343,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                   </SortableTh>
                   <th
                     scope="col"
-                    className="px-3 py-2.5 text-right font-mono text-[11px] font-normal uppercase text-ink-faint"
+                    className="px-3 py-2.5 text-right font-mono text-2xs font-normal uppercase text-ink-faint"
                   >
                     {t(locale, 'panel.talentBank.colActions')}
                   </th>
@@ -354,7 +354,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                   <tr key={row.id} className="border-b border-ink/6 align-middle last:border-0">
                     <td className="px-3 py-3">
                       <div className="font-medium text-ink">{row.fullName || '—'}</div>
-                      <div className="font-mono text-[10px] text-ink-faint">#{row.id}</div>
+                      <div className="font-mono text-2xs text-ink-faint">#{row.id}</div>
                     </td>
                     <td className="px-3 py-3 text-sm text-ink-muted">{row.email || '—'}</td>
                     <td className="px-3 py-3 text-sm text-ink">

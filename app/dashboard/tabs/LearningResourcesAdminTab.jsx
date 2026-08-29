@@ -410,10 +410,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
             onAction={isAdmin ? handleCreate : undefined}
           />
           <div className="flex flex-wrap gap-3 px-1">
-            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=team" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaPdi')} →
             </Link>
-            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=help" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaHelp')} →
             </Link>
           </div>

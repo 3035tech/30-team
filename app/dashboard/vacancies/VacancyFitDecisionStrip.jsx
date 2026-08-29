@@ -108,11 +108,11 @@ export function VacancyFitDecisionStrip({
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.fitDecisionTitle')}</span>
         {score010 != null ? (
-          <span className={cn('font-mono text-[12px] font-semibold', scoreTone(score010))}>
+          <span className={cn('font-mono text-xs font-semibold', scoreTone(score010))}>
             {t(locale, 'recruiting.fitDecisionScore', { score: score010 })}
           </span>
         ) : (
-          <span className="font-mono text-[11px] text-ink-muted">
+          <span className="font-mono text-2xs text-ink-muted">
             {t(locale, 'recruiting.fitDecisionNoScore')}
           </span>
         )}
@@ -123,7 +123,7 @@ export function VacancyFitDecisionStrip({
           {topContrib.map((c) => (
             <span
               key={c.type}
-              className="rounded-control border border-ink/10 bg-surface/70 px-2 py-0.5 font-mono text-[10px] text-ink-muted"
+              className="rounded-control border border-ink/10 bg-surface/70 px-2 py-0.5 font-mono text-2xs text-ink-muted"
               title={t(locale, 'recruiting.fitDecisionContribTitle', {
                 type: `T${c.type}`,
                 weight: c.weight,
@@ -137,7 +137,7 @@ export function VacancyFitDecisionStrip({
           ))}
         </div>
       ) : null}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px]">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-2xs">
         {aligned.length > 0 ? (
           <span className="text-success">
             {t(locale, 'recruiting.fitDecisionAligned', {
@@ -154,7 +154,7 @@ export function VacancyFitDecisionStrip({
         ) : null}
       </div>
       {probe ? (
-        <p className="m-0 mt-2 text-[12px] leading-snug text-ink-muted">{probe}</p>
+        <p className="m-0 mt-2 text-xs leading-snug text-ink-muted">{probe}</p>
       ) : null}
     </div>
   );

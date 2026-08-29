@@ -68,9 +68,9 @@ export function LeadershipTab({
   const Kpi = ({ icon, value, label, hint }) => (
     <div className={cn(S.card, 'p-[22px]')}>
       <div className="mb-2 flex text-brand-500"><Icon name={icon} /></div>
-      <div className="mb-1 font-mono text-[28px] text-brand-600">{value}</div>
-      <div className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">{label}</div>
-      {hint && <div className="mt-2 text-[11px] leading-snug text-ink-faint">{hint}</div>}
+      <div className="mb-1 font-mono text-3xl text-brand-600">{value}</div>
+      <div className="font-mono text-2xs uppercase tracking-wide text-ink-muted">{label}</div>
+      {hint && <div className="mt-2 text-2xs leading-snug text-ink-faint">{hint}</div>}
     </div>
   );
 
@@ -94,7 +94,7 @@ export function LeadershipTab({
     <div className="flex flex-col gap-4">
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'panel.leadership.title')}</span>
-        <p className="mb-3.5 mt-2.5 text-[13px] leading-relaxed text-ink-muted">
+        <p className="mb-3.5 mt-2.5 text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.leadership.intro')}
         </p>
         <PanelSubNav
@@ -128,13 +128,13 @@ export function LeadershipTab({
                     key={`${p.companyId}-${p.candidateId}`}
                     className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-ink/[0.02] px-3 py-2.5"
                   >
-                    <span className="min-w-0 flex-[1_1_140px] text-[13px] text-ink">{p.name}</span>
-                    <span className="font-mono text-[11px] text-ink-faint">{p.companyName}</span>
+                    <span className="min-w-0 flex-[1_1_140px] text-prose text-ink">{p.name}</span>
+                    <span className="font-mono text-2xs text-ink-faint">{p.companyName}</span>
                     <TypeBadge type={p.topType} locale={locale} compact />
                     <span className="font-mono text-xs text-brand-600">
                       {p.leadership010}/10
                     </span>
-                    <span className="font-mono text-[11px] text-ink-muted">
+                    <span className="font-mono text-2xs text-ink-muted">
                       {bandLabel(locale, p.leadershipBand)}
                     </span>
                   </div>
@@ -152,11 +152,11 @@ export function LeadershipTab({
 
           <div className={S.card}>
             <span className={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
-            <p className="mb-4 mt-1.5 text-[11px] text-ink-faint">
+            <p className="mb-4 mt-1.5 text-2xs text-ink-faint">
               {t(locale, 'panel.leadership.monthlyHint')}
             </p>
             {monthlyTrend.length === 0 ? (
-              <p className="text-[13px] italic text-ink-muted">{t(locale, 'panel.leadership.noTimeSeries')}</p>
+              <p className="text-prose italic text-ink-muted">{t(locale, 'panel.leadership.noTimeSeries')}</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {monthlyTrend.slice(-6).map((m) => (
@@ -186,7 +186,7 @@ export function LeadershipTab({
                     key={String(co.companyId)}
                     className="rounded-xl border border-ink/12 bg-ink/[0.03] px-[18px] py-4"
                   >
-                    <div className="mb-3 font-mono text-[13px] text-ink">
+                    <div className="mb-3 font-mono text-prose text-ink">
                       {co.companyName}
                       <span className="ml-2 text-ink-faint">#{co.companyId}</span>
                     </div>
@@ -235,11 +235,11 @@ export function LeadershipTab({
 
           <div className={S.card}>
             <span className={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
-            <p className="mb-4 mt-1.5 text-[11px] text-ink-faint">
+            <p className="mb-4 mt-1.5 text-2xs text-ink-faint">
               {t(locale, 'panel.leadership.monthlyHint')}
             </p>
             {monthlyTrend.length === 0 ? (
-              <p className="text-[13px] italic text-ink-muted">{t(locale, 'panel.leadership.noTimeSeries')}</p>
+              <p className="text-prose italic text-ink-muted">{t(locale, 'panel.leadership.noTimeSeries')}</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {monthlyTrend.map((m) => (
@@ -258,7 +258,7 @@ export function LeadershipTab({
           <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
             <div className={S.card}>
               <span className={S.label}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
-              <p className="mb-3.5 mt-1.5 text-[11px] text-ink-faint">
+              <p className="mb-3.5 mt-1.5 text-2xs text-ink-faint">
                 {t(locale, 'panel.leadership.globalDistHint')}
               </p>
               <div className="flex flex-col gap-3">
@@ -283,7 +283,7 @@ export function LeadershipTab({
                           <Bar value={c} max={maxG} color={d.color} h={8} />
                         </div>
                         <span className="w-7 text-right font-mono text-xs text-ink-muted">{c}</span>
-                        <span className="w-10 text-right font-mono text-[11px] text-ink-faint">
+                        <span className="w-10 text-right font-mono text-2xs text-ink-faint">
                           {Math.round((c / gTot) * 100)}%
                         </span>
                       </div>
@@ -294,7 +294,7 @@ export function LeadershipTab({
 
             <div className={S.card}>
               <span className={S.label}>{t(locale, 'panel.leadership.diversityTitle')}</span>
-              <p className="mb-3.5 mt-1.5 text-[11px] leading-snug text-ink-faint">
+              <p className="mb-3.5 mt-1.5 text-2xs leading-snug text-ink-faint">
                 {t(locale, 'panel.leadership.diversityHint')}
               </p>
               <div className="flex flex-col gap-3">
@@ -353,7 +353,7 @@ export function LeadershipTab({
                 </tbody>
               </table>
             </div>
-            <p className="mb-0 mt-3.5 text-[11px] italic leading-relaxed text-ink-faint">
+            <p className="mb-0 mt-3.5 text-2xs italic leading-relaxed text-ink-faint">
               {t(locale, 'panel.leadership.execFootnote')}
             </p>
           </div>

@@ -94,7 +94,7 @@ export function PublicVacancyShareBar({ locale = 'pt-BR', posting }) {
       className="mt-5 border-t border-ink/12 pt-[18px]"
       aria-label={t(locale, 'publicVacancy.shareAria')}
     >
-      <p className="mb-2.5 mt-0 font-mono text-[11px] uppercase tracking-[0.04em] text-ink-faint">
+      <p className="mb-2.5 mt-0 font-mono text-2xs uppercase tracking-[0.04em] text-ink-faint">
         {t(locale, 'publicVacancy.shareHeading')}
       </p>
       <div className="flex flex-wrap items-center gap-2.5">

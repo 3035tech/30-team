@@ -472,10 +472,10 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
             onAction={canWrite ? handleRegisterExit : undefined}
           />
           <div className="flex flex-wrap gap-3 px-1">
-            <Link href="/dashboard?tab=company-benefits" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=company-benefits" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaBenefits')} →
             </Link>
-            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=team" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaTeam')} →
             </Link>
           </div>
@@ -520,7 +520,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                       <div className="mt-1">
                         <Link
                           href="/dashboard?tab=company-benefits"
-                          className="font-mono text-[10px] text-brand-600 hover:underline"
+                          className="font-mono text-2xs text-brand-600 hover:underline"
                         >
                           {t('ctaBenefits')}
                         </Link>
@@ -634,7 +634,7 @@ function ExitRecordViewDialog({ locale, record, t, formatDate, canWrite, onClose
         </h3>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('candidateName')}</dt>
+            <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('candidateName')}</dt>
             <dd className="m-0 mt-0.5 text-ink">{record.candidateName}</dd>
             {record.candidateEmail ? (
               <dd className="m-0 text-xs text-ink-muted">
@@ -643,19 +643,19 @@ function ExitRecordViewDialog({ locale, record, t, formatDate, canWrite, onClose
             ) : null}
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitDate')}</dt>
+            <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('exitDate')}</dt>
             <dd className="m-0 mt-0.5 text-ink">{formatDate(record.exitDate)}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitType')}</dt>
+            <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('exitType')}</dt>
             <dd className="m-0 mt-0.5 text-ink">{t(record.exitType)}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('exitReason')}</dt>
+            <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('exitReason')}</dt>
             <dd className="m-0 mt-0.5 text-ink">{t(record.exitReason)}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">{t('notes')}</dt>
+            <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('notes')}</dt>
             <dd className="m-0 mt-1">
               {hasNotes ? (
                 <RichTextView html={record.notes} className="rounded-control border border-ink/8 bg-canvas px-3 py-2" />

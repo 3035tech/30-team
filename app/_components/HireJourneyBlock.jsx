@@ -33,14 +33,14 @@ export function HireJourneyBlock({
       <span id="hire-journey-title" className={cn(S.label, 'mb-1')}>
         {t(locale, 'panel.hireJourney.title')}
       </span>
-      <p className="mb-3 mt-0 text-[11px] leading-snug text-ink-muted">
+      <p className="mb-3 mt-0 text-2xs leading-snug text-ink-muted">
         {t(locale, 'panel.hireJourney.hint')}
       </p>
       <ol className="mb-4 mt-0 flex list-none flex-wrap gap-1.5 p-0" aria-label={t(locale, 'panel.hireJourney.stepsAria')}>
         {JOURNEY_STEPS.map((step, i) => (
           <li
             key={step}
-            className="inline-flex min-h-touch items-center gap-1 rounded-control border border-ink/10 bg-white/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-ink-muted"
+            className="inline-flex min-h-touch items-center gap-1 rounded-control border border-ink/10 bg-white/70 px-2.5 py-1 font-mono text-2xs uppercase tracking-wide text-ink-muted"
           >
             <span className="text-ink-faint" aria-hidden>
               {i + 1}.

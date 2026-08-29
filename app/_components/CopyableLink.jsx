@@ -72,7 +72,7 @@ export function CopyableLink({
     }
   };
 
-  const labelClass = 'font-mono text-[11px] tracking-[0.02em]';
+  const labelClass = 'font-mono text-2xs tracking-[0.02em]';
 
   return (
     <div

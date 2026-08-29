@@ -149,7 +149,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
       <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.preOnboarding.title')}</h3>
       <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'panel.preOnboarding.hint')}</p>
       {items.length > 0 ? (
-        <p className={cn(S.faint, 'm-0 mt-1 font-mono text-[10px]')}>
+        <p className={cn(S.faint, 'm-0 mt-1 font-mono text-2xs')}>
           {t(locale, 'panel.preOnboarding.progress', { done: doneCount, total: items.length })}
         </p>
       ) : null}
@@ -182,12 +182,12 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
                   <div className="text-sm text-ink">
                     {t(locale, `panel.preOnboarding.item.${row.itemKey}`)}
                     {row.overdue ? (
-                      <span className="ml-1.5 font-mono text-[10px] text-warning">
+                      <span className="ml-1.5 font-mono text-2xs text-warning">
                         {t(locale, 'panel.preOnboarding.overdue')}
                       </span>
                     ) : null}
                   </div>
-                  <div className="font-mono text-[10px] text-ink-muted">
+                  <div className="font-mono text-2xs text-ink-muted">
                     {t(locale, 'panel.preOnboarding.due', { date: row.dueDate || '—' })}
                     {done ? ` · ${t(locale, `panel.preOnboarding.status.${row.status}`)}` : ''}
                     {row.employeeAckAt ? (
@@ -201,7 +201,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
                       href={row.meetUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-flex font-mono text-[10px] text-brand-600"
+                      className="mt-1 inline-flex font-mono text-2xs text-brand-600"
                     >
                       {t(locale, 'panel.preOnboarding.openMeet')}
                     </a>

@@ -102,11 +102,11 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
             >
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-ink">{inv.candidateName}</div>
-                <div className="text-[11px] text-ink-muted">{inv.candidateEmail}</div>
+                <div className="text-2xs text-ink-muted">{inv.candidateEmail}</div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <span className="text-brand-600">{inviteStatusLabel(locale, inv.status)}</span>
                   {reminderCount > 0 && (
-                    <span className="text-[11px] text-ink-faint">
+                    <span className="text-2xs text-ink-faint">
                       {t(locale, 'recruiting.reminderSentCount', { n: reminderCount })}
                       {lastReminder
                         ? t(locale, 'recruiting.lastReminderSuffix', {
@@ -124,7 +124,7 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                     disabled={!!busy}
                     onClick={() => remind(inv.id)}
                     className={cn(
-                      'flex items-center gap-1.5 rounded-md border border-success/35 bg-success/[0.07] px-2.5 py-1.5 text-[11px] text-success',
+                      'flex items-center gap-1.5 rounded-md border border-success/35 bg-success/[0.07] px-2.5 py-1.5 text-2xs text-success',
                       busy ? 'cursor-default' : 'cursor-pointer'
                     )}
                   >
@@ -139,7 +139,7 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                   onClick={() => removeInvite(inv)}
                   title={t(locale, 'recruiting.inviteDelete')}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-md border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 text-[11px] text-danger',
+                    'flex items-center gap-1.5 rounded-md border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 text-2xs text-danger',
                     busy ? 'cursor-default' : 'cursor-pointer'
                   )}
                 >

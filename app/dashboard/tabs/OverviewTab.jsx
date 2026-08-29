@@ -82,12 +82,12 @@ function StatTile({ value, label, color, onClick }) {
       style={color ? { borderColor: `${color}35` } : undefined}
     >
       <div
-        className="font-ui text-[26px] font-semibold leading-tight text-ink"
+        className="font-ui text-3xl font-semibold leading-tight text-ink"
         style={color ? { color } : undefined}
       >
         {value}
       </div>
-      <div className="mt-1.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+      <div className="mt-1.5 font-mono text-2xs uppercase tracking-wide text-ink-muted">
         {label}
       </div>
     </button>
@@ -181,7 +181,7 @@ export function OverviewTab({
       <div className={S.stack}>
         <div className={cn(S.card, 'p-5 sm:px-6')}>
           <span className={S.label}>{t(locale, 'panel.overview.needsCompanyScopeTitle')}</span>
-          <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
+          <p className="mt-2.5 mb-0 max-w-[62ch] text-prose leading-relaxed text-ink-muted">
             {t(locale, 'panel.overview.needsCompanyScopeBody')}
           </p>
         </div>
@@ -248,7 +248,7 @@ export function OverviewTab({
         <span className={S.label}>
           {t(locale, 'dashboard.overview')}
         </span>
-        <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
+        <p className="mt-2.5 mb-0 max-w-[62ch] text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.overview.intro')}
         </p>
         {chips.length > 0 ? (
@@ -256,7 +256,7 @@ export function OverviewTab({
             {chips.map((c) => (
               <span
                 key={c}
-                className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-[11px] text-ink-muted"
+                className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-2xs text-ink-muted"
               >
                 {c}
               </span>
@@ -303,7 +303,7 @@ export function OverviewTab({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.opsIntelTitle')}</span>
-              <p className="mt-1.5 mb-0 text-[13px] leading-snug text-ink-muted">
+              <p className="mt-1.5 mb-0 text-prose leading-snug text-ink-muted">
                 {t(locale, 'panel.overview.opsIntelBody')}
               </p>
             </div>
@@ -350,7 +350,7 @@ export function OverviewTab({
           />
         </div>
         {mixTotalRaw === 0 ? (
-          <p className="m-0 text-[13px] text-ink-faint">
+          <p className="m-0 text-prose text-ink-faint">
             {t(locale, 'panel.overview.typeMixEmpty')}
           </p>
         ) : (
@@ -372,7 +372,7 @@ export function OverviewTab({
                 {mixEntries.map((e) => (
                   <div
                     key={e.type}
-                    className="flex min-w-0 flex-col items-center gap-0 overflow-hidden font-mono text-[10px] leading-tight tabular-nums"
+                    className="flex min-w-0 flex-col items-center gap-0 overflow-hidden font-mono text-2xs leading-tight tabular-nums"
                     style={{ width: `${(e.n / mixTotal) * 100}%` }}
                     title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
                   >
@@ -388,7 +388,7 @@ export function OverviewTab({
               </div>
             </div>
             {dominant ? (
-              <p className="mt-2 mb-0 text-[11px] leading-snug text-ink-muted">
+              <p className="mt-2 mb-0 text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.overview.dominantHint', {
                   type: typeFullName(dominant, locale),
                   n: mixCount[dominant] || mixCount[String(dominant)] || 0,
@@ -399,10 +399,10 @@ export function OverviewTab({
               </p>
             ) : null}
             {compositionLine ? (
-              <p className="mt-1 mb-0 text-[11px] leading-snug text-ink-faint">{compositionLine}</p>
+              <p className="mt-1 mb-0 text-2xs leading-snug text-ink-faint">{compositionLine}</p>
             ) : null}
             {data.typeMix?.windowDelta?.available ? (
-              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">
+              <p className="mt-1.5 mb-0 text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.overview.typeMixWindowDelta', {
                   recent: typeFullName(data.typeMix.windowDelta.recentDominant, locale),
                   recentPct: data.typeMix.windowDelta.recentPct,
@@ -416,7 +416,7 @@ export function OverviewTab({
               </p>
             ) : null}
             {rubricDeltaLine ? (
-              <p className="mt-1.5 mb-0 text-[11px] leading-snug text-ink-muted">{rubricDeltaLine}</p>
+              <p className="mt-1.5 mb-0 text-2xs leading-snug text-ink-muted">{rubricDeltaLine}</p>
             ) : null}
           </>
         )}
@@ -427,12 +427,12 @@ export function OverviewTab({
           <span className={cn(S.label, 'mb-0')}>
             {t(locale, 'panel.overview.attentionTitle')}
           </span>
-          <span className="font-mono text-[11px] text-ink-muted">
+          <span className="font-mono text-2xs text-ink-muted">
             {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
           </span>
         </div>
         {(data.attention || []).length === 0 ? (
-          <p className="m-0 text-[13px] italic text-ink-muted">
+          <p className="m-0 text-prose italic text-ink-muted">
             {t(locale, 'panel.overview.attentionEmpty')}
           </p>
         ) : (
@@ -452,17 +452,17 @@ export function OverviewTab({
                 >
                   <span
                     className={cn(
-                      'min-w-[52px] font-mono text-[10px] uppercase tracking-wide',
+                      'min-w-[52px] font-mono text-2xs uppercase tracking-wide',
                       pr.label
                     )}
                   >
                     {t(locale, `panel.overview.priority.${item.priority}`)}
                   </span>
-                  <span className="min-w-0 flex-[1_1_180px] text-[13px] text-ink">
+                  <span className="min-w-0 flex-[1_1_180px] text-prose text-ink">
                     {t(locale, item.titleKey)}
                   </span>
                   <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
-                  <span className="font-mono text-[11px] text-ink-faint">
+                  <span className="font-mono text-2xs text-ink-faint">
                     {t(locale, 'panel.overview.daysAgo', { n: item.days ?? 0 })}
                   </span>
                 </button>
@@ -478,14 +478,14 @@ export function OverviewTab({
             <span className={cn(S.label, 'mb-0')}>
               {t(locale, 'panel.overview.recruitingTitle')}
             </span>
-            <p className="mt-1 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-1 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.recruitingHint')}
             </p>
           </div>
           <button
             type="button"
             onClick={toggleRecruiting}
-            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-[11px] text-ink-muted"
+            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-2xs text-ink-muted"
             aria-expanded={recruitingOpen}
           >
             {recruitingOpen
@@ -494,7 +494,7 @@ export function OverviewTab({
           </button>
         </div>
         {!recruitingOpen ? (
-          <p className="m-0 font-mono text-[11px] text-ink-faint">
+          <p className="m-0 font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.overview.recruitingCollapsedHint', {
               n: data.funnelTotal || 0,
               open: data.vacancies?.openCount ?? 0,
@@ -535,7 +535,7 @@ export function OverviewTab({
                 />
               ))}
             </div>
-            <p className="mt-2 mb-0 font-mono text-[11px] text-ink-faint">
+            <p className="mt-2 mb-0 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.funnelBarHint', { n: data.funnelTotal })}
             </p>
           </div>
@@ -556,26 +556,26 @@ export function OverviewTab({
           </div>
           <div className="mb-3.5 flex flex-wrap gap-4">
             <div>
-              <div className="text-[22px] text-ink">{data.vacancies?.openCount ?? 0}</div>
-              <div className="font-mono text-[11px] text-ink-muted">
+              <div className="text-2xl text-ink">{data.vacancies?.openCount ?? 0}</div>
+              <div className="font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.overview.vacanciesOpen')}
               </div>
             </div>
             <div>
-              <div className="text-[22px] text-warning">{data.vacancies?.positionsOpen ?? 0}</div>
-              <div className="font-mono text-[11px] text-ink-muted">
+              <div className="text-2xl text-warning">{data.vacancies?.positionsOpen ?? 0}</div>
+              <div className="font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.overview.positionsLeft')}
               </div>
             </div>
             <div>
-              <div className="text-[22px] text-danger">{data.vacancies?.staleCount ?? 0}</div>
-              <div className="font-mono text-[11px] text-ink-muted">
+              <div className="text-2xl text-danger">{data.vacancies?.staleCount ?? 0}</div>
+              <div className="font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.overview.staleVacancies')}
               </div>
             </div>
           </div>
           {(data.vacancies?.items || []).length === 0 ? (
-            <p className="m-0 text-[13px] italic text-ink-faint">
+            <p className="m-0 text-prose italic text-ink-faint">
               {t(locale, 'panel.overview.vacanciesEmpty')}
             </p>
           ) : (
@@ -588,8 +588,8 @@ export function OverviewTab({
                   className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5 text-left"
                 >
                   <div className="flex flex-wrap justify-between gap-2">
-                    <span className="text-[13px] text-ink">{v.title}</span>
-                    <span className="font-mono text-[11px] text-ink-muted">
+                    <span className="text-prose text-ink">{v.title}</span>
+                    <span className="font-mono text-2xs text-ink-muted">
                       {v.hired}/{v.positionsCount} · {t(locale, 'panel.overview.inFunnel', { n: v.inFunnel })}
                       {(v.approvedGaps || 0) > 0
                         ? ` · ${t(locale, 'panel.overview.hireGapsChip', { n: v.approvedGaps })}`
@@ -598,7 +598,7 @@ export function OverviewTab({
                   </div>
                   <div
                     className={cn(
-                      'mt-1 font-mono text-[11px]',
+                      'mt-1 font-mono text-2xs',
                       v.stale ? 'text-danger' : 'text-ink-faint'
                     )}
                   >
@@ -619,23 +619,23 @@ export function OverviewTab({
           </span>
           <div className="mb-4 flex flex-wrap gap-5">
             <div>
-              <div className="text-[22px] text-success">{data.hiredLast7d}</div>
-              <div className="font-mono text-[11px] text-ink-muted">
+              <div className="text-2xl text-success">{data.hiredLast7d}</div>
+              <div className="font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.overview.hired7d')}
               </div>
             </div>
             <div>
-              <div className="text-[22px] text-danger">{data.rejectedLast7d}</div>
-              <div className="font-mono text-[11px] text-ink-muted">
+              <div className="text-2xl text-danger">{data.rejectedLast7d}</div>
+              <div className="font-mono text-2xs text-ink-muted">
                 {t(locale, 'panel.overview.rejected7d')}
               </div>
             </div>
           </div>
-          <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+          <span className="font-mono text-2xs uppercase tracking-wide text-ink-muted">
             {t(locale, 'panel.overview.topRejectReasons')}
           </span>
           {reasons.length === 0 ? (
-            <p className="mt-2.5 mb-0 text-[13px] italic text-ink-faint">
+            <p className="mt-2.5 mb-0 text-prose italic text-ink-faint">
               {t(locale, 'panel.overview.noRejectReasons')}
             </p>
           ) : (
@@ -662,14 +662,14 @@ export function OverviewTab({
           )}
           {rejectPatterns.length > 0 ? (
             <div className="mt-3 border-t border-ink/10 pt-3">
-              <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+              <span className="font-mono text-2xs uppercase tracking-wide text-ink-muted">
                 {t(locale, 'panel.overview.rejectPatternsTitle')}
               </span>
               <ul className="mt-2 mb-0 flex list-none flex-col gap-1.5 p-0">
                 {rejectPatterns.slice(0, 4).map((p) => (
                   <li
                     key={`${p.reason}-${p.topType}`}
-                    className="text-[12px] leading-snug text-ink-muted"
+                    className="text-xs leading-snug text-ink-muted"
                   >
                     {t(locale, 'panel.overview.rejectPatternRow', {
                       reason: rejectionReasonLabel(locale, p.reason),
@@ -679,7 +679,7 @@ export function OverviewTab({
                   </li>
                 ))}
               </ul>
-              <p className="mb-0 mt-1.5 text-[10px] leading-snug text-ink-faint">
+              <p className="mb-0 mt-1.5 text-2xs leading-snug text-ink-faint">
                 {t(locale, 'panel.overview.rejectPatternsHint')}
               </p>
             </div>
@@ -766,7 +766,7 @@ export function OverviewTab({
                 <button
                   type="button"
                   onClick={togglePeopleOps}
-                  className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-ink-muted"
+                  className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-2xs text-ink-muted"
                   aria-expanded={peopleOpsOpen}
                 >
                   {peopleOpsOpen
@@ -777,7 +777,7 @@ export function OverviewTab({
             </div>
             <p className={cn(S.muted, 'm-0 mt-2 text-xs')}>{summary}</p>
             {!peopleOpsOpen ? (
-              <p className={cn(S.faint, 'm-0 mt-1.5 text-[11px]')}>
+              <p className={cn(S.faint, 'm-0 mt-1.5 text-2xs')}>
                 {t(locale, 'panel.overview.peopleOpsCollapsedHint')}
               </p>
             ) : null}
@@ -786,13 +786,13 @@ export function OverviewTab({
               <div className="mt-3 border-t border-ink/10 pt-3">
                 <p className={cn(S.muted, 'm-0 mb-3 text-xs')}>{t(locale, 'panel.overview.peopleOpsHint')}</p>
                 {!hasPdi && !hasClima && !hasRet && !hasOnb && !hasEnps ? (
-                  <p className="m-0 text-[13px] italic text-ink-muted">
+                  <p className="m-0 text-prose italic text-ink-muted">
                     {t(locale, 'panel.overview.peopleOpsEmpty')}
                   </p>
                 ) : (
                   <ul className="m-0 flex list-none flex-col gap-2 p-0">
                     {hasRet ? (
-                      <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-[13px] text-ink">
+                      <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-prose text-ink">
                         {t(locale, 'panel.overview.peopleOpsRetention', {
                           n: ret.count,
                           days: ret.lookbackDays || 14,
@@ -801,19 +801,19 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasOnb ? (
-                      <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-[13px] text-ink">
-                        <div className={cn(S.label, 'mb-1.5 text-[10px]')}>
+                      <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-prose text-ink">
+                        <div className={cn(S.label, 'mb-1.5 text-2xs')}>
                           {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
                         </div>
                         {(onb.overdueCount || 0) > 0 ? (
-                          <div className="mb-1 font-mono text-[11px] text-warning">
+                          <div className="mb-1 font-mono text-2xs text-warning">
                             {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
                               n: onb.overdueCount,
                             })}
                           </div>
                         ) : null}
                         {(onb.dueSoonCount || 0) > 0 ? (
-                          <div className="mb-1.5 font-mono text-[11px] text-ink-muted">
+                          <div className="mb-1.5 font-mono text-2xs text-ink-muted">
                             {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
                               n: onb.dueSoonCount,
                             })}
@@ -829,8 +829,8 @@ export function OverviewTab({
                                   className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
                                   onClick={() => go(row.nav)}
                                 >
-                                  <span className="block text-[12px] text-ink">{row.candidateName}</span>
-                                  <span className="block font-mono text-[10px] text-ink-muted">
+                                  <span className="block text-xs text-ink">{row.candidateName}</span>
+                                  <span className="block font-mono text-2xs text-ink-muted">
                                     {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
                                       days: row.milestoneDays,
                                       date: row.dueDate || '—',
@@ -843,7 +843,7 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasPdi ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink">
                         {pdi.donePct != null
                           ? t(locale, 'panel.overview.peopleOpsPdi', {
                               plans: pdi.activePlans,
@@ -865,11 +865,11 @@ export function OverviewTab({
                         {hasPdiPlans ? (
                           <div className="mt-3 flex flex-col gap-2 border-t border-ink/10 pt-2.5">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                              <div className={cn(S.label, 'mb-0 text-2xs')}>
                                 {t(locale, 'panel.overview.peopleOpsPdiPlansTitle')}
                               </div>
                               {Number(pdi.activePlans) > plans.length ? (
-                                <span className="font-mono text-[10px] text-ink-faint">
+                                <span className="font-mono text-2xs text-ink-faint">
                                   {t(locale, 'panel.overview.peopleOpsPdiPlansMore', {
                                     shown: plans.length,
                                     total: pdi.activePlans,
@@ -895,14 +895,14 @@ export function OverviewTab({
                                     >
                                       <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div className="min-w-0 flex-1">
-                                          <span className="block text-[12px] font-medium text-ink">
+                                          <span className="block text-xs font-medium text-ink">
                                             {row.candidateName}
                                           </span>
-                                          <span className="mt-0.5 block truncate text-[11px] text-ink-muted">
+                                          <span className="mt-0.5 block truncate text-2xs text-ink-muted">
                                             {row.planTitle}
                                           </span>
                                         </div>
-                                        <span className="shrink-0 font-mono text-[10px] text-ink-faint">
+                                        <span className="shrink-0 font-mono text-2xs text-ink-faint">
                                           {t(locale, 'panel.overview.peopleOpsPdiPlanProgress', {
                                             done: row.doneCount,
                                             total: row.itemCount,
@@ -924,7 +924,7 @@ export function OverviewTab({
                                         />
                                       </div>
                                       {row.periodStart || row.periodEnd ? (
-                                        <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                                        <span className="mt-1 block font-mono text-2xs text-ink-faint">
                                           {[row.periodStart, row.periodEnd].filter(Boolean).join(' → ')}
                                         </span>
                                       ) : null}
@@ -937,12 +937,12 @@ export function OverviewTab({
                         ) : null}
                         {hasPdiQueue ? (
                           <div className="mt-3 flex flex-col gap-2.5 border-t border-ink/10 pt-2.5">
-                            <div className={cn(S.label, 'mb-0 text-[10px]')}>
+                            <div className={cn(S.label, 'mb-0 text-2xs')}>
                               {t(locale, 'panel.overview.peopleOpsPdiQueueTitle')}
                             </div>
                             {overdueN > 0 || overduePlansN > 0 || (queue.overdue || []).length > 0 ? (
                               <div>
-                                <div className="mb-1 font-mono text-[11px] text-warning">
+                                <div className="mb-1 font-mono text-2xs text-warning">
                                   {overdueN > 0 || (queue.overdue || []).length > 0
                                     ? t(locale, 'panel.overview.peopleOpsPdiOverdue', {
                                         n: overdueN || (queue.overdue || []).length,
@@ -971,10 +971,10 @@ export function OverviewTab({
                                         className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
                                         onClick={() => go(row.nav)}
                                       >
-                                        <span className="block text-[12px] text-ink">
+                                        <span className="block text-xs text-ink">
                                           {row.candidateName}
                                         </span>
-                                        <span className="block font-mono text-[10px] text-ink-muted">
+                                        <span className="block font-mono text-2xs text-ink-muted">
                                           {row.itemTitle}
                                           {row.dueDate ? ` · ${row.dueDate}` : ''}
                                         </span>
@@ -986,7 +986,7 @@ export function OverviewTab({
                             ) : null}
                             {unlinkedN > 0 || (queue.unlinked || []).length > 0 ? (
                               <div>
-                                <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                                <div className="mb-1 font-mono text-2xs text-ink-muted">
                                   {t(locale, 'panel.overview.peopleOpsPdiUnlinked', {
                                     n: unlinkedN || (queue.unlinked || []).length,
                                   })}
@@ -999,10 +999,10 @@ export function OverviewTab({
                                         className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
                                         onClick={() => go(row.nav)}
                                       >
-                                        <span className="block text-[12px] text-ink">
+                                        <span className="block text-xs text-ink">
                                           {row.candidateName}
                                         </span>
-                                        <span className="block font-mono text-[10px] text-ink-muted">
+                                        <span className="block font-mono text-2xs text-ink-muted">
                                           {row.itemTitle}
                                         </span>
                                       </button>
@@ -1013,7 +1013,7 @@ export function OverviewTab({
                             ) : null}
                             {noPlanN > 0 || noPlanRows.length > 0 ? (
                               <div>
-                                <div className="mb-1 font-mono text-[11px] text-ink-muted">
+                                <div className="mb-1 font-mono text-2xs text-ink-muted">
                                   {t(locale, 'panel.overview.peopleOpsPdiNoPlan', {
                                     n: noPlanN || noPlanRows.length,
                                   })}
@@ -1026,10 +1026,10 @@ export function OverviewTab({
                                         className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
                                         onClick={() => go(row.nav)}
                                       >
-                                        <span className="block text-[12px] text-ink">
+                                        <span className="block text-xs text-ink">
                                           {row.candidateName}
                                         </span>
-                                        <span className="block font-mono text-[10px] text-ink-faint">
+                                        <span className="block font-mono text-2xs text-ink-faint">
                                           {t(locale, 'panel.overview.peopleOpsPdiNoPlanCta')}
                                         </span>
                                       </button>
@@ -1051,7 +1051,7 @@ export function OverviewTab({
                                 ) : null}
                               </div>
                             ) : null}
-                            <p className={cn(S.faint, 'm-0 text-[10px]')}>
+                            <p className={cn(S.faint, 'm-0 text-2xs')}>
                               {t(locale, 'panel.overview.peopleOpsPdiQueueHint')}
                             </p>
                           </div>
@@ -1062,7 +1062,7 @@ export function OverviewTab({
                       <li>
                         <button
                           type="button"
-                          className="w-full cursor-pointer rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-left text-[13px] text-ink hover:border-ink/20 hover:bg-ink/[0.03]"
+                          className="w-full cursor-pointer rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-left text-prose text-ink hover:border-ink/20 hover:bg-ink/[0.03]"
                           onClick={() => go({ tab: 'climate' })}
                           aria-label={t(locale, 'panel.overview.openClimate')}
                         >
@@ -1070,17 +1070,17 @@ export function OverviewTab({
                             score: enps.score,
                             n: enps.responseCount,
                           })}
-                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                          <span className="mt-1 block font-mono text-2xs text-ink-muted">
                             {t(locale, 'panel.overview.enpsHint')}
                           </span>
-                          <span className="mt-1.5 block font-mono text-[10px] text-brand-600">
+                          <span className="mt-1.5 block font-mono text-2xs text-brand-600">
                             {t(locale, 'panel.overview.enpsOpenClimate')}
                           </span>
                         </button>
                       </li>
                     ) : null}
                     {hasClima ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-[13px] text-ink">
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink">
                         {clima.openSurveys > 0 || clima.draftSurveys > 0
                           ? t(locale, 'panel.overview.peopleOpsClimate', {
                               open: clima.openSurveys,
@@ -1089,14 +1089,14 @@ export function OverviewTab({
                             })
                           : t(locale, 'panel.overview.peopleOpsClimateClosed')}
                         {clima.draftSurveys > 0 ? (
-                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                          <span className="mt-1 block font-mono text-2xs text-ink-muted">
                             {t(locale, 'panel.overview.peopleOpsClimateDraft', {
                               n: clima.draftSurveys,
                             })}
                           </span>
                         ) : null}
                         {clima.latestMean != null || clima.deltaVsPrevious != null ? (
-                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                          <span className="mt-1 block font-mono text-2xs text-ink-muted">
                             {t(locale, 'panel.overview.peopleOpsClimateDelta', {
                               mean:
                                 clima.latestMean != null

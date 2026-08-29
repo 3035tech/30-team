@@ -13,7 +13,7 @@ import { BrandMark } from '../_components/BrandMark';
 import TurnstileField from '../_components/TurnstileField';
 
 const inputClass =
-  'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-[15px] text-ink';
+  'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-base text-ink';
 
 function LoginForm() {
   const [mode, setMode] = useState('login');
@@ -217,10 +217,10 @@ function LoginForm() {
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <p className="mb-3 mt-0 block font-mono text-[10px] uppercase tracking-[3px] text-ink-label">
+        <p className="mb-3 mt-0 block font-mono text-2xs uppercase tracking-[3px] text-ink-label">
           {t(locale, 'login.restricted')}
         </p>
-        <h2 className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[32px] font-normal leading-tight text-transparent">
+        <h2 className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-4xl font-normal leading-tight text-transparent">
           {t(locale, titleKey).split('\n').map((line, i) => (
             <span key={line}>{i > 0 ? <br /> : null}{line}</span>
           ))}

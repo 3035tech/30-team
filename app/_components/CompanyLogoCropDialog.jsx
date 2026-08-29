@@ -234,7 +234,7 @@ export function CompanyLogoCropDialog({ open, file, locale = 'pt-BR', onCancel, 
           />
         </div>
 
-        <label className="mt-4 flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint">
+        <label className="mt-4 flex flex-col gap-1.5 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.admin.companyLogoCropZoom')}
           <input
             type="range"

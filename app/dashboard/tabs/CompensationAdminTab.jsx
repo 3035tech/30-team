@@ -125,7 +125,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="m-0 font-display text-xl font-normal text-ink">
+        <h2 className={S.pageTitle}>
           {t(locale, 'panel.compensationRoster.title')}
         </h2>
         <p className={cn(S.muted, 'mb-0 mt-1 text-sm')}>
@@ -205,7 +205,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                 </SortableTh>
                 <th
                   scope="col"
-                  className="border-b border-ink/12 px-4 py-3 font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+                  className="border-b border-ink/12 px-4 py-3 font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
                 >
                   {t(locale, 'panel.compensationRoster.colType')}
                 </th>
@@ -221,10 +221,10 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                   <td className="px-4 py-3 align-middle">
                     <div className="font-ui text-sm text-ink">{row.fullName}</div>
                     {row.email ? (
-                      <div className="mt-0.5 font-mono text-[11px] text-ink-muted">{row.email}</div>
+                      <div className="mt-0.5 font-mono text-2xs text-ink-muted">{row.email}</div>
                     ) : null}
                     {row.employmentStatus === EMPLOYMENT_STATUS.ALUMNI ? (
-                      <span className="mt-1 inline-block rounded-control bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[10px] uppercase text-ink-muted">
+                      <span className="mt-1 inline-block rounded-control bg-ink/[0.06] px-1.5 py-0.5 font-mono text-2xs uppercase text-ink-muted">
                         {t(locale, 'panel.compensationRoster.badgeAlumni')}
                       </span>
                     ) : null}
@@ -232,7 +232,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                   <td className="px-4 py-3 align-middle font-ui text-sm tabular-nums text-ink">
                     {money(row.current?.amount)}
                   </td>
-                  <td className="px-4 py-3 align-middle font-mono text-[12px] text-ink-muted">
+                  <td className="px-4 py-3 align-middle font-mono text-xs text-ink-muted">
                     {formatDate(row.current?.effectiveDate, locale)}
                   </td>
                   <td className="px-4 py-3 align-middle text-sm text-ink-muted">
@@ -240,7 +240,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                       ? eventTypeLabel(locale, row.current.eventType)
                       : '—'}
                   </td>
-                  <td className="px-4 py-3 align-middle font-mono text-[12px] text-ink-muted">
+                  <td className="px-4 py-3 align-middle font-mono text-xs text-ink-muted">
                     {row.eventCount}
                   </td>
                   <td className="px-4 py-3 align-middle text-right">

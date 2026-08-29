@@ -74,7 +74,7 @@ function InsightStrip({ locale, visible }) {
 
   return (
     <div className="mb-[18px] flex flex-wrap gap-2 rounded-xl border border-brand-500/20 bg-brand-500/[0.06] px-3.5 py-3">
-      <span className="mr-1 self-center font-mono text-[10px] uppercase tracking-wider text-brand-500">
+      <span className="mr-1 self-center font-mono text-2xs uppercase tracking-wider text-brand-500">
         {t(locale, 'panel.compare.insightLabel')}
       </span>
       {chips.map((text) => (
@@ -181,13 +181,13 @@ export function CompareTab({
   const allSelected = nTot > 0 && nSel === nTot;
 
   const miniBtnBase =
-    'cursor-pointer rounded-lg px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide';
+    'cursor-pointer rounded-lg px-3 py-1.5 font-mono text-2xs uppercase tracking-wide';
 
   return (
     <div className="flex flex-col gap-3.5">
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'panel.compare.title')}</span>
-        <h2 className="mt-2 mb-0 font-ui text-[22px] font-semibold font-normal leading-tight text-ink">
+        <h2 className="mt-2 mb-0 font-ui text-2xl font-semibold font-normal leading-tight text-ink">
           {t(locale, 'panel.compare.headline')}
         </h2>
         <p className="mt-2.5 mb-0 max-w-[62ch] text-sm leading-relaxed text-ink-muted">
@@ -202,10 +202,10 @@ export function CompareTab({
               key={n}
               className="rounded-xl border border-ink/12 bg-ink/[0.03] px-3.5 py-3"
             >
-              <div className="mb-1.5 font-mono text-[10px] tracking-wide text-brand-500">
+              <div className="mb-1.5 font-mono text-2xs tracking-wide text-brand-500">
                 {t(locale, 'panel.compare.useStep', { n })}
               </div>
-              <div className="text-[13px] leading-snug text-ink-muted">
+              <div className="text-prose leading-snug text-ink-muted">
                 {t(locale, `panel.compare.use${n}`)}
               </div>
             </div>
@@ -230,10 +230,10 @@ export function CompareTab({
             onBlur={commitSearch}
             placeholder={t(locale, 'panel.compare.searchPh')}
             aria-label={t(locale, 'panel.compare.searchPh')}
-            className="min-w-[140px] max-w-[260px] flex-[1_1_160px] rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 text-[13px] text-ink"
+            className="min-w-[140px] max-w-[260px] flex-[1_1_160px] rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 text-prose text-ink"
           />
           {(search || '').trim() ? (
-            <span className="font-mono text-[11px] text-ink-faint">
+            <span className="font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.compare.searchResultsTotal', { n: listTotal })}
             </span>
           ) : null}
@@ -269,7 +269,7 @@ export function CompareTab({
           {resultsByName.length === 0 ? (
             <div className="col-span-full">
               {(search || '').trim() ? (
-                <span className="text-[13px] italic text-ink-faint">
+                <span className="text-prose italic text-ink-faint">
                   {t(locale, 'panel.compare.searchEmpty')}
                 </span>
               ) : (
@@ -290,7 +290,7 @@ export function CompareTab({
                   key={id}
                   title={r.name}
                   className={cn(
-                    'flex min-w-0 cursor-pointer items-center gap-2 rounded-control border px-2.5 py-2 text-[13px] text-ink',
+                    'flex min-w-0 cursor-pointer items-center gap-2 rounded-control border px-2.5 py-2 text-prose text-ink',
                     on
                       ? 'border-brand-500/25 bg-brand-500/[0.06]'
                       : 'border-ink/12 bg-ink/[0.03]'
@@ -330,7 +330,7 @@ export function CompareTab({
                   >
                     <span className="inline-flex items-center gap-2">
                       {t(locale, 'panel.compare.personCol')}
-                      <span className="text-[11px] text-ink-faint">{sortMark('name')}</span>
+                      <span className="text-2xs text-ink-faint">{sortMark('name')}</span>
                     </span>
                   </th>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
@@ -343,10 +343,10 @@ export function CompareTab({
                     >
                       <span className="flex flex-col items-center gap-0.5">
                         <span className="text-sm">{TYPE_DATA[typeNum].emoji}</span>
-                        <span className="font-mono text-[11px] tracking-wide">
+                        <span className="font-mono text-2xs tracking-wide">
                           T{typeNum}
                         </span>
-                        <span className="min-h-3 text-[10px] text-ink-faint">{sortMark(typeNum)}</span>
+                        <span className="min-h-3 text-2xs text-ink-faint">{sortMark(typeNum)}</span>
                       </span>
                     </th>
                   ))}
@@ -374,7 +374,7 @@ export function CompareTab({
                           <td key={typeNum} className="p-1.5 text-center">
                             <div
                               title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
-                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px]"
+                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-2xs"
                               style={{
                                 background: isTop
                                   ? TYPE_DATA[typeNum].color
@@ -399,7 +399,7 @@ export function CompareTab({
             </table>
           </div>
         )}
-        <div className="mt-4 flex flex-wrap items-center gap-3.5 text-[11px] text-ink-faint">
+        <div className="mt-4 flex flex-wrap items-center gap-3.5 text-2xs text-ink-faint">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-3.5 w-3.5 rounded-full border-2 border-brand-500 bg-brand-500 ring-2 ring-brand-500/20" />
             {t(locale, 'panel.compare.legendDominant')}

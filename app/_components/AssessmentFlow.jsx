@@ -18,12 +18,12 @@ const SC = {
   app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-[20px] border border-ink/12 bg-white px-7 py-9 shadow-card backdrop-blur-3xl sm:px-9 sm:py-10',
-  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-ink-label',
+  label: 'mb-4 block font-mono text-2xs uppercase tracking-[3px] text-ink-label',
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
-  p: 'mb-7 text-[15px] italic leading-[1.65] text-ink-muted',
+  p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
-  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
+  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
   fieldLabel: 'mb-2 block text-xs text-ink-muted',
   fields: 'cand-flow-fields',
 };
@@ -220,7 +220,7 @@ function HomeScreen({
           >
             <div
               className={cn(
-                'mb-1.5 font-mono text-[11px]',
+                'mb-1.5 font-mono text-2xs',
                 notice.kind === 'warning' ? 'text-danger' : 'text-ink-faint'
               )}
             >
@@ -239,7 +239,7 @@ function HomeScreen({
           ].map(([n, l]) => (
             <div key={l}>
               <div className="text-xl text-brand-600 sm:text-2xl">{n}</div>
-              <div className="font-mono text-[10px] uppercase tracking-[2px] text-ink-muted">
+              <div className="font-mono text-2xs uppercase tracking-[2px] text-ink-muted">
                 {l}
               </div>
             </div>
@@ -259,11 +259,11 @@ function HomeScreen({
                 ? t(locale, 'candidate.inviteIdentityNoteWithProfile')
                 : t(locale, 'candidate.inviteIdentityNote')}
             </div>
-            <div className="font-mono text-[11px] text-ink-faint">
+            <div className="font-mono text-2xs text-ink-faint">
               {t(locale, 'candidate.inviteIdentityEmail', { email: effectiveEmail })}
             </div>
             {hrProfileBits.length > 0 ? (
-              <div className="mt-2 font-mono text-[11px] leading-[1.55] text-ink-muted">
+              <div className="mt-2 font-mono text-2xs leading-[1.55] text-ink-muted">
                 {hrProfileBits.join(' · ')}
               </div>
             ) : null}
@@ -310,7 +310,7 @@ function HomeScreen({
             <label className={cn(SC.fieldLabel, 'mb-1')}>
               {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
             </label>
-            <p className="mb-2 mt-0 text-[11px] leading-normal text-ink-faint">
+            <p className="mb-2 mt-0 text-2xs leading-normal text-ink-faint">
               {requireCandidateEmail
                 ? t(locale, 'candidate.emailHelpRequired')
                 : t(locale, 'candidate.emailHelpOptional')}
@@ -399,8 +399,8 @@ function HomeScreen({
         </div>
 
         <div className="mt-6 border-t border-ink/12 pt-5">
-          <span className="text-[11px] text-ink-faint">{t(locale, 'candidate.manager')} </span>
-          <span className="cursor-pointer text-[11px] text-brand-600 underline" onClick={() => router.push('/login')}>
+          <span className="text-2xs text-ink-faint">{t(locale, 'candidate.manager')} </span>
+          <span className="cursor-pointer text-2xs text-brand-600 underline" onClick={() => router.push('/login')}>
             {t(locale, 'candidate.dashboardAccess')}
           </span>
         </div>
@@ -510,7 +510,7 @@ function TestScreen({ name, onComplete, locale }) {
                 {t(locale, 'candidate.previous')}
               </button>
             ) : null}
-            <span className="font-mono text-[11px] text-ink-muted">{Math.round(progress)}%</span>
+            <span className="font-mono text-2xs text-ink-muted">{Math.round(progress)}%</span>
           </div>
         </div>
         <div className="mb-3 h-0.5 overflow-hidden rounded-sm bg-ink/[0.08]">
@@ -519,7 +519,7 @@ function TestScreen({ name, onComplete, locale }) {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <label className="mb-6 flex cursor-pointer items-center gap-2 text-[11px] text-ink-faint">
+        <label className="mb-6 flex cursor-pointer items-center gap-2 text-2xs text-ink-faint">
           <input
             type="checkbox"
             checked={carefulMode}
@@ -556,7 +556,7 @@ function TestScreen({ name, onComplete, locale }) {
               >
                 <span
                   className={cn(
-                    'flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[11px]',
+                    'flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-2xs',
                     isSel ? 'border-none bg-brand-500 text-white' : 'border border-ink/12 bg-ink/[0.06] text-ink-muted'
                   )}
                 >
@@ -569,12 +569,12 @@ function TestScreen({ name, onComplete, locale }) {
         </div>
         {carefulMode && pendingVal !== null && !fade ? (
           <div className="mt-5 flex flex-wrap gap-2.5">
-            <button type="button" className={cn(SC.btn, 'text-[13px]')} onClick={() => advanceWithAnswer(pendingVal)}>
+            <button type="button" className={cn(SC.btn, 'text-prose')} onClick={() => advanceWithAnswer(pendingVal)}>
               {t(locale, 'candidate.confirmAdvance')}
             </button>
             <button
               type="button"
-              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-5 py-3.5 font-display text-[13px] text-ink-muted" 
+              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-5 py-3.5 font-display text-prose text-ink-muted" 
               onClick={() => {
                 setPendingVal(null);
                 setSelected(null);
@@ -595,9 +595,9 @@ function ThankYouScreen({ saveError = null, onRetrySave = null, retryBusy = fals
       <div className={SC.glow} />
       <div className={cn(SC.card, 'max-w-[560px] text-center')}>
         <span className={SC.label}>{t(locale, 'candidate.thankYouLabel')}</span>
-        <h1 className={cn(SC.h1, 'mb-4 text-[32px]')}>{t(locale, 'candidate.thankYouTitle')}</h1>
+        <h1 className={cn(SC.h1, 'mb-4 text-4xl')}>{t(locale, 'candidate.thankYouTitle')}</h1>
         {saveError ? (
-          <div className="mb-[18px] rounded-xl border border-danger/25 bg-danger/[0.08] px-3.5 py-3 text-left text-[13px] leading-normal text-danger">
+          <div className="mb-[18px] rounded-xl border border-danger/25 bg-danger/[0.08] px-3.5 py-3 text-left text-prose leading-normal text-danger">
             {t(locale, 'candidate.saveErrorPrefix')} {saveError}
             {onRetrySave ? (
               <div className="mt-3.5">
@@ -609,7 +609,7 @@ function ThankYouScreen({ saveError = null, onRetrySave = null, retryBusy = fals
                 >
                   {retryBusy ? t(locale, 'candidate.sending') : t(locale, 'candidate.retrySave')}
                 </button>
-                <div className="mt-2.5 text-[11px] leading-normal text-ink-muted">
+                <div className="mt-2.5 text-2xs leading-normal text-ink-muted">
                   {t(locale, 'candidate.retryHelp')}
                 </div>
               </div>

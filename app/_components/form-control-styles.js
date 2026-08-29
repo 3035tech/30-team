@@ -6,7 +6,7 @@
 
 /** Chrome shared by text-like controls (no width — callers add `w-full` when needed). */
 export const fieldControlChromeClass =
-  'box-border min-h-touch rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 text-[13px] text-ink transition-[border-color,background-color] duration-150 disabled:cursor-default disabled:opacity-55';
+  'box-border min-h-touch rounded-control border border-ink/12 bg-ink/[0.05] px-3 py-2.5 font-ui text-prose text-ink transition-[border-color,background-color] duration-150 disabled:cursor-default disabled:opacity-55';
 
 /** Text / password / number / date shell. */
 export const fieldInputClass = `${fieldControlChromeClass} ui-field font-mono`;
@@ -15,13 +15,13 @@ export const fieldInputClass = `${fieldControlChromeClass} ui-field font-mono`;
 export const fieldSelectClass = `${fieldControlChromeClass} ui-select cursor-pointer font-ui text-ink-muted`;
 
 /** Compact select (page-size, inline filters). */
-export const fieldSelectCompactClass = `${fieldSelectClass} px-2.5 py-1.5 font-mono text-[11px]`;
+export const fieldSelectCompactClass = `${fieldSelectClass} px-2.5 py-1.5 font-mono text-2xs`;
 
 /** Full-width select for forms / dialogs. */
 export const fieldSelectBlockClass = `${fieldSelectClass} w-full`;
 
 /** Textarea. */
-export const fieldTextareaClass = `${fieldControlChromeClass} ui-field min-h-[88px] w-full resize-y font-display leading-relaxed`;
+export const fieldTextareaClass = `${fieldControlChromeClass} ui-field min-h-[88px] w-full resize-y font-ui leading-relaxed`;
 
 /** Checkbox with custom checkmark (`.ui-checkbox`). */
 export const fieldCheckboxClass =

@@ -76,7 +76,7 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <span className={S.label}>{t(locale, 'panel.workbench.title')}</span>
-          <p className="mt-1 mb-0 text-[13px] leading-snug text-ink-muted">
+          <p className="mt-1 mb-0 text-prose leading-snug text-ink-muted">
             {t(locale, 'panel.workbench.intro')}
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
       {loading ? (
         <p className="mt-3 mb-0 text-xs text-ink-muted">…</p>
       ) : !workbench || workbench.empty ? (
-        <p className="mt-3 mb-0 text-[13px] text-ink-muted">{t(locale, 'panel.workbench.empty')}</p>
+        <p className="mt-3 mb-0 text-prose text-ink-muted">{t(locale, 'panel.workbench.empty')}</p>
       ) : (
         <ul className="mt-3 mb-0 flex list-none flex-col gap-2 p-0">
           {workbench.patterns.map((p) => (
@@ -101,10 +101,10 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
               key={p.id}
               className={cn('rounded-control border px-3 py-2.5', SEV[p.severity] || SEV.info)}
             >
-              <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+              <div className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
                 {(p.signals || []).join(' · ')}
               </div>
-              <p className="mt-1 mb-0 text-[13px] leading-snug text-ink">
+              <p className="mt-1 mb-0 text-prose leading-snug text-ink">
                 {t(locale, `panel.workbench.pattern.${p.id}`)}
               </p>
             </li>
@@ -114,15 +114,15 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
 
       {ai?.summary ? (
         <div className="mt-3 rounded-control border border-brand-500/20 bg-brand-500/[0.04] px-3 py-2.5">
-          <p className="m-0 text-[13px] leading-snug text-ink">{ai.summary}</p>
+          <p className="m-0 text-prose leading-snug text-ink">{ai.summary}</p>
           {Array.isArray(ai.recommendations) && ai.recommendations.length > 0 ? (
-            <ul className="mt-2 mb-0 list-disc pl-4 text-[12px] text-ink">
+            <ul className="mt-2 mb-0 list-disc pl-4 text-xs text-ink">
               {ai.recommendations.map((r) => (
                 <li key={r}>{r}</li>
               ))}
             </ul>
           ) : null}
-          <p className="mt-2 mb-0 text-[11px] text-ink-faint">{t(locale, 'panel.workbench.aiDisclaimer')}</p>
+          <p className="mt-2 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.workbench.aiDisclaimer')}</p>
         </div>
       ) : null}
 
@@ -132,7 +132,7 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
             <button
               key={c}
               type="button"
-              className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
               onClick={() =>
                 go(
                   c === 'compat'

@@ -67,7 +67,7 @@ export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
   return (
     <div className="mt-3.5 w-full border-t border-ink/12 pt-3.5">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <span className="font-mono text-[11px] text-ink-muted">
+        <span className="font-mono text-2xs text-ink-muted">
           {t(locale, 'recruiting.inviteEmailIntro')}
         </span>
         <button
@@ -83,10 +83,10 @@ export function VacancyInviteByEmail({ vacancyId, onSent, locale = 'pt-BR' }) {
         </button>
       </div>
       {localErr ? (
-        <p className="mb-0 mt-2 font-mono text-[11px] text-danger">{localErr}</p>
+        <p className="mb-0 mt-2 font-mono text-2xs text-danger">{localErr}</p>
       ) : null}
       {localOk ? (
-        <p className="mb-0 mt-2 font-mono text-[11px] text-success">{localOk}</p>
+        <p className="mb-0 mt-2 font-mono text-2xs text-success">{localOk}</p>
       ) : null}
     </div>
   );

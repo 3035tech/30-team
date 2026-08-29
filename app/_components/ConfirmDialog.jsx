@@ -67,7 +67,7 @@ export function ConfirmDialog({
       >
         <span
           className={cn(
-            'font-mono text-[10px] uppercase tracking-[2px]',
+            'font-mono text-2xs uppercase tracking-[2px]',
             danger ? 'text-danger' : 'text-brand-500'
           )}
         >

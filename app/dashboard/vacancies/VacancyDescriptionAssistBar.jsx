@@ -136,7 +136,7 @@ export function VacancyDescriptionAssistBar({
           label={t(locale, 'recruiting.descAiWorkingHint')}
         />
       ) : (
-        <p className="mb-0 mt-1.5 text-[11px] leading-[1.4] text-ink-faint">
+        <p className="mb-0 mt-1.5 text-2xs leading-[1.4] text-ink-faint">
           {t(locale, 'recruiting.descAssistHint')}
         </p>
       )}

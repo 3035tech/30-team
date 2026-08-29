@@ -10,7 +10,7 @@ import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
 
 const inputClass =
-  'mb-3.5 box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink';
+  'mb-3.5 box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -100,7 +100,7 @@ function SetPasswordForm() {
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 className="mb-3 mt-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[28px] font-normal leading-tight text-transparent">
+        <h1 className="mb-3 mt-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-3xl font-normal leading-tight text-transparent">
           {t(locale, 'setPassword.title')}
         </h1>
 
@@ -148,14 +148,14 @@ function SetPasswordForm() {
               className={inputClass}
             />
             {error ? (
-              <p className="mb-3 mt-0 text-[13px] text-danger">{error}</p>
+              <p className="mb-3 mt-0 text-prose text-danger">{error}</p>
             ) : null}
             <button
               type="button"
               onClick={() => void submit()}
               disabled={loading}
               className={cn(
-                'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-[15px] font-semibold text-white',
+                'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-base font-semibold text-white',
                 loading ? 'cursor-default opacity-70' : 'cursor-pointer'
               )}
             >

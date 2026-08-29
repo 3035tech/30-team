@@ -87,7 +87,7 @@ function ExportCsvButton({ href, locale }) {
       onClick={onExport}
       disabled={busy}
       className={cn(
-        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-ui text-[13px] text-brand-500',
+        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-ui text-prose text-brand-500',
         busy ? 'cursor-wait opacity-70' : 'cursor-pointer'
       )}
     >
@@ -692,7 +692,7 @@ export default function DashboardClient({
       aria-label={label}
       aria-current={tab === id ? 'page' : undefined}
       className={cn(
-        'relative mb-1 flex w-full items-center gap-2.5 rounded-control border-none font-mono text-[13px] tracking-[0.5px]',
+        'relative mb-1 flex w-full items-center gap-2.5 rounded-control border-none font-mono text-prose tracking-[0.5px]',
         navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start py-[11px]',
         !navCollapsed && (tab === id ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
         tab === id ? 'bg-brand-500/10 text-brand-800' : 'bg-transparent text-ink-muted',
@@ -982,7 +982,7 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={() => { setSearch(''); pushFilters({ search: null }); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent font-mono text-[13px] text-ink-muted"
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent font-mono text-prose text-ink-muted"
               >
                 {t(locale, 'common.clearSearch')}
               </button>
@@ -1017,10 +1017,10 @@ export default function DashboardClient({
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              <h2 className="db-page-title mb-1 font-ui text-[28px] font-semibold tracking-tight text-ink">
+              <h2 className="db-page-title mb-1 font-ui text-3xl font-semibold tracking-tight text-ink">
                 {t(locale, getDashboardTabNav(tab).labelKey)}
               </h2>
-              <span className="text-[13px] text-ink-muted">
+              <span className="text-prose text-ink-muted">
                 {panelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
                 ) : showsCohortChrome ? (
@@ -1052,7 +1052,7 @@ export default function DashboardClient({
                   aria-expanded={filtersExpanded}
                   aria-label={t(locale, 'dashboard.filtersToggleAria')}
                   className={cn(
-                    'min-h-touch cursor-pointer rounded-control border px-3.5 py-2.5 font-mono text-[13px]',
+                    'min-h-touch cursor-pointer rounded-control border px-3.5 py-2.5 font-mono text-prose',
                     filtersExpanded
                       ? 'border-brand-500/25 bg-brand-500/10 text-brand-500'
                       : 'border-ink/12 bg-transparent text-ink-muted'
@@ -1183,7 +1183,7 @@ export default function DashboardClient({
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
             </select>
             <div className="inline-flex h-[38px] items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3">
-              <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
+              <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
               <DateField
                 bare
                 value={dateFrom}
@@ -1191,7 +1191,7 @@ export default function DashboardClient({
                 aria-label={t(locale, 'dashboard.dateFromLabel')}
                 className="min-w-[120px]"
               />
-              <span className="whitespace-nowrap font-mono text-[11px] text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
+              <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
               <DateField
                 bare
                 value={dateTo}
@@ -1222,7 +1222,7 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="cursor-pointer rounded-full border border-ink/12 bg-transparent px-2.5 py-1 font-mono text-[11px] text-ink-muted"
+                className="cursor-pointer rounded-full border border-ink/12 bg-transparent px-2.5 py-1 font-mono text-2xs text-ink-muted"
               >
                 {t(locale, 'common.clearAll')}
               </button>
@@ -1319,7 +1319,7 @@ export default function DashboardClient({
                   />
                   {listTotal > 0 ? (
                     <div className={cn(S.card, 'mt-[18px] flex flex-wrap items-center justify-between gap-3 px-[22px] py-4')}>
-                      <span className="font-mono text-[13px] text-ink-muted">
+                      <span className="font-mono text-prose text-ink-muted">
                         {t(locale, 'dashboard.itemsPerPageTeam')}
                       </span>
                       <div className="flex flex-wrap items-center gap-2.5">
@@ -1341,7 +1341,7 @@ export default function DashboardClient({
                             disabled={pagination.page <= 1}
                             onClick={() => pushTeamPagination({ teamPage: pagination.page - 1 })}
                             className={cn(
-                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-[13px]',
+                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-prose',
                               pagination.page <= 1
                                 ? 'cursor-default text-ink-faint'
                                 : 'cursor-pointer text-ink-muted'
@@ -1349,7 +1349,7 @@ export default function DashboardClient({
                           >
                             {t(locale, 'dashboard.previous')}
                           </button>
-                          <span className="min-w-[100px] text-center font-mono text-[13px] text-ink-muted">
+                          <span className="min-w-[100px] text-center font-mono text-prose text-ink-muted">
                             {pagination.page} / {pagination.totalPages}
                           </span>
                           <button
@@ -1357,7 +1357,7 @@ export default function DashboardClient({
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pushTeamPagination({ teamPage: pagination.page + 1 })}
                             className={cn(
-                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-[13px]',
+                              'rounded-control border border-ink/12 bg-transparent px-3.5 py-2 font-mono text-prose',
                               pagination.page >= pagination.totalPages
                                 ? 'cursor-default text-ink-faint'
                                 : 'cursor-pointer text-ink-muted'

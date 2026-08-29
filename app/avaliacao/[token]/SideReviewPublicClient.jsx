@@ -111,7 +111,7 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
   return (
     <ContentEnter className="mx-auto max-w-2xl px-4 py-8">
       <header className="mb-6">
-        <p className="m-0 font-mono text-[11px] uppercase tracking-wide text-ink-faint">
+        <p className="m-0 font-mono text-2xs uppercase tracking-wide text-ink-faint">
           {roleLabel}
           {meta?.reviewerLabel ? ` · ${meta.reviewerLabel}` : ''}
         </p>

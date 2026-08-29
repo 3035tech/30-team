@@ -550,10 +550,10 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
             onAction={isAdmin ? handleCreate : undefined}
           />
           <div className="flex flex-wrap gap-3 px-1">
-            <Link href="/dashboard?tab=exit-analysis" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=exit-analysis" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaExit')} →
             </Link>
-            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=help" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaHelp')} →
             </Link>
           </div>

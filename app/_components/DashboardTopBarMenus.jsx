@@ -283,7 +283,7 @@ export function DashboardTopBarMenus({
             <path d="M10.3 21a1.7 1.7 0 0 0 3.4 0" />
           </svg>
           {unreadCount > 0 ? (
-            <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-brand-500 px-1 text-center font-mono text-[10px] leading-4 text-white">
+            <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-brand-500 px-1 text-center font-mono text-2xs leading-4 text-white">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : null}
@@ -299,7 +299,7 @@ export function DashboardTopBarMenus({
                   type="button"
                   onClick={markAll}
                   disabled={loading}
-                  className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
+                  className="cursor-pointer border-none bg-transparent font-mono text-2xs text-brand-500"
                 >
                   {t(locale, 'dashboard.notificationsMarkAll')}
                 </button>
@@ -324,13 +324,13 @@ export function DashboardTopBarMenus({
                 >
                   <NotifTypeIcon category={visual.category} tone={visual.tone} />
                   <div className="min-w-0 flex-1">
-                    <div className={cn('text-[13px] leading-[1.35] text-ink', item.readAt ? 'font-normal' : 'font-semibold')}>
+                    <div className={cn('text-prose leading-[1.35] text-ink', item.readAt ? 'font-normal' : 'font-semibold')}>
                       {notifTitle(locale, item)}
                     </div>
                     {notifBody(locale, item) ? (
                       <div className="mt-1 text-xs text-ink-muted">{notifBody(locale, item)}</div>
                     ) : null}
-                    <div className="mt-1.5 font-mono text-[11px] text-ink-faint">
+                    <div className="mt-1.5 font-mono text-2xs text-ink-faint">
                       {formatWhen(item.createdAt, locale)}
                     </div>
                   </div>
@@ -353,7 +353,7 @@ export function DashboardTopBarMenus({
           aria-expanded={profileOpen}
           aria-label={t(locale, 'dashboard.profileMenuAria')}
         >
-          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-[11px] text-brand-500">
+          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-2xs text-brand-500">
             {(displayLabel || '?').slice(0, 1).toUpperCase()}
           </span>
           <span className="db-profile-label overflow-hidden text-ellipsis whitespace-nowrap">

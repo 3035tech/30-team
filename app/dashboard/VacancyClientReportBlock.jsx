@@ -778,7 +778,7 @@ export function VacancyClientReportBlock({
             <button
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
-              className="p-0 text-[11px] font-mono text-ink-muted bg-transparent border-none cursor-pointer uppercase tracking-[0.08em]"
+              className="p-0 text-2xs font-mono text-ink-muted bg-transparent border-none cursor-pointer uppercase tracking-[0.08em]"
             >
               {previewOpen ? t(locale, 'panel.report.previewHide') : t(locale, 'panel.report.previewShow')}
             </button>
@@ -968,7 +968,7 @@ export function VacancyClientReportBlock({
                 )}
               </button>
               <span
-                className={cn('font-mono text-[11px]', noteOk ? 'text-ink-muted' : 'text-danger')}
+                className={cn('font-mono text-2xs', noteOk ? 'text-ink-muted' : 'text-danger')}
               >
                 {t(locale, 'panel.report.noteCharCount', { n: notePlainLen, min: REPORT_NOTE_MIN_CHARS })}
               </span>
@@ -1026,7 +1026,7 @@ export function VacancyClientReportBlock({
                         <td className="py-2 px-2.5 text-ink">
                           <div>{c.name}</div>
                           {c.hasMotivators ? (
-                            <div className="mt-[2px] text-[10px] font-mono text-ink-muted">
+                            <div className="mt-[2px] text-2xs font-mono text-ink-muted">
                               {t(locale, 'panel.report.hasMotivatorsBadge')}
                             </div>
                           ) : null}
@@ -1103,7 +1103,7 @@ export function VacancyClientReportBlock({
                 <div className="space-y-2 text-xs text-ink-muted">
                   {(compositionRisks.pairTensions || []).length > 0 ? (
                     <div>
-                      <span className="font-mono text-[10px] uppercase text-warning">
+                      <span className="font-mono text-2xs uppercase text-warning">
                         {t(locale, 'panel.report.compositionPairTensions')}
                       </span>
                       <ul className="m-0 mt-1 pl-4">
@@ -1121,7 +1121,7 @@ export function VacancyClientReportBlock({
                   ) : null}
                   {(compositionRisks.nucleusRisks || []).length > 0 ? (
                     <div>
-                      <span className="font-mono text-[10px] uppercase text-warning">
+                      <span className="font-mono text-2xs uppercase text-warning">
                         {t(locale, 'panel.report.compositionNucleusRisks')}
                       </span>
                       <ul className="m-0 mt-1 pl-4">
@@ -1135,7 +1135,7 @@ export function VacancyClientReportBlock({
                   ) : null}
                   {(compositionRisks.nucleusCompleters || []).length > 0 ? (
                     <div>
-                      <span className="font-mono text-[10px] uppercase text-success">
+                      <span className="font-mono text-2xs uppercase text-success">
                         {t(locale, 'panel.report.compositionCompleters')}
                       </span>
                       <ul className="m-0 mt-1 pl-4">
@@ -1171,7 +1171,7 @@ export function VacancyClientReportBlock({
               {busy ? t(locale, 'panel.common.loading') : t(locale, 'panel.report.generate', { n: selected.size })}
             </button>
             {!noteOk && selected.size > 0 ? (
-              <p className="mt-[8px] mx-[0] mb-[0] text-[11px] text-ink-muted leading-[1.45]">
+              <p className="mt-[8px] mx-[0] mb-[0] text-2xs text-ink-muted leading-[1.45]">
                 {t(locale, 'panel.report.noteGateHint', { n: REPORT_NOTE_MIN_CHARS })}
               </p>
             ) : null}
@@ -1183,7 +1183,7 @@ export function VacancyClientReportBlock({
               {reports.some((r) => r.isLive) ? (
                 <button
                   type="button"
-                  className={cn(S.btnGhost, 'px-2.5 py-1.5 text-[11px]')}
+                  className={cn(S.btnGhost, 'px-2.5 py-1.5 text-2xs')}
                   disabled={busy}
                   onClick={async () => {
                     const urls = reports
@@ -1227,7 +1227,7 @@ export function VacancyClientReportBlock({
                               {r.isLive ? t(locale, 'panel.report.statusLive') : t(locale, 'panel.report.statusDead')}
                             </span>
                           </div>
-                          <div className="mt-[2px] text-[11px] font-mono text-ink-muted">
+                          <div className="mt-[2px] text-2xs font-mono text-ink-muted">
                             {exp ? t(locale, 'panel.report.expiresAt', { date: exp.toLocaleString(locale) }) : ''}
                           </div>
                         </div>
@@ -1262,7 +1262,7 @@ export function VacancyClientReportBlock({
                       </div>
                       {isEditing ? (
                         <div className="mt-2.5">
-                          <p className="mt-[0] mx-[0] mb-[6px] text-[11px] text-ink-muted">
+                          <p className="mt-[0] mx-[0] mb-[6px] text-2xs text-ink-muted">
                             {t(locale, 'panel.report.editNoteHint')}
                           </p>
                           <RichTextEditor
@@ -1299,17 +1299,17 @@ export function VacancyClientReportBlock({
 }
 
 function fieldInputClass() {
-  return 'rounded-lg border border-ink/12 bg-ink/[0.05] px-2 py-1.5 font-ui text-[11px] text-ink';
+  return 'rounded-lg border border-ink/12 bg-ink/[0.05] px-2 py-1.5 font-ui text-2xs text-ink';
 }
 
 function btnGhostClass({ busy = false, locked = false } = {}) {
   const inactive = busy || locked;
   return cn(
-    'inline-flex min-h-[32px] items-center rounded-lg border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-ink-muted',
+    'inline-flex min-h-[32px] items-center rounded-lg border border-ink/12 bg-transparent px-2.5 py-1.5 font-mono text-2xs text-ink-muted',
     inactive ? 'cursor-wait opacity-65' : 'cursor-pointer'
   );
 }
 
 function btnPurpleClass() {
-  return 'inline-flex min-h-[32px] cursor-pointer items-center rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-[11px] text-brand-500';
+  return 'inline-flex min-h-[32px] cursor-pointer items-center rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-2xs text-brand-500';
 }

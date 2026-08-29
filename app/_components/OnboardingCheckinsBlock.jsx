@@ -209,12 +209,12 @@ export function OnboardingCheckinsBlock({
                   <div className="text-sm text-ink">
                     {t(locale, 'panel.onboarding.milestone', { days: row.milestoneDays })}
                     {row.overdue ? (
-                      <span className="ml-1.5 font-mono text-[10px] text-warning">
+                      <span className="ml-1.5 font-mono text-2xs text-warning">
                         {t(locale, 'panel.onboarding.overdue')}
                       </span>
                     ) : null}
                   </div>
-                  <div className="font-mono text-[10px] text-ink-muted">
+                  <div className="font-mono text-2xs text-ink-muted">
                     {t(locale, 'panel.onboarding.due', { date: row.dueDate || '—' })}
                     {done && row.outcome
                       ? ` · ${t(locale, `panel.onboarding.outcome.${row.outcome}`)}`
@@ -231,7 +231,7 @@ export function OnboardingCheckinsBlock({
                       href={row.meetUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-flex font-mono text-[10px] text-brand-600"
+                      className="mt-1 inline-flex font-mono text-2xs text-brand-600"
                     >
                       {t(locale, 'panel.onboarding.openMeet')}
                     </a>

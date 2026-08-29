@@ -15,10 +15,10 @@ function PersonCard({ person, locale }) {
   return (
     <div className="min-w-0 rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5">
       <div className="mb-2 flex items-center gap-2.5">
-        <div className="shrink-0 text-[22px]">{d.emoji || '·'}</div>
+        <div className="shrink-0 text-2xl">{d.emoji || '·'}</div>
         <div className="min-w-0">
           <div
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-ink"
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-prose text-ink"
             title={person.name}
           >
             {personListName(person.name)}
@@ -26,7 +26,7 @@ function PersonCard({ person, locale }) {
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <TypeBadge type={person.topType} locale={locale} compact />
             {person.areaLabel ? (
-              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[11px] text-ink-muted">
+              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
                 {person.areaLabel}
               </span>
             ) : null}
@@ -110,7 +110,7 @@ export function CompatTab({
     return (
       <div className={cn(S.card, 'p-5 sm:px-6')}>
         <span className={S.label}>{t(locale, 'panel.compat.needsCompanyScopeTitle')}</span>
-        <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
+        <p className="mt-2.5 mb-0 max-w-[62ch] text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.compat.needsCompanyScopeBody')}
         </p>
       </div>
@@ -172,7 +172,7 @@ export function CompatTab({
     <div>
       <div className={cn(S.card, 'mb-3.5 px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'dashboard.compatibility')}</span>
-        <h2 className="mt-2 mb-0 font-ui text-[22px] font-semibold font-normal leading-tight text-ink">
+        <h2 className="mt-2 mb-0 font-ui text-2xl font-semibold font-normal leading-tight text-ink">
           {t(locale, 'panel.compat.headline')}
         </h2>
         <p className="mt-2.5 mb-0 max-w-[64ch] text-sm leading-relaxed text-ink-muted">
@@ -206,12 +206,12 @@ export function CompatTab({
                 boxShadow: active ? `0 0 0 2px ${x.c}22` : 'none',
               }}
             >
-              <div className="mb-1 font-display text-[28px]" style={{ color: x.c }}>{x.n}</div>
-              <div className="mb-1.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+              <div className="mb-1 font-display text-3xl" style={{ color: x.c }}>{x.n}</div>
+              <div className="mb-1.5 font-mono text-2xs uppercase tracking-wide text-ink-muted">
                 {x.l}
               </div>
               <div className="mb-2.5 text-xs text-ink-faint">{x.d}</div>
-              <div className="font-mono text-[11px]" style={{ color: x.c }}>{x.action}</div>
+              <div className="font-mono text-2xs" style={{ color: x.c }}>{x.action}</div>
             </button>
           );
         })}
@@ -220,7 +220,7 @@ export function CompatTab({
       {section === 'tensions' && topRisks.length > 0 ? (
         <div className={cn(S.card, 'mb-3.5 border-danger/30 bg-danger/[0.04]')}>
           <span className={cn(S.label, 'text-danger')}>{t(locale, 'panel.compat.topRisksTitle')}</span>
-          <p className="mb-3.5 mt-2 text-[13px] leading-snug text-ink-muted">
+          <p className="mb-3.5 mt-2 text-prose leading-snug text-ink-muted">
             {t(locale, 'panel.compat.topRisksIntro')}
           </p>
           <div className="flex flex-col gap-2.5">
@@ -229,10 +229,10 @@ export function CompatTab({
                 key={`risk-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
                 className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-surface px-3 py-2.5"
               >
-                <span className="min-w-[18px] font-mono text-[11px] text-danger">
+                <span className="min-w-[18px] font-mono text-2xs text-danger">
                   {i + 1}.
                 </span>
-                <span className="text-[13px] text-ink">
+                <span className="text-prose text-ink">
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
                 <TypeBadge type={pair.a.topType} locale={locale} compact />
@@ -250,7 +250,7 @@ export function CompatTab({
       {section === 'synergies' && topWins.length > 0 ? (
         <div className={cn(S.card, 'mb-3.5 border-success/30 bg-success/[0.04]')}>
           <span className={cn(S.label, 'text-success')}>{t(locale, 'panel.compat.topWinsTitle')}</span>
-          <p className="mb-3.5 mt-2 text-[13px] leading-snug text-ink-muted">
+          <p className="mb-3.5 mt-2 text-prose leading-snug text-ink-muted">
             {t(locale, 'panel.compat.topWinsIntro')}
           </p>
           <div className="flex flex-col gap-2.5">
@@ -259,10 +259,10 @@ export function CompatTab({
                 key={`win-${pair.a?.assessmentId}-${pair.b?.assessmentId}-${i}`}
                 className="flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-surface px-3 py-2.5"
               >
-                <span className="min-w-[18px] font-mono text-[11px] text-success">
+                <span className="min-w-[18px] font-mono text-2xs text-success">
                   {i + 1}.
                 </span>
-                <span className="text-[13px] text-ink">
+                <span className="text-prose text-ink">
                   {personListName(pair.a.name)} × {personListName(pair.b.name)}
                 </span>
                 <TypeBadge type={pair.a.topType} locale={locale} compact />
@@ -298,7 +298,7 @@ export function CompatTab({
             </span>
           </button>
           {adviceOpen ? (
-            <p className="mx-4 mb-3.5 mt-0 text-[13px] leading-relaxed text-ink-muted">{playbook.body}</p>
+            <p className="mx-4 mb-3.5 mt-0 text-prose leading-relaxed text-ink-muted">{playbook.body}</p>
           ) : null}
         </div>
       ) : null}
@@ -306,7 +306,7 @@ export function CompatTab({
       {display.length === 0 ? (
         <div className={cn(S.card, 'p-10 text-center')}>
           <p className="m-0 italic text-ink-muted">{t(locale, 'panel.compat.emptyCategory')}</p>
-          <p className="mt-2.5 mb-0 text-[13px] leading-snug text-ink-faint">
+          <p className="mt-2.5 mb-0 text-prose leading-snug text-ink-faint">
             {t(locale, 'panel.compat.emptyHint')}
           </p>
         </div>
@@ -329,12 +329,12 @@ export function CompatTab({
                 <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div
-                      className="mb-1 font-mono text-[13px] uppercase tracking-wide"
+                      className="mb-1 font-mono text-prose uppercase tracking-wide"
                       style={{ color: lc }}
                     >
                       {compat.title}
                     </div>
-                    <div className="text-[11px] text-ink-faint">
+                    <div className="text-2xs text-ink-faint">
                       {t(locale, 'panel.compat.whyLabel')}
                     </div>
                   </div>
@@ -349,7 +349,7 @@ export function CompatTab({
                   <PersonCard person={b} locale={locale} />
                 </div>
 
-                <p className="mt-3.5 mb-0 text-[13px] leading-relaxed text-ink-muted">{compat.desc}</p>
+                <p className="mt-3.5 mb-0 text-prose leading-relaxed text-ink-muted">{compat.desc}</p>
               </div>
             );
           })}
@@ -378,7 +378,7 @@ export function CompatTab({
                   disabled={pg <= 1}
                   onClick={() => onCompatPagination({ page: pg - 1, pageSize: compatPageSize })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
                     pg <= 1
                       ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
                       : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'
@@ -391,7 +391,7 @@ export function CompatTab({
                   disabled={pg >= totalPg}
                   onClick={() => onCompatPagination({ page: pg + 1, pageSize: compatPageSize })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
                     pg >= totalPg
                       ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
                       : 'cursor-pointer border-brand-500/40 bg-brand-500/[0.09] text-brand-500'

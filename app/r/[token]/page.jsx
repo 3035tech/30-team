@@ -19,7 +19,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import { printClientReport } from '../../../lib/client-report-print';
 
 const miniLabelClass =
-  'mb-0.5 mt-0 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint';
+  'mb-0.5 mt-0 font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint';
 
 function ScoreBars({ scores, locale }) {
   const entries = [];
@@ -32,7 +32,7 @@ function ScoreBars({ scores, locale }) {
     <div className="flex flex-col gap-1">
       {entries.map((e) => (
         <div key={e.t} className="flex items-center gap-2" title={typeHintTooltip(e.t, locale)}>
-          <span className="w-7 cursor-help font-mono text-[10px] text-ink-faint">T{e.t}</span>
+          <span className="w-7 cursor-help font-mono text-2xs text-ink-faint">T{e.t}</span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-ink/[0.08]">
             <div
               className="h-full rounded-sm"
@@ -42,7 +42,7 @@ function ScoreBars({ scores, locale }) {
               }}
             />
           </div>
-          <span className="w-7 text-right font-mono text-[10px] text-ink-faint">{e.v}</span>
+          <span className="w-7 text-right font-mono text-2xs text-ink-faint">{e.v}</span>
         </div>
       ))}
     </div>
@@ -127,7 +127,7 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
     <article className="rounded-xl border border-ink/12 bg-white p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="m-0 font-display text-base text-ink">{c.name}</h3>
-        <span className="font-mono text-[11px] text-brand-500">{recommendationLabel(locale, rec)}</span>
+        <span className="font-mono text-2xs text-brand-500">{recommendationLabel(locale, rec)}</span>
       </div>
       <p
         className={cn(
@@ -150,19 +150,19 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
           {why ? (
             <div className="min-h-[46px]">
               <div className={miniLabelClass}>{t(locale, 'panel.report.fieldWhy')}</div>
-              <p className="m-0 text-[13px] leading-[1.55] text-ink">{why}</p>
+              <p className="m-0 text-prose leading-[1.55] text-ink">{why}</p>
             </div>
           ) : null}
           {c.watchOut ? (
             <div className="min-h-[46px]">
               <div className={miniLabelClass}>{t(locale, 'panel.report.fieldWatch')}</div>
-              <p className="m-0 text-[13px] leading-[1.55] text-ink">{c.watchOut}</p>
+              <p className="m-0 text-prose leading-[1.55] text-ink">{c.watchOut}</p>
             </div>
           ) : null}
           {c.interviewProbe ? (
             <div className="min-h-[46px]">
               <div className={miniLabelClass}>{t(locale, 'panel.report.fieldProbe')}</div>
-              <p className="m-0 text-[13px] leading-[1.55] text-ink">{c.interviewProbe}</p>
+              <p className="m-0 text-prose leading-[1.55] text-ink">{c.interviewProbe}</p>
             </div>
           ) : null}
         </div>
@@ -175,7 +175,7 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
             {motivators.map((m) => (
               <span
                 key={m.key}
-                className="rounded-full border border-ink/12 px-2 py-1 font-mono text-[11px] text-ink-muted"
+                className="rounded-full border border-ink/12 px-2 py-1 font-mono text-2xs text-ink-muted"
               >
                 {motivatorDimensionLabel(m.key, locale)}
                 {m.score != null ? ` ${m.score}` : ''}
@@ -186,7 +186,7 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
       ) : null}
 
       {roleReading ? (
-        <p className="mb-0 mt-2.5 text-[13px] leading-[1.55] text-ink">{roleReading}</p>
+        <p className="mb-0 mt-2.5 text-prose leading-[1.55] text-ink">{roleReading}</p>
       ) : null}
       {d?.desc ? (
         <p className="mb-0 mt-2 text-xs leading-[1.55] text-ink-muted">{d.desc}</p>
@@ -227,7 +227,7 @@ function FitCompareChart({ candidates, locale }) {
   const max = Math.max(...ranked.map((c) => Number(c.vacancyFitScore010) || 0), 1);
   return (
     <section className="mb-5 rounded-xl border border-ink/12 bg-ink/[0.02] px-4 py-3.5">
-      <p className="mb-3 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
+      <p className="mb-3 mt-0 font-mono text-2xs uppercase tracking-[0.12em] text-ink-label">
         {t(locale, 'panel.report.fitCompareTitle')}
       </p>
       <div className="flex flex-col gap-2">
@@ -253,7 +253,7 @@ function FitCompareChart({ candidates, locale }) {
               </div>
               <span className="w-[52px] text-right font-mono text-xs text-ink-muted">
                 {score.toFixed(1)}
-                <span className="text-[10px] text-ink-faint"> ({pct}%)</span>
+                <span className="text-2xs text-ink-faint"> ({pct}%)</span>
               </span>
             </div>
           );
@@ -412,21 +412,21 @@ function ReportInner() {
               className="h-12 w-12 rounded-control object-contain"
             />
             {vacancy.companyName ? (
-              <p className="m-0 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-label">
+              <p className="m-0 font-mono text-2xs font-semibold uppercase tracking-[0.16em] text-ink-label">
                 {vacancy.companyName}
               </p>
             ) : null}
           </div>
         ) : vacancy.companyName ? (
-          <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-label">
+          <p className="mb-2 mt-0 font-mono text-2xs font-semibold uppercase tracking-[0.16em] text-ink-label">
             {vacancy.companyName}
           </p>
         ) : (
-          <p className="mb-2 mt-0 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-500">
+          <p className="mb-2 mt-0 font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-brand-500">
             30Team
           </p>
         )}
-        <h1 className="mb-1.5 mt-0 font-display text-[28px] font-semibold text-ink">
+        <h1 className="mb-1.5 mt-0 font-display text-3xl font-semibold text-ink">
           {state.data.title || vacancy.title || t(locale, 'panel.report.publicTitle')}
         </h1>
         <p className="m-0 text-sm text-ink-muted">
@@ -486,13 +486,13 @@ function ReportInner() {
 
       {!rubricSummary?.hasRubric ? (
         <section className="mb-5 rounded-xl border border-danger/30 bg-danger/[0.05] px-4 py-3.5">
-          <p className="m-0 text-[13px] leading-[1.55] text-danger">{t(locale, 'panel.report.noRubricBanner')}</p>
+          <p className="m-0 text-prose leading-[1.55] text-danger">{t(locale, 'panel.report.noRubricBanner')}</p>
         </section>
       ) : null}
 
       {(rubricSummary?.hasRubric && rubricTypesLabel) || vacancy.description || rubricSummary?.notes ? (
         <section className="mb-5 rounded-xl border border-ink/12 bg-ink/[0.02] px-4 py-3.5">
-          <p className="mb-1.5 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
+          <p className="mb-1.5 mt-0 font-mono text-2xs uppercase tracking-[0.12em] text-ink-label">
             {t(locale, 'panel.report.vacancySeeksTitle')}
           </p>
           {rubricSummary?.hasRubric && rubricTypesLabel ? (
@@ -501,12 +501,12 @@ function ReportInner() {
             </p>
           ) : null}
           {rubricSummary?.notes ? (
-            <p className="mb-2 mt-0 text-[13px] leading-[1.55] text-ink-muted">{rubricSummary.notes}</p>
+            <p className="mb-2 mt-0 text-prose leading-[1.55] text-ink-muted">{rubricSummary.notes}</p>
           ) : null}
           {!isRichTextEmpty(vacancy.description) ? (
             <div className="mt-1">
               <p className={miniLabelClass}>{t(locale, 'panel.report.vacancyDescLabel')}</p>
-              <RichTextView html={vacancy.description} className="m-0 text-[13px]" />
+              <RichTextView html={vacancy.description} className="m-0 text-prose" />
             </div>
           ) : null}
           {rubricSummary?.hasRubric ? (
@@ -517,7 +517,7 @@ function ReportInner() {
 
       {!isRichTextEmpty(note) ? (
         <section className={cn(S.cardTight, 'mb-6 px-[18px] py-4')}>
-          <p className="mb-1.5 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-label">
+          <p className="mb-1.5 mt-0 font-mono text-2xs uppercase tracking-[0.12em] text-ink-label">
             {t(locale, 'panel.report.executiveNote')}
           </p>
           <RichTextView html={note} className="m-0 text-sm" />
@@ -525,7 +525,7 @@ function ReportInner() {
       ) : null}
 
       {compareLine ? (
-        <p className="mb-3 mt-0 text-[13px] leading-[1.55] text-ink-muted">{compareLine}</p>
+        <p className="mb-3 mt-0 text-prose leading-[1.55] text-ink-muted">{compareLine}</p>
       ) : null}
 
       {rubricSummary?.hasRubric ? <FitCompareChart candidates={candidates} locale={locale} /> : null}
@@ -535,9 +535,9 @@ function ReportInner() {
           {t(locale, 'panel.report.shortlistTitle', { n: candidates.length })}
         </h2>
         <div className="overflow-x-auto rounded-xl border border-ink/12 bg-white">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full border-collapse text-prose">
             <thead>
-              <tr className="text-left font-mono text-[11px] text-ink-muted">
+              <tr className="text-left font-mono text-2xs text-ink-muted">
                 <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colName')}</th>
                 <th className="px-3.5 py-2.5">{t(locale, 'panel.report.colRec')}</th>
                 {rubricSummary?.hasRubric ? (
@@ -588,8 +588,8 @@ function ReportInner() {
       </section>
 
       <footer className="mt-9 border-t border-ink/12 pt-4">
-        <p className="m-0 text-[11px] leading-[1.55] text-ink-faint">{t(locale, 'panel.report.disclaimer')}</p>
-        <p className="mb-0 mt-2 font-mono text-[10px] text-ink-faint">
+        <p className="m-0 text-2xs leading-[1.55] text-ink-faint">{t(locale, 'panel.report.disclaimer')}</p>
+        <p className="mb-0 mt-2 font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.report.poweredBy')}
         </p>
       </footer>

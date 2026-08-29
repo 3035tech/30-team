@@ -166,14 +166,14 @@ export function CandidateCvBlock({
                   <CopyableLink url={cv.cvUrl} label={t(locale, 'recruiting.cvOpenPdf')} compact locale={locale} />
                 ) : null}
                 {cv.cvUpdatedAt ? (
-                  <span className="font-mono text-[11px] text-ink-faint">
+                  <span className="font-mono text-2xs text-ink-faint">
                     {t(locale, 'recruiting.cvUpdatedAt', {
                       date: new Date(cv.cvUpdatedAt).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
                     })}
                   </span>
                 ) : null}
                 {cv.textLength > 0 ? (
-                  <span className="font-mono text-[11px] text-ink-faint">
+                  <span className="font-mono text-2xs text-ink-faint">
                     {t(locale, 'recruiting.cvTextChars', { n: cv.textLength })}
                   </span>
                 ) : null}
@@ -216,7 +216,7 @@ export function CandidateCvBlock({
               <p className="mb-2 mt-0 text-xs font-medium text-ink">{t(locale, 'recruiting.cvSuggestionsTitle')}</p>
               <ul className="mb-3 list-none space-y-1 p-0">
                 {suggestionEntries.map(([key, value]) => (
-                  <li key={key} className="font-mono text-[11px] text-ink-muted">
+                  <li key={key} className="font-mono text-2xs text-ink-muted">
                     <span className="text-ink-label">{t(locale, `recruiting.cvField.${key}`)}:</span>{' '}
                     {String(value)}
                     {candidateFields[key] && candidateFields[key] !== value ? (
@@ -232,7 +232,7 @@ export function CandidateCvBlock({
               </button>
             </div>
           ) : cv?.hasCv ? (
-            <p className="m-0 text-[11px] text-ink-faint">{t(locale, 'recruiting.cvNoSuggestions')}</p>
+            <p className="m-0 text-2xs text-ink-faint">{t(locale, 'recruiting.cvNoSuggestions')}</p>
           ) : null}
 
           <input

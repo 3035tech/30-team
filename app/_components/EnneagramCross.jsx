@@ -51,13 +51,13 @@ function BlendCard({ pair, locale }) {
       }}
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-2">
-        <span className="text-[13px] font-medium text-ink">
+        <span className="text-prose font-medium text-ink">
           {t(locale, 'candidate.crossPairLabel', { a: a.type, b: b.type })}
           {' · '}
           {blend.title}
         </span>
         <span
-          className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide"
+          className="rounded-full px-2 py-0.5 font-mono text-2xs uppercase tracking-wide"
           style={{
             background: `${color}18`,
             color,
@@ -66,7 +66,7 @@ function BlendCard({ pair, locale }) {
           {t(locale, levelKey(blend.level))}
         </span>
       </div>
-      <p className="m-0 text-[13px] leading-[1.65] text-ink-muted">{blend.reading}</p>
+      <p className="m-0 text-prose leading-[1.65] text-ink-muted">{blend.reading}</p>
     </div>
   );
 }
@@ -94,7 +94,7 @@ export function EnneagramCross({ scores, locale, showChallenge = true }) {
                 <span
                   key={`${s.role}-${s.type}-${s.text}`}
                   title={s.role !== 'primary' ? t(locale, 'candidate.strengthFromType', { type: s.type }) : undefined}
-                  className="rounded-full px-2.5 py-0.5 text-[11px]"
+                  className="rounded-full px-2.5 py-0.5 text-2xs"
                   style={{
                     background: `${d.color}15`,
                     border: `1px solid ${d.color}35`,
@@ -163,7 +163,7 @@ export function EnneagramCross({ scores, locale, showChallenge = true }) {
       {showChallenge && challenge ? (
         <div className="mb-4">
           <span className={cn(S.label, 'mb-2')}>{t(locale, 'candidate.challenge')}</span>
-          <p className="m-0 text-[13px] italic leading-[1.65] text-ink-muted">
+          <p className="m-0 text-prose italic leading-[1.65] text-ink-muted">
             “{challenge}”
           </p>
         </div>
@@ -182,7 +182,7 @@ export function EnneagramCross({ scores, locale, showChallenge = true }) {
         >
           {t(locale, 'candidate.teamContribution')}
         </span>
-        <p className="m-0 text-[13px] leading-[1.65] text-ink-muted">{teamCross}</p>
+        <p className="m-0 text-prose leading-[1.65] text-ink-muted">{teamCross}</p>
       </div>
     </div>
   );

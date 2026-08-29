@@ -48,12 +48,12 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
     return (
       <div className={cn(S.card, 'flex items-center gap-2.5 p-5')}>
         <Spinner size={18} />
-        <span className="text-[13px] text-ink-muted">{t(locale, 'common.loading')}</span>
+        <span className="text-prose text-ink-muted">{t(locale, 'common.loading')}</span>
       </div>
     );
   }
   if (err) {
-    return <div className={cn(S.card, 'p-4 text-[13px] text-danger')}>{err}</div>;
+    return <div className={cn(S.card, 'p-4 text-prose text-danger')}>{err}</div>;
   }
 
   const views = Number(data?.views) || 0;
@@ -66,12 +66,12 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
   return (
     <div className="flex flex-col gap-3.5">
       <div className={cn(S.card, 'px-[18px] py-4')}>
-        <div className="mb-3 text-[13px] font-semibold text-ink">
+        <div className="mb-3 text-prose font-semibold text-ink">
           {t(locale, 'recruiting.analyticsFunnelTitle')}
         </div>
         {empty ? (
           <div className="flex flex-col gap-2.5">
-            <p className="m-0 text-[13px] leading-[1.55] text-ink-muted">
+            <p className="m-0 text-prose leading-[1.55] text-ink-muted">
               {t(locale, 'recruiting.analyticsEmpty')}
             </p>
             {publicPageUrl ? (
@@ -91,8 +91,8 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
                 key={s.key}
                 className="rounded-control border border-ink/12 p-3 text-center"
               >
-                <div className="font-mono text-[22px] text-ink">{Number(data?.[s.key]) || 0}</div>
-                <div className="mt-1 font-mono text-[11px] text-ink-muted">{s.label}</div>
+                <div className="font-mono text-2xl text-ink">{Number(data?.[s.key]) || 0}</div>
+                <div className="mt-1 font-mono text-2xs text-ink-muted">{s.label}</div>
               </div>
             ))}
           </div>
@@ -108,7 +108,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
 
       {!empty && Array.isArray(data?.sources) && data.sources.length > 0 ? (
         <div className={cn(S.card, 'px-[18px] py-4')}>
-          <div className="mb-2.5 text-[13px] font-semibold text-ink">
+          <div className="mb-2.5 text-prose font-semibold text-ink">
             {t(locale, 'recruiting.analyticsSourcesTitle')}
           </div>
           <div className="overflow-x-auto">

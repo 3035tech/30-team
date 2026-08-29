@@ -56,7 +56,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
         <span className={S.label}>{t(locale, 'recruiting.rankingTitle')}</span>
         {loading ? <span className="spinner text-ink-muted" /> : null}
         {!loading && rows.length > 0 ? (
-          <span className="font-mono text-[11px] text-ink-faint">
+          <span className="font-mono text-2xs text-ink-faint">
             {t(locale, 'recruiting.rankingScoredCount', { n: rows.length })}
           </span>
         ) : null}
@@ -65,11 +65,11 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
         {t(locale, 'recruiting.rankingIntro')}
       </p>
       {!loading && nucleusSize > 0 ? (
-        <p className="mb-3.5 mt-0 text-[11px] leading-snug text-ink-faint">
+        <p className="mb-3.5 mt-0 text-2xs leading-snug text-ink-faint">
           {t(locale, 'recruiting.rankingNucleusHint', { n: nucleusSize })}
         </p>
       ) : !loading && rows.length > 0 ? (
-        <p className="mb-3.5 mt-0 text-[11px] leading-snug text-ink-faint">
+        <p className="mb-3.5 mt-0 text-2xs leading-snug text-ink-faint">
           {t(locale, 'recruiting.rankingNucleusEmpty')}
         </p>
       ) : (
@@ -90,7 +90,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
 
       {rows.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full border-collapse text-prose">
             <thead>
               <tr className="border-b border-ink/12 text-left">
                 {[
@@ -103,7 +103,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                 ].map((key) => (
                   <th
                     key={key}
-                    className="px-2.5 py-2 font-mono text-[11px] font-semibold text-ink-faint"
+                    className="px-2.5 py-2 font-mono text-2xs font-semibold text-ink-faint"
                   >
                     {t(locale, key)}
                   </th>
@@ -134,7 +134,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                     <td className="p-2.5">
                       <div className="font-medium text-ink">{titleCasePersonName(r.name)}</div>
                       {r.email ? (
-                        <div className="mt-0.5 font-mono text-[11px] text-ink-faint">{r.email}</div>
+                        <div className="mt-0.5 font-mono text-2xs text-ink-faint">{r.email}</div>
                       ) : null}
                     </td>
                     <td className="p-2.5">
@@ -146,32 +146,32 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                     </td>
                     <td className="p-2.5">
                       <div>
-                        <span className="block font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                        <span className="block font-mono text-2xs uppercase tracking-wide text-ink-faint">
                           {t(locale, 'recruiting.fitScoreLabel')}
                         </span>
                         <span className={cn('font-mono font-bold', scoreTone(r.vacancyFitScore010))}>
                           {r.vacancyFitScore010}/10
                         </span>
                         {band ? (
-                          <span className="ml-2 font-mono text-[11px] text-ink-muted">{band}</span>
+                          <span className="ml-2 font-mono text-2xs text-ink-muted">{band}</span>
                         ) : null}
                       </div>
                       {r.textMatchScore != null ? (
                         <div className="mt-2 rounded-md border border-ink/10 bg-ink/[0.03] px-2 py-1.5">
-                          <span className="block font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                          <span className="block font-mono text-2xs uppercase tracking-wide text-ink-faint">
                             {t(locale, 'recruiting.textMatchLabel')}
                           </span>
-                          <span className="font-mono text-[11px] text-ink-muted">
+                          <span className="font-mono text-2xs text-ink-muted">
                             {t(locale, 'recruiting.textMatchShort', { score: r.textMatchScore })}
                           </span>
                         </div>
                       ) : null}
                       {r.fitBreakdown ? (
                         <details className="mt-1 max-w-[240px]">
-                          <summary className="cursor-pointer font-mono text-[10px] text-brand-600">
+                          <summary className="cursor-pointer font-mono text-2xs text-brand-600">
                             {t(locale, 'recruiting.fitExplainToggle')}
                           </summary>
-                          <div className="mt-1 rounded-md border border-ink/10 bg-canvas/60 px-2 py-1.5 text-[10px] leading-snug text-ink-muted">
+                          <div className="mt-1 rounded-md border border-ink/10 bg-canvas/60 px-2 py-1.5 text-2xs leading-snug text-ink-muted">
                             <p className="m-0 mb-1">{t(locale, 'recruiting.fitExplainIntro')}</p>
                             <ul className="m-0 list-none space-y-0.5 p-0">
                               {(r.fitBreakdown.types || []).slice(0, 5).map((row) => (
@@ -190,7 +190,7 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                     <td className="p-2.5">
                       {nf && (nf.synergy > 0 || nf.tension > 0) ? (
                         <div className="max-w-[220px]">
-                          <div className="flex flex-wrap gap-1.5 font-mono text-[11px]">
+                          <div className="flex flex-wrap gap-1.5 font-mono text-2xs">
                             {nf.synergy > 0 ? (
                               <span className="rounded-full border border-success/30 bg-success/[0.08] px-1.5 py-0.5 text-success">
                                 {t(locale, 'recruiting.rankingNucleusSynergy', { n: nf.synergy })}
@@ -203,11 +203,11 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                             ) : null}
                           </div>
                           {nf.summary ? (
-                            <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-faint">{nf.summary}</p>
+                            <p className="mb-0 mt-1 text-2xs leading-snug text-ink-faint">{nf.summary}</p>
                           ) : null}
                         </div>
                       ) : (
-                        <span className="font-mono text-[11px] text-ink-faint">
+                        <span className="font-mono text-2xs text-ink-faint">
                           {t(locale, 'panel.common.notApplicable')}
                         </span>
                       )}

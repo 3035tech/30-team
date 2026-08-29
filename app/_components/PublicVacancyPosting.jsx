@@ -45,15 +45,15 @@ const SC = {
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
   card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
-  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
-  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-[15px] text-ink',
+  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink',
+  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink',
   btnPrimary:
     'min-h-touch items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-xs font-medium text-white',
 };
 
 function MetaChip({ children }) {
   return (
-    <span className="inline-block rounded-full border border-ink/12 bg-ink/[0.05] px-3 py-1.5 font-mono text-[11px] tracking-wide text-ink-muted">
+    <span className="inline-block rounded-full border border-ink/12 bg-ink/[0.05] px-3 py-1.5 font-mono text-2xs tracking-wide text-ink-muted">
       {children}
     </span>
   );
@@ -157,7 +157,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
       <div className={SC.wrap}>
         <header className="mb-5 flex items-center gap-3">
           <img src={brandMarkSrc(64)} alt="" width={40} height={40} />
-          <span className="font-mono text-[11px] uppercase tracking-[2px] text-ink-faint">
+          <span className="font-mono text-2xs uppercase tracking-[2px] text-ink-faint">
             30Team
           </span>
         </header>
@@ -166,7 +166,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
           {closed ? (
             <>
               <p
-className="mb-2 mt-0 font-mono text-[11px] uppercase tracking-[2px] text-warning"
+className="mb-2 mt-0 font-mono text-2xs uppercase tracking-[2px] text-warning"
               >
                 {closedReason === 'expired'
                   ? t(locale, 'publicVacancy.expiredBadge')
@@ -186,12 +186,12 @@ className="mb-2 mt-0 font-mono text-[11px] uppercase tracking-[2px] text-warning
                       title: posting?.title || t(locale, 'publicVacancy.thisRole'),
                     })}
               </p>
-              <p className="mb-5 mt-0 text-[15px] leading-[1.65] text-ink-muted">
+              <p className="mb-5 mt-0 text-base leading-[1.65] text-ink-muted">
                 {t(locale, 'publicVacancy.closedMessage')}
               </p>
               {posting?.title ? (
                 <p
-className="mb-2 mt-0 font-mono text-[13px] text-ink-faint"
+className="mb-2 mt-0 font-mono text-prose text-ink-faint"
                 >
                   {t(locale, 'publicVacancy.closedWas')}:{' '}
                   <strong className="text-ink">{posting.title}</strong>
@@ -301,7 +301,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                   <div>
                     <RichTextView
                       html={posting.description}
-                      className="text-[15px] leading-[1.7] text-ink"
+                      className="text-base leading-[1.7] text-ink"
                     />
                   </div>
                 </section>
@@ -349,7 +349,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                     height={48}
                     className="rounded-lg object-contain"
                   />
-                  <span className="text-[15px] text-ink">{companyName}</span>
+                  <span className="text-base text-ink">{companyName}</span>
                 </section>
               ) : null}
 
@@ -467,7 +467,7 @@ export function PublicVacanciesIndexView({
           >
             {heading}
           </h1>
-          <p className="mb-0 mt-2.5 text-[15px] leading-relaxed text-ink-muted">
+          <p className="mb-0 mt-2.5 text-base leading-relaxed text-ink-muted">
             {lead}
           </p>
         </header>
@@ -512,7 +512,7 @@ className="mb-1.5 block font-mono text-xs text-ink-muted"
             </label>
             <button
               type="submit"
-className="min-h-[44px] shrink-0 cursor-pointer rounded-control border-none bg-brand-500 px-5 font-display text-[15px] text-white"
+className="min-h-[44px] shrink-0 cursor-pointer rounded-control border-none bg-brand-500 px-5 font-display text-base text-white"
             >
               {t(locale, 'publicVacancy.indexSearchSubmit')}
             </button>
@@ -547,7 +547,7 @@ className="rounded-xl border border-ink/12 px-[18px] py-4"
                   >
                     <Link
                       href={item.path}
-className="block text-[17px] text-ink no-underline"
+className="block text-lg text-ink no-underline"
                     >
                       {item.title}
                     </Link>
@@ -657,7 +657,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
                 />
               </label>
               {alertStatus === 'err' ? (
-                <p className="m-0 text-[13px] text-danger">
+                <p className="m-0 text-prose text-danger">
                   {t(locale, 'publicVacancy.alertError')}
                 </p>
               ) : null}
@@ -665,7 +665,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
                 type="submit"
                 disabled={alertStatus === 'loading'}
                 className={cn(
-                  'min-h-[44px] self-start rounded-control border-none bg-brand-500 px-5 font-display text-[15px] text-white',
+                  'min-h-[44px] self-start rounded-control border-none bg-brand-500 px-5 font-display text-base text-white',
                   alertStatus === 'loading' ? 'cursor-default opacity-70' : 'cursor-pointer'
                 )}
               >
@@ -724,7 +724,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
               />
             )}
             <div className="min-w-0 flex-1">
-              <p className="mb-1 mt-0 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-label">
+              <p className="mb-1 mt-0 font-mono text-2xs uppercase tracking-[0.14em] text-ink-label">
                 {t(locale, 'publicVacancy.companyCareersEyebrow')}
               </p>
               <h1 className="m-0 font-display text-[clamp(26px,4vw,36px)] font-semibold leading-tight text-ink">
@@ -804,7 +804,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
                       href={item.path}
                       className="block rounded-xl border border-ink/12 px-[18px] py-4 text-ink no-underline transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.03]"
                     >
-                      <span className="block text-[17px] font-medium">{item.title}</span>
+                      <span className="block text-lg font-medium">{item.title}</span>
                       {meta ? (
                         <span className="mt-1.5 block font-mono text-xs text-ink-muted">{meta}</span>
                       ) : null}

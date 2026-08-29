@@ -85,13 +85,13 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
   return (
     <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3">
       <span className={cn(S.label, 'mb-1 block')}>{t(locale, 'recruiting.scorecardTitle')}</span>
-      <p className="mb-3 mt-0 text-[11px] leading-snug text-ink-muted">
+      <p className="mb-3 mt-0 text-2xs leading-snug text-ink-muted">
         {t(locale, 'recruiting.scorecardHint')}
       </p>
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {items.map((row, idx) => (
           <li key={row.questionId || idx} className="border-t border-ink/10 pt-2.5 first:border-0 first:pt-0">
-            <p className="mb-1.5 mt-0 text-[13px] leading-snug text-ink">{row.text}</p>
+            <p className="mb-1.5 mt-0 text-prose leading-snug text-ink">{row.text}</p>
             <div className="mb-1.5 flex flex-wrap gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button

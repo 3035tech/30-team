@@ -46,7 +46,7 @@ function statusBadge(locale, status) {
   return (
     <span
       className={cn(
-        'rounded-xl px-2 py-0.5 font-mono text-[10px]',
+        'rounded-xl px-2 py-0.5 font-mono text-2xs',
         tone[status] || tone.sent
       )}
     >
@@ -256,7 +256,7 @@ function InviteForm({ locale, isAdmin, companies, companyId, onSent }) {
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="min-w-0">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.motivatorsAdmin.invite.newInvite')}</span>
-          <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">
+          <p className="mb-0 mt-1 text-2xs leading-snug text-ink-muted">
             {t(locale, 'panel.motivatorsAdmin.invite.batchHint')}
           </p>
         </div>
@@ -405,7 +405,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               <SortableTh columnKey="expiresAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                 {t(locale, 'panel.motivatorsAdmin.invites.colExpires')}
               </SortableTh>
-              <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted" />
+              <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted" />
             </tr>
           </thead>
           <tbody>
@@ -417,7 +417,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               <tr key={row.id} className="border-t border-ink/12">
                 <td className="px-3 py-2.5">
                   <div>{row.candidateName}</div>
-                  <div className="text-[11px] text-ink-muted">{row.candidateEmail}</div>
+                  <div className="text-2xs text-ink-muted">{row.candidateEmail}</div>
                   {canShareLink ? (
                     <div className="mt-1">
                       <CopyableLink
@@ -613,7 +613,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 <SortableTh columnKey="completedAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t(locale, 'panel.motivatorsAdmin.results.colDate')}
                 </SortableTh>
-                <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted" />
+                <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted" />
               </tr>
             </thead>
             <tbody>
@@ -621,7 +621,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 <tr key={row.id} className="border-t border-ink/12">
                   <td className="px-3 py-2.5">
                     <div>{row.candidateName}</div>
-                    <div className="text-[11px] text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
+                    <div className="text-2xs text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
                   </td>
                   <td className="px-3 py-2.5 text-ink-muted">
                     {formatDisplayDate(row.completedAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
@@ -669,7 +669,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 {detail.attempt.areaLabel ? ` · ${detail.attempt.areaLabel}` : ''}
                 {detail.attempt.companyName ? ` · ${detail.attempt.companyName}` : ''}
               </div>
-              <div className="mt-1 font-mono text-[11px] text-ink-faint">
+              <div className="mt-1 font-mono text-2xs text-ink-faint">
                 {t(locale, 'panel.motivatorsAdmin.results.completedAt', {
                   date: detail.attempt.completedAt
                     ? new Date(detail.attempt.completedAt).toLocaleString(dateLocale(locale))
@@ -684,7 +684,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                   disabled={busy}
                   onClick={() => rescoreAttempt(detail.attempt.id)}
                   className={cn(
-                    'rounded-lg border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-500',
+                    'rounded-lg border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 text-2xs text-brand-500',
                     busy ? 'cursor-not-allowed' : 'cursor-pointer'
                   )}
                 >
@@ -696,7 +696,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 disabled={busy}
                 onClick={() => removeAttempt(detail.attempt.id)}
                 className={cn(
-                  'rounded-lg border border-danger/25 bg-danger/10 px-2.5 py-1 text-[11px] text-danger',
+                  'rounded-lg border border-danger/25 bg-danger/10 px-2.5 py-1 text-2xs text-danger',
                   busy ? 'cursor-not-allowed' : 'cursor-pointer'
                 )}
               >
@@ -709,7 +709,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
             <div className="mb-3.5 rounded-control border border-danger/20 bg-danger/10 px-3 py-2.5 text-xs text-danger">
               <div>{detail.rescore.error}</div>
               {detail.rescore.diagnostics ? (
-                <div className="mt-2 font-mono text-[11px] leading-snug text-ink-muted">
+                <div className="mt-2 font-mono text-2xs leading-snug text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.results.rescoreDiag', {
                     loaded: detail.rescore.diagnostics.questionsLoaded,
                     answers: detail.rescore.diagnostics.answersCount,
@@ -723,7 +723,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
 
           {detail.hrInsights?.topMotivators?.length > 0 ? (
             <div className="mb-5 rounded-xl border border-brand-500/15 bg-brand-500/[0.03] p-3.5">
-              <div className="mb-2.5 font-mono text-[10px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
+              <div className="mb-2.5 font-mono text-2xs text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
               <div className="mb-2.5 flex flex-wrap gap-2">
                 {detail.hrInsights.topMotivators.map((d) => (
                   <span
@@ -736,41 +736,41 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 ))}
               </div>
               {detail.hrInsights.summaryNote ? (
-                <p className="m-0 text-[13px] leading-relaxed text-ink-muted">{detail.hrInsights.summaryNote}</p>
+                <p className="m-0 text-prose leading-relaxed text-ink-muted">{detail.hrInsights.summaryNote}</p>
               ) : null}
             </div>
           ) : null}
 
           <p className="mb-4 text-sm leading-relaxed text-ink">{detail.attempt.profileSummary}</p>
 
-          <div className="mb-2.5 font-mono text-[10px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
+          <div className="mb-2.5 font-mono text-2xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
           {(detail.attempt.ranking || []).map((dim) => (
             <div key={dim.key} className="mb-2 flex items-center gap-2.5">
-              <span className="w-[110px] text-[11px]" style={{ color: dim.color }}>{dim.label}</span>
+              <span className="w-[110px] text-2xs" style={{ color: dim.color }}>{dim.label}</span>
               <div className="flex-1"><Bar value={dim.score} max={100} color={dim.color} h={6} /></div>
-              <span className="w-6 text-right text-[11px] text-ink-muted">{dim.score}</span>
+              <span className="w-6 text-right text-2xs text-ink-muted">{dim.score}</span>
             </div>
           ))}
 
           {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
             <div className="mt-5 grid grid-cols-1 gap-4 border-t border-ink/12 pt-4 sm:grid-cols-2">
               <div className="rounded-xl border border-success/20 bg-success/[0.04] p-3.5">
-                <div className="mb-2.5 font-mono text-[10px] text-success">{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
+                <div className="mb-2.5 font-mono text-2xs text-success">{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
                 <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.do.map((item) => (
                     <li key={item.dimensionKey} className="mb-2.5">
-                      <span className="font-mono text-[10px] text-success">{item.dimension}</span>
+                      <span className="font-mono text-2xs text-success">{item.dimension}</span>
                       <div className="mt-0.5">{item.text}</div>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="rounded-xl border border-danger/20 bg-danger/[0.03] p-3.5">
-                <div className="mb-2.5 font-mono text-[10px] text-danger">{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
+                <div className="mb-2.5 font-mono text-2xs text-danger">{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
                 <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.avoid.map((item) => (
                     <li key={item.dimensionKey} className="mb-2.5">
-                      <span className="font-mono text-[10px] text-danger">{item.dimension}</span>
+                      <span className="font-mono text-2xs text-danger">{item.dimension}</span>
                       <div className="mt-0.5">{item.text}</div>
                     </li>
                   ))}
@@ -781,7 +781,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
 
           {detail.history?.length > 1 ? (
             <div className="mt-5 border-t border-ink/12 pt-4">
-              <div className="mb-2 font-mono text-[11px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.evolution', { count: detail.history.length })}</div>
+              <div className="mb-2 font-mono text-2xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.evolution', { count: detail.history.length })}</div>
               {detail.history.map((h) => (
                 <div key={h.id} className="mb-1 text-xs text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.results.historyTop', {
@@ -822,16 +822,16 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
         <p className="mb-4 text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.analytics.completedCount', { count: data.totalAttempts })}</p>
         {(data.distribution || []).slice(0, 8).map((d) => (
           <div key={d.key} className="mb-2.5 flex items-center gap-2.5">
-            <span className="w-[100px] font-mono text-[11px]">{d.key}</span>
+            <span className="w-[100px] font-mono text-2xs">{d.key}</span>
             <div className="flex-1"><Bar value={d.average} max={maxAvg} color={C.purple} h={6} /></div>
-            <span className="text-[11px] text-ink-muted">{d.average}</span>
+            <span className="text-2xs text-ink-muted">{d.average}</span>
           </div>
         ))}
       </div>
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.topMotivators')}</span>
         {(data.topMotivators || []).slice(0, 6).map((row) => (
-          <div key={row.key} className="mb-2.5 flex justify-between text-[13px]">
+          <div key={row.key} className="mb-2.5 flex justify-between text-prose">
             <span>{row.key}</span>
             <span className="text-ink-muted">{row.pct}% ({row.count})</span>
           </div>
@@ -840,7 +840,7 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.invitesByStatus')}</span>
         {(data.inviteStats || []).map((s) => (
-          <div key={s.status} className="mb-2 flex justify-between text-[13px]">
+          <div key={s.status} className="mb-2 flex justify-between text-prose">
             <span>{statusBadge(locale, s.status)}</span>
             <span>{s.count}</span>
           </div>
@@ -925,7 +925,7 @@ function ConfigPanel({ locale }) {
             <div key={def.id} className="flex items-start justify-between gap-3 border-t border-ink/12 py-3">
               <div>
                 <div className="text-sm text-ink">{def.name}</div>
-                <div className="mt-1 font-mono text-[11px] text-ink-muted">
+                <div className="mt-1 font-mono text-2xs text-ink-muted">
                   {t(locale, 'panel.motivatorsAdmin.config.defMeta', {
                     slug: def.slug,
                     version: def.version,
@@ -940,7 +940,7 @@ function ConfigPanel({ locale }) {
                 disabled={deleteBusy === def.id}
                 onClick={() => removeDefinition(def)}
                 className={cn(
-                  'shrink-0 rounded-lg border border-danger/25 bg-transparent px-2.5 py-1 text-[11px] text-danger',
+                  'shrink-0 rounded-lg border border-danger/25 bg-transparent px-2.5 py-1 text-2xs text-danger',
                   deleteBusy === def.id ? 'cursor-not-allowed' : 'cursor-pointer'
                 )}
               >
@@ -957,7 +957,7 @@ function ConfigPanel({ locale }) {
           {dims.map((d) => (
             <span
               key={d.id}
-              className={cn('rounded-2xl px-2.5 py-1 text-[11px]', !d.active && 'opacity-40')}
+              className={cn('rounded-2xl px-2.5 py-1 text-2xs', !d.active && 'opacity-40')}
               style={{ background: `${d.color || C.purple}18`, color: d.color || C.purple }}
             >
               {d.label}
@@ -974,14 +974,14 @@ function ConfigPanel({ locale }) {
               type="button"
               onClick={() => toggleQuestion(q.id, q.active)}
               className={cn(
-                'cursor-pointer rounded-lg border border-ink/12 px-2 py-0.5 text-[10px]',
+                'cursor-pointer rounded-lg border border-ink/12 px-2 py-0.5 text-2xs',
                 q.active ? 'bg-success/10' : 'bg-transparent'
               )}
             >
               {q.active ? t(locale, 'panel.motivatorsAdmin.config.questionActive') : t(locale, 'panel.motivatorsAdmin.config.questionInactive')}
             </button>
             <div className={cn('flex-1 text-xs leading-snug', q.active ? 'text-ink' : 'text-ink-muted')}>
-              <span className="font-mono text-[10px] text-ink-faint">{q.questionType} · {q.key}</span>
+              <span className="font-mono text-2xs text-ink-faint">{q.questionType} · {q.key}</span>
               <div>{q.text.length > 120 ? `${q.text.slice(0, 120)}…` : q.text}</div>
             </div>
           </div>
@@ -1054,14 +1054,14 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         onClose={() => setNotice(null)}
       />
       <div className="mb-5">
-        <h2 className="mb-2 mt-0 text-[22px] font-normal text-ink">{t(locale, 'panel.motivatorsAdmin.title')}</h2>
-        <p className="m-0 text-[13px] text-ink-muted">{t(locale, 'panel.motivatorsAdmin.intro')}</p>
+        <h2 className="mb-2 mt-0 text-2xl font-normal text-ink">{t(locale, 'panel.motivatorsAdmin.title')}</h2>
+        <p className="m-0 text-prose text-ink-muted">{t(locale, 'panel.motivatorsAdmin.intro')}</p>
       </div>
 
       {moduleStatus && !moduleStatus.ready ? (
         <div className={cn(S.card, 'mb-5 border-danger/25 bg-danger/[0.03]')}>
           <span className={cn(S.label, 'text-danger')}>{t(locale, 'panel.motivatorsAdmin.setup.pendingTitle')}</span>
-          <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
+          <p className="mb-3 mt-0 text-prose leading-relaxed text-ink-muted">
             {moduleStatus.reason === 'schema_missing'
               ? t(locale, 'panel.motivatorsAdmin.setup.schemaMissing')
               : t(locale, 'panel.motivatorsAdmin.setup.notInitialized')}

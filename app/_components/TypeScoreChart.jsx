@@ -49,7 +49,7 @@ export function TypeScoreChart({ scores, locale, highlightTypes, defaultCollapse
         className="mb-2 flex w-full min-h-touch cursor-pointer items-center justify-between gap-2 rounded-control border border-ink/12 bg-ink/[0.02] px-3 py-2 text-left"
       >
         <span className="min-w-0">
-          <span className="block font-mono text-[11px] uppercase tracking-wide text-ink-faint">
+          <span className="block font-mono text-2xs uppercase tracking-wide text-ink-faint">
             {t(locale, 'panel.team.scoresByType')}
           </span>
           {!sectionOpen && top ? (
@@ -101,9 +101,9 @@ export function TypeScoreChart({ scores, locale, highlightTypes, defaultCollapse
                   }}
                 >
                   <div className="flex items-baseline justify-between gap-2.5">
-                    <span className="min-w-0 text-[13px] font-semibold" style={{ color: d.color }}>
+                    <span className="min-w-0 text-prose font-semibold" style={{ color: d.color }}>
                       {d.emoji}{' '}
-                      <span className="font-mono text-[11px] tracking-wide">T{type}</span>
+                      <span className="font-mono text-2xs tracking-wide">T{type}</span>
                       {' · '}
                       {short}
                     </span>
@@ -113,12 +113,12 @@ export function TypeScoreChart({ scores, locale, highlightTypes, defaultCollapse
                   <MiniBar value={score} max={maxS} color={d.color} h={highlight ? 7 : 5} />
                   {expanded ? (
                     <div className="mt-2.5 pt-2.5" style={{ borderTop: `1px solid ${d.color}33` }}>
-                      <p className="mb-2 mt-0 text-[13px] leading-relaxed text-ink">{d.desc}</p>
+                      <p className="mb-2 mt-0 text-prose leading-relaxed text-ink">{d.desc}</p>
                       <div className="mb-2 flex flex-wrap gap-1.5">
                         {d.strengths.map((s) => (
                           <span
                             key={s}
-                            className="rounded-full px-2 py-0.5 text-[11px]"
+                            className="rounded-full px-2 py-0.5 text-2xs"
                             style={{
                               background: `${d.color}18`,
                               border: `1px solid ${d.color}35`,

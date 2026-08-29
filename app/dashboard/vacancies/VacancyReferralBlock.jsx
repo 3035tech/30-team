@@ -11,7 +11,7 @@ import { Spinner } from '../../_components/AppLoading';
 const BTN_BRAND =
   'min-h-touch rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2.5 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_GHOST =
-  'min-h-[36px] rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-[11px] text-ink-muted disabled:cursor-default disabled:opacity-60';
+  'min-h-[36px] rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-2xs text-ink-muted disabled:cursor-default disabled:opacity-60';
 
 export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl = '' }) {
   const { promptForm, confirm, toast } = useAppFeedback();
@@ -143,7 +143,7 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
     return (
       <div className={cn(S.card, 'flex items-center gap-2.5 p-5')}>
         <Spinner size={18} />
-        <span className="text-[13px] text-ink-muted">{t(locale, 'common.loading')}</span>
+        <span className="text-prose text-ink-muted">{t(locale, 'common.loading')}</span>
       </div>
     );
   }
@@ -153,10 +153,10 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
       <div className={cn(S.card, 'px-[18px] py-4')}>
         <div className="flex flex-wrap items-start justify-between gap-2.5">
           <div className="min-w-0 flex-[1_1_220px]">
-            <div className="mb-1.5 text-[13px] font-semibold text-ink">
+            <div className="mb-1.5 text-prose font-semibold text-ink">
               {t(locale, 'recruiting.referralTitle')}
             </div>
-            <p className="m-0 text-[13px] leading-[1.55] text-ink-muted">
+            <p className="m-0 text-prose leading-[1.55] text-ink-muted">
               {t(locale, 'recruiting.referralIntro')}
             </p>
             {!publicPagePath ? (
@@ -176,7 +176,7 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
         </div>
 
         {err ? (
-          <p className="mb-0 mt-3 text-[13px] text-danger">{err}</p>
+          <p className="mb-0 mt-3 text-prose text-danger">{err}</p>
         ) : null}
 
         <label className="mt-3.5 inline-flex cursor-pointer items-center gap-2 font-mono text-xs text-ink-muted">
@@ -189,7 +189,7 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
         </label>
 
         {visibleCodes.length === 0 ? (
-          <p className="mb-0 mt-3.5 text-[13px] italic text-ink-muted">
+          <p className="mb-0 mt-3.5 text-prose italic text-ink-muted">
             {t(locale, 'recruiting.referralEmpty')}
           </p>
         ) : (
@@ -223,10 +223,10 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
                       <td className="px-2 py-2.5 align-top">
                         <div className="font-mono font-semibold text-ink">{row.code}</div>
                         {row.label ? (
-                          <div className="mt-0.5 text-[11px] text-ink-muted">{row.label}</div>
+                          <div className="mt-0.5 text-2xs text-ink-muted">{row.label}</div>
                         ) : null}
                         {row.active === false ? (
-                          <div className="mt-0.5 font-mono text-[10px] text-ink-faint">
+                          <div className="mt-0.5 font-mono text-2xs text-ink-faint">
                             {t(locale, 'recruiting.referralInactive')}
                           </div>
                         ) : null}

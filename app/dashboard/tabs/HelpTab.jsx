@@ -17,7 +17,7 @@ function TypeCatalog({ locale }) {
   const typeData = getTypeData(locale);
   return (
     <div className="mt-[18px]">
-      <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
+      <p className="mb-3 mt-0 text-prose leading-relaxed text-ink-muted">
         {t(locale, 'panel.help.typesCatalogIntro')}
       </p>
       <div className="flex flex-col gap-3">
@@ -36,11 +36,11 @@ function TypeCatalog({ locale }) {
             >
               <div className="mb-2 flex flex-wrap items-baseline gap-2">
                 <span className="text-lg leading-none">{d.emoji}</span>
-                <span className="font-display text-[15px] text-ink">
+                <span className="font-display text-base text-ink">
                   T{n} · {typeFullName(n, locale)}
                 </span>
                 <span
-                  className="rounded-full border px-2 py-0.5 font-mono text-[11px]"
+                  className="rounded-full border px-2 py-0.5 font-mono text-2xs"
                   style={{
                     color: d.color,
                     borderColor: `${d.color}44`,
@@ -50,25 +50,25 @@ function TypeCatalog({ locale }) {
                   {typeShortLabel(n, locale)}
                 </span>
               </div>
-              <p className="mb-2.5 mt-0 text-[13px] leading-relaxed text-ink">{d.desc}</p>
-              <p className="mb-2.5 mt-0 text-[13px] leading-relaxed text-ink-muted">
+              <p className="mb-2.5 mt-0 text-prose leading-relaxed text-ink">{d.desc}</p>
+              <p className="mb-2.5 mt-0 text-prose leading-relaxed text-ink-muted">
                 <strong className="font-semibold text-ink">{t(locale, 'panel.help.typesAtWork')}.</strong>
                 {' '}
                 {t(locale, `panel.help.typeAtWork${n}`)}
               </p>
-              <p className="mb-3 mt-0 text-[13px] leading-relaxed text-ink-muted">
+              <p className="mb-3 mt-0 text-prose leading-relaxed text-ink-muted">
                 <strong className="font-semibold text-ink">{t(locale, 'panel.help.typesWatch')}.</strong>
                 {' '}
                 {t(locale, `panel.help.typeWatch${n}`)}
               </p>
               <div className="mb-2.5 flex flex-wrap gap-1.5">
-                <span className="w-full font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+                <span className="w-full font-mono text-2xs uppercase tracking-wider text-ink-faint">
                   {t(locale, 'panel.help.typesStrengths')}
                 </span>
                 {d.strengths.map((s) => (
                   <span
                     key={s}
-                    className="rounded-full border px-2.5 py-0.5 text-[11px]"
+                    className="rounded-full border px-2.5 py-0.5 text-2xs"
                     style={{
                       background: `${d.color}18`,
                       borderColor: `${d.color}35`,
@@ -101,7 +101,7 @@ function StepList({ locale, sectionKey, count }) {
     items.push(t(locale, `panel.help.${sectionKey}Step${i}`));
   }
   return (
-    <ol className="mt-2.5 mb-0 list-decimal pl-5 text-[13px] leading-snug text-ink-muted">
+    <ol className="mt-2.5 mb-0 list-decimal pl-5 text-prose leading-snug text-ink-muted">
       {items.map((text) => (
         <li key={text} className="mb-1">{text}</li>
       ))}
@@ -125,7 +125,7 @@ function FlowStrip({ locale }) {
     <div className="mt-3.5 flex flex-wrap items-center gap-2">
       {steps.map((label, i) => (
         <span key={label} className="inline-flex items-center gap-2">
-          <span className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1.5 font-mono text-[11px] text-ink">
+          <span className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1.5 font-mono text-2xs text-ink">
             {label}
           </span>
           {i < steps.length - 1 ? (
@@ -186,7 +186,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
               type="button"
               onClick={() => setOpen(key)}
               className={cn(
-                'min-h-9 cursor-pointer rounded-full border px-3 py-1.5 font-mono text-[11px]',
+                'min-h-9 cursor-pointer rounded-full border px-3 py-1.5 font-mono text-2xs',
                 open === key
                   ? 'border-brand-500/30 bg-brand-500/[0.07] text-brand-600'
                   : 'border-ink/12 bg-transparent text-ink-muted'
@@ -214,7 +214,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
                 {t(locale, `panel.help.${key}Title`)}
               </span>
               <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
-                <span className="font-mono text-[11px] font-medium tracking-wide">
+                <span className="font-mono text-2xs font-medium tracking-wide">
                   {isOpen ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
                 </span>
                 <Icon
@@ -225,7 +225,7 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
             </button>
             {isOpen ? (
               <div className="border-t border-ink/12 px-4 pb-3.5">
-                <p className="mt-2.5 mb-0 text-[13px] leading-relaxed text-ink-muted">
+                <p className="mt-2.5 mb-0 text-prose leading-relaxed text-ink-muted">
                   {t(locale, `panel.help.${key}Body`)}
                 </p>
                 {key === 'flow' ? <FlowStrip locale={locale} /> : null}

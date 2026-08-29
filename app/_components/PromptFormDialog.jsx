@@ -177,7 +177,7 @@ export function PromptFormDialog({
   const renderFieldBlock = (f) => (
     <div key={fieldKeyOf(f)} className="block min-w-0">
       {f.type !== 'boolean' ? (
-        <span className="font-mono text-[11px] text-ink-faint">{f.label}</span>
+        <span className="font-mono text-2xs text-ink-faint">{f.label}</span>
       ) : null}
       {renderControl(f)}
       {f.help && f.type !== 'imageUpload' ? (
@@ -255,7 +255,7 @@ export function PromptFormDialog({
               {preview ? (
                 <img src={preview} alt="" width={72} height={72} className="object-contain" />
               ) : (
-                <span className="font-mono text-[10px] text-ink-faint">—</span>
+                <span className="font-mono text-2xs text-ink-faint">—</span>
               )}
             </div>
             <div className="flex flex-col gap-2">
@@ -319,7 +319,7 @@ export function PromptFormDialog({
             return (
               <label
                 key={opt.value}
-                className="flex cursor-pointer items-center gap-2 font-display text-[13px] text-ink"
+                className="flex cursor-pointer items-center gap-2 font-display text-prose text-ink"
               >
                 <input
                   type="checkbox"
@@ -495,7 +495,7 @@ export function PromptFormDialog({
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
+          <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
             30Team
           </span>
           <h2

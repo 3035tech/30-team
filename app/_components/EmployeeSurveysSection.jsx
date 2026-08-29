@@ -86,14 +86,14 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
             {open.map((item) => (
               <li key={item.key} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                 <div className="text-sm text-ink">{item.title}</div>
-                <div className="mt-1 font-mono text-[10px] uppercase text-ink-faint">
+                <div className="mt-1 font-mono text-2xs uppercase text-ink-faint">
                   {item.kind === 'climate'
                     ? t(locale, 'employeeHome.surveyKindClimate')
                     : t(locale, 'employeeHome.surveyKindPulse')}
                 </div>
                 <button
                   type="button"
-                  className={cn(S.btnBrandSoft, 'mt-2 min-h-touch text-[11px]')}
+                  className={cn(S.btnBrandSoft, 'mt-2 min-h-touch text-2xs')}
                   onClick={() => setActive(item)}
                 >
                   {t(locale, 'employeeHome.surveysAnswer')}
@@ -113,7 +113,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
             </div>
             <button
               type="button"
-              className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+              className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
               onClick={() => setActive(null)}
             >
               {t(locale, 'panel.common.cancel')}
@@ -166,7 +166,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
 
       {history.length > 0 ? (
         <div>
-          <h3 className={cn(S.faint, 'mb-2 mt-0 text-[11px] uppercase tracking-wide')}>
+          <h3 className={cn(S.faint, 'mb-2 mt-0 text-2xs uppercase tracking-wide')}>
             {t(locale, 'employeeHome.surveysHistory')}
           </h3>
           <ul className="m-0 list-none space-y-1.5 p-0 text-xs text-ink-muted">
@@ -174,7 +174,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
               <li key={`${h.kind}-${h.title}-${i}`}>
                 ✓ {h.title}
                 {h.submittedAt ? (
-                  <span className="ml-1 font-mono text-[10px] text-ink-faint">
+                  <span className="ml-1 font-mono text-2xs text-ink-faint">
                     {String(h.submittedAt).slice(0, 10)}
                   </span>
                 ) : null}

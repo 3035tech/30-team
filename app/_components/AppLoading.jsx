@@ -60,7 +60,7 @@ export function PanelPageSkeleton({ locale = 'pt-BR', label }) {
       aria-live="polite"
       className="ui-content-enter w-full min-h-[200px] space-y-4 py-2"
     >
-      <div className="flex items-center gap-2.5 font-display text-[15px] text-ink-muted">
+      <div className="flex items-center gap-2.5 font-display text-base text-ink-muted">
         <Spinner size={18} className="text-brand-500" />
         <span>{text}</span>
       </div>
@@ -172,7 +172,7 @@ export function AppLoading({
     <span
       role="status"
       aria-live="polite"
-      className="inline-flex items-center gap-2 font-mono text-[13px] text-ink-muted"
+      className="inline-flex items-center gap-2 font-mono text-prose text-ink-muted"
     >
       {withSpinner ? <Spinner size={14} className="text-brand-500" /> : null}
       {text}

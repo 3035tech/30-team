@@ -593,10 +593,10 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
             onAction={handleCreateRole}
           />
           <div className="flex flex-wrap gap-3 px-1">
-            <Link href="/dashboard?tab=team" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=team" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaTeam')} →
             </Link>
-            <Link href="/dashboard?tab=help" className="font-mono text-[12px] text-brand-600 hover:underline">
+            <Link href="/dashboard?tab=help" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaHelp')} →
             </Link>
           </div>
@@ -668,7 +668,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                           {successors.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-ink/15 bg-surface/60 px-3 py-4 text-center">
                               <p className="text-xs font-medium text-ink-muted">{t('noSuccessors')}</p>
-                              <p className="mt-1 text-[11px] text-ink-faint">{t('noSuccessorsHint')}</p>
+                              <p className="mt-1 text-2xs text-ink-faint">{t('noSuccessorsHint')}</p>
                             </div>
                           ) : (
                             <ul className="flex flex-col gap-2">
@@ -715,7 +715,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1">
                                       <span
-                                        className={`rounded-full border px-2 py-px font-mono text-[11px] ${colors.bg} ${colors.border} ${colors.text}`}
+                                        className={`rounded-full border px-2 py-px font-mono text-2xs ${colors.bg} ${colors.border} ${colors.text}`}
                                       >
                                         {getReadinessLabel(successor.readiness)}
                                       </span>

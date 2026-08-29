@@ -599,7 +599,7 @@ export function DevelopmentPlansBlock({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+            className={cn(S.btnGhost, 'min-h-touch text-2xs')}
             onClick={() => setShowArchived((v) => !v)}
           >
             {showArchived ? t(locale, 'panel.pdi.hideArchived') : t(locale, 'panel.pdi.showArchived')}
@@ -618,7 +618,7 @@ export function DevelopmentPlansBlock({
       {overallPct != null || activePlans.length > 0 ? (
         <div className="mb-3 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-[11px] text-ink-muted">
+            <span className="font-mono text-2xs text-ink-muted">
               {t(locale, 'panel.pdi.progressSummary', {
                 done: sumDone,
                 total: sumItems,
@@ -626,7 +626,7 @@ export function DevelopmentPlansBlock({
               })}
             </span>
             {overallPct != null ? (
-              <span className="font-mono text-[11px] text-ink">{overallPct}%</span>
+              <span className="font-mono text-2xs text-ink">{overallPct}%</span>
             ) : null}
           </div>
           {sumItems > 0 ? (
@@ -665,7 +665,7 @@ export function DevelopmentPlansBlock({
                   <span className="min-w-0 flex-1">
                     <span className="block font-ui text-sm text-ink">{p.title}</span>
                     {p.periodEnd ? (
-                      <span className="mt-0.5 block font-mono text-[10px] text-ink-faint">
+                      <span className="mt-0.5 block font-mono text-2xs text-ink-faint">
                         {p.periodStart ? `${String(p.periodStart).slice(0, 10)} → ` : ''}
                         {String(p.periodEnd).slice(0, 10)}
                         {overdue ? ` · ${t(locale, 'panel.pdi.overdue')}` : ''}
@@ -683,7 +683,7 @@ export function DevelopmentPlansBlock({
                       </span>
                     ) : null}
                   </span>
-                  <span className={cn(S.faint, 'shrink-0 font-mono text-[11px]')}>
+                  <span className={cn(S.faint, 'shrink-0 font-mono text-2xs')}>
                     {overdue ? (
                       <span className="mr-1 text-warning">{t(locale, 'panel.pdi.overdue')}</span>
                     ) : null}
@@ -723,14 +723,14 @@ export function DevelopmentPlansBlock({
                       const suggestions = academyCatalog.slice(0, 3);
                       return (
                         <div className="mb-2 rounded-control border border-brand-500/20 bg-brand-500/[0.05] px-2.5 py-2">
-                          <p className="m-0 font-mono text-[11px] text-brand-600">
+                          <p className="m-0 font-mono text-2xs text-brand-600">
                             {t(locale, 'panel.pdi.academySuggestTitle')}
                           </p>
-                          <p className="mb-1.5 mt-0.5 text-[11px] text-ink-muted">
+                          <p className="mb-1.5 mt-0.5 text-2xs text-ink-muted">
                             {t(locale, 'panel.pdi.academySuggestHint')}
                           </p>
                           {suggestions.length === 0 ? (
-                            <p className="m-0 text-[11px] text-ink-faint">
+                            <p className="m-0 text-2xs text-ink-faint">
                               {t(locale, 'panel.pdi.academySuggestNone')}
                             </p>
                           ) : (
@@ -742,13 +742,13 @@ export function DevelopmentPlansBlock({
                                     key={it.id}
                                     className="flex flex-wrap items-center justify-between gap-2"
                                   >
-                                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink">
+                                    <span className="min-w-0 flex-1 truncate text-xs text-ink">
                                       {it.title}
                                     </span>
                                     <button
                                       type="button"
                                       disabled={busy}
-                                      className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 py-1 text-[10px]')}
+                                      className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 py-1 text-2xs')}
                                       onClick={() => quickLinkAcademy(it, res.id)}
                                     >
                                       {t(locale, 'panel.pdi.academySuggestApply')}:{' '}
@@ -801,7 +801,7 @@ export function DevelopmentPlansBlock({
                                     {it.title}
                                   </div>
                                   {it.ownerLabel || it.dueDate || (it.source && it.source !== 'manual') ? (
-                                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-mono text-[10px] leading-tight text-ink-muted">
+                                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-mono text-2xs leading-tight text-ink-muted">
                                       {it.ownerLabel ? <span>{it.ownerLabel}</span> : null}
                                       {it.dueDate ? (
                                         <span className={itemOver ? 'text-warning' : 'text-ink-faint'}>
@@ -823,7 +823,7 @@ export function DevelopmentPlansBlock({
                                   <button
                                     type="button"
                                     disabled={busy}
-                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-2xs')}
                                     onClick={() => editItem(it)}
                                   >
                                     {t(locale, 'panel.pdi.editItemBtn')}
@@ -831,7 +831,7 @@ export function DevelopmentPlansBlock({
                                   <button
                                     type="button"
                                     disabled={busy}
-                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-2xs')}
                                     onClick={() => linkAcademyResource(it)}
                                   >
                                     {t(locale, 'panel.pdi.linkAcademyBtn')}
@@ -839,13 +839,13 @@ export function DevelopmentPlansBlock({
                                   <button
                                     type="button"
                                     disabled={busy}
-                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-[11px]')}
+                                    className={cn(S.btnGhost, 'min-h-touch py-1 text-2xs')}
                                     onClick={() => linkLmsCourse(it)}
                                   >
                                     {t(locale, 'panel.pdi.linkLmsBtn')}
                                   </button>
                                   <select
-                                    className={cn(S.select, 'min-h-touch w-auto py-1 text-[11px]')}
+                                    className={cn(S.select, 'min-h-touch w-auto py-1 text-2xs')}
                                     value={it.status}
                                     disabled={busy}
                                     aria-label={t(locale, 'panel.pdi.itemStatusAria')}
@@ -862,7 +862,7 @@ export function DevelopmentPlansBlock({
                                   {(it.linkedResources || []).map((lr) => (
                                     <li
                                       key={lr.id}
-                                      className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-muted"
+                                      className="flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted"
                                     >
                                       <span className="text-ink">
                                         {t(locale, 'panel.pdi.academyChip')}: {lr.title}
@@ -880,7 +880,7 @@ export function DevelopmentPlansBlock({
                                       <button
                                         type="button"
                                         disabled={busy}
-                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-[10px] text-danger')}
+                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-2xs text-danger')}
                                         onClick={() => unlinkAcademyResource(it, lr.id)}
                                       >
                                         {t(locale, 'panel.pdi.unlinkAcademyBtn')}
@@ -894,7 +894,7 @@ export function DevelopmentPlansBlock({
                                   {(it.linkedLmsCourses || []).map((course) => (
                                     <li
                                       key={course.courseId}
-                                      className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-muted"
+                                      className="flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted"
                                     >
                                       <span className="text-ink">
                                         {t(locale, 'panel.pdi.lmsChip')}: {course.title}
@@ -902,7 +902,7 @@ export function DevelopmentPlansBlock({
                                       <button
                                         type="button"
                                         disabled={busy}
-                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-[10px] text-danger')}
+                                        className={cn(S.btnGhost, 'min-h-touch py-0.5 text-2xs text-danger')}
                                         onClick={() => unlinkLmsCourse(it, course.courseId)}
                                       >
                                         {t(locale, 'panel.pdi.unlinkLmsBtn')}
@@ -912,10 +912,10 @@ export function DevelopmentPlansBlock({
                                 </ul>
                               ) : null}
                               {ooOpts.length > 0 ? (
-                                <label className="flex flex-wrap items-center gap-2 pl-10 text-[11px] text-ink-muted">
+                                <label className="flex flex-wrap items-center gap-2 pl-10 text-2xs text-ink-muted">
                                   <span>{t(locale, 'panel.pdi.linkOo')}</span>
                                   <select
-                                    className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-[11px]')}
+                                    className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-2xs')}
                                     value={it.oneOnOneId != null ? String(it.oneOnOneId) : ''}
                                     disabled={busy}
                                     onChange={(e) => linkOneOnOne(it, e.target.value)}

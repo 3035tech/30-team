@@ -59,7 +59,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
   const groupSelect =
     teamGroups.length > 0 ? (
       <label className="mt-2 flex min-w-0 flex-col gap-1 sm:max-w-xs">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+        <span className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
           {t(locale, 'panel.overview.bci.groupFilterLabel')}
         </span>
         <select
@@ -82,14 +82,14 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
     return (
       <div id="behavioral-intel" className={S.cardTight}>
         <span className={S.label}>{t(locale, 'panel.overview.bci.title')}</span>
-        <p className="mt-2 mb-0 text-[13px] text-ink-muted">{t(locale, 'panel.overview.bci.empty')}</p>
+        <p className="mt-2 mb-0 text-prose text-ink-muted">{t(locale, 'panel.overview.bci.empty')}</p>
         {groupSelect}
-        <p className="mt-2 mb-0 text-[12px] text-ink-muted">
+        <p className="mt-2 mb-0 text-xs text-ink-muted">
           {t(locale, 'panel.overview.bci.groupsHint')}{' '}
           <button
             type="button"
             onClick={goGroup}
-            className="cursor-pointer border-none bg-transparent p-0 font-mono text-[12px] text-brand-500 underline-offset-2 hover:underline"
+            className="cursor-pointer border-none bg-transparent p-0 font-mono text-xs text-brand-500 underline-offset-2 hover:underline"
           >
             {t(locale, 'panel.overview.bci.openGroups')}
           </button>
@@ -119,14 +119,14 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
             <h2 id="bci-heading" className="m-0 font-display text-lg font-normal text-ink">
               {t(locale, 'panel.overview.bci.title')}
             </h2>
-            <p className="mt-1 mb-0 max-w-2xl text-[13px] leading-snug text-ink-muted">
+            <p className="mt-1 mb-0 max-w-2xl text-prose leading-snug text-ink-muted">
               {t(locale, 'panel.overview.bci.intro')}
             </p>
           </div>
           <button
             type="button"
             onClick={toggleSection}
-            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-[11px] text-ink-muted"
+            className="min-h-touch shrink-0 cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-2xs text-ink-muted"
             aria-expanded={sectionOpen}
           >
             {sectionOpen
@@ -136,7 +136,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
         </div>
         {groupSelect}
         {!sectionOpen ? (
-          <p className="mt-2 mb-0 font-mono text-[11px] text-ink-faint">
+          <p className="mt-2 mb-0 font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.overview.bci.collapsedHint', {
               nE: meta.nEneagram,
               nM: meta.nMotivators,
@@ -144,7 +144,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           </p>
         ) : (
           <>
-            <p className="mt-2 mb-0 font-mono text-[11px] text-ink-faint">
+            <p className="mt-2 mb-0 font-mono text-2xs text-ink-faint">
               {cohortIsGroup && meta.teamGroupName
                 ? t(locale, 'panel.overview.bci.baseGroup', {
                     name: meta.teamGroupName,
@@ -157,16 +157,16 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                   })}
             </p>
             {meta.smallSample || meta.smallSampleMotivators ? (
-              <p className="mt-1.5 mb-0 text-[12px] text-warning">
+              <p className="mt-1.5 mb-0 text-xs text-warning">
                 {t(locale, 'panel.overview.bci.smallSample')}
               </p>
             ) : null}
-            <p className="mt-2 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-2 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.groupsHint')}{' '}
               <button
                 type="button"
                 onClick={goGroup}
-                className="cursor-pointer border-none bg-transparent p-0 font-mono text-[12px] text-brand-500 underline-offset-2 hover:underline"
+                className="cursor-pointer border-none bg-transparent p-0 font-mono text-xs text-brand-500 underline-offset-2 hover:underline"
               >
                 {t(locale, 'panel.overview.bci.openGroups')}
               </button>
@@ -180,27 +180,27 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 1. Profiles */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
-            <p className="mt-0.5 mb-1 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-1 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.profilesQuestion')}
             </p>
-            <p className="mt-0 mb-3 font-mono text-[10px] text-ink-faint">
+            <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.profilesBase', { n: profiles.nPeople })}
             </p>
             {profiles.nPeople === 0 ? (
-              <p className="m-0 text-[13px] text-ink-faint">{t(locale, 'panel.overview.bci.profilesEmpty')}</p>
+              <p className="m-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.profilesEmpty')}</p>
             ) : (
               <>
-                <p className="mb-2 mt-0 text-[11px] text-ink-faint">
+                <p className="mb-2 mt-0 text-2xs text-ink-faint">
                   {t(locale, 'panel.overview.bci.profilesAxisHint')}
                 </p>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {profiles.bars.map((b) => (
                     <li key={b.type} className="flex items-center gap-3">
-                      <div className="w-[11rem] shrink-0 text-[13px] text-ink">
+                      <div className="w-[11rem] shrink-0 text-prose text-ink">
                         <span className="font-medium" style={{ color: b.color }}>
                           {b.name}
                         </span>
-                        <span className="ml-1.5 font-mono text-[10px] text-ink-faint" title={`T${b.type}`}>
+                        <span className="ml-1.5 font-mono text-2xs text-ink-faint" title={`T${b.type}`}>
                           T{b.type}
                         </span>
                       </div>
@@ -213,13 +213,13 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                           }}
                         />
                       </div>
-                      <span className="w-10 shrink-0 text-right font-mono text-[11px] text-ink-muted">
+                      <span className="w-10 shrink-0 text-right font-mono text-2xs text-ink-muted">
                         {b.pct}%
                       </span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-3 mb-0 text-[12px] leading-snug text-ink-muted">
+                <p className="mt-3 mb-0 text-xs leading-snug text-ink-muted">
                   {t(locale, `panel.overview.bci.micro.${profiles.microphraseKey}`)}
                 </p>
               </>
@@ -229,14 +229,14 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 2. Motivators */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.motivatorsTitle')}</span>
-            <p className="mt-0.5 mb-1 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-1 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.motivatorsQuestion')}
             </p>
-            <p className="mt-0 mb-3 font-mono text-[10px] text-ink-faint">
+            <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.motivatorsBase', { n: motivators.nPeople })}
             </p>
             {motivators.nPeople === 0 ? (
-              <p className="m-0 text-[13px] text-ink-faint">{t(locale, 'panel.overview.bci.motivatorsEmpty')}</p>
+              <p className="m-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.motivatorsEmpty')}</p>
             ) : (
               <>
                 <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
@@ -246,7 +246,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                       className="rounded-control border border-ink/8 bg-ink/[0.02] px-3 py-2.5"
                     >
                       <div className="font-medium text-ink text-sm">{m.label}</div>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-[11px] text-ink-muted">
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-2xs text-ink-muted">
                         <span>
                           {t(locale, 'panel.overview.bci.intensity')}: {m.intensity}
                         </span>
@@ -260,7 +260,7 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                 {motivators.rest?.length > 0 ? (
                   <button
                     type="button"
-                    className="mt-3 cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
+                    className="mt-3 cursor-pointer border-none bg-transparent font-mono text-2xs text-brand-500"
                     onClick={() => setMotivatorsOpen((v) => !v)}
                   >
                     {motivatorsOpen
@@ -277,11 +277,11 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 3. Forces */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.forcesTitle')}</span>
-            <p className="mt-0.5 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.forcesQuestion')}
             </p>
             {forces.length === 0 ? (
-              <p className="mt-2 mb-0 text-[13px] text-ink-faint">{t(locale, 'panel.overview.bci.forcesEmpty')}</p>
+              <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.forcesEmpty')}</p>
             ) : (
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {forces.map((f) => (
@@ -289,10 +289,10 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                     key={f.id}
                     className="rounded-card border border-success/20 bg-success/[0.06] px-3.5 py-3"
                   >
-                    <h3 className="m-0 font-mono text-[11px] uppercase tracking-wide text-success">
+                    <h3 className="m-0 font-mono text-2xs uppercase tracking-wide text-success">
                       {t(locale, `panel.overview.bci.force.${f.id}.title`)}
                     </h3>
-                    <p className="mt-1.5 mb-0 text-[13px] leading-snug text-ink">
+                    <p className="mt-1.5 mb-0 text-prose leading-snug text-ink">
                       {t(locale, `panel.overview.bci.force.${f.id}.body`)}
                     </p>
                   </article>
@@ -304,12 +304,12 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 4. Attention */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.attentionTitle')}</span>
-            <p className="mt-0.5 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.attentionQuestion')}
             </p>
-            <p className="mt-0.5 mb-0 text-[11px] text-ink-faint">{t(locale, 'panel.overview.bci.attentionHint')}</p>
+            <p className="mt-0.5 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.overview.bci.attentionHint')}</p>
             {attentions.length === 0 ? (
-              <p className="mt-2 mb-0 text-[13px] text-ink-faint">
+              <p className="mt-2 mb-0 text-prose text-ink-faint">
                 {t(locale, 'panel.overview.bci.attentionEmpty')}
               </p>
             ) : (
@@ -319,10 +319,10 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                     key={a.id}
                     className="rounded-card border border-warning/25 bg-warning/[0.07] px-3.5 py-3"
                   >
-                    <h3 className="m-0 font-mono text-[11px] uppercase tracking-wide text-warning">
+                    <h3 className="m-0 font-mono text-2xs uppercase tracking-wide text-warning">
                       {t(locale, `panel.overview.bci.attention.${a.id}.title`)}
                     </h3>
-                    <p className="mt-1.5 mb-0 text-[13px] leading-snug text-ink">
+                    <p className="mt-1.5 mb-0 text-prose leading-snug text-ink">
                       {t(locale, `panel.overview.bci.attention.${a.id}.body`)}
                     </p>
                   </article>
@@ -334,11 +334,11 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 5. Top 5 movers */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.top5Title')}</span>
-            <p className="mt-0.5 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.top5Question')}
             </p>
             {topMovers.length === 0 ? (
-              <p className="mt-2 mb-0 text-[13px] text-ink-faint">{t(locale, 'panel.overview.bci.top5Empty')}</p>
+              <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.top5Empty')}</p>
             ) : (
               <>
                 <ol className="mt-3 mb-0 flex list-none flex-wrap gap-2 p-0">
@@ -347,13 +347,13 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                       key={m.key}
                       className="flex min-w-[7.5rem] flex-1 items-baseline gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
                     >
-                      <span className="font-mono text-[11px] text-ink-faint">#{m.rank}</span>
+                      <span className="font-mono text-2xs text-ink-faint">#{m.rank}</span>
                       <span className="text-sm font-medium text-ink">{m.label}</span>
                     </li>
                   ))}
                 </ol>
                 {diversityKind && diversityKind !== 'empty' ? (
-                  <p className="mt-3 mb-0 text-[13px] leading-snug text-ink-muted">
+                  <p className="mt-3 mb-0 text-prose leading-snug text-ink-muted">
                     {t(locale, `panel.overview.bci.diversity.${diversityKind}`)}
                   </p>
                 ) : null}
@@ -364,12 +364,12 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
           {/* 6. Actions */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.actionsTitle')}</span>
-            <p className="mt-0.5 mb-0 text-[12px] text-ink-muted">
+            <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.actionsQuestion')}
             </p>
-            <p className="mt-0.5 mb-0 text-[11px] text-ink-faint">{t(locale, 'panel.overview.bci.actionsHint')}</p>
+            <p className="mt-0.5 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.overview.bci.actionsHint')}</p>
             {actions.length === 0 ? (
-              <p className="mt-2 mb-0 text-[13px] text-ink-faint">
+              <p className="mt-2 mb-0 text-prose text-ink-faint">
                 {t(locale, 'panel.overview.bci.actionsEmpty')}
               </p>
             ) : (
@@ -379,10 +379,10 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
                     key={a.id}
                     className={cn('rounded-card border border-info/20 bg-info/[0.06] px-3.5 py-3')}
                   >
-                    <h3 className="m-0 font-mono text-[11px] uppercase tracking-wide text-info">
+                    <h3 className="m-0 font-mono text-2xs uppercase tracking-wide text-info">
                       {t(locale, `panel.overview.bci.action.${a.id}.title`)}
                     </h3>
-                    <p className="mt-1.5 mb-0 text-[13px] leading-snug text-ink">
+                    <p className="mt-1.5 mb-0 text-prose leading-snug text-ink">
                       {t(locale, `panel.overview.bci.action.${a.id}.body`)}
                     </p>
                   </article>

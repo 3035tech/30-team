@@ -59,7 +59,7 @@ import { fieldInputClass, fieldSelectClass } from '../../_components/form-contro
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-xs`;
 const FIELD_LABEL =
-  'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
+  'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
 const FIELD_LABEL_INLINE =
   'flex items-center gap-2 font-mono text-xs text-ink-muted';
 const BTN_GHOST =
@@ -67,12 +67,12 @@ const BTN_GHOST =
 const BTN_BRAND =
   'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND_SOFT =
-  'min-h-touch cursor-pointer rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-mono text-[11px] text-brand-500 disabled:cursor-default disabled:opacity-60';
+  'min-h-touch cursor-pointer rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const CHECK_LABEL =
   'flex max-w-[520px] items-start gap-2.5 text-xs leading-[1.45] text-ink-muted';
 const LINK_ROW = 'mt-2.5 flex min-w-0 flex-col gap-1';
-const META = 'font-mono text-[11px] text-ink-muted';
-const META_FAINT = 'font-mono text-[11px] text-ink-faint';
+const META = 'font-mono text-2xs text-ink-muted';
+const META_FAINT = 'font-mono text-2xs text-ink-faint';
 const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
 const GRID_AUTO_LG = 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5';
 
@@ -613,7 +613,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   if (!jobRoleId || Object.keys(rubric).length === 0) return null;
                   return (
                     <div className="max-w-[420px]">
-                      <p className="m-0 mb-1 font-mono text-[10px] text-ink-faint">
+                      <p className="m-0 mb-1 font-mono text-2xs text-ink-faint">
                         {t(locale, 'jobRoles.rubricPreview')}
                       </p>
                       <RubricEditor value={rubric} locale={locale} compact />
@@ -831,7 +831,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       onChange={(e) =>
                         setEditingVacancy((cur) => ({ ...cur, jobRoleId: e.target.value }))
                       }
-                      className={cn(FIELD_SELECT, 'max-w-[420px] text-[13px]')}
+                      className={cn(FIELD_SELECT, 'max-w-[420px] text-prose')}
                     >
                       <option value="">{t(locale, 'recruiting.noJobRole')}</option>
                       {jobRoles.map((jr) => (
@@ -848,7 +848,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     if (!editingVacancy.jobRoleId || Object.keys(rubric).length === 0) return null;
                     return (
                       <div className="max-w-[420px]">
-                        <p className="m-0 mb-1 font-mono text-[10px] text-ink-faint">
+                        <p className="m-0 mb-1 font-mono text-2xs text-ink-faint">
                           {t(locale, 'jobRoles.rubricPreview')}
                         </p>
                         <RubricEditor value={rubric} locale={locale} compact />
@@ -863,20 +863,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
                   placeholder={t(locale, 'recruiting.vacancyTitlePh')}
                   aria-label={t(locale, 'recruiting.vacancyTitlePh')}
-                  className={cn(FIELD, "flex-[2_1_280px] text-[13px]")}
+                  className={cn(FIELD, "flex-[2_1_280px] text-prose")}
                 />
                 <input
                   value={editingVacancy.slug}
                   onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
                   placeholder={t(locale, 'recruiting.vacancySlugPh')}
                   aria-label={t(locale, 'recruiting.vacancySlugPh')}
-                  className={cn(FIELD, "flex-[1_1_200px] text-[13px]")}
+                  className={cn(FIELD, "flex-[1_1_200px] text-prose")}
                 />
                 <select
                   value={editingVacancy.status}
                   onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
                   aria-label={t(locale, 'recruiting.sortStatus')}
-                  className={cn(FIELD_SELECT, "flex-[0_0_140px] text-[13px] text-ink")}
+                  className={cn(FIELD_SELECT, "flex-[0_0_140px] text-prose text-ink")}
                 >
                   <option value="open">{t(locale, 'recruiting.openStatus')}</option>
                   <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
@@ -891,7 +891,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     value={editingVacancy.positionsCount}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
                     aria-label={t(locale, 'recruiting.positionsLabel')}
-                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
                   />
                 </label>
                 <label className={FIELD_LABEL_INLINE}>
@@ -900,7 +900,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     value={editingVacancy.targetDate}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
                     aria-label={t(locale, 'recruiting.targetDateLabel')}
-                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-[13px] text-ink"
+                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
                   />
                 </label>
               </div>
@@ -912,7 +912,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   value={editingVacancy.employmentType}
                   onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
                   aria-label={t(locale, 'recruiting.employmentTypeLabel')}
-                  className={cn(FIELD_SELECT, "px-2.5 py-2 text-[13px]")}
+                  className={cn(FIELD_SELECT, "px-2.5 py-2 text-prose")}
                 >
                   <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
                   {VACANCY_EMPLOYMENT_TYPES.map((type) => (
@@ -925,7 +925,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   placeholder={t(locale, 'recruiting.salaryMinPh')}
                   inputMode="numeric"
                   aria-label={t(locale, 'recruiting.salaryMinPh')}
-                  className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
+                  className={cn(FIELD, "px-2.5 py-2 text-prose")}
                 />
                 <input
                   value={formatSalaryBr(editingVacancy.salaryMax)}
@@ -933,7 +933,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   placeholder={t(locale, 'recruiting.salaryMaxPh')}
                   inputMode="numeric"
                   aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                  className={cn(FIELD, "px-2.5 py-2 text-[13px]")}
+                  className={cn(FIELD, "px-2.5 py-2 text-prose")}
                 />
               </div>
               <VacancyWorkplaceFields
@@ -1077,7 +1077,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <span className="text-lg font-bold text-ink">{v.title}</span>
                     <span
                       className={cn(
-                      'rounded-full border px-2 py-0.5 font-mono text-[11px]',
+                      'rounded-full border px-2 py-0.5 font-mono text-2xs',
                       v.status === VACANCY_STATUS.OPEN
                         ? 'border-success/35 text-success'
                         : 'border-ink/12 text-ink-faint'
@@ -1384,7 +1384,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         }
                         disabled={loading}
                         aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
-                        className={cn(FIELD, 'min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-[13px]')}
+                        className={cn(FIELD, 'min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-prose')}
                       />
                       <button type="button" onClick={saveLinkExpiry} disabled={loading}
                         className={cn("min-h-touch cursor-pointer rounded-control border border-success/35 bg-success/[0.09] px-3 py-2 font-mono text-xs text-success", loading && "opacity-60")}>
@@ -1412,7 +1412,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     <div className="flex flex-col gap-4">
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'recruiting.vacanciesTitle')}</span>
-        <p className="mb-0 mt-2.5 text-[13px] leading-[1.65] text-ink-muted">
+        <p className="mb-0 mt-2.5 text-prose leading-[1.65] text-ink-muted">
           {t(locale, 'recruiting.vacanciesIntro')}
         </p>
         {error ? (
@@ -1490,7 +1490,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               aria-label={t(locale, 'recruiting.sortVacanciesAria')}
               className="mt-3 flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] p-3"
             >
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
+              <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
                 {t(locale, 'recruiting.sortBy')}
               </span>
               {[
@@ -1508,7 +1508,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     onClick={() => pushVacanciesSort(k)}
                     aria-pressed={active}
                     className={cn(
-                      'cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-[11px]',
+                      'cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-2xs',
                       active
                         ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                         : 'border-ink/12 bg-transparent text-ink-muted'
@@ -1533,7 +1533,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       <strong className="font-medium">{v.title}</strong>
                       <span
                         className={cn(
-                          'rounded-lg border px-2 py-0.5 font-mono text-[11px]',
+                          'rounded-lg border px-2 py-0.5 font-mono text-2xs',
                           v.status === VACANCY_STATUS.OPEN
                             ? 'border-success/30 bg-success/[0.12] text-success'
                             : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
@@ -1579,7 +1579,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           disabled={loading}
                         />
                         {exp ? (
-                          <span className="font-mono text-[11px] text-ink-faint">
+                          <span className="font-mono text-2xs text-ink-faint">
                             {t(locale, 'recruiting.expiresAt', {
                               when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
                             })}
@@ -1675,7 +1675,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   disabled={loading || vacPage <= 1}
                   onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
                     vacPage <= 1
                       ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
                       : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
@@ -1688,7 +1688,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   disabled={loading || vacPage >= vacTotalPages}
                   onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-[11px]',
+                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
                     vacPage >= vacTotalPages
                       ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
                       : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'

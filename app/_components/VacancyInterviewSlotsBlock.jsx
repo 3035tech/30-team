@@ -202,7 +202,7 @@ export function VacancyInterviewSlotsBlock({
           <button type="button" onClick={() => shiftWeek(-1)} className={cn(S.btnGhost, 'min-h-touch px-2')}>
             ←
           </button>
-          <span className="font-mono text-[11px] text-ink-muted">{weekLabel}</span>
+          <span className="font-mono text-2xs text-ink-muted">{weekLabel}</span>
           <button type="button" onClick={() => shiftWeek(1)} className={cn(S.btnGhost, 'min-h-touch px-2')}>
             →
           </button>
@@ -238,7 +238,7 @@ export function VacancyInterviewSlotsBlock({
                       <p className="m-0 text-sm font-medium text-ink">
                         {slot.candidateName || `#${slot.candidateId}`}
                       </p>
-                      <p className="m-0 font-mono text-[11px] text-ink-muted">
+                      <p className="m-0 font-mono text-2xs text-ink-muted">
                         {new Date(slot.startsAt).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR')}
                         {slot.endsAt
                           ? ` – ${new Date(slot.endsAt).toLocaleTimeString(locale === 'en' ? 'en-US' : 'pt-BR', { hour: '2-digit', minute: '2-digit' })}`
@@ -252,7 +252,7 @@ export function VacancyInterviewSlotsBlock({
                       {slot.notes ? (
                         <p className="mb-0 mt-1 text-xs text-ink-faint">{slot.notes}</p>
                       ) : null}
-                      <span className="mt-1 inline-block font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                      <span className="mt-1 inline-block font-mono text-2xs uppercase tracking-wide text-ink-faint">
                         {t(locale, `recruiting.interviewSlotStatus.${slot.status}`)}
                       </span>
                     </div>

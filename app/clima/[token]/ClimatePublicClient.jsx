@@ -126,14 +126,14 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
           return (
             <li key={q.id} className="rounded-card border border-ink/12 bg-canvas/60 p-4">
               <div className="mb-3 text-sm text-ink">
-                <span className="font-mono text-[11px] text-ink-faint">{idx + 1}. </span>
+                <span className="font-mono text-2xs text-ink-faint">{idx + 1}. </span>
                 {q.prompt}
                 {textQ ? (
-                  <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                  <span className="mt-1 block font-mono text-2xs text-ink-faint">
                     {t(locale, 'panel.climate.publicTextHint')}
                   </span>
                 ) : isEnpsQuestion(q) ? (
-                  <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                  <span className="mt-1 block font-mono text-2xs text-ink-faint">
                     {t(locale, 'panel.climate.publicEnpsHint')}
                   </span>
                 ) : null}

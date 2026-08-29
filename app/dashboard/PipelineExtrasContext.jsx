@@ -12,9 +12,9 @@ const PipelineExtrasContext = createContext(null);
 const FIELD = `${fieldInputClass} w-full font-ui text-sm`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-ui text-sm`;
 const BTN_PRIMARY =
-  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-[13px] text-white';
+  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose text-white';
 const BTN_GHOST =
-  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-4 py-2.5 font-mono text-[13px] text-ink-muted';
+  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-4 py-2.5 font-mono text-prose text-ink-muted';
 
 function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -67,23 +67,23 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
         className="w-full max-w-[440px] rounded-card border border-ink/12 bg-surface px-[26px] py-6 shadow-dialog"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
+        <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
           {t(locale, 'recruiting.pipelineShort')}
         </span>
         <h2
           id="pipeline-extras-title"
-          className="mb-0 mt-2 font-ui text-[22px] font-semibold leading-[1.25] text-ink"
+          className="mb-0 mt-2 font-ui text-2xl font-semibold leading-[1.25] text-ink"
         >
           {title}
         </h2>
-        <p className="mb-0 mt-2.5 text-[13px] leading-[1.55] text-ink-muted">{body}</p>
+        <p className="mb-0 mt-2.5 text-prose leading-[1.55] text-ink-muted">{body}</p>
 
         <div className="mt-5">
           {mode === 'rejected' ? (
             <>
               <label
                 htmlFor="pipeline-reject-reason"
-                className="mb-2 block font-mono text-[11px] uppercase tracking-[1.5px] text-ink-muted"
+                className="mb-2 block font-mono text-2xs uppercase tracking-[1.5px] text-ink-muted"
               >
                 {t(locale, 'recruiting.rejectionReasonLabel')}
               </label>
@@ -104,7 +104,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
             <>
               <label
                 htmlFor="pipeline-hire-date"
-                className="mb-2 block font-mono text-[11px] uppercase tracking-[1.5px] text-ink-muted"
+                className="mb-2 block font-mono text-2xs uppercase tracking-[1.5px] text-ink-muted"
               >
                 {t(locale, 'recruiting.startDateLabel')}
               </label>

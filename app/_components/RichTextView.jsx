@@ -17,7 +17,7 @@ export function RichTextView({
     <>
       <Tag
         className={cn(
-          'rich-text-view break-words font-display text-[13px] leading-relaxed text-ink',
+          'rich-text-view break-words font-display text-prose leading-relaxed text-ink',
           className
         )}
         style={style}

@@ -307,7 +307,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       </div>
 
       <div className="mb-4 rounded-control border border-brand/20 bg-brand/[0.04] px-3 py-2.5">
-        <div className={cn(S.faint, 'text-[10px] uppercase tracking-wide')}>
+        <div className={cn(S.faint, 'text-2xs uppercase tracking-wide')}>
           {t(locale, 'panel.compensation.currentLabel')}
         </div>
         {current?.amount ? (
@@ -320,7 +320,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
           </div>
         )}
         {current?.effectiveDate ? (
-          <div className="mt-1 font-mono text-[11px] text-ink-muted">
+          <div className="mt-1 font-mono text-2xs text-ink-muted">
             {t(locale, 'panel.compensation.since', { date: formatDate(current.effectiveDate, locale) })}
             {' · '}
             {eventTypeLabel(locale, current.eventType)}
@@ -346,7 +346,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
             >
               <div className="min-w-0">
                 <div className="font-ui text-sm tabular-nums text-ink">{money(row.amount)}</div>
-                <div className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-[11px] text-ink-muted">
+                <div className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-2xs text-ink-muted">
                   <span>{formatDate(row.effectiveDate, locale)}</span>
                   <span>{eventTypeLabel(locale, row.eventType)}</span>
                 </div>

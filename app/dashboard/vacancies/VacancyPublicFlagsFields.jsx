@@ -77,7 +77,7 @@ export function VacancyPublicFlagsFields({ locale, values, onChange, seoContext 
                 max: String(score.maxScore),
               })}
             </div>
-            <ul className="m-0 list-disc py-0 pl-4 text-[11px] leading-[1.55] text-ink-muted">
+            <ul className="m-0 list-disc py-0 pl-4 text-2xs leading-[1.55] text-ink-muted">
               {score.checks.map((c) => (
                 <li key={c.id} className={cn(c.ok ? 'text-success' : 'text-ink-muted')}>
                   {c.ok ? '✓' : '○'} {t(locale, `recruiting.seoCheck_${c.id}`)}
@@ -87,7 +87,7 @@ export function VacancyPublicFlagsFields({ locale, values, onChange, seoContext 
           </div>
         </>
       ) : (
-        <p className="m-0 font-mono text-[11px] leading-snug text-ink-faint">
+        <p className="m-0 font-mono text-2xs leading-snug text-ink-faint">
           {t(locale, 'recruiting.publicPageOffHint')}
         </p>
       )}

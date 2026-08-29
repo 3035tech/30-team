@@ -13,7 +13,7 @@ import {
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-500/70">{children}</p>
+    <p className="mb-3 font-mono text-2xs uppercase tracking-[0.14em] text-brand-500/70">{children}</p>
   );
 }
 
@@ -51,14 +51,14 @@ export default function PricingPageClient({ locale: initialLocale }) {
 
       <main className="relative z-[1]">
         <section className="mx-auto max-w-5xl px-5 pb-8 pt-12 sm:px-8 sm:pt-16">
-          <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-success">
+          <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-success">
             {t(locale, 'pricing.earlyBadge')}
           </p>
           <h1 className="mb-4 max-w-2xl bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-[clamp(2rem,5.5vw,3rem)] font-normal leading-[1.12] text-transparent">
             {t(locale, 'pricing.heroTitle')}
           </h1>
           <p className="mb-2 max-w-2xl text-lg leading-relaxed text-ink">{t(locale, 'pricing.heroLead')}</p>
-          <p className="max-w-2xl text-[15px] leading-relaxed text-ink-muted">{t(locale, 'pricing.heroBody')}</p>
+          <p className="max-w-2xl text-base leading-relaxed text-ink-muted">{t(locale, 'pricing.heroBody')}</p>
         </section>
 
         <section className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="plan-title">
@@ -83,7 +83,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
               </div>
 
               <article className="rounded-card border-2 border-brand-200 bg-canvas/90 p-6 shadow-sm">
-                <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-brand-500/80">
+                <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
                   {t(locale, 'pricing.priceLabel')}
                 </p>
                 <p className="mb-1 mt-0 text-3xl font-normal text-ink">{t(locale, 'pricing.priceFreeEarlyAccess')}</p>
@@ -131,7 +131,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <h3 className="m-0 text-base font-normal text-ink">{addon.name}</h3>
-                  <span className="rounded-control border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+                  <span className="rounded-control border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs uppercase tracking-wider text-ink-faint">
                     {addon.statusLabel}
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
             <h2 id="enterprise-title" className="mb-3 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
               {t(locale, 'pricing.enterpriseTitle')}
             </h2>
-            <p className="mb-6 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{t(locale, 'pricing.enterpriseBody')}</p>
+            <p className="mb-6 max-w-2xl text-base leading-relaxed text-ink-muted">{t(locale, 'pricing.enterpriseBody')}</p>
             <a
               href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}?subject=${encodeURIComponent(t(locale, 'pricing.enterpriseSubject'))}`}
               className="inline-flex min-h-touch items-center rounded-control border border-brand-300 bg-white/80 px-5 py-3.5 text-sm text-brand-700 no-underline hover:border-brand-400"

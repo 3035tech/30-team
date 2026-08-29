@@ -15,10 +15,10 @@ export function EmptyState({
   return (
     <div className="rounded-[14px] border border-dashed border-ink/12 bg-ink/[0.02] px-5 py-7 text-center">
       {title ? (
-        <p className="mb-2 mt-0 font-display text-[15px] text-ink">{title}</p>
+        <p className="mb-2 mt-0 font-display text-base text-ink">{title}</p>
       ) : null}
       {message ? (
-        <p className="mx-auto my-0 max-w-[42ch] text-[13px] leading-[1.55] text-ink-muted">
+        <p className="mx-auto my-0 max-w-[42ch] text-prose leading-[1.55] text-ink-muted">
           {message}
         </p>
       ) : null}
@@ -28,7 +28,7 @@ export function EmptyState({
           disabled={actionDisabled}
           onClick={onAction}
           className={cn(
-            'mt-4 min-h-touch rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2 font-mono text-[13px] text-brand-600',
+            'mt-4 min-h-touch rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2 font-mono text-prose text-brand-600',
             actionDisabled ? 'cursor-default opacity-55' : 'cursor-pointer'
           )}
         >

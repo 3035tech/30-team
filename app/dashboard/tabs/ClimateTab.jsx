@@ -73,7 +73,7 @@ function ClimateStatusChip({ status, locale }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-control border px-2 py-0.5 font-mono text-[11px]',
+        'inline-flex items-center rounded-control border px-2 py-0.5 font-mono text-2xs',
         STATUS_CHIP[key]
       )}
     >
@@ -100,13 +100,13 @@ function ClimateMeanMeter({
     <div className={cn('w-full', compact ? 'mt-1' : 'mt-2')}>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
         {showLabel ? (
-          <span className={cn('font-mono text-[11px]', textClass)}>
+          <span className={cn('font-mono text-2xs', textClass)}>
             {t(locale, `panel.climate.level.${level.level}`)}
           </span>
         ) : (
           <span />
         )}
-        <span className="font-mono text-[11px] text-ink-faint">
+        <span className="font-mono text-2xs text-ink-faint">
           {t(locale, 'panel.climate.scaleRange', { min: scaleMin, max: scaleMax })}
         </span>
       </div>
@@ -267,7 +267,7 @@ function ClimateCompareBars({ surveys, locale }) {
                   style={{ width: `${Math.max(6, pct)}%` }}
                 />
               </div>
-              <span className="font-mono text-[11px] text-ink-faint">
+              <span className="font-mono text-2xs text-ink-faint">
                 {formatClimateDate(climateSurveyAnchorDate(s), locale) || '—'}
                 {s.deltaVsPrevious != null
                   ? ` · ${t(locale, 'panel.climate.deltaVsPrev', {
@@ -290,7 +290,7 @@ function OverallScoreHero({ mean, locale, responseCount, minResponses }) {
     <div className={cn('rounded-card border px-4 py-4', TONE_BG[level.tone] || TONE_BG.info)}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">
+          <div className="font-mono text-2xs uppercase tracking-wider text-ink-muted">
             {t(locale, 'panel.climate.satisfactionTitle')}
           </div>
           <div className="mt-1 flex items-baseline gap-2">
@@ -301,7 +301,7 @@ function OverallScoreHero({ mean, locale, responseCount, minResponses }) {
             {t(locale, `panel.climate.level.${level.level}`)}
           </div>
         </div>
-        <div className="min-w-[140px] flex-1 text-right font-mono text-[11px] text-ink-muted">
+        <div className="min-w-[140px] flex-1 text-right font-mono text-2xs text-ink-muted">
           {t(locale, 'panel.climate.rCount', { n: responseCount || 0 })}
           {minResponses ? (
             <div className="mt-0.5 text-ink-faint">
@@ -787,7 +787,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         <>
           <div className="grid gap-4 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] lg:items-start">
             <div>
-              <div className="mb-2 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+              <div className="mb-2 font-mono text-2xs uppercase tracking-wider text-ink-faint">
                 {t(locale, 'panel.climate.listHeading', { n: items.length })}
               </div>
               <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -819,7 +819,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.rCount', { n: listResp })}
                         </div>
                         {formatClimateSurveyWhen(s, locale) ? (
-                          <div className="mt-0.5 font-mono text-[11px] text-ink-faint">
+                          <div className="mt-0.5 font-mono text-2xs text-ink-faint">
                             {formatClimateSurveyWhen(s, locale)}
                           </div>
                         ) : null}
@@ -837,7 +837,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           </div>
                         ) : s.status === CLIMATE_SURVEY_STATUS.OPEN || s.status === CLIMATE_SURVEY_STATUS.CLOSED ? (
                           <div className="mt-2">
-                            <div className="mb-0.5 font-mono text-[10px] text-ink-faint">
+                            <div className="mb-0.5 font-mono text-2xs text-ink-faint">
                               {t(locale, 'panel.climate.responseProgress', { n: listResp, min: listMin })}
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
@@ -871,7 +871,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <ClimateStatusChip status={detail.status} locale={locale} />
                           {formatClimateSurveyWhen(detail, locale) ? (
-                            <span className="font-mono text-[11px] text-ink-faint">
+                            <span className="font-mono text-2xs text-ink-faint">
                               {formatClimateSurveyWhen(detail, locale)}
                             </span>
                           ) : null}
@@ -1019,7 +1019,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                                 <span className="min-w-0 flex-1 text-sm leading-snug text-ink">
                                   {row.prompt}
                                   {isEnps ? (
-                                    <span className="mt-1 block font-mono text-[10px] text-ink-faint">
+                                    <span className="mt-1 block font-mono text-2xs text-ink-faint">
                                       {t(locale, 'panel.climate.enpsQuestionHint')}
                                     </span>
                                   ) : null}
@@ -1068,19 +1068,19 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                       <p className={cn(S.faint, 'm-0 mb-3')}>{t(locale, 'panel.climate.textAnswersHint')}</p>
                       {aggregate.themes?.length ? (
                         <div className="mb-3 rounded-control border border-ink/10 bg-canvas/50 px-3 py-2.5">
-                          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+                          <div className="mb-1 font-mono text-2xs uppercase tracking-wider text-ink-muted">
                             {t(locale, 'panel.climate.themesTitle')}
                           </div>
                           <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'panel.climate.themesHint')}</p>
                           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                             {aggregate.themes.map((th) => (
-                              <li key={th.key} className="text-[12px] leading-snug text-ink-muted">
+                              <li key={th.key} className="text-xs leading-snug text-ink-muted">
                                 <span className="font-medium text-ink">
                                   {t(locale, `panel.climate.theme.${th.key}`)}
                                 </span>
                                 <span className="font-mono text-ink-faint"> · {th.count}</span>
                                 {th.sample ? (
-                                  <span className="mt-0.5 block text-[11px] italic text-ink-faint">
+                                  <span className="mt-0.5 block text-2xs italic text-ink-faint">
                                     “{th.sample}”
                                   </span>
                                 ) : null}
@@ -1094,7 +1094,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           <li key={block.questionId} className="rounded-control border border-ink/10 px-3.5 py-3">
                             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                               <span className="text-sm text-ink">{block.prompt}</span>
-                              <span className="font-mono text-[11px] text-ink-faint">
+                              <span className="font-mono text-2xs text-ink-faint">
                                 {t(locale, 'panel.climate.textAnswersCount', { n: block.responses || 0 })}
                               </span>
                             </div>
@@ -1139,7 +1139,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           >
                             <span className="min-w-0 flex-1 text-ink-muted">
                               <span className="mr-1.5 font-mono text-ink-faint">{idx + 1}.</span>
-                              <span className="mr-2 inline-block rounded border border-ink/10 px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
+                              <span className="mr-2 inline-block rounded border border-ink/10 px-1.5 py-0.5 font-mono text-2xs text-ink-faint">
                                 {t(
                                   locale,
                                   `panel.climate.questionKind.${

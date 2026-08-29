@@ -72,11 +72,11 @@ export function TeamTensionNarrativeBlock({
     return (
       <div className={S.cardTight}>
         <span className={S.label}>{t(locale, 'panel.tension.title')}</span>
-        <p className="mt-2 mb-0 text-[13px] text-ink-muted">{t(locale, 'panel.tension.empty')}</p>
+        <p className="mt-2 mb-0 text-prose text-ink-muted">{t(locale, 'panel.tension.empty')}</p>
         <button
           type="button"
           onClick={() => go('group')}
-          className="mt-2 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+          className="mt-2 cursor-pointer border-none bg-transparent p-0 font-mono text-2xs text-brand-500"
         >
           {t(locale, 'panel.tension.ctaGroup')}
         </button>
@@ -89,7 +89,7 @@ export function TeamTensionNarrativeBlock({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <span className={S.label}>{t(locale, 'panel.tension.title')}</span>
-          <p className="mt-1 mb-0 text-[13px] leading-snug text-ink-muted">
+          <p className="mt-1 mb-0 text-prose leading-snug text-ink-muted">
             {t(locale, 'panel.tension.intro')}
           </p>
         </div>
@@ -104,7 +104,7 @@ export function TeamTensionNarrativeBlock({
       </div>
 
       {narrative.smallSample ? (
-        <p className="mt-2 mb-0 text-[12px] text-warning">{t(locale, 'panel.tension.smallSample')}</p>
+        <p className="mt-2 mb-0 text-xs text-warning">{t(locale, 'panel.tension.smallSample')}</p>
       ) : null}
 
       <ul className="mt-3 mb-0 flex list-none flex-col gap-2 p-0">
@@ -112,7 +112,7 @@ export function TeamTensionNarrativeBlock({
           <li
             key={`${line.source}-${line.id}`}
             className={cn(
-              'rounded-control border px-3 py-2 text-[13px] leading-snug text-ink',
+              'rounded-control border px-3 py-2 text-prose leading-snug text-ink',
               line.tone === 'force' && 'border-success/25 bg-success/[0.06]',
               line.tone === 'attention' && 'border-warning/25 bg-warning/[0.06]',
               line.tone === 'neutral' && 'border-ink/10 bg-ink/[0.02]'
@@ -125,31 +125,31 @@ export function TeamTensionNarrativeBlock({
 
       {ai?.summary ? (
         <div className="mt-3 rounded-control border border-brand-500/20 bg-brand-500/[0.04] px-3 py-2.5">
-          <p className="m-0 text-[13px] leading-snug text-ink">{ai.summary}</p>
+          <p className="m-0 text-prose leading-snug text-ink">{ai.summary}</p>
           {Array.isArray(ai.recommendations) && ai.recommendations.length > 0 ? (
-            <ul className="mt-2 mb-0 list-disc pl-4 text-[12px] text-ink">
+            <ul className="mt-2 mb-0 list-disc pl-4 text-xs text-ink">
               {ai.recommendations.map((r) => (
                 <li key={r}>{r}</li>
               ))}
             </ul>
           ) : null}
-          <p className="mt-2 mb-0 text-[11px] text-ink-faint">{t(locale, 'panel.tension.aiDisclaimer')}</p>
+          <p className="mt-2 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.tension.aiDisclaimer')}</p>
         </div>
       ) : null}
 
       <div className="mt-3 flex flex-wrap gap-2">
         {narrative.ctas.includes('compat') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-[11px]')} onClick={() => go('compatibility')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('compatibility')}>
             {t(locale, 'panel.tension.ctaCompat')}
           </button>
         ) : null}
         {narrative.ctas.includes('group') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-[11px]')} onClick={() => go('group')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('group')}>
             {t(locale, 'panel.tension.ctaGroup')}
           </button>
         ) : null}
         {narrative.ctas.includes('team') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-[11px]')} onClick={() => go('team')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('team')}>
             {t(locale, 'panel.tension.ctaTeam')}
           </button>
         ) : null}

@@ -54,7 +54,7 @@ export function HireReadinessBlock({
         <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.hireReadyTitle')}</span>
         <span
           className={cn(
-            'font-mono text-[11px]',
+            'font-mono text-2xs',
             readiness.ready ? 'text-success' : 'text-ink-muted'
           )}
         >
@@ -70,7 +70,7 @@ export function HireReadinessBlock({
           <li
             key={c.id}
             className={cn(
-              'font-mono text-[11px] leading-snug',
+              'font-mono text-2xs leading-snug',
               c.ok ? 'text-success' : c.required ? 'text-ink-muted' : 'text-ink-faint'
             )}
           >
@@ -83,7 +83,7 @@ export function HireReadinessBlock({
         ))}
       </ul>
       {readiness.ready ? (
-        <p className="m-0 mt-2 font-mono text-[11px] text-success">
+        <p className="m-0 mt-2 font-mono text-2xs text-success">
           {t(locale, 'recruiting.hireReadyOk')}
         </p>
       ) : null}

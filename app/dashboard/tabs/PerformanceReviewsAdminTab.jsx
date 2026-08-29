@@ -540,7 +540,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                       <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{cycle.description}</p>
                     ) : null}
                     {cycle.allowSelfReview || cycle.allowPeerReview ? (
-                      <p className="mt-1 font-mono text-[10px] text-brand-600">
+                      <p className="mt-1 font-mono text-2xs text-brand-600">
                         {cycle.allowSelfReview ? t('allowSelfReview') : ''}
                         {cycle.allowSelfReview && cycle.allowPeerReview ? ' · ' : ''}
                         {cycle.allowPeerReview ? t('allowPeerReview') : ''}

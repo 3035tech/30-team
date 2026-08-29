@@ -31,7 +31,7 @@ export function BrandPulseLoading({ locale = 'pt-BR', label, fullPage = false })
           className="brand-pulse-mark block"
         />
       </div>
-      <p className="m-0 max-w-[280px] font-display text-[15px] leading-[1.45] text-ink-muted">
+      <p className="m-0 max-w-[280px] font-display text-base leading-[1.45] text-ink-muted">
         {text}
       </p>
     </div>
@@ -57,7 +57,7 @@ export function PublicFunnyError({ locale = 'pt-BR', title, message, onRetry }) 
         height={220}
         className="block h-auto w-[min(220px,70vw)] rounded-card"
       />
-      <p className="m-0 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-500">
+      <p className="m-0 font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-brand-500">
         30Team
       </p>
       <h1 className="m-0 font-display text-[clamp(22px,5vw,28px)] font-semibold leading-[1.25] text-ink">

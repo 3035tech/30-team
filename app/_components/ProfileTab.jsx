@@ -7,7 +7,7 @@ import { S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
 
 const inputClass =
-  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-[13px] text-ink';
+  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-prose text-ink';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
@@ -183,7 +183,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
     <div className="flex w-full items-start justify-center">
       <div className={cn(dashS.card, 'box-border w-full max-w-[560px]')}>
         <span className={dashS.label}>{t(locale, 'dashboard.profileTitle')}</span>
-        <p className="mt-2 text-[13px] leading-[1.55] text-ink-muted">
+        <p className="mt-2 text-prose leading-[1.55] text-ink-muted">
           {t(locale, 'dashboard.profileIntro')}
         </p>
 
@@ -192,7 +192,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
         ) : (
           <div className="mt-[18px] flex flex-col gap-3.5">
             <label className="block">
-              <span className="font-mono text-[11px] text-ink-faint">
+              <span className="font-mono text-2xs text-ink-faint">
                 {t(locale, 'dashboard.profileDisplayName')}
               </span>
               <input
@@ -203,7 +203,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               />
             </label>
             <label className="block">
-              <span className="font-mono text-[11px] text-ink-faint">
+              <span className="font-mono text-2xs text-ink-faint">
                 {t(locale, 'dashboard.profileEmail')}
               </span>
               <input
@@ -219,7 +219,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
             </div>
 
             <div>
-              <span className="mb-1.5 block font-mono text-[11px] text-ink-faint">
+              <span className="mb-1.5 block font-mono text-2xs text-ink-faint">
                 {t(locale, 'dashboard.profileLocale')}
               </span>
               <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
@@ -228,7 +228,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
             <div className="mt-1 border-t border-ink/12 pt-3.5">
               <span className={cn(dashS.label, 'mb-2.5')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
               <label className="mb-2.5 block">
-                <span className="font-mono text-[11px] text-ink-faint">
+                <span className="font-mono text-2xs text-ink-faint">
                   {t(locale, 'dashboard.profileCurrentPassword')}
                 </span>
                 <input
@@ -240,7 +240,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 />
               </label>
               <label className="mb-2.5 block">
-                <span className="font-mono text-[11px] text-ink-faint">
+                <span className="font-mono text-2xs text-ink-faint">
                   {t(locale, 'dashboard.profileNewPassword')}
                 </span>
                 <input
@@ -252,7 +252,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 />
               </label>
               <label className="block">
-                <span className="font-mono text-[11px] text-ink-faint">
+                <span className="font-mono text-2xs text-ink-faint">
                   {t(locale, 'dashboard.profileConfirmPassword')}
                 </span>
                 <input
@@ -269,18 +269,18 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               <div className="mt-1 border-t border-ink/12 pt-3.5">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profile2faSection')}</span>
-                  <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+                  <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
                     {t(locale, 'dashboard.profile2faOptionalBadge')}
                   </span>
                 </div>
-                <p className="mb-3 text-[13px] leading-relaxed text-ink-muted">
+                <p className="mb-3 text-prose leading-relaxed text-ink-muted">
                   {t(locale, 'dashboard.profile2faIntro')}
                 </p>
                 {twoFaEnabled ? (
                   <div className="space-y-3">
                     <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
                     <label className="block">
-                      <span className="font-mono text-[11px] text-ink-faint">
+                      <span className="font-mono text-2xs text-ink-faint">
                         {t(locale, 'dashboard.profile2faCode')}
                       </span>
                       <input
@@ -293,7 +293,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                       />
                     </label>
                     <label className="block">
-                      <span className="font-mono text-[11px] text-ink-faint">
+                      <span className="font-mono text-2xs text-ink-faint">
                         {t(locale, 'dashboard.profile2faDisablePassword')}
                       </span>
                       <input
@@ -319,11 +319,11 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 ) : twoFaSetupSecret ? (
                   <div className="space-y-3">
                     <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
-                    <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-[11px]">
+                    <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
                       {twoFaSetupSecret}
                     </code>
                     <label className="block">
-                      <span className="font-mono text-[11px] text-ink-faint">
+                      <span className="font-mono text-2xs text-ink-faint">
                         {t(locale, 'dashboard.profile2faCode')}
                       </span>
                       <input

@@ -11,7 +11,7 @@ import {
 import { fieldInputClass, fieldSelectClass } from './form-control-styles';
 
 const fieldLabelClass =
-  'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
+  'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
 
 /**
  * Modalidade + UF + cidade (IBGE autocomplete) para create/edit de vaga.
@@ -27,9 +27,9 @@ export function VacancyWorkplaceFields({
   const controlClass = cn(
     fieldInputClass,
     'w-full text-ink-muted',
-    compact ? 'px-2.5 py-2 text-[13px]' : 'text-xs'
+    compact ? 'px-2.5 py-2 text-prose' : 'text-xs'
   );
-  const selectClass = cn(fieldSelectClass, 'w-full', compact ? 'px-2.5 py-2 text-[13px]' : 'text-xs');
+  const selectClass = cn(fieldSelectClass, 'w-full', compact ? 'px-2.5 py-2 text-prose' : 'text-xs');
 
   return (
     <div className="grid max-w-[640px] grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5">
@@ -75,7 +75,7 @@ export function VacancyWorkplaceFields({
           aria-label={t(locale, 'recruiting.workplaceCityLabel')}
           className={controlClass}
         />
-        <span className="text-[10px] leading-[1.35] text-ink-faint">
+        <span className="text-2xs leading-[1.35] text-ink-faint">
           {t(locale, 'recruiting.workplaceCityHelp')}
         </span>
       </label>

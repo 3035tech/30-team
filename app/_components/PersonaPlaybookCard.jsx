@@ -177,7 +177,7 @@ export function PersonaPlaybookCard({ tab, role, locale = 'pt-BR' }) {
             ))}
           </ul>
           {playbooks.length > 1 ? (
-            <p className={cn(S.faint, 'm-0 mt-2 text-[11px]')}>
+            <p className={cn(S.faint, 'm-0 mt-2 text-2xs')}>
               {t(locale, 'panel.playbook.morePlaybooks', { n: playbooks.length - 1 })}
             </p>
           ) : null}

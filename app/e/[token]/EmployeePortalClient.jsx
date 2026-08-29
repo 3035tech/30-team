@@ -125,7 +125,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
   return (
     <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-10">
-      <p className={cn(S.faint, 'm-0 text-[11px] uppercase tracking-wide')}>
+      <p className={cn(S.faint, 'm-0 text-2xs uppercase tracking-wide')}>
         {t(locale, 'panel.employeePortal.eyebrow')}
       </p>
       <h1 className="m-0 mt-1 font-display text-2xl text-ink">
@@ -169,7 +169,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {data.recentAgreements.map((a) => (
               <li key={a.id} className="rounded-control border border-ink/12 bg-white/40 px-3 py-2">
-                <div className="font-mono text-[11px] text-ink-faint">
+                <div className="font-mono text-2xs text-ink-faint">
                   {a.meetingDate ? String(a.meetingDate).slice(0, 10) : '—'}
                 </div>
                 <RichTextView html={a.nextSteps} className="mt-1 text-xs text-ink-muted" />
@@ -189,7 +189,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
               <li key={course.enrollmentId} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div className="font-ui text-sm text-ink">{course.title}</div>
-                  <span className="font-mono text-[11px] text-ink-muted">
+                  <span className="font-mono text-2xs text-ink-muted">
                     {course.progressPct}%
                     {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
                   </span>
@@ -198,7 +198,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                   <p className={cn(S.muted, 'mt-1 text-xs')}>{course.description}</p>
                 ) : null}
                 {course.dueDate || course.mandatory || course.overdue ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-[10px]">
+                  <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-2xs">
                     {course.dueDate ? (
                       <span className="rounded-full bg-ink/5 px-2 py-1 text-ink-muted">
                         {t(locale, 'panel.employeePortal.courseDue', { date: course.dueDate })}
@@ -231,7 +231,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                           href={lesson.contentUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-mono text-[11px] text-brand-600"
+                          className="font-mono text-2xs text-brand-600"
                         >
                           {t(locale, 'panel.employeePortal.openLesson')}
                         </a>
@@ -240,20 +240,20 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                         <button
                           type="button"
                           disabled={busy}
-                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-[11px]')}
+                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-2xs')}
                           onClick={() => completeLesson(lesson.id)}
                         >
                           {t(locale, 'panel.employeePortal.markLessonDone')}
                         </button>
                       ) : (
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[10px] text-success">
+                          <span className="font-mono text-2xs text-success">
                             {t(locale, 'panel.employeePortal.lessonDone')}
                           </span>
                           <button
                             type="button"
                             disabled={busy}
-                            className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+                            className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
                             onClick={() => uncompleteLesson(lesson.id)}
                           >
                             {t(locale, 'panel.employeePortal.unmarkLesson')}
@@ -275,7 +275,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
           <p className={cn(S.muted, 'mb-2 text-xs')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
           <ol className="m-0 pl-[18px]">
             {data.oneOnOnePrompts.map((q) => (
-              <li key={q} className="mb-1 text-[13px] leading-[1.55] text-ink">
+              <li key={q} className="mb-1 text-prose leading-[1.55] text-ink">
                 {q}
               </li>
             ))}
@@ -309,7 +309,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
               : t(locale, 'panel.employeePortal.prepConfirm')}
           </button>
           {data?.preparedAt ? (
-            <span className="font-mono text-[11px] text-success">
+            <span className="font-mono text-2xs text-success">
               {t(locale, 'panel.employeePortal.prepDone')}
             </span>
           ) : null}

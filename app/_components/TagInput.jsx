@@ -87,7 +87,7 @@ export function TagInput({
         {tags.map((tag, i) => (
           <span
             key={`${tag}-${i}`}
-            className="inline-flex max-w-full items-center gap-1 rounded-control border border-ink/15 bg-surface px-2 py-0.5 font-mono text-[12px] text-ink"
+            className="inline-flex max-w-full items-center gap-1 rounded-control border border-ink/15 bg-surface px-2 py-0.5 font-mono text-xs text-ink"
           >
             <span className="truncate">{tag}</span>
             {!disabled ? (
@@ -121,7 +121,7 @@ export function TagInput({
             onBlur={() => {
               if (draft.trim()) commit(draft);
             }}
-            className="min-w-[7rem] flex-1 border-0 bg-transparent py-1 font-ui text-[13px] text-ink outline-none placeholder:text-ink-faint"
+            className="min-w-[7rem] flex-1 border-0 bg-transparent py-1 font-ui text-prose text-ink outline-none placeholder:text-ink-faint"
           />
         ) : null}
       </div>
@@ -132,7 +132,7 @@ export function TagInput({
               key={s}
               type="button"
               onClick={() => commit(s)}
-              className="rounded-control border border-dashed border-ink/20 bg-transparent px-2 py-0.5 font-mono text-[11px] text-ink-muted hover:border-brand-500/40 hover:text-brand-600"
+              className="rounded-control border border-dashed border-ink/20 bg-transparent px-2 py-0.5 font-mono text-2xs text-ink-muted hover:border-brand-500/40 hover:text-brand-600"
             >
               + {s}
             </button>
@@ -156,7 +156,7 @@ export function TagChips({ tags, empty = '—', className }) {
       {list.map((tag) => (
         <span
           key={tag}
-          className="inline-flex rounded-control border border-ink/12 bg-canvas px-2 py-0.5 font-mono text-[11px] text-ink-muted"
+          className="inline-flex rounded-control border border-ink/12 bg-canvas px-2 py-0.5 font-mono text-2xs text-ink-muted"
         >
           {tag}
         </span>

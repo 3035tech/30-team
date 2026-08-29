@@ -10,9 +10,9 @@ export function HrScoreBadge({ score, risk, size = 'sm' }) {
   if (!score && !risk) return null;
 
   const sizeClasses = {
-    xs: 'h-4 min-w-[16px] px-1 text-[9px]',
-    sm: 'h-5 min-w-[20px] px-1.5 text-[10px]',
-    md: 'h-6 min-w-[24px] px-2 text-[11px]',
+    xs: 'h-4 min-w-[16px] px-1 text-2xs',
+    sm: 'h-5 min-w-[20px] px-1.5 text-2xs',
+    md: 'h-6 min-w-[24px] px-2 text-2xs',
   };
 
   const riskColors = {

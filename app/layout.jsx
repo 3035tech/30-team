@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="m-0 bg-canvas p-0 text-ink">
+      <body className="m-0 bg-canvas p-0 font-ui text-prose text-ink antialiased">
         <DarkModeProvider>
           {children}
         </DarkModeProvider>

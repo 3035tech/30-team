@@ -96,14 +96,14 @@ export function HrActionBrief({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.briefTitle')}</span>
-          <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-faint">
+          <p className="mb-0 mt-1 text-2xs leading-snug text-ink-faint">
             {t(locale, 'panel.team.briefHint')}
           </p>
         </div>
         <button
           type="button"
           onClick={onPrint}
-          className={cn(S.btnGhost, 'inline-flex min-h-touch shrink-0 items-center gap-1.5 px-2.5 py-1.5 text-[11px]')}
+          className={cn(S.btnGhost, 'inline-flex min-h-touch shrink-0 items-center gap-1.5 px-2.5 py-1.5 text-2xs')}
           title={t(locale, 'panel.team.briefPrint')}
           aria-label={t(locale, 'panel.team.briefPrint')}
         >
@@ -113,12 +113,12 @@ export function HrActionBrief({
       </div>
 
       {syn.headline ? (
-        <p className="m-0 text-[14px] font-medium leading-snug text-ink">{syn.headline}</p>
+        <p className="m-0 text-sm font-medium leading-snug text-ink">{syn.headline}</p>
       ) : null}
 
       {alertsPrimary.length > 0 ? (
         <section>
-          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-warning">
+          <div className="mb-1.5 font-mono text-2xs uppercase tracking-wider text-warning">
             {t(locale, 'panel.team.briefAlerts')}
           </div>
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -158,7 +158,7 @@ export function HrActionBrief({
         <section className="grid gap-4 sm:grid-cols-2">
           {actionsDo.length > 0 ? (
             <div>
-              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-success">
+              <div className="mb-1.5 font-mono text-2xs uppercase tracking-wider text-success">
                 {t(locale, 'panel.team.briefDo')}
               </div>
               <ul className="m-0 list-disc space-y-1.5 pl-4 text-xs leading-snug text-ink">
@@ -170,7 +170,7 @@ export function HrActionBrief({
           ) : null}
           {actionsAvoid.length > 0 ? (
             <div>
-              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-danger">
+              <div className="mb-1.5 font-mono text-2xs uppercase tracking-wider text-danger">
                 {t(locale, 'panel.team.briefAvoid')}
               </div>
               <ul className="m-0 list-disc space-y-1.5 pl-4 text-xs leading-snug text-ink">
@@ -193,7 +193,7 @@ export function HrActionBrief({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {synSections.map(([key, labelKey]) => (
               <div key={key}>
-                <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+                <div className="mb-1 font-mono text-2xs uppercase tracking-wider text-ink-muted">
                   {t(locale, labelKey)}
                 </div>
                 <ul className="m-0 list-disc space-y-1 pl-4 text-xs leading-snug text-ink">
@@ -263,7 +263,7 @@ export function HrActionBrief({
               </li>
             ))}
           </ul>
-          <p className="mb-0 mt-1.5 text-[10px] leading-snug text-ink-faint">
+          <p className="mb-0 mt-1.5 text-2xs leading-snug text-ink-faint">
             {t(locale, 'panel.team.briefNucleusFitHint')}
           </p>
         </CollapsibleBlock>

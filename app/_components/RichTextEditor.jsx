@@ -14,7 +14,7 @@ const FONT_SIZES = [
 ];
 
 const toolbarBtnClass =
-  'cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] px-2 py-1 font-mono text-[11px] leading-tight text-ink';
+  'cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] px-2 py-1 font-mono text-2xs leading-tight text-ink';
 
 function ToolbarButton({ label, title, onClick, className }) {
   return (
@@ -39,7 +39,7 @@ function ToolbarSelect({ value, onChange, title, children }) {
       value={value}
       onMouseDown={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
-      className="ui-select max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] !px-1.5 !py-1 !pr-6 font-mono text-[11px] text-ink"
+      className="ui-select max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] !px-1.5 !py-1 !pr-6 font-mono text-2xs text-ink"
     >
       {children}
     </select>
@@ -190,7 +190,7 @@ export function RichTextEditor({
       </div>
       <div className="relative">
         {isEmpty ? (
-          <span className="pointer-events-none absolute left-3.5 top-3 font-display text-[13px] text-ink-faint">
+          <span className="pointer-events-none absolute left-3.5 top-3 font-display text-prose text-ink-faint">
             {ph}
           </span>
         ) : null}

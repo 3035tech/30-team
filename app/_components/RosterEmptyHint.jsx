@@ -21,10 +21,10 @@ export function RosterEmptyHint({
 
   return (
     <div className={cn('rounded-[14px] border border-dashed border-ink/12 bg-ink/[0.02] px-5 py-7 text-center', className)}>
-      <p className="mb-2 mt-0 font-display text-[15px] text-ink">
+      <p className="mb-2 mt-0 font-display text-base text-ink">
         {t(locale, 'dashboard.rosterEmptyTitle')}
       </p>
-      <p className="mx-auto my-0 max-w-[48ch] text-[13px] leading-[1.55] text-ink-muted">
+      <p className="mx-auto my-0 max-w-[48ch] text-prose leading-[1.55] text-ink-muted">
         {isInternal
           ? t(locale, 'dashboard.rosterEmptyBodyInternal')
           : t(locale, 'dashboard.rosterEmptyBodyOther')}

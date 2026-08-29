@@ -19,12 +19,12 @@ const SC = {
   app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-[20px] border border-ink/12 bg-white px-7 py-9 shadow-card backdrop-blur-3xl sm:px-9 sm:py-10',
-  label: 'mb-4 block font-mono text-[10px] uppercase tracking-[3px] text-ink-label',
+  label: 'mb-4 block font-mono text-2xs uppercase tracking-[3px] text-ink-label',
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
-  p: 'mb-7 text-[15px] italic leading-[1.65] text-ink-muted',
+  p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
-  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-[15px] text-ink',
+  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
   fieldLabel: 'mb-2 block text-xs text-ink-muted',
   fields: 'cand-flow-fields',
 };
@@ -36,7 +36,7 @@ function ThankYouScreen({ locale, saveError, onDone }) {
       <div className={SC.glow} />
       <div className={cn(SC.card, 'max-w-[560px] text-center')}>
         <span className={SC.label}>{t(locale, 'motivators.thankYouLabel')}</span>
-        <h1 className={cn(SC.h1, 'mb-4 text-[32px]')}>{t(locale, 'motivators.thankYouTitle')}</h1>
+        <h1 className={cn(SC.h1, 'mb-4 text-4xl')}>{t(locale, 'motivators.thankYouTitle')}</h1>
         {saveError ? <p className="mb-4 text-sm text-danger">{saveError}</p> : null}
         <p className={cn(SC.p, 'mb-8 not-italic')}>{t(locale, 'motivators.thankYouBody')}</p>
         <button type="button" className={SC.btn} onClick={onDone}>{t(locale, 'motivators.thankYouDone')}</button>
@@ -131,8 +131,8 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         <div className="mb-7 flex flex-wrap gap-x-5 gap-y-3">
           {stats.map(([n, l]) => (
             <div key={l}>
-              <div className="text-xl text-brand-600 sm:text-[22px]">{n}</div>
-              <div className="font-mono text-[10px] uppercase tracking-[2px] text-ink-muted">{l}</div>
+              <div className="text-xl text-brand-600 sm:text-2xl">{n}</div>
+              <div className="font-mono text-2xs uppercase tracking-[2px] text-ink-muted">{l}</div>
             </div>
           ))}
         </div>
@@ -148,7 +148,7 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
                 ? t(locale, 'motivators.inviteIdentityNoteWithProfile')
                 : t(locale, 'motivators.inviteIdentityNote')}
             </div>
-            <div className="font-mono text-[11px] text-ink-faint">
+            <div className="font-mono text-2xs text-ink-faint">
               {t(locale, 'motivators.inviteIdentityEmail', { email: effectiveEmail })}
             </div>
           </div>
@@ -180,14 +180,14 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           {t(locale, 'motivators.consent')}
         </label>
 
-        {error ? <p className="text-[13px] text-danger">{error}</p> : null}
+        {error ? <p className="text-prose text-danger">{error}</p> : null}
 
         <button type="button" disabled={!ready || busy} className={cn(SC.btn, !ready && 'opacity-45')} onClick={submit}>
           {busy ? t(locale, 'motivators.starting') : t(locale, 'motivators.startAssessment')}
         </button>
         </div>
 
-        <p className="mt-5 text-[11px] text-ink-faint">
+        <p className="mt-5 text-2xs text-ink-faint">
           {t(locale, 'candidate.manager')}{' '}
           <span className="cursor-pointer text-brand-600 underline" onClick={() => router.push('/login')}>
             {t(locale, 'motivators.accessPanel')}
@@ -230,7 +230,7 @@ function RankingChoice({ question, onConfirm, locale }) {
             >
               <span
                 className={cn(
-                  'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[13px]',
+                  'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-prose',
                   ranked
                     ? 'border border-brand-500 bg-brand-500 text-white'
                     : 'border border-ink/12 bg-transparent text-ink-muted'
@@ -241,12 +241,12 @@ function RankingChoice({ question, onConfirm, locale }) {
               <span>
                 {opt.text}
                 {ranked && pos === 0 ? (
-                  <span className="mt-1 block text-[11px] text-ink-muted">
+                  <span className="mt-1 block text-2xs text-ink-muted">
                     {t(locale, 'motivators.rankingMost')}
                   </span>
                 ) : null}
                 {ranked && complete && pos === order.length - 1 && order.length > 1 ? (
-                  <span className="mt-1 block text-[11px] text-ink-muted">
+                  <span className="mt-1 block text-2xs text-ink-muted">
                     {t(locale, 'motivators.rankingLeast')}
                   </span>
                 ) : null}
@@ -259,7 +259,7 @@ function RankingChoice({ question, onConfirm, locale }) {
         <button
           type="button"
           className={cn(
-            'cand-tap border-none bg-transparent text-[13px]',
+            'cand-tap border-none bg-transparent text-prose',
             order.length === 0 ? 'cursor-default text-ink-faint' : 'cursor-pointer text-ink-muted'
           )}
           disabled={order.length === 0}
@@ -319,7 +319,7 @@ function TestScreen({ questions, onComplete, locale }) {
         <div className="mb-6 h-1 overflow-hidden rounded-sm bg-ink/[0.08]">
           <div className="h-full rounded-sm bg-brand-500" style={{ width: `${progress}%` }} />
         </div>
-        <p className="cand-q-text mb-7 text-[17px] leading-relaxed text-ink">{q.text}</p>
+        <p className="cand-q-text mb-7 text-lg leading-relaxed text-ink">{q.text}</p>
 
         {q.questionType === 'forced_choice' ? (
           <div className="flex flex-col gap-2.5">
@@ -338,7 +338,7 @@ function TestScreen({ questions, onComplete, locale }) {
           <RankingChoice key={q.id} question={q} locale={locale} onConfirm={(orderIds) => advance({ ranking: orderIds })} />
         ) : (
           <div>
-            <div className="mb-3 flex justify-between gap-2 text-[11px] text-ink-muted">
+            <div className="mb-3 flex justify-between gap-2 text-2xs text-ink-muted">
               <span>{q.likertScale?.minLabel || t(locale, 'motivators.likertMinShort')}</span>
               <span>{q.likertScale?.maxLabel || t(locale, 'motivators.likertMaxShort')}</span>
             </div>
@@ -361,7 +361,7 @@ function TestScreen({ questions, onComplete, locale }) {
         {idx > 0 ? (
           <button
             type="button"
-            className="cand-tap mt-6 cursor-pointer border-none bg-transparent text-[13px] text-ink-muted"
+            className="cand-tap mt-6 cursor-pointer border-none bg-transparent text-prose text-ink-muted"
             onClick={() => { setIdx((i) => i - 1); setFade(false); }}
           >
             {t(locale, 'candidate.previous')}

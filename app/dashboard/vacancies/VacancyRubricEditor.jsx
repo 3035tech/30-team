@@ -10,9 +10,9 @@ import { AppLoading } from '../../_components/AppLoading';
 import { buildRubricContextDraft, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
 
 const BTN_SM =
-  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-[11px] text-brand-500 disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_PRIMARY =
-  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500 bg-brand-500 px-3 py-2 font-mono text-[11px] text-white disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500 bg-brand-500 px-3 py-2 font-mono text-2xs text-white disabled:cursor-default disabled:opacity-60';
 
 export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDescription = '', onSaved }) {
   const { notice, toast } = useAppFeedback();
@@ -198,13 +198,13 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
 
   return (
     <div className="mt-3 border-t border-ink/12 pt-3">
-      <span className="mb-2 block font-mono text-[11px] text-ink-muted">
+      <span className="mb-2 block font-mono text-2xs text-ink-muted">
         {t(locale, 'recruiting.rubricTitle')}
       </span>
-      <p className="mb-2.5 mt-0 text-[11px] leading-normal text-ink-faint">
+      <p className="mb-2.5 mt-0 text-2xs leading-normal text-ink-faint">
         {t(locale, 'recruiting.rubricWeightHint')}
       </p>
-      {loading ? <p className="text-[11px] text-ink-faint">…</p> : null}
+      {loading ? <p className="text-2xs text-ink-faint">…</p> : null}
       <div className="mb-2.5 flex flex-wrap gap-2">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
           <label key={typeNum} className="flex items-center gap-1 text-xs text-ink-muted">
@@ -213,7 +213,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
               value={weights[typeNum] ?? ''}
               onChange={(e) => setWeights((prev) => ({ ...prev, [typeNum]: e.target.value }))}
               placeholder="0"
-              className="w-11 rounded-md border border-ink/12 bg-ink/[0.03] px-1.5 py-1 font-mono text-[11px] text-ink"
+              className="w-11 rounded-md border border-ink/12 bg-ink/[0.03] px-1.5 py-1 font-mono text-2xs text-ink"
             />
           </label>
         ))}
@@ -224,7 +224,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
           type="button"
           onClick={() => setAiOpen((o) => !o)}
           className={cn(
-            'cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500',
+            'cursor-pointer border-none bg-transparent p-0 font-mono text-2xs text-brand-500',
             aiOpen && 'mb-2'
           )}
         >
@@ -236,7 +236,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
             <p className="mb-2.5 mt-0 text-xs leading-[1.55] text-ink-muted">
               {t(locale, 'recruiting.rubricAiIntro')}
             </p>
-            <label className="mb-1 block text-[11px] text-ink-muted">
+            <label className="mb-1 block text-2xs text-ink-muted">
               {t(locale, 'recruiting.rubricAiJobLabel')}
             </label>
             <textarea
@@ -274,7 +274,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
                 )}
               </button>
             </div>
-            <p className="mb-0 mt-2.5 text-[11px] leading-normal text-ink-faint">
+            <p className="mb-0 mt-2.5 text-2xs leading-normal text-ink-faint">
               {t(locale, 'recruiting.rubricAiFillSteps')}
             </p>
           </>

@@ -62,12 +62,12 @@ export function AdminRichFormDrawer({
       >
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[2px] text-brand-500">
+            <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
               30Team
             </span>
             <h2
               id="rich-form-drawer-title"
-              className="mb-0 mt-1.5 font-display text-[22px] font-normal leading-tight text-ink"
+              className="mb-0 mt-1.5 font-display text-2xl font-normal leading-tight text-ink"
             >
               {title}
             </h2>

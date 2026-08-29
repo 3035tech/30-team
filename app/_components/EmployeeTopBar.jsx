@@ -125,7 +125,7 @@ export function EmployeeTopBar({
         <Link href="/colaborador" className="flex min-w-0 items-center gap-2 no-underline">
           <BrandMark size={24} withWordmark />
           {companyName ? (
-            <span className="hidden truncate font-mono text-[10px] text-ink-faint sm:inline">
+            <span className="hidden truncate font-mono text-2xs text-ink-faint sm:inline">
               {companyName}
             </span>
           ) : null}
@@ -148,7 +148,7 @@ export function EmployeeTopBar({
             >
               <Icon name="bell" />
               {unreadCount > 0 ? (
-                <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-danger px-1 text-center font-mono text-[10px] text-white">
+                <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-danger px-1 text-center font-mono text-2xs text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               ) : null}
@@ -160,7 +160,7 @@ export function EmployeeTopBar({
                   {unreadCount > 0 ? (
                     <button
                       type="button"
-                      className="border-none bg-transparent p-0 font-mono text-[11px] text-brand-600"
+                      className="border-none bg-transparent p-0 font-mono text-2xs text-brand-600"
                       onClick={markAll}
                     >
                       {t(locale, 'employeeHome.notificationsMarkAll')}
@@ -186,10 +186,10 @@ export function EmployeeTopBar({
                           <div className="text-xs text-ink">
                             {t(locale, item.copy?.titleKey || 'employeeHome.notifGenericTitle', item.copy?.values)}
                           </div>
-                          <div className="mt-0.5 text-[11px] text-ink-muted">
+                          <div className="mt-0.5 text-2xs text-ink-muted">
                             {t(locale, item.copy?.bodyKey || 'employeeHome.notifGenericBody', item.copy?.values)}
                           </div>
-                          <div className="mt-1 font-mono text-[10px] text-ink-faint">
+                          <div className="mt-1 font-mono text-2xs text-ink-faint">
                             {formatWhen(item.createdAt, locale)}
                           </div>
                         </button>

@@ -21,7 +21,7 @@ import { IconActionTip } from '../_components/IconActionTip';
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
   label:
-    'mb-3 block font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label',
+    'mb-3 block font-mono text-2xs uppercase tracking-[2.5px] text-ink-label',
   card: 'rounded-card border border-ink/12 bg-surface p-7 backdrop-blur-[16px]',
   cardTight: 'rounded-card border border-ink/12 bg-surface p-5',
   /** Native select — custom chevron via `.ui-select` (globals.css). */
@@ -33,12 +33,12 @@ const S = {
   textarea: fieldTextareaClass,
   checkbox: fieldCheckboxClass,
   sidebarSection:
-    'mb-1 block px-3 font-mono text-[11px] uppercase tracking-[2px] text-ink-label',
+    'mb-1 block px-3 font-mono text-2xs uppercase tracking-[2px] text-ink-label',
   filterChip:
     'inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-mono text-xs text-brand-600',
   /** Primary CTA — brand (use once per viewport when possible) */
   btnPrimary:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-mono text-[13px] text-white disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-mono text-prose text-white disabled:cursor-default disabled:opacity-55',
   /** Secondary soft brand */
   btnBrandSoft:
     'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/35 bg-brand-500/10 px-3.5 py-2.5 font-mono text-xs text-brand-600 disabled:cursor-default disabled:opacity-55',
@@ -51,26 +51,28 @@ const S = {
    */
   btnRowIcon:
     'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 disabled:cursor-default disabled:opacity-50',
-  muted: 'text-[13px] leading-relaxed text-ink-muted',
-  faint: 'text-[12px] leading-snug text-ink-faint',
+  muted: 'font-ui text-prose leading-relaxed text-ink-muted',
+  faint: 'font-ui text-xs leading-snug text-ink-faint',
   stack: 'flex flex-col gap-4',
   row: 'flex flex-wrap items-center gap-2',
   /**
    * Overview / intel cards — one type scale (title → subtitle → body → chips).
-   * Prefer these over ad-hoc text-[10px] / font-medium vs font-semibold mix.
+   * Prefer these over ad-hoc text-[Npx] / font-medium vs font-semibold mix.
    */
-  cardTitle: 'text-base font-semibold text-ink',
-  cardSubtitle: 'text-xs text-ink-muted',
-  cardBody: 'text-sm text-ink',
-  cardMuted: 'text-xs text-ink-muted',
-  cardFaint: 'text-xs leading-snug text-ink-faint',
-  cardSection: 'mb-2 text-xs font-semibold uppercase tracking-wide text-ink-label',
-  cardRowTitle: 'truncate text-sm font-medium text-ink',
-  cardLink: 'text-xs font-medium text-brand-600 hover:text-brand-700',
+  cardTitle: 'font-ui text-base font-semibold text-ink',
+  cardSubtitle: 'font-ui text-xs text-ink-muted',
+  cardBody: 'font-ui text-sm text-ink',
+  cardMuted: 'font-ui text-xs text-ink-muted',
+  cardFaint: 'font-ui text-xs leading-snug text-ink-faint',
+  cardSection: 'mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-ink-label',
+  cardRowTitle: 'truncate font-ui text-sm font-medium text-ink',
+  cardLink: 'font-ui text-xs font-medium text-brand-600 hover:text-brand-700',
   cardChip:
-    'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 text-xs text-ink-muted',
+    'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 font-mono text-xs text-ink-muted',
   cardMetric: 'font-mono text-sm font-semibold tabular-nums',
   cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
+  /** Dashboard page H1 */
+  pageTitle: 'm-0 font-display text-xl font-normal text-ink',
 };
 
 const Bar = ({ value, max, color, h = 6 }) => (
@@ -111,14 +113,14 @@ const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
   const label = compact ? `T${type}` : short;
   const base = cn(
     'inline-flex flex-shrink-0 cursor-help items-center font-mono rounded-full',
-    compact ? 'gap-0.5 px-[7px] py-0.5 text-[10px]' : 'gap-1 px-2.5 py-[3px] text-[11px]'
+    compact ? 'gap-0.5 px-[7px] py-0.5 text-2xs' : 'gap-1 px-2.5 py-[3px] text-2xs'
   );
   if (!d) {
     return (
       <span
         title={tip}
         aria-label={tip}
-        className={cn(base, !compact && 'text-[11px]', 'border border-ink/12 bg-ink-muted/10 text-ink-muted')}
+        className={cn(base, !compact && 'text-2xs', 'border border-ink/12 bg-ink-muted/10 text-ink-muted')}
       >
         T{type}
       </span>
@@ -137,7 +139,7 @@ const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
     >
       {compact ? (
         <>
-          <span aria-hidden className="text-[11px] leading-none">
+          <span aria-hidden className="text-2xs leading-none">
             {d.emoji}
           </span>
           {label}
@@ -167,7 +169,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
         }
       }}
       className={cn(
-        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.06em]',
+        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-mono text-2xs font-semibold uppercase tracking-[0.06em]',
         active ? 'text-brand-600' : 'text-ink-muted',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
       )}
@@ -188,7 +190,7 @@ function clientSortNextDir(column, previousKey, previousDir) {
 }
 
 const PAGER_BTN =
-  'rounded-control border px-3 py-1.5 font-mono text-[11px] disabled:cursor-default';
+  'rounded-control border px-3 py-1.5 font-mono text-2xs disabled:cursor-default';
 
 /**
  * Canonical list footer: count + page size + prev/next.
@@ -238,7 +240,7 @@ function AdminListPager({
         className
       )}
     >
-      <span className="font-mono text-[11px] text-ink-muted">{label}</span>
+      <span className="font-mono text-2xs text-ink-muted">{label}</span>
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={String(pageSize)}
@@ -379,7 +381,7 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
         type="button"
         onClick={onHome}
         title={t(locale, 'dashboard.homeAria')}
-        className="m-0 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] uppercase tracking-[2.5px] text-ink-label"
+        className="m-0 cursor-pointer border-none bg-transparent p-0 font-mono text-2xs uppercase tracking-[2.5px] text-ink-label"
       >
         {t(locale, 'dashboard.panel')}
       </button>
@@ -645,7 +647,7 @@ function AdminActionsTh({ children }) {
   return (
     <th
       scope="col"
-      className="border-b border-ink/12 px-4 py-3 text-right font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted"
+      className="border-b border-ink/12 px-4 py-3 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
     >
       {children}
     </th>

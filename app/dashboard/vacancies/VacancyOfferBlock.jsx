@@ -131,7 +131,7 @@ export function VacancyOfferBlock({
         }}
         onMouseDown={(e) => e.stopPropagation()}
         className={cn(
-          'mt-1.5 inline-flex max-w-full items-center gap-1 rounded-control border px-1.5 py-0.5 font-mono text-[10px]',
+          'mt-1.5 inline-flex max-w-full items-center gap-1 rounded-control border px-1.5 py-0.5 font-mono text-2xs',
           STATUS_TONE[status] || STATUS_TONE.none
         )}
         title={t(locale, 'recruiting.offerEdit')}
@@ -152,7 +152,7 @@ export function VacancyOfferBlock({
         <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.offerTitle')}</span>
         <span
           className={cn(
-            'inline-flex rounded-control border px-2 py-0.5 font-mono text-[11px]',
+            'inline-flex rounded-control border px-2 py-0.5 font-mono text-2xs',
             STATUS_TONE[status] || STATUS_TONE.none
           )}
         >
@@ -161,7 +161,7 @@ export function VacancyOfferBlock({
       </div>
       <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'recruiting.offerHint')}</p>
       {status !== 'none' ? (
-        <div className="mb-2 space-y-0.5 font-mono text-[12px] text-ink-muted">
+        <div className="mb-2 space-y-0.5 font-mono text-xs text-ink-muted">
           {offer.offerSalary ? (
             <div>{t(locale, 'recruiting.offerSalaryLine', { n: offer.offerSalary })}</div>
           ) : null}

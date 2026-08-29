@@ -9,7 +9,7 @@ import LandingAnalytics from './LandingAnalytics';
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-500/70">{children}</p>
+    <p className="mb-3 font-mono text-2xs uppercase tracking-[0.14em] text-brand-500/70">{children}</p>
   );
 }
 
@@ -89,14 +89,14 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
 
       <main id="conteudo" className="relative z-[1]">
         <section id="produto-hero" className="mx-auto max-w-5xl px-5 pb-12 pt-12 sm:px-8 sm:pb-16 sm:pt-16">
-          <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-success">
+          <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-success">
             {copy.earlyBadge}
           </p>
           <h1 className="mb-4 max-w-[22ch] bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-[clamp(2rem,5.5vw,3.15rem)] font-normal leading-[1.12] text-transparent">
             {copy.heroTitle}
           </h1>
           <p className="mb-3 max-w-2xl text-lg leading-relaxed text-ink">{copy.heroLead}</p>
-          <p className="mb-6 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{copy.heroBody}</p>
+          <p className="mb-6 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.heroBody}</p>
           <Ctas copy={copy} />
           <p className="mt-4 text-sm text-ink-faint">
             {copy.heroFoot}{' '}
@@ -157,7 +157,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
             <h2 id="wedge-title" className="mb-4 mt-0 max-w-2xl text-2xl font-normal text-ink sm:text-[1.75rem]">
               {copy.wedgeTitle}
             </h2>
-            <p className="m-0 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{copy.wedgeBody}</p>
+            <p className="m-0 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.wedgeBody}</p>
           </div>
         </section>
 
@@ -257,7 +257,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <SectionLabel>{copy.earlyLabel}</SectionLabel>
             <h2 className="mb-3 mt-0 max-w-lg text-2xl font-normal text-ink sm:text-[1.75rem]">{copy.earlyTitle}</h2>
-            <p className="mb-5 max-w-2xl text-[15px] leading-relaxed text-ink-muted">{copy.earlyBody}</p>
+            <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.earlyBody}</p>
             <ul className="mb-6 flex list-none flex-wrap gap-2 p-0">
               {copy.earlyProof.map((p) => (
                 <li

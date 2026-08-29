@@ -80,7 +80,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
           <div className="flex items-center justify-between gap-2 border-b border-ink/10 bg-canvas/80 px-3 py-2.5">
             <div className="min-w-0">
               <div className="font-ui text-sm font-semibold text-ink">{t(locale, 'panel.helpAssist.title')}</div>
-              <p className="m-0 font-mono text-[10px] text-ink-faint">{t(locale, 'panel.helpAssist.subtitle')}</p>
+              <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'panel.helpAssist.subtitle')}</p>
             </div>
             <button
               type="button"
@@ -101,7 +101,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
                     <button
                       key={key}
                       type="button"
-                      className="min-h-touch rounded-control border border-ink/12 bg-canvas px-2.5 py-1.5 text-left font-mono text-[11px] text-ink-muted"
+                      className="min-h-touch rounded-control border border-ink/12 bg-canvas px-2.5 py-1.5 text-left font-mono text-2xs text-ink-muted"
                       onClick={() => send(t(locale, key))}
                     >
                       {t(locale, key)}
@@ -114,7 +114,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
               <div
                 key={`${m.role}-${i}`}
                 className={cn(
-                  'rounded-control px-2.5 py-2 text-[13px] leading-snug',
+                  'rounded-control px-2.5 py-2 text-prose leading-snug',
                   m.role === 'user' ? 'ml-6 bg-brand-500/10 text-ink' : 'mr-2 bg-canvas text-ink'
                 )}
               >
@@ -122,7 +122,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
                 {m.role === 'assistant' && m.tab && typeof navigateDashboard === 'function' ? (
                   <button
                     type="button"
-                    className="mt-2 inline-flex min-h-touch items-center gap-1 border-none bg-transparent p-0 font-mono text-[11px] text-brand-600 underline"
+                    className="mt-2 inline-flex min-h-touch items-center gap-1 border-none bg-transparent p-0 font-mono text-2xs text-brand-600 underline"
                     onClick={() => navigateDashboard({ tab: m.tab })}
                   >
                     {t(locale, 'panel.helpAssist.openTab')}
@@ -130,7 +130,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
                 ) : null}
               </div>
             ))}
-            {busy ? <p className="m-0 font-mono text-[11px] text-ink-faint">{t(locale, 'panel.common.loading')}</p> : null}
+            {busy ? <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'panel.common.loading')}</p> : null}
             {error ? <p className="m-0 text-xs text-danger">{error}</p> : null}
           </div>
 
@@ -163,7 +163,7 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
       <button
         type="button"
         className={cn(
-          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-brand-500 px-4 py-2.5 font-ui text-[13px] font-semibold text-white shadow-toast',
+          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-brand-500 px-4 py-2.5 font-ui text-prose font-semibold text-white shadow-toast',
           open && 'bg-brand-600'
         )}
         onClick={() => setOpen((v) => !v)}

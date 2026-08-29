@@ -16,20 +16,20 @@ function itemTitle(locale, item) {
 function statusBadge(locale, item) {
   if (item.hrDone) {
     return (
-      <span className="font-mono text-[10px] text-success">
+      <span className="font-mono text-2xs text-success">
         {t(locale, 'employeeHome.journeyHrDone')}
       </span>
     );
   }
   if (item.overdue) {
     return (
-      <span className="font-mono text-[10px] text-warning">
+      <span className="font-mono text-2xs text-warning">
         {t(locale, 'employeeHome.journeyOverdue')}
       </span>
     );
   }
   return (
-    <span className="font-mono text-[10px] text-ink-faint">
+    <span className="font-mono text-2xs text-ink-faint">
       {t(locale, 'employeeHome.journeyPending')}
     </span>
   );
@@ -99,7 +99,7 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-ink">{itemTitle(locale, item)}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-[10px] text-ink-muted">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-muted">
                     {item.dueDate ? (
                       <span>{t(locale, 'employeeHome.dueBy', { date: item.dueDate })}</span>
                     ) : null}

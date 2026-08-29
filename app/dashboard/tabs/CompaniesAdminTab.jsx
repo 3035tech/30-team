@@ -28,15 +28,15 @@ import { RichTextEditor } from '../../_components/RichTextEditor';
 import { CompanyLogoCropDialog } from '../../_components/CompanyLogoCropDialog';
 import { COMPANY_LOGO_ACCEPT } from '../../../lib/company-logo-limits';
 
-const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-[11px] text-ink-faint';
+const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
 const FIELD_INPUT =
   'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
 const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
 const DIALOG_BTN_GHOST =
-  'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-[13px] text-ink-muted disabled:cursor-default disabled:opacity-60';
+  'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-prose text-ink-muted disabled:cursor-default disabled:opacity-60';
 const DIALOG_BTN_PRIMARY =
-  'inline-flex cursor-pointer items-center gap-2 rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-[13px] text-white disabled:cursor-default disabled:opacity-60';
+  'inline-flex cursor-pointer items-center gap-2 rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-prose text-white disabled:cursor-default disabled:opacity-60';
 
 /** Minimal logo upload/preview for company drawer (create = local file; edit = POST/DELETE). */
 function CompanyLogoField({
@@ -116,7 +116,7 @@ function CompanyLogoField({
 
   return (
     <div>
-      <span className="font-mono text-[11px] text-ink-faint">
+      <span className="font-mono text-2xs text-ink-faint">
         {t(locale, 'panel.admin.companyLogoUpload')}
       </span>
       <div className="mt-1.5 flex flex-wrap items-center gap-3">
@@ -124,7 +124,7 @@ function CompanyLogoField({
           {preview ? (
             <img src={preview} alt="" width={72} height={72} className="object-contain" />
           ) : (
-            <span className="font-mono text-[10px] text-ink-faint">—</span>
+            <span className="font-mono text-2xs text-ink-faint">—</span>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -526,7 +526,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.companiesTitle')}</span>
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'panel.admin.companiesRegister')}</span>
-        <p className="mb-0 mt-2.5 text-[13px] leading-relaxed text-ink-muted">
+        <p className="mb-0 mt-2.5 text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.admin.companiesRegisterDesc')}
         </p>
       </div>
@@ -599,13 +599,13 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
                   <th
                     scope="col"
-                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
                   >
                     {t(locale, 'panel.admin.colLinkT')}
                   </th>
                   <th
                     scope="col"
-                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted"
+                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
                   >
                     {t(locale, 'panel.admin.colCareers')}
                   </th>
@@ -663,7 +663,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             }
                           />
                         ) : (
-                          <span className="font-mono text-[11px] text-ink-faint">
+                          <span className="font-mono text-2xs text-ink-faint">
                             {t(locale, 'panel.admin.noLinkShort')}
                           </span>
                         )}
@@ -679,7 +679,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             disabled={loading}
                           />
                         ) : (
-                          <span className="font-mono text-[11px] text-ink-faint">
+                          <span className="font-mono text-2xs text-ink-faint">
                             {t(locale, 'panel.admin.companyPublicPageOffShort')}
                           </span>
                         )}
@@ -805,7 +805,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         )}
       >
         <div className="flex flex-col gap-3.5">
-          <p className="m-0 text-[13px] leading-snug text-ink-muted">
+          <p className="m-0 text-prose leading-snug text-ink-muted">
             {drawerMode === 'edit'
               ? t(locale, 'panel.admin.editCompanyHelp')
               : t(locale, 'panel.admin.createCompanyHelp')}
@@ -841,28 +841,28 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               )}
             />
             {slugStatus === 'checking' ? (
-              <span className="text-[11px] leading-snug text-ink-muted">
+              <span className="text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.admin.companySlugChecking')}
               </span>
             ) : null}
             {slugStatus === 'ok' ? (
-              <span className="text-[11px] leading-snug text-success">
+              <span className="text-2xs leading-snug text-success">
                 {t(locale, 'panel.admin.companySlugAvailable')}
                 {slugNormalized ? ` (${slugNormalized})` : ''}
               </span>
             ) : null}
             {slugStatus === 'taken' ? (
-              <span className="text-[11px] leading-snug text-danger">
+              <span className="text-2xs leading-snug text-danger">
                 {t(locale, 'panel.admin.companySlugTaken')}
               </span>
             ) : null}
             {slugStatus === 'invalid' && String(form.slug || '').trim() ? (
-              <span className="text-[11px] leading-snug text-warning">
+              <span className="text-2xs leading-snug text-warning">
                 {t(locale, 'panel.admin.companySlugInvalid')}
               </span>
             ) : null}
             {slugStatus === 'idle' || (slugStatus === 'invalid' && !String(form.slug || '').trim()) ? (
-              <span className="text-[11px] leading-snug text-ink-muted">
+              <span className="text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.admin.companySlugHelp')}
               </span>
             ) : null}
@@ -886,7 +886,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               aria-label={t(locale, 'panel.admin.editCompanyAnniversary')}
               className={FIELD_INPUT}
             />
-            <span className="text-[11px] leading-snug text-ink-muted">
+            <span className="text-2xs leading-snug text-ink-muted">
               {t(locale, 'panel.admin.editCompanyAnniversaryHelp')}
             </span>
           </label>
@@ -922,7 +922,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             />
             <span>
               {t(locale, 'panel.admin.editCompanyPublicProfile')}
-              <span className="mt-1 block text-[11px] leading-snug text-ink-muted">
+              <span className="mt-1 block text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.admin.editCompanyPublicProfileHelp')}
               </span>
             </span>
@@ -937,7 +937,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               locale={locale}
               disabled={formSaving}
             />
-            <span className="text-[11px] leading-snug text-ink-muted">
+            <span className="text-2xs leading-snug text-ink-muted">
               {t(locale, 'panel.admin.editCompanyAboutHelp')}
             </span>
           </div>

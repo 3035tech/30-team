@@ -75,7 +75,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
               <h2 className="m-0 font-ui text-lg font-semibold text-ink">
                 {t(locale, 'nineBox.title')}
               </h2>
-              <span className={cn(S.faint, 'font-mono text-[11px]')}>
+              <span className={cn(S.faint, 'font-mono text-2xs')}>
                 {t(locale, 'nineBox.placed', { placed, scanned })}
               </span>
             </div>
@@ -87,7 +87,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
                 <p className={cn(S.faint, 'm-0 text-xs')}>{t(locale, 'nineBox.emptyHint')}</p>
                 <a
                   href="/dashboard?tab=team"
-                  className="inline-flex min-h-touch items-center font-mono text-[11px] text-brand-600 hover:underline"
+                  className="inline-flex min-h-touch items-center font-mono text-2xs text-brand-600 hover:underline"
                 >
                   {t(locale, 'nineBox.emptyCta')}
                 </a>
@@ -107,24 +107,24 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
                       className="flex min-h-[88px] flex-col rounded-control border border-ink/10 bg-canvas/40 p-2"
                     >
                       <div className="mb-1.5 flex items-center justify-between gap-1">
-                        <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                        <span className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
                           {t(locale, `nineBox.cellLabel.${cellId}`)}
                         </span>
-                        <span className="font-mono text-[10px] text-ink-muted">{people.length}</span>
+                        <span className="font-mono text-2xs text-ink-muted">{people.length}</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {people.slice(0, 8).map((p) => (
                           <a
                             key={p.candidateId}
                             href={`/dashboard?tab=team&candidateId=${p.candidateId}`}
-                            className="max-w-full truncate rounded-full border border-brand-500/25 bg-brand-500/[0.08] px-2 py-0.5 text-[11px] text-brand-800 hover:bg-brand-500/15"
+                            className="max-w-full truncate rounded-full border border-brand-500/25 bg-brand-500/[0.08] px-2 py-0.5 text-2xs text-brand-800 hover:bg-brand-500/15"
                             title={t(locale, 'nineBox.openPerson', { name: p.name })}
                           >
                             {p.name}
                           </a>
                         ))}
                         {people.length > 8 ? (
-                          <span className="self-center font-mono text-[10px] text-ink-faint">
+                          <span className="self-center font-mono text-2xs text-ink-faint">
                             {t(locale, 'nineBox.more', { n: people.length - 8 })}
                           </span>
                         ) : null}
@@ -136,7 +136,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
             )}
 
             {(data?.unplaced?.length || 0) > 0 ? (
-              <p className={cn(S.faint, 'm-0 mt-3 text-[11px]')}>
+              <p className={cn(S.faint, 'm-0 mt-3 text-2xs')}>
                 {t(locale, 'nineBox.unplaced', { n: data.unplaced.length })}
               </p>
             ) : null}

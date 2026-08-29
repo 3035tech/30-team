@@ -64,7 +64,7 @@ function VacancyEntryInner({ token, initial }) {
         <div className="relative z-[2] mx-auto mt-6 max-w-[660px] px-6 text-center">
           <a
             href="/jobs"
-            className="mb-2 inline-block font-display text-[15px] text-brand-500"
+            className="mb-2 inline-block font-display text-base text-brand-500"
           >
             {t(locale, 'publicVacancy.browseOpenCta')}
           </a>

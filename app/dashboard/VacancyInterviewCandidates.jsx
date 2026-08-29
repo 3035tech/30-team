@@ -275,7 +275,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
             {row.phone ? ` · ${formatPhoneBr(row.phone)}` : ''}
           </div>
           {(locBits || row.linkedinUrl) ? (
-            <div className="mt-1 text-[11px] font-mono text-ink-faint">
+            <div className="mt-1 text-2xs font-mono text-ink-faint">
               {locBits || null}
               {locBits && row.linkedinUrl ? ' · ' : null}
               {row.linkedinUrl ? (
@@ -287,14 +287,14 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           ) : null}
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             <span
-              className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-[11px] text-ink-muted"
+              className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-2xs text-ink-muted"
               title={t(locale, 'recruiting.enneagramBadgeTitle')}
             >
               {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
             </span>
             <span
               className={cn(
-                  'rounded-lg border px-2 py-0.5 font-mono text-[11px]',
+                  'rounded-lg border px-2 py-0.5 font-mono text-2xs',
                   motivatorsDone ? 'border-success/35 text-success' : 'border-ink/12 text-ink-muted'
                 )}
               title={t(locale, 'recruiting.motivatorsBadgeTitle')}
@@ -302,22 +302,22 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
               {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
             </span>
             {row.topType != null && (
-              <span className="text-[11px] font-mono text-brand-500">
+              <span className="text-2xs font-mono text-brand-500">
                 {t(locale, 'recruiting.typeShort', { type: row.topType })}
               </span>
             )}
             {availabilityLabel(locale, row.availability) ? (
-              <span className="text-[11px] font-mono text-ink-faint">
+              <span className="text-2xs font-mono text-ink-faint">
                 {availabilityLabel(locale, row.availability)}
               </span>
             ) : null}
             {sourceLabel(locale, row.source) ? (
-              <span className="text-[11px] font-mono text-ink-faint">
+              <span className="text-2xs font-mono text-ink-faint">
                 {sourceLabel(locale, row.source)}
               </span>
             ) : null}
             {row.salaryExpectation ? (
-              <span className="text-[11px] font-mono text-ink-faint">
+              <span className="text-2xs font-mono text-ink-faint">
                 {formatSalaryBr(row.salaryExpectation)}
               </span>
             ) : null}
@@ -402,7 +402,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           ) : null}
 
           {briefLoading ? (
-            <div className="mb-3 flex items-center gap-2 text-[13px] text-ink-muted">
+            <div className="mb-3 flex items-center gap-2 text-prose text-ink-muted">
               <Spinner size={16} />
               <span>{t(locale, 'common.loading')}</span>
             </div>
@@ -507,7 +507,7 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
           </button>
 
           <span
-            className="block mb-2 text-[11px] font-mono text-ink-muted uppercase tracking-[0.6px]"
+            className="block mb-2 text-2xs font-mono text-ink-muted uppercase tracking-[0.6px]"
           >
             {t(locale, 'recruiting.interviewNotesTitle')}
           </span>
@@ -688,7 +688,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         className="mb-3.5 rounded-xl border border-brand-500/20 bg-brand-500/[0.03] p-3.5"
       >
         <span
-          className="block mb-2.5 text-[11px] font-mono text-brand-500 uppercase tracking-[0.6px]"
+          className="block mb-2.5 text-2xs font-mono text-brand-500 uppercase tracking-[0.6px]"
         >
           {t(locale, 'recruiting.newCandidate')}
         </span>
@@ -779,7 +779,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             />
             {t(locale, 'recruiting.createSendMotivators')}
           </label>
-          <span className="text-[11px] font-mono text-ink-faint">
+          <span className="text-2xs font-mono text-ink-faint">
             {t(locale, 'recruiting.createInvitesHint')}
           </span>
         </div>
@@ -789,7 +789,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             onClick={create}
             disabled={creating || !name.trim() || !email.trim()}
             className={cn(
-              'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-4 py-[9px] font-mono text-[13px] text-brand-500',
+              'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-4 py-[9px] font-mono text-prose text-brand-500',
               (creating || !name.trim() || !email.trim()) && 'opacity-55'
             )}
           >
@@ -799,7 +799,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           </button>
         </div>
         {createMsg ? (
-          <p className="mb-0 mt-2 font-mono text-[11px] text-success">
+          <p className="mb-0 mt-2 font-mono text-2xs text-success">
             {createMsg}
           </p>
         ) : null}

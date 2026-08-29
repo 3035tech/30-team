@@ -133,7 +133,7 @@ export function HelpSystemMap({ locale }) {
 
   return (
     <div className="mt-3.5 flex flex-col gap-3">
-      <p className="m-0 text-[12px] leading-snug text-ink-faint">
+      <p className="m-0 text-xs leading-snug text-ink-faint">
         {t(locale, 'panel.help.systemMapLegend')}
       </p>
 
@@ -146,7 +146,7 @@ export function HelpSystemMap({ locale }) {
           type="button"
           onClick={() => setLane('all')}
           className={cn(
-            'min-h-touch cursor-pointer rounded-full border px-3 py-1.5 font-mono text-[11px]',
+            'min-h-touch cursor-pointer rounded-full border px-3 py-1.5 font-mono text-2xs',
             lane === 'all'
               ? 'border-brand-500/35 bg-brand-500/[0.08] text-brand-600'
               : 'border-ink/12 bg-transparent text-ink-muted'
@@ -164,7 +164,7 @@ export function HelpSystemMap({ locale }) {
               if (first) setSelected(first);
             }}
             className={cn(
-              'min-h-touch cursor-pointer rounded-full border px-3 py-1.5 font-mono text-[11px]',
+              'min-h-touch cursor-pointer rounded-full border px-3 py-1.5 font-mono text-2xs',
               lane === id
                 ? 'border-brand-500/35 bg-brand-500/[0.08] text-brand-600'
                 : 'border-ink/12 bg-transparent text-ink-muted'
@@ -279,60 +279,60 @@ export function HelpSystemMap({ locale }) {
           <span className="font-display text-sm text-ink">
             {t(locale, `panel.help.systemMapNode_${selected}`)}
           </span>
-          <span className={cn(S.filterChip, 'text-[10px]')}>
+          <span className={cn(S.filterChip, 'text-2xs')}>
             {t(locale, `panel.help.systemMapLane_${NODE_LAYOUT[selected].lane}`)}
           </span>
         </div>
-        <p className="mb-2 mt-0 text-[13px] leading-relaxed text-ink-muted">
+        <p className="mb-2 mt-0 text-prose leading-relaxed text-ink-muted">
           {t(locale, `panel.help.systemMapDoes_${selected}`)}
         </p>
         <dl className="m-0 grid gap-2 sm:grid-cols-3">
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+            <dt className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
               {t(locale, 'panel.help.systemMapWhere')}
             </dt>
-            <dd className="m-0 text-[12px] text-ink">
+            <dd className="m-0 text-xs text-ink">
               {t(locale, `panel.help.systemMapWhere_${selected}`)}
             </dd>
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+            <dt className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
               {t(locale, 'panel.help.systemMapWho')}
             </dt>
-            <dd className="m-0 text-[12px] text-ink">
+            <dd className="m-0 text-xs text-ink">
               {t(locale, `panel.help.systemMapWho_${selected}`)}
             </dd>
           </div>
           <div>
-            <dt className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+            <dt className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
               {t(locale, 'panel.help.systemMapNext')}
             </dt>
-            <dd className="m-0 text-[12px] text-ink">
+            <dd className="m-0 text-xs text-ink">
               {t(locale, `panel.help.systemMapNext_${selected}`)}
             </dd>
           </div>
         </dl>
-        <p className="mb-0 mt-2.5 text-[11px] leading-snug text-ink-faint">
+        <p className="mb-0 mt-2.5 text-2xs leading-snug text-ink-faint">
           {t(locale, 'panel.help.systemMapHedge')}
         </p>
       </div>
 
       <div>
         <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.help.systemMapLinksTitle')}</span>
-        <p className="mb-2 mt-0 text-[12px] leading-snug text-ink-faint">
+        <p className="mb-2 mt-0 text-xs leading-snug text-ink-faint">
           {t(locale, 'panel.help.systemMapLinksHint')}
         </p>
         <div className="overflow-x-auto rounded-control border border-ink/12">
-          <table className="w-full min-w-[480px] border-collapse text-left text-[12px]">
+          <table className="w-full min-w-[480px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-ink/12 bg-ink/[0.03]">
-                <th className="px-2.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                <th className="px-2.5 py-2 font-mono text-2xs font-semibold uppercase tracking-wide text-ink-muted">
                   {t(locale, 'panel.help.systemMapColUrl')}
                 </th>
-                <th className="px-2.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                <th className="px-2.5 py-2 font-mono text-2xs font-semibold uppercase tracking-wide text-ink-muted">
                   {t(locale, 'panel.help.systemMapColName')}
                 </th>
-                <th className="px-2.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                <th className="px-2.5 py-2 font-mono text-2xs font-semibold uppercase tracking-wide text-ink-muted">
                   {t(locale, 'panel.help.systemMapColPurpose')}
                 </th>
               </tr>
@@ -340,7 +340,7 @@ export function HelpSystemMap({ locale }) {
             <tbody>
               {LINK_KEYS.map((k) => (
                 <tr key={k} className="border-b border-ink/8 last:border-0">
-                  <td className="px-2.5 py-1.5 font-mono text-[11px] text-brand-600">
+                  <td className="px-2.5 py-1.5 font-mono text-2xs text-brand-600">
                     {t(locale, `panel.help.systemMapLinkUrl_${k}`)}
                   </td>
                   <td className="px-2.5 py-1.5 text-ink">

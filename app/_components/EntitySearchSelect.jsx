@@ -159,7 +159,7 @@ export function EntitySearchSelect({
                 >
                   <span className="font-display text-sm text-ink">{item.label}</span>
                   {item.email ? (
-                    <span className="font-mono text-[11px] text-ink-faint">{item.email}</span>
+                    <span className="font-mono text-2xs text-ink-faint">{item.email}</span>
                   ) : null}
                 </button>
               </li>

@@ -213,7 +213,7 @@ function statusStyles(status, color) {
 
 function LegendDot({ color, label, hollow }) {
   return (
-    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-ink-muted">
+    <span className="inline-flex items-center gap-1.5 font-mono text-2xs text-ink-muted">
       <span
         className="box-border h-2.5 w-2.5 rounded-full border-2"
         style={{
@@ -339,7 +339,7 @@ export function CandidateTimeline({
                   />
                 </div>
                 <div
-                  className="px-1 text-center font-mono text-[11px] leading-tight"
+                  className="px-1 text-center font-mono text-2xs leading-tight"
                   style={{
                     fontWeight: styles.labelWeight,
                     color: styles.labelColor,
@@ -349,7 +349,7 @@ export function CandidateTimeline({
                 </div>
                 {step.status === 'current' ? (
                   <div
-                    className="mt-1.5 text-center font-mono text-[9px] font-bold uppercase tracking-wider"
+                    className="mt-1.5 text-center font-mono text-2xs font-bold uppercase tracking-wider"
                     style={{ color }}
                   >
                     {t(locale, 'recruiting.timelineNow')}
@@ -371,7 +371,7 @@ export function CandidateTimeline({
 
       {events.length > 0 ? (
         <details className="mt-3.5 w-full max-w-[520px]">
-          <summary className="cursor-pointer select-none text-center font-mono text-[11px] tracking-wide text-ink-muted [list-style-position:inside]">
+          <summary className="cursor-pointer select-none text-center font-mono text-2xs tracking-wide text-ink-muted [list-style-position:inside]">
             {t(locale, 'recruiting.timelineHistory', { n: events.length })}
           </summary>
           <ul className="mb-0 mt-2.5 list-none p-0 text-left">

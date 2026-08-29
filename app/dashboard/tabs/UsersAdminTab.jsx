@@ -426,7 +426,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.usersTitle')}</span>
       <div className={cn(S.card, 'px-7 py-[22px]')}>
         <span className={S.label}>{t(locale, 'panel.admin.usersAccounts')}</span>
-        <p className="mb-0 mt-2.5 text-[13px] leading-relaxed text-ink-muted">
+        <p className="mb-0 mt-2.5 text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.admin.usersIntro')}
           <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
           {t(locale, 'panel.admin.usersIntroSuffix')}
@@ -501,7 +501,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="displayName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colDisplayName')}</SortableTh>
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
-                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted">
                     {t(locale, 'panel.admin.colOrigin')}
                   </th>
                   <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
@@ -522,13 +522,13 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       </td>
                       <td className="px-3 py-3 text-ink">{u.email}</td>
                       <td className="px-3 py-3">
-                        <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+                        <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
                           {u.role}
                         </span>
                         {u.capabilitiesCustomized ? (
                           <span
                             title={t(locale, 'panel.admin.userModulesHint')}
-                            className="ml-1.5 rounded-full border border-brand-500/25 bg-brand-500/[0.07] px-2 py-0.5 font-mono text-[10px] text-brand-600"
+                            className="ml-1.5 rounded-full border border-brand-500/25 bg-brand-500/[0.07] px-2 py-0.5 font-mono text-2xs text-brand-600"
                           >
                             {t(locale, 'panel.admin.userModulesCustom')}
                           </span>
@@ -536,7 +536,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                         {u.passwordSetupPending ? (
                           <span
                             title={t(locale, 'panel.admin.passwordSetupPendingHint')}
-                            className="ml-1.5 rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted"
+                            className="ml-1.5 rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted"
                           >
                             {t(locale, 'panel.admin.passwordSetupPending')}
                           </span>
@@ -546,7 +546,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                         <span
                           title={t(locale, `panel.admin.originHint.${u.origin || 'admin'}`)}
                           className={cn(
-                            'inline-block rounded-full border px-2 py-0.5 font-mono text-[10px]',
+                            'inline-block rounded-full border px-2 py-0.5 font-mono text-2xs',
                             u.origin === 'admin' || !u.origin
                               ? 'border-ink/12 bg-ink/[0.04] text-ink-muted'
                               : 'border-info/25 bg-info/10 text-info'
@@ -555,7 +555,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           {t(locale, `panel.admin.origin.${u.origin || 'admin'}`)}
                         </span>
                         {u.signupPending ? (
-                          <div className="mt-1 font-mono text-[10px] text-warning">
+                          <div className="mt-1 font-mono text-2xs text-warning">
                             {t(locale, 'panel.admin.signupPendingBadge')}
                           </div>
                         ) : null}

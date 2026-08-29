@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 
 const tipClass =
-  'pointer-events-none fixed z-[200] max-w-[16rem] rounded-control border border-ink/15 bg-canvas px-2 py-1.5 text-center font-mono text-[11px] leading-snug text-ink shadow-md';
+  'pointer-events-none fixed z-[200] max-w-[16rem] rounded-control border border-ink/15 bg-canvas px-2 py-1.5 text-center font-mono text-2xs leading-snug text-ink shadow-md';
 
 /**
  * Immediate hover/focus hint for icon-only controls.

@@ -89,7 +89,7 @@ export function SystemNoticeModal({
             <Icon name={noticeIconName(tone)} className="h-5 w-5 shrink-0" />
           </span>
           <div className="min-w-0 flex-1">
-            <span className={cn('font-mono text-[10px] uppercase tracking-[2px]', accentClass)}>
+            <span className={cn('font-mono text-2xs uppercase tracking-[2px]', accentClass)}>
               30Team
             </span>
             <h2

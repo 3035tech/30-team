@@ -162,7 +162,7 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
                   key={item.id}
                   role="status"
                   className={cn(
-                    'pointer-events-auto flex items-start gap-2.5 rounded-xl border border-l-4 bg-white px-3.5 py-3 font-ui text-[13px] leading-snug text-ink shadow-toast',
+                    'pointer-events-auto flex items-start gap-2.5 rounded-xl border border-l-4 bg-white px-3.5 py-3 font-ui text-prose leading-snug text-ink shadow-toast',
                     item.tone === 'error' && 'border-danger/33 border-l-danger',
                     item.tone === 'info' && 'border-info/33 border-l-info',
                     item.tone === 'warning' && 'border-warning/33 border-l-warning',

@@ -130,7 +130,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="m-0 font-display text-xl font-normal text-ink">{t(locale, 'panel.audit.title')}</h2>
+        <h2 className={S.pageTitle}>{t(locale, 'panel.audit.title')}</h2>
         <p className={cn(S.muted, 'mt-1 max-w-3xl')}>{t(locale, 'panel.audit.intro')}</p>
       </div>
 
@@ -209,9 +209,9 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
         <>
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.audit.count', { n: total })}</p>
           <div className="overflow-x-auto rounded-card border border-ink/10">
-            <table className="w-full min-w-[880px] border-collapse text-left text-[13px]">
+            <table className="w-full min-w-[880px] border-collapse text-left text-prose">
               <thead>
-                <tr className="border-b border-ink/10 bg-ink/[0.03] font-mono text-[11px] uppercase tracking-wide text-ink-label">
+                <tr className="border-b border-ink/10 bg-ink/[0.03] font-mono text-2xs uppercase tracking-wide text-ink-label">
                   <th className="px-3 py-2.5">{t(locale, 'panel.audit.colWhen')}</th>
                   <th className="px-3 py-2.5">{t(locale, 'panel.audit.colActor')}</th>
                   <th className="px-3 py-2.5">{t(locale, 'panel.audit.colAction')}</th>
@@ -229,36 +229,36 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
                   const open = expandedId === row.id;
                   return (
                     <tr key={row.id} className="border-b border-ink/8 align-top hover:bg-ink/[0.02]">
-                      <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-ink-muted">
+                      <td className="whitespace-nowrap px-3 py-2.5 font-mono text-2xs text-ink-muted">
                         {when}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="mb-0.5 block font-mono text-[10px] uppercase text-ink-faint">
+                        <span className="mb-0.5 block font-mono text-2xs uppercase text-ink-faint">
                           {t(locale, `panel.audit.actorKind.${row.actorKind || 'manager'}`)}
                         </span>
                         {formatActor(row, locale)}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[12px]">{row.action}</td>
-                      <td className="px-3 py-2.5 font-mono text-[12px]">{formatTarget(row)}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs">{row.action}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs">{formatTarget(row)}</td>
                       <td className="px-3 py-2.5 text-ink-muted">
                         {row.companyName || (row.companyId ? `#${row.companyId}` : '—')}
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="font-mono text-[11px] text-ink-muted">{row.requestPath || '—'}</div>
+                        <div className="font-mono text-2xs text-ink-muted">{row.requestPath || '—'}</div>
                         {row.requestIp ? (
-                          <div className="mt-0.5 font-mono text-[10px] text-ink-faint">{row.requestIp}</div>
+                          <div className="mt-0.5 font-mono text-2xs text-ink-faint">{row.requestIp}</div>
                         ) : null}
                         {metaLine ? (
                           <button
                             type="button"
-                            className="mt-1 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-[10px] text-brand-600"
+                            className="mt-1 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-2xs text-brand-600"
                             onClick={() => setExpandedId(open ? null : row.id)}
                           >
                             {open ? t(locale, 'panel.audit.hideMeta') : t(locale, 'panel.audit.showMeta')}
                           </button>
                         ) : null}
                         {open && row.metadata ? (
-                          <pre className="mt-1 max-w-md overflow-x-auto rounded-control border border-ink/10 bg-ink/[0.03] p-2 font-mono text-[10px] text-ink-muted">
+                          <pre className="mt-1 max-w-md overflow-x-auto rounded-control border border-ink/10 bg-ink/[0.03] p-2 font-mono text-2xs text-ink-muted">
                             {JSON.stringify(row.metadata, null, 2)}
                           </pre>
                         ) : null}

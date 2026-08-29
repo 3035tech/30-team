@@ -17,7 +17,7 @@ export function VacancyFormSection({ locale, titleKey, defaultOpen = true, child
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">
+        <span className="font-mono text-2xs uppercase tracking-wider text-ink-muted">
           {t(locale, titleKey)}
         </span>
         <span className="font-mono text-xs text-ink-faint" aria-hidden>

@@ -597,7 +597,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'panel.lms.title')}</h2>
-          <p className="m-0 text-[13px] text-ink-muted">{t(locale, 'panel.lms.subtitle')}</p>
+          <p className="m-0 text-prose text-ink-muted">{t(locale, 'panel.lms.subtitle')}</p>
         </div>
         <AdminCreateButton onClick={createCourse} label={t(locale, 'panel.lms.createCourse')} />
       </div>
@@ -614,7 +614,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
           <div className={S.cardTight}>
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-ink/10 font-mono text-[11px] uppercase text-ink-faint">
+                <tr className="border-b border-ink/10 font-mono text-2xs uppercase text-ink-faint">
                   <th className="px-2 py-2">{t(locale, 'panel.lms.colCourse')}</th>
                   <th className="px-2 py-2">{t(locale, 'panel.lms.colLessons')}</th>
                   <th className="px-2 py-2">{t(locale, 'panel.lms.colEnrolled')}</th>
@@ -638,7 +638,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                       >
                         {c.title}
                         {!c.active ? (
-                          <span className="ml-2 font-mono text-[10px] text-ink-faint">
+                          <span className="ml-2 font-mono text-2xs text-ink-faint">
                             {t(locale, 'panel.lms.inactive')}
                           </span>
                         ) : null}
@@ -688,7 +688,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                 {ops ? (
                   <p
                     className={cn(
-                      'm-0 font-mono text-[12px]',
+                      'm-0 font-mono text-xs',
                       ops.overdue > 0 ? 'text-danger' : 'text-ink-muted'
                     )}
                   >
@@ -743,7 +743,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                             <div className="text-sm text-ink">
                               {index + 1}. {l.title}
                               {!l.active ? (
-                                <span className="ml-2 font-mono text-[10px] text-ink-faint">
+                                <span className="ml-2 font-mono text-2xs text-ink-faint">
                                   {t(locale, 'panel.lms.inactive')}
                                 </span>
                               ) : null}
@@ -799,12 +799,12 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                 <div>
                   <span className={S.label}>{t(locale, 'panel.lms.enrollmentsTitle')}</span>
                   <div className="mt-2 rounded-control border border-ink/10 bg-canvas-alt p-3">
-                    <div className="mb-2 font-mono text-[11px] uppercase text-ink-faint">
+                    <div className="mb-2 font-mono text-2xs uppercase text-ink-faint">
                       {lmsText(locale, 'enrollBatchOpts', 'Opções da turma')}
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block min-w-0">
-                        <span className="font-mono text-[11px] text-ink-faint">
+                        <span className="font-mono text-2xs text-ink-faint">
                           {lmsText(locale, 'batchCohortName', 'Nome da turma (opcional)')}
                         </span>
                         <input
@@ -815,7 +815,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                         />
                       </label>
                       <label className="block min-w-0">
-                        <span className="font-mono text-[11px] text-ink-faint">
+                        <span className="font-mono text-2xs text-ink-faint">
                           {lmsText(locale, 'fieldDueDate', 'Data limite')}
                         </span>
                         <DateField
@@ -881,7 +881,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                   ) : (
                     <table className="mt-3 w-full border-collapse text-left text-sm">
                       <thead>
-                        <tr className="border-b border-ink/10 font-mono text-[11px] uppercase text-ink-faint">
+                        <tr className="border-b border-ink/10 font-mono text-2xs uppercase text-ink-faint">
                           <th className="px-2 py-1.5">{t(locale, 'panel.lms.colPerson')}</th>
                           <th className="px-2 py-1.5">{t(locale, 'panel.lms.colProgress')}</th>
                           <AdminActionsTh locale={locale} />
@@ -892,7 +892,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                           <tr key={row.id} className="border-b border-ink/8">
                             <td className="px-2 py-2">
                               <div className="text-sm text-ink">{row.fullName}</div>
-                              <div className="font-mono text-[11px] text-ink-faint">{row.email}</div>
+                              <div className="font-mono text-2xs text-ink-faint">{row.email}</div>
                               {row.cohortName ? (
                                 <div className="mt-1 text-xs text-ink-muted">
                                   {lmsText(locale, 'cohortLabel', 'Turma')}: {row.cohortName}

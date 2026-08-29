@@ -13,8 +13,8 @@ import TurnstileField from '../_components/TurnstileField';
 
 const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
-const inputClass = `${fieldInputClass} w-full px-4 py-3 text-[15px] placeholder:text-ink-faint focus:border-brand-300 focus:bg-white`;
-const selectClass = `${fieldSelectClass} w-full px-4 py-3 text-[15px]`;
+const inputClass = `${fieldInputClass} w-full px-4 py-3 text-base placeholder:text-ink-faint focus:border-brand-300 focus:bg-white`;
+const selectClass = `${fieldSelectClass} w-full px-4 py-3 text-base`;
 
 export default function SignupPage() {
   const [locale, setLocale] = useLocale();
@@ -94,7 +94,7 @@ export default function SignupPage() {
           <h1 className="mb-4 text-center text-2xl font-normal text-ink">
             {t(locale, 'signup.successTitle')}
           </h1>
-          <p className="mb-6 text-center text-[15px] leading-relaxed text-ink-muted">
+          <p className="mb-6 text-center text-base leading-relaxed text-ink-muted">
             {t(locale, 'signup.successBody', { email: formData.email })}
           </p>
           <div className="mb-4 rounded-control border border-info/20 bg-info/10 px-4 py-3 text-sm text-ink-muted">
@@ -102,7 +102,7 @@ export default function SignupPage() {
           </div>
           <button
             onClick={() => router.push('/login')}
-            className="w-full rounded-control bg-brand-500 px-4 py-3 text-[15px] text-white hover:bg-brand-600"
+            className="w-full rounded-control bg-brand-500 px-4 py-3 text-base text-white hover:bg-brand-600"
           >
             {t(locale, 'signup.goToLogin')}
           </button>
@@ -120,10 +120,10 @@ export default function SignupPage() {
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
 
-        <h1 className="mb-2 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-[28px] font-normal leading-tight text-transparent">
+        <h1 className="mb-2 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-3xl font-normal leading-tight text-transparent">
           {t(locale, 'signup.title')}
         </h1>
-        <p className="mb-4 text-[15px] leading-relaxed text-ink-muted">{t(locale, 'signup.intro')}</p>
+        <p className="mb-4 text-base leading-relaxed text-ink-muted">{t(locale, 'signup.intro')}</p>
         <p className="mb-2 text-sm leading-relaxed text-ink-muted">{t(locale, 'signup.includedBlurb')}</p>
         <p className="mb-6">
           <Link href="/pricing" className="text-sm text-brand-600 underline-offset-2 hover:underline">
@@ -247,7 +247,7 @@ export default function SignupPage() {
             type="submit"
             disabled={loading}
             className={cn(
-              'w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-4 py-3.5 text-[15px] font-medium text-white',
+              'w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-4 py-3.5 text-base font-medium text-white',
               loading ? 'cursor-default opacity-60' : 'cursor-pointer hover:from-brand-600 hover:to-brand-900'
             )}
           >

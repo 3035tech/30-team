@@ -48,11 +48,11 @@ function CollapsibleSection({ id, title, count, open, onToggle, children, locale
         <span className={cn(S.label, 'm-0')}>
           {title}
           {count != null ? (
-            <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">({count})</span>
+            <span className="ml-2 font-mono text-2xs font-normal text-ink-faint">({count})</span>
           ) : null}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
-          <span className="font-mono text-[11px] font-medium tracking-wide">
+          <span className="font-mono text-2xs font-medium tracking-wide">
             {open ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
           </span>
           <Icon
@@ -271,7 +271,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 {task.dueDate ? (
                   <div
                     className={cn(
-                      'mt-1 font-mono text-[11px]',
+                      'mt-1 font-mono text-2xs',
                       task.kind === 'lms_overdue' ? 'text-danger' : 'text-ink-faint'
                     )}
                   >
@@ -283,12 +283,12 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     href={task.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex font-mono text-[12px] text-brand-600"
+                    className="mt-2 inline-flex font-mono text-xs text-brand-600"
                   >
                     {t(locale, 'employeeHome.openTask')}
                   </a>
                 ) : task.href?.startsWith('#') ? (
-                  <a href={task.href} className="mt-2 inline-flex font-mono text-[12px] text-brand-600">
+                  <a href={task.href} className="mt-2 inline-flex font-mono text-xs text-brand-600">
                     {task.href === '#lms'
                       ? t(locale, 'employeeHome.goToLms')
                       : task.href === '#pdi'
@@ -347,7 +347,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       <div className="min-w-0 text-xs text-ink">
                         {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
                         {it.title}
-                        <div className="mt-0.5 font-mono text-[10px] text-ink-faint">
+                        <div className="mt-0.5 font-mono text-2xs text-ink-faint">
                           {itemStatusLabel(locale, it.status)}
                           {it.dueDate ? ` · ${it.dueDate}` : ''}
                         </div>
@@ -357,7 +357,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           <button
                             type="button"
                             disabled={busy}
-                            className={cn(S.btnBrandSoft, 'min-h-touch text-[11px]')}
+                            className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
                             onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DONE)}
                           >
                             {t(locale, 'employeeHome.pdiMarkDone')}
@@ -366,7 +366,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           <button
                             type="button"
                             disabled={busy}
-                            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+                            className={cn(S.btnGhost, 'min-h-touch text-2xs')}
                             onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.TODO)}
                           >
                             {t(locale, 'employeeHome.pdiMarkTodo')}
@@ -376,7 +376,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           <button
                             type="button"
                             disabled={busy}
-                            className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+                            className={cn(S.btnGhost, 'min-h-touch text-2xs')}
                             onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DOING)}
                           >
                             {t(locale, 'employeeHome.pdiMarkDoing')}
@@ -406,7 +406,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <span className="truncate text-xs text-ink">{watching.title}</span>
               <button
                 type="button"
-                className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+                className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
                 onClick={() => setWatching(null)}
               >
                 {t(locale, 'employeeHome.closePlayer')}
@@ -432,7 +432,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <li key={course.enrollmentId} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div className="font-ui text-sm text-ink">{course.title}</div>
-                  <span className="font-mono text-[11px] text-ink-muted">
+                  <span className="font-mono text-2xs text-ink-muted">
                     {course.progressPct}%
                     {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
                   </span>
@@ -440,7 +440,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 {course.dueDate ? (
                   <p
                     className={cn(
-                      'mt-1 m-0 font-mono text-[11px]',
+                      'mt-1 m-0 font-mono text-2xs',
                       course.overdue ? 'text-danger' : 'text-ink-faint'
                     )}
                   >
@@ -461,7 +461,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           {lesson.completed ? '✓ ' : '○ '}
                           {lesson.title}
                           {lesson.contentKind && lesson.contentKind !== 'link' ? (
-                            <span className="ml-1 font-mono text-[10px] uppercase text-ink-faint">
+                            <span className="ml-1 font-mono text-2xs uppercase text-ink-faint">
                               {lesson.contentKind}
                             </span>
                           ) : null}
@@ -470,7 +470,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           {lesson.embedUrl ? (
                             <button
                               type="button"
-                              className="border-none bg-transparent p-0 font-mono text-[11px] text-brand-600"
+                              className="border-none bg-transparent p-0 font-mono text-2xs text-brand-600"
                               onClick={() =>
                                 setWatching({
                                   lessonId: lesson.id,
@@ -486,7 +486,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             href={lesson.contentUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="font-mono text-[11px] text-brand-600"
+                            className="font-mono text-2xs text-brand-600"
                           >
                             {t(locale, 'panel.employeePortal.openLesson')}
                           </a>
@@ -496,7 +496,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         <button
                           type="button"
                           disabled={busy}
-                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-[11px]')}
+                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-2xs')}
                           onClick={() => lessonAction(lesson.id, 'completeLesson')}
                         >
                           {t(locale, 'panel.employeePortal.markLessonDone')}
@@ -505,7 +505,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         <button
                           type="button"
                           disabled={busy}
-                          className={cn(S.btnGhost, 'min-h-touch shrink-0 text-[11px]')}
+                          className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
                           onClick={() => lessonAction(lesson.id, 'uncompleteLesson')}
                         >
                           {t(locale, 'panel.employeePortal.unmarkLesson')}
@@ -547,7 +547,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             {agreements.map((a) => (
               <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5 text-sm text-ink">
                 {a.meetingDate ? (
-                  <div className="mb-1 font-mono text-[11px] text-ink-faint">{a.meetingDate}</div>
+                  <div className="mb-1 font-mono text-2xs text-ink-faint">{a.meetingDate}</div>
                 ) : null}
                 <div className="whitespace-pre-wrap text-xs">{a.nextSteps}</div>
               </li>
@@ -556,7 +556,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         )}
         {prompts.length > 0 ? (
           <div className="mt-4">
-            <h3 className={cn(S.faint, 'mb-2 mt-0 text-[11px] uppercase tracking-wide')}>
+            <h3 className={cn(S.faint, 'mb-2 mt-0 text-2xs uppercase tracking-wide')}>
               {t(locale, 'panel.employeePortal.prepTitle')}
             </h3>
             <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
@@ -593,7 +593,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 : t(locale, 'panel.employeePortal.prepConfirm')}
             </button>
             {data?.oneOnOnePrep?.preparedAt ? (
-              <span className="font-mono text-[11px] text-success">
+              <span className="font-mono text-2xs text-success">
                 {t(locale, 'panel.employeePortal.prepDone')}
               </span>
             ) : null}
@@ -619,14 +619,14 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               href={company.website}
               target="_blank"
               rel="noreferrer"
-              className="mb-3 inline-flex font-mono text-[12px] text-brand-600"
+              className="mb-3 inline-flex font-mono text-xs text-brand-600"
             >
               {company.website}
             </a>
           ) : null}
           {(company.benefits || []).length > 0 ? (
             <>
-              <h3 className={cn(S.faint, 'mb-2 mt-3 text-[11px] uppercase tracking-wide')}>
+              <h3 className={cn(S.faint, 'mb-2 mt-3 text-2xs uppercase tracking-wide')}>
                 {t(locale, 'employeeHome.benefitsTitle')}
               </h3>
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -634,9 +634,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   <li key={b.id} className="rounded-control border border-ink/8 px-2.5 py-2 text-xs text-ink">
                     <span className="font-ui">{b.name}</span>
                     {b.categoryName ? (
-                      <span className="ml-2 font-mono text-[10px] text-ink-faint">{b.categoryName}</span>
+                      <span className="ml-2 font-mono text-2xs text-ink-faint">{b.categoryName}</span>
                     ) : null}
-                    {b.summary ? <p className={cn(S.muted, 'mb-0 mt-1 text-[11px]')}>{b.summary}</p> : null}
+                    {b.summary ? <p className={cn(S.muted, 'mb-0 mt-1 text-2xs')}>{b.summary}</p> : null}
                   </li>
                 ))}
               </ul>

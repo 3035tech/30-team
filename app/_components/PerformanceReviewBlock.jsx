@@ -120,7 +120,7 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
                       {roleLabel}
                       {sr.reviewerLabel ? ` · ${sr.reviewerLabel}` : ''}
                     </span>
-                    <span className="font-mono text-[10px] text-ink-muted">
+                    <span className="font-mono text-2xs text-ink-muted">
                       {sr.status === 'submitted'
                         ? t(locale, 'performanceReviews.sideReview.statusSubmitted')
                         : t(locale, 'performanceReviews.sideReview.statusPending')}
@@ -135,7 +135,7 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
                         const o = sr.outcomes?.[String(g.id)];
                         if (!o?.outcome) return null;
                         return (
-                          <li key={`${sr.id}-${g.id}`} className="text-[11px] text-ink-muted">
+                          <li key={`${sr.id}-${g.id}`} className="text-2xs text-ink-muted">
                             {g.title}: {outcomeLabel(locale, o.outcome)}
                           </li>
                         );

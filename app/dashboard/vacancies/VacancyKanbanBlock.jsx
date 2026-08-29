@@ -110,7 +110,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
         </span>
         {loading && <span className="spinner text-ink-muted" />}
         {!loading && hasAny && (
-          <span className="font-mono text-[11px] text-ink-faint">
+          <span className="font-mono text-2xs text-ink-faint">
             {t(locale, 'recruiting.candidatesCount', { n: rows.length })}
           </span>
         )}
@@ -166,13 +166,13 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                       style={{ background: stage.color }}
                     />
                     <span
-                      className="flex-1 font-mono text-[11px] font-bold uppercase tracking-[0.8px]"
+                      className="flex-1 font-mono text-2xs font-bold uppercase tracking-[0.8px]"
                       style={{ color: stage.color }}
                     >
                       {stage.label}
                     </span>
                     <span
-                      className="rounded-lg px-[7px] py-px font-mono text-[11px] font-bold"
+                      className="rounded-lg px-[7px] py-px font-mono text-2xs font-bold"
                       style={{ color: stage.color, background: `${stage.color}25` }}
                     >
                       {cards.length}
@@ -211,13 +211,13 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           )}
                         >
                           <div className="mb-[3px] flex items-start justify-between gap-1">
-                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-[13px] text-ink">
+                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-prose text-ink">
                               {titleCasePersonName(r.name)}
                             </div>
                             {days != null && aging ? (
                               <span
                                 className={cn(
-                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px]',
+                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-2xs',
                                   aging === 'danger'
                                     ? 'border-danger/30 bg-danger/[0.09] text-danger'
                                     : 'border-warning/30 bg-warning/[0.1] text-warning'
@@ -228,7 +228,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                               </span>
                             ) : days != null && days > 0 ? (
                               <span
-                                className="shrink-0 font-mono text-[10px] text-ink-faint"
+                                className="shrink-0 font-mono text-2xs text-ink-faint"
                                 title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
                               >
                                 {t(locale, 'recruiting.stageAgingDays', { n: days })}
@@ -237,7 +237,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           </div>
                           {r.email ? (
                             <div
-                              className="mb-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] text-ink-faint"
+                              className="mb-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs text-ink-faint"
                               title={r.email}
                             >
                               {r.email}
@@ -245,21 +245,21 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           ) : null}
                           <div className="flex flex-wrap items-center gap-1.5">
                             {r.pendingTest || r.topType == null ? null : (
-                              <span className="font-mono text-[11px] text-ink-muted">T{r.topType}</span>
+                              <span className="font-mono text-2xs text-ink-muted">T{r.topType}</span>
                             )}
                             {r.vacancyFitScore010 != null && (
-                              <span className={cn('font-mono text-[11px]', fitTone(r.vacancyFitScore010))}>
+                              <span className={cn('font-mono text-2xs', fitTone(r.vacancyFitScore010))}>
                                 {r.vacancyFitScore010}/10
                               </span>
                             )}
                           </div>
                           {r.rejectionReason ? (
-                            <div className="mt-1 font-mono text-[10px] text-danger">
+                            <div className="mt-1 font-mono text-2xs text-danger">
                               {rejectionReasonLabel(locale, r.rejectionReason)}
                             </div>
                           ) : null}
                           {r.startDate && (r.pipelineStage === PIPELINE_STAGE.HIRED) ? (
-                            <div className="mt-1 font-mono text-[10px] text-success">
+                            <div className="mt-1 font-mono text-2xs text-success">
                               {t(locale, 'recruiting.startDateLabel')}: {r.startDate}
                             </div>
                           ) : null}
@@ -294,18 +294,18 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                             />
                           ) : null}
                           {(inviteLabel || ago) ? (
-                            <div className="mt-[5px] font-mono text-[10px] leading-[1.35] text-ink-muted">
+                            <div className="mt-[5px] font-mono text-2xs leading-[1.35] text-ink-muted">
                               {inviteLabel ? t(locale, 'recruiting.inviteLine', { status: inviteLabel }) : null}
                               {inviteLabel && ago ? ' · ' : null}
                               {ago || null}
                             </div>
                           ) : r.pendingTest ? (
-                            <div className="mt-[5px] font-mono text-[10px] text-ink-faint">
+                            <div className="mt-[5px] font-mono text-2xs text-ink-faint">
                               {t(locale, 'recruiting.waitingTest')}
                             </div>
                           ) : null}
                           {r.hasNotes ? (
-                            <div className="mt-1 font-mono text-[10px] text-brand-600">
+                            <div className="mt-1 font-mono text-2xs text-brand-600">
                               {t(locale, 'recruiting.withNotes')}
                             </div>
                           ) : null}
@@ -315,7 +315,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                     {cards.length === 0 && (
                       <div
                         className={cn(
-                          'rounded-lg px-2.5 py-3.5 text-center font-mono text-[11px] italic transition-all duration-100',
+                          'rounded-lg px-2.5 py-3.5 text-center font-mono text-2xs italic transition-all duration-100',
                           isDropTarget ? 'border-2 border-dashed' : 'border-2 border-dashed border-transparent text-ink-faint'
                         )}
                         style={

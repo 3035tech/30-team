@@ -10,30 +10,37 @@ alwaysApply: true
 
 ## Obrigatório
 
-1. **UI nova ou bloco em edição** → `className` Tailwind com tokens (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono` / `font-ui`, `min-h-touch`, `rounded-card` / `rounded-control`).
+1. **UI nova ou bloco em edição** → `className` Tailwind com tokens (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono` / `font-ui`, `text-2xs` / `text-prose`, `min-h-touch`, `rounded-card` / `rounded-control`).
 
-2. **Reutilizar antes de inventar** (grep primeiro):
-   - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`
+2. **Tipografia (escala obrigatória)** — ver `tailwind.config.js` `fontSize` + `FONTS` em `lib/theme.js`:
+   - **Famílias:** `font-ui` corpo · `font-mono` labels/meta/CTAs densos · `font-display` títulos de página / marketing (não body de form)
+   - **Tamanhos:** `text-2xs` (11) labels · `text-xs` (12) faint · `text-prose` (13) body muted/CTA · `text-sm`+ cards · sem `text-[Npx]` novo
+   - Preferir `S.label` / `S.muted` / `S.faint` / `S.pageTitle` / `S.card*` em vez de inventar
+
+3. **Reutilizar antes de inventar** (grep primeiro):
+   - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`, `S.pageTitle`
    - `dialog*Class` em `app/_components/app-dialog-styles.js`
    - `EmptyState`, `Icon`, `PanelSubNav`, `TypeBadge`, `AdminRichFormDrawer`, `PromptFormDialog`, `AppLoading` (`ContentEnter`, `NavLoadBar`, `variant="panel"`), `CollapsibleBlock`, `IconActionTip`, `useAppFeedback`
    - `cn()` em `lib/cn.js` para condicionais
    - Só criar constante local se nada servir
 
-3. **Cores de marca** = `brand-*` — só CTA / nav ativa / focus. Nunca status de pipeline.
+4. **Cores de marca** = `brand-*` — só CTA / nav ativa / focus. Nunca status de pipeline.
 
-4. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*`. Toast `info` → `border-l-info` (não `brand`). Labels de seção (`S.label`) → `text-ink-label` (não lilás).
+5. **Status / pipeline** = `success` `danger` `warning` `info` `soft` ou `pipeline-*`. Toast `info` → `border-l-info` (não `brand`). Labels de seção (`S.label`) → `text-ink-label` (não lilás).
 
-5. **Dinâmico** (T1–T9 `TYPE_DATA`, width %) → `style={{}}` pontual; sem hex solto. T4/T8 não devem colidir com brand/danger.
+6. **Dinâmico** (T1–T9 `TYPE_DATA`, width %) → `style={{}}` pontual; sem hex solto. T4/T8 não devem colidir com brand/danger.
 
-6. Ao migrar: trocar `style={{}}` estático por `className={S.x}` / tokens TW.
+7. Ao migrar: trocar `style={{}}` estático por `className={S.x}` / tokens TW.
 
-7. Sem TypeScript, sem `src/`, sem segundo kit UI.
+8. Sem TypeScript, sem `src/`, sem segundo kit UI.
 
-8. UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, **transição** (`ContentEnter` / `AppLoading panel` / `CollapsibleBlock`), `t()` pt-BR+en.
+9. UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, **transição** (`ContentEnter` / `AppLoading panel` / `CollapsibleBlock`), `t()` pt-BR+en.
 
 ## Evitar
 
 - Hex / `rgba(124,58,237,…)` soltos
+- `text-[10px]` / `text-[11px]` / `text-[13px]` ad hoc (usar `text-2xs` / `text-prose`)
+- `font-display` em body de formulário ou tabelas densas
 - `bg-purple-600` genérico em vez de `brand-*`
 - Novo botão/card com classes ad hoc quando `S.btn*` / `S.card` bastam
 - `@apply` massivo por tela
@@ -42,7 +49,7 @@ alwaysApply: true
 ## Checklist rápido
 
 - [ ] Grep de `S.` / componente / `dialog*Class` feito?
-- [ ] Tokens do `tailwind.config.js` / `theme.js`?
+- [ ] Tokens do `tailwind.config.js` / `theme.js` (incl. tipo)?
 - [ ] Roxo só em marca/CTA?
 - [ ] Alvo `min-h-touch` (~40px)?
 - [ ] i18n + reuso de componente?

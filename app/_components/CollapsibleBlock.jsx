@@ -37,11 +37,11 @@ export function CollapsibleBlock({
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="min-w-0 font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+        <span className="min-w-0 font-mono text-2xs uppercase tracking-wider text-ink-muted">
           {label}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
-          <span className="font-mono text-[11px] font-medium tracking-wide">{actionLabel}</span>
+          <span className="font-mono text-2xs font-medium tracking-wide">{actionLabel}</span>
           <Icon
             name="chevronDown"
             className={cn('shrink-0 transition-transform duration-150', open && 'rotate-180')}

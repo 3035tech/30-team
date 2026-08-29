@@ -442,7 +442,7 @@ export function AnalyticsTab({ session }) {
               <option value="off">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqOff')}</option>
             </select>
           </label>
-          <label className="flex min-h-touch cursor-pointer items-center gap-2 font-display text-sm text-ink">
+          <label className="flex min-h-touch cursor-pointer items-center gap-2 font-ui text-sm text-ink">
             <input
               type="checkbox"
               className={S.checkbox}

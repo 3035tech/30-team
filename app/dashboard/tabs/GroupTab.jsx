@@ -272,14 +272,14 @@ export function GroupTab({
         )}
         <div className="flex flex-wrap items-center gap-2">
           <TypeBadge type={person.topType} locale={locale} compact />
-          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium text-ink">
+          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-prose font-medium text-ink">
             {person.name}
           </span>
           {baseCompat ? (
             <>
               <CompatBadge level={baseCompat.level} locale={locale} />
               {baseCompat.level === 'tension' ? (
-                <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-[10px] text-danger">
+                <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-2xs text-danger">
                   {t(locale, 'panel.group.tensionWithBase')}
                 </span>
               ) : null}
@@ -290,12 +290,12 @@ export function GroupTab({
         {(person.areaLabel || (person.areaFitScore010 != null)) ? (
           <div className="flex flex-wrap items-center gap-2">
             {person.areaLabel ? (
-              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-[10px] text-ink-muted">
+              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
                 {person.areaLabel}
               </span>
             ) : null}
             {person.areaFitScore010 != null ? (
-              <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-0.5 font-mono text-[10px] text-success">
+              <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-0.5 font-mono text-2xs text-success">
                 {person.areaFitScore010}/10
               </span>
             ) : null}
@@ -304,7 +304,7 @@ export function GroupTab({
         {baseCompat ? (
           <div className="text-xs leading-snug text-ink-muted">
             {baseCompat.title ? (
-              <span className="mb-1 block font-mono text-[11px] text-ink-faint">{baseCompat.title}</span>
+              <span className="mb-1 block font-mono text-2xs text-ink-faint">{baseCompat.title}</span>
             ) : null}
             {baseCompat.desc || ''}
           </div>
@@ -335,7 +335,7 @@ export function GroupTab({
               onClick={() => void saveCurrent({ asUpdate: false })}
               className={cn(
                 S.btnBrandSoft,
-                'px-3 py-2 font-mono text-[11px] disabled:cursor-not-allowed disabled:opacity-50'
+                'px-3 py-2 font-mono text-2xs disabled:cursor-not-allowed disabled:opacity-50'
               )}
             >
               {t(locale, 'panel.group.saveCurrent')}
@@ -345,7 +345,7 @@ export function GroupTab({
                 type="button"
                 disabled={savedBusy}
                 onClick={() => void saveCurrent({ asUpdate: true })}
-                className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-[11px] text-ink-muted disabled:opacity-50"
+                className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-2xs text-ink-muted disabled:opacity-50"
               >
                 {t(locale, 'panel.group.overwrite')}
               </button>
@@ -353,7 +353,7 @@ export function GroupTab({
             <button
               type="button"
               onClick={clearGroup}
-              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-[11px] text-ink-muted"
+              className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2 font-mono text-2xs text-ink-muted"
             >
               {t(locale, 'panel.group.clear')}
             </button>
@@ -370,9 +370,9 @@ export function GroupTab({
         <div className="mt-3.5 rounded-control border border-ink/10 bg-ink/[0.02] px-3 py-2.5">
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
             <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.savedTitle')}</span>
-            {savedLoading ? <span className="font-mono text-[10px] text-ink-faint">…</span> : null}
+            {savedLoading ? <span className="font-mono text-2xs text-ink-faint">…</span> : null}
           </div>
-          <p className="mb-2 mt-0 text-[11px] leading-snug text-ink-faint">
+          <p className="mb-2 mt-0 text-2xs leading-snug text-ink-faint">
             {t(locale, 'panel.group.savedHint')}
           </p>
           {!resolvedCompanyId ? (
@@ -393,8 +393,8 @@ export function GroupTab({
                     )}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-medium text-ink">{g.name}</div>
-                      <div className="font-mono text-[10px] text-ink-faint">
+                      <div className="truncate text-prose font-medium text-ink">{g.name}</div>
+                      <div className="font-mono text-2xs text-ink-faint">
                         {t(locale, 'panel.group.membersCount', { n })}
                       </div>
                     </div>
@@ -403,7 +403,7 @@ export function GroupTab({
                         type="button"
                         disabled={savedBusy}
                         onClick={() => loadSaved(g)}
-                        className="cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-[11px] text-brand-600"
+                        className="cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-2.5 py-1.5 font-mono text-2xs text-brand-600"
                       >
                         {t(locale, 'panel.group.load')}
                       </button>
@@ -411,7 +411,7 @@ export function GroupTab({
                         type="button"
                         disabled={savedBusy}
                         onClick={() => void deleteSaved(g)}
-                        className="cursor-pointer rounded-control border border-danger/25 bg-transparent px-2 py-1.5 font-mono text-[11px] text-danger"
+                        className="cursor-pointer rounded-control border border-danger/25 bg-transparent px-2 py-1.5 font-mono text-2xs text-danger"
                         aria-label={t(locale, 'panel.group.deleteSaved')}
                         title={t(locale, 'panel.group.deleteSaved')}
                       >
@@ -457,7 +457,7 @@ export function GroupTab({
                   setGroupBaseId(null);
                   setActiveSavedId(null);
                 }}
-                className="cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-[11px] text-ink-muted"
+                className="cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-2xs text-ink-muted"
               >
                 {t(locale, 'panel.group.swap')}
               </button>
@@ -482,7 +482,7 @@ export function GroupTab({
                   <button
                     type="button"
                     onClick={()=>{ setGroupBaseId(String(r.assessmentId)); setActiveSavedId(null); }}
-                    className="cursor-pointer rounded-control border border-brand-500/40 bg-brand-500/[0.13] px-2.5 py-2 font-mono text-[11px] text-brand-600"
+                    className="cursor-pointer rounded-control border border-brand-500/40 bg-brand-500/[0.13] px-2.5 py-2 font-mono text-2xs text-brand-600"
                   >
                     {t(locale, 'panel.group.select')}
                   </button>
@@ -493,12 +493,12 @@ export function GroupTab({
               <button
                 type="button"
                 onClick={() => setShowAllBase(true)}
-                className="cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-[11px] text-ink-muted"
+                className="cursor-pointer rounded-control border border-ink/12 bg-transparent px-2.5 py-2 font-mono text-2xs text-ink-muted"
               >
                 {t(locale, 'panel.group.showMore')}
               </button>
             ) : null}
-            <div className="mt-1.5 font-mono text-[11px] text-ink-faint">
+            <div className="mt-1.5 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.group.filterHint')}
             </div>
           </div>
@@ -509,7 +509,7 @@ export function GroupTab({
         <span className={S.label}>{t(locale, 'panel.group.suggestionsTitle')}</span>
 
         {!groupBase ? (
-          <p className="text-[13px] italic text-ink-muted">
+          <p className="text-prose italic text-ink-muted">
             {t(locale, 'panel.group.pickBaseFirst')}
           </p>
         ) : (
@@ -544,23 +544,23 @@ export function GroupTab({
             </div>
 
             <div className="mb-3.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-success/30 bg-success/[0.09] px-2.5 py-0.5 font-mono text-[10px] text-success">
+              <span className="rounded-full border border-success/30 bg-success/[0.09] px-2.5 py-0.5 font-mono text-2xs text-success">
                 {t(locale, 'panel.group.synergy')}
               </span>
-              <span className="rounded-full border border-soft/30 bg-soft/[0.09] px-2.5 py-0.5 font-mono text-[10px] text-soft">
+              <span className="rounded-full border border-soft/30 bg-soft/[0.09] px-2.5 py-0.5 font-mono text-2xs text-soft">
                 {t(locale, 'panel.group.neutral')}
               </span>
-              <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2.5 py-0.5 font-mono text-[10px] text-danger">
+              <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2.5 py-0.5 font-mono text-2xs text-danger">
                 {t(locale, 'panel.group.tension')}
               </span>
             </div>
 
             {nucleusAdvice && !nucleusAdvice.empty ? (
               <div className="mb-4 rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-3.5 py-3">
-                <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-brand-600">
+                <div className="mb-1 font-mono text-2xs uppercase tracking-wider text-brand-600">
                   {t(locale, 'panel.group.nucleusTitle')}
                 </div>
-                <p className="mb-3 mt-0 text-[11px] leading-snug text-ink-faint">
+                <p className="mb-3 mt-0 text-2xs leading-snug text-ink-faint">
                   {t(locale, 'panel.group.nucleusHint', { n: nucleusAdvice.nucleusSize })}
                 </p>
                 {nucleusAdvice.completers.length > 0 ? (
@@ -579,16 +579,16 @@ export function GroupTab({
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <TypeBadge type={row.topType} locale={locale} compact />
-                                <span className="text-[13px] text-ink">{row.name}</span>
+                                <span className="text-prose text-ink">{row.name}</span>
                               </div>
-                              <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">{row.summary}</p>
+                              <p className="mb-0 mt-1 text-2xs leading-snug text-ink-muted">{row.summary}</p>
                             </div>
                             <button
                               type="button"
                               disabled={already}
                               onClick={() => addToGroup(row.id)}
                               className={cn(
-                                'shrink-0 rounded-control border px-2.5 py-1.5 font-mono text-[11px]',
+                                'shrink-0 rounded-control border px-2.5 py-1.5 font-mono text-2xs',
                                 already
                                   ? 'cursor-not-allowed border-ink/12 text-ink-faint'
                                   : 'cursor-pointer border-success/35 bg-success/[0.09] text-success'
@@ -615,9 +615,9 @@ export function GroupTab({
                         >
                           <div className="flex flex-wrap items-center gap-1.5">
                             <TypeBadge type={row.topType} locale={locale} compact />
-                            <span className="text-[13px] text-ink">{row.name}</span>
+                            <span className="text-prose text-ink">{row.name}</span>
                           </div>
-                          <p className="mb-0 mt-1 text-[11px] leading-snug text-ink-muted">{row.summary}</p>
+                          <p className="mb-0 mt-1 text-2xs leading-snug text-ink-muted">{row.summary}</p>
                         </li>
                       ))}
                     </ul>
@@ -643,10 +643,10 @@ export function GroupTab({
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex min-w-0 flex-[1_1_180px] flex-wrap items-center gap-2">
                         <TypeBadge type={person.topType} locale={locale} compact />
-                        <span className="text-[13px] text-ink">{person.name}</span>
+                        <span className="text-prose text-ink">{person.name}</span>
                         <CompatBadge level={compat.level} locale={locale}/>
                         {compat.level==='tension' && (
-                          <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-[10px] text-danger">
+                          <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-2xs text-danger">
                             {t(locale, 'panel.group.tensionWithBase')}
                           </span>
                         )}
@@ -657,7 +657,7 @@ export function GroupTab({
                           disabled={already}
                           onClick={()=>addToGroup(person.assessmentId)}
                           className={cn(
-                            'rounded-control border px-2.5 py-2 font-mono text-[11px]',
+                            'rounded-control border px-2.5 py-2 font-mono text-2xs',
                             already ? 'cursor-not-allowed' : 'cursor-pointer'
                           )}
                           style={{

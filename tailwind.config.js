@@ -70,6 +70,15 @@ module.exports = {
           'monospace',
         ],
       },
+      /**
+       * Type scale (dashboard + app chrome). Prefer these over text-[Npx].
+       * Roles: font-ui body · font-mono labels/meta/CTAs · font-display page titles / marketing.
+       * 2xs (11) labels/meta · xs (12) faint · prose (13) body muted · sm (14) · base (16) · …
+       */
+      fontSize: {
+        '2xs': ['0.6875rem', { lineHeight: '1rem' }], // 11px
+        prose: ['0.8125rem', { lineHeight: '1.375rem' }], // 13px
+      },
       borderRadius: {
         card: '16px',
         control: '10px',
