@@ -30,7 +30,7 @@ export function BrStateSelect({
       <option value="">{t(locale, 'recruiting.statePh')}</option>
       {BR_STATES.map((s) => (
         <option key={s.uf} value={s.uf}>
-          {s.uf} — {s.name}
+          {s.uf}: {s.name}
         </option>
       ))}
     </select>

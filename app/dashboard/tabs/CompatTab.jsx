@@ -288,7 +288,7 @@ export function CompatTab({
             className="flex w-full cursor-pointer items-center justify-between gap-3 border-none bg-transparent px-4 py-3 text-left"
           >
             <span className="font-mono text-xs" style={{ color: playbook.color }}>
-              {playbook.title} — {t(locale, 'panel.compat.playbookToggle')}
+              {playbook.title}: {t(locale, 'panel.compat.playbookToggle')}
             </span>
             <span className="inline-flex shrink-0 items-center text-ink-muted">
               <Icon

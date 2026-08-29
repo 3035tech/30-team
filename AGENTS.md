@@ -284,6 +284,7 @@ Fechar a entrega com o bloco **Pipeline result** do skill (`done` | `failed` | `
 - Tipos T1–T9 em inglês: `lib/i18n-data.js` / `lib/type-en.js`.
 - Erros de API: chave `errors.<CODE>` + `apiError` / `apiErrorFromResult`. Códigos canônicos em `ERR` (`lib/api-error-codes.js`); status HTTP via `httpStatusForError` — não espalhar ternários de string nas rotas. Domínio de funil: `PIPELINE_STAGES` em `lib/pipeline.js` (mesmo padrão de constantes).
 - Hook de UI: `lib/useLocale.js`.
+- **Copy / labels:** nunca usar a sequência ` — ` (espaço + em dash U+2014 + espaço) em strings de UI, em qualquer idioma. Preferir `:`, `. `, ` · ` ou en dash colado em faixas (`{min}–{max}`). Ver `.cursor/rules/copy-no-emdash.mdc`.
 
 ## Banco de dados
 

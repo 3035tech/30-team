@@ -658,7 +658,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             disabled={loading}
                             openLabel={
                               exp
-                                ? `${t(locale, 'panel.common.openLink')} — ${t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}`
+                                ? `${t(locale, 'panel.common.openLink')}: ${t(locale, 'panel.admin.linkExpires', { date: exp.toLocaleString(dateLocale) })}`
                                 : undefined
                             }
                           />

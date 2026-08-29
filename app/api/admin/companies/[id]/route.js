@@ -117,7 +117,7 @@ export async function PATCH(request, { params }) {
     } catch (err) {
       if (err?.code === '23505') return apiError(request, ERR.SLUG_TAKEN, 409);
       if (err?.code === '42703') {
-        console.error('PATCH companies missing column — run migrations (e.g. 066 anniversary_date):', err.message);
+        console.error('PATCH companies missing column; run migrations (e.g. 066 anniversary_date):', err.message);
         return apiError(request, ERR.INTERNAL_ERROR, 500);
       }
       throw err;

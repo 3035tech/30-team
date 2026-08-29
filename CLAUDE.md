@@ -38,6 +38,7 @@ Atue como **especialista UI/UX** em mudanças de interface:
 - Lista antes de formulário; progressive disclosure; feedback de loading/erro/vazio
 - **Transição obrigatória** em UI nova / bloco editado: `ContentEnter`, `AppLoading variant="panel"`, `NavLoadBar`, `CollapsibleBlock` (ver `AGENTS.md` § UI/UX e Reaproveitamento)
 - Tokens e padrões: Tailwind + `lib/theme.js` / `tailwind.config.js` (ver `.cursor/rules/tailwind-ui.mdc`); `t()` pt-BR+en
+- **Copy:** nunca ` — ` (espaço + em dash + espaço) em labels/UI em qualquer idioma (`.cursor/rules/copy-no-emdash.mdc`)
 - Sem TypeScript, sem pasta `src/`, sem segundo kit de UI além de Tailwind + tokens
 
 ### DBA e performance
@@ -58,6 +59,7 @@ Regras Cursor espelhadas em `.cursor/rules/` (`ui-ux.mdc`, `dba-performance.mdc`
 | Contexto geral | `AGENTS.md`, `.cursor/rules/30team-context.mdc` |
 | Constantes / “enums” string (`ERR`, status, pipeline) | `AGENTS.md` § Constantes, `.cursor/rules/domain-constants.mdc`, `lib/api-error-codes.js`, `lib/domain-status.js`, `lib/pipeline.js` |
 | UI/UX | `AGENTS.md` § UI/UX, `.cursor/rules/ui-ux.mdc` |
+| Copy sem ` — ` | `.cursor/rules/copy-no-emdash.mdc` |
 | DBA / performance | `AGENTS.md` § DBA e performance, `.cursor/rules/dba-performance.mdc` |
 | Dashboard JSX | `.cursor/rules/dashboard-ui.mdc` |
 | Listagens admin (sort/pager/CTAs) | `.cursor/rules/admin-list-grid.mdc`, `dashboard-shared` (`SortableTh`, `AdminListPager`, `AdminCreateButton` / `Edit` / `Delete`) |

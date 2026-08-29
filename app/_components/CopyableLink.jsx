@@ -53,8 +53,8 @@ export function CopyableLink({
   const context = String(label || '').trim();
   const copyBase = copyLabel || t(locale, 'panel.common.copyLink');
   const openBase = openLabel || t(locale, 'panel.common.openLink');
-  const copyText = context && !copyLabel ? `${copyBase} — ${context}` : copyBase;
-  const openText = context && !openLabel ? `${openBase} — ${context}` : openBase;
+  const copyText = context && !copyLabel ? `${copyBase}: ${context}` : copyBase;
+  const openText = context && !openLabel ? `${openBase}: ${context}` : openBase;
   const hit = compact ? 'min-h-9 min-w-9' : 'min-h-touch min-w-touch';
   const displayUrl = iconOnly ? false : showUrl;
   const labelAsLink = Boolean(context) && !displayUrl && !iconOnly && openable;

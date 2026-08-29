@@ -1,0 +1,47 @@
+---
+description: Proíbe travessão tipográfico " — " em copy/labels de UI (tell clássico de IA)
+alwaysApply: true
+---
+
+# Copy: sem ` — ` (espaço + em dash + espaço)
+
+## Proibido em copy de produto
+
+Não usar a sequência **espaço + travessão tipográfico (U+2014) + espaço** (` — `) em:
+
+- Labels de formulário / `FormField` / `aria-label` / `title` de UI
+- Títulos, placeholders, toasts, empty states, hints, badges, subjects de e-mail
+- Strings em `lib/i18n.js` (pt-BR **e** en) e copy hardcoded em JSX/`lib/` voltada ao usuário
+- Concatenações runtime (`${a} — ${b}`)
+
+Vale para **qualquer idioma**.
+
+## Preferir
+
+| Caso | Use |
+|------|-----|
+| Título + subtítulo curto | `:` (`Histórico: {name}`) |
+| Duas ideias na mesma frase | `. ` (nova oração) |
+| Lista / meta compacta | ` · ` (já usado no produto) |
+| Intervalo numérico / faixa | en dash **sem** espaços (`{min}–{max}`) ou `a` / `to` |
+| Código T1–T9 | `T1–T9` (en dash colado; ok) |
+
+## Checklist ao escrever ou editar copy
+
+1. Grep mental / literal: a string contém ` — `? Se sim, reescreva.
+2. Não “embelezar” label com travessão central (`Roteiro RH — contratar` → `Roteiro RH: contratar`).
+3. Comentários de código / JSDoc / docs internas **podem** continuar com travessão; a regra é **copy visível ao usuário**.
+
+## Anti-padrão
+
+```text
+❌ Aguarde — a IA está montando o texto
+❌ 2FA ativo — exigido no login
+❌ ${name} — vagas
+❌ copyBase — ${context}
+
+✅ Aguarde. A IA está montando o texto
+✅ 2FA ativo: exigido no login
+✅ ${name}: vagas
+✅ ${copyBase}: ${context}
+```

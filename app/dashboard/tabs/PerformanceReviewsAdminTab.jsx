@@ -67,7 +67,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         saveError: 'Erro ao salvar',
         autoPdiNote: 'Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
         continuousFeedbackNote:
-          'Entre ciclos, use 1:1 na Equipe para feedback contínuo — metas “Desenvolver” também pedem conversa.',
+          'Entre ciclos, use 1:1 na Equipe para feedback contínuo. Metas “Desenvolver” também pedem conversa.',
         continuousFeedbackCta: 'Abrir Equipe',
         edit: 'Editar',
         view: 'Ver',
@@ -118,7 +118,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         saveError: 'Failed to save',
         autoPdiNote: 'Outcome "Develop" automatically generates a PDI item for the employee',
         continuousFeedbackNote:
-          'Between cycles, use Team 1:1s for continuous feedback — “Develop” goals also need a conversation.',
+          'Between cycles, use Team 1:1s for continuous feedback. “Develop” goals also need a conversation.',
         continuousFeedbackCta: 'Open Team',
         edit: 'Edit',
         view: 'View',
@@ -309,7 +309,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           lines.push('', '—');
           for (const r of reviews.slice(0, 12)) {
             lines.push(
-              `• ${r.candidateName || r.candidateEmail || `#${r.candidateId}`} — ${r.status}`
+              `• ${r.candidateName || r.candidateEmail || `#${r.candidateId}`}: ${r.status}`
             );
           }
           if (reviews.length > 12) lines.push(`… +${reviews.length - 12}`);

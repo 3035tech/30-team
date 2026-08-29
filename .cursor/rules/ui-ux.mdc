@@ -26,7 +26,8 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 8. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
 9. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
 10. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
-11. **Copy hedged no domínio** — “tende a / há indícios”; nunca tom de diagnóstico clínico.
+11. **Copy hedged no domínio** (“tende a / há indícios”); nunca tom de diagnóstico clínico.
+12. **Sem ` — ` em labels/copy de UI** (qualquer idioma): tell clássico de IA. Preferir `:`, `. `, ` · ` ou en dash colado em faixas. Ver `.cursor/rules/copy-no-emdash.mdc`.
 
 ## Anti-padrões (evitar)
 
@@ -37,7 +38,8 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 - Densidade extrema sem agrupamento (especialmente kanban/tabelas)
 - Inventar segundo design system (MUI/Chakra/etc.), cards genéricos IA, roxo-em-tudo / roxo em status
 - Hex solto fora de `theme.js` / `tailwind.config.js`
-- Label de campo **ao lado** do input em grade (ou placeholder como único rótulo) — usar `FormField`
+- Label de campo **ao lado** do input em grade (ou placeholder como único rótulo); usar `FormField`
+- Travessão tipográfico com espaços (` — `) em labels, títulos, hints, toasts ou i18n
 - Loading ad hoc (`…`, spinner solto) ou fade inventado fora de `ContentEnter` / `variant="panel"`
 
 ## Checklist rápido antes de entregar UI
@@ -46,5 +48,6 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 - [ ] Estados vazio / loading / erro estão cobertos?
 - [ ] Transição: `ContentEnter` e/ou `AppLoading variant="panel"` / `NavLoadBar` / `CollapsibleBlock`?
 - [ ] pt-BR **e** en em `lib/i18n.js`?
+- [ ] Nenhuma string de UI nova com ` — `?
 - [ ] Reusou componente existente (grep) antes de criar?
 - [ ] Faz sentido para hr/direction no fluxo real (recrutar, 1:1, revisar teste)?

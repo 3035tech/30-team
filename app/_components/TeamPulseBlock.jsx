@@ -223,7 +223,7 @@ export function TeamPulseBlock({ locale, companyId, teamGroupId }) {
               <ul className="mt-2 m-0 list-none space-y-1 p-0">
                 {(aggregate.questions || []).map((q) => (
                   <li key={q.questionId} className="text-xs text-ink-muted">
-                    {q.prompt} — {q.mean}
+                    {q.prompt}: {q.mean}
                   </li>
                 ))}
               </ul>

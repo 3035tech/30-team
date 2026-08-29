@@ -328,7 +328,7 @@ export function VacancyClientReportBlock({
             const ov = overrides[c.candidateId] || {};
             const fit =
               c.vacancyFitScore010 != null ? ` (fit ${Number(c.vacancyFitScore010).toFixed(1)}/10)` : '';
-            const why = ov.why ? ` — ${ov.why}` : '';
+            const why = ov.why ? `: ${ov.why}` : '';
             return `${c.name}${c.topType != null ? ` T${c.topType}` : ''}${fit}${why}`;
           });
 
@@ -791,7 +791,7 @@ export function VacancyClientReportBlock({
                     {t(locale, 'panel.report.previewSeeks')}
                     {rubricMeta?.hasRubric && rubricTypesLabel
                       ? `: ${rubricTypesLabel}`
-                      : ` — ${t(locale, 'panel.report.previewNoRubric')}`}
+                      : `: ${t(locale, 'panel.report.previewNoRubric')}`}
                     {vacancyMeta?.hasDescription ? ` · ${t(locale, 'panel.report.previewHasDesc')}` : ''}
                     {rubricMeta?.hasNotes ? ` · ${t(locale, 'panel.report.previewHasRubricNotes')}` : ''}
                   </li>
@@ -802,7 +802,7 @@ export function VacancyClientReportBlock({
                     {t(locale, 'panel.report.previewNote')}
                     {noteOk
                       ? ` ✓ (${notePlainLen} ${t(locale, 'panel.report.chars')})`
-                      : ` — ${t(locale, 'panel.report.previewNoteMissing')}`}
+                      : `: ${t(locale, 'panel.report.previewNoteMissing')}`}
                   </li>
                   <li>
                     {t(locale, 'panel.report.previewShortlist', { n: selectedPeople.length })}
@@ -1117,7 +1117,7 @@ export function VacancyClientReportBlock({
                         {compositionRisks.pairTensions.map((row) => (
                           <li key={`${row.candidateA.id}-${row.candidateB.id}`} className="mb-1">
                             <strong className="text-ink">{row.title}</strong>
-                            {' — '}
+                            {': '}
                             {row.candidateA.name || `T${row.candidateA.topType}`} ×{' '}
                             {row.candidateB.name || `T${row.candidateB.topType}`}
                             {row.desc ? `. ${row.desc}` : ''}
