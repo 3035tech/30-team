@@ -24,14 +24,27 @@ export function HelpAssistantWidget({
   const [messages, setMessages] = useState([]);
   const [followUps, setFollowUps] = useState([]);
   const listRef = useRef(null);
+  const latestMsgRef = useRef(null);
+  const scrollPinnedLenRef = useRef(0);
 
   const emptySuggestions = useMemo(() => helpSuggestionLabels(locale, activeTab), [locale, activeTab]);
   const hereLabel = useMemo(() => helpTabLabel(locale, activeTab), [locale, activeTab]);
 
+  // Pin the *start* of the newest message into view (not the bottom of a long answer).
   useEffect(() => {
-    if (!open || !listRef.current) return;
-    listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, open, busy, followUps]);
+    if (!open || !listRef.current || !latestMsgRef.current) return;
+    if (messages.length === 0) {
+      scrollPinnedLenRef.current = 0;
+      return;
+    }
+    if (messages.length === scrollPinnedLenRef.current) return;
+    scrollPinnedLenRef.current = messages.length;
+    const container = listRef.current;
+    const target = latestMsgRef.current;
+    const cRect = container.getBoundingClientRect();
+    const tRect = target.getBoundingClientRect();
+    container.scrollTop += tRect.top - cRect.top - 4;
+  }, [messages, open]);
 
   const send = async (raw) => {
     const q = String(raw || '').trim();
@@ -128,6 +141,7 @@ export function HelpAssistantWidget({
             {messages.map((m, i) => (
               <div
                 key={`${m.role}-${i}`}
+                ref={i === messages.length - 1 ? latestMsgRef : undefined}
                 className={cn(
                   'rounded-control px-2.5 py-2 text-prose leading-snug',
                   m.role === 'user' ? 'ml-6 bg-brand-500/10 text-ink' : 'mr-2 bg-canvas text-ink'
