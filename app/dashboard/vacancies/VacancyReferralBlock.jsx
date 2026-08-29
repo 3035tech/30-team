@@ -251,9 +251,9 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
                             url={share}
                             locale={locale}
                             compact
-                            showUrl={Boolean(share)}
+                            iconOnly
+                            label={t(locale, 'recruiting.referralCopyLink')}
                             disabled={busy || !share || row.active === false}
-                            className="w-full max-w-[280px] text-left"
                           />
                           <div className="flex flex-wrap justify-end gap-1.5">
                           {row.active !== false ? (

@@ -17,6 +17,8 @@ import {
   AdminEditButton,
   AdminDeleteButton,
   AdminActionsCell,
+  AdminIconButton,
+  AdminViewButton,
 } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
@@ -1092,7 +1094,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         url={link}
                         locale={locale}
                         label={t(locale, 'recruiting.enneagramLinkLabel')}
-                        showUrl={false}
+                        iconOnly
                         compact
                         disabled={loading}
                       />
@@ -1115,7 +1117,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         url={publicPageLink}
                         locale={locale}
                         label={t(locale, 'recruiting.publicPageLinkLabel')}
-                        showUrl={false}
+                        iconOnly
                         compact
                         disabled={loading}
                       />
@@ -1181,15 +1183,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     onClick={() => editVacancy(v)}
                     disabled={loading}
                   />
+                  <AdminIconButton
+                    label={t(locale, 'recruiting.cloneVacancy')}
+                    icon="copy"
+                    tint="muted"
+                    onClick={() => cloneVacancyAction(v)}
+                    disabled={loading}
+                  />
                 </AdminActionsCell>
-                <button
-                  type="button"
-                  onClick={() => cloneVacancyAction(v)}
-                  disabled={loading}
-                  className={cn(BTN_GHOST, loading && "opacity-60")}
-                >
-                  {t(locale, 'recruiting.cloneVacancy')}
-                </button>
                 <button
                   type="button"
                   onClick={() => setDetailSection('config')}
@@ -1570,7 +1571,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           url={link}
                           locale={locale}
                           label={t(locale, 'recruiting.enneagramLinkLabel')}
-                          showUrl={false}
+                          iconOnly
                           compact
                           disabled={loading}
                         />
@@ -1590,22 +1591,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id) })}
-                      className={BTN_BRAND_SOFT}
-                    >
-                      {t(locale, 'recruiting.viewCandidates')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openVacancyDetail(v.id)}
-                      className="min-h-touch cursor-pointer rounded-control border border-success/25 bg-success/[0.08] px-2.5 py-2 font-mono text-xs text-success"
-                      title={t(locale, 'recruiting.openDetailsTitle')}
-                    >
-                      {t(locale, 'recruiting.details')}
-                    </button>
                     <AdminActionsCell>
+                      <AdminIconButton
+                        label={t(locale, 'recruiting.viewCandidates')}
+                        icon="users"
+                        onClick={() => navigateDashboard({ tab: 'team', vacancy: String(v.id) })}
+                      />
+                      <AdminViewButton
+                        label={t(locale, 'recruiting.details')}
+                        onClick={() => openVacancyDetail(v.id)}
+                      />
                       <AdminEditButton
                         label={t(locale, 'recruiting.editVacancy')}
                         onClick={() => editVacancy(v)}
@@ -1616,40 +1611,39 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         onClick={() => archiveVacancy(v.id, v.title)}
                         disabled={loading}
                       />
-                    </AdminActionsCell>
-                    <button
-                      type="button"
-                      onClick={() => cloneVacancyAction(v)}
-                      disabled={loading}
-                      className={cn(BTN_GHOST, loading && 'opacity-60')}
-                    >
-                      {t(locale, 'recruiting.cloneVacancy')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setVacancyStatus(
-                          v.id,
+                      <AdminIconButton
+                        label={t(locale, 'recruiting.cloneVacancy')}
+                        icon="copy"
+                        tint="muted"
+                        onClick={() => cloneVacancyAction(v)}
+                        disabled={loading}
+                      />
+                      <AdminIconButton
+                        label={
                           v.status === VACANCY_STATUS.OPEN
-                            ? VACANCY_STATUS.CLOSED
-                            : VACANCY_STATUS.OPEN
-                        )
-                      }
-                      disabled={loading}
-                      className={cn(BTN_GHOST, loading && 'opacity-60')}
-                    >
-                      {v.status === VACANCY_STATUS.OPEN
-                        ? t(locale, 'recruiting.closeVacancy')
-                        : t(locale, 'recruiting.reopenVacancy')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => rotateLink(v.id)}
-                      disabled={loading}
-                      className={cn(BTN_GHOST, loading && 'opacity-60')}
-                    >
-                      {t(locale, 'recruiting.rotateLink')}
-                    </button>
+                            ? t(locale, 'recruiting.closeVacancy')
+                            : t(locale, 'recruiting.reopenVacancy')
+                        }
+                        icon="door"
+                        tint={v.status === VACANCY_STATUS.OPEN ? 'warning' : 'brand'}
+                        onClick={() =>
+                          setVacancyStatus(
+                            v.id,
+                            v.status === VACANCY_STATUS.OPEN
+                              ? VACANCY_STATUS.CLOSED
+                              : VACANCY_STATUS.OPEN
+                          )
+                        }
+                        disabled={loading}
+                      />
+                      <AdminIconButton
+                        label={t(locale, 'recruiting.rotateLink')}
+                        icon="refresh"
+                        tint="muted"
+                        onClick={() => rotateLink(v.id)}
+                        disabled={loading}
+                      />
+                    </AdminActionsCell>
                   </div>
                 </div>
               );

@@ -8,12 +8,14 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
 import { EntitySearchSelect } from '../../_components/EntitySearchSelect';
+import { CopyableLink } from '../../_components/CopyableLink';
 import {
   AdminActionsCell,
   AdminActionsTh,
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
   AdminViewButton,
   S,
 } from '../dashboard-shared';
@@ -746,14 +748,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                                 </span>
                               ) : null}
                             </div>
-                            <a
-                              href={l.contentUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="font-mono text-[11px] text-brand-600 break-all"
-                            >
-                              {l.contentKind} · {l.contentUrl}
-                            </a>
+                            <CopyableLink
+                              url={l.contentUrl}
+                              locale={locale}
+                              compact
+                              iconOnly
+                              label={`${l.contentKind}`}
+                            />
                           </div>
                           <div className="flex items-center gap-1">
                             <button
@@ -924,14 +925,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                               ) : null}
                             </td>
                             <AdminActionsCell>
-                              <button
-                                type="button"
-                                className={cn(S.btnGhost, 'min-h-touch px-2 text-xs')}
+                              <AdminIconButton
+                                label={lmsText(locale, 'resetProgress', 'Zerar progresso')}
+                                icon="refresh"
+                                tint="warning"
                                 disabled={enrollBusy}
                                 onClick={() => resetEnrollment(row)}
-                              >
-                                {lmsText(locale, 'resetProgress', 'Zerar progresso')}
-                              </button>
+                              />
                               <AdminEditButton
                                 onClick={() => editEnrollment(row)}
                                 disabled={enrollBusy}

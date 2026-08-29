@@ -13,14 +13,18 @@ const iconActionClass =
  * Shareable URL for managers: clickable link + icon actions (copy / open).
  * Labels stay in aria-label + title; toast via AppFeedback when present.
  *
- * When `showUrl` is false and `label` is set, the label itself opens the URL
- * (compact list rows — no long URL wrapping).
+ * When `showUrl` is false and `label` is set (and not `iconOnly`), the label
+ * itself opens the URL (compact list rows — no long URL wrapping).
+ *
+ * When `iconOnly` is true (preferred in admin grids): only copy + open icons;
+ * `label` enriches tooltips/aria, never shown as text.
  *
  * @param {{
  *   url: string,
  *   locale?: string,
  *   label?: string,
  *   showUrl?: boolean,
+ *   iconOnly?: boolean,
  *   openable?: boolean,
  *   disabled?: boolean,
  *   compact?: boolean,
@@ -34,6 +38,7 @@ export function CopyableLink({
   locale = 'pt-BR',
   label,
   showUrl = true,
+  iconOnly = false,
   openable = true,
   disabled = false,
   compact = false,
@@ -44,10 +49,15 @@ export function CopyableLink({
   const feedback = useAppFeedbackOptional();
   const href = String(url || '').trim();
   const canUse = Boolean(href) && !disabled;
-  const copyText = copyLabel || t(locale, 'panel.common.copyLink');
-  const openText = openLabel || t(locale, 'panel.common.openLink');
+  const context = String(label || '').trim();
+  const copyBase = copyLabel || t(locale, 'panel.common.copyLink');
+  const openBase = openLabel || t(locale, 'panel.common.openLink');
+  const copyText = context && !copyLabel ? `${copyBase} — ${context}` : copyBase;
+  const openText = context && !openLabel ? `${openBase} — ${context}` : openBase;
   const hit = compact ? 'min-h-9 min-w-9' : 'min-h-touch min-w-touch';
-  const labelAsLink = Boolean(label) && !showUrl && openable;
+  const displayUrl = iconOnly ? false : showUrl;
+  const labelAsLink = Boolean(context) && !displayUrl && !iconOnly && openable;
+  const showOpenIcon = openable && canUse && (iconOnly || (!displayUrl && !labelAsLink));
 
   const onCopy = async () => {
     if (!canUse) return;
@@ -67,11 +77,11 @@ export function CopyableLink({
     <div
       className={cn(
         'flex min-w-0',
-        labelAsLink ? 'flex-row flex-wrap items-center gap-1.5' : 'flex-col gap-1',
+        iconOnly || labelAsLink ? 'flex-row flex-wrap items-center gap-1.5' : 'flex-col gap-1',
         className
       )}
     >
-      {label && labelAsLink ? (
+      {context && labelAsLink ? (
         canUse ? (
           <a
             href={href}
@@ -80,17 +90,17 @@ export function CopyableLink({
             className={cn(labelClass, 'text-brand-500 underline underline-offset-2')}
             title={openText}
           >
-            {label}
+            {context}
           </a>
         ) : (
-          <span className={cn(labelClass, 'text-ink-faint')}>{label}</span>
+          <span className={cn(labelClass, 'text-ink-faint')}>{context}</span>
         )
-      ) : label ? (
-        <span className={cn(labelClass, 'text-ink-faint')}>{label}</span>
+      ) : context && !iconOnly && displayUrl ? (
+        <span className={cn(labelClass, 'text-ink-faint')}>{context}</span>
       ) : null}
 
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        {showUrl ? (
+        {displayUrl ? (
           canUse && openable ? (
             <a
               href={href}
@@ -126,7 +136,7 @@ export function CopyableLink({
         >
           <Icon name="copy" />
         </button>
-        {openable && !showUrl && !labelAsLink && canUse ? (
+        {showOpenIcon ? (
           <a
             href={href}
             target="_blank"

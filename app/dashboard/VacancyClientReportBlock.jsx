@@ -1236,9 +1236,9 @@ export function VacancyClientReportBlock({
                             url={url}
                             locale={locale}
                             compact
-                            showUrl={Boolean(r.isLive)}
+                            iconOnly
+                            label={t(locale, 'panel.report.title')}
                             disabled={!r.isLive}
-                            className="min-w-0 flex-1"
                           />
                           {r.isLive ? (
                             <button

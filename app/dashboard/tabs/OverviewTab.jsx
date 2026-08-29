@@ -8,7 +8,7 @@ import { rejectionReasonLabel } from '../pipeline-prompts';
 import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { cn } from '../../../lib/cn';
-import { S } from '../dashboard-shared';
+import { S, AdminIconButton } from '../dashboard-shared';
 import { TeamBehavioralIntelBlock } from './TeamBehavioralIntelBlock';
 import TurnoverRadarCard from './overview/TurnoverRadarCard';
 import HrScoreCard from './overview/HrScoreCard';
@@ -329,13 +329,11 @@ export function OverviewTab({
           <span className={cn(S.label, 'mb-0')}>
             {t(locale, 'panel.overview.typeMixTitle')}
           </span>
-          <button
-            type="button"
+          <AdminIconButton
+            label={t(locale, 'panel.overview.openCompat')}
+            icon="compatibility"
             onClick={() => go({ tab: 'compatibility' })}
-            className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
-          >
-            {t(locale, 'panel.overview.openCompat')}
-          </button>
+          />
         </div>
         {mixTotalRaw === 0 ? (
           <p className="m-0 text-[13px] text-ink-faint">
@@ -536,13 +534,11 @@ export function OverviewTab({
             <span className={cn(S.label, 'mb-0')}>
               {t(locale, 'panel.overview.vacanciesTitle')}
             </span>
-            <button
-              type="button"
+            <AdminIconButton
+              label={t(locale, 'panel.overview.openVacancies')}
+              icon="vacancies"
               onClick={() => go({ tab: 'vacancies' })}
-              className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500"
-            >
-              {t(locale, 'panel.overview.openVacancies')}
-            </button>
+            />
           </div>
           <div className="mb-3.5 flex flex-wrap gap-4">
             <div>
@@ -736,21 +732,17 @@ export function OverviewTab({
           <div className={S.cardTight}>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
-              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
-                <button
-                  type="button"
-                  className={cn(S.cardLink, 'min-h-touch border-none bg-transparent px-0 hover:underline')}
+              <div className="flex flex-wrap items-center justify-end gap-1">
+                <AdminIconButton
+                  label={t(locale, 'panel.overview.openTeam')}
+                  icon="team"
                   onClick={() => go({ tab: 'team' })}
-                >
-                  {t(locale, 'panel.overview.openTeam')}
-                </button>
-                <button
-                  type="button"
-                  className={cn(S.cardLink, 'min-h-touch border-none bg-transparent px-0 hover:underline')}
+                />
+                <AdminIconButton
+                  label={t(locale, 'panel.overview.openClimate')}
+                  icon="climate"
                   onClick={() => go({ tab: 'climate' })}
-                >
-                  {t(locale, 'panel.overview.openClimate')}
-                </button>
+                />
                 <button
                   type="button"
                   onClick={togglePeopleOps}

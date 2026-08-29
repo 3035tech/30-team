@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, PanelSubNav, S, SortableTh, AdminListPager, clientSortNextDir } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminActionsCell, AdminIconButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -424,7 +424,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
                         url={inviteUrl}
                         locale={locale}
                         compact
-                        showUrl={false}
+                        iconOnly
                         label={t(locale, 'panel.motivatorsAdmin.invites.assessmentLink')}
                       />
                     </div>
@@ -439,10 +439,18 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   {['sent', 'opened'].includes(row.status) ? (
-                    <>
-                      <button type="button" onClick={() => remind(row.id)} className="mr-2 cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.invites.resend')}</button>
-                      <button type="button" onClick={() => cancel(row.id)} className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-danger">{t(locale, 'panel.motivatorsAdmin.invites.cancel')}</button>
-                    </>
+                    <AdminActionsCell>
+                      <AdminIconButton
+                        label={t(locale, 'panel.motivatorsAdmin.invites.resend')}
+                        icon="refresh"
+                        tint="brand"
+                        onClick={() => remind(row.id)}
+                      />
+                      <AdminDeleteButton
+                        label={t(locale, 'panel.motivatorsAdmin.invites.cancel')}
+                        onClick={() => cancel(row.id)}
+                      />
+                    </AdminActionsCell>
                   ) : null}
                 </td>
               </tr>
@@ -619,8 +627,17 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                     {formatDisplayDate(row.completedAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <button type="button" onClick={() => setSelected(row.id)} className="mr-2.5 cursor-pointer border-none bg-transparent text-[11px] text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.view')}</button>
-                    <button type="button" disabled={busy} onClick={() => removeAttempt(row.id)} className={cn('border-none bg-transparent text-[11px] text-danger', busy ? 'cursor-not-allowed' : 'cursor-pointer')}>{t(locale, 'panel.motivatorsAdmin.results.delete')}</button>
+                    <AdminActionsCell>
+                      <AdminViewButton
+                        label={t(locale, 'panel.motivatorsAdmin.results.view')}
+                        onClick={() => setSelected(row.id)}
+                      />
+                      <AdminDeleteButton
+                        label={t(locale, 'panel.motivatorsAdmin.results.delete')}
+                        onClick={() => removeAttempt(row.id)}
+                        disabled={busy}
+                      />
+                    </AdminActionsCell>
                   </td>
                 </tr>
               ))}

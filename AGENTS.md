@@ -129,6 +129,8 @@ Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise de
 | Editar | `AdminEditButton` (lápis + brand) |
 | Excluir / desativar / arquivar | `AdminDeleteButton` (lixeira + danger) |
 | Ver (opcional) | `AdminViewButton` |
+| Ação secundária (ícone) | `AdminIconButton` (Equipe, clonar, reenviar, rotacionar…) |
+| Link compartilhável | `CopyableLink` `iconOnly` |
 | Célula de ações | `AdminActionsCell` + `AdminActionsTh` |
 
 Referência de tela: `ExitAnalysisAdminTab.jsx`. Regra Cursor: `.cursor/rules/admin-list-grid.mdc`. Exceção: Vagas (cards/kanban ricos) — ainda preferir os mesmos botões de criar/editar/excluir.
@@ -332,7 +334,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css`, tokens `S.*` em `dashboard-shared.jsx` |
-| Listagens admin (grid) | `SortableTh`, `AdminListPager`, `AdminCreateButton`, `AdminEditButton`, `AdminDeleteButton`, `AdminActionsCell` / `Th` — `dashboard-shared.jsx`; regra `.cursor/rules/admin-list-grid.mdc`; referência `ExitAnalysisAdminTab` |
+| Listagens admin (grid) | `SortableTh`, `AdminListPager`, `AdminCreateButton`, `AdminEditButton`, `AdminDeleteButton`, `AdminViewButton`, `AdminIconButton`, `AdminActionsCell` / `Th`, `CopyableLink` `iconOnly` — `dashboard-shared.jsx`; regra `.cursor/rules/admin-list-grid.mdc`; referência `ExitAnalysisAdminTab` |
 | Logo empresa (S3) | `lib/company-logo.js`, `lib/company-logo-limits.js`, `lib/company-logo-client.js` (crop/compress), `CompanyLogoCropDialog`, `POST/DELETE …/companies/[id]/logo` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |

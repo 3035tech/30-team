@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -13,6 +12,8 @@ import {
   S,
   SortableTh,
   AdminListPager,
+  AdminActionsCell,
+  AdminIconButton,
   clientSortNextDir,
   TypeBadge,
 } from '../dashboard-shared';
@@ -373,21 +374,18 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                       {formatDate(row.lastActivityAt)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Link
+                      <AdminActionsCell>
+                        <AdminIconButton
                           href={`/dashboard?tab=team&candidate=${row.id}`}
-                          className={cn(S.btnGhost, 'min-h-touch inline-flex items-center')}
-                        >
-                          {t(locale, 'panel.talentBank.openPerson')}
-                        </Link>
-                        <button
-                          type="button"
+                          label={t(locale, 'panel.talentBank.openPerson')}
+                          icon="team"
+                        />
+                        <AdminIconButton
+                          label={t(locale, 'panel.team.addToVacancyBtn')}
+                          icon="briefcase"
                           onClick={() => addToVacancy(row.id, row.fullName)}
-                          className={cn(S.btnBrandSoft, 'min-h-touch')}
-                        >
-                          {t(locale, 'panel.team.addToVacancyBtn')}
-                        </button>
-                      </div>
+                        />
+                      </AdminActionsCell>
                     </td>
                   </tr>
                 ))}

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
@@ -532,6 +533,7 @@ function AdminDeleteButton({ label, onClick, disabled = false, className }) {
 /**
  * Row view — default: info tint + eye (pair with Edit / Delete).
  * Pass `asText` for rare text CTAs that reuse this slot (e.g. resend invite).
+ * Pass `icon` to override the glyph (default `eye`).
  */
 function AdminViewButton({
   label,
@@ -573,6 +575,53 @@ function AdminViewButton({
   );
 }
 
+const ADMIN_ICON_TINT = {
+  brand: 'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
+  info: 'border-info/35 bg-info/[0.08] text-info',
+  muted: 'border-ink/15 bg-ink/[0.04] text-ink-muted',
+  warning: 'border-warning/40 bg-warning/[0.1] text-warning',
+  danger: 'border-danger/35 bg-danger/[0.08] text-danger',
+};
+
+/**
+ * Icon-only secondary row action (button or Next.js Link).
+ * Prefer AdminView / Edit / Delete for CRUD; use this for “open team”, rotate, clone, reset…
+ */
+function AdminIconButton({
+  href,
+  onClick,
+  label,
+  icon,
+  tint = 'brand',
+  disabled = false,
+  className,
+}) {
+  const classes = cn(
+    S.btnRowIcon,
+    ADMIN_ICON_TINT[tint] || ADMIN_ICON_TINT.brand,
+    className
+  );
+  if (href && !disabled) {
+    return (
+      <Link href={href} className={classes} aria-label={label} title={label}>
+        <Icon name={icon} />
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={classes}
+      aria-label={label}
+      title={label}
+    >
+      <Icon name={icon} />
+    </button>
+  );
+}
+
 function AdminActionsCell({ children, className }) {
   return (
     <div className={cn('inline-flex flex-wrap items-center justify-end gap-1', className)}>
@@ -598,6 +647,7 @@ export {
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
   AdminListPager,
   AdminViewButton,
   Bar,

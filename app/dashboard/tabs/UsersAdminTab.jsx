@@ -6,7 +6,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
-import { clientSortNextDir, S, SortableTh, AdminListPager, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton } from '../dashboard-shared';
+import { clientSortNextDir, S, SortableTh, AdminListPager, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 
@@ -568,11 +568,11 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       <td className="px-3 py-3 text-right">
                         <AdminActionsCell>
                           {u.passwordSetupPending ? (
-                            <AdminViewButton
+                            <AdminIconButton
                               label={t(locale, 'panel.admin.resendInvite')}
+                              icon="refresh"
                               onClick={() => resendInvite(u.id, u.email)}
                               disabled={loading}
-                              asText
                             />
                           ) : (
                             <AdminViewButton

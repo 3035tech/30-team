@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { formatSalaryDisplay } from '../../../lib/br-masks';
@@ -10,6 +9,7 @@ import { EMPLOYMENT_STATUS } from '../../../lib/domain-status.js';
 import {
   AdminActionsCell,
   AdminActionsTh,
+  AdminIconButton,
   AdminListPager,
   AdminViewButton,
   S,
@@ -21,7 +21,6 @@ import { AppLoading } from '../../_components/AppLoading';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { Icon } from '../../_components/Icon';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -251,17 +250,11 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                         icon="list"
                         onClick={() => setHistoryPerson(row)}
                       />
-                      <Link
+                      <AdminIconButton
                         href={`/dashboard?tab=team&candidate=${row.candidateId}&section=compensation`}
-                        className={cn(
-                          S.btnRowIcon,
-                          'border-brand-500/35 bg-brand-500/[0.09] text-brand-600'
-                        )}
-                        aria-label={t(locale, 'panel.compensationRoster.openTeam')}
-                        title={t(locale, 'panel.compensationRoster.openTeam')}
-                      >
-                        <Icon name="team" />
-                      </Link>
+                        label={t(locale, 'panel.compensationRoster.openTeam')}
+                        icon="team"
+                      />
                     </AdminActionsCell>
                   </td>
                 </tr>

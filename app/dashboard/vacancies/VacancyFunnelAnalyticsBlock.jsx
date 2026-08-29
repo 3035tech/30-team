@@ -79,6 +79,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
                 url={publicPageUrl}
                 locale={locale}
                 compact
+                iconOnly
                 label={t(locale, 'recruiting.analyticsOpenPublic')}
               />
             ) : null}

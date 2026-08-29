@@ -19,6 +19,7 @@ import {
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
   AdminListPager,
   AdminViewButton,
   S,
@@ -93,6 +94,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         pickEmployee: 'Selecione um colaborador',
         alreadyAssigned: 'Este colaborador já está atribuído a este papel',
         openOnTeam: 'Abrir na Equipe',
+        openPdi: 'Abrir PDI na Equipe',
       },
       en: {
         title: 'Succession',
@@ -147,6 +149,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         pickEmployee: 'Pick an employee',
         alreadyAssigned: 'This employee is already assigned to this role',
         openOnTeam: 'Open on Team',
+        openPdi: 'Open PDI on Team',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -642,6 +645,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                         <AdminActionsCell>
                           <AdminViewButton
                             label={isExpanded ? t('collapse') : t('expand')}
+                            icon={isExpanded ? 'chevronDown' : 'expand'}
                             onClick={() => toggleRole(role.id)}
                           />
                           <AdminEditButton label={t('edit')} onClick={() => handleEditRole(role)} />
@@ -683,21 +687,20 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                           t('unknownPerson')}
                                       </span>
                                       {personId ? (
-                                        <div className="mt-1 flex flex-wrap gap-2">
-                                          <Link
+                                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                                          <AdminIconButton
                                             href={`/dashboard?tab=team&candidate=${personId}`}
-                                            className="font-mono text-[11px] text-brand-600 hover:underline"
-                                          >
-                                            {t('openOnTeam')}
-                                          </Link>
+                                            label={t('openOnTeam')}
+                                            icon="team"
+                                          />
                                           {(successor.readiness === 'developing' ||
                                             successor.readiness === 'not_ready') && (
-                                            <Link
+                                            <AdminIconButton
                                               href={`/dashboard?tab=team&candidate=${personId}&section=journey`}
-                                              className="font-mono text-[11px] text-brand-600 hover:underline"
-                                            >
-                                              PDI
-                                            </Link>
+                                              label={t('openPdi')}
+                                              icon="clipboard"
+                                              tint="info"
+                                            />
                                           )}
                                         </div>
                                       ) : null}

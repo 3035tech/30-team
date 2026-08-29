@@ -12,6 +12,7 @@ import {
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
   AdminListPager,
   AdminViewButton,
   S,
@@ -652,7 +653,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             url={link}
                             locale={locale}
                             compact
-                            showUrl={false}
+                            iconOnly
                             label={t(locale, 'panel.admin.linkAssessmentShort')}
                             disabled={loading}
                             openLabel={
@@ -673,7 +674,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             url={careersUrl}
                             locale={locale}
                             compact
-                            showUrl={false}
+                            iconOnly
                             label={t(locale, 'panel.admin.companyPublicPageLabel')}
                             disabled={loading}
                           />
@@ -708,16 +709,13 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                             onClick={() => editCompany(c)}
                             disabled={loading}
                           />
-                          <button
-                            type="button"
+                          <AdminIconButton
+                            label={t(locale, 'panel.admin.rotateLink')}
+                            icon="refresh"
+                            tint="muted"
                             onClick={() => rotateLink(c.id)}
                             disabled={loading}
-                            className={cn(S.btnGhost, 'min-h-touch px-2 text-xs', loading && 'opacity-60')}
-                            title={t(locale, 'panel.admin.rotateLink')}
-                            aria-label={t(locale, 'panel.admin.rotateLink')}
-                          >
-                            {t(locale, 'panel.admin.rotateLinkShort')}
-                          </button>
+                          />
                           <AdminDeleteButton
                             label={t(locale, 'panel.admin.archive')}
                             onClick={() => deleteCompany(c.id, c.name)}

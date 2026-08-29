@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
-import { S } from '../../dashboard-shared';
+import { AdminIconButton, S } from '../../dashboard-shared';
 
 /**
  * Overview card — upcoming birthdays + work anniversaries (+ company anniversary).
@@ -79,17 +78,17 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
           </p>
         </div>
         {typeof navigateDashboard === 'function' ? (
-          <button
-            type="button"
-            className="cursor-pointer border-none bg-transparent font-mono text-[11px] text-brand-600"
+          <AdminIconButton
+            label={t(locale, 'panel.birthdays.openTeam')}
+            icon="team"
             onClick={() => navigateDashboard({ tab: 'team', roster: 'internal' })}
-          >
-            {t(locale, 'panel.birthdays.openTeam')} →
-          </button>
+          />
         ) : (
-          <Link href="/dashboard?tab=team" className="font-mono text-[11px] text-brand-600">
-            {t(locale, 'panel.birthdays.openTeam')} →
-          </Link>
+          <AdminIconButton
+            href="/dashboard?tab=team"
+            label={t(locale, 'panel.birthdays.openTeam')}
+            icon="team"
+          />
         )}
       </div>
 
