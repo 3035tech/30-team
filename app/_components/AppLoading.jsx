@@ -25,7 +25,8 @@ export function Spinner({ size = 14, color, style, className }) {
 }
 
 /**
- * Short fade/slide when panel content mounts (tab change, route, Suspense resolve).
+ * Short fade when panel content mounts (tab change, route, Suspense resolve).
+ * Opacity-only — no CSS transform (Safari native <select> popups misalign under transform ancestors).
  * Honors prefers-reduced-motion via `.ui-content-enter` in globals.css.
  */
 export function ContentEnter({ children, animKey, className }) {

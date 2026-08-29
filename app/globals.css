@@ -92,6 +92,7 @@ textarea:focus-visible {
 .ui-select {
   -webkit-appearance: none;
   appearance: none;
+  background-color: rgb(var(--ink) / 0.05);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75L6 6.25L10.5 1.75' stroke='%231A1625' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
@@ -100,7 +101,11 @@ textarea:focus-visible {
 }
 
 .dark .ui-select {
+  background-color: rgb(var(--ink) / 0.06);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75L6 6.25L10.5 1.75' stroke='%23E8E4F0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 0.75rem 0.5rem;
 }
 
 .ui-checkbox {
@@ -440,15 +445,15 @@ textarea:focus-visible {
   }
 }
 
-/* Panel / route content enter — short, respects reduced motion */
+/* Panel / route content enter — opacity only (no transform).
+ * Safari/macOS native <select> popups misalign under an ancestor with transform
+ * (ContentEnter wraps every dashboard tab). */
 @keyframes ui-content-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 .ui-content-enter {

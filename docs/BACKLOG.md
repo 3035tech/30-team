@@ -392,6 +392,7 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 1. Pipeline kanban: `PIPELINE_STAGE_COLORS_DARK` + `getKanbanStages(locale, { isDark })` (Equipe + Vagas) — texto/borda legíveis no dark.
 2. Charts/meters: classes `ui-meter-track` / `ui-meter-fill` / `ui-analytics-bar` + regras em `dark-mode.css` (track mais forte, fills saturados/brilhantes).
 3. Chrome: remapeamento extra de `bg-white` no dashboard + Help overlay leftovers.
+4. `ContentEnter` sem `transform` (só opacity) — popup nativo de `<select>` no Safari/macOS deixa de desalinha sob o wrapper das abas; `.ui-select` reforça chevron no dark.
 
 **Ainda aberto:**
 1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first (`color-scheme: light` em careers + assessment).

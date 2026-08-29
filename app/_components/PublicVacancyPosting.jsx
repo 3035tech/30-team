@@ -17,6 +17,10 @@ import { PublicVacancyShareBar } from './PublicVacancyShareBar';
 import { FormField, formFieldRowClass } from './FormField';
 import { EmptyState } from './EmptyState';
 import {
+  fieldInputClass,
+  fieldSelectBlockClass,
+} from './form-control-styles';
+import {
   formatPublicVacancyDate,
   publicVacancyCanApply,
   publicVacancyClosedReason,
@@ -46,17 +50,20 @@ function trackJobFunnel(eventType, vacancyId) {
   }).catch(() => {});
 }
 
+/** Public careers chrome — inputs reuse dashboard field tokens (same height, no display font). */
 const SC = {
-  shell: 'relative box-border min-h-screen bg-canvas font-display text-ink [color-scheme:light]',
+  shell: 'relative box-border min-h-screen bg-canvas font-ui text-ink [color-scheme:light]',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
-  card: 'box-border rounded-[20px] border border-ink/12 bg-white px-10 py-9 shadow-card',
-  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink',
-  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink',
+  card: 'box-border rounded-card border border-ink/12 bg-surface px-5 py-6 shadow-card sm:px-7 sm:py-7',
+  input: cn(fieldInputClass, 'w-full bg-surface'),
+  select: cn(fieldSelectBlockClass, 'bg-surface text-ink'),
   btnPrimary:
-    'min-h-touch items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-xs font-medium text-white',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose font-medium text-white disabled:cursor-default disabled:opacity-60',
+  btnPrimaryBlock:
+    'inline-flex min-h-touch w-full cursor-pointer items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose font-medium text-white sm:w-auto disabled:cursor-default disabled:opacity-60',
   filterChip:
-    'inline-flex min-h-touch items-center rounded-full border border-ink/12 bg-ink/[0.04] px-3 py-1.5 font-mono text-2xs text-ink-muted no-underline hover:border-brand-500/30 hover:text-brand-500',
+    'inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-surface px-3 py-1.5 font-mono text-2xs text-ink-muted no-underline hover:border-brand-500/30 hover:text-brand-500',
 };
 
 function MetaChip({ children }) {
@@ -490,9 +497,9 @@ export function PublicVacanciesIndexView({
         <form
           method="get"
           action={listBase}
-          className={cn(SC.card, 'mb-4 flex flex-col gap-3')}
+          className={cn(SC.card, 'mb-4 flex flex-col gap-4')}
         >
-          <FormField label={t(locale, 'publicVacancy.indexSearchLabel')}>
+          <FormField label={t(locale, 'publicVacancy.indexSearchLabel')} className="gap-1.5">
             <input
               type="search"
               name="q"
@@ -502,10 +509,10 @@ export function PublicVacanciesIndexView({
               autoComplete="off"
             />
           </FormField>
-          <div className={cn(formFieldRowClass, 'gap-3')}>
+          <div className={cn(formFieldRowClass, 'items-end gap-3')}>
             <FormField
               label={t(locale, 'publicVacancy.indexEmploymentLabel')}
-              className="min-w-0 flex-[1_1_160px]"
+              className="min-w-0 flex-[1_1_160px] gap-1.5"
             >
               <select name="employmentType" defaultValue={employmentType} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
@@ -517,7 +524,7 @@ export function PublicVacanciesIndexView({
             </FormField>
             <FormField
               label={t(locale, 'publicVacancy.indexWorkplaceLabel')}
-              className="min-w-0 flex-[1_1_160px]"
+              className="min-w-0 flex-[1_1_160px] gap-1.5"
             >
               <select name="workplaceModality" defaultValue={workplaceModality} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexWorkplaceAll')}</option>
@@ -531,16 +538,13 @@ export function PublicVacanciesIndexView({
                 })}
               </select>
             </FormField>
-            <button
-              type="submit"
-              className="min-h-[44px] shrink-0 cursor-pointer self-end rounded-control border-none bg-brand-500 px-5 font-display text-base text-white"
-            >
+            <button type="submit" className={cn(SC.btnPrimary, 'shrink-0')}>
               {t(locale, 'publicVacancy.indexSearchSubmit')}
             </button>
             {hasFilters ? (
               <Link
                 href={clearHref}
-                className="inline-flex min-h-[44px] shrink-0 items-center self-end px-3.5 text-sm text-ink-muted"
+                className="inline-flex min-h-touch shrink-0 items-center px-2 text-prose text-ink-muted no-underline hover:text-brand-600"
               >
                 {t(locale, 'publicVacancy.indexClearFilters')}
               </Link>
@@ -564,9 +568,7 @@ export function PublicVacanciesIndexView({
 
         <main className={SC.card}>
           {total > 0 ? (
-            <p
-className="mb-3.5 mt-0 font-mono text-xs text-ink-muted"
-            >
+            <p className="mb-3 mt-0 font-mono text-2xs text-ink-muted">
               {t(locale, 'publicVacancy.indexResultCount', { count: String(total) })}
             </p>
           ) : null}
@@ -581,7 +583,7 @@ className="mb-3.5 mt-0 font-mono text-xs text-ink-muted"
               actionHref={hasFilters ? clearHref : '/jobs'}
             />
           ) : (
-            <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {items.map((item) => {
                 const empKey = employmentTypeLabelKey(item.employmentType);
                 const empLabel = empKey ? t(locale, empKey) : null;
@@ -597,23 +599,19 @@ className="mb-3.5 mt-0 font-mono text-xs text-ink-muted"
                 const meta = [empLabel, workplaceLabel].filter(Boolean).join(' · ');
                 return (
                   <li key={item.vacancyId}>
-                    <div
-className="rounded-xl border border-ink/12 px-[18px] py-4"
-                    >
+                    <div className="rounded-control border border-ink/12 bg-canvas/40 px-4 py-3">
                       <Link
                         href={item.path}
-className="block text-lg text-ink no-underline"
+                        className="block font-ui text-base font-medium text-ink no-underline hover:text-brand-600"
                       >
                         {item.title}
                       </Link>
                       {item.companyName || meta ? (
-                        <div
-className="mt-1.5 font-mono text-xs text-ink-muted"
-                        >
+                        <div className="mt-1 font-mono text-2xs text-ink-muted">
                           {item.companyName && item.companySlug ? (
                             <Link
                               href={publicCompanyPath(item.companySlug)}
-                              className="text-ink-muted"
+                              className="text-ink-muted no-underline hover:text-brand-600"
                             >
                               {item.companyName}
                             </Link>
@@ -659,44 +657,45 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
 
         {showJobAlert ? (
         <section className={cn(SC.card, 'mt-4')}>
-          <h2 className="mb-2 mt-0 text-lg font-semibold">
+          <h2 className="mb-1.5 mt-0 font-display text-lg font-normal text-ink">
             {t(locale, 'publicVacancy.alertTitle')}
           </h2>
-          <p className="mb-3.5 mt-0 text-sm leading-[1.55] text-ink-muted">
+          <p className="mb-4 mt-0 text-prose leading-relaxed text-ink-muted">
             {t(locale, 'publicVacancy.alertIntro')}
           </p>
           {alertStatus === 'ok' ? (
-            <p className="m-0 text-sm text-success">
+            <p className="m-0 text-prose text-success">
               {t(locale, 'publicVacancy.alertSuccess')}
             </p>
           ) : (
-            <form
-              onSubmit={submitJobAlert}
-              className="flex flex-col gap-3"
-            >
-              <FormField label={t(locale, 'publicVacancy.alertNameLabel')}>
-                <input
-                  type="text"
-                  name="name"
-                  value={alertName}
-                  onChange={(ev) => setAlertName(ev.target.value)}
-                  placeholder={t(locale, 'publicVacancy.alertNamePlaceholder')}
-                  className={SC.input}
-                  autoComplete="name"
-                />
-              </FormField>
-              <FormField label={t(locale, 'publicVacancy.alertEmailLabel')}>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={alertEmail}
-                  onChange={(ev) => setAlertEmail(ev.target.value)}
-                  placeholder={t(locale, 'publicVacancy.alertEmailPlaceholder')}
-                  className={SC.input}
-                  autoComplete="email"
-                />
-              </FormField>
+            <form onSubmit={submitJobAlert} className="flex flex-col gap-4">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
+                <FormField label={t(locale, 'publicVacancy.alertNameLabel')} className="gap-1.5">
+                  <input
+                    type="text"
+                    name="name"
+                    value={alertName}
+                    onChange={(ev) => setAlertName(ev.target.value)}
+                    placeholder={t(locale, 'publicVacancy.alertNamePlaceholder')}
+                    className={SC.input}
+                    autoComplete="name"
+                    maxLength={120}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'publicVacancy.alertEmailLabel')} className="gap-1.5">
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={alertEmail}
+                    onChange={(ev) => setAlertEmail(ev.target.value)}
+                    placeholder={t(locale, 'publicVacancy.alertEmailPlaceholder')}
+                    className={SC.input}
+                    autoComplete="email"
+                    inputMode="email"
+                  />
+                </FormField>
+              </div>
               {alertStatus === 'err' ? (
                 <p className="m-0 text-prose text-danger">
                   {t(locale, 'publicVacancy.alertError')}
@@ -705,10 +704,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
               <button
                 type="submit"
                 disabled={alertStatus === 'loading'}
-                className={cn(
-                  'min-h-[44px] self-start rounded-control border-none bg-brand-500 px-5 font-display text-base text-white',
-                  alertStatus === 'loading' ? 'cursor-default opacity-70' : 'cursor-pointer'
-                )}
+                className={SC.btnPrimaryBlock}
               >
                 {alertStatus === 'loading'
                   ? t(locale, 'publicVacancy.alertSubmitting')
