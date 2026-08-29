@@ -88,6 +88,14 @@ export function useDashboardNavigation({
       if (curCand) p.set('candidate', curCand);
     }
 
+    // Detalhe LMS: /dashboard?tab=lms&course=<id>
+    if (opts.course !== undefined) {
+      if (opts.course) p.set('course', String(opts.course));
+    } else if (nextTab === 'lms') {
+      const curCourse = urlParams.get('course');
+      if (curCourse) p.set('course', curCourse);
+    }
+
     if (opts.section !== undefined) {
       if (opts.section) p.set('section', String(opts.section));
     } else if (nextTab === 'team') {

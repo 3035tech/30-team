@@ -1426,6 +1426,7 @@ export default function DashboardClient({
                       : (sessionAuth?.companyId ?? null)
                   }
                   courseId={urlParams.get('course') || null}
+                  navigateDashboard={navigateWithOpts}
                 />
               )}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
