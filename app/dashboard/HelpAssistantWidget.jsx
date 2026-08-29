@@ -1,42 +1,44 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
+import { helpSuggestionLabels, helpTabLabel } from '../../lib/help-screen-context';
 import { S } from './dashboard-shared';
 import { Icon } from '../_components/Icon';
 
-const SUGGESTIONS = [
-  'panel.helpAssist.suggestCreateVacancy',
-  'panel.helpAssist.suggestHire',
-  'panel.helpAssist.suggestEmployeeJourney',
-  'panel.helpAssist.suggestColaborador',
-  'panel.helpAssist.suggestMotivators',
-  'panel.helpAssist.suggestGuide',
-];
-
 /**
  * Floating AI product-help assistant (B-801) — Guia / navigation only.
- * Labelled as AI so RH does not confuse it with a static FAQ page.
+ * Uses the open dashboard tab for tips and contextual suggestions.
  */
-export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
+export function HelpAssistantWidget({
+  locale = 'pt-BR',
+  navigateDashboard,
+  activeTab = null,
+  activeSection = null,
+}) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [messages, setMessages] = useState([]);
+  const [followUps, setFollowUps] = useState([]);
   const listRef = useRef(null);
+
+  const emptySuggestions = useMemo(() => helpSuggestionLabels(locale, activeTab), [locale, activeTab]);
+  const hereLabel = useMemo(() => helpTabLabel(locale, activeTab), [locale, activeTab]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, open, busy]);
+  }, [messages, open, busy, followUps]);
 
   const send = async (raw) => {
     const q = String(raw || '').trim();
     if (!q || busy) return;
     setError('');
     setQuestion('');
+    setFollowUps([]);
     const nextHistory = [...messages, { role: 'user', content: q }].slice(-6);
     setMessages(nextHistory);
     setBusy(true);
@@ -48,6 +50,8 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
           question: q,
           locale,
           history: nextHistory.slice(0, -1),
+          activeTab: activeTab || null,
+          activeSection: activeSection || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -63,12 +67,17 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
           citations: Array.isArray(data.citations) ? data.citations : [],
         },
       ]);
+      if (Array.isArray(data.suggestions) && data.suggestions.length) {
+        setFollowUps(data.suggestions.slice(0, 6));
+      }
     } catch (e) {
       setError(e?.message || t(locale, 'panel.helpAssist.error'));
     } finally {
       setBusy(false);
     }
   };
+
+  const chipList = messages.length === 0 ? emptySuggestions : followUps;
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[90] flex flex-col items-end gap-2">
@@ -106,21 +115,14 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
             {messages.length === 0 ? (
               <div className="flex flex-col gap-2">
                 <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.helpAssist.empty')}</p>
+                {hereLabel ? (
+                  <p className="m-0 font-mono text-2xs font-semibold text-ink-muted">
+                    {t(locale, 'panel.helpAssist.emptyHere', { tab: hereLabel })}
+                  </p>
+                ) : null}
                 <p className="m-0 font-mono text-2xs text-ink-faint">
                   {t(locale, 'panel.helpAssist.emptyHint')}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {SUGGESTIONS.map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className="min-h-touch rounded-control border border-ink/12 bg-canvas px-2.5 py-1.5 text-left font-mono text-2xs text-ink-muted"
-                      onClick={() => send(t(locale, key))}
-                    >
-                      {t(locale, key)}
-                    </button>
-                  ))}
-                </div>
               </div>
             ) : null}
             {messages.map((m, i) => (
@@ -143,6 +145,21 @@ export function HelpAssistantWidget({ locale = 'pt-BR', navigateDashboard }) {
                 ) : null}
               </div>
             ))}
+            {chipList.length ? (
+              <div className="flex flex-wrap gap-1.5">
+                {chipList.map((label) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className="min-h-touch rounded-control border border-ink/12 bg-canvas px-2.5 py-1.5 text-left font-mono text-2xs text-ink-muted"
+                    onClick={() => send(label)}
+                    disabled={busy}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {busy ? <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'panel.common.loading')}</p> : null}
             {error ? <p className="m-0 text-xs text-danger">{error}</p> : null}
           </div>

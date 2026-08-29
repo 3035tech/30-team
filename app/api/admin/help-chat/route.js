@@ -33,9 +33,12 @@ export async function POST(request) {
   const locale = normalizeLocale(body.locale || payload?.locale || 'pt-BR');
   const question = String(body.question || '').trim();
   const history = Array.isArray(body.history) ? body.history : [];
+  const activeTab = body.activeTab != null ? String(body.activeTab).trim().slice(0, 64) : null;
+  const activeSection =
+    body.activeSection != null ? String(body.activeSection).trim().slice(0, 64) : null;
 
   try {
-    const out = await answerHelpQuestion({ question, locale, history });
+    const out = await answerHelpQuestion({ question, locale, history, activeTab, activeSection });
     return NextResponse.json({ ok: true, ...out });
   } catch (e) {
     const code = e?.code || 'HELP_ASSIST_FAILED';

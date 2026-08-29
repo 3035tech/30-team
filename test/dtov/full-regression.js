@@ -694,7 +694,27 @@ async function runOfflineLibs() {
     if (!turnFaq || turnFaq.section !== 'b1000TurnoverRadar') throw new Error('faq turnover miss');
     const rolesFaq = matchHelpFaq('como criar um cargo com rubrica', 'pt-BR');
     if (!rolesFaq || rolesFaq.section !== 'b1000JobRoles') throw new Error('faq job-roles miss');
+    const screensFaq = matchHelpFaq('para que serve cada tela do painel', 'pt-BR');
+    if (!screensFaq || screensFaq.section !== 'screens') throw new Error('faq screens miss');
+    const screenCtx = matchHelpFaq('para que serve esta tela', 'pt-BR', { activeTab: 'overview' });
+    if (!screenCtx || screenCtx.id !== 'screen-context' || !String(screenCtx.answer || '').includes('Visão geral')) {
+      throw new Error('faq screen-context miss');
+    }
+    const sysTips = matchHelpFaq('dicas do sistema', 'pt-BR', { activeTab: 'vacancies' });
+    if (!sysTips || !String(sysTips.answer || '').includes('Dicas do sistema')) {
+      throw new Error('faq system tips miss');
+    }
+    const {
+      helpSuggestionLabels,
+      helpScreenPurpose,
+    } = await import('../../lib/help-screen-context.js');
+    if (!helpScreenPurpose('pt-BR', 'vacancies')) throw new Error('screen purpose vacancies');
+    if (helpSuggestionLabels('pt-BR', 'team').length < 3) throw new Error('suggestions thin');
     const chunks = buildHelpChunks('pt-BR');
+    const screensChunk = chunks.find((c) => c.section === 'screens');
+    if (!screensChunk || !String(screensChunk.body || '').includes('Visão geral')) {
+      throw new Error('screens chunk incomplete');
+    }
     if (chunks.length < HELP_GUIDE_SECTIONS.length - 2) {
       throw new Error(`chunks ${chunks.length} < sections ${HELP_GUIDE_SECTIONS.length}`);
     }

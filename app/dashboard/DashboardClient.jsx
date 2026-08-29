@@ -1493,7 +1493,12 @@ export default function DashboardClient({
       </div>
     </div>
     {can(sessionAuth, CAP.HELP_VIEW) ? (
-      <HelpAssistantWidget locale={locale} navigateDashboard={navigateWithOpts} />
+      <HelpAssistantWidget
+        locale={locale}
+        navigateDashboard={navigateWithOpts}
+        activeTab={tab}
+        activeSection={urlParams.get('section')}
+      />
     ) : null}
     {sessionAuth?.showOnboardingWizard ? (
       <OnboardingWizard
