@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
-import { S, AdminListPager } from '../dashboard-shared';
+import { S, AdminListPager, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
@@ -131,10 +131,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className={S.pageTitle}>{t(locale, 'panel.audit.title')}</h2>
-        <p className={cn(S.muted, 'mt-1 max-w-3xl')}>{t(locale, 'panel.audit.intro')}</p>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.audit.title')}
+        subtitle={t(locale, 'panel.audit.intro')}
+      />
 
       <div className={cn(formFieldRowClass, 'gap-3')}>
         <FormField label={t(locale, 'panel.audit.filterActorKind')}>
@@ -206,16 +206,15 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
       {!loading && items.length ? (
         <>
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.audit.count', { n: total })}</p>
-          <div className="overflow-x-auto rounded-card border border-ink/10">
-            <table className="w-full min-w-[880px] border-collapse text-left text-prose">
+          <AdminTableShell minWidth="880px">
               <thead>
-                <tr className="border-b border-ink/10 bg-ink/[0.03] font-mono text-2xs uppercase tracking-wide text-ink-label">
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colWhen')}</th>
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colActor')}</th>
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colAction')}</th>
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colTarget')}</th>
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colCompany')}</th>
-                  <th className="px-3 py-2.5">{t(locale, 'panel.audit.colWhere')}</th>
+                <tr className="border-b border-ink/10 bg-ink/[0.03]">
+                  <AdminTh>{t(locale, 'panel.audit.colWhen')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.audit.colActor')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.audit.colAction')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.audit.colTarget')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.audit.colCompany')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.audit.colWhere')}</AdminTh>
                 </tr>
               </thead>
               <tbody>
@@ -266,8 +265,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+          </AdminTableShell>
 
           <AdminListPager
             locale={locale}

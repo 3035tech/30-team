@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
+import { InsightListItem } from '../../../_components/InsightListItem';
+import { InlineCallout } from '../../../_components/InlineCallout';
+import { StatusToneChip } from '../../../_components/StatusToneChip';
 
 export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -99,16 +102,16 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
     }
   }
 
-  function getHealthColor(health) {
+  function healthTone(health) {
     switch (health) {
       case 'positive':
-        return 'bg-success/10 text-success';
+        return 'success';
       case 'neutral':
-        return 'bg-warning/10 text-warning';
+        return 'warning';
       case 'concern':
-        return 'bg-danger/10 text-danger';
+        return 'danger';
       default:
-        return 'bg-ink/10 text-ink-muted';
+        return 'neutral';
     }
   }
 
@@ -171,11 +174,13 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         <div className="space-y-4">
           <div>
             <p className={S.cardSection}>{t('overallHealth')}</p>
-            <span
-              className={`inline-flex rounded px-3 py-1 text-sm font-medium ${getHealthColor(data.overallHealth)}`}
+            <StatusToneChip
+              tone={healthTone(data.overallHealth)}
+              bordered={false}
+              className="rounded px-3 py-1 font-ui text-sm font-medium"
             >
               {t(data.overallHealth)}
-            </span>
+            </StatusToneChip>
           </div>
 
           {data.dominantArchetype && (
@@ -208,9 +213,9 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-ink/5 bg-canvas-alt/30 p-3">
-            <p className={S.cardMuted}>{t('hedgingNote')}</p>
-          </div>
+          <InlineCallout tone="info" className="text-prose">
+            <p className={cn(S.cardMuted, 'm-0')}>{t('hedgingNote')}</p>
+          </InlineCallout>
 
           <button type="button" onClick={loadFullInsights} className={S.cardLink}>
             {t('viewFull')} →
@@ -234,26 +239,20 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
                 actionLink = '/dashboard?tab=team';
               }
               return (
-                <div
+                <InsightListItem
                   key={idx}
-                  className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
+                  title={`${getCategoryIcon(insight.category)} ${insight.description}`}
+                  body={insight.details}
                 >
-                  <span className="shrink-0 text-xl">{getCategoryIcon(insight.category)}</span>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={S.cardBody}>{insight.description}</p>
-                      {actionLink && (
-                        <Link href={actionLink} className={cn(S.cardLink, 'flex-shrink-0')}>
-                          {locale === 'en' ? 'View' : 'Ver'} →
-                        </Link>
-                      )}
-                    </div>
-                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.details}</p>
-                    {insight.hedging && (
-                      <p className={cn(S.cardFaint, 'mt-1 italic')}>{insight.hedging}</p>
-                    )}
-                  </div>
-                </div>
+                  {insight.hedging ? (
+                    <p className={cn(S.cardFaint, 'mt-1 italic')}>{insight.hedging}</p>
+                  ) : null}
+                  {actionLink ? (
+                    <Link href={actionLink} className={cn(S.cardLink, 'mt-1 inline-block')}>
+                      {locale === 'en' ? 'View' : 'Ver'} →
+                    </Link>
+                  ) : null}
+                </InsightListItem>
               );
             })}
           </div>

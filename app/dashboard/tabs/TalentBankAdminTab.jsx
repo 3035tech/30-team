@@ -12,7 +12,11 @@ import {
   S,
   SortableTh,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
   AdminActionsCell,
+  AdminActionsTh,
   AdminIconButton,
   clientSortNextDir,
   TypeBadge,
@@ -193,32 +197,21 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className={S.stack}>
-      <div>
-        <h2 className={S.pageTitle}>
-          {t(locale, 'panel.talentBank.title')}
-        </h2>
-        <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.talentBank.intro')}</p>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.talentBank.title')}
+        subtitle={t(locale, 'panel.talentBank.intro')}
+      />
 
       <div className={cn(formFieldRowClass, 'gap-3')}>
-        <FormField
-          label={t(locale, 'panel.talentBank.filterSearch')}
-          className="min-w-[200px] flex-1"
-        >
-          <input
-            type="search"
-            value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applySearch();
-            }}
-            onBlur={() => {
-              if (qDraft.trim() !== q) applySearch();
-            }}
-            placeholder={t(locale, 'panel.talentBank.searchPh')}
-            className={S.input}
-          />
-        </FormField>
+        <AdminListSearch
+          locale={locale}
+          value={qDraft}
+          onChange={setQDraft}
+          onSubmit={() => applySearch()}
+          placeholder={t(locale, 'panel.talentBank.searchPh')}
+          className="min-w-[200px] flex-1 items-end self-end"
+          inputClassName="w-full max-w-none"
+        />
         <FormField label={t(locale, 'panel.talentBank.filterVacancy')}>
           <select
             value={vacancyId}
@@ -289,8 +282,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.talentBank.count', { n: total })}
           </p>
-          <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-            <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+          <AdminTableShell minWidth="56rem">
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">
                   <SortableTh
@@ -341,12 +333,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                   >
                     {t(locale, 'panel.talentBank.colActivity')}
                   </SortableTh>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-right font-mono text-2xs font-normal uppercase text-ink-faint"
-                  >
-                    {t(locale, 'panel.talentBank.colActions')}
-                  </th>
+                  <AdminActionsTh>{t(locale, 'panel.talentBank.colActions')}</AdminActionsTh>
                 </tr>
               </thead>
               <tbody>
@@ -390,8 +377,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </AdminTableShell>
 
           <AdminListPager
             locale={locale}

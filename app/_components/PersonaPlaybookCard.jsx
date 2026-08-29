@@ -7,6 +7,7 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { PLAYBOOK_IDS } from '../../lib/persona-playbooks.js';
 import { DisclosureToggle } from './CollapsibleBlock';
+import { MeterBar } from './MeterBar';
 
 const DISMISS_KEY = 'team30_playbook_dismissed';
 
@@ -132,12 +133,16 @@ export function PersonaPlaybookCard({ tab, role, locale = 'pt-BR' }) {
 
       {!collapsed ? (
         <>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/10">
-            <div
-              className="h-full rounded-full bg-brand-500 transition-all"
-              style={{ width: `${primary.progress}%` }}
-            />
-          </div>
+          <MeterBar
+            percent={primary.progress}
+            height={6}
+            className="mt-3"
+            toneClass="bg-brand-500"
+            aria-label={t(locale, 'panel.playbook.progress', {
+              done: completedCount,
+              total: totalCount,
+            })}
+          />
           <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
             {(primary.tasks || []).map((task) => (
               <li key={task.id}>

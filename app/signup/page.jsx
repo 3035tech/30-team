@@ -11,6 +11,7 @@ import { FormField } from '../_components/FormField';
 import { cn } from '../../lib/cn';
 import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 import TurnstileField from '../_components/TurnstileField';
+import { InlineCallout } from '../_components/InlineCallout';
 
 const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
@@ -98,9 +99,9 @@ export default function SignupPage() {
           <p className="mb-6 text-center text-base leading-relaxed text-ink-muted">
             {t(locale, 'signup.successBody', { email: formData.email })}
           </p>
-          <div className="mb-4 rounded-control border border-info/20 bg-info/10 px-4 py-3 text-sm text-ink-muted">
+          <InlineCallout tone="info" className="mb-4 text-sm text-ink-muted">
             {t(locale, 'signup.successHint')}
-          </div>
+          </InlineCallout>
           <button
             onClick={() => router.push('/login')}
             className="w-full rounded-control bg-brand-500 px-4 py-3 text-base text-white hover:bg-brand-600"

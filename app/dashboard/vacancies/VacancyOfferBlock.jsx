@@ -5,6 +5,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { StatusToneChip, statusToneClass } from '../../_components/StatusToneChip';
 
 function formatOfferDate(raw) {
   if (!raw) return '';
@@ -12,12 +13,12 @@ function formatOfferDate(raw) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
 }
 
-const STATUS_TONE = {
-  none: 'border-ink/12 bg-ink/[0.04] text-ink-muted',
-  proposed: 'border-warning/30 bg-warning/10 text-warning',
-  accepted: 'border-success/30 bg-success/10 text-success',
-  declined: 'border-danger/30 bg-danger/10 text-danger',
-};
+function offerStatusTone(status) {
+  if (status === 'proposed') return 'warning';
+  if (status === 'accepted') return 'success';
+  if (status === 'declined') return 'danger';
+  return 'neutral';
+}
 
 /**
  * Minimal offer / acceptance (B-703) — salary, start date, status.
@@ -132,7 +133,7 @@ export function VacancyOfferBlock({
         onMouseDown={(e) => e.stopPropagation()}
         className={cn(
           'mt-1.5 inline-flex max-w-full items-center gap-1 rounded-control border px-1.5 py-0.5 font-mono text-2xs',
-          STATUS_TONE[status] || STATUS_TONE.none
+          statusToneClass(offerStatusTone(status))
         )}
         title={t(locale, 'recruiting.offerEdit')}
       >
@@ -150,14 +151,9 @@ export function VacancyOfferBlock({
     <div className="mb-3 rounded-control border border-ink/12 bg-canvas/40 px-3 py-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.offerTitle')}</span>
-        <span
-          className={cn(
-            'inline-flex rounded-control border px-2 py-0.5 font-mono text-2xs',
-            STATUS_TONE[status] || STATUS_TONE.none
-          )}
-        >
+        <StatusToneChip tone={offerStatusTone(status)}>
           {t(locale, `recruiting.offerStatus.${status}`)}
-        </span>
+        </StatusToneChip>
       </div>
       <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'recruiting.offerHint')}</p>
       {status !== 'none' ? (

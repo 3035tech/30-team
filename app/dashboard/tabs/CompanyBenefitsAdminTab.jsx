@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { cn } from '../../../lib/cn';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -15,6 +14,9 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
   AdminViewButton,
   S,
   SortableTh,
@@ -470,10 +472,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-ink">{t('title')}</h2>
-        <p className="text-sm text-ink-muted mt-1">{t('subtitle')}</p>
-      </div>
+      <AdminPageHeader title={t('title')} subtitle={t('subtitle')} />
 
       {/* Categories first — list before linking to benefits */}
       <section className={S.cardTight}>
@@ -513,13 +512,15 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       </section>
 
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="search"
+        <AdminListSearch
+          locale={locale}
           value={nameQ}
-          onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
+          onChange={(v) => {
+            setNameQ(v);
+            setPage(1);
+          }}
           placeholder={t('searchNamePh')}
-          aria-label={t('searchNamePh')}
-          className={cn(S.input, 'max-w-xs')}
+          showButton={false}
         />
         {isAdmin && (
           <AdminCreateButton label={t('create')} onClick={handleCreate} />
@@ -559,8 +560,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[560px]">
+        <>
+        <AdminTableShell minWidth="560px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -613,23 +614,21 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                 </tr>
               ))}
             </tbody>
-          </table>
-          <div className="px-4 pb-3">
-            <AdminListPager
-              locale={locale}
-              page={safePage}
-              pageSize={pageSize}
-              total={total}
-              loading={loading}
-              pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onPageChange={setPage}
-              onPageSizeChange={(ps) => {
-                setPageSize(ps);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
+        </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={safePage}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+        </>
       )}
     </div>
   );

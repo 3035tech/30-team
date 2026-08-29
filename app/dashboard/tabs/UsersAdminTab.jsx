@@ -6,9 +6,10 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
-import { clientSortNextDir, S, SortableTh, AdminListPager, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton } from '../dashboard-shared';
+import { clientSortNextDir, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminTh, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 const BTN_GHOST =
   'min-h-touch rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
@@ -455,29 +456,14 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             </button>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            type="search"
+        <div className="mt-3">
+          <AdminListSearch
+            locale={locale}
             value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                pushUsersSearch(String(searchDraft || '').trim());
-              }
-            }}
+            onChange={setSearchDraft}
+            onSubmit={(v) => pushUsersSearch(String(v || '').trim())}
             placeholder={t(locale, 'panel.admin.usersSearchPh')}
-            aria-label={t(locale, 'panel.admin.usersSearchPh')}
-            className={cn(S.input, 'max-w-xs')}
           />
-          <button
-            type="button"
-            onClick={() => pushUsersSearch(String(searchDraft || '').trim())}
-            disabled={loading}
-            className={cn(BTN_GHOST, loading && 'opacity-60')}
-          >
-            {t(locale, 'panel.admin.usersSearchBtn')}
-          </button>
         </div>
         {usersTotal === 0 ? (
           <div className="mt-3">
@@ -493,17 +479,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             />
           </div>
         ) : (
-          <div className="db-table-scroll mt-2.5 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-xs">
+          <>
+          <AdminTableShell minWidth="640px" className="mt-2.5">
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
                   <SortableTh columnKey="displayName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colDisplayName')}</SortableTh>
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
-                  <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted">
-                    {t(locale, 'panel.admin.colOrigin')}
-                  </th>
+                  <AdminTh>{t(locale, 'panel.admin.colOrigin')}</AdminTh>
                   <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
@@ -522,38 +506,33 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                       </td>
                       <td className="px-3 py-3 text-ink">{u.email}</td>
                       <td className="px-3 py-3">
-                        <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
-                          {u.role}
-                        </span>
+                        <StatusToneChip tone="neutral">{u.role}</StatusToneChip>
                         {u.capabilitiesCustomized ? (
-                          <span
+                          <StatusToneChip
+                            tone="brand"
                             title={t(locale, 'panel.admin.userModulesHint')}
-                            className="ml-1.5 rounded-full border border-brand-500/25 bg-brand-500/[0.07] px-2 py-0.5 font-mono text-2xs text-brand-600"
+                            className="ml-1.5"
                           >
                             {t(locale, 'panel.admin.userModulesCustom')}
-                          </span>
+                          </StatusToneChip>
                         ) : null}
                         {u.passwordSetupPending ? (
-                          <span
+                          <StatusToneChip
+                            tone="neutral"
                             title={t(locale, 'panel.admin.passwordSetupPendingHint')}
-                            className="ml-1.5 rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted"
+                            className="ml-1.5"
                           >
                             {t(locale, 'panel.admin.passwordSetupPending')}
-                          </span>
+                          </StatusToneChip>
                         ) : null}
                       </td>
                       <td className="px-3 py-3">
-                        <span
+                        <StatusToneChip
+                          tone={u.origin === 'admin' || !u.origin ? 'neutral' : 'info'}
                           title={t(locale, `panel.admin.originHint.${u.origin || 'admin'}`)}
-                          className={cn(
-                            'inline-block rounded-full border px-2 py-0.5 font-mono text-2xs',
-                            u.origin === 'admin' || !u.origin
-                              ? 'border-ink/12 bg-ink/[0.04] text-ink-muted'
-                              : 'border-info/25 bg-info/10 text-info'
-                          )}
                         >
                           {t(locale, `panel.admin.origin.${u.origin || 'admin'}`)}
-                        </span>
+                        </StatusToneChip>
                         {u.signupPending ? (
                           <div className="mt-1 font-mono text-2xs text-warning">
                             {t(locale, 'panel.admin.signupPendingBadge')}
@@ -597,7 +576,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   );
                 })}
               </tbody>
-            </table>
+          </AdminTableShell>
             {navigateDashboard && usersTotal > 0 ? (
               <AdminListPager
                 locale={locale}
@@ -616,7 +595,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                 }
               />
             ) : null}
-          </div>
+          </>
         )}
       </div>
     </div>

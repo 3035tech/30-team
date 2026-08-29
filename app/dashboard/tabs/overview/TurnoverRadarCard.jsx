@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
+import { statusToneClass } from '../../../_components/StatusToneChip';
 import { Icon } from '../../../_components/Icon';
 
 const SIGNAL_META = {
@@ -58,10 +59,17 @@ export default function TurnoverRadarCard({ locale, companyId }) {
     fetchRisks();
   }, [companyId]);
 
-  const getRiskColor = (risk) => {
-    if (risk === 'high') return 'text-danger bg-danger/10 border-danger/30';
-    if (risk === 'medium') return 'text-warning bg-warning/10 border-warning/30';
-    return 'text-success bg-success/10 border-success/30';
+  const riskTone = (risk) => {
+    if (risk === 'high') return 'danger';
+    if (risk === 'medium') return 'warning';
+    return 'success';
+  };
+
+  const riskTextClass = (risk) => {
+    const tone = riskTone(risk);
+    if (tone === 'danger') return 'text-danger';
+    if (tone === 'warning') return 'text-warning';
+    return 'text-success';
   };
 
   const getRiskIcon = (risk) => {
@@ -130,7 +138,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
               <div
                 className={cn(
                   'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border',
-                  getRiskColor(person.risk)
+                  statusToneClass(riskTone(person.risk))
                 )}
                 title={riskLabel}
                 aria-label={riskLabel}
@@ -161,7 +169,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
                     className={cn(
                       'cursor-help',
                       S.cardMetric,
-                      getRiskColor(person.risk).split(' ')[0]
+                      riskTextClass(person.risk)
                     )}
                     title={`${riskLabel}: ${person.riskScore}. ${riskScoreHint}`}
                     aria-label={`${riskLabel}: ${person.riskScore}. ${riskScoreHint}`}

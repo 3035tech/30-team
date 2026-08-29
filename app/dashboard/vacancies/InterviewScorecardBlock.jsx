@@ -6,6 +6,7 @@ import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { FormField } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { ScaleRatingButtons } from '../../_components/ScaleRatingButtons';
 
 /**
  * Light interview scorecard (B-407) — ratings 1–5 vs briefing questions.
@@ -93,25 +94,15 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
         {items.map((row, idx) => (
           <li key={row.questionId || idx} className="border-t border-ink/10 pt-2.5 first:border-0 first:pt-0">
             <p className="mb-1.5 mt-0 text-prose leading-snug text-ink">{row.text}</p>
-            <div className="mb-1.5 flex flex-wrap gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setRating(idx, n)}
-                  className={cn(
-                    'min-h-touch min-w-[40px] rounded-control border px-2 font-mono text-xs',
-                    row.rating === n
-                      ? 'border-brand-500/40 bg-brand-500/[0.12] text-brand-500'
-                      : 'border-ink/12 bg-surface text-ink-muted'
-                  )}
-                  aria-label={t(locale, 'recruiting.scorecardRatingAria', { n })}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <FormField label={t(locale, 'recruiting.scorecardCommentPh')}>
+            <ScaleRatingButtons
+              min={1}
+              max={5}
+              value={row.rating}
+              size="sm"
+              className="mb-1.5"
+              ariaLabel={row.text}
+              onChange={(n) => setRating(idx, n)}
+            />            <FormField label={t(locale, 'recruiting.scorecardCommentPh')}>
               <input
                 value={row.comment || ''}
                 onChange={(e) => setComment(idx, e.target.value)}

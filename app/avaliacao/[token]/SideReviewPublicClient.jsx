@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 
 const OUTCOMES = ['met', 'exceeded', 'develop', 'not_met'];
 const OUTCOME_I18N = {
@@ -87,20 +87,26 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) {
+    return <PublicNarrowShell variant="loading" locale={locale} maxWidthClass="max-w-2xl" />;
+  }
   if (error) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <PublicNarrowShell variant="error" locale={locale} className="text-center">
         <p className="m-0 text-sm text-ink-muted">{error}</p>
-      </div>
+      </PublicNarrowShell>
     );
   }
   if (done) {
     return (
-      <ContentEnter className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold text-ink">{t(locale, 'performanceReviews.sideReview.publicDoneTitle')}</h1>
+      <PublicNarrowShell
+        variant="done"
+        locale={locale}
+        title={t(locale, 'performanceReviews.sideReview.publicDoneTitle')}
+        className="text-center"
+      >
         <p className="mt-2 text-sm text-ink-muted">{t(locale, 'performanceReviews.sideReview.publicThanks')}</p>
-      </ContentEnter>
+      </PublicNarrowShell>
     );
   }
 
@@ -110,7 +116,7 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
       : t(locale, 'performanceReviews.sideReview.rolePeer');
 
   return (
-    <ContentEnter className="mx-auto max-w-2xl px-4 py-8">
+    <PublicNarrowShell variant="form" locale={locale} maxWidthClass="max-w-2xl">
       <header className="mb-6">
         <p className="m-0 font-mono text-2xs uppercase tracking-wide text-ink-faint">
           {roleLabel}
@@ -197,6 +203,6 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
           {t(locale, 'performanceReviews.sideReview.publicSubmit')}
         </button>
       </div>
-    </ContentEnter>
+    </PublicNarrowShell>
   );
 }

@@ -10,6 +10,7 @@ import { Bar, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { cn } from '../../../lib/cn';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
+import { StatMetricTile } from '../../_components/StatMetricTile';
 
 const BAND_KEYS = {
   standout: 'bandStandout',
@@ -65,15 +66,6 @@ export function LeadershipTab({
   const gTot = globalTotal || 1;
   const topPeople = summaryPeople(leadershipPotentials);
 
-  const Kpi = ({ icon, value, label, hint }) => (
-    <div className={cn(S.card, 'p-[22px]')}>
-      <div className="mb-2 flex text-brand-500"><Icon name={icon} /></div>
-      <div className="mb-1 font-mono text-3xl text-brand-600">{value}</div>
-      <div className="font-mono text-2xs uppercase tracking-wide text-ink-muted">{label}</div>
-      {hint && <div className="mt-2 text-2xs leading-snug text-ink-faint">{hint}</div>}
-    </div>
-  );
-
   const tableHeaders = [
     t(locale, 'panel.leadership.tablePerson'),
     t(locale, 'panel.leadership.tableDominant'),
@@ -109,9 +101,40 @@ export function LeadershipTab({
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-        <Kpi icon="chart" value={kpis.assessments} label={t(locale, 'panel.leadership.kpiAssessments')} hint={t(locale, 'panel.leadership.kpiAssessmentsHint')} />
-        <Kpi icon="user" value={kpis.candidates} label={t(locale, 'panel.leadership.kpiCandidates')} hint={t(locale, 'panel.leadership.kpiCandidatesHint')} />
-        <Kpi icon="building" value={kpis.areasActive} label={t(locale, 'panel.leadership.kpiAreas')} hint={t(locale, 'panel.leadership.kpiAreasHint')} />
+        {[
+          {
+            icon: 'chart',
+            value: kpis.assessments,
+            label: t(locale, 'panel.leadership.kpiAssessments'),
+            hint: t(locale, 'panel.leadership.kpiAssessmentsHint'),
+          },
+          {
+            icon: 'user',
+            value: kpis.candidates,
+            label: t(locale, 'panel.leadership.kpiCandidates'),
+            hint: t(locale, 'panel.leadership.kpiCandidatesHint'),
+          },
+          {
+            icon: 'building',
+            value: kpis.areasActive,
+            label: t(locale, 'panel.leadership.kpiAreas'),
+            hint: t(locale, 'panel.leadership.kpiAreasHint'),
+          },
+        ].map((kpi) => (
+          <div key={kpi.label} className={cn(S.card, 'p-[22px]')}>
+            <div className="mb-2 flex text-brand-500">
+              <Icon name={kpi.icon} />
+            </div>
+            <StatMetricTile
+              value={kpi.value}
+              label={kpi.label}
+              color={C.purple}
+              className="border-0 bg-transparent p-0"
+              hero
+              hint={kpi.hint}
+            />
+          </div>
+        ))}
       </div>
 
       {viewMode === 'summary' ? (

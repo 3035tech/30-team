@@ -6,6 +6,7 @@ import { cn } from '../../lib/cn';
 import { notificationCopySpec, notificationVisual, NOTIF } from '../../lib/manager-notification-catalog';
 import { GlobalSearch } from './GlobalSearch';
 import { DarkModeToggle } from './DarkModeProvider';
+import { statusToneClass } from './StatusToneChip';
 
 function formatWhen(iso, locale) {
   if (!iso) return '';
@@ -53,13 +54,9 @@ function notifBody(locale, item) {
 }
 
 function toneClasses(tone) {
-  if (tone === 'attention') {
-    return 'bg-warning/10 text-warning';
-  }
-  if (tone === 'success') {
-    return 'bg-success/10 text-success';
-  }
-  return 'bg-brand-500/[0.08] text-brand-500';
+  if (tone === 'attention') return statusToneClass('warning', { bordered: false });
+  if (tone === 'success') return statusToneClass('success', { bordered: false });
+  return statusToneClass('brand', { bordered: false });
 }
 
 function NotifTypeIcon({ category, tone }) {

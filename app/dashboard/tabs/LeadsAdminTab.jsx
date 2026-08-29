@@ -5,14 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
-import { S, AdminListPager } from '../dashboard-shared';
+import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
-function statusChipClass(status) {
-  if (status === 'pending') return 'border-warning/25 bg-warning/10 text-warning';
-  if (status === 'active') return 'border-success/25 bg-success/10 text-success';
-  return 'border-ink/12 bg-ink/[0.04] text-ink-muted';
+function leadStatusTone(status) {
+  if (status === 'pending') return 'warning';
+  if (status === 'active') return 'success';
+  return 'neutral';
 }
 
 /**
@@ -109,10 +110,10 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
 
   return (
     <div className={S.stack}>
-      <div>
-        <h2 className={S.pageTitle}>{t(locale, 'panel.leads.title')}</h2>
-        <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.leads.intro')}</p>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.leads.title')}
+        subtitle={t(locale, 'panel.leads.intro')}
+      />
 
       <div className={cn(formFieldRowClass, 'gap-3')}>
         <FormField label={t(locale, 'panel.leads.filterStatus')}>
@@ -127,21 +128,15 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             <option value="inactive">{t(locale, 'panel.leads.statusInactive')}</option>
           </select>
         </FormField>
-        <FormField label={t(locale, 'panel.leads.filterSearch')} className="min-w-[200px] flex-1">
-          <input
-            type="search"
-            value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') pushFilters({ q: qDraft.trim(), page: 1 });
-            }}
-            onBlur={() => {
-              if (qDraft.trim() !== filters.q) pushFilters({ q: qDraft.trim(), page: 1 });
-            }}
-            placeholder={t(locale, 'panel.leads.searchPh')}
-            className={S.input}
-          />
-        </FormField>
+        <AdminListSearch
+          locale={locale}
+          value={qDraft}
+          onChange={setQDraft}
+          onSubmit={(v) => pushFilters({ q: String(v || '').trim(), page: 1 })}
+          placeholder={t(locale, 'panel.leads.searchPh')}
+          className="min-w-[200px] flex-1 items-end self-end"
+          inputClassName="w-full max-w-none"
+        />
       </div>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
@@ -159,28 +154,15 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.leads.count', { n: total })}
           </p>
-          <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-            <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+          <AdminTableShell minWidth="56rem">
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colWhen')}
-                  </th>
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colLead')}
-                  </th>
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colOrigin')}
-                  </th>
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colCompany')}
-                  </th>
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colStatus')}
-                  </th>
-                  <th className="px-3 py-2.5 font-mono text-2xs font-normal uppercase text-ink-faint">
-                    {t(locale, 'panel.leads.colMeta')}
-                  </th>
+                  <AdminTh>{t(locale, 'panel.leads.colWhen')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.leads.colLead')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.leads.colOrigin')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.leads.colCompany')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.leads.colStatus')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.leads.colMeta')}</AdminTh>
                 </tr>
               </thead>
               <tbody>
@@ -197,9 +179,9 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="inline-block rounded-control border border-info/25 bg-info/10 px-2 py-0.5 font-mono text-2xs text-info">
+                      <StatusToneChip tone="info">
                         {t(locale, `panel.leads.origin.${row.origin || 'self_service'}`)}
-                      </span>
+                      </StatusToneChip>
                     </td>
                     <td className="px-3 py-3 text-sm text-ink">
                       {row.companyName || '—'}
@@ -213,14 +195,9 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                       ) : null}
                     </td>
                     <td className="px-3 py-3">
-                      <span
-                        className={cn(
-                          'inline-block rounded-control border px-2 py-0.5 font-mono text-2xs uppercase',
-                          statusChipClass(row.status)
-                        )}
-                      >
+                      <StatusToneChip tone={leadStatusTone(row.status)} className="uppercase">
                         {t(locale, `panel.leads.status.${row.status}`)}
-                      </span>
+                      </StatusToneChip>
                       {row.passwordSetupPending ? (
                         <div className="mt-1 text-2xs text-warning">
                           {t(locale, 'panel.leads.setupPending')}
@@ -256,8 +233,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </AdminTableShell>
 
           <AdminListPager
             locale={locale}

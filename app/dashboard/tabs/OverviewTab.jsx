@@ -22,6 +22,8 @@ import {
   DisclosureToggle,
   disclosureToggleButtonClass,
 } from '../../_components/CollapsibleBlock';
+import { StatMetricTile } from '../../_components/StatMetricTile';
+import { MeterBar } from '../../_components/MeterBar';
 
 const PEOPLE_OPS_OPEN_KEY = '30team_overview_people_ops_open';
 const RECRUITING_OPEN_KEY = '30team_overview_recruiting_open';
@@ -71,31 +73,6 @@ function filterChips(locale, filters = {}) {
   }
   if (filters.search) chips.push(`"${filters.search}"`);
   return chips;
-}
-
-function StatTile({ value, label, color, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      className={cn(
-        'min-w-0 rounded-[14px] border border-ink/12 bg-surface px-[18px] py-4 text-left',
-        onClick ? 'cursor-pointer' : 'cursor-default'
-      )}
-      style={color ? { borderColor: `${color}35` } : undefined}
-    >
-      <div
-        className="font-ui text-3xl font-semibold leading-tight text-ink"
-        style={color ? { color } : undefined}
-      >
-        {value}
-      </div>
-      <div className="mt-1.5 font-mono text-2xs uppercase tracking-wide text-ink-muted">
-        {label}
-      </div>
-    </button>
-  );
 }
 
 export function OverviewTab({
@@ -513,11 +490,12 @@ export function OverviewTab({
         </span>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5">
           {OVERVIEW_FUNNEL_STAGES.filter((s) => s !== 'archived' || (data.funnel.archived || 0) > 0).map((stage) => (
-            <StatTile
+            <StatMetricTile
               key={stage}
               value={data.funnel[stage] || 0}
               label={t(locale, FUNNEL_LABEL_KEYS[stage])}
               color={FUNNEL_COLORS[stage]}
+              className="min-w-0 rounded-[14px] border-ink/12 bg-surface px-[18px] py-4"
               onClick={() => go({ tab: 'team', pipeline: stage })}
             />
           ))}
@@ -857,12 +835,13 @@ export function OverviewTab({
                               people: pdi.peopleWithActive,
                             })}
                         {pdi.activeItems > 0 ? (
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                            <div
-                              className="h-full rounded-full bg-success"
-                              style={{ width: `${pdi.donePct || 0}%` }}
-                            />
-                          </div>
+                          <MeterBar
+                            percent={pdi.donePct || 0}
+                            height={6}
+                            className="mt-2 rounded-full"
+                            trackClassName="bg-ink/10"
+                            toneClass="rounded-full bg-success"
+                          />
                         ) : null}
                         {hasPdiPlans ? (
                           <div className="mt-3 flex flex-col gap-2 border-t border-ink/10 pt-2.5">
@@ -916,15 +895,16 @@ export function OverviewTab({
                                           ) : null}
                                         </span>
                                       </div>
-                                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink/10">
-                                        <div
-                                          className={cn(
-                                            'h-full rounded-full',
-                                            flagged ? 'bg-warning' : 'bg-success'
-                                          )}
-                                          style={{ width: `${pct}%` }}
-                                        />
-                                      </div>
+                                      <MeterBar
+                                        percent={pct}
+                                        height={4}
+                                        className="mt-1.5 rounded-full"
+                                        trackClassName="bg-ink/10"
+                                        toneClass={cn(
+                                          'rounded-full',
+                                          flagged ? 'bg-warning' : 'bg-success'
+                                        )}
+                                      />
                                       {row.periodStart || row.periodEnd ? (
                                         <span className="mt-1 block font-mono text-2xs text-ink-faint">
                                           {[row.periodStart, row.periodEnd].filter(Boolean).join(' → ')}

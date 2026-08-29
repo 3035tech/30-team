@@ -12,6 +12,8 @@ import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
 import { C } from '../../../lib/theme';
 import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
+import { MeterBar } from '../../_components/MeterBar';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 function dateLocale(locale) {
   return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
@@ -63,23 +65,22 @@ const TONE_STROKE = {
   info: C.info,
 };
 
-const STATUS_CHIP = {
-  [CLIMATE_SURVEY_STATUS.DRAFT]: 'border-ink/15 bg-ink/[0.05] text-ink-muted',
-  [CLIMATE_SURVEY_STATUS.OPEN]: 'border-success/30 bg-success/10 text-success',
-  [CLIMATE_SURVEY_STATUS.CLOSED]: 'border-info/25 bg-info/10 text-info',
-};
+function climateSurveyStatusTone(status) {
+  if (status === CLIMATE_SURVEY_STATUS.OPEN) return 'success';
+  if (status === CLIMATE_SURVEY_STATUS.CLOSED) return 'info';
+  return 'neutral';
+}
 
 function ClimateStatusChip({ status, locale }) {
-  const key = STATUS_CHIP[status] ? status : CLIMATE_SURVEY_STATUS.DRAFT;
+  const key = [CLIMATE_SURVEY_STATUS.DRAFT, CLIMATE_SURVEY_STATUS.OPEN, CLIMATE_SURVEY_STATUS.CLOSED].includes(
+    status
+  )
+    ? status
+    : CLIMATE_SURVEY_STATUS.DRAFT;
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-control border px-2 py-0.5 font-mono text-2xs',
-        STATUS_CHIP[key]
-      )}
-    >
+    <StatusToneChip tone={climateSurveyStatusTone(key)}>
       {t(locale, `panel.climate.status.${key}`)}
-    </span>
+    </StatusToneChip>
   );
 }
 
@@ -111,16 +112,14 @@ function ClimateMeanMeter({
           {t(locale, 'panel.climate.scaleRange', { min: scaleMin, max: scaleMax })}
         </span>
       </div>
-      <div
-        className={cn('overflow-hidden rounded-full bg-ink/10', compact ? 'h-2' : 'h-2.5')}
-        role="meter"
-        aria-valuemin={scaleMin}
-        aria-valuemax={scaleMax}
-        aria-valuenow={mean}
+      <MeterBar
+        percent={level.pct}
+        height={compact ? 8 : 10}
+        className="rounded-full"
+        trackClassName="bg-ink/10"
+        toneClass={cn('rounded-full', barClass)}
         aria-label={t(locale, `panel.climate.level.${level.level}`)}
-      >
-        <div className={cn('h-full rounded-full transition-[width]', barClass)} style={{ width: `${level.pct}%` }} />
-      </div>
+      />
     </div>
   );
 }
@@ -262,12 +261,13 @@ function ClimateCompareBars({ surveys, locale }) {
                 </span>
                 <span className="shrink-0 font-display text-lg text-ink">{s.overallMean}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-ink/10">
-                <div
-                  className={cn('h-full rounded-full', TONE_BAR[level?.tone] || TONE_BAR.info)}
-                  style={{ width: `${Math.max(6, pct)}%` }}
-                />
-              </div>
+              <MeterBar
+                percent={Math.max(6, pct)}
+                height={8}
+                toneClass={cn('rounded-full', TONE_BAR[level?.tone] || TONE_BAR.info)}
+                trackClassName="bg-ink/10"
+                className="rounded-full"
+              />
               <span className="font-mono text-2xs text-ink-faint">
                 {formatClimateDate(climateSurveyAnchorDate(s), locale) || '—'}
                 {s.deltaVsPrevious != null
@@ -841,15 +841,20 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                             <div className="mb-0.5 font-mono text-2xs text-ink-faint">
                               {t(locale, 'panel.climate.responseProgress', { n: listResp, min: listMin })}
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
-                              <div
-                                className={cn(
-                                  'h-full rounded-full',
-                                  listResp >= listMin ? 'bg-success' : 'bg-info'
-                                )}
-                                style={{ width: `${listPct}%` }}
-                              />
-                            </div>
+                            <MeterBar
+                              percent={listPct}
+                              height={6}
+                              className="rounded-full"
+                              trackClassName="bg-ink/10"
+                              toneClass={cn(
+                                'rounded-full',
+                                listResp >= listMin ? 'bg-success' : 'bg-info'
+                              )}
+                              aria-label={t(locale, 'panel.climate.responseProgress', {
+                                n: listResp,
+                                min: listMin,
+                              })}
+                            />
                           </div>
                         ) : null}
                       </button>
@@ -988,12 +993,14 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                             {t(locale, 'panel.climate.responseProgress', { n: resp, min })}
                           </p>
                         )}
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/10">
-                          <div
-                            className={cn('h-full rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
-                            style={{ width: `${unlockPct}%` }}
-                          />
-                        </div>
+                        <MeterBar
+                          percent={unlockPct}
+                          height={8}
+                          className="mt-3 rounded-full"
+                          trackClassName="bg-ink/10"
+                          toneClass={cn('rounded-full', resp >= min ? 'bg-success' : 'bg-info')}
+                          aria-label={t(locale, 'panel.climate.responseProgress', { n: resp, min })}
+                        />
                       </div>
                     )
                   ) : null}

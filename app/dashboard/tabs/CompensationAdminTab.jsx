@@ -11,6 +11,10 @@ import {
   AdminActionsTh,
   AdminIconButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
   S,
   SortableTh,
@@ -125,32 +129,21 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className={S.pageTitle}>
-          {t(locale, 'panel.compensationRoster.title')}
-        </h2>
-        <p className={cn(S.muted, 'mb-0 mt-1 text-sm')}>
-          {t(locale, 'panel.compensationRoster.subtitle')}
-        </p>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.compensationRoster.title')}
+        subtitle={t(locale, 'panel.compensationRoster.subtitle')}
+      />
 
       <div className={cn(formFieldRowClass, 'gap-2')}>
-        <FormField
-          label={t(locale, 'panel.compensationRoster.searchLabel')}
-          className="min-w-[12rem] flex-1"
-        >
-          <input
-            type="search"
-            value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitSearch();
-            }}
-            onBlur={commitSearch}
-            placeholder={t(locale, 'panel.compensationRoster.searchPh')}
-            className={S.input}
-          />
-        </FormField>
+        <AdminListSearch
+          locale={locale}
+          value={qDraft}
+          onChange={setQDraft}
+          onSubmit={() => commitSearch()}
+          placeholder={t(locale, 'panel.compensationRoster.searchPh')}
+          className="min-w-[12rem] flex-1 items-end self-end"
+          inputClassName="w-full max-w-none"
+        />
         <FormField label={t(locale, 'panel.compensationRoster.statusLabel')}>
           <select
             className={S.select}
@@ -191,8 +184,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           message={t(locale, 'panel.compensationRoster.emptyHint')}
         />
       ) : (
-        <div className="overflow-x-auto rounded-control border border-ink/12 bg-surface">
-          <table className="w-full min-w-[640px] border-collapse text-left">
+        <AdminTableShell minWidth="640px">
             <thead>
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={onSort}>
@@ -204,12 +196,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                 <SortableTh columnKey="effectiveDate" sortKey={sort} dir={sortDir} onSort={onSort}>
                   {t(locale, 'panel.compensationRoster.colSince')}
                 </SortableTh>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-4 py-3 font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t(locale, 'panel.compensationRoster.colType')}
-                </th>
+                <AdminTh>{t(locale, 'panel.compensationRoster.colType')}</AdminTh>
                 <SortableTh columnKey="eventCount" sortKey={sort} dir={sortDir} onSort={onSort}>
                   {t(locale, 'panel.compensationRoster.colEvents')}
                 </SortableTh>
@@ -261,8 +248,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+        </AdminTableShell>
       )}
 
       <AdminListPager

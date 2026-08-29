@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { BrandMark } from './BrandMark';
+import { InlineCallout } from './InlineCallout';
 
 const STEPS = [
   { id: 'welcome', icon: '👋' },
@@ -102,14 +103,14 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <p className="mb-6 text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.welcome.body')}
               </p>
-              <div className="mb-4 rounded-control border border-info/20 bg-info/10 px-4 py-3 text-left text-sm text-ink-muted">
+              <InlineCallout tone="info" className="mb-4 text-left text-sm text-ink-muted">
                 <strong className="text-ink">{t(locale, 'onboarding.welcome.trialTitle')}</strong>
                 <ul className="mt-2 space-y-1 text-xs">
                   <li>• {t(locale, 'onboarding.welcome.trialVacancies')}</li>
                   <li>• {t(locale, 'onboarding.welcome.trialCandidates')}</li>
                   <li>• {t(locale, 'onboarding.welcome.trialUsers')}</li>
                 </ul>
-              </div>
+              </InlineCallout>
               <button
                 onClick={handleNext}
                 className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-base text-white"

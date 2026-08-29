@@ -7,7 +7,7 @@ import { personListName, personSortKey } from '../../../lib/person-name';
 import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
-import { S, TypeBadge } from '../dashboard-shared';
+import { S, TypeBadge, AdminListSearch } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
@@ -218,19 +218,13 @@ export function CompareTab({
           <span className="font-mono text-xs text-ink-muted">
             {t(locale, 'panel.compare.inTable', { selected: nSel, total: nTot })}
           </span>
-          <input
-            id="compare-search"
-            name="compareSearch"
-            type="search"
+          <AdminListSearch
+            locale={locale}
             value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitSearch();
-            }}
-            onBlur={commitSearch}
+            onChange={setSearchDraft}
+            onSubmit={() => commitSearch()}
             placeholder={t(locale, 'panel.compare.searchPh')}
-            aria-label={t(locale, 'panel.compare.searchPh')}
-            className="min-w-[140px] max-w-[260px] flex-[1_1_160px] rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 text-prose text-ink"
+            inputClassName="min-w-[140px] max-w-[260px] flex-[1_1_160px]"
           />
           {(search || '').trim() ? (
             <span className="font-mono text-2xs text-ink-faint">

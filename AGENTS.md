@@ -125,6 +125,10 @@ Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise de
 | Peça | Componente / token |
 |------|-------------------|
 | Cabeçalho ordenável | `SortableTh` |
+| Cabeçalho estático | `AdminTh` |
+| Casca da tabela | `AdminTableShell` |
+| Título da aba | `AdminPageHeader` |
+| Busca da listagem | `AdminListSearch` |
 | Paginação | `AdminListPager` (+ `PAGE_SIZE_OPTIONS`) |
 | Criar | `AdminCreateButton` (`S.btnPrimary` + ícone `plus`) |
 | Editar | `AdminEditButton` (lápis + brand) |
@@ -361,7 +365,9 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |
 | Cores / marca | `lib/theme.js`, `lib/brand.js`, **`tailwind.config.js`**, `app/globals.css`, tokens `S.*` em `dashboard-shared.jsx` |
-| Listagens admin (grid) | `SortableTh`, `AdminListPager`, `AdminCreateButton`, `AdminEditButton`, `AdminDeleteButton`, `AdminViewButton`, `AdminIconButton`, `AdminActionsCell` / `Th`, `CopyableLink` `iconOnly` — `dashboard-shared.jsx`; regra `.cursor/rules/admin-list-grid.mdc`; referência `ExitAnalysisAdminTab` |
+| Listagens admin (grid) | `SortableTh`, `AdminTh`, `AdminTableShell`, `AdminPageHeader`, `AdminListSearch`, `AdminListPager`, `AdminCreateButton`, `AdminEditButton`, `AdminDeleteButton`, `AdminViewButton`, `AdminIconButton`, `AdminActionsCell` / `Th`, `CopyableLink` `iconOnly` — `dashboard-shared.jsx`; regra `.cursor/rules/admin-list-grid.mdc`; referência `ExitAnalysisAdminTab` |
+| Status / chips semânticos | `app/_components/StatusToneChip.jsx` |
+| Escala / medidor / KPI / callout / shell | `ScaleRatingButtons`, `MeterBar` (+ `Bar`), `StatMetricTile`, `InlineCallout`, `PublicNarrowShell`, `SegmentedControl`, `InsightListItem` |
 | Logo empresa (S3) | `lib/company-logo.js`, `lib/company-logo-limits.js`, `lib/company-logo-client.js` (crop/compress), `CompanyLogoCropDialog`, `POST/DELETE …/companies/[id]/logo` |
 | Schema | `migrations/`, `scripts/rds-bootstrap-completo.sql` |
 | Provas (DTOV / HTTP / browser) | `test/` (`test/README.md`) — harness em `test/dtov/`, Playwright em `test/e2e/` |

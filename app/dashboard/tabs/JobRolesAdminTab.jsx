@@ -11,6 +11,10 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
   S,
   SortableTh,
@@ -278,15 +282,11 @@ export function JobRolesAdminTab({ locale, companyId }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={S.card}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="mb-1 text-lg font-medium text-ink">{t(locale, 'jobRoles.title')}</h2>
-            <p className="text-sm text-ink-muted">{t(locale, 'jobRoles.subtitle')}</p>
-          </div>
-          <AdminCreateButton label={t(locale, 'jobRoles.createButton')} onClick={openCreate} />
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'jobRoles.title')}
+        subtitle={t(locale, 'jobRoles.subtitle')}
+        actions={<AdminCreateButton label={t(locale, 'jobRoles.createButton')} onClick={openCreate} />}
+      />
 
       {roles.length === 0 ? (
         <EmptyState
@@ -297,47 +297,29 @@ export function JobRolesAdminTab({ locale, companyId }) {
         />
       ) : (
         <>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="search"
-            value={nameQ}
-            onChange={(e) => {
-              setNameQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder={t(locale, 'panel.admin.nameSearchPh')}
-            aria-label={t(locale, 'panel.admin.nameSearchPh')}
-            className={cn(S.input, 'max-w-xs')}
-          />
-        </div>
+        <AdminListSearch
+          locale={locale}
+          value={nameQ}
+          onChange={(v) => {
+            setNameQ(v);
+            setPage(1);
+          }}
+          placeholder={t(locale, 'panel.admin.nameSearchPh')}
+          showButton={false}
+        />
         {sortedRoles.length === 0 ? (
           <EmptyState message={t(locale, 'panel.admin.noUsersMatch')} />
         ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[720px]">
+        <>
+        <AdminTableShell minWidth="720px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                   {t(locale, 'jobRoles.nameLabel')}
                 </SortableTh>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t(locale, 'jobRoles.colDescription')}
-                </th>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t(locale, 'jobRoles.colRubric')}
-                </th>
-                <th
-                  scope="col"
-                  className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
-                >
-                  {t(locale, 'jobRoles.colStatus')}
-                </th>
+                <AdminTh>{t(locale, 'jobRoles.colDescription')}</AdminTh>
+                <AdminTh>{t(locale, 'jobRoles.colRubric')}</AdminTh>
+                <AdminTh>{t(locale, 'jobRoles.colStatus')}</AdminTh>
                 <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
               </tr>
             </thead>
@@ -420,7 +402,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 );
               })}
             </tbody>
-          </table>
+          </AdminTableShell>
           <div className="px-4 pb-3">
             <AdminListPager
               locale={locale}
@@ -436,7 +418,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
               }}
             />
           </div>
-        </div>
+        </>
         )}
         </>
       )}

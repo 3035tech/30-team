@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { Icon } from './Icon';
+import { MeterBar } from './MeterBar';
+import { StatusToneChip, statusToneClass } from './StatusToneChip';
 
 /**
  * Display HR Score com gauge visual e breakdown opcional
@@ -58,18 +60,16 @@ export default function HrScoreDisplay({ candidateId, locale, mode = 'compact', 
 
   const { score, signals, turnoverRisk, turnoverReasons, pdiGapAreas } = data;
 
-  // Cor do score
-  const getScoreColor = (s) => {
-    if (s >= 75) return 'text-success bg-success/10 border-success/20';
-    if (s >= 50) return 'text-warning bg-warning/10 border-warning/20';
-    return 'text-danger bg-danger/10 border-danger/20';
+  const scoreTone = (s) => {
+    if (s >= 75) return 'success';
+    if (s >= 50) return 'warning';
+    return 'danger';
   };
 
-  // Cor do risco
-  const getRiskColor = (risk) => {
-    if (risk === 'low') return 'text-success bg-success/10';
-    if (risk === 'medium') return 'text-warning bg-warning/10';
-    return 'text-danger bg-danger/10';
+  const riskTone = (risk) => {
+    if (risk === 'low') return 'success';
+    if (risk === 'medium') return 'warning';
+    return 'danger';
   };
 
   if (mode === 'compact') {
@@ -78,7 +78,7 @@ export default function HrScoreDisplay({ candidateId, locale, mode = 'compact', 
         <div
           className={cn(
             'flex h-8 w-16 items-center justify-center rounded-control border font-mono text-sm font-medium',
-            getScoreColor(score)
+            statusToneClass(scoreTone(score))
           )}
         >
           {score}
@@ -101,7 +101,7 @@ export default function HrScoreDisplay({ candidateId, locale, mode = 'compact', 
           <div
             className={cn(
               'mb-1 flex h-20 w-20 items-center justify-center rounded-full border-4 font-mono text-2xl font-bold',
-              getScoreColor(score)
+              statusToneClass(scoreTone(score))
             )}
           >
             {score}
@@ -123,12 +123,12 @@ export default function HrScoreDisplay({ candidateId, locale, mode = 'compact', 
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-ink/10">
-                  <div
-                    className="h-full bg-brand-500"
-                    style={{ width: `${signal.score}%` }}
-                  />
-                </div>
+                <MeterBar
+                  percent={signal.score}
+                  height={6}
+                  className="w-24"
+                  toneClass="bg-brand-500"
+                />
                 <span className="w-8 text-right font-mono text-xs text-ink-muted">
                   {signal.score}
                 </span>
@@ -149,14 +149,9 @@ export default function HrScoreDisplay({ candidateId, locale, mode = 'compact', 
                 <span className="text-xs text-ink-muted">
                   {t(locale, 'hrScore.turnoverRisk')}:
                 </span>
-                <span
-                  className={cn(
-                    'rounded px-2 py-0.5 text-xs font-medium',
-                    getRiskColor(turnoverRisk)
-                  )}
-                >
+                <StatusToneChip tone={riskTone(turnoverRisk)} bordered={false}>
                   {t(locale, `hrScore.turnover${turnoverRisk.charAt(0).toUpperCase() + turnoverRisk.slice(1)}`)}
-                </span>
+                </StatusToneChip>
               </div>
               {turnoverReasons?.length > 0 && (
                 <ul className="ml-4 space-y-0.5 text-xs text-ink-muted">

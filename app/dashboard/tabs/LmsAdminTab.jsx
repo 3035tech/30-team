@@ -17,9 +17,13 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminIconButton,
+  AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
   S,
 } from '../dashboard-shared';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 function companyQs(companyId) {
   return companyId ? `companyId=${encodeURIComponent(companyId)}` : '';
@@ -595,13 +599,11 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
 
   return (
     <div className={S.stack}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'panel.lms.title')}</h2>
-          <p className="m-0 text-prose text-ink-muted">{t(locale, 'panel.lms.subtitle')}</p>
-        </div>
-        <AdminCreateButton onClick={createCourse} label={t(locale, 'panel.lms.createCourse')} />
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.lms.title')}
+        subtitle={t(locale, 'panel.lms.subtitle')}
+        actions={<AdminCreateButton onClick={createCourse} label={t(locale, 'panel.lms.createCourse')} />}
+      />
 
       {courses.length === 0 ? (
         <EmptyState
@@ -613,13 +615,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className={S.cardTight}>
-            <table className="w-full border-collapse text-left text-sm">
+            <AdminTableShell minWidth="480px">
               <thead>
-                <tr className="border-b border-ink/10 font-mono text-2xs uppercase text-ink-faint">
-                  <th className="px-2 py-2">{t(locale, 'panel.lms.colCourse')}</th>
-                  <th className="px-2 py-2">{t(locale, 'panel.lms.colLessons')}</th>
-                  <th className="px-2 py-2">{t(locale, 'panel.lms.colEnrolled')}</th>
-                  <th className="px-2 py-2" />
+                <tr className="border-b border-ink/10">
+                  <AdminTh>{t(locale, 'panel.lms.colCourse')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.lms.colLessons')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.lms.colEnrolled')}</AdminTh>
+                  <AdminTh>{''}</AdminTh>
                 </tr>
               </thead>
               <tbody>
@@ -658,7 +660,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </AdminTableShell>
           </div>
 
           <div className={S.cardTight}>
@@ -873,11 +875,11 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                       {t(locale, 'panel.lms.noEnrollments')}
                     </p>
                   ) : (
-                    <table className="mt-3 w-full border-collapse text-left text-sm">
+                    <AdminTableShell minWidth="480px" className="mt-3">
                       <thead>
-                        <tr className="border-b border-ink/10 font-mono text-2xs uppercase text-ink-faint">
-                          <th className="px-2 py-1.5">{t(locale, 'panel.lms.colPerson')}</th>
-                          <th className="px-2 py-1.5">{t(locale, 'panel.lms.colProgress')}</th>
+                        <tr className="border-b border-ink/10">
+                          <AdminTh>{t(locale, 'panel.lms.colPerson')}</AdminTh>
+                          <AdminTh>{t(locale, 'panel.lms.colProgress')}</AdminTh>
                           <AdminActionsTh locale={locale} />
                         </tr>
                       </thead>
@@ -899,14 +901,14 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                                   </span>
                                 ) : null}
                                 {row.mandatory ? (
-                                  <span className="rounded-full bg-warning/10 px-2 py-0.5 text-warning">
+                                  <StatusToneChip tone="warning" bordered={false}>
                                     {lmsText(locale, 'fieldMandatory', 'Obrigatório')}
-                                  </span>
+                                  </StatusToneChip>
                                 ) : null}
                                 {row.overdue ? (
-                                  <span className="rounded-full bg-danger/10 px-2 py-0.5 text-danger">
+                                  <StatusToneChip tone="danger" bordered={false}>
                                     {lmsText(locale, 'enrollmentOverdue', 'Em atraso')}
-                                  </span>
+                                  </StatusToneChip>
                                 ) : null}
                               </div>
                             </td>
@@ -940,7 +942,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </AdminTableShell>
                   )}
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
+import { InsightListItem } from '../../../_components/InsightListItem';
 
 export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -99,27 +100,17 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
             <h4 className={S.cardSection}>{t('recruitment')}</h4>
             <div className="space-y-2">
               {recruitmentInsights.map((insight, idx) => (
-                <div
+                <InsightListItem
                   key={idx}
-                  className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
+                  title={insight.description}
+                  body={insight.suggestion}
+                  tone={insight.severity === 'high' ? 'danger' : 'warning'}
+                  toneLabel={insight.severity === 'high' ? t('high') : t('medium')}
                 >
-                  <span
-                    className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      insight.severity === 'high'
-                        ? 'bg-danger/20 text-danger'
-                        : 'bg-warning/20 text-warning'
-                    }`}
-                  >
-                    !
-                  </span>
-                  <div className="flex-1">
-                    <p className={cn(S.cardBody, 'font-medium')}>{insight.description}</p>
-                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.suggestion}</p>
-                    <p className={cn(S.cardFaint, 'mt-1')}>
-                      {insight.percentage}% das saídas ({insight.count})
-                    </p>
-                  </div>
-                </div>
+                  <p className={cn(S.cardFaint, 'mt-1')}>
+                    {insight.percentage}% das saídas ({insight.count})
+                  </p>
+                </InsightListItem>
               ))}
             </div>
           </div>
@@ -130,27 +121,17 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
             <h4 className={S.cardSection}>{t('management')}</h4>
             <div className="space-y-2">
               {managementInsights.map((insight, idx) => (
-                <div
+                <InsightListItem
                   key={idx}
-                  className="flex items-start gap-3 rounded-lg border border-ink/5 bg-canvas-alt/30 p-3"
+                  title={insight.description}
+                  body={insight.suggestion}
+                  tone={insight.severity === 'high' ? 'danger' : 'warning'}
+                  toneLabel={insight.severity === 'high' ? t('high') : t('medium')}
                 >
-                  <span
-                    className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      insight.severity === 'high'
-                        ? 'bg-danger/20 text-danger'
-                        : 'bg-warning/20 text-warning'
-                    }`}
-                  >
-                    !
-                  </span>
-                  <div className="flex-1">
-                    <p className={cn(S.cardBody, 'font-medium')}>{insight.description}</p>
-                    <p className={cn(S.cardMuted, 'mt-1')}>{insight.suggestion}</p>
-                    <p className={cn(S.cardFaint, 'mt-1')}>
-                      {insight.percentage}% das saídas ({insight.count})
-                    </p>
-                  </div>
-                </div>
+                  <p className={cn(S.cardFaint, 'mt-1')}>
+                    {insight.percentage}% das saídas ({insight.count})
+                  </p>
+                </InsightListItem>
               ))}
             </div>
           </div>

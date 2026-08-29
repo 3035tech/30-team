@@ -31,6 +31,9 @@ import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_compone
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
+import { SegmentedControl } from '../../_components/SegmentedControl';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
@@ -606,10 +609,7 @@ export function TeamTab({
         ) : null}
       </div>
       {listFilter === 'turnover_risk' ? (
-        <div
-          className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-warning/30 bg-warning/10 px-3.5 py-2.5 text-sm text-ink"
-          role="status"
-        >
+        <InlineCallout tone="warning" className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
           <span>{t(locale, 'panel.team.filterTurnoverRisk')}</span>
           {typeof onClearListFilter === 'function' ? (
             <button
@@ -620,7 +620,7 @@ export function TeamTab({
               {t(locale, 'panel.team.clearListFilter')}
             </button>
           ) : null}
-        </div>
+        </InlineCallout>
       ) : null}
       <div
         role="group"
@@ -661,28 +661,16 @@ export function TeamTab({
           );
         })}
         <div className="ml-auto flex flex-col items-end gap-1.5">
-          <div className="flex gap-1">
-          {[
-            { id: 'list',   icon: 'list', label: t(locale, 'panel.team.viewList') },
-            { id: 'kanban', icon: 'kanban', label: t(locale, 'panel.team.viewKanban') },
-          ].map(({ id, icon, label }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setViewMode(id)}
-              title={label}
-              aria-pressed={viewMode === id}
-              className={cn(
-                'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-xs',
-                viewMode === id
-                  ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                  : 'border-ink/12 bg-transparent text-ink-muted'
-              )}
-            >
-              <Icon name={icon} /> {label}
-            </button>
-          ))}
-          </div>
+          <SegmentedControl
+            size="sm"
+            aria-label={t(locale, 'panel.team.viewList')}
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { id: 'list', icon: 'list', label: t(locale, 'panel.team.viewList') },
+              { id: 'kanban', icon: 'kanban', label: t(locale, 'panel.team.viewKanban') },
+            ]}
+          />
           {viewMode === 'kanban' ? (
             <p className="m-0 max-w-[320px] text-right text-2xs leading-snug text-ink-faint">
               {t(locale, 'panel.team.teamKanbanHint')}
@@ -807,23 +795,14 @@ export function TeamTab({
                             <TypeBadge type={r.topType} locale={locale} compact />
                             <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                             {r.areaLabel && (
-                              <span className="rounded-full border border-ink/12 bg-ink/[0.05] px-[7px] py-0.5 font-mono text-2xs text-ink-muted">
-                                {r.areaLabel}
-                              </span>
+                              <StatusToneChip tone="neutral">{r.areaLabel}</StatusToneChip>
                             )}
                             {fitScore != null && (
-                              <span
-                                className={cn(
-                                  'rounded-full border px-[7px] py-0.5 font-mono text-2xs',
-                                  fitScore >= 7
-                                    ? 'border-success/30 bg-success/10 text-success'
-                                    : fitScore >= 4
-                                      ? 'border-warning/30 bg-warning/10 text-warning'
-                                      : 'border-danger/30 bg-danger/10 text-danger'
-                                )}
+                              <StatusToneChip
+                                tone={fitScore >= 7 ? 'success' : fitScore >= 4 ? 'warning' : 'danger'}
                               >
                                 {fitScore}/10
-                              </span>
+                              </StatusToneChip>
                             )}
                           </div>
                           {r.vacancyTitle && (
@@ -958,9 +937,9 @@ export function TeamTab({
                     {titleCasePersonName(r.name)}
                   </span>
                   {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
-                    <span className="rounded-full border border-success/35 px-1.5 py-px font-mono text-2xs text-success">
+                    <StatusToneChip tone="success">
                       {t(locale, 'recruiting.employmentEmployee')}
-                    </span>
+                    </StatusToneChip>
                   ) : null}
                   {createdLabel ? (
                     <span
@@ -975,28 +954,26 @@ export function TeamTab({
                   <TypeBadge type={r.topType} locale={locale} compact />
                   <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
                   {r.areaLabel && (
-                    <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-px font-mono text-2xs text-ink-muted">
-                      {r.areaLabel}
-                    </span>
+                    <StatusToneChip tone="neutral">{r.areaLabel}</StatusToneChip>
                   )}
                   {r.pipelineStage ? (
-                    <span className="rounded-full border border-brand-500/35 bg-brand-500/[0.12] px-2 py-px font-mono text-2xs text-brand-600">
+                    <StatusToneChip tone="brand">
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
-                    </span>
+                    </StatusToneChip>
                   ) : null}
                   {r.fitLabel && (
-                    <span className="rounded-full border border-brand-500/25 bg-brand-500/[0.09] px-2 py-px font-mono text-2xs text-brand-600">
+                    <StatusToneChip tone="brand">
                       {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
-                    </span>
+                    </StatusToneChip>
                   )}
                   {showVacancyFit ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-2xs text-success">
+                    <StatusToneChip tone="success">
                       {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
-                    </span>
+                    </StatusToneChip>
                   ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
-                    <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-px font-mono text-2xs text-success">
+                    <StatusToneChip tone="success">
                       {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
-                    </span>
+                    </StatusToneChip>
                   ) : null}
                   {(r.hrScore != null || r.turnoverRisk) && (
                     <HrScoreBadge score={r.hrScore} risk={r.turnoverRisk} size="xs" />
@@ -1387,14 +1364,13 @@ export function TeamTab({
                           {detail?.lmsOverdue?.length ? (
                             <ul className="mt-2 flex list-none flex-col gap-1 p-0">
                               {detail.lmsOverdue.map((course) => (
-                                <li
-                                  key={course.enrollmentId}
-                                  className="w-fit rounded-full bg-danger/10 px-2 py-1 text-2xs text-danger"
-                                >
-                                  {t(locale, 'panel.team.lmsOverdue', {
-                                    title: course.courseTitle,
-                                    date: fmtDate(course.dueDate),
-                                  })}
+                                <li key={course.enrollmentId}>
+                                  <StatusToneChip tone="danger" bordered={false}>
+                                    {t(locale, 'panel.team.lmsOverdue', {
+                                      title: course.courseTitle,
+                                      date: fmtDate(course.dueDate),
+                                    })}
+                                  </StatusToneChip>
                                 </li>
                               ))}
                             </ul>

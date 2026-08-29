@@ -14,6 +14,9 @@ import {
   AdminEditButton,
   AdminIconButton,
   AdminListPager,
+  AdminListSearch,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
   S,
   SortableTh,
@@ -550,29 +553,14 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             </button>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            type="search"
+        <div className="mt-3">
+          <AdminListSearch
+            locale={locale}
             value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                pushCompaniesSearch(String(searchDraft || '').trim());
-              }
-            }}
+            onChange={setSearchDraft}
+            onSubmit={(v) => pushCompaniesSearch(String(v || '').trim())}
             placeholder={t(locale, 'panel.admin.companiesSearchPh')}
-            aria-label={t(locale, 'panel.admin.companiesSearchPh')}
-            className={cn(S.input, 'max-w-xs')}
           />
-          <button
-            type="button"
-            onClick={() => pushCompaniesSearch(String(searchDraft || '').trim())}
-            disabled={loading}
-            className={cn(BTN_GHOST, loading && 'opacity-60')}
-          >
-            {t(locale, 'panel.admin.usersSearchBtn')}
-          </button>
         </div>
         {companiesTotal === 0 ? (
           <div className="mt-3">
@@ -588,8 +576,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             />
           </div>
         ) : (
-          <div className="db-table-scroll mt-2.5 overflow-x-auto">
-            <table className="w-full min-w-[960px] border-collapse text-xs">
+          <>
+          <AdminTableShell minWidth="960px" className="mt-2.5">
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.sortId')}</SortableTh>
@@ -597,18 +585,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
-                  <th
-                    scope="col"
-                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
-                  >
-                    {t(locale, 'panel.admin.colLinkT')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-b border-ink/12 px-3 py-2.5 text-left font-mono text-2xs font-semibold uppercase tracking-[0.06em] text-ink-muted"
-                  >
-                    {t(locale, 'panel.admin.colCareers')}
-                  </th>
+                  <AdminTh>{t(locale, 'panel.admin.colLinkT')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.admin.colCareers')}</AdminTh>
                   <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
                 </tr>
               </thead>
@@ -727,7 +705,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   );
                 })}
               </tbody>
-            </table>
+          </AdminTableShell>
             {navigateDashboard && companiesTotal > 0 ? (
               <AdminListPager
                 locale={locale}
@@ -746,7 +724,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                 }
               />
             ) : null}
-          </div>
+          </>
         )}
       </div>
 

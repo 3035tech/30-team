@@ -6,6 +6,7 @@ import { t, localeHtmlLang } from '../../../lib/i18n';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { S, TypeBadge } from '../dashboard-shared';
 import { fitBandLabel, pipelineStageLabel } from './vacancy-admin-shared';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
@@ -192,14 +193,14 @@ export function VacancyFitRankingBlock({ vacancyId, locale, refreshKey = 0 }) {
                         <div className="max-w-[220px]">
                           <div className="flex flex-wrap gap-1.5 font-mono text-2xs">
                             {nf.synergy > 0 ? (
-                              <span className="rounded-full border border-success/30 bg-success/[0.08] px-1.5 py-0.5 text-success">
+                              <StatusToneChip tone="success">
                                 {t(locale, 'recruiting.rankingNucleusSynergy', { n: nf.synergy })}
-                              </span>
+                              </StatusToneChip>
                             ) : null}
                             {nf.tension > 0 ? (
-                              <span className="rounded-full border border-warning/30 bg-warning/[0.08] px-1.5 py-0.5 text-warning">
+                              <StatusToneChip tone="warning">
                                 {t(locale, 'recruiting.rankingNucleusTension', { n: nf.tension })}
-                              </span>
+                              </StatusToneChip>
                             ) : null}
                           </div>
                           {nf.summary ? (

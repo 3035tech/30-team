@@ -13,6 +13,7 @@ import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativ
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 export function GroupTab({
   results,
@@ -290,14 +291,10 @@ export function GroupTab({
         {(person.areaLabel || (person.areaFitScore010 != null)) ? (
           <div className="flex flex-wrap items-center gap-2">
             {person.areaLabel ? (
-              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
-                {person.areaLabel}
-              </span>
+              <StatusToneChip tone="neutral">{person.areaLabel}</StatusToneChip>
             ) : null}
             {person.areaFitScore010 != null ? (
-              <span className="rounded-full border border-success/25 bg-success/[0.08] px-2 py-0.5 font-mono text-2xs text-success">
-                {person.areaFitScore010}/10
-              </span>
+              <StatusToneChip tone="success">{person.areaFitScore010}/10</StatusToneChip>
             ) : null}
           </div>
         ) : null}
@@ -544,15 +541,11 @@ export function GroupTab({
             </div>
 
             <div className="mb-3.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-success/30 bg-success/[0.09] px-2.5 py-0.5 font-mono text-2xs text-success">
-                {t(locale, 'panel.group.synergy')}
-              </span>
+              <StatusToneChip tone="success">{t(locale, 'panel.group.synergy')}</StatusToneChip>
               <span className="rounded-full border border-soft/30 bg-soft/[0.09] px-2.5 py-0.5 font-mono text-2xs text-soft">
                 {t(locale, 'panel.group.neutral')}
               </span>
-              <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2.5 py-0.5 font-mono text-2xs text-danger">
-                {t(locale, 'panel.group.tension')}
-              </span>
+              <StatusToneChip tone="danger">{t(locale, 'panel.group.tension')}</StatusToneChip>
             </div>
 
             {nucleusAdvice && !nucleusAdvice.empty ? (

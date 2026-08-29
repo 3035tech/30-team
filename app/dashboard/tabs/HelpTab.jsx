@@ -9,6 +9,7 @@ import { S } from '../dashboard-shared';
 
 import { HelpSystemMap } from '../../_components/HelpSystemMap';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
+import { SegmentedControl } from '../../_components/SegmentedControl';
 import { HELP_GUIDE_SECTIONS, HELP_SECTION_STEP_COUNTS } from '../../../lib/help-sections';
 
 const SECTIONS = HELP_GUIDE_SECTIONS;
@@ -176,25 +177,18 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
           <LinkBtn label={t(locale, 'panel.help.linkMotivators')} onClick={() => go('motivators')} />
           <LinkBtn label={t(locale, 'panel.help.linkClimate')} onClick={() => go('climate')} />
         </div>
-        <nav
-          aria-label={t(locale, 'panel.help.tocAria')}
-          className="mt-3 flex flex-wrap gap-1.5 border-t border-ink/12 pt-3"
-        >
-          {SECTIONS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setOpen(key)}
-              className={cn(
-                'min-h-9 cursor-pointer rounded-full border px-3 py-1.5 font-mono text-2xs',
-                open === key
-                  ? 'border-brand-500/30 bg-brand-500/[0.07] text-brand-600'
-                  : 'border-ink/12 bg-transparent text-ink-muted'
-              )}
-            >
-              {t(locale, `panel.help.${key}Title`)}
-            </button>
-          ))}
+        <nav aria-label={t(locale, 'panel.help.tocAria')} className="mt-3 border-t border-ink/12 pt-3">
+          <SegmentedControl
+            size="sm"
+            aria-label={t(locale, 'panel.help.tocAria')}
+            value={open}
+            onChange={setOpen}
+            className="w-full"
+            options={SECTIONS.map((key) => ({
+              id: key,
+              label: t(locale, `panel.help.${key}Title`),
+            }))}
+          />
         </nav>
       </div>
 

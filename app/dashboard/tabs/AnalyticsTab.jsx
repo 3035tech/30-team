@@ -13,6 +13,7 @@ import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
 import { cn } from '../../../lib/cn.js';
+import { StatMetricTile } from '../../_components/StatMetricTile';
 
 const TREND_TONE = {
   brand: { bar: 'bg-brand-500', value: 'text-brand-600' },
@@ -497,16 +498,17 @@ function MetricCard({ title, value, subtitle, trend, locale }) {
 
   return (
     <div className={S.cardTight}>
-      <div className={S.label}>{title}</div>
-      <div className="text-2xl font-bold mt-2 mb-1 text-brand-600">
-        {value}
-      </div>
-      <div className={S.faint}>{subtitle}</div>
-      {trend !== undefined && trendText && (
-        <div className={cn('text-sm mt-2', trendClass)}>
+      <StatMetricTile
+        value={value}
+        label={title}
+        hint={subtitle || null}
+        className="border-0 bg-transparent p-0"
+      />
+      {trend !== undefined && trendText ? (
+        <div className={cn('mt-2 text-sm', trendClass)}>
           {trendText} {locale === 'pt-BR' ? 'vs período anterior' : 'vs previous period'}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

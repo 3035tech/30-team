@@ -7,6 +7,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 import {
   dialogBtnGhostClass,
   dialogBtnPrimaryClass,
@@ -24,6 +25,9 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
   AdminViewButton,
   S,
   SortableTh,
@@ -439,28 +443,27 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-ink">{t('title')}</h2>
-        <p className="text-sm text-ink-muted mt-1">{t('subtitle')}</p>
-      </div>
-
-      {canWrite && (
-        <div className="flex gap-2">
-          <AdminCreateButton label={t('register')} onClick={handleRegisterExit} />
-        </div>
-      )}
+      <AdminPageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          canWrite ? (
+            <AdminCreateButton label={t('register')} onClick={handleRegisterExit} />
+          ) : null
+        }
+      />
 
       {records.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="search"
-            value={nameQ}
-            onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
-            placeholder={t('searchNamePh')}
-            aria-label={t('searchNamePh')}
-            className={cn(S.input, 'max-w-xs')}
-          />
-        </div>
+        <AdminListSearch
+          locale={locale}
+          value={nameQ}
+          onChange={(v) => {
+            setNameQ(v);
+            setPage(1);
+          }}
+          placeholder={t('searchNamePh')}
+          showButton={false}
+        />
       ) : null}
 
       {records.length === 0 ? (
@@ -481,8 +484,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[640px]">
+        <>
+          <AdminTableShell minWidth="640px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="exitDate" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -528,17 +531,19 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
+                    <StatusToneChip
+                      tone={
                         rec.exitType === 'voluntary'
-                          ? 'bg-info/10 text-info'
+                          ? 'info'
                           : rec.exitType === 'involuntary'
-                            ? 'bg-danger/10 text-danger'
-                            : 'bg-warning/10 text-warning'
-                      }`}
+                            ? 'danger'
+                            : 'warning'
+                      }
+                      bordered={false}
+                      className="rounded px-2 py-0.5 font-ui text-xs font-medium"
                     >
                       {t(rec.exitType)}
-                    </span>
+                    </StatusToneChip>
                   </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{t(rec.exitReason)}</td>
                   <td className="px-4 py-3 text-right">
@@ -555,23 +560,21 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                 </tr>
               ))}
             </tbody>
-          </table>
-          <div className="px-4 pb-3">
-            <AdminListPager
-              locale={locale}
-              page={safePage}
-              pageSize={pageSize}
-              total={total}
-              loading={loading}
-              pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onPageChange={setPage}
-              onPageSizeChange={(ps) => {
-                setPageSize(ps);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
+          </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={safePage}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+        </>
       )}
 
       {viewRecord ? (

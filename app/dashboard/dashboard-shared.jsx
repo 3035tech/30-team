@@ -17,6 +17,7 @@ import {
 } from '../_components/form-control-styles';
 import { Icon } from '../_components/Icon';
 import { IconActionTip } from '../_components/IconActionTip';
+import { MeterBar } from '../_components/MeterBar';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -78,19 +79,7 @@ const S = {
 };
 
 const Bar = ({ value, max, color, h = 6 }) => (
-  <div
-    className="w-full overflow-hidden bg-ink/[0.08]"
-    style={{ height: h, borderRadius: h / 2 }}
-  >
-    <div
-      className="h-full"
-      style={{
-        width: `${(value / Math.max(max, 1)) * 100}%`,
-        background: `linear-gradient(90deg,${color}99,${color})`,
-        borderRadius: h / 2,
-      }}
-    />
-  </div>
+  <MeterBar value={value} max={max} color={color} height={h} />
 );
 
 /** Inline T1–T9 reference with localized hint (hover / aria). */
@@ -656,6 +645,101 @@ function AdminActionsTh({ children }) {
   );
 }
 
+/** Non-sortable table header cell (pair with SortableTh). */
+function AdminTh({ children, align = 'left', className }) {
+  return (
+    <th
+      scope="col"
+      className={cn(
+        'border-b border-ink/12 px-4 py-3 font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted',
+        align === 'right' ? 'text-right' : 'text-left',
+        className
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+/** Scroll + border chrome around admin list tables. */
+function AdminTableShell({ children, minWidth = '640px', className }) {
+  return (
+    <div className={cn('overflow-x-auto rounded-card border border-ink/10', className)}>
+      <table
+        className="w-full border-collapse text-left text-prose"
+        style={minWidth ? { minWidth } : undefined}
+      >
+        {children}
+      </table>
+    </div>
+  );
+}
+
+/** Standard admin tab title + optional subtitle + actions. */
+function AdminPageHeader({ title, subtitle = null, actions = null, className }) {
+  return (
+    <div
+      className={cn(
+        'mb-4 flex flex-wrap items-start justify-between gap-3',
+        className
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <h1 className={S.pageTitle}>{title}</h1>
+        {subtitle ? (
+          <p className={cn(S.muted, 'm-0 mt-1.5 max-w-[62ch] text-prose')}>{subtitle}</p>
+        ) : null}
+      </div>
+      {actions ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * List search field + optional submit (Enter / button).
+ * Controlled: pass `value` + `onChange`; call `onSubmit` on Enter or search click.
+ */
+function AdminListSearch({
+  locale = 'pt-BR',
+  value,
+  onChange,
+  onSubmit,
+  placeholder,
+  className,
+  inputClassName,
+  showButton = true,
+}) {
+  return (
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onSubmit?.(value);
+          }
+        }}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className={cn(S.input, 'max-w-xs', inputClassName)}
+      />
+      {showButton ? (
+        <button
+          type="button"
+          onClick={() => onSubmit?.(value)}
+          className={S.btnGhost}
+        >
+          {t(locale, 'panel.common.search')}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export {
   AdminActionsCell,
   AdminActionsTh,
@@ -664,6 +748,10 @@ export {
   AdminEditButton,
   AdminIconButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
   Bar,
   CompatBadge,

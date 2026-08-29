@@ -5,7 +5,6 @@
  */
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { cn } from '../../../lib/cn';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -13,6 +12,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -21,8 +21,10 @@ import {
   AdminEditButton,
   AdminIconButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
   AdminViewButton,
-  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -489,18 +491,18 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
     return t('impactHigh');
   }
 
-  function getReadinessColor(readiness) {
+  function readinessTone(readiness) {
     switch (readiness) {
       case 'now':
-        return { bg: 'bg-success/10', border: 'border-success/30', text: 'text-success' };
+        return 'success';
       case 'ready':
-        return { bg: 'bg-info/10', border: 'border-info/30', text: 'text-info' };
+        return 'info';
       case 'developing':
-        return { bg: 'bg-warning/10', border: 'border-warning/30', text: 'text-warning' };
+        return 'warning';
       case 'not_ready':
-        return { bg: 'bg-danger/10', border: 'border-danger/30', text: 'text-danger' };
+        return 'danger';
       default:
-        return { bg: 'bg-ink/5', border: 'border-ink/10', text: 'text-ink-muted' };
+        return 'neutral';
     }
   }
 
@@ -562,26 +564,23 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-ink">{t('title')}</h1>
-        <p className="text-sm text-ink-muted">{t('subtitle')}</p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <AdminCreateButton label={t('createRoleButton')} onClick={handleCreateRole} />
-      </div>
+      <AdminPageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={<AdminCreateButton label={t('createRoleButton')} onClick={handleCreateRole} />}
+      />
 
       {roles.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="search"
-            value={nameQ}
-            onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
-            placeholder={t('searchNamePh')}
-            aria-label={t('searchNamePh')}
-            className={cn(S.input, 'max-w-xs')}
-          />
-        </div>
+        <AdminListSearch
+          locale={locale}
+          value={nameQ}
+          onChange={(v) => {
+            setNameQ(v);
+            setPage(1);
+          }}
+          placeholder={t('searchNamePh')}
+          showButton={false}
+        />
       ) : null}
 
       {roles.length === 0 ? (
@@ -602,8 +601,8 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[640px]">
+        <>
+        <AdminTableShell minWidth="640px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -673,7 +672,6 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                           ) : (
                             <ul className="flex flex-col gap-2">
                               {successors.map((successor) => {
-                                const colors = getReadinessColor(successor.readiness);
                                 const personId = successor.successorId || successor.candidateId;
                                 return (
                                   <li
@@ -714,11 +712,9 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                       ) : null}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1">
-                                      <span
-                                        className={`rounded-full border px-2 py-px font-mono text-2xs ${colors.bg} ${colors.border} ${colors.text}`}
-                                      >
+                                      <StatusToneChip tone={readinessTone(successor.readiness)}>
                                         {getReadinessLabel(successor.readiness)}
-                                      </span>
+                                      </StatusToneChip>
                                       <AdminEditButton
                                         label={t('editReadiness')}
                                         onClick={() => handleEditSuccessor(role, successor)}
@@ -740,23 +736,21 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                 );
               })}
             </tbody>
-          </table>
-          <div className="px-4 pb-3">
-            <AdminListPager
-              locale={locale}
-              page={safePage}
-              pageSize={pageSize}
-              total={total}
-              loading={loading}
-              pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onPageChange={setPage}
-              onPageSizeChange={(ps) => {
-                setPageSize(ps);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
+        </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={safePage}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+        </>
       )}
     </div>
   );

@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { cn } from '../../../lib/cn';
 import { t as i18nT } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -20,13 +19,16 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
   AdminViewButton,
   AdminIconButton,
-  S,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
 import { NineBoxBlock } from './NineBoxBlock';
+import { InlineCallout } from '../../_components/InlineCallout';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
@@ -475,34 +477,31 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-ink">{t('title')}</h1>
-        <p className="text-sm text-ink-muted">{t('subtitle')}</p>
-        <div className="rounded-lg border border-info/20 bg-info/5 px-3 py-2 text-xs text-ink-muted">
-          {t('autoPdiNote')}
-        </div>
-        <div className="rounded-lg border border-brand-500/20 bg-brand-500/[0.06] px-3 py-2 text-xs text-ink-muted">
-          {t('continuousFeedbackNote')}{' '}
-          <a href="/dashboard?tab=team" className="font-medium text-brand-600 hover:underline">
-            {t('continuousFeedbackCta')}
-          </a>
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={<AdminCreateButton label={t('createCycleButton')} onClick={handleCreateCycle} />}
+      />
+      <InlineCallout tone="info" className="text-xs text-ink-muted">
+        {t('autoPdiNote')}
+      </InlineCallout>
+      <InlineCallout tone="brand" className="text-xs text-ink-muted">
+        {t('continuousFeedbackNote')}{' '}
+        <a href="/dashboard?tab=team" className="font-medium text-brand-600 hover:underline">
+          {t('continuousFeedbackCta')}
+        </a>
+      </InlineCallout>
 
-      <div className="flex items-center gap-3">
-        <AdminCreateButton label={t('createCycleButton')} onClick={handleCreateCycle} />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={nameQ}
-          onChange={(e) => { setNameQ(e.target.value); setPage(1); }}
-          placeholder={t('searchNamePh')}
-          aria-label={t('searchNamePh')}
-          className={cn(S.input, 'max-w-xs')}
-        />
-      </div>
+      <AdminListSearch
+        locale={locale}
+        value={nameQ}
+        onChange={(v) => {
+          setNameQ(v);
+          setPage(1);
+        }}
+        placeholder={t('searchNamePh')}
+        showButton={false}
+      />
 
       {cycles.length === 0 ? (
         <EmptyState
@@ -512,8 +511,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           onAction={handleCreateCycle}
         />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-ink/10 bg-surface">
-          <table className="w-full min-w-[640px]">
+        <>
+        <AdminTableShell minWidth="640px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -587,23 +586,21 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                 </tr>
               ))}
             </tbody>
-          </table>
-          <div className="px-4 pb-3">
-            <AdminListPager
-              locale={locale}
-              page={safePage}
-              pageSize={pageSize}
-              total={total}
-              loading={loading}
-              pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onPageChange={setPage}
-              onPageSizeChange={(ps) => {
-                setPageSize(ps);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
+        </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={safePage}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => {
+              setPageSize(ps);
+              setPage(1);
+            }}
+          />
+        </>
       )}
       <NineBoxBlock locale={locale} companyId={companyId} />
     </div>

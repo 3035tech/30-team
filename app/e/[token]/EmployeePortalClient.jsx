@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
 import { RichTextView } from '../../_components/RichTextView';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { MeterBar } from '../../_components/MeterBar';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 
 export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
   const { toast } = useAppFeedback();
@@ -114,18 +116,19 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) {
+    return <PublicNarrowShell variant="loading" locale={locale} />;
+  }
   if (error) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <PublicNarrowShell variant="error" locale={locale} className="text-center">
         <p className="m-0 text-sm text-ink-muted">{error}</p>
-      </div>
+      </PublicNarrowShell>
     );
   }
 
   return (
-    <ContentEnter animKey="ready">
-    <div className="mx-auto max-w-lg px-4 py-10">
+    <PublicNarrowShell variant="form" locale={locale}>
       <p className={cn(S.faint, 'm-0 text-2xs uppercase tracking-wide')}>
         {t(locale, 'panel.employeePortal.eyebrow')}
       </p>
@@ -195,25 +198,32 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                     {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
                   </span>
                 </div>
+                <MeterBar
+                  percent={course.progressPct}
+                  height={6}
+                  className="mt-2"
+                  toneClass={course.isComplete ? 'bg-success' : 'bg-brand-500'}
+                  aria-label={`${course.title}: ${course.progressPct}%`}
+                />
                 {course.description ? (
                   <p className={cn(S.muted, 'mt-1 text-xs')}>{course.description}</p>
                 ) : null}
                 {course.dueDate || course.mandatory || course.overdue ? (
                   <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-2xs">
                     {course.dueDate ? (
-                      <span className="rounded-full bg-ink/5 px-2 py-1 text-ink-muted">
+                      <StatusToneChip tone="neutral" bordered={false}>
                         {t(locale, 'panel.employeePortal.courseDue', { date: course.dueDate })}
-                      </span>
+                      </StatusToneChip>
                     ) : null}
                     {course.mandatory ? (
-                      <span className="rounded-full bg-warning/10 px-2 py-1 text-warning">
+                      <StatusToneChip tone="warning" bordered={false}>
                         {t(locale, 'panel.employeePortal.courseMandatory')}
-                      </span>
+                      </StatusToneChip>
                     ) : null}
                     {course.overdue ? (
-                      <span className="rounded-full bg-danger/10 px-2 py-1 text-danger">
+                      <StatusToneChip tone="danger" bordered={false}>
                         {t(locale, 'panel.employeePortal.courseOverdue')}
-                      </span>
+                      </StatusToneChip>
                     ) : null}
                   </div>
                 ) : null}
@@ -315,7 +325,6 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
           ) : null}
         </div>
       </section>
-    </div>
-    </ContentEnter>
+    </PublicNarrowShell>
   );
 }

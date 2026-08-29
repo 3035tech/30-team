@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminActionsCell, AdminIconButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { formatDisplayDate } from '../../../lib/format-display-date.js';
+import { StatusToneChip } from '../../_components/StatusToneChip';
+import { InlineCallout } from '../../_components/InlineCallout';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
@@ -35,23 +37,18 @@ function inviteStatusLabel(locale, status) {
   return status;
 }
 
+function inviteStatusTone(status) {
+  if (status === 'opened') return 'info';
+  if (status === 'completed') return 'success';
+  if (status === 'cancelled' || status === 'expired') return 'danger';
+  return 'neutral';
+}
+
 function statusBadge(locale, status) {
-  const tone = {
-    sent: 'bg-ink/[0.06] text-ink-muted',
-    opened: 'bg-info/10 text-info',
-    completed: 'bg-success/10 text-success',
-    cancelled: 'bg-danger/10 text-danger',
-    expired: 'bg-danger/10 text-danger',
-  };
   return (
-    <span
-      className={cn(
-        'rounded-xl px-2 py-0.5 font-mono text-2xs',
-        tone[status] || tone.sent
-      )}
-    >
+    <StatusToneChip tone={inviteStatusTone(status)} bordered={false}>
       {inviteStatusLabel(locale, status)}
-    </span>
+    </StatusToneChip>
   );
 }
 
@@ -389,8 +386,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         </select>
       </div>
       {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
-      <div className="db-table-scroll overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-xs">
+      <AdminTableShell minWidth="640px">
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -405,7 +401,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               <SortableTh columnKey="expiresAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
                 {t(locale, 'panel.motivatorsAdmin.invites.colExpires')}
               </SortableTh>
-              <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted" />
+              <AdminActionsTh />
             </tr>
           </thead>
           <tbody>
@@ -457,7 +453,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
               );
             })}
           </tbody>
-        </table>
+      </AdminTableShell>
         <AdminListPager
           locale={locale}
           page={page}
@@ -471,7 +467,6 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
             setPage(1);
           }}
         />
-      </div>
       {!loading && items.length === 0 ? <p className="mt-3 text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.empty')}</p> : null}
     </div>
   );
@@ -603,19 +598,18 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
         {loading ? <p className="text-ink-muted">{t(locale, 'panel.common.loading')}</p> : null}
-        <div className="db-table-scroll overflow-x-auto">
-          <table className="w-full min-w-[480px] border-collapse text-xs">
-            <thead>
-              <tr className="bg-ink/[0.02]">
-                <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
-                  {t(locale, 'panel.motivatorsAdmin.results.colEmployee')}
-                </SortableTh>
-                <SortableTh columnKey="completedAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
-                  {t(locale, 'panel.motivatorsAdmin.results.colDate')}
-                </SortableTh>
-                <th scope="col" className="border-b border-ink/12 px-3 py-2.5 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted" />
-              </tr>
-            </thead>
+        <AdminTableShell minWidth="480px">
+          <thead>
+            <tr className="bg-ink/[0.02]">
+              <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.results.colEmployee')}
+              </SortableTh>
+              <SortableTh columnKey="completedAt" sortKey={sort} dir={sortDir} onSort={toggleSort}>
+                {t(locale, 'panel.motivatorsAdmin.results.colDate')}
+              </SortableTh>
+              <AdminActionsTh />
+            </tr>
+          </thead>
             <tbody>
               {items.map((row) => (
                 <tr key={row.id} className="border-t border-ink/12">
@@ -642,7 +636,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                 </tr>
               ))}
             </tbody>
-          </table>
+        </AdminTableShell>
           <AdminListPager
             locale={locale}
             page={page}
@@ -656,7 +650,6 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
               setPage(1);
             }}
           />
-        </div>
       </div>
       {detail?.attempt ? (
         <div className={S.card}>
@@ -722,7 +715,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           ) : null}
 
           {detail.hrInsights?.topMotivators?.length > 0 ? (
-            <div className="mb-5 rounded-xl border border-brand-500/15 bg-brand-500/[0.03] p-3.5">
+            <InlineCallout tone="brand" className="mb-5 p-3.5">
               <div className="mb-2.5 font-mono text-2xs text-brand-500">{t(locale, 'panel.motivatorsAdmin.results.topMotivators')}</div>
               <div className="mb-2.5 flex flex-wrap gap-2">
                 {detail.hrInsights.topMotivators.map((d) => (
@@ -738,7 +731,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
               {detail.hrInsights.summaryNote ? (
                 <p className="m-0 text-prose leading-relaxed text-ink-muted">{detail.hrInsights.summaryNote}</p>
               ) : null}
-            </div>
+            </InlineCallout>
           ) : null}
 
           <p className="mb-4 text-sm leading-relaxed text-ink">{detail.attempt.profileSummary}</p>
@@ -754,7 +747,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
 
           {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
             <div className="mt-5 grid grid-cols-1 gap-4 border-t border-ink/12 pt-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-success/20 bg-success/[0.04] p-3.5">
+              <InlineCallout tone="success" className="p-3.5">
                 <div className="mb-2.5 font-mono text-2xs text-success">{t(locale, 'panel.motivatorsAdmin.results.actionsDo')}</div>
                 <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.do.map((item) => (
@@ -764,8 +757,8 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="rounded-xl border border-danger/20 bg-danger/[0.03] p-3.5">
+              </InlineCallout>
+              <InlineCallout tone="danger" className="p-3.5">
                 <div className="mb-2.5 font-mono text-2xs text-danger">{t(locale, 'panel.motivatorsAdmin.results.actionsAvoid')}</div>
                 <ul className="m-0 list-none p-0 text-xs leading-relaxed text-ink-muted">
                   {detail.hrInsights.suggestedActions.avoid.map((item) => (
@@ -775,7 +768,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
                     </li>
                   ))}
                 </ul>
-              </div>
+              </InlineCallout>
             </div>
           ) : null}
 
@@ -1053,10 +1046,10 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
         message={notice?.message || ''}
         onClose={() => setNotice(null)}
       />
-      <div className="mb-5">
-        <h2 className="mb-2 mt-0 text-2xl font-normal text-ink">{t(locale, 'panel.motivatorsAdmin.title')}</h2>
-        <p className="m-0 text-prose text-ink-muted">{t(locale, 'panel.motivatorsAdmin.intro')}</p>
-      </div>
+      <AdminPageHeader
+        title={t(locale, 'panel.motivatorsAdmin.title')}
+        subtitle={t(locale, 'panel.motivatorsAdmin.intro')}
+      />
 
       {moduleStatus && !moduleStatus.ready ? (
         <div className={cn(S.card, 'mb-5 border-danger/25 bg-danger/[0.03]')}>

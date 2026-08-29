@@ -13,6 +13,7 @@ import {
   DEVELOPMENT_PLAN_ITEM_STATUS,
   DEVELOPMENT_PLAN_STATUS,
 } from '../../lib/domain-status.js';
+import { MeterBar } from './MeterBar';
 
 /**
  * PDI — create/edit plan, archive, items + optional 1:1 link (B-501 / B-601).
@@ -631,15 +632,17 @@ export function DevelopmentPlansBlock({
             ) : null}
           </div>
           {sumItems > 0 ? (
-            <div
-              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/10"
-              role="progressbar"
-              aria-valuenow={overallPct || 0}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <div className="h-full rounded-full bg-success" style={{ width: `${overallPct || 0}%` }} />
-            </div>
+            <MeterBar
+              percent={overallPct || 0}
+              height={6}
+              className="mt-1.5"
+              toneClass="bg-success"
+              aria-label={t(locale, 'panel.pdi.progressSummary', {
+                done: sumDone,
+                total: sumItems,
+                plans: activePlans.length,
+              })}
+            />
           ) : null}
         </div>
       ) : null}
@@ -673,15 +676,12 @@ export function DevelopmentPlansBlock({
                       </span>
                     ) : null}
                     {p.itemCount > 0 ? (
-                      <span
-                        className="mt-1 block h-1 max-w-[140px] overflow-hidden rounded-full bg-ink/10"
-                        aria-hidden
-                      >
-                        <span
-                          className="block h-full rounded-full bg-success/80"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </span>
+                      <MeterBar
+                        percent={pct}
+                        height={4}
+                        className="mt-1 max-w-[140px]"
+                        toneClass="bg-success/80"
+                      />
                     ) : null}
                   </span>
                   <span className={cn(S.faint, 'flex shrink-0 items-center gap-2 font-mono text-2xs')}>
