@@ -7,6 +7,7 @@ import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 
@@ -146,7 +147,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
       </AdminListFilters>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
-      {loading ? <p className={S.muted}>{t(locale, 'common.loading')}</p> : null}
+      {loading ? <AppLoading locale={locale} variant="panel" /> : null}
 
       {!loading && !error && items.length === 0 ? (
         <EmptyState
@@ -156,6 +157,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
       ) : null}
 
       {!loading && items.length > 0 ? (
+        <ContentEnter animKey={`${filters.status}-${filters.page}-${items.length}`}>
         <>
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.leads.count', { n: total })}
@@ -250,6 +252,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             onPageSizeChange={(ps) => pushFilters({ pageSize: ps, page: 1 })}
           />
         </>
+        </ContentEnter>
       ) : null}
     </div>
   );

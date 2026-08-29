@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import TurnstileField from '../../_components/TurnstileField';
 
 /**
@@ -93,16 +94,18 @@ export default function EmployeeEnterClient() {
 
   useEffect(() => {
     if (!captchaConfigReady || !magicToken) return;
-    if (!magicToken) {
-      setError(t(locale, 'employeeHome.invalidLink'));
-      return;
-    }
     if (turnstileRequired) {
       setAwaitingCaptcha(true);
       return;
     }
     void startSession(undefined);
-  }, [captchaConfigReady, magicToken, turnstileRequired, locale, startSession]);
+  }, [captchaConfigReady, magicToken, turnstileRequired, startSession]);
+
+  useEffect(() => {
+    if (captchaConfigReady && !magicToken) {
+      setError(t(locale, 'employeeHome.invalidLink'));
+    }
+  }, [captchaConfigReady, magicToken, locale]);
 
   const continueWithCaptcha = () => {
     if (turnstileRequired && !turnstileToken) {
@@ -143,20 +146,27 @@ export default function EmployeeEnterClient() {
 
   if (error && !requires2fa && !awaitingCaptcha) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <p className="m-0 text-sm text-ink-muted">{error}</p>
-        <a href="/employee/login" className={cn(S.btnBrandSoft, 'mt-4 inline-flex min-h-touch')}>
+      <PublicNarrowShell variant="error" locale={locale} maxWidthClass="max-w-md" className="min-h-screen text-center">
+        <InlineCallout tone="danger" role="alert">
+          {error}
+        </InlineCallout>
+        <a href="/employee/login" className={cn(S.btnBrandSoft, 'mt-4 inline-flex min-h-touch no-underline')}>
           {t(locale, 'employeeHome.backToLogin')}
         </a>
-      </div>
+      </PublicNarrowShell>
     );
   }
 
   if (awaitingCaptcha && !requires2fa) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-        <h1 className="font-display text-2xl text-ink">{t(locale, 'employeeHome.loginTitle')}</h1>
-        <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.loginHintMagic')}</p>
+      <PublicNarrowShell
+        variant="form"
+        locale={locale}
+        maxWidthClass="max-w-md"
+        className="min-h-screen py-12"
+        title={t(locale, 'employeeHome.loginTitle')}
+      >
+        <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'employeeHome.loginHintMagic')}</p>
         {turnstileRequired && turnstileSiteKey ? (
           <div className="mt-6">
             <TurnstileField
@@ -167,7 +177,11 @@ export default function EmployeeEnterClient() {
             />
           </div>
         ) : null}
-        {error ? <p className="mt-3 m-0 text-prose text-danger">{error}</p> : null}
+        {error ? (
+          <InlineCallout tone="danger" role="alert" className="mt-3">
+            {error}
+          </InlineCallout>
+        ) : null}
         <button
           type="button"
           disabled={busy || (turnstileRequired && !turnstileToken)}
@@ -176,15 +190,20 @@ export default function EmployeeEnterClient() {
         >
           {busy ? t(locale, 'login.entering') : t(locale, 'employeeHome.enter')}
         </button>
-      </div>
+      </PublicNarrowShell>
     );
   }
 
   if (requires2fa) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-        <h1 className="font-display text-2xl text-ink">{t(locale, 'login.twoFaTitle')}</h1>
-        <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'login.twoFaIntro')}</p>
+      <PublicNarrowShell
+        variant="form"
+        locale={locale}
+        maxWidthClass="max-w-md"
+        className="min-h-screen py-12"
+        title={t(locale, 'login.twoFaTitle')}
+      >
+        <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'login.twoFaIntro')}</p>
         <FormField label={t(locale, 'login.twoFaCode')} className="mt-6">
           <input
             inputMode="numeric"
@@ -207,7 +226,11 @@ export default function EmployeeEnterClient() {
             />
           </div>
         ) : null}
-        {error ? <p className="mt-3 m-0 text-prose text-danger">{error}</p> : null}
+        {error ? (
+          <InlineCallout tone="danger" role="alert" className="mt-3">
+            {error}
+          </InlineCallout>
+        ) : null}
         <button
           type="button"
           disabled={busy || twoFaCode.length !== 6}
@@ -216,13 +239,11 @@ export default function EmployeeEnterClient() {
         >
           {busy ? t(locale, 'login.twoFaVerifying') : t(locale, 'login.twoFaSubmit')}
         </button>
-      </div>
+      </PublicNarrowShell>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <AppLoading variant="panel" />
-    </div>
+    <PublicNarrowShell variant="loading" locale={locale} maxWidthClass="max-w-md" className="min-h-screen" />
   );
 }

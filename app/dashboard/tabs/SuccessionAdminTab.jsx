@@ -8,7 +8,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
@@ -568,6 +568,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   if (loading) return <AppLoading variant="panel" />;
 
   return (
+    <ContentEnter>
     <div className="flex flex-col gap-6">
       <AdminPageHeader
         title={t('title')}
@@ -780,5 +781,6 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         </>
       )}
     </div>
+    </ContentEnter>
   );
 }

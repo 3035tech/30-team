@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { AdminIconButton, S } from '../../dashboard-shared';
+import { AppLoading } from '../../../_components/AppLoading';
 
 /**
  * Overview card — upcoming birthdays + work anniversaries (+ company anniversary).
@@ -48,10 +49,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
   if (loading) {
     return (
       <div className={S.card}>
-        <div className="flex items-center gap-2 text-ink-muted">
-          <span className="spinner" aria-hidden />
-          <span className={S.cardMuted}>{t(locale, 'panel.birthdays.loading')}</span>
-        </div>
+        <AppLoading locale={locale} variant="inline" label={t(locale, 'panel.birthdays.loading')} />
       </div>
     );
   }

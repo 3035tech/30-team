@@ -5,8 +5,7 @@
  * UX/UX Melhoria #8 — Navegação rápida para power users
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { cn } from '../../lib/cn';
+import { useState, useEffect } from 'react';
 
 const SHORTCUTS = {
   navigation: [
@@ -113,7 +112,7 @@ export function useKeyboardShortcuts({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [gPressed, onNavigateNext, onNavigatePrev, onNavigateToTab, onCreate, onEdit]);
 
-  return { showHelp, setShowHelp };
+  return { showHelp, setShowHelp, gPressed };
 }
 
 /**
@@ -201,10 +200,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+        <div className="sticky bottom-0 bg-canvas px-6 py-4 border-t border-ink/10 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors min-h-touch"
           >
             {labels.close}
           </button>
@@ -217,14 +216,17 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
 /**
  * Indicador visual quando "g" está pressionado
  */
-export function GModePending({ isActive }) {
+export function GModePending({ isActive, locale = 'pt-BR' }) {
   if (!isActive) return null;
+
+  const waiting =
+    locale === 'en' ? 'Waiting for key…' : 'Aguardando tecla…';
 
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-      <div className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-        <kbd className="px-2 py-1 bg-purple-700 rounded font-mono text-sm">g</kbd>
-        <span className="text-sm">Aguardando tecla...</span>
+      <div className="bg-brand-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+        <kbd className="px-2 py-1 bg-brand-700 rounded font-mono text-sm">g</kbd>
+        <span className="text-sm">{waiting}</span>
       </div>
     </div>
   );

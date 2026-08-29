@@ -12,6 +12,7 @@ import { cn } from '../../lib/cn';
 import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 import TurnstileField from '../_components/TurnstileField';
 import { InlineCallout } from '../_components/InlineCallout';
+import { S } from '../dashboard/dashboard-shared';
 
 const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
@@ -104,7 +105,7 @@ export default function SignupPage() {
           </InlineCallout>
           <button
             onClick={() => router.push('/login')}
-            className="w-full rounded-control bg-brand-500 px-4 py-3 text-base text-white hover:bg-brand-600"
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center')}
           >
             {t(locale, 'signup.goToLogin')}
           </button>
@@ -233,11 +234,11 @@ export default function SignupPage() {
             {t(locale, 'signup.terms')}
           </div>
 
-          {error && (
-            <div className="rounded-control border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {error ? (
+            <InlineCallout tone="danger" role="alert">
               {error}
-            </div>
-          )}
+            </InlineCallout>
+          ) : null}
 
           {TURNSTILE_SITE_KEY ? (
             <TurnstileField
@@ -251,10 +252,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className={cn(
-              'w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-4 py-3.5 text-base font-medium text-white',
-              loading ? 'cursor-default opacity-60' : 'cursor-pointer hover:from-brand-600 hover:to-brand-900'
-            )}
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center', loading && 'opacity-60')}
           >
             {loading ? t(locale, 'common.loading') : t(locale, 'signup.submit')}
           </button>

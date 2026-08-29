@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
@@ -449,6 +449,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   if (loading) return <AppLoading variant="panel" />;
 
   return (
+    <ContentEnter>
     <div className="flex flex-col gap-6">
       <AdminPageHeader
         title={t('title')}
@@ -640,6 +641,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         />
       ) : null}
     </div>
+    </ContentEnter>
   );
 }
 

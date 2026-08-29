@@ -7,6 +7,7 @@ import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { statusToneClass } from '../../../_components/StatusToneChip';
 import { Icon } from '../../../_components/Icon';
+import { AppLoading } from '../../../_components/AppLoading';
 
 const SIGNAL_META = {
   climate: { emoji: '🌡️', labelKey: 'turnoverRadar.signalLabelClimate', hintKey: 'turnoverRadar.signalClimateHint' },
@@ -81,10 +82,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
   if (loading) {
     return (
       <div className={S.card}>
-        <div className="flex items-center gap-2">
-          <span className="spinner text-ink-muted" aria-hidden />
-          <span className={S.cardMuted}>{t(locale, 'common.loading')}</span>
-        </div>
+        <AppLoading locale={locale} variant="inline" />
       </div>
     );
   }

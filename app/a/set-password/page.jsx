@@ -6,13 +6,14 @@ import Link from 'next/link';
 import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
 import { cn } from '../../../lib/cn';
+import { S } from '../../dashboard/dashboard-shared';
 import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
+import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import TurnstileField from '../../_components/TurnstileField';
-
-const inputClass =
-  'box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -126,92 +127,90 @@ function SetPasswordForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-display text-ink">
-      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
-      <div className="relative z-[1] w-full max-w-[420px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <BrandMark size={36} withWordmark />
-          <LanguageSelect locale={locale} onChange={setLocale} compact />
-        </div>
-        <h1 className="mb-3 mt-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-3xl font-normal leading-tight text-transparent">
-          {t(locale, 'setPassword.title')}
-        </h1>
-
-        {checking ? (
-          <p className="text-sm text-ink-muted">{t(locale, 'common.loading')}</p>
-        ) : tokenError ? (
-          <>
-            <p className="text-sm leading-relaxed text-danger">
-              {errorMessage(locale, tokenError, t(locale, 'setPassword.invalidLink'))}
-            </p>
-            <Link href="/login" className="text-sm text-brand-500">
-              {t(locale, 'setPassword.backToLogin')}
-            </Link>
-          </>
-        ) : success ? (
-          <p className="text-sm text-success">{t(locale, 'setPassword.ok')}</p>
-        ) : (
-          <>
-            <p className="mb-5 text-sm leading-[1.65] text-ink-muted">
-              {t(locale, 'setPassword.intro', { email: emailMasked })}
-            </p>
-            <div className="flex flex-col gap-3">
-              <FormField htmlFor="set-password-new" label={t(locale, 'setPassword.newPassword')}>
-                <input
-                  id="set-password-new"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={inputClass}
-                />
-              </FormField>
-              <FormField htmlFor="set-password-confirm" label={t(locale, 'setPassword.confirmPassword')}>
-                <input
-                  id="set-password-confirm"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void submit();
-                  }}
-                  className={inputClass}
-                />
-              </FormField>
-              {turnstileRequired && turnstileSiteKey ? (
-                <TurnstileField
-                  siteKey={turnstileSiteKey}
-                  onToken={setTurnstileToken}
-                  onError={() => setTurnstileError(true)}
-                  errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
-                />
-              ) : null}
-              {error ? (
-                <p className="m-0 text-prose text-danger">{error}</p>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => void submit()}
-                disabled={loading}
-                className={cn(
-                  'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-base font-semibold text-white',
-                  loading ? 'cursor-default opacity-70' : 'cursor-pointer'
-                )}
-              >
-                {loading ? t(locale, 'common.loading') : t(locale, 'setPassword.submit')}
-              </button>
-            </div>
-          </>
-        )}
+    <PublicNarrowShell variant="form" locale={locale} maxWidthClass="max-w-md" className="min-h-screen py-12">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <BrandMark size={32} withWordmark />
+        <LanguageSelect locale={locale} onChange={setLocale} compact />
       </div>
-    </div>
+      <h1 className={S.pageTitle}>{t(locale, 'setPassword.title')}</h1>
+
+      {checking ? (
+        <div className="mt-6">
+          <AppLoading locale={locale} variant="panel" />
+        </div>
+      ) : tokenError ? (
+        <div className="mt-6 flex flex-col gap-3">
+          <InlineCallout tone="danger" role="alert">
+            {errorMessage(locale, tokenError, t(locale, 'setPassword.invalidLink'))}
+          </InlineCallout>
+          <Link href="/login" className={cn(S.btnBrandSoft, 'min-h-touch justify-center no-underline')}>
+            {t(locale, 'setPassword.backToLogin')}
+          </Link>
+        </div>
+      ) : success ? (
+        <InlineCallout tone="success" className="mt-6">
+          {t(locale, 'setPassword.ok')}
+        </InlineCallout>
+      ) : (
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <p className={cn(S.muted, 'm-0')}>
+            {t(locale, 'setPassword.intro', { email: emailMasked })}
+          </p>
+          <FormField htmlFor="set-password-new" label={t(locale, 'setPassword.newPassword')}>
+            <input
+              id="set-password-new"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(S.input, 'w-full')}
+              disabled={loading}
+            />
+          </FormField>
+          <FormField htmlFor="set-password-confirm" label={t(locale, 'setPassword.confirmPassword')}>
+            <input
+              id="set-password-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submit();
+              }}
+              className={cn(S.input, 'w-full')}
+              disabled={loading}
+            />
+          </FormField>
+          {turnstileRequired && turnstileSiteKey ? (
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          ) : null}
+          {error ? (
+            <InlineCallout tone="danger" role="alert">
+              {error}
+            </InlineCallout>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={loading}
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center', loading && 'opacity-60')}
+          >
+            {loading ? t(locale, 'common.loading') : t(locale, 'setPassword.submit')}
+          </button>
+        </div>
+      )}
+    </PublicNarrowShell>
   );
 }
 
 export default function SetPasswordPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<AppLoading variant="panel" />}>
       <SetPasswordForm />
     </Suspense>
   );

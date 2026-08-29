@@ -5,6 +5,7 @@ import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { useAppFeedback } from '../../../_components/AppFeedback';
+import { AppLoading } from '../../../_components/AppLoading';
 
 const SEV = {
   info: 'border-info/25 bg-info/[0.06]',
@@ -91,7 +92,9 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
       </div>
 
       {loading ? (
-        <p className="mt-3 mb-0 text-xs text-ink-muted">…</p>
+        <div className="mt-3">
+          <AppLoading locale={locale} variant="inline" />
+        </div>
       ) : !workbench || workbench.empty ? (
         <p className="mt-3 mb-0 text-prose text-ink-muted">{t(locale, 'panel.workbench.empty')}</p>
       ) : (

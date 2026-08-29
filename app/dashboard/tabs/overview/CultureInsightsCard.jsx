@@ -6,6 +6,7 @@ import { S } from '../../dashboard-shared';
 import { InsightListItem } from '../../../_components/InsightListItem';
 import { InlineCallout } from '../../../_components/InlineCallout';
 import { StatusToneChip } from '../../../_components/StatusToneChip';
+import { AppLoading } from '../../../_components/AppLoading';
 
 export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -133,9 +134,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   if (loading) {
     return (
       <div className={S.card}>
-        <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500" />
-        </div>
+        <AppLoading locale={locale} variant="inline" />
       </div>
     );
   }

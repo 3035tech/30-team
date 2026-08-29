@@ -6,6 +6,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S, AdminListPager, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
@@ -209,7 +210,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
       </AdminListFilters>
 
       {error ? <p className="m-0 font-mono text-xs text-danger">{error}</p> : null}
-      {loading ? <p className={cn(S.muted, 'text-sm')}>{t(locale, 'panel.common.loading')}</p> : null}
+      {loading ? <AppLoading locale={locale} variant="panel" /> : null}
 
       {!loading && !items.length ? (
         <EmptyState
@@ -219,6 +220,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
       ) : null}
 
       {!loading && items.length ? (
+        <ContentEnter animKey={`${total}-${items.length}`}>
         <>
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.audit.count', { n: total })}</p>
           <AdminTableShell
@@ -295,6 +297,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
             onPageSizeChange={(ps) => pushFilters({ pageSize: ps, page: 1 })}
           />
         </>
+        </ContentEnter>
       ) : null}
     </div>
   );

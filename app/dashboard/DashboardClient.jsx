@@ -32,7 +32,7 @@ import { AppLoading, ContentEnter, NavLoadBar } from '../_components/AppLoading'
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
 import { OnboardingTour } from '../_components/OnboardingTour';
-import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../_components/KeyboardShortcuts';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp, GModePending } from '../_components/KeyboardShortcuts';
 import OnboardingWizard from '../_components/OnboardingWizard';
 import { PersonaPlaybookCard } from '../_components/PersonaPlaybookCard';
 
@@ -276,7 +276,7 @@ export default function DashboardClient({
   const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
 
   // Keyboard shortcuts
-  const { showHelp, setShowHelp } = useKeyboardShortcuts({
+  const { showHelp, setShowHelp, gPressed } = useKeyboardShortcuts({
     onNavigateToTab: (tabName) => navigateToTab(tabName),
   });
 
@@ -759,6 +759,7 @@ export default function DashboardClient({
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} locale={locale} />
+      <GModePending isActive={gPressed} locale={locale} />
 
       <button
         type="button"

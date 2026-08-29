@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { InsightListItem } from '../../../_components/InsightListItem';
+import { AppLoading } from '../../../_components/AppLoading';
 
 export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -60,9 +61,7 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
   if (loading) {
     return (
       <div className={S.card}>
-        <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500" />
-        </div>
+        <AppLoading locale={locale} variant="inline" />
       </div>
     );
   }

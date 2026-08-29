@@ -11,6 +11,7 @@ import { S } from '../dashboard/dashboard-shared';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 import { FormField } from '../_components/FormField';
+import { InlineCallout } from '../_components/InlineCallout';
 import TurnstileField from '../_components/TurnstileField';
 
 function LoginForm() {
@@ -330,10 +331,14 @@ function LoginForm() {
             </>
           )}
           {error ? (
-            <p className="m-0 text-prose text-danger">{error}</p>
+            <InlineCallout tone="danger" role="alert">
+              {error}
+            </InlineCallout>
           ) : null}
           {success ? (
-            <p className="m-0 text-prose text-success">{success}</p>
+            <InlineCallout tone="success">
+              {success}
+            </InlineCallout>
           ) : null}
         </div>
 

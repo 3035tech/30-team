@@ -6,12 +6,15 @@ import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { Icon } from '../../../_components/Icon';
+import { AppLoading } from '../../../_components/AppLoading';
+import { useAppFeedback } from '../../../_components/AppFeedback';
 
 /**
  * Card de HR Score na Overview
  * Mostra média da empresa + rollup por área + top/bottom performers
  */
 export default function HrScoreCard({ locale, companyId, isAdmin }) {
+  const { confirm, toast } = useAppFeedback();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -42,10 +45,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
   if (loading) {
     return (
       <div className={S.card}>
-        <div className="flex items-center gap-2 text-ink-muted">
-          <span className="spinner" aria-hidden />
-          <span className={S.cardMuted}>{t(locale, 'hrScore.calculating')}</span>
-        </div>
+        <AppLoading locale={locale} variant="inline" label={t(locale, 'hrScore.calculating')} />
       </div>
     );
   }
@@ -71,6 +71,25 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
       ? t(locale, 'hrScore.peopleOne')
       : t(locale, 'hrScore.peopleMany', { n: overall.total });
 
+  const recalculate = async () => {
+    const ok = await confirm({
+      message: t(locale, 'hrScore.recalculateConfirm'),
+    });
+    if (!ok) return;
+    try {
+      const res = await fetch('/api/admin/hr-score/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId }),
+      });
+      if (!res.ok) throw new Error('recalc_failed');
+      toast(t(locale, 'hrScore.recalculated'), 'ok');
+      window.location.reload();
+    } catch {
+      toast(t(locale, 'hrScore.recalculateFailed'), 'error');
+    }
+  };
+
   return (
     <div className={S.card}>
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -90,21 +109,7 @@ export default function HrScoreCard({ locale, companyId, isAdmin }) {
         {isAdmin && (
           <button
             type="button"
-            onClick={async () => {
-              if (!confirm(t(locale, 'hrScore.recalculate') + '?')) return;
-              try {
-                const res = await fetch('/api/admin/hr-score/recalculate', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ companyId }),
-                });
-                if (!res.ok) throw new Error('recalc_failed');
-                alert(t(locale, 'hrScore.recalculated'));
-                window.location.reload();
-              } catch (err) {
-                alert(t(locale, 'hrScore.recalculateFailed'));
-              }
-            }}
+            onClick={() => void recalculate()}
             className={cn(S.btnGhost, 'px-3 py-1.5 text-xs')}
           >
             {t(locale, 'hrScore.recalculate')}
