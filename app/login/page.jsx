@@ -7,13 +7,11 @@ import { sanitizeLoginRedirect } from '../../lib/sanitize-login-redirect';
 import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { cn } from '../../lib/cn';
+import { S } from '../dashboard/dashboard-shared';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
 import { FormField } from '../_components/FormField';
 import TurnstileField from '../_components/TurnstileField';
-
-const inputClass =
-  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-base text-ink';
 
 function LoginForm() {
   const [mode, setMode] = useState('login');
@@ -209,10 +207,18 @@ function LoginForm() {
         ? 'login.forgotTitle'
         : 'login.title';
 
+  const primaryAction = mustChangePassword
+    ? changePassword
+    : requires2fa
+      ? verify2fa
+      : mode === 'forgot'
+        ? requestReset
+        : login;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-display text-ink">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-ui text-ink">
       <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
-      <div className="relative z-[1] w-full max-w-[420px] rounded-[20px] border border-ink/12 bg-white px-12 py-11 shadow-card backdrop-blur-3xl">
+      <div className="relative z-[1] w-full max-w-[420px] rounded-[20px] border border-ink/12 bg-surface px-8 py-10 shadow-card sm:px-12 sm:py-11">
         <div className="mb-4 flex items-center justify-between gap-3">
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
@@ -220,22 +226,21 @@ function LoginForm() {
         <p className="mb-3 mt-0 block font-mono text-2xs uppercase tracking-[3px] text-ink-label">
           {t(locale, 'login.restricted')}
         </p>
-        <h2 className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-4xl font-normal leading-tight text-transparent">
+        <h2 className="mb-3 font-display text-3xl font-normal leading-tight text-brand-600 sm:text-4xl">
           {t(locale, titleKey).split('\n').map((line, i) => (
             <span key={line}>{i > 0 ? <br /> : null}{line}</span>
           ))}
         </h2>
         {!mustChangePassword && !requires2fa ? (
-          <p className="mb-7 text-sm italic leading-[1.7] text-ink-muted">
+          <p className={cn(S.muted, 'mb-7')}>
             {t(locale, mode === 'forgot' ? 'login.forgotIntro' : 'login.intro')}
           </p>
         ) : null}
         {requires2fa ? (
-          <p className="mb-7 text-sm italic leading-[1.7] text-ink-muted">
-            {t(locale, 'login.twoFaIntro')}
-          </p>
+          <p className={cn(S.muted, 'mb-7')}>{t(locale, 'login.twoFaIntro')}</p>
         ) : null}
-        <div className="mb-4 flex flex-col gap-3">
+
+        <div className="mb-4 flex w-full flex-col gap-3">
           {mustChangePassword ? (
             <>
               <FormField htmlFor="login-current-password" label={t(locale, 'login.changePasswordCurrent')}>
@@ -243,7 +248,7 @@ function LoginForm() {
                   id="login-current-password"
                   type="password"
                   autoComplete="current-password"
-                  className={inputClass}
+                  className={S.input}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                 />
@@ -253,7 +258,7 @@ function LoginForm() {
                   id="login-new-password"
                   type="password"
                   autoComplete="new-password"
-                  className={inputClass}
+                  className={S.input}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
@@ -263,7 +268,7 @@ function LoginForm() {
                   id="login-confirm-password"
                   type="password"
                   autoComplete="new-password"
-                  className={cn(inputClass, error && 'border-danger')}
+                  className={cn(S.input, error && 'border-danger')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && changePassword()}
@@ -276,7 +281,7 @@ function LoginForm() {
                 id="login-2fa-code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className={cn(inputClass, error && 'border-danger')}
+                className={cn(S.input, error && 'border-danger')}
                 value={twoFaCode}
                 onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
@@ -289,7 +294,7 @@ function LoginForm() {
                 id="login-email"
                 type="email"
                 autoComplete="username"
-                className={inputClass}
+                className={S.input}
                 value={email}
                 placeholder={t(locale, 'login.emailPlaceholder')}
                 onChange={(e) => setEmail(e.target.value)}
@@ -303,7 +308,7 @@ function LoginForm() {
                   id="login-email"
                   type="email"
                   autoComplete="username"
-                  className={inputClass}
+                  className={S.input}
                   value={email}
                   placeholder={t(locale, 'login.emailPlaceholder')}
                   onChange={(e) => setEmail(e.target.value)}
@@ -315,7 +320,7 @@ function LoginForm() {
                   id="login-password"
                   type="password"
                   autoComplete="current-password"
-                  className={cn(inputClass, error && 'border-danger')}
+                  className={cn(S.input, error && 'border-danger')}
                   value={password}
                   placeholder={t(locale, 'login.passwordPlaceholder')}
                   onChange={(e) => setPassword(e.target.value)}
@@ -325,35 +330,28 @@ function LoginForm() {
             </>
           )}
           {error ? (
-            <p className="m-0 text-xs text-danger">{error}</p>
+            <p className="m-0 text-prose text-danger">{error}</p>
           ) : null}
           {success ? (
-            <p className="m-0 text-xs text-success">{success}</p>
+            <p className="m-0 text-prose text-success">{success}</p>
           ) : null}
         </div>
+
         {turnstileRequired && turnstileSiteKey && !mustChangePassword ? (
-          <TurnstileField
-            siteKey={turnstileSiteKey}
-            onToken={setTurnstileToken}
-            onError={() => setTurnstileError(true)}
-            errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
-          />
+          <div className="mb-4 w-full">
+            <TurnstileField
+              siteKey={turnstileSiteKey}
+              onToken={setTurnstileToken}
+              onError={() => setTurnstileError(true)}
+              errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+            />
+          </div>
         ) : null}
+
         <button
           type="button"
-          className={cn(
-            'mb-3 cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-            loading && 'opacity-60'
-          )}
-          onClick={
-            mustChangePassword
-              ? changePassword
-              : requires2fa
-                ? verify2fa
-                : mode === 'forgot'
-                  ? requestReset
-                  : login
-          }
+          className={cn(S.btnPrimary, 'mb-4 min-h-touch w-full justify-center', loading && 'opacity-60')}
+          onClick={primaryAction}
           disabled={loading}
         >
           {loading
@@ -370,54 +368,56 @@ function LoginForm() {
                   ? t(locale, 'login.forgotSubmit')
                   : t(locale, 'login.enter')}
         </button>
-        {requires2fa ? (
-          <button
-            type="button"
-            onClick={() => {
-              setRequires2fa(false);
-              setChallengeToken('');
-              setTwoFaCode('');
-              setError('');
-            }}
-            className="mb-4 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-ink-muted"
-          >
-            {t(locale, 'login.forgotBack')}
-          </button>
-        ) : null}
-        {!mustChangePassword && !requires2fa && mode === 'login' ? (
-          <>
+
+        <div className="flex w-full flex-col gap-2 text-left">
+          {requires2fa ? (
             <button
               type="button"
-              onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
-              className="mb-3 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-brand-600"
+              onClick={() => {
+                setRequires2fa(false);
+                setChallengeToken('');
+                setTwoFaCode('');
+                setError('');
+              }}
+              className="cursor-pointer border-none bg-transparent p-0 text-left font-ui text-prose text-ink-muted"
             >
-              {t(locale, 'login.forgotPassword')}
+              {t(locale, 'login.forgotBack')}
             </button>
-            <a
-              href="/employee/login"
-              className="mb-4 block font-display text-xs text-ink-muted underline-offset-2 hover:text-brand-600 hover:underline"
+          ) : null}
+          {!mustChangePassword && !requires2fa && mode === 'login' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
+                className="cursor-pointer border-none bg-transparent p-0 text-left font-ui text-prose text-brand-600"
+              >
+                {t(locale, 'login.forgotPassword')}
+              </button>
+              <a
+                href="/employee/login"
+                className="font-ui text-prose text-ink-muted underline-offset-2 hover:text-brand-600 hover:underline"
+              >
+                {t(locale, 'login.employeeLogin')}
+              </a>
+            </>
+          ) : null}
+          {!mustChangePassword && !requires2fa && mode === 'forgot' ? (
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+              className="cursor-pointer border-none bg-transparent p-0 text-left font-ui text-prose text-ink-muted"
             >
-              {t(locale, 'login.employeeLogin')}
-            </a>
-          </>
-        ) : null}
-        {!mustChangePassword && !requires2fa && mode === 'forgot' ? (
+              {t(locale, 'login.forgotBack')}
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
-            className="mb-4 block cursor-pointer border-none bg-transparent p-0 font-display text-xs text-ink-muted"
+            onClick={() => router.push('/')}
+            className="cursor-pointer border-none bg-transparent p-0 text-left font-ui text-prose text-ink-muted"
           >
-            {t(locale, 'login.forgotBack')}
+            {t(locale, 'login.backToTest')}
           </button>
-        ) : null}
-        <br />
-        <button
-          type="button"
-          onClick={() => router.push('/')}
-          className="cursor-pointer border-none bg-transparent font-display text-xs text-ink-muted"
-        >
-          {t(locale, 'login.backToTest')}
-        </button>
+        </div>
       </div>
     </div>
   );
