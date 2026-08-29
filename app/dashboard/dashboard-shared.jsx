@@ -5,7 +5,7 @@ import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
-import { C, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_COLORS_DARK } from '../../lib/theme';
+import { C, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_COLORS_DARK, typeChipSurfaceStyle } from '../../lib/theme';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
 import { cn } from '../../lib/cn';
 import {
@@ -18,6 +18,7 @@ import {
 import { Icon } from '../_components/Icon';
 import { IconActionTip } from '../_components/IconActionTip';
 import { MeterBar } from '../_components/MeterBar';
+import { useDarkMode } from '../_components/DarkModeProvider';
 import { ContentEnter } from '../_components/AppLoading';
 import { FormField } from '../_components/FormField';
 
@@ -100,12 +101,13 @@ const TypeRef = ({ type, locale = 'pt-BR', children, className, style }) => {
 };
 
 const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
+  const { isDark } = useDarkMode();
   const d = TYPE_DATA[type];
   const short = typeShortLabel(type, locale);
   const tip = typeHintTooltip(type, locale);
   const label = compact ? `T${type}` : short;
   const base = cn(
-    'inline-flex flex-shrink-0 cursor-help items-center font-mono rounded-full',
+    'ui-type-badge inline-flex flex-shrink-0 cursor-help items-center font-mono rounded-full',
     compact ? 'gap-0.5 px-[7px] py-0.5 text-2xs' : 'gap-1 px-2.5 py-[3px] text-2xs'
   );
   if (!d) {
@@ -124,11 +126,7 @@ const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
       title={tip}
       aria-label={tip}
       className={cn(base, !compact && 'text-xs', compact && 'tracking-[0.02em]')}
-      style={{
-        background: `${d.color}18`,
-        border: `1px solid ${d.color}44`,
-        color: d.color,
-      }}
+      style={typeChipSurfaceStyle(d.color, { isDark })}
     >
       {compact ? (
         <>

@@ -428,6 +428,7 @@ export function OverviewTab({
                 {mixEntries.map((e) => (
                   <div
                     key={e.type}
+                    className="ui-type-heat-seg"
                     style={{
                       width: `${(e.n / mixTotal) * 100}%`,
                       background: TYPE_DATA[e.type]?.color || C.purple,
@@ -445,7 +446,7 @@ export function OverviewTab({
                     title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
                   >
                     <span
-                      className="cursor-help max-w-full truncate"
+                      className="ui-type-label cursor-help max-w-full truncate"
                       style={{ color: TYPE_DATA[e.type]?.color || undefined }}
                     >
                       T{e.type}

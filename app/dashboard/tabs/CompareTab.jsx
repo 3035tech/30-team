@@ -5,13 +5,14 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
 import { personListName, personSortKey } from '../../../lib/person-name';
 import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
-import { C } from '../../../lib/theme';
+import { C, typeScoreCellStyle } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { S, TypeBadge, AdminListSearch } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { ContentEnter } from '../../_components/AppLoading';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
+import { useDarkMode } from '../../_components/DarkModeProvider';
 
 function scoreOf(row, typeNum) {
   const v = row?.scores?.[typeNum] ?? row?.scores?.[String(typeNum)] ?? 0;
@@ -99,6 +100,7 @@ export function CompareTab({
   roster,
   navigateDashboard,
 }) {
+  const { isDark } = useDarkMode();
   const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
   const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
   const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' }));
@@ -334,7 +336,7 @@ export function CompareTab({
                         key={typeNum}
                         onClick={() => toggleSort(typeNum)}
                         title={typeHintTooltip(typeNum, locale)}
-                        className="min-w-[52px] cursor-pointer select-none border-b border-ink/12 px-1 py-2 text-center font-normal"
+                        className="ui-type-label min-w-[52px] cursor-pointer select-none border-b border-ink/12 px-1 py-2 text-center font-normal"
                         style={{ color: TYPE_DATA[typeNum].color }}
                       >
                         <span className="flex flex-col items-center gap-0.5">
@@ -370,18 +372,13 @@ export function CompareTab({
                             <td key={typeNum} className="p-1.5 text-center">
                               <div
                                 title={typeHintTooltip(typeNum, locale) + ` · ${s}`}
-                                className="mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-2xs"
-                                style={{
-                                  background: isTop
-                                    ? TYPE_DATA[typeNum].color
-                                    : `${TYPE_DATA[typeNum].color}${Math.max(20, Math.round(pct * 1.5))
-                                        .toString(16)
-                                        .padStart(2, '0')}`,
-                                  border: isTop ? `2px solid ${TYPE_DATA[typeNum].color}` : `1px solid ${C.border}`,
-                                  boxShadow: isTop ? `0 0 0 2px ${TYPE_DATA[typeNum].color}33` : 'none',
-                                  color: isTop ? '#fff' : 'rgba(26,22,37,.72)',
-                                  fontWeight: isTop ? 600 : 400,
-                                }}
+                                className="ui-type-score-cell mx-auto flex h-8 w-8 items-center justify-center rounded-full font-mono text-2xs"
+                                style={typeScoreCellStyle(TYPE_DATA[typeNum].color, {
+                                  isTop,
+                                  pct,
+                                  isDark,
+                                  borderFallback: C.border,
+                                })}
                               >
                                 {s}
                               </div>

@@ -395,8 +395,9 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 
 **Ainda aberto:**
 1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first (`color-scheme: light` em careers + assessment).
-2. Cores dinâmicas T1–T9 (`TYPE_DATA` / chips de tipo) permanecem hex por tipo (filter no meter ajuda; AA fino opcional).
-3. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome. Docs: não confundir com `prefers-color-scheme`.
+2. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome. Docs: não confundir com `prefers-color-scheme`.
+
+**Fechado neste corte:** chips T1–T9 / Compare (`TypeBadge` + `typeChipSurfaceStyle` / `typeScoreCellStyle` + classes `ui-type-*` no dark).
 
 **Fora:** segundo tema custom por empresa; modo “auto” OS (opcional depois).
 
@@ -639,10 +640,7 @@ JSON stdout via `lib/monitoring.js` ligado a Postgres (`lib/db.js`), Redis (`lib
 
 ## Aberto — Polish residual (pós waves 1–12 / demo beta)
 
-_(B-2901 WhatsApp Vagas · B-2902 GlobalSearch i18n · B-2903 diagnose Banco · B-2905 kanban mobile select · B-2906 VacancyInvites EmptyState · adoção Overview/checklist/HrScore `candidate=` · playbook `vacancies` · Guia `firstWeek` — entregues ago/2026.)_
-
-### B-2904 — Dark: chips T1–T9 / Compare
-Follow-up **B-1501**: `CompareTab` / chips `TYPE_DATA` legíveis no dark (sem reescrever `C.*` global). **S**
+_(B-2901–B-2906 + adoção/packaging + B-2904 dark T1–T9/Compare — entregues ago/2026. Polish residual vazio.)_
 
 **Skip (explícito):** aliases `/climate`/`/pulse`; DISC/DP.
 
