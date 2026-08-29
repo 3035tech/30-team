@@ -71,7 +71,7 @@ O hardening **não** adicionou login ao teste T1–T9 nem ao submit de candidato
 
 1. **`SIGNUP_DOMAIN_MATCH`** — deixar unset/`false` salvo intenção explícita.
 2. **`REDIS_URL`** — recomendado em multi-instância (rate limit + cache `session_version`).
-3. **`ENABLE_CSP=true`** — após smoke em staging (Next ainda precisa `unsafe-inline` / `unsafe-eval` no script-src).
+3. **`ENABLE_CSP=true`** — após smoke em staging (Next ainda precisa `unsafe-inline` / `unsafe-eval` no script-src). A política padrão em `lib/security-csp.js` já permite Turnstile (`challenges.cloudflare.com`) e **Cloudflare Web Analytics** (`static.cloudflareinsights.com` + `connect-src` para `cloudflareinsights.com`) — o beacon é injetado pela borda Cloudflare quando Insights está ligado na zona.
 4. **`CSP_POLICY`** — override opcional da política padrão.
 5. **`HEALTH_METRICS_SECRET`** / **`HEALTH_STATUS_TOKEN`** — usar header, não query string.
 6. **Turnstile** — `TURNSTILE_SECRET_KEY` + `NEXT_PUBLIC_TURNSTILE_SITE_KEY` no gitops quando ativar CAPTCHA.

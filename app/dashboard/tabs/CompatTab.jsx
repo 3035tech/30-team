@@ -8,6 +8,7 @@ import { personListName } from '../../../lib/person-name';
 import { C } from '../../../lib/theme';
 import { cn } from '../../../lib/cn';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
+import { Icon } from '../../_components/Icon';
 
 function PersonCard({ person, locale }) {
   const d = TYPE_DATA[person.topType] || {};
@@ -57,8 +58,10 @@ function Glossary({ locale, open, onToggle }) {
         )}
       >
         {open ? t(locale, 'panel.compat.glossaryHide') : t(locale, 'panel.compat.glossaryShow')}
-        {' '}
-        {open ? '▲' : '▼'}
+        <Icon
+          name="chevronDown"
+          className={cn('ml-1.5 inline-block shrink-0 align-middle transition-transform duration-150', open && 'rotate-180')}
+        />
       </button>
       {open ? (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
@@ -287,7 +290,12 @@ export function CompatTab({
             <span className="font-mono text-xs" style={{ color: playbook.color }}>
               {playbook.title} — {t(locale, 'panel.compat.playbookToggle')}
             </span>
-            <span className="font-mono text-[11px] text-ink-muted">{adviceOpen ? '▲' : '▼'}</span>
+            <span className="inline-flex shrink-0 items-center text-ink-muted">
+              <Icon
+                name="chevronDown"
+                className={cn('shrink-0 transition-transform duration-150', adviceOpen && 'rotate-180')}
+              />
+            </span>
           </button>
           {adviceOpen ? (
             <p className="mx-4 mb-3.5 mt-0 text-[13px] leading-relaxed text-ink-muted">{playbook.body}</p>

@@ -8,6 +8,7 @@ import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 
 import { HelpSystemMap } from '../../_components/HelpSystemMap';
+import { Icon } from '../../_components/Icon';
 import { HELP_GUIDE_SECTIONS, HELP_SECTION_STEP_COUNTS } from '../../../lib/help-sections';
 
 const SECTIONS = HELP_GUIDE_SECTIONS;
@@ -212,8 +213,14 @@ export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
               <span className="font-display text-sm text-ink">
                 {t(locale, `panel.help.${key}Title`)}
               </span>
-              <span className="font-mono text-[11px] text-ink-muted">
-                {isOpen ? '▲' : '▼'}
+              <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
+                <span className="font-mono text-[11px] font-medium tracking-wide">
+                  {isOpen ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
+                </span>
+                <Icon
+                  name="chevronDown"
+                  className={cn('shrink-0 transition-transform duration-150', isOpen && 'rotate-180')}
+                />
               </span>
             </button>
             {isOpen ? (

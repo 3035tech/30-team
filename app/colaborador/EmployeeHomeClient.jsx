@@ -11,6 +11,7 @@ import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
+import { Icon } from '../_components/Icon';
 
 const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
@@ -35,12 +36,12 @@ function loadCollapsed() {
   }
 }
 
-function CollapsibleSection({ id, title, count, open, onToggle, children }) {
+function CollapsibleSection({ id, title, count, open, onToggle, children, locale = 'pt-BR' }) {
   return (
     <section id={id} className="mt-6 scroll-mt-20">
       <button
         type="button"
-        className="flex w-full min-h-touch items-center justify-between gap-2 rounded-control border border-ink/12 bg-canvas/60 px-3 py-2 text-left"
+        className="flex w-full min-h-touch items-center justify-between gap-3 rounded-control border border-ink/12 bg-canvas/60 px-3 py-2.5 text-left hover:bg-ink/[0.03]"
         onClick={onToggle}
         aria-expanded={open}
       >
@@ -50,7 +51,15 @@ function CollapsibleSection({ id, title, count, open, onToggle, children }) {
             <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">({count})</span>
           ) : null}
         </span>
-        <span className="font-mono text-xs text-ink-muted">{open ? '▾' : '▸'}</span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-ink-muted">
+          <span className="font-mono text-[11px] font-medium tracking-wide">
+            {open ? t(locale, 'panel.common.collapse') : t(locale, 'panel.common.expand')}
+          </span>
+          <Icon
+            name="chevronDown"
+            className={cn('shrink-0 transition-transform duration-150', open && 'rotate-180')}
+          />
+        </span>
       </button>
       {open ? <div className="mt-3">{children}</div> : null}
     </section>
@@ -250,6 +259,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         count={tasks.length}
         open={openMap.tasks !== false}
         onToggle={() => toggleSection('tasks')}
+        locale={locale}
       >
         {tasks.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'employeeHome.tasksEmpty')}</p>
@@ -300,6 +310,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           title={t(locale, 'employeeHome.journeyTitle')}
           open={openMap.journey !== false}
           onToggle={() => toggleSection('journey')}
+          locale={locale}
         >
           <EmployeeOnboardingJourneySection
             locale={locale}
@@ -315,6 +326,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         count={plans.length}
         open={openMap.pdi !== false}
         onToggle={() => toggleSection('pdi')}
+        locale={locale}
       >
         {plans.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.employeePortal.pdiEmpty')}</p>
@@ -386,6 +398,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         count={courses.length}
         open={openMap.lms !== false}
         onToggle={() => toggleSection('lms')}
+        locale={locale}
       >
         {watching?.embedUrl ? (
           <div className="mb-4 overflow-hidden rounded-control border border-ink/12 bg-ink/5">
@@ -512,6 +525,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         title={t(locale, 'employeeHome.surveysTitle')}
         open={openMap.surveys !== false}
         onToggle={() => toggleSection('surveys')}
+        locale={locale}
       >
         <EmployeeSurveysSection locale={locale} />
       </CollapsibleSection>
@@ -522,6 +536,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         count={agreements.length + (prompts.length ? 1 : 0)}
         open={openMap.oneOnOne !== false}
         onToggle={() => toggleSection('oneOnOne')}
+        locale={locale}
       >
         {agreements.length === 0 ? (
           <p className={cn(S.faint, 'm-0 text-xs italic')}>
@@ -592,6 +607,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           title={t(locale, 'employeeHome.companyTitle')}
           open={openMap.company !== false}
           onToggle={() => toggleSection('company')}
+          locale={locale}
         >
           {company.aboutHtml ? (
             <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2 text-xs text-ink">
