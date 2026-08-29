@@ -27,13 +27,15 @@ export const GET = withAdminApi(
     logLabel: 'job-roles GET',
   },
   async ({ companyId, query }) => {
-    const roles = await listCompanyJobRoles(companyId, {
+    const rolesResult = await listCompanyJobRoles(companyId, {
       includeInactive: query.includeInactive,
     });
     return Response.json({
       companyId,
-      total: roles.length,
-      roles,
+      total: rolesResult.roles.length,
+      roles: rolesResult.roles,
+      truncated: rolesResult.truncated,
+      scanCap: rolesResult.scanCap,
     });
   }
 );

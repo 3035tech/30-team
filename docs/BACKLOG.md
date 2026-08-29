@@ -71,6 +71,10 @@ _(entregue — hero logo+nome+CTA, breadcrumb `/j` → empresa, meta local/faixa
 
 ## Aberto — performance (audit dashboard)
 
+### B-2800 — Hot-path performance (Perf-A + Perf-B + Perf-C) ✅ ENTREGUE
+
+Sprint de escala sem rewrite: batch HR Score + núcleo único; `LIMIT`/página em candidatos da vaga; compat top-N pairs no payload; bloquear admin `company=all` em Overview/Compat; Overview sem LATERAL por vaga aberta (stats em batch nas 8 listadas); Turnover scan cap 500 + flag `truncated`; `area_stats` sem write-on-read no dashboard; caps job-roles/`forSelect`/leadership; ranking vaga cap 200; histograma T1–T9 só em Compat/Overview (Equipe só `COUNT`).
+
 ### B-202 — (opcional) caps/API restantes do audit
 _(fechado como “monitorar prod” — sem gap aberto claro.)_ Já entregue: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps, indexes `061`. Reabrir só com evidência de produção.
 

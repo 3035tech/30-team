@@ -175,6 +175,20 @@ export function OverviewTab({
   };
 
   const chips = filterChips(locale, filters);
+
+  if (data.needsCompanyScope) {
+    return (
+      <div className={S.stack}>
+        <div className={cn(S.card, 'p-5 sm:px-6')}>
+          <span className={S.label}>{t(locale, 'panel.overview.needsCompanyScopeTitle')}</span>
+          <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
+            {t(locale, 'panel.overview.needsCompanyScopeBody')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const funnelActive = OVERVIEW_FUNNEL_STAGES.filter((s) => (data.funnel[s] || 0) > 0);
   const funnelSum = Math.max(data.funnelTotal || 1, 1);
   const mixCount = data.typeMix?.typeCount || typeCount || {};

@@ -43,15 +43,18 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const minRisk = searchParams.get('minRisk') || 'medium';
 
-    const risks = await getCompanyTurnoverRisks(companyId, {
+    const result = await getCompanyTurnoverRisks(companyId, {
       limit: Math.min(Number.isFinite(limit) ? limit : 20, 100),
       minRisk,
     });
 
     return NextResponse.json({
       companyId,
-      total: risks.length,
-      risks,
+      total: result.risks.length,
+      risks: result.risks,
+      truncated: result.truncated,
+      scanned: result.scanned,
+      scanCap: result.scanCap,
     });
   } catch (err) {
     console.error('[turnover-radar] GET company error:', err);

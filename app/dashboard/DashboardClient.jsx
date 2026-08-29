@@ -540,6 +540,7 @@ export default function DashboardClient({
   const pairs = compatMetrics.pairs || [];
   const tensions = compatMetrics.tensions || [];
   const synergies = compatMetrics.synergies || [];
+  const pairTotals = compatMetrics.pairTotals || null;
   const typeCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
   Object.assign(typeCount, compatMetrics.typeCount || {});
   const maxCount = Math.max(...Object.values(typeCount), 1);
@@ -1371,6 +1372,8 @@ export default function DashboardClient({
                   tensions={tensions}
                   synergies={synergies}
                   pairs={pairs}
+                  pairTotals={pairTotals}
+                  needsCompanyScope={Boolean(compatMetrics.needsCompanyScope)}
                   compatPage={compatListPagination.page}
                   compatPageSize={compatListPagination.pageSize}
                   onCompatPagination={pushCompatListPagination}

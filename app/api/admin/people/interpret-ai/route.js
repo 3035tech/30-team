@@ -134,7 +134,7 @@ export const POST = withAdminApi(
       loadIntel(scope, cid, locale, null),
     ]);
 
-    const riskList = Array.isArray(risks) ? risks : [];
+    const riskList = Array.isArray(risks?.risks) ? risks.risks : Array.isArray(risks) ? risks : [];
     const workbench = buildMultiSignalWorkbench({
       climate,
       pdi,

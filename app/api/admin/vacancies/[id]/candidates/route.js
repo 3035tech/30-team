@@ -37,8 +37,11 @@ export async function GET(request, { params }) {
       return apiError(request, loaded.errorCode || 'UNAUTHORIZED', actorErrorStatus(loaded.errorCode));
     }
 
-    const items = await listVacancyCandidates(vacancyId);
-    return NextResponse.json({ items });
+    const list = await listVacancyCandidates(vacancyId, {
+      page: new URL(request.url).searchParams.get('page') || 1,
+      pageSize: new URL(request.url).searchParams.get('pageSize') || 300,
+    });
+    return NextResponse.json(list);
   } catch (error) {
     console.error(error);
     return apiError(request, ERR.INTERNAL, 500);

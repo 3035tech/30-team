@@ -23,6 +23,7 @@ import {
   LEADERSHIP_POTENTIALS_SCAN_CAP,
 } from '../../lib/leadership-analytics';
 import { buildOverviewMetrics } from '../../lib/overview-metrics';
+import { OVERVIEW_FUNNEL_STAGES } from '../../lib/overview-constants.js';
 import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles';
 import { getOnboardingProgress } from '../../lib/onboarding-progress';
 import { isSuperAdminPayload } from '../../lib/permissions';
@@ -170,6 +171,13 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
       scopeCompanyFilter = effectiveCompanyId;
     }
 
+    /** Super-admin without company chip: skip Overview/Compat scans across all tenants. */
+    const needsCompanyScope =
+      isAdmin &&
+      companyId == null &&
+      effectiveCompanyId == null &&
+      (needOverview || needCompatPairs || needListMetrics);
+
     if (needVacanciesFilter) {
       const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
       const vParams = [];
@@ -290,13 +298,7 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
               rawParams
             );
             areaStats = computeStatsFromScores(raw.rows);
-            await query(
-              `INSERT INTO area_stats (area_id, type_means, type_stds, n, computed_at)
-               VALUES ($1, $2, $3, $4, NOW())
-               ON CONFLICT (area_id)
-               DO UPDATE SET type_means = EXCLUDED.type_means, type_stds = EXCLUDED.type_stds, n = EXCLUDED.n, computed_at = NOW()`,
-              [areaId, JSON.stringify(areaStats.means), JSON.stringify(areaStats.stds), areaStats.n]
-            );
+            // Persist via cron/ops — avoid write-on-read on the dashboard hot path.
           }
         }
 
@@ -326,6 +328,22 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
     }
 
     if (needListMetrics || needTeam || needCompatPairs || needGroupPeople || needOverview || needLeadership) {
+      if (needsCompanyScope) {
+        overviewMetrics = {
+          needsCompanyScope: true,
+          funnel: Object.fromEntries(OVERVIEW_FUNNEL_STAGES?.map?.((s) => [s, 0]) || []),
+          funnelTotal: 0,
+          attention: [],
+          openVacancies: [],
+          openVacancyCount: 0,
+          peopleOps: null,
+          behavioralIntel: null,
+        };
+        compatMetrics = {
+          ...compatMetrics,
+          needsCompanyScope: true,
+        };
+      } else {
       const BASE_JOIN_LIST = `
 FROM assessments ass
 JOIN candidates c ON c.id = ass.candidate_id
@@ -364,19 +382,21 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       let typeCountAgg = { ...EMPTY_TYPE_COUNT };
 
       if (needListMetrics) {
-        const [cntRes, histRes] = await Promise.all([
-          queryRead(
-            `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
-            extParams
-          ),
-          queryRead(
-            `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
-             ${BASE_JOIN_LIST}
-             ${candidateWhere}
-             GROUP BY ass.top_type`,
-            extParams
-          ),
-        ]);
+        const needHistogram = needCompatPairs || needOverview;
+        const cntPromise = queryRead(
+          `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
+          extParams
+        );
+        const histPromise = needHistogram
+          ? queryRead(
+              `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
+               ${BASE_JOIN_LIST}
+               ${candidateWhere}
+               GROUP BY ass.top_type`,
+              extParams
+            )
+          : Promise.resolve({ rows: [] });
+        const [cntRes, histRes] = await Promise.all([cntPromise, histPromise]);
         listTotal = cntRes.rows[0]?.n ?? 0;
         for (const row of histRes.rows) {
           const tt = row.topType;
@@ -421,6 +441,9 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
             pairs: bundles.pairs,
             tensions: bundles.tensions,
             synergies: bundles.synergies,
+            pairTotals: bundles.pairTotals,
+            pairsPayloadCapped: bundles.pairsPayloadCapped,
+            pairPayloadCap: bundles.pairPayloadCap,
             typeCount: typeCountAgg,
             total: listTotal,
             capped,
@@ -626,6 +649,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
           leadershipPotentials,
         };
       }
+      } // end else (!needsCompanyScope)
     }
   } catch (e) {
     console.error('Failed to fetch results:', e);

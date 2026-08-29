@@ -101,6 +101,14 @@ export default function TurnoverRadarCard({ locale, companyId }) {
         <div>
           <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'turnoverRadar.title')}</h3>
           <p className={S.cardSubtitle}>{atRiskLabel}</p>
+          {data.truncated ? (
+            <p className={cn(S.cardMuted, 'mt-1 text-xs')}>
+              {t(locale, 'turnoverRadar.scanTruncated', {
+                scanned: data.scanned || data.scanCap,
+                cap: data.scanCap,
+              })}
+            </p>
+          ) : null}
         </div>
       </div>
 

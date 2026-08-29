@@ -45,7 +45,7 @@ export const GET = withAdminApi(
       ),
     ]);
 
-    const riskList = Array.isArray(risks) ? risks : [];
+    const riskList = Array.isArray(risks?.risks) ? risks.risks : Array.isArray(risks) ? risks : [];
     const retentionCount = Array.isArray(watches?.items)
       ? watches.items.length
       : Array.isArray(watches)

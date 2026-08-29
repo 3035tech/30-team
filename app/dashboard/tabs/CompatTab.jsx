@@ -92,25 +92,42 @@ export function CompatTab({
   tensions,
   synergies,
   pairs,
+  pairTotals = null,
   compatPage = 1,
   compatPageSize = 20,
   onCompatPagination,
   locale = 'pt-BR',
+  needsCompanyScope = false,
 }) {
   const [section, setSection] = useState('tensions');
   const [adviceOpen, setAdviceOpen] = useState(false);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
+
+  if (needsCompanyScope) {
+    return (
+      <div className={cn(S.card, 'p-5 sm:px-6')}>
+        <span className={S.label}>{t(locale, 'panel.compat.needsCompanyScopeTitle')}</span>
+        <p className="mt-2.5 mb-0 max-w-[62ch] text-[13px] leading-relaxed text-ink-muted">
+          {t(locale, 'panel.compat.needsCompanyScopeBody')}
+        </p>
+      </div>
+    );
+  }
 
   const goSection = (id) => {
     setSection(id);
     if (onCompatPagination) onCompatPagination({ page: 1, pageSize: compatPageSize });
   };
 
+  const tensionCount = pairTotals?.tensions ?? tensions.length;
+  const synergyCount = pairTotals?.synergies ?? synergies.length;
+  const pairCount = pairTotals?.pairs ?? pairs.length;
+
   const summaryCards = [
     {
       id: 'tensions',
       l: t(locale, 'panel.compat.cardTensionPairs'),
-      n: tensions.length,
+      n: tensionCount,
       c: C.tension,
       d: t(locale, 'panel.compat.cardTensionHint'),
       action: t(locale, 'panel.compat.cardTensionAction'),
@@ -118,7 +135,7 @@ export function CompatTab({
     {
       id: 'synergies',
       l: t(locale, 'panel.compat.cardSynergyPairs'),
-      n: synergies.length,
+      n: synergyCount,
       c: C.synergy,
       d: t(locale, 'panel.compat.cardSynergyHint'),
       action: t(locale, 'panel.compat.cardSynergyAction'),
@@ -126,7 +143,7 @@ export function CompatTab({
     {
       id: 'all',
       l: t(locale, 'panel.compat.cardTotalPairs'),
-      n: pairs.length,
+      n: pairCount,
       c: C.purpleLight,
       d: t(locale, 'panel.compat.cardTotalHint'),
       action: t(locale, 'panel.compat.cardTotalAction'),

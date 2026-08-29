@@ -43,7 +43,8 @@ export async function GET(request) {
       `SELECT id, name
        FROM companies
        WHERE deleted = FALSE
-       ORDER BY LOWER(name) ASC`
+       ORDER BY LOWER(name) ASC
+       LIMIT 500`
     );
     return NextResponse.json(r.rows);
   }
