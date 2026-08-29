@@ -6,15 +6,18 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { TypeBadge } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
+import { CollapsibleBlock } from './CollapsibleBlock';
 
 /**
  * Dossier unificado da pessoa (B-1901) + botão IA (B-1904).
+ * @param {{ embedded?: boolean }} props — when true (Resumo tab), signals start collapsed
  */
 export function PersonDossierBlock({
   locale = 'pt-BR',
   candidateId,
   companyId = null,
   onGoSubTab,
+  embedded = false,
 }) {
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
@@ -97,28 +100,44 @@ export function PersonDossierBlock({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className={S.cardTight}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <span className={S.label}>{t(locale, 'panel.dossier.title')}</span>
-            <p className="mt-1 mb-0 text-[13px] leading-snug text-ink-muted">
-              {t(locale, 'panel.dossier.intro')}
-            </p>
-            <p className="mt-1 mb-0 font-mono text-[11px] text-ink-faint">
-              {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
-            </p>
+    <div className={cn('flex flex-col gap-3', embedded && 'mb-1')}>
+      {!embedded ? (
+        <div className={S.cardTight}>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className={S.label}>{t(locale, 'panel.dossier.title')}</span>
+              <p className="mt-1 mb-0 text-[13px] leading-snug text-ink-muted">
+                {t(locale, 'panel.dossier.intro')}
+              </p>
+              <p className="mt-1 mb-0 font-mono text-[11px] text-ink-faint">
+                {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={aiLoading}
+              onClick={runAi}
+              className={cn(S.btnBrandSoft, 'min-h-touch shrink-0')}
+            >
+              {aiLoading ? t(locale, 'panel.dossier.aiRunning') : t(locale, 'panel.dossier.aiCta')}
+            </button>
           </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="m-0 font-mono text-[11px] text-ink-faint">
+            {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
+          </p>
           <button
             type="button"
             disabled={aiLoading}
             onClick={runAi}
-            className={cn(S.btnBrandSoft, 'min-h-touch shrink-0')}
+            className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-[11px]')}
           >
             {aiLoading ? t(locale, 'panel.dossier.aiRunning') : t(locale, 'panel.dossier.aiCta')}
           </button>
         </div>
-      </div>
+      )}
 
       {ai?.summary ? (
         <div className={cn(S.cardTight, 'border-brand-500/20 bg-brand-500/[0.04]')}>
@@ -142,8 +161,14 @@ export function PersonDossierBlock({
         </div>
       ) : null}
 
+      <CollapsibleBlock
+        locale={locale}
+        title={t(locale, 'panel.dossier.title')}
+        defaultOpen={!embedded}
+        count={d.meta?.signalCount ?? null}
+      >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <section className={S.cardTight}>
+        <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.profileTitle')}</span>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {d.profile?.topType ? <TypeBadge type={d.profile.topType} locale={locale} compact /> : null}
@@ -158,18 +183,9 @@ export function PersonDossierBlock({
                 : t(locale, 'panel.dossier.noMotivators')}
             </span>
           </div>
-          {typeof onGoSubTab === 'function' ? (
-            <button
-              type="button"
-              className="mt-2 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
-              onClick={() => onGoSubTab('briefing')}
-            >
-              {t(locale, 'panel.dossier.openBriefing')}
-            </button>
-          ) : null}
         </section>
 
-        <section className={S.cardTight}>
+        <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.hrTitle')}</span>
           {d.hrScore ? (
             <p className="mt-2 mb-0 text-[13px] text-ink">
@@ -183,7 +199,7 @@ export function PersonDossierBlock({
           )}
         </section>
 
-        <section className={S.cardTight}>
+        <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.pdiTitle')}</span>
           {d.pdi ? (
             <p className="mt-2 mb-0 text-[13px] text-ink">
@@ -198,7 +214,7 @@ export function PersonDossierBlock({
           {typeof onGoSubTab === 'function' ? (
             <button
               type="button"
-              className="mt-2 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
               onClick={() => onGoSubTab('journey')}
             >
               {t(locale, 'panel.dossier.openJourney')}
@@ -206,7 +222,7 @@ export function PersonDossierBlock({
           ) : null}
         </section>
 
-        <section className={S.cardTight}>
+        <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.performanceTitle')}</span>
           {d.performance ? (
             <>
@@ -220,14 +236,14 @@ export function PersonDossierBlock({
                 <div className="mt-2 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
                     onClick={() => onGoSubTab('oneOnOne')}
                   >
                     {t(locale, 'panel.dossier.openOneOnOneFromReview')}
                   </button>
                   <button
                     type="button"
-                    className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
                     onClick={() => onGoSubTab('journey')}
                   >
                     {t(locale, 'panel.dossier.openJourney')}
@@ -242,7 +258,7 @@ export function PersonDossierBlock({
           )}
         </section>
 
-        <section className={S.cardTight}>
+        <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.retentionTitle')}</span>
           <p className="mt-2 mb-0 text-[13px] text-ink">
             {t(locale, 'panel.dossier.retentionOpen', { n: d.retention?.openFollowUpCount || 0 })}
@@ -250,7 +266,7 @@ export function PersonDossierBlock({
           {typeof onGoSubTab === 'function' ? (
             <button
               type="button"
-              className="mt-2 cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
+              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-[11px] text-brand-500"
               onClick={() => onGoSubTab('oneOnOne')}
             >
               {t(locale, 'panel.dossier.openOneOnOne')}
@@ -258,7 +274,7 @@ export function PersonDossierBlock({
           ) : null}
         </section>
 
-        <section className={S.cardTight}>
+        <section>
           <span className={S.label}>{t(locale, 'panel.dossier.climateTitle')}</span>
           <p className="mt-1 mb-0 text-[11px] text-ink-faint">{t(locale, 'panel.dossier.climateHint')}</p>
           {d.climateCompany?.latestMean != null ? (
@@ -274,7 +290,7 @@ export function PersonDossierBlock({
       </div>
 
       {Array.isArray(d.briefing?.alerts) && d.briefing.alerts.length > 0 ? (
-        <section className={S.cardTight}>
+        <section className="mt-3">
           <span className={S.label}>{t(locale, 'panel.dossier.alertsTitle')}</span>
           <ul className="mt-2 mb-0 list-disc pl-4 text-[13px] text-ink">
             {d.briefing.alerts.map((a) => (
@@ -283,6 +299,7 @@ export function PersonDossierBlock({
           </ul>
         </section>
       ) : null}
+      </CollapsibleBlock>
     </div>
   );
 }

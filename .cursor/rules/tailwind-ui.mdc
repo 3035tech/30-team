@@ -15,7 +15,7 @@ alwaysApply: true
 2. **Reutilizar antes de inventar** (grep primeiro):
    - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`
    - `dialog*Class` em `app/_components/app-dialog-styles.js`
-   - `EmptyState`, `Icon`, `PanelSubNav`, `TypeBadge`, `AdminRichFormDrawer`, `PromptFormDialog`, `AppLoading`, `useAppFeedback`
+   - `EmptyState`, `Icon`, `PanelSubNav`, `TypeBadge`, `AdminRichFormDrawer`, `PromptFormDialog`, `AppLoading` (`ContentEnter`, `NavLoadBar`, `variant="panel"`), `CollapsibleBlock`, `IconActionTip`, `useAppFeedback`
    - `cn()` em `lib/cn.js` para condicionais
    - Só criar constante local se nada servir
 
@@ -29,7 +29,7 @@ alwaysApply: true
 
 7. Sem TypeScript, sem `src/`, sem segundo kit UI.
 
-8. UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, `t()` pt-BR+en.
+8. UI/UX: lista antes de form, 1 CTA primário, progressive disclosure, **transição** (`ContentEnter` / `AppLoading panel` / `CollapsibleBlock`), `t()` pt-BR+en.
 
 ## Evitar
 

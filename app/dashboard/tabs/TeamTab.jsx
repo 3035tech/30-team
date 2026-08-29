@@ -231,8 +231,11 @@ export function TeamTab({
       focusSection === 'journey' ||
       focusSection === 'oneOnOne' ||
       focusSection === 'briefing' ||
+      focusSection === 'dossier' ||
       focusSection === 'compensation'
-        ? focusSection
+        ? focusSection === 'dossier'
+          ? 'briefing'
+          : focusSection
         : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
@@ -252,8 +255,11 @@ export function TeamTab({
       focusSection === 'journey' ||
       focusSection === 'oneOnOne' ||
       focusSection === 'briefing' ||
+      focusSection === 'dossier' ||
       focusSection === 'compensation'
-        ? focusSection
+        ? focusSection === 'dossier'
+          ? 'briefing'
+          : focusSection
         : 'briefing';
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
@@ -1109,11 +1115,10 @@ export function TeamTab({
                     </div>
                     <PanelSubNav
                       ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}
-                      active={peopleSubTab}
-                      onChange={setPeopleSubTab}
+                      active={peopleSubTab === 'dossier' ? 'briefing' : peopleSubTab}
+                      onChange={(id) => setPeopleSubTab(id === 'dossier' ? 'briefing' : id)}
                       tabs={[
-                        { id: 'dossier', label: t(locale, 'panel.team.peopleSubTabDossier') },
-                        { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabBriefing') },
+                        { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabSummary') },
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
                         ...(detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
@@ -1127,20 +1132,22 @@ export function TeamTab({
                           : []),
                       ]}
                     />
-                    {peopleSubTab === 'dossier' ? (
-                      <PersonDossierBlock
-                        locale={locale}
-                        candidateId={detail.candidate.id}
-                        companyId={detail.candidate.companyId}
-                        onGoSubTab={setPeopleSubTab}
-                      />
-                    ) : null}
-                    {peopleSubTab === 'briefing' ? (
-                      <HrActionBrief
-                        locale={locale}
-                        brief={detail.people?.decisionBrief}
-                        personName={openRow.name}
-                      />
+                    {peopleSubTab === 'briefing' || peopleSubTab === 'dossier' ? (
+                      <div className="space-y-4">
+                        <PersonDossierBlock
+                          locale={locale}
+                          candidateId={detail.candidate.id}
+                          companyId={detail.candidate.companyId}
+                          onGoSubTab={setPeopleSubTab}
+                          embedded
+                        />
+                        <HrActionBrief
+                          locale={locale}
+                          brief={detail.people?.decisionBrief}
+                          personName={openRow.name}
+                          omitHypotheses
+                        />
+                      </div>
                     ) : null}
                     {peopleSubTab === 'oneOnOne' ? (
                       <PeopleManagementPanel

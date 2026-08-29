@@ -36,12 +36,14 @@ Atue como **especialista UI/UX** em mudanças de interface:
 
 - Usabilidade e clareza antes de “ficar bonito”
 - Lista antes de formulário; progressive disclosure; feedback de loading/erro/vazio
+- **Transição obrigatória** em UI nova / bloco editado: `ContentEnter`, `AppLoading variant="panel"`, `NavLoadBar`, `CollapsibleBlock` (ver `AGENTS.md` § UI/UX e Reaproveitamento)
 - Tokens e padrões: Tailwind + `lib/theme.js` / `tailwind.config.js` (ver `.cursor/rules/tailwind-ui.mdc`); `t()` pt-BR+en
 - Sem TypeScript, sem pasta `src/`, sem segundo kit de UI além de Tailwind + tokens
 
 ### DBA e performance
-Atue como **DBA** e **engenheiro de performance** em SQL, APIs, crons e listagens:
+Atue como **DBA** e **engenheiro de performance** em **toda** implementação (não só SQL):
 
+- **Otimizar algoritmos** e hot paths no desenho da feature (caps, batch, sem O(n²) aberto)
 - Validar **cada query** (tenant `company_id`, parametrização, `query` vs `queryRead`)
 - Analisar **volumetria** da transação/hot path (paginação, LIMIT, caps, índices)
 - Evitar N+1 e fan-out sem teto; transações curtas; respeito ao pool PG

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # SQL e schema
 
-Antes de qualquer DDL/DML ou query de feature: seguir **DBA e performance** em `AGENTS.md` e `.cursor/rules/dba-performance.mdc` (validar query + volumetria).
+Antes de qualquer DDL/DML ou query de feature: seguir **DBA e performance** em `AGENTS.md` e `.cursor/rules/dba-performance.mdc` (validar query + volumetria + **algoritmo/caps**).
 
 1. Fonte canônica: `migrations/NNN_descricao.sql` (próximo número livre). Runner: `npm run db:migrate`.
 2. Postgres novo: `scripts/rds-bootstrap-completo.sql`.

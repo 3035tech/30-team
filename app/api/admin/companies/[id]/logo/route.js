@@ -78,6 +78,9 @@ export async function POST(request, { params }) {
   } catch (e) {
     const code = e?.code || e?.message;
     if (code === 'STORAGE_NOT_CONFIGURED') return apiError(request, ERR.STORAGE_NOT_CONFIGURED, 503);
+    if (code === 'STORAGE_UPLOAD_FAILED') {
+      return apiError(request, ERR.STORAGE_UPLOAD_FAILED, 502);
+    }
     if (code === 'INVALID_LOGO_TYPE') return apiError(request, ERR.INVALID_LOGO_TYPE, 400);
     if (code === 'INVALID_LOGO_SIZE') return apiError(request, ERR.INVALID_LOGO_SIZE, 400);
     throw e;

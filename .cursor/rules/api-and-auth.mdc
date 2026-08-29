@@ -16,7 +16,7 @@ alwaysApply: false
 7. SQL só com placeholders `$1`. Soft delete: `deleted = FALSE`.
 8. Mutações sensíveis (user, company, hire/reject, purge): `audit({ actorUserId, action, ... })`.
 9. Cron: exigir `CRON_SECRET`. Não vazar stack traces para o cliente.
-10. Performance: validar volumetria da query (paginação/LIMIT/caps, sem N+1) — `.cursor/rules/dba-performance.mdc` / `AGENTS.md` § DBA e performance.
+10. Performance: em **toda** rota nova/editada — otimizar algoritmo + volumetria (paginação/LIMIT/caps, batch, sem N+1 / O(n²) aberto) — `.cursor/rules/dba-performance.mdc` / `AGENTS.md` § DBA e performance.
 11. Rate limit: `await checkRateLimit(key, limit, windowMs)` (`lib/rate-limit.js`). Opcional Redis clássico (`REDIS_URL`, ex. Dublin `redis-haproxy.redis.svc`) + `REDIS_KEY_PREFIX`.
 12. **Imports relativos para `lib/` (obrigatório — erro comum de CI)**  
     Contar pastas **entre `app/` e o `route.js`**, depois somar **1** (sair de `app/`):

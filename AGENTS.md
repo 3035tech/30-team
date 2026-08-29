@@ -112,7 +112,8 @@ Regra Cursor: `.cursor/rules/domain-constants.mdc` (alwaysApply).
 | Nomes de arquivo/export em inglês | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`) |
 | **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
 | **Constantes string** (`ERR.*`, `EMPLOYMENT_STATUS.*`, `PIPELINE_STAGES`, `CAP.*`) — ver § Constantes | Literais `'UNAUTHORIZED'` / `'employee'` / `'open'` soltos; enums TypeScript; segundo mapa de status HTTP na rota |
-| **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia |
+| **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport; **transição** (`ContentEnter` / `AppLoading panel` / `NavLoadBar` / `CollapsibleBlock`) | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia; loading ad hoc |
+| **Performance:** otimizar algoritmo/hot path em feature nova (caps, batch, sem O(n²) aberto) | “Funciona e depois a gente otimiza” em pares/listagens/fan-out |
 | Imports `lib/` com `../` contados pela profundidade do `route.js` (ver `.cursor/rules/api-and-auth.mdc` §11) | Copiar `../../../lib` de outra rota sem conferir pastas → `Module not found` no Docker build |
 
 UI do dashboard: reutilizar `app/dashboard/dashboard-shared.jsx` e padrões das tabs existentes. Kanban/pipeline: drag-and-drop, sem select de estágio no card.
@@ -149,6 +150,14 @@ Em **cada nova tela** e **antes de qualquer função nova**, o agente deve privi
 3. Estender (props, i18n) > copiar > criar do zero.
 4. Só criar componente novo se nada servir — justificar no resumo.
 5. Feedback de UI: `useAppFeedback` (`confirm` / `notice` / `promptForm` / `toast`), `AppLoading` — **nunca** `window.confirm`, `alert` ou `prompt`.
+6. **Transição / loading de tela (obrigatório em UI nova ou bloco em edição):**
+   - Conteúdo que monta após navegação ou fetch → `ContentEnter` (`app/_components/AppLoading.jsx`)
+   - Loading de painel / aba / Suspense → `AppLoading variant="panel"` (skeleton + texto; **não** spinner solto ou `…` ad hoc)
+   - Troca de aba SSR do dashboard → `NavLoadBar` no shell (`DashboardClient`)
+   - Densidade / progressive disclosure em fichas → `CollapsibleBlock` (`app/_components/CollapsibleBlock.jsx`)
+   - Hint em botão só-ícone → `IconActionTip` (já embutido nos `Admin*Button` / `CopyableLink`)
+   - Classes CSS: `.ui-content-enter`, `.ui-nav-indeterminate` em `app/globals.css` (respeitam `prefers-reduced-motion`)
+   - **Proibido** inventar segundo fade/spinner/skeleton paralelo
 
 ### Funções / métodos
 1. Grep em `lib/`, `lib/ae/`, `lib/people/` e call sites próximos.
@@ -158,7 +167,7 @@ Em **cada nova tela** e **antes de qualquer função nova**, o agente deve privi
 
 Ordem: **reusar → estender → extrair util → criar novo**.
 
-Antes de implementar feature de UI: **grep** (`RichText`, `TypeBadge`, `sanitize`, filtros, etc.) e ler usos existentes.
+Antes de implementar feature de UI: **grep** (`RichText`, `TypeBadge`, `sanitize`, `ContentEnter`, `CollapsibleBlock`, filtros, etc.) e ler usos existentes.
 
 ## UI/UX (obrigatório em mudanças de interface)
 
@@ -168,10 +177,11 @@ O agente atua como **especialista de usabilidade e interface**. Objetivo: gestor
 1. **Uma tarefa principal** por tela ou primeiro viewport — o resto é secundário ou progressive disclosure.
 2. **Lista antes de formulário** — entidades ricas (vagas, usuários, etc.): ver/buscar primeiro; criar/editar atrás de botão, drawer ou rota dedicada.
 3. **Feedback** — loading, sucesso, erro e empty state com copy útil (i18n); nunca clique sem resposta.
-4. **Consistência** — Tailwind + tokens `brand`/`pipeline`/`C`; mesmos padrões de botão, card e densidade; `dashboard-shared` onde já existir.
-5. **Acessibilidade básica** — alvos ~40px, `aria-label`/`title` em ícones, contraste, foco; sidebar colapsada = ícone + tooltip.
-6. **Responsive** — mobile: drawer; desktop: collapse de menu ok; não quebrar assessment público.
-7. **Copy de perfil** — hedging (“tende a”); nunca diagnóstico clínico.
+4. **Transição de tela / componente** — obrigatória em tela nova, troca de aba, Suspense resolve ou conteúdo que substitui loading: usar `ContentEnter` + `AppLoading variant="panel"` / `NavLoadBar` / `CollapsibleBlock` conforme o caso (ver § Reaproveitamento). Sem flash abrupto spinner→conteúdo.
+5. **Consistência** — Tailwind + tokens `brand`/`pipeline`/`C`; mesmos padrões de botão, card e densidade; `dashboard-shared` onde já existir.
+6. **Acessibilidade básica** — alvos ~40px, `aria-label`/`title` em ícones, contraste, foco; sidebar colapsada = ícone + tooltip.
+7. **Responsive** — mobile: drawer; desktop: collapse de menu ok; não quebrar assessment público.
+8. **Copy de perfil** — hedging (“tende a”); nunca diagnóstico clínico.
 
 ### Anti-padrões
 - Formulário de criação permanente no topo da listagem
@@ -179,19 +189,28 @@ O agente atua como **especialista de usabilidade e interface**. Objetivo: gestor
 - Segundo design system paralelo (MUI, Chakra, cards “genéricos de IA”); roxo em status de pipeline; hex fora dos tokens
 - Big-bang de migração Tailwind só por estética (migrar o bloco que estiver tocando)
 - Densidade sem agrupamento; modais empilhados sem contexto
+- Loading ad hoc (`…`, spinner solto, texto “Carregando” sem `AppLoading`); fade/skeleton inventado fora de `ContentEnter` / `variant="panel"`
 
 ### Checklist ao entregar UI
 - Ação principal óbvia em poucos segundos?
 - Empty / loading / erro cobertos?
+- Transição: `ContentEnter` e/ou `AppLoading variant="panel"` / `NavLoadBar` / `CollapsibleBlock` onde couber?
 - Chaves **pt-BR e en** em `lib/i18n.js`?
 - Grep de componente existente feito?
 - Faz sentido no fluxo real de RH (recrutar, 1:1, revisar teste)?
 
 Regras Cursor/Claude: `.cursor/rules/ui-ux.mdc` (alwaysApply), `CLAUDE.md`.
 
-## DBA e performance (obrigatório em SQL, APIs, crons e listagens)
+## DBA e performance (obrigatório em **toda** implementação)
 
-O agente atua também como **DBA** e **engenheiro de performance**. Objetivo: a aplicação escalar (mais empresas, candidatos e gestores concorrentes) **sem precisar de refactor grande** no futuro. Validar **cada query** e a **volumetria** de cada transação/hot path.
+O agente atua também como **DBA** e **engenheiro de performance**. Em **qualquer** feature nova ou alteração de comportamento (SQL, API, `lib/`, scoring, listagens, crons, UI que dispara fetch), **otimizar algoritmos e caminhos quentes desde o desenho** — não “deixar para depois”. A aplicação deve escalar (mais empresas, candidatos e gestores concorrentes) **sem precisar de refactor grande**.
+
+### Escopo além de SQL
+1. **Complexidade** — preferir O(n) / O(n log n) com caps; evitar O(n²) em pares, compat, ranking, fan-out sem teto.
+2. **Batch** — uma query/`IN`/upsert em lote em vez de loop N+1 (DB ou HTTP).
+3. **Payload** — não devolver grafos enormes ao cliente; paginar, limiar (`COMPAT_PAIR_PAYLOAD_CAP`, pageSize, etc.).
+4. **Hot path** — submit público, dashboard SSR, overview, ranking: medir mentalmente; usar `measureAsync` / caps documentados quando já existirem (`docs/performance-hotpaths.md`).
+5. **Cache / dedupe** — reutilizar batch já existente (ex. HR Score, núcleo) em vez de recalcular por item.
 
 ### Em toda query / transação
 1. **Tenant** — filtrar por `company_id` (ou join equivalente); hr/direction nunca veem cross-tenant.
@@ -204,9 +223,10 @@ O agente atua também como **DBA** e **engenheiro de performance**. Objetivo: a 
 8. **Pool** — `PG_POOL_MAX` / `lib/db.js`; não abrir `Client` ad-hoc em request quente.
 9. **Dashboard SSR** — só a aba ativa; não carregar compat + overview + ranking juntos.
 
-### Checklist ao entregar SQL/API
+### Checklist ao entregar (SQL/API **e** lógica nova)
 - Escopo por `company_id` (ou admin explícito)?
 - Resultado limitado (página / LIMIT / cap)?
+- Algoritmo/hot path com teto de volumetria (sem O(n²) aberto)?
 - Risco de seq scan em tabela quente considerado?
 - Cron/batch com `LIMIT` + idempotência/dedupe?
 - Submit do candidato não multiplica custo sem teto (gestores da empresa, dedupe)?
@@ -217,6 +237,7 @@ O agente atua também como **DBA** e **engenheiro de performance**. Objetivo: a 
 - Agregar/contar tabela inteira no hot path do dashboard
 - Migration de feature sem índice para o filtro que ela introduz
 - `DELETE` físico em massa sem pedido
+- Algoritmo “correto mas ingenioso” (pares completos, loops por gestor/candidato) sem cap em feature nova
 
 Regras Cursor/Claude: `.cursor/rules/dba-performance.mdc` (alwaysApply), `.cursor/rules/sql-schema.mdc`.
 
@@ -287,6 +308,8 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - Não refatorar fora do escopo do pedido
 - Não duplicar componentes **nem** funções/helpers que já existem (reutilizar / estender / extrair para `lib/` primeiro; ver § Reaproveitamento)
 - Não inventar literais de erro/status de domínio (`'UNAUTHORIZED'`, `'employee'`, `'open'`) nem enums TypeScript — usar `ERR` / `domain-status` / `pipeline` (ver § Constantes)
+- Não entregar feature nova com algoritmo/hot path sem teto de volumetria (pares sem cap, N+1, fan-out aberto) — ver § DBA e performance
+- Não entregar UI nova sem transição canônica (`ContentEnter` / `AppLoading variant="panel"` / etc.) — ver § UI/UX
 - Não encerrar implementação de produto sem rodar Dev → Test → Validate (ou declarar skip/`blocked` válido; ver § Pós-implementação)
 - Não encerrar feature de uso sem atualizar README/`docs`, Guia do painel (`panel.help.*` pt-BR+en) **e** base do assistente de Ajuda (`HELP_GUIDE_SECTIONS` / FAQ) quando houver fluxo novo para gestor ou ops
 
@@ -325,7 +348,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Funil / rejeição | `lib/pipeline.js` (`PIPELINE_STAGES`) |
 | Copy / i18n | `lib/i18n.js` |
 | Notas ricas (HTML) | `app/_components/RichTextEditor.jsx`, `RichTextView.jsx`, `lib/sanitize-html.js` |
-| Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx`, `EmptyState.jsx` |
+| Feedback UI (confirm/toast/loading) | `app/_components/AppFeedback.jsx`, `ConfirmDialog.jsx`, `SystemNoticeModal.jsx`, `AppLoading.jsx` (`AppLoading`, `ContentEnter`, `NavLoadBar`, `PanelPageSkeleton`, `Spinner`), `CollapsibleBlock.jsx`, `IconActionTip.jsx`, `EmptyState.jsx` |
 | Tags / chips (tema Academy, etc.) | `app/_components/TagInput.jsx` (+ `type: 'tags'` no `PromptFormDialog`); `lib/tag-list.js` |
 | Busca de colaborador (nome → id) | `app/_components/EntitySearchSelect.jsx` (+ `type: 'entitySearch'`); `GET /api/admin/employees/search` |
 | Campos de data / datetime | `app/_components/DateField.jsx` (+ `type: 'date'` / `'datetime-local'` no `PromptFormDialog`) |

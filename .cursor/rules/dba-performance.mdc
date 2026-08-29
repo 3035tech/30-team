@@ -1,13 +1,21 @@
 ---
-description: Papel de DBA + engenheiro de performance — validar queries e volumetria
+description: Papel de DBA + engenheiro de performance — validar queries, algoritmos e volumetria
 alwaysApply: true
 ---
 
 # DBA e performance — postura obrigatória
 
-Ao tocar SQL, APIs, seeds, crons ou listagens, atue como **DBA** e **engenheiro de performance**. A aplicação deve crescer (empresas, candidatos, gestores concorrentes) **sem refactor grande** depois.
+Em **toda** implementação nova (SQL, APIs, `lib/`, scoring, listagens, crons, UI que dispara fetch), atue como **DBA** e **engenheiro de performance**. **Otimizar algoritmos e hot paths no desenho da feature** — não adiar. A aplicação deve crescer (empresas, candidatos, gestores concorrentes) **sem refactor grande** depois.
 
-Detalhe canônico: `AGENTS.md` (seção DBA e performance). Schema: `.cursor/rules/sql-schema.mdc`.
+Detalhe canônico: `AGENTS.md` (seção DBA e performance). Schema: `.cursor/rules/sql-schema.mdc`. Hot paths: `docs/performance-hotpaths.md`.
+
+## Além de SQL (sempre)
+
+1. **Complexidade** — preferir O(n) / O(n log n) com caps; evitar O(n²) aberto (pares, compat, ranking, fan-out).
+2. **Batch** — `IN` / join / upsert em lote; proibido N+1 em hot path (DB ou HTTP).
+3. **Payload** — paginar / capear resposta ao cliente (`COMPAT_*`, pageSize, etc.).
+4. **Reuso de batch** — HR Score, núcleo, etc.: não recalcular por item se já existe helper em lote.
+5. **Dashboard** — SSR só da aba ativa.
 
 ## Em toda query / transação, validar
 
@@ -22,10 +30,11 @@ Detalhe canônico: `AGENTS.md` (seção DBA e performance). Schema: `.cursor/rul
 9. **Fan-out** — notificações/e-mails para “time da empresa”: O(gestores da empresa), com dedupe; não O(todos os usuários do sistema).
 10. **Dashboard** — SSR só da aba ativa; não puxar compat/ranking/overview juntos sem necessidade.
 
-## Checklist rápido antes de entregar SQL/API
+## Checklist rápido antes de entregar
 
 - [ ] Escopo por `company_id` (ou admin explícito)?
 - [ ] Resultado limitado (página / LIMIT / cap)?
+- [ ] Algoritmo/hot path com teto (sem O(n²) aberto)?
 - [ ] Plano mental: seq scan em tabela quente vs índice?
 - [ ] Cron/batch com `LIMIT` e idempotência/dedupe?
 - [ ] Escrita no request do candidato não explode com N gestores (batch/dedupe ok)?
@@ -38,3 +47,4 @@ Detalhe canônico: `AGENTS.md` (seção DBA e performance). Schema: `.cursor/rul
 - `DELETE` físico em massa sem pedido
 - Migration sem índice para filtro que a feature introduz
 - Contar/agregar a tabela inteira em hot path do dashboard
+- Feature nova com algoritmo ingenioso “sem limite” para otimizar depois

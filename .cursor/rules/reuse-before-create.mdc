@@ -20,6 +20,7 @@ Para **cada nova tela** (ou pedaço grande de UI):
    - Cores / tipografia → `C` / `FONTS` (`lib/theme.js`)
    - Pipeline / badges / cards → `dashboard-shared` e padrões das tabs existentes
  - Confirm / aviso / toast / loading → `useAppFeedback` (`AppFeedbackProvider`), `ConfirmDialog`, `SystemNoticeModal`, `AppLoading` — **nunca** `window.confirm` / `alert` / `prompt`
+ - Transição de tela / conteúdo → `ContentEnter`, `AppLoading variant="panel"`, `NavLoadBar`, `CollapsibleBlock`, `IconActionTip` (`AppLoading.jsx` / `CollapsibleBlock.jsx` / `IconActionTip.jsx`) — **obrigatório** em UI nova ou bloco em edição; não inventar fade/skeleton paralelo
  - Cadastro simples (criar/editar) → `promptForm` / `PromptFormDialog` (select, boolean, checkboxGroup, date)
  - Campos de data / datetime → `DateField` (`app/_components/DateField.jsx`); no `<input type="date">` solto
  - Controles nativos (select/input/checkbox) → `S.select` / `S.input` / `S.checkbox` ou `form-control-styles.js` + classes `.ui-select` / `.ui-field` / `.ui-checkbox` em `globals.css` (não reinventar borda ad hoc)

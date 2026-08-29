@@ -14,3 +14,5 @@ alwaysApply: false
 6. Filtros de lista: `lib/assessment-filters.js` (`assessmentListWhereParts`) — reusar, não copiar WHERE.
 7. i18n: novas chaves nos dois locales em `lib/i18n.js`.
 8. DB: `query` / `queryRead` de `lib/db.js`. Parametrizar sempre.
+9. **Performance:** em helper novo/editado — otimizar algoritmo (batch, caps, sem O(n²)/N+1 aberto). Ver `AGENTS.md` § DBA e performance / `docs/performance-hotpaths.md`.
+

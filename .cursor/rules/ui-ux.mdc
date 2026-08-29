@@ -13,14 +13,20 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 
 1. **Uma tarefa principal por tela/viewport** — o que o usuário veio fazer deve dominar; o resto fica secundário ou atrás de ação explícita.
 2. **Lista antes de formulário** — cadastros ricos: listar/buscar primeiro; criar/editar atrás de botão, drawer ou página dedicada (não formulário permanente no topo).
-3. **Progressive disclosure** — esconder complexidade até ser necessária (filtros avançados, criar vaga, detalhes).
+3. **Progressive disclosure** — esconder complexidade até ser necessária (filtros avançados, criar vaga, detalhes); usar `CollapsibleBlock` em fichas densas.
 4. **Feedback imediato** — loading, sucesso, erro e estado vazio com copy útil (`t()`); nunca silêncio após clique.
-5. **Alvos tocáveis / clicáveis** — área mínima confortável (~40px); labels e `aria-label` em ícones.
-6. **Consistência** — Tailwind (`tailwind.config.js` tokens) + `C`/`FONTS` onde ainda inline; padrões das tabs existentes; ver `.cursor/rules/tailwind-ui.mdc`.
-7. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
-8. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
-9. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
-10. **Copy hedged no domínio** — “tende a / há indícios”; nunca tom de diagnóstico clínico.
+5. **Transição de tela / componente (obrigatório)** — UI nova ou bloco em edição:
+   - Conteúdo pós-navegação / pós-fetch → `ContentEnter` (`AppLoading.jsx`)
+   - Loading de painel/aba/Suspense → `AppLoading variant="panel"` (skeleton; não spinner solto)
+   - Troca de aba SSR dashboard → `NavLoadBar`
+   - Hint em ícone → `IconActionTip` (já nos Admin* / CopyableLink)
+   - Não inventar segundo fade/skeleton/spinner
+6. **Alvos tocáveis / clicáveis** — área mínima confortável (~40px); labels e `aria-label` em ícones.
+7. **Consistência** — Tailwind (`tailwind.config.js` tokens) + `C`/`FONTS` onde ainda inline; padrões das tabs existentes; ver `.cursor/rules/tailwind-ui.mdc`.
+8. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
+9. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
+10. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
+11. **Copy hedged no domínio** — “tende a / há indícios”; nunca tom de diagnóstico clínico.
 
 ## Anti-padrões (evitar)
 
@@ -31,11 +37,13 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 - Densidade extrema sem agrupamento (especialmente kanban/tabelas)
 - Inventar segundo design system (MUI/Chakra/etc.), cards genéricos IA, roxo-em-tudo / roxo em status
 - Hex solto fora de `theme.js` / `tailwind.config.js`
+- Loading ad hoc (`…`, spinner solto) ou fade inventado fora de `ContentEnter` / `variant="panel"`
 
 ## Checklist rápido antes de entregar UI
 
 - [ ] A ação principal é óbvia em poucos segundos?
 - [ ] Estados vazio / loading / erro estão cobertos?
+- [ ] Transição: `ContentEnter` e/ou `AppLoading variant="panel"` / `NavLoadBar` / `CollapsibleBlock`?
 - [ ] pt-BR **e** en em `lib/i18n.js`?
 - [ ] Reusou componente existente (grep) antes de criar?
 - [ ] Faz sentido para hr/direction no fluxo real (recrutar, 1:1, revisar teste)?

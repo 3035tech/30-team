@@ -11,6 +11,7 @@ import { RichTextView } from './RichTextView';
 import { HireJourneyBlock } from './HireJourneyBlock';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
+import { CollapsibleBlock } from './CollapsibleBlock';
 import { DateField } from './DateField';
 
 function todayIso() {
@@ -346,35 +347,47 @@ export function PeopleManagementPanel({
   };
 
   return (
-    <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
-      <span className={cn(S.label, 'mb-1.5')}>
-        {t(locale, 'panel.team.peopleTitle')}
-      </span>
-      <p className="mb-3 mt-0 text-xs leading-normal text-ink-faint">
-        {t(locale, 'panel.team.peopleHint')}
-      </p>
+    <div className={cn(section === 'oneOnOne' ? 'mb-2 space-y-4' : 'mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5')}>
+      <div>
+        <span className={cn(S.label, 'mb-1.5')}>
+          {t(locale, 'panel.team.peopleTitle')}
+        </span>
+        <p className="mb-0 mt-0 text-xs leading-normal text-ink-faint">
+          {t(locale, 'panel.team.peopleHint')}
+        </p>
+      </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-ink-muted">
         <span
           className={cn(
-            'rounded-full px-2 py-0.5 font-mono text-[11px]',
-            completeness.enneagram ? 'bg-success/10 text-success' : 'bg-ink/[0.06] text-ink-muted'
+            'inline-flex min-h-8 items-center',
+            completeness.enneagram ? 'text-success' : 'text-ink-faint'
           )}
         >
-          {completeness.enneagram ? t(locale, 'panel.team.peopleHasEnneagram') : t(locale, 'panel.team.peopleMissingEnneagram')}
+          {completeness.enneagram
+            ? t(locale, 'panel.team.peopleHasEnneagram')
+            : t(locale, 'panel.team.peopleMissingEnneagram')}
+        </span>
+        <span className="text-ink/20" aria-hidden>
+          ·
         </span>
         <span
           className={cn(
-            'rounded-full px-2 py-0.5 font-mono text-[11px]',
-            completeness.motivators ? 'bg-success/10 text-success' : 'bg-ink/[0.06] text-ink-muted'
+            'inline-flex min-h-8 items-center',
+            completeness.motivators ? 'text-success' : 'text-ink-faint'
           )}
         >
-          {completeness.motivators ? t(locale, 'panel.team.peopleHasMotivators') : t(locale, 'panel.team.peopleMissingMotivators')}
+          {completeness.motivators
+            ? t(locale, 'panel.team.peopleHasMotivators')
+            : t(locale, 'panel.team.peopleMissingMotivators')}
         </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           disabled={busy}
-          className={cn(S.btnGhost, 'min-h-touch text-[11px]')}
+          className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-[11px]')}
           onClick={issueEmployeePortal}
         >
           {t(locale, 'panel.employeePortal.issueBtn')}
@@ -382,7 +395,7 @@ export function PeopleManagementPanel({
         <button
           type="button"
           disabled={busy}
-          className={cn(S.btnBrandSoft, 'min-h-touch text-[11px]')}
+          className={cn(S.btnBrandSoft, 'inline-flex min-h-touch items-center text-[11px]')}
           onClick={sendEmployeeAccess}
           title={t(locale, 'panel.employeePortal.accessHint')}
         >
@@ -391,7 +404,7 @@ export function PeopleManagementPanel({
       </div>
 
       {portalUrl ? (
-        <div className="mb-3 rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2">
+        <div className="rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2">
           <p className={cn(S.muted, 'm-0 mb-1 text-xs')}>{t(locale, 'panel.employeePortal.linkHint')}</p>
           <CopyableLink url={portalUrl} locale={locale} />
         </div>
@@ -432,16 +445,19 @@ export function PeopleManagementPanel({
       ) : null}
 
       {topMot.length > 0 ? (
-        <div className="mb-3">
-          <span className="font-mono text-[11px] text-ink-muted">
-            {t(locale, 'panel.team.peopleTopMotivators')}
-          </span>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <CollapsibleBlock
+          locale={locale}
+          title={t(locale, 'panel.team.peopleTopMotivators')}
+          defaultOpen={false}
+          count={topMot.length}
+          className="border-t border-ink/10"
+        >
+          <div className="flex flex-wrap gap-1.5">
             {topMot.map((d) => (
               <span
                 key={d.key}
                 className={cn(
-                  'rounded-lg border bg-white/50 px-2 py-1 text-xs text-ink',
+                  'inline-flex min-h-8 items-center rounded-control border bg-surface px-2.5 text-xs text-ink',
                   !d.color && 'border-ink/12'
                 )}
                 style={d.color ? { borderColor: d.color } : undefined}
@@ -450,7 +466,7 @@ export function PeopleManagementPanel({
               </span>
             ))}
           </div>
-        </div>
+        </CollapsibleBlock>
       ) : null}
 
       {signals.length > 0 ? (
