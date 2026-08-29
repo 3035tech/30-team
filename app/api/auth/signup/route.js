@@ -4,7 +4,7 @@ import {
   issuePasswordSetupInvite,
 } from '../../../../lib/user-password-invite.js';
 import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error.js';
-import { isMailConfigured } from '../../../../lib/mail.js';
+import { enqueueTransactionalMail, isMailConfigured } from '../../../../lib/mail.js';
 import { generateUniqueCompanySlug } from '../../../../lib/slugify.js';
 import { trackLandingEvent } from '../../../../lib/landing-analytics.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
@@ -15,8 +15,8 @@ import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
  * POST /api/auth/signup
  *
  * Segurança:
- * - Rate limit por IP
- * - Conta já ativa → 409 (UX: orientar login; aceito vs anti-enum total)
+ * - Rate limit por IP + Turnstile
+ * - Conta já ativa → { ok: true } uniforme (anti-enum) + e-mail de lembrete
  * - SIGNUP_DOMAIN_MATCH=true: ao juntar company existente, role = hr (não direction)
  */
 export async function POST(request) {
@@ -95,8 +95,34 @@ export async function POST(request) {
       const user = existing.rows[0];
 
       if (!user.deleted && user.active && !user.signup_pending) {
-        // Conta ativa: 409 para orientar login (tradeoff UX vs anti-enumeração).
-        return apiError(request, ERR.EMAIL_ALREADY_REGISTERED, 409);
+        // Anti-enum: mesma forma de sucesso; e-mail de lembrete (já tem conta).
+        if (isMailConfigured()) {
+          const loc = locale === 'en' ? 'en' : 'pt-BR';
+          const loginUrl = `${appUrl}/login`;
+          const subject =
+            loc === 'en'
+              ? 'You already have a 30Team account'
+              : 'Você já tem uma conta no 30Team';
+          const text =
+            loc === 'en'
+              ? `Someone tried to sign up with this email. You already have an account. Sign in: ${loginUrl}\n`
+              : `Alguém tentou se cadastrar com este e-mail. Você já tem conta. Entre em: ${loginUrl}\n`;
+          enqueueTransactionalMail({
+            to: emailClean,
+            subject,
+            text,
+            html: `<p>${text.replace(/\n/g, '<br/>')}</p>`,
+          });
+        }
+        await trackLandingEvent({
+          eventType: 'signup_existing',
+          sessionId,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          metadata: { email: emailClean },
+        });
+        return Response.json({ ok: true });
       }
 
       if (user.signup_pending) {

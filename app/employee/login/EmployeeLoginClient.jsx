@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { t } from '../../../lib/i18n';
+import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -16,7 +16,7 @@ import TurnstileField from '../../_components/TurnstileField';
 
 /**
  * Collaborator login — password primary; forgot + magic via SegmentedControl.
- * 2FA only when the account has totp_enabled_at (optional).
+ * Multi-empresa: código (slug) digitado — nunca lista de empresas na API.
  */
 export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -24,9 +24,10 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const [mode, setMode] = useState('login'); // login | forgot | magic
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [companySlug, setCompanySlug] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const [companies, setCompanies] = useState(null);
+  const [needsCompanySlug, setNeedsCompanySlug] = useState(false);
   const [requires2fa, setRequires2fa] = useState(false);
   const [challengeToken, setChallengeToken] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
@@ -56,6 +57,11 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const captchaPayload = () => ({
     turnstileToken: turnstileToken || undefined,
   });
+
+  const companyPayload = () => {
+    const slug = companySlug.trim();
+    return slug ? { companySlug: slug } : {};
+  };
 
   const ensureCaptcha = () => {
     if (turnstileRequired && !turnstileToken) {
@@ -91,7 +97,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     }
   };
 
-  const login = async (companyId = null) => {
+  const login = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
     try {
@@ -102,24 +108,30 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
           email,
           password,
           locale,
-          ...(companyId ? { companyId } : {}),
+          ...companyPayload(),
           ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
-      if (json.ambiguous && Array.isArray(json.companies)) {
-        setCompanies(json.companies);
-        toast(t(locale, 'employeeHome.pickCompany'), 'info');
+      if (json.errorCode === 'COMPANY_SLUG_REQUIRED' || json.needsCompanySlug) {
+        setNeedsCompanySlug(true);
+        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
         return;
       }
-      if (!res.ok) throw new Error(json?.error || t(locale, 'employeeHome.loginError'));
+      if (!res.ok) {
+        throw new Error(
+          json?.errorCode
+            ? errorMessage(locale, json.errorCode, json.error)
+            : json?.error || t(locale, 'employeeHome.loginError')
+        );
+      }
       if (json.requires2fa && json.challengeToken) {
         setRequires2fa(true);
         setChallengeToken(json.challengeToken);
-        setCompanies(null);
+        setNeedsCompanySlug(false);
         return;
       }
-      setCompanies(null);
+      setNeedsCompanySlug(false);
       router.replace('/employee');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
@@ -128,7 +140,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     }
   };
 
-  const sendForgot = async (companyId = null) => {
+  const sendForgot = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
     try {
@@ -138,18 +150,18 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         body: JSON.stringify({
           email,
           locale,
-          ...(companyId ? { companyId } : {}),
+          ...companyPayload(),
           ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'send');
-      if (json.ambiguous && Array.isArray(json.companies)) {
-        setCompanies(json.companies);
-        toast(t(locale, 'employeeHome.pickCompany'), 'info');
+      if (json.needsCompanySlug) {
+        setNeedsCompanySlug(true);
+        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
         return;
       }
-      setCompanies(null);
+      setNeedsCompanySlug(false);
       setSent(true);
       toast(t(locale, 'employeeHome.forgotSent'), 'ok');
     } catch (e) {
@@ -159,7 +171,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     }
   };
 
-  const sendMagic = async (companyId = null) => {
+  const sendMagic = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
     try {
@@ -169,18 +181,18 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         body: JSON.stringify({
           email,
           locale,
-          ...(companyId ? { companyId } : {}),
+          ...companyPayload(),
           ...captchaPayload(),
         }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'send');
-      if (json.ambiguous && Array.isArray(json.companies)) {
-        setCompanies(json.companies);
-        toast(t(locale, 'employeeHome.pickCompany'), 'info');
+      if (json.needsCompanySlug) {
+        setNeedsCompanySlug(true);
+        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
         return;
       }
-      setCompanies(null);
+      setNeedsCompanySlug(false);
       setSent(true);
       toast(t(locale, 'employeeHome.linkSent'), 'ok');
     } catch (e) {
@@ -190,16 +202,10 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     }
   };
 
-  const onCompanyPick = (companyId) => {
-    if (mode === 'login') void login(companyId);
-    else if (mode === 'forgot') void sendForgot(companyId);
-    else void sendMagic(companyId);
-  };
-
   const switchMode = (next) => {
     setMode(next);
     setSent(false);
-    setCompanies(null);
+    setNeedsCompanySlug(false);
   };
 
   const modeHint =
@@ -320,6 +326,21 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
             </FormField>
           ) : null}
 
+          <FormField
+            label={t(locale, 'employeeHome.companySlugLabel')}
+            hint={needsCompanySlug ? t(locale, 'employeeHome.companySlugRequired') : t(locale, 'employeeHome.companySlugHint')}
+          >
+            <input
+              type="text"
+              autoComplete="organization"
+              className={cn(S.input, 'w-full', needsCompanySlug && 'border-warning')}
+              value={companySlug}
+              onChange={(e) => setCompanySlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              disabled={busy}
+              placeholder={t(locale, 'employeeHome.companySlugPlaceholder')}
+            />
+          </FormField>
+
           {turnstileRequired && turnstileSiteKey ? (
             <TurnstileField
               siteKey={turnstileSiteKey}
@@ -329,34 +350,22 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
             />
           ) : null}
 
-          {companies?.length ? (
-            <div className="flex flex-col gap-2">
-              <InlineCallout tone="info">{t(locale, 'employeeHome.pickCompany')}</InlineCallout>
-              {companies.map((c) => (
-                <button
-                  key={c.companyId}
-                  type="button"
-                  disabled={busy}
-                  className={cn(S.btnBrandSoft, 'min-h-touch w-full justify-center')}
-                  onClick={() => onCompanyPick(c.companyId)}
-                >
-                  {c.companyName}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <button
-              type="submit"
-              disabled={busy || !email.trim() || (mode === 'login' && !password)}
-              className={cn(S.btnPrimary, 'min-h-touch w-full justify-center')}
-            >
-              {mode === 'login'
-                ? t(locale, 'employeeHome.enter')
-                : mode === 'forgot'
-                  ? t(locale, 'employeeHome.sendReset')
-                  : t(locale, 'employeeHome.sendLink')}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={
+              busy ||
+              !email.trim() ||
+              (mode === 'login' && !password) ||
+              (needsCompanySlug && !companySlug.trim())
+            }
+            className={cn(S.btnPrimary, 'min-h-touch w-full justify-center')}
+          >
+            {mode === 'login'
+              ? t(locale, 'employeeHome.enter')
+              : mode === 'forgot'
+                ? t(locale, 'employeeHome.sendReset')
+                : t(locale, 'employeeHome.sendLink')}
+          </button>
         </form>
       )}
 

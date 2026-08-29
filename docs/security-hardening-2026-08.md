@@ -52,6 +52,23 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 | Magic consume atômico | `UPDATE … WHERE used_at IS NULL … RETURNING` (sem TOCTOU) |
 | Anti-enumeração | magic/forgot públicos respondem `{ ok: true }` (sem `sent`); delay ~500 ms em falha de login; RL por e-mail + peek set-password |
 
+## Correções aplicadas (fase 6 — anti-vazamento)
+
+| Item | Mudança |
+|------|---------|
+| Auth colaborador multi-empresa | Sem lista `companies`; pede `companySlug` (`COMPANY_SLUG_REQUIRED` / `needsCompanySlug`) |
+| Signup anti-enum | Conta já ativa → `{ ok: true }` + e-mail de lembrete (sem 409 `EMAIL_ALREADY_REGISTERED`) |
+| Login gestor | `password_setup_token` pendente → mesmo `INVALID_CREDENTIALS` + delay (sem `PASSWORD_SETUP_PENDING`) |
+| Tokens públicos | `/e` TTL default **14** dias (máx. 90); `/r` default 14; `lib/redact-secrets.js` em audit metadata |
+| Vagas públicas | Sem `publicShowCompanyInfo`: não expõe `companyId` / `slug` no payload |
+| Turnstile | Também em `/a/set-password`, magic `POST /session` e set-password colaborador |
+
+### Ops / tokens
+
+- Trate URLs `/r/…`, `/e/…`, `/v/…`, convites e magic links como **segredo** (não logar URL completo; validade curta).
+- Produção: `TURNSTILE_*`, `CRON_SECRET`, `HEALTH_*` obrigatórios e fortes.
+- Página `/jobs` e perfil `/companies` só com flags opt-in da empresa/vaga.
+
 ### 2FA (opcional por usuário)
 
 - **Default:** desligado — login com e-mail/senha (+ Turnstile se configurado).

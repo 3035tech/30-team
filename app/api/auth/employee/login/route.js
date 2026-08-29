@@ -34,7 +34,7 @@ export async function POST(request) {
 
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
-    const companyId = body.companyId != null ? parseInt(String(body.companyId), 10) : null;
+    const companySlug = String(body.companySlug || '').trim() || null;
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (email) {
@@ -49,15 +49,11 @@ export async function POST(request) {
     const result = await loginEmployeeWithPassword(query, {
       email,
       password,
-      companyId: Number.isFinite(companyId) ? companyId : null,
+      companySlug,
     });
 
-    if (result.ambiguous) {
-      return NextResponse.json({
-        ok: false,
-        ambiguous: true,
-        companies: result.companies || [],
-      }, { status: 400 });
+    if (result.needsCompanySlug) {
+      return apiError(request, ERR.COMPANY_SLUG_REQUIRED, httpStatusForError(ERR.COMPANY_SLUG_REQUIRED));
     }
     if (!result.ok) {
       await failDelay();

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { apiError, ERR } from '../../../../lib/api-error';
+import { apiError, ERR, httpStatusForError } from '../../../../lib/api-error';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
+import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
 import {
   completePasswordSetup,
   peekPasswordSetupToken,
@@ -29,7 +30,7 @@ export async function GET(request) {
   });
 }
 
-/** POST /api/public/set-password — body: { token, password } */
+/** POST /api/public/set-password — body: { token, password, turnstileToken? } */
 export async function POST(request) {
   const ip = clientIpFromRequest(request);
   const rl = await checkRateLimit(`set-password:${ip}`, 20, 15 * 60 * 1000);
@@ -38,6 +39,11 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => ({}));
+  const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+  if (!turnstile.ok) {
+    return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+  }
+
   const token = String(body.token || '').trim();
   const password = String(body.password || '');
   const result = await completePasswordSetup(token, password);

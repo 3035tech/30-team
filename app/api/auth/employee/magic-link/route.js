@@ -7,7 +7,7 @@ import { requestEmployeeMagicLink } from '../../../../../lib/employee-auth.js';
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/auth/employee/magic-link — request collaborator login email (no sent enumeration) */
+/** POST /api/auth/employee/magic-link — request collaborator login email (no company list) */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -25,7 +25,7 @@ export async function POST(request) {
     }
 
     const email = String(body.email || '').trim().toLowerCase();
-    const companyId = body.companyId != null ? parseInt(String(body.companyId), 10) : null;
+    const companySlug = String(body.companySlug || '').trim() || null;
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (email) {
@@ -39,7 +39,7 @@ export async function POST(request) {
 
     const result = await requestEmployeeMagicLink(query, {
       email,
-      companyId: Number.isFinite(companyId) ? companyId : null,
+      companySlug,
       locale,
       requireMail: true,
     });
@@ -48,12 +48,8 @@ export async function POST(request) {
       return apiError(request, result.errorCode || ERR.INTERNAL, httpStatusForError(result.errorCode || ERR.INTERNAL));
     }
 
-    if (result.ambiguous) {
-      return NextResponse.json({
-        ok: true,
-        ambiguous: true,
-        companies: result.companies || [],
-      });
+    if (result.needsCompanySlug) {
+      return NextResponse.json({ ok: true, needsCompanySlug: true });
     }
 
     return NextResponse.json({ ok: true });

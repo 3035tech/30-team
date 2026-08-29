@@ -9,6 +9,7 @@ import { cn } from '../../../lib/cn';
 import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
 import { FormField } from '../../_components/FormField';
+import TurnstileField from '../../_components/TurnstileField';
 
 const inputClass =
   'box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink';
@@ -26,6 +27,28 @@ function SetPasswordForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [tokenError, setTokenError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/captcha-config');
+        const data = await res.json().catch(() => ({}));
+        if (cancelled || !res.ok) return;
+        setTurnstileRequired(Boolean(data.required));
+        setTurnstileSiteKey(String(data.siteKey || '').trim());
+      } catch {
+        /* Turnstile opcional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,13 +90,22 @@ function SetPasswordForm() {
       setError(t(locale, 'login.changePasswordMismatch'));
       return;
     }
+    if (turnstileRequired && !turnstileToken) {
+      setError(t(locale, 'errors.TURNSTILE_FAILED'));
+      setTurnstileError(true);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/public/set-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({
+          token,
+          password,
+          turnstileToken: turnstileToken || undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -147,6 +179,14 @@ function SetPasswordForm() {
                   className={inputClass}
                 />
               </FormField>
+              {turnstileRequired && turnstileSiteKey ? (
+                <TurnstileField
+                  siteKey={turnstileSiteKey}
+                  onToken={setTurnstileToken}
+                  onError={() => setTurnstileError(true)}
+                  errorMessage={turnstileError ? t(locale, 'errors.TURNSTILE_FAILED') : ''}
+                />
+              ) : null}
               {error ? (
                 <p className="m-0 text-prose text-danger">{error}</p>
               ) : null}

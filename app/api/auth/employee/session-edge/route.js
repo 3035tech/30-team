@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { EMPLOYEE_COOKIE_NAME } from '../../../../lib/employee-auth-constants.js';
-import { verifyEmployeeToken } from '../../../../lib/employee-auth.js';
+import { EMPLOYEE_COOKIE_NAME } from '../../../../../lib/employee-auth-constants.js';
+import { verifyEmployeeToken } from '../../../../../lib/employee-auth.js';
 import {
   isEmployeeSessionVersionCurrent,
   loadEmployeeSessionVersion,
-} from '../../../../lib/employee-session-revocation.js';
-import { EMPLOYMENT_STATUS } from '../../../../lib/domain-status.js';
+} from '../../../../../lib/employee-session-revocation.js';
+import { EMPLOYMENT_STATUS } from '../../../../../lib/domain-status.js';
 
 export const dynamic = 'force-dynamic';
 

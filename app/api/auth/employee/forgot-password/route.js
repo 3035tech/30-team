@@ -7,7 +7,7 @@ import { requestEmployeePasswordReset } from '../../../../../lib/employee-auth.j
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/auth/employee/forgot-password — re-issue set-password email (no sent enumeration) */
+/** POST /api/auth/employee/forgot-password — re-issue set-password email (no company list) */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -25,7 +25,7 @@ export async function POST(request) {
     }
 
     const email = String(body.email || '').trim().toLowerCase();
-    const companyId = body.companyId != null ? parseInt(String(body.companyId), 10) : null;
+    const companySlug = String(body.companySlug || '').trim() || null;
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (email) {
@@ -39,7 +39,7 @@ export async function POST(request) {
 
     const result = await requestEmployeePasswordReset(query, {
       email,
-      companyId: Number.isFinite(companyId) ? companyId : null,
+      companySlug,
       locale,
     });
 
@@ -51,12 +51,8 @@ export async function POST(request) {
       );
     }
 
-    if (result.ambiguous) {
-      return NextResponse.json({
-        ok: true,
-        ambiguous: true,
-        companies: result.companies || [],
-      });
+    if (result.needsCompanySlug) {
+      return NextResponse.json({ ok: true, needsCompanySlug: true });
     }
 
     return NextResponse.json({ ok: true });

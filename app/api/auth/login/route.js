@@ -87,8 +87,9 @@ export async function POST(request) {
     }
 
     if (row0.passwordSetupToken) {
+      // Anti-enum: mesmo código/atraso de credencial inválida.
       await new Promise((r) => setTimeout(r, 500));
-      return apiError(request, ERR.PASSWORD_SETUP_PENDING, 403);
+      return apiError(request, ERR.INVALID_CREDENTIALS, 401);
     }
 
     const u = res.rows[0];

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { query } from '../../../../../lib/db.js';
 import { apiError, ERR, httpStatusForError } from '../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
+import { verifyTurnstileToken } from '../../../../../lib/turnstile.js';
 import {
   EMPLOYEE_COOKIE_NAME,
   consumeEmployeeMagicToken,
@@ -47,6 +48,11 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const turnstile = await verifyTurnstileToken({ token: body.turnstileToken, remoteIp: ip });
+    if (!turnstile.ok) {
+      return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
+    }
+
     const token = String(body.token || '').trim();
     const locale = body.locale === 'en' ? 'en' : 'pt-BR';
     const consumed = await consumeEmployeeMagicToken(query, { token });
