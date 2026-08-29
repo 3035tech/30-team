@@ -473,7 +473,23 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       />
 
       <div className={S.card}>
-        <AdminListFilters aria-label={t(locale, 'panel.admin.usersList')}>
+        <AdminListFilters
+          aria-label={t(locale, 'panel.admin.usersList')}
+          locale={locale}
+          onClear={() => {
+            setSearchDraft('');
+            if (!navigateDashboard) return;
+            navigateDashboard({
+              usersQ: null,
+              usersRole: null,
+              usersActive: null,
+              usersCompany: null,
+              usersPage: 1,
+              tab: 'users',
+            });
+          }}
+          clearEnabled={Boolean(hasUsersFilter || String(searchDraft || '').trim())}
+        >
           <AdminListSearch
             locale={locale}
             value={searchDraft}

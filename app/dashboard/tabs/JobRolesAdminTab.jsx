@@ -301,7 +301,16 @@ export function JobRolesAdminTab({ locale, companyId }) {
         />
       ) : (
         <>
-        <AdminListFilters aria-label={t(locale, 'jobRoles.title')}>
+        <AdminListFilters
+          aria-label={t(locale, 'jobRoles.title')}
+          locale={locale}
+          onClear={() => {
+            setNameQ('');
+            setActiveFilter('');
+            setPage(1);
+          }}
+          clearEnabled={Boolean(String(nameQ || '').trim() || activeFilter)}
+        >
           <AdminListSearch
             locale={locale}
             value={nameQ}
@@ -310,7 +319,6 @@ export function JobRolesAdminTab({ locale, companyId }) {
               setPage(1);
             }}
             placeholder={t(locale, 'panel.admin.nameSearchPh')}
-            showButton={false}
           />
           <AdminListFilterSelect
             label={t(locale, 'panel.admin.filterActive')}

@@ -22,6 +22,8 @@ alwaysApply: false
 2b. **Cabeçalho** — `AdminPageHeader` (título + subtítulo + actions).
 2c. **Filtros (obrigatório)** — uma **única linha** horizontal com `AdminListFilters` (`app/_components/AdminListFilters.jsx`):
    - Filhos: **somente** `AdminListSearch` + `AdminListFilterSelect` (0–3 selects relevantes). **Proibido** `AdminCreateButton` (ou outro CTA de criar) dentro ou ao lado de `AdminListFilters`.
+   - **`AdminListSearch`** — sem botão Buscar. Filtragem ao vivo via `onChange`; Enter chama `onSubmit` quando a busca é server-side (URL/API). Não passar `showButton` (prop removida).
+   - **`AdminListFilters`** — sempre passar `locale`, `onClear` e `clearEnabled` em listagens com filtros. `onClear` reseta busca + selects aos defaults e page a 1 (e params de URL via `navigateDashboard` / `pushFilters` quando aplicável). `clearEnabled={Boolean(...)}` fica true quando qualquer filtro/busca ≠ default. O botão “Limpar filtros” (`panel.common.clearFilters`) é renderizado pelo próprio `AdminListFilters`.
    - **Criar** = só em `AdminPageHeader` `actions` (topo-direita do título). Nunca na barra de filtros nem no toolbar “Lista” acima dos filtros.
    - Só filtros alinhados a **colunas da tabela** (status, tipo, ativo, empresa, motivo…). Não inventar filtros para Ações / notas / id.
    - Avaliar listagem a listagem o que é útil; max ~3 selects + busca para caber numa linha (`flex-nowrap` + `overflow-x-auto`).
@@ -70,6 +72,8 @@ import { AdminListSearch, … } from '../dashboard-shared';
 - `AdminCreateButton` dentro / ao lado de `AdminListFilters` ou no toolbar “Lista” acima dos filtros (create só em `AdminPageHeader` `actions`)
 - Listagem filtrável sem `animKey` em `AdminTableShell` (nem `AdminListResults`)
 - Filtros em **duas+ linhas** ou `flex-wrap` empilhando selects (usar `AdminListFilters`)
+- `AdminListSearch` com `showButton` (prop removida; sem botão Buscar)
+- Listagem com filtros sem `onClear` / `clearEnabled` / `locale` em `AdminListFilters`
 - Só busca sem selects quando a tabela tem colunas categóricas relevantes (status/ativo/tipo…)
 - Filtro client-only em listagem **paginada no servidor** (resultados incompletos)
 - Select de filtro sem label (`FormField` / `AdminListFilterSelect`)

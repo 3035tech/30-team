@@ -137,7 +137,23 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
         subtitle={t(locale, 'panel.audit.intro')}
       />
 
-      <AdminListFilters aria-label={t(locale, 'panel.audit.title')}>
+      <AdminListFilters
+        aria-label={t(locale, 'panel.audit.title')}
+        locale={locale}
+        onClear={() => {
+          setQDraft('');
+          setActionDraft('');
+          pushFilters({ actorKind: 'all', companyId: 'all', action: '', q: '', page: 1 });
+        }}
+        clearEnabled={Boolean(
+          filters.actorKind !== 'all' ||
+            (filters.companyId && filters.companyId !== 'all') ||
+            filters.action ||
+            filters.q ||
+            String(qDraft || '').trim() ||
+            String(actionDraft || '').trim()
+        )}
+      >
         <AdminListFilterSelect
           label={t(locale, 'panel.audit.filterActorKind')}
           value={filters.actorKind}

@@ -202,7 +202,21 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t(locale, 'panel.talentBank.intro')}
       />
 
-      <AdminListFilters aria-label={t(locale, 'panel.talentBank.title')}>
+      <AdminListFilters
+        aria-label={t(locale, 'panel.talentBank.title')}
+        locale={locale}
+        onClear={() => {
+          setQDraft('');
+          setQ('');
+          setVacancyId('');
+          setStage('');
+          setTopType('');
+          setPage(1);
+        }}
+        clearEnabled={Boolean(
+          String(qDraft || '').trim() || q || vacancyId || stage || topType
+        )}
+      >
         <AdminListSearch
           locale={locale}
           value={qDraft}

@@ -1,17 +1,28 @@
 'use client';
 
+import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { fieldSelectCompactClass } from './form-control-styles';
 import { FormField } from './FormField';
 import { ContentEnter } from './AppLoading';
 
+const clearBtnClass =
+  'inline-flex min-h-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-45';
+
 /**
  * Single-row filter bar for admin listagens.
- * Keep controls on one horizontal line (overflow-x on narrow viewports).
  * Children: AdminListSearch + AdminListFilterSelect only — never AdminCreateButton.
- * Create CTA belongs in AdminPageHeader `actions` (top-right of the title).
+ * Optional `onClear` renders “Limpar filtros” at the end (standard; no Buscar button).
+ * Search submits on Enter when AdminListSearch has onSubmit; filtering is live via onChange.
  */
-export function AdminListFilters({ children, className = '', 'aria-label': ariaLabel }) {
+export function AdminListFilters({
+  children,
+  className = '',
+  'aria-label': ariaLabel,
+  locale = 'pt-BR',
+  onClear,
+  clearEnabled = false,
+}) {
   return (
     <div
       role="search"
@@ -22,6 +33,16 @@ export function AdminListFilters({ children, className = '', 'aria-label': ariaL
       )}
     >
       {children}
+      {typeof onClear === 'function' ? (
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={!clearEnabled}
+          className={clearBtnClass}
+        >
+          {t(locale, 'panel.common.clearFilters')}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -55,8 +76,6 @@ export function AdminListFilterSelect({
 
 /**
  * Wraps list results (table / empty / pager block) so filter changes re-trigger ContentEnter.
- * Prefer AdminTableShell `animKey` when only the table should animate; use this when
- * empty state + table share one transition.
  */
 export function AdminListResults({ animKey, children, className = '' }) {
   if (animKey === undefined || animKey === null || animKey === '') {

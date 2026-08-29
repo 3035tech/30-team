@@ -522,7 +522,19 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         )}
       </section>
 
-      <AdminListFilters aria-label={t('title')}>
+      <AdminListFilters
+        aria-label={t('title')}
+        locale={locale}
+        onClear={() => {
+          setNameQ('');
+          setFilterCategoryId('');
+          setFilterBenefitType('');
+          setPage(1);
+        }}
+        clearEnabled={Boolean(
+          String(nameQ || '').trim() || filterCategoryId || filterBenefitType
+        )}
+      >
         <AdminListSearch
           locale={locale}
           value={nameQ}
@@ -531,7 +543,6 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
             setPage(1);
           }}
           placeholder={t('searchNamePh')}
-          showButton={false}
         />
         {categories.length > 0 ? (
           <AdminListFilterSelect

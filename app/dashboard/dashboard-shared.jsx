@@ -75,7 +75,7 @@ const S = {
   cardMetric: 'font-mono text-sm font-semibold tabular-nums',
   cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
-  pageTitle: 'm-0 font-display text-xl font-normal text-ink',
+  pageTitle: 'm-0 break-words font-display text-xl font-normal leading-snug text-ink',
   /** Flex row for FormField — items-start evita altura “esticada” por hint/readonly */
   fieldRow: 'flex flex-wrap items-start gap-2.5',
 };
@@ -712,9 +712,8 @@ function AdminPageHeader({ title, subtitle = null, actions = null, className }) 
 }
 
 /**
- * List search field + optional submit (Enter / button).
- * Controlled: pass `value` + `onChange`; call `onSubmit` on Enter or search click.
- * Label above via FormField so it aligns with AdminListFilterSelect in AdminListFilters.
+ * List search field — live `onChange`; optional Enter/`onSubmit` (no Buscar button).
+ * Clear filters lives on AdminListFilters `onClear`, not here.
  */
 function AdminListSearch({
   locale = 'pt-BR',
@@ -725,36 +724,24 @@ function AdminListSearch({
   label,
   className,
   inputClassName,
-  showButton = true,
 }) {
   const fieldLabel = label || t(locale, 'panel.common.search');
   return (
     <FormField label={fieldLabel} className={cn('min-w-[12rem] max-w-md shrink-0 grow', className)}>
-      <div className="flex flex-nowrap items-center gap-2">
-        <input
-          type="search"
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              onSubmit?.(value);
-            }
-          }}
-          placeholder={placeholder}
-          aria-label={placeholder || fieldLabel}
-          className={cn(S.input, 'w-full min-w-[10rem]', inputClassName)}
-        />
-        {showButton ? (
-          <button
-            type="button"
-            onClick={() => onSubmit?.(value)}
-            className={cn(S.btnGhost, 'shrink-0')}
-          >
-            {t(locale, 'panel.common.search')}
-          </button>
-        ) : null}
-      </div>
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onSubmit?.(value);
+          }
+        }}
+        placeholder={placeholder}
+        aria-label={placeholder || fieldLabel}
+        className={cn(S.input, 'w-full min-w-[10rem]', inputClassName)}
+      />
     </FormField>
   );
 }

@@ -133,7 +133,23 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t(locale, 'panel.compensationRoster.subtitle')}
       />
 
-      <AdminListFilters aria-label={t(locale, 'panel.compensationRoster.title')}>
+      <AdminListFilters
+        aria-label={t(locale, 'panel.compensationRoster.title')}
+        locale={locale}
+        onClear={() => {
+          setQDraft('');
+          setQ('');
+          setStatusFilter(EMPLOYMENT_STATUS.EMPLOYEE);
+          setHasSalary('all');
+          setPage(1);
+        }}
+        clearEnabled={Boolean(
+          String(qDraft || '').trim() ||
+            q ||
+            statusFilter !== EMPLOYMENT_STATUS.EMPLOYEE ||
+            hasSalary !== 'all'
+        )}
+      >
         <AdminListSearch
           locale={locale}
           value={qDraft}

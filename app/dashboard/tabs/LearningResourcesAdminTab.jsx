@@ -362,7 +362,17 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         }
       />
 
-      <AdminListFilters aria-label={t('title')}>
+      <AdminListFilters
+        aria-label={t('title')}
+        locale={locale}
+        onClear={() => {
+          setNameQ('');
+          setFilterTheme('');
+          setFilterType('');
+          setPage(1);
+        }}
+        clearEnabled={Boolean(String(nameQ || '').trim() || filterTheme || filterType)}
+      >
         <AdminListSearch
           locale={locale}
           value={nameQ}
@@ -371,7 +381,6 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
             setPage(1);
           }}
           placeholder={t('searchNamePh')}
-          showButton={false}
         />
         {themes.length > 0 ? (
           <AdminListFilterSelect

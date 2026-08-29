@@ -555,7 +555,21 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       />
 
       <div className={S.card}>
-        <AdminListFilters aria-label={t(locale, 'panel.admin.companiesList')}>
+        <AdminListFilters
+          aria-label={t(locale, 'panel.admin.companiesList')}
+          locale={locale}
+          onClear={() => {
+            setSearchDraft('');
+            if (!navigateDashboard) return;
+            navigateDashboard({
+              companiesQ: null,
+              companiesActive: null,
+              companiesPage: 1,
+              tab: 'companies',
+            });
+          }}
+          clearEnabled={Boolean(hasCompaniesFilter || String(searchDraft || '').trim())}
+        >
           <AdminListSearch
             locale={locale}
             value={searchDraft}

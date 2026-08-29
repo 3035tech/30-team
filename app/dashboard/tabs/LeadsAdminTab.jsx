@@ -115,7 +115,15 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
         subtitle={t(locale, 'panel.leads.intro')}
       />
 
-      <AdminListFilters aria-label={t(locale, 'panel.leads.title')}>
+      <AdminListFilters
+        aria-label={t(locale, 'panel.leads.title')}
+        locale={locale}
+        onClear={() => {
+          setQDraft('');
+          pushFilters({ q: '', status: 'all', page: 1 });
+        }}
+        clearEnabled={Boolean(filters.q || filters.status !== 'all' || String(qDraft || '').trim())}
+      >
         <AdminListSearch
           locale={locale}
           value={qDraft}

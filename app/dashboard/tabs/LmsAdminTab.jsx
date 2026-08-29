@@ -1030,7 +1030,16 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
         />
       ) : (
         <>
-          <AdminListFilters aria-label={t(locale, 'panel.lms.title')}>
+          <AdminListFilters
+            aria-label={t(locale, 'panel.lms.title')}
+            locale={locale}
+            onClear={() => {
+              setCourseQ('');
+              setActiveFilter('');
+              setPage(1);
+            }}
+            clearEnabled={Boolean(String(courseQ || '').trim() || activeFilter)}
+          >
             <AdminListSearch
               locale={locale}
               value={courseQ}
@@ -1039,7 +1048,6 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 setPage(1);
               }}
               placeholder={t(locale, 'panel.lms.searchCoursePh')}
-              showButton={false}
             />
             <AdminListFilterSelect
               label={t(locale, 'panel.admin.filterActive')}

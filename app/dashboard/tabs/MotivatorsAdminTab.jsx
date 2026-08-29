@@ -370,7 +370,15 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         onClose={() => setNotice(null)}
       />
       <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.invites.title')}</span>
-      <AdminListFilters aria-label={t(locale, 'panel.motivatorsAdmin.invites.title')}>
+      <AdminListFilters
+        aria-label={t(locale, 'panel.motivatorsAdmin.invites.title')}
+        locale={locale}
+        onClear={() => {
+          setStatus('all');
+          setPage(1);
+        }}
+        clearEnabled={status !== 'all'}
+      >
         <AdminListFilterSelect
           label={t(locale, 'panel.motivatorsAdmin.invites.colStatus')}
           value={status}

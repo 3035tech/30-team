@@ -497,7 +497,16 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         </a>
       </InlineCallout>
 
-      <AdminListFilters aria-label={t('title')}>
+      <AdminListFilters
+        aria-label={t('title')}
+        locale={locale}
+        onClear={() => {
+          setNameQ('');
+          setStatusFilter('');
+          setPage(1);
+        }}
+        clearEnabled={Boolean(String(nameQ || '').trim() || statusFilter)}
+      >
         <AdminListSearch
           locale={locale}
           value={nameQ}
@@ -506,7 +515,6 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
             setPage(1);
           }}
           placeholder={t('searchNamePh')}
-          showButton={false}
         />
         <AdminListFilterSelect
           label={t('status')}

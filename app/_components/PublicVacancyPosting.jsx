@@ -79,7 +79,7 @@ className="m-0 flex list-none flex-col gap-2.5 p-0"
               href={item.path}
 className="block rounded-xl border border-ink/12 bg-white px-4 py-3.5 text-ink no-underline"
             >
-              <span className="block text-base leading-[1.35]">
+              <span className="block text-base leading-snug break-words">
                 {item.title}
               </span>
               {item.companyName ? (
@@ -174,7 +174,7 @@ className="mb-2 mt-0 font-mono text-2xs uppercase tracking-[2px] text-warning"
                   : t(locale, 'publicVacancy.closedBadge')}
               </p>
               <h1
-                className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,5vw,36px)] font-normal text-transparent"
+                className="mb-3 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.625rem,5vw,2.25rem)] font-normal leading-snug text-transparent"
               >
                 {t(locale, 'publicVacancy.closedTitle')}
               </h1>
@@ -266,7 +266,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                   </p>
                 ) : null}
                 <h1
-                  className="mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(28px,5vw,40px)] font-normal text-transparent"
+                  className="mb-3 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.75rem,5vw,2.5rem)] font-normal leading-snug text-transparent"
                 >
                   {posting.title}
                 </h1>
@@ -464,7 +464,7 @@ export function PublicVacanciesIndexView({
             </p>
           ) : null}
           <h1
-            className="m-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-normal text-transparent text-[clamp(26px,4vw,36px)]"
+            className="m-0 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.625rem,4vw,2.25rem)] font-normal leading-snug text-transparent"
           >
             {heading}
           </h1>
@@ -709,7 +709,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
               <p className="mb-1 mt-0 font-mono text-2xs uppercase tracking-[0.14em] text-ink-label">
                 {t(locale, 'publicVacancy.companyCareersEyebrow')}
               </p>
-              <h1 className="m-0 font-display text-[clamp(26px,4vw,36px)] font-semibold leading-tight text-ink">
+              <h1 className="m-0 break-words font-display text-[clamp(1.625rem,4vw,2.25rem)] font-semibold leading-snug text-ink">
                 {name}
               </h1>
               <p className="mb-0 mt-2 text-sm text-ink-muted">

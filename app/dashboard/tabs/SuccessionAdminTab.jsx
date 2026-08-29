@@ -576,7 +576,16 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
       />
 
       {roles.length > 0 ? (
-        <AdminListFilters aria-label={t('title')}>
+        <AdminListFilters
+          aria-label={t('title')}
+          locale={locale}
+          onClear={() => {
+            setNameQ('');
+            setImpactFilter('');
+            setPage(1);
+          }}
+          clearEnabled={Boolean(String(nameQ || '').trim() || impactFilter)}
+        >
           <AdminListSearch
             locale={locale}
             value={nameQ}
@@ -585,7 +594,6 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
               setPage(1);
             }}
             placeholder={t('searchNamePh')}
-            showButton={false}
           />
           <AdminListFilterSelect
             label={t('impactLevel')}

@@ -461,7 +461,19 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       />
 
       {records.length > 0 ? (
-        <AdminListFilters aria-label={t('title')}>
+        <AdminListFilters
+          aria-label={t('title')}
+          locale={locale}
+          onClear={() => {
+            setNameQ('');
+            setExitTypeFilter('');
+            setExitReasonFilter('');
+            setPage(1);
+          }}
+          clearEnabled={Boolean(
+            String(nameQ || '').trim() || exitTypeFilter || exitReasonFilter
+          )}
+        >
           <AdminListSearch
             locale={locale}
             value={nameQ}
@@ -470,7 +482,6 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
               setPage(1);
             }}
             placeholder={t('searchNamePh')}
-            showButton={false}
           />
           <AdminListFilterSelect
             label={t('exitType')}
