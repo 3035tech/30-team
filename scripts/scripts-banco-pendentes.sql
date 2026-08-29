@@ -1497,3 +1497,12 @@ ALTER TABLE employee_compensation_events
 
 INSERT INTO schema_migrations (name) VALUES ('078_compensation_notes_rich.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 079_candidates_name_trgm.sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS idx_candidates_full_name_trgm
+  ON candidates USING gin (full_name gin_trgm_ops);
+
+INSERT INTO schema_migrations (name) VALUES ('079_candidates_name_trgm.sql')
+ON CONFLICT (name) DO NOTHING;

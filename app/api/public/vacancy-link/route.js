@@ -33,5 +33,9 @@ export async function GET(request) {
   }
 
   const { vacancyId: _v, companyId: _c, ...publicVacancy } = result.vacancy;
-  return NextResponse.json(publicVacancy);
+  return NextResponse.json(publicVacancy, {
+    headers: {
+      'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
+    },
+  });
 }

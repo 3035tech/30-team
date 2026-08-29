@@ -35,11 +35,16 @@ export async function GET(request) {
   };
 
   if (!authorizedDetailed(request)) {
-    return NextResponse.json(base);
+    return NextResponse.json(base, {
+      headers: { 'Cache-Control': 'public, max-age=5' },
+    });
   }
 
-  return NextResponse.json({
-    ...base,
-    pg: getPoolStats(),
-  });
+  return NextResponse.json(
+    {
+      ...base,
+      pg: getPoolStats(),
+    },
+    { headers: { 'Cache-Control': 'private, no-store' } }
+  );
 }

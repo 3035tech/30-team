@@ -79,6 +79,10 @@ Sprint de escala sem rewrite: batch HR Score + núcleo único; `LIMIT`/página e
 
 Baseline documentada (`docs/performance-hotpaths.md`): SSR por aba, caps, export stream, `PG_POOL_MAX`, índices `006`/`061`. `measureAsync` nos hot paths + breadcrumb Sentry em slow; `npm run dtov:explain` (`scripts/explain-hotpaths.js`) para checklist EXPLAIN no DTOV.
 
+### B-2802 — Performance P3 (colaborador + gaps restantes) ✅ ENTREGUE
+
+Home/`/e` em paralelo + PDI batch; inbox de pesquisas com batch invite (sem N+1); jornada GET sem ensure; clima aggregate SQL; sucessão batch; HR Score cache wired; caps assessments/timeline; LMS lessons `ROW_NUMBER` cap; `notifyCandidates` unnest; crons em chunks paralelos; índice trigram `079`; mail retry; Cache-Control em links públicos + health. Detalhe: `docs/performance-hotpaths.md`.
+
 ### B-202 — (opcional) caps/API restantes do audit
 _(fechado como “monitorar prod” — sem gap aberto claro.)_ Já entregue: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps, indexes `061`. Reabrir só com evidência de produção.
 

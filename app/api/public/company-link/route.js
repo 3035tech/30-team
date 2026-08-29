@@ -18,5 +18,9 @@ export async function GET(request) {
     return apiError(request, result.errorCode, status);
   }
   const { companyId: _id, ...publicCompany } = result.company;
-  return NextResponse.json(publicCompany);
+  return NextResponse.json(publicCompany, {
+    headers: {
+      'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
+    },
+  });
 }

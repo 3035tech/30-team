@@ -185,6 +185,7 @@ async function main() {
   const journey = await getEmployeeOnboardingJourney(query, {
     companyId: person.companyId,
     candidateId: person.candidateId,
+    ensure: true,
   });
   assert.equal(journey.ok, true, journey.errorCode);
   assert.equal(journey.hasJourney, true);

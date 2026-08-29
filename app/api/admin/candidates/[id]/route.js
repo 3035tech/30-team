@@ -61,7 +61,8 @@ export async function GET(request, { params }) {
      JOIN areas ar ON ar.id = ass.area_id
      LEFT JOIN vacancies v ON v.id = ass.vacancy_id
      WHERE ass.candidate_id = $1
-     ORDER BY ass.created_at DESC`,
+     ORDER BY ass.created_at DESC
+     LIMIT 30`,
     [id]
   );
 
