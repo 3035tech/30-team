@@ -585,6 +585,7 @@ const ADMIN_ICON_TINT = {
   muted: 'border-ink/15 bg-ink/[0.04] text-ink-muted',
   warning: 'border-warning/40 bg-warning/[0.1] text-warning',
   danger: 'border-danger/35 bg-danger/[0.08] text-danger',
+  success: 'border-success/35 bg-success/[0.08] text-success',
 };
 
 /**
@@ -632,7 +633,7 @@ function AdminIconButton({
 
 function AdminActionsCell({ children, className }) {
   return (
-    <div className={cn('inline-flex flex-wrap items-center justify-end gap-1', className)}>
+    <div className={cn('flex w-full flex-wrap items-center justify-end gap-1', className)}>
       {children}
     </div>
   );
@@ -642,7 +643,7 @@ function AdminActionsTh({ children }) {
   return (
     <th
       scope="col"
-      className="border-b border-ink/12 px-4 py-3 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
+      className="w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
     >
       {children}
     </th>

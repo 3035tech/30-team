@@ -212,8 +212,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
     }
   };
 
-  const editCourse = async () => {
-    const c = detail?.course;
+  const editCourse = async (courseRow = null) => {
+    const c = courseRow || detail?.course;
     if (!c) return;
     const values = await promptForm({
       title: t(locale, 'panel.lms.editCourse'),
@@ -262,7 +262,42 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
       if (!res.ok) throw new Error(json?.error || 'update');
       toast(t(locale, 'panel.lms.courseUpdated'), 'ok');
       await loadCourses();
-      await loadDetail(c.id);
+      if (selectedId && Number(selectedId) === Number(c.id)) await loadDetail(c.id);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    }
+  };
+
+  const setCourseActive = async (courseRow, nextActive) => {
+    const c = courseRow || detail?.course;
+    if (!c) return;
+    if (!nextActive) {
+      const ok = await confirm({
+        title: t(locale, 'panel.lms.deactivateCourse'),
+        message: `${c.title}\n\n${t(locale, 'panel.lms.deactivateCourseConfirm')}`,
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    try {
+      const res = await fetch(`/api/admin/lms/courses/${encodeURIComponent(c.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId, active: Boolean(nextActive) }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'update');
+      toast(
+        nextActive
+          ? t(locale, 'panel.lms.courseReactivated')
+          : t(locale, 'panel.lms.courseDeactivated'),
+        'ok'
+      );
+      await loadCourses();
+      if (selectedId && Number(selectedId) === Number(c.id)) {
+        if (!nextActive) backToList();
+        else await loadDetail(c.id);
+      }
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     }
@@ -687,56 +722,89 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
 
   /* ── Detail mode ─────────────────────────────────────────────── */
   if (selectedId) {
+    const course = detail?.course;
     return (
       <ContentEnter animKey={String(selectedId)} className={S.stack}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <button type="button" className={cn(S.btnGhost, 'min-h-touch')} onClick={backToList}>
-              {t(locale, 'panel.lms.backToList')}
-            </button>
-            {detailLoading && !detail?.course ? (
-              <AppLoading variant="inline" />
-            ) : detail?.course ? (
-              <div className="min-w-0">
-                <h2 className="m-0 truncate text-lg font-display text-ink">{detail.course.title}</h2>
-                <p className={cn(S.muted, 'mt-0.5 text-xs')}>
-                  {t(locale, 'panel.lms.completionRule', {
-                    pct: detail.course.completionPct,
-                  })}
-                </p>
-              </div>
-            ) : (
-              <p className={S.muted}>{t(locale, 'panel.lms.loadError')}</p>
-            )}
-          </div>
-          {detail?.course ? (
-            <AdminEditButton onClick={editCourse} label={t(locale, 'panel.lms.editCourse')} />
-          ) : null}
+        <div>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch')} onClick={backToList}>
+            {t(locale, 'panel.lms.backToList')}
+          </button>
         </div>
 
-        {detail?.course?.description ? (
-          <p className="m-0 whitespace-pre-wrap text-sm text-ink-muted">{detail.course.description}</p>
-        ) : null}
-
-        {ops ? (
-          <p
-            className={cn(
-              'm-0 font-mono text-xs',
-              ops.overdue > 0 ? 'text-danger' : 'text-ink-muted'
-            )}
-          >
-            {t(locale, 'panel.lms.opsSummary', {
-              completed: ops.completed,
-              enrolled: ops.enrolled,
-              overdue: ops.overdue,
-            })}
-          </p>
-        ) : null}
-
-        {detailLoading && detail?.course ? <AppLoading variant="inline" /> : null}
-
-        {detail?.course ? (
+        {detailLoading && !course ? (
+          <AppLoading variant="panel" />
+        ) : !course ? (
+          <EmptyState
+            title={t(locale, 'panel.lms.loadError')}
+            actionLabel={t(locale, 'panel.lms.backToList')}
+            onAction={backToList}
+          />
+        ) : (
           <>
+            <AdminPageHeader
+              title={course.title}
+              subtitle={t(locale, 'panel.lms.detailSubtitle')}
+              actions={
+                <div className="flex flex-wrap items-center justify-end gap-1">
+                  <AdminEditButton
+                    onClick={() => editCourse(course)}
+                    label={t(locale, 'panel.lms.editCourse')}
+                  />
+                  {course.active !== false ? (
+                    <AdminDeleteButton
+                      onClick={() => setCourseActive(course, false)}
+                      label={t(locale, 'panel.lms.deactivateCourse')}
+                    />
+                  ) : (
+                    <AdminIconButton
+                      icon="refresh"
+                      tint="success"
+                      label={t(locale, 'panel.lms.reactivateCourse')}
+                      onClick={() => setCourseActive(course, true)}
+                    />
+                  )}
+                </div>
+              }
+            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              {course.active !== false ? (
+                <StatusToneChip tone="success" bordered={false}>
+                  {t(locale, 'panel.lms.statusActive')}
+                </StatusToneChip>
+              ) : (
+                <StatusToneChip tone="neutral" bordered={false}>
+                  {t(locale, 'panel.lms.statusInactive')}
+                </StatusToneChip>
+              )}
+              <span className={cn(S.muted, 'text-xs')}>
+                {t(locale, 'panel.lms.completionRule', { pct: course.completionPct })}
+              </span>
+            </div>
+
+            {course.description ? (
+              <p className="m-0 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-ink-muted">
+                {course.description}
+              </p>
+            ) : null}
+
+            {ops ? (
+              <p
+                className={cn(
+                  'm-0 font-mono text-xs',
+                  ops.overdue > 0 ? 'text-danger' : 'text-ink-muted'
+                )}
+              >
+                {t(locale, 'panel.lms.opsSummary', {
+                  completed: ops.completed,
+                  enrolled: ops.enrolled,
+                  overdue: ops.overdue,
+                })}
+              </p>
+            ) : null}
+
+            {detailLoading ? <AppLoading variant="inline" /> : null}
+
             <CollapsibleBlock
               locale={locale}
               variant="card"
@@ -771,52 +839,54 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 />
               </div>
               {(detail.lessons || []).length === 0 ? (
-                <p className={cn(S.faint, 'm-0 text-xs italic')}>{t(locale, 'panel.lms.noLessons')}</p>
+                <EmptyState
+                  title={t(locale, 'panel.lms.noLessons')}
+                  message={t(locale, 'panel.lms.noLessonsHint')}
+                  actionLabel={t(locale, 'panel.lms.addLesson')}
+                  onAction={addLesson}
+                  className="py-5"
+                />
               ) : (
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {detail.lessons.map((l, index) => (
                     <li
                       key={l.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 px-3 py-2"
+                      className="grid grid-cols-1 items-start gap-3 rounded-control border border-ink/10 bg-surface px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto]"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm text-ink">
-                          {index + 1}. {l.title}
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
+                          <span className="font-mono text-2xs text-ink-faint">{index + 1}.</span>
+                          <span className="font-medium">{l.title}</span>
                           {!l.active ? (
-                            <span className="ml-2 font-mono text-2xs text-ink-faint">
+                            <StatusToneChip tone="neutral" bordered={false}>
                               {t(locale, 'panel.lms.inactive')}
-                            </span>
+                            </StatusToneChip>
                           ) : null}
                         </div>
-                        <CopyableLink
-                          url={l.contentUrl}
-                          locale={locale}
-                          compact
-                          iconOnly
-                          label={`${l.contentKind}`}
-                        />
+                        <div className="mt-1.5">
+                          <CopyableLink
+                            url={l.contentUrl}
+                            locale={locale}
+                            compact
+                            iconOnly
+                            label={String(l.contentKind || 'url')}
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className={cn(S.btnGhost, 'min-h-touch px-2')}
+                      <AdminActionsCell className="sm:pt-0.5">
+                        <AdminIconButton
+                          icon="chevronDown"
+                          label={lmsText(locale, 'lessonReorderUp', 'Mover aula para cima')}
                           disabled={lessonBusy || index === 0}
                           onClick={() => reorderLesson(index, -1)}
-                          aria-label={lmsText(locale, 'lessonReorderUp', 'Mover aula para cima')}
-                          title={lmsText(locale, 'lessonReorderUp', 'Mover aula para cima')}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          className={cn(S.btnGhost, 'min-h-touch px-2')}
+                          className="rotate-180"
+                        />
+                        <AdminIconButton
+                          icon="chevronDown"
+                          label={lmsText(locale, 'lessonReorderDown', 'Mover aula para baixo')}
                           disabled={lessonBusy || index === detail.lessons.length - 1}
                           onClick={() => reorderLesson(index, 1)}
-                          aria-label={lmsText(locale, 'lessonReorderDown', 'Mover aula para baixo')}
-                          title={lmsText(locale, 'lessonReorderDown', 'Mover aula para baixo')}
-                        >
-                          ↓
-                        </button>
+                        />
                         <AdminEditButton
                           onClick={() => editLesson(l)}
                           disabled={lessonBusy}
@@ -829,7 +899,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                             label={t(locale, 'panel.lms.deactivateLesson')}
                           />
                         ) : null}
-                      </div>
+                      </AdminActionsCell>
                     </li>
                   ))}
                 </ul>
@@ -877,27 +947,29 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
               count={enrollments.length}
               defaultOpen
             >
-              <div className="flex flex-wrap items-end gap-2">
+              <div className={cn(S.fieldRow, 'items-end')}>
                 <div className="min-w-[220px] flex-1">
-                  <EntitySearchSelect
-                    value={enrollPick}
-                    onChange={setEnrollPick}
-                    searchUrl={`/api/admin/employees/search?${companyQs(companyId)}`}
-                    locale={locale}
-                    placeholder={t(locale, 'panel.lms.enrollSearchPh')}
-                    aria-label={t(locale, 'panel.lms.enrollSearchPh')}
-                  />
+                  <FormField label={t(locale, 'panel.lms.enrollSearchPh')}>
+                    <EntitySearchSelect
+                      value={enrollPick}
+                      onChange={setEnrollPick}
+                      searchUrl={`/api/admin/employees/search?${companyQs(companyId)}`}
+                      locale={locale}
+                      placeholder={t(locale, 'panel.lms.enrollSearchPh')}
+                      aria-label={t(locale, 'panel.lms.enrollSearchPh')}
+                    />
+                  </FormField>
                 </div>
                 <button
                   type="button"
-                  className={cn(S.btnBrandSoft, 'min-h-touch')}
+                  className={cn(S.btnPrimary, 'min-h-touch shrink-0')}
                   disabled={enrollBusy || !enrollPick}
                   onClick={enrollSelected}
                 >
                   {t(locale, 'panel.lms.enrollBtn')}
                 </button>
               </div>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   className={cn(S.btnBrandSoft, 'min-h-touch')}
@@ -916,14 +988,20 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 </button>
               </div>
               {enrollments.length === 0 ? (
-                <p className={cn(S.faint, 'mt-3 m-0 text-xs italic')}>
-                  {t(locale, 'panel.lms.noEnrollments')}
-                </p>
+                <EmptyState
+                  title={t(locale, 'panel.lms.noEnrollments')}
+                  message={t(locale, 'panel.lms.noEnrollmentsHint')}
+                  className="mt-3 py-5"
+                />
               ) : (
                 <>
-                  <AdminTableShell minWidth="480px" className="mt-3" animKey={`${selectedId}|${safeEnrollPage}|${enrollPageSize}`}>
+                  <AdminTableShell
+                    minWidth="560px"
+                    className="mt-3"
+                    animKey={`${selectedId}|${safeEnrollPage}|${enrollPageSize}`}
+                  >
                     <thead>
-                      <tr className="border-b border-ink/10">
+                      <tr className="border-b border-ink/10 bg-canvas-alt">
                         <AdminTh>{t(locale, 'panel.lms.colPerson')}</AdminTh>
                         <AdminTh>{t(locale, 'panel.lms.colProgress')}</AdminTh>
                         <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
@@ -932,7 +1010,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                     <tbody>
                       {enrollPageRows.map((row) => (
                         <tr key={row.id} className="border-b border-ink/8">
-                          <td className="px-2 py-2">
+                          <td className="px-4 py-3">
                             <div className="text-sm text-ink">{row.fullName}</div>
                             <div className="font-mono text-2xs text-ink-faint">{row.email}</div>
                             {row.cohortName ? (
@@ -940,7 +1018,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                                 {lmsText(locale, 'cohortLabel', 'Turma')}: {row.cohortName}
                               </div>
                             ) : null}
-                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
                               {row.dueDate ? (
                                 <span>
                                   {lmsText(locale, 'enrollmentDue', 'Prazo')}: {row.dueDate}
@@ -958,7 +1036,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                               ) : null}
                             </div>
                           </td>
-                          <td className="px-2 py-2 font-mono text-xs text-ink-muted">
+                          <td className="px-4 py-3 font-mono text-xs text-ink-muted">
                             {row.progressPct}%
                             {row.isComplete ? (
                               <span className="ml-2 text-success">
@@ -966,25 +1044,27 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                               </span>
                             ) : null}
                           </td>
-                          <AdminActionsCell>
-                            <AdminIconButton
-                              label={lmsText(locale, 'resetProgress', 'Zerar progresso')}
-                              icon="refresh"
-                              tint="warning"
-                              disabled={enrollBusy}
-                              onClick={() => resetEnrollment(row)}
-                            />
-                            <AdminEditButton
-                              onClick={() => editEnrollment(row)}
-                              disabled={enrollBusy}
-                              label={lmsText(locale, 'enrollmentDue', 'Editar prazo')}
-                            />
-                            <AdminDeleteButton
-                              onClick={() => removeEnrollment(row)}
-                              disabled={enrollBusy}
-                              label={t(locale, 'panel.lms.removeEnrollment')}
-                            />
-                          </AdminActionsCell>
+                          <td className="px-4 py-3 text-right">
+                            <AdminActionsCell>
+                              <AdminIconButton
+                                label={lmsText(locale, 'resetProgress', 'Zerar progresso')}
+                                icon="refresh"
+                                tint="warning"
+                                disabled={enrollBusy}
+                                onClick={() => resetEnrollment(row)}
+                              />
+                              <AdminEditButton
+                                onClick={() => editEnrollment(row)}
+                                disabled={enrollBusy}
+                                label={lmsText(locale, 'enrollmentDue', 'Editar prazo')}
+                              />
+                              <AdminDeleteButton
+                                onClick={() => removeEnrollment(row)}
+                                disabled={enrollBusy}
+                                label={t(locale, 'panel.lms.removeEnrollment')}
+                              />
+                            </AdminActionsCell>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1007,7 +1087,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
               )}
             </CollapsibleBlock>
           </>
-        ) : null}
+        )}
       </ContentEnter>
     );
   }
@@ -1121,6 +1201,23 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                               onClick={() => openCourse(c.id)}
                               label={t(locale, 'panel.lms.open')}
                             />
+                            <AdminEditButton
+                              onClick={() => editCourse(c)}
+                              label={t(locale, 'panel.lms.editCourse')}
+                            />
+                            {c.active ? (
+                              <AdminDeleteButton
+                                onClick={() => setCourseActive(c, false)}
+                                label={t(locale, 'panel.lms.deactivateCourse')}
+                              />
+                            ) : (
+                              <AdminIconButton
+                                icon="refresh"
+                                tint="success"
+                                label={t(locale, 'panel.lms.reactivateCourse')}
+                                onClick={() => setCourseActive(c, true)}
+                              />
+                            )}
                           </AdminActionsCell>
                         </td>
                       </tr>
