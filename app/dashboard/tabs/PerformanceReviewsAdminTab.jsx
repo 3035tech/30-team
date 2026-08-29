@@ -532,7 +532,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         />
       ) : (
         <>
-        <AdminTableShell minWidth="640px">
+        <AdminTableShell minWidth="640px" animKey={`${nameQ}|${statusFilter}|${safePage}|${pageSize}`}>
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>

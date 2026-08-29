@@ -179,7 +179,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           message={t(locale, 'panel.compensationRoster.emptyHint')}
         />
       ) : (
-        <AdminTableShell minWidth="640px">
+        <AdminTableShell minWidth="640px" animKey={`${q}|${statusFilter}|${hasSalary}|${page}|${pageSize}`}>
             <thead>
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={onSort}>

@@ -6,7 +6,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
 import { TagChips } from '../../_components/TagInput';
-import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { AdminListFilters, AdminListFilterSelect, AdminListResults } from '../../_components/AdminListFilters';
 import { formatTagList, parseTagList } from '../../../lib/tag-list';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
@@ -409,6 +409,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         </AdminListFilterSelect>
       </AdminListFilters>
 
+      <AdminListResults animKey={`${nameQ}|${filterTheme}|${filterType}|${safePage}|${pageSize}`}>
       {resources.length === 0 ? (
         <div className="flex flex-col gap-3">
           <EmptyState
@@ -515,6 +516,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           />
         </>
       )}
+      </AdminListResults>
     </div>
   );
 }

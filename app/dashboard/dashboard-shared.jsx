@@ -18,6 +18,8 @@ import {
 import { Icon } from '../_components/Icon';
 import { IconActionTip } from '../_components/IconActionTip';
 import { MeterBar } from '../_components/MeterBar';
+import { ContentEnter } from '../_components/AppLoading';
+import { FormField } from '../_components/FormField';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -661,9 +663,11 @@ function AdminTh({ children, align = 'left', className }) {
   );
 }
 
-/** Scroll + border chrome around admin list tables. */
-function AdminTableShell({ children, minWidth = '640px', className }) {
-  return (
+/** Scroll + border chrome around admin list tables.
+ * Pass `animKey` (filter/search/page signature) to fade/slide results after filter changes.
+ */
+function AdminTableShell({ children, minWidth = '640px', className, animKey }) {
+  const shell = (
     <div className={cn('overflow-x-auto rounded-card border border-ink/10', className)}>
       <table
         className="w-full border-collapse text-left text-prose"
@@ -673,14 +677,22 @@ function AdminTableShell({ children, minWidth = '640px', className }) {
       </table>
     </div>
   );
+  if (animKey === undefined || animKey === null || animKey === '') return shell;
+  return (
+    <ContentEnter animKey={String(animKey)} className="w-full">
+      {shell}
+    </ContentEnter>
+  );
 }
 
-/** Standard admin tab title + optional subtitle + actions. */
+/** Standard admin tab title + optional subtitle + primary actions (create).
+ * Create CTA stays top-right of the title row — never inside AdminListFilters.
+ */
 function AdminPageHeader({ title, subtitle = null, actions = null, className }) {
   return (
-    <div
+    <header
       className={cn(
-        'mb-4 flex flex-wrap items-start justify-between gap-3',
+        'mb-4 flex items-start justify-between gap-4',
         className
       )}
     >
@@ -691,15 +703,18 @@ function AdminPageHeader({ title, subtitle = null, actions = null, className }) 
         ) : null}
       </div>
       {actions ? (
-        <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 pt-0.5">
+          {actions}
+        </div>
       ) : null}
-    </div>
+    </header>
   );
 }
 
 /**
  * List search field + optional submit (Enter / button).
  * Controlled: pass `value` + `onChange`; call `onSubmit` on Enter or search click.
+ * Label above via FormField so it aligns with AdminListFilterSelect in AdminListFilters.
  */
 function AdminListSearch({
   locale = 'pt-BR',
@@ -707,36 +722,40 @@ function AdminListSearch({
   onChange,
   onSubmit,
   placeholder,
+  label,
   className,
   inputClassName,
   showButton = true,
 }) {
+  const fieldLabel = label || t(locale, 'panel.common.search');
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            onSubmit?.(value);
-          }
-        }}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        className={cn(S.input, 'max-w-xs', inputClassName)}
-      />
-      {showButton ? (
-        <button
-          type="button"
-          onClick={() => onSubmit?.(value)}
-          className={S.btnGhost}
-        >
-          {t(locale, 'panel.common.search')}
-        </button>
-      ) : null}
-    </div>
+    <FormField label={fieldLabel} className={cn('min-w-[12rem] max-w-md shrink-0 grow', className)}>
+      <div className="flex flex-nowrap items-center gap-2">
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              onSubmit?.(value);
+            }
+          }}
+          placeholder={placeholder}
+          aria-label={placeholder || fieldLabel}
+          className={cn(S.input, 'w-full min-w-[10rem]', inputClassName)}
+        />
+        {showButton ? (
+          <button
+            type="button"
+            onClick={() => onSubmit?.(value)}
+            className={cn(S.btnGhost, 'shrink-0')}
+          >
+            {t(locale, 'panel.common.search')}
+          </button>
+        ) : null}
+      </div>
+    </FormField>
   );
 }
 

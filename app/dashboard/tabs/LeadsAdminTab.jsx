@@ -152,7 +152,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.leads.count', { n: total })}
           </p>
-          <AdminTableShell minWidth="56rem">
+          <AdminTableShell minWidth="56rem" animKey={`${filters.q}|${filters.status}|${filters.page}|${filters.pageSize}`}>
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">
                   <AdminTh>{t(locale, 'panel.leads.colWhen')}</AdminTh>

@@ -524,7 +524,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         </div>
       ) : (
         <>
-          <AdminTableShell minWidth="640px">
+          <AdminTableShell minWidth="640px" animKey={`${nameQ}|${exitTypeFilter}|${exitReasonFilter}|${safePage}|${pageSize}`}>
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="exitDate" sortKey={sort} dir={sortDir} onSort={toggleSort}>

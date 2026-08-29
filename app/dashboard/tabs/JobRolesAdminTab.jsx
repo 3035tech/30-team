@@ -329,7 +329,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
           <EmptyState message={t(locale, 'panel.admin.noUsersMatch')} />
         ) : (
         <>
-        <AdminTableShell minWidth="720px">
+        <AdminTableShell minWidth="720px" animKey={`${nameQ}|${activeFilter}|${safePage}|${pageSize}`}>
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>

@@ -3,11 +3,13 @@
 import { cn } from '../../lib/cn';
 import { fieldSelectCompactClass } from './form-control-styles';
 import { FormField } from './FormField';
+import { ContentEnter } from './AppLoading';
 
 /**
  * Single-row filter bar for admin listagens.
  * Keep controls on one horizontal line (overflow-x on narrow viewports).
- * Children: AdminListSearch + AdminListFilterSelect (column-aligned filters only).
+ * Children: AdminListSearch + AdminListFilterSelect only — never AdminCreateButton.
+ * Create CTA belongs in AdminPageHeader `actions` (top-right of the title).
  */
 export function AdminListFilters({ children, className = '', 'aria-label': ariaLabel }) {
   return (
@@ -15,7 +17,7 @@ export function AdminListFilters({ children, className = '', 'aria-label': ariaL
       role="search"
       aria-label={ariaLabel}
       className={cn(
-        'mb-3 flex flex-nowrap items-start gap-2.5 overflow-x-auto pb-0.5',
+        'mb-3 flex flex-nowrap items-end gap-2.5 overflow-x-auto pb-0.5',
         className
       )}
     >
@@ -48,5 +50,21 @@ export function AdminListFilterSelect({
         {children}
       </select>
     </FormField>
+  );
+}
+
+/**
+ * Wraps list results (table / empty / pager block) so filter changes re-trigger ContentEnter.
+ * Prefer AdminTableShell `animKey` when only the table should animate; use this when
+ * empty state + table share one transition.
+ */
+export function AdminListResults({ animKey, children, className = '' }) {
+  if (animKey === undefined || animKey === null || animKey === '') {
+    return <div className={className}>{children}</div>;
+  }
+  return (
+    <ContentEnter animKey={String(animKey)} className={cn('w-full', className)}>
+      {children}
+    </ContentEnter>
   );
 }

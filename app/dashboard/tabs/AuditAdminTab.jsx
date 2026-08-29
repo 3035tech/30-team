@@ -205,7 +205,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
       {!loading && items.length ? (
         <>
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.audit.count', { n: total })}</p>
-          <AdminTableShell minWidth="880px">
+          <AdminTableShell
+            minWidth="880px"
+            animKey={`${filters.actorKind}|${filters.companyId}|${filters.action}|${filters.q}|${filters.page}|${filters.pageSize}`}
+          >
               <thead>
                 <tr className="border-b border-ink/10 bg-ink/[0.03]">
                   <AdminTh>{t(locale, 'panel.audit.colWhen')}</AdminTh>

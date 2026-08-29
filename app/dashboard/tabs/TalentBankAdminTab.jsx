@@ -276,7 +276,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
           <p className={cn(S.faint, 'm-0')}>
             {t(locale, 'panel.talentBank.count', { n: total })}
           </p>
-          <AdminTableShell minWidth="56rem">
+          <AdminTableShell minWidth="56rem" animKey={`${q}|${vacancyId}|${stage}|${topType}|${page}|${pageSize}`}>
               <thead>
                 <tr className="border-b border-ink/10 bg-canvas/80">
                   <SortableTh

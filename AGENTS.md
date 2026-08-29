@@ -127,10 +127,10 @@ Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise de
 | Cabeçalho ordenável | `SortableTh` |
 | Cabeçalho estático | `AdminTh` |
 | Casca da tabela | `AdminTableShell` |
-| Título da aba | `AdminPageHeader` |
-| Busca + filtros de coluna (1 linha) | `AdminListFilters` + `AdminListSearch` + `AdminListFilterSelect` (`app/_components/AdminListFilters.jsx`) — só campos que existem como colunas |
+| Título da aba | `AdminPageHeader` (Create CTA só em `actions`, topo-direita) |
+| Busca + filtros de coluna (1 linha) | `AdminListFilters` + `AdminListSearch` + `AdminListFilterSelect` — só busca/selects (nunca Create); resultados com `AdminTableShell` `animKey` ou `AdminListResults` |
 | Paginação | `AdminListPager` (+ `PAGE_SIZE_OPTIONS`) |
-| Criar | `AdminCreateButton` (`S.btnPrimary` + ícone `plus`) |
+| Criar | `AdminCreateButton` só em `AdminPageHeader` `actions` (`S.btnPrimary` + ícone `plus`) |
 | Editar | `AdminEditButton` (lápis + brand) |
 | Excluir / desativar / arquivar | `AdminDeleteButton` (lixeira + danger) |
 | Ver (opcional) | `AdminViewButton` |

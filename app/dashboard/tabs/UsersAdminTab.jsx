@@ -6,7 +6,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
-import { clientSortNextDir, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminTh, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton } from '../dashboard-shared';
+import { clientSortNextDir, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminTh, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton, AdminPageHeader } from '../dashboard-shared';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -441,20 +441,17 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         </div>
       ) : null}
 
-      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.usersTitle')}</span>
-      <div className={cn(S.card, 'px-7 py-[22px]')}>
-        <span className={S.label}>{t(locale, 'panel.admin.usersAccounts')}</span>
-        <p className="mb-0 mt-2.5 text-prose leading-relaxed text-ink-muted">
-          {t(locale, 'panel.admin.usersIntro')}
-          <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
-          {t(locale, 'panel.admin.usersIntroSuffix')}
-        </p>
-      </div>
-
-      <div className={S.card}>
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.usersList')}</span>
-          <div className="flex flex-wrap gap-2">
+      <AdminPageHeader
+        title={t(locale, 'panel.admin.usersTitle')}
+        subtitle={
+          <>
+            {t(locale, 'panel.admin.usersIntro')}
+            <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
+            {t(locale, 'panel.admin.usersIntroSuffix')}
+          </>
+        }
+        actions={
+          <>
             <AdminCreateButton
               label={t(locale, 'panel.admin.newUserBtn')}
               onClick={openCreateUser}
@@ -471,73 +468,74 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             >
               {t(locale, 'panel.admin.refresh')}
             </button>
-          </div>
-        </div>
-        <div className="mt-3">
-          <AdminListFilters aria-label={t(locale, 'panel.admin.usersList')}>
-            <AdminListSearch
-              locale={locale}
-              value={searchDraft}
-              onChange={setSearchDraft}
-              onSubmit={(v) => pushUsersSearch(String(v || '').trim())}
-              placeholder={t(locale, 'panel.admin.usersSearchPh')}
-            />
+          </>
+        }
+      />
+
+      <div className={S.card}>
+        <AdminListFilters aria-label={t(locale, 'panel.admin.usersList')}>
+          <AdminListSearch
+            locale={locale}
+            value={searchDraft}
+            onChange={setSearchDraft}
+            onSubmit={(v) => pushUsersSearch(String(v || '').trim())}
+            placeholder={t(locale, 'panel.admin.usersSearchPh')}
+          />
+          <AdminListFilterSelect
+            label={t(locale, 'panel.admin.filterRole')}
+            value={usersRole}
+            onChange={(v) => {
+              if (!navigateDashboard) return;
+              navigateDashboard({
+                usersRole: v || null,
+                usersPage: 1,
+                tab: 'users',
+              });
+            }}
+          >
+            <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+            <option value="hr">hr</option>
+            <option value="direction">direction</option>
+            <option value="admin">admin</option>
+          </AdminListFilterSelect>
+          <AdminListFilterSelect
+            label={t(locale, 'panel.admin.filterActive')}
+            value={usersActive}
+            onChange={(v) => {
+              if (!navigateDashboard) return;
+              navigateDashboard({
+                usersActive: v || null,
+                usersPage: 1,
+                tab: 'users',
+              });
+            }}
+          >
+            <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+            <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+            <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+          </AdminListFilterSelect>
+          {companyOptions.length > 0 ? (
             <AdminListFilterSelect
-              label={t(locale, 'panel.admin.filterRole')}
-              value={usersRole}
+              label={t(locale, 'panel.admin.filterCompany')}
+              value={usersCompany}
               onChange={(v) => {
                 if (!navigateDashboard) return;
                 navigateDashboard({
-                  usersRole: v || null,
+                  usersCompany: v || null,
                   usersPage: 1,
                   tab: 'users',
                 });
               }}
             >
               <option value="">{t(locale, 'panel.admin.filterAll')}</option>
-              <option value="hr">hr</option>
-              <option value="direction">direction</option>
-              <option value="admin">admin</option>
+              {companyOptions.map((c) => (
+                <option key={c.id} value={String(c.id)}>
+                  {c.name}
+                </option>
+              ))}
             </AdminListFilterSelect>
-            <AdminListFilterSelect
-              label={t(locale, 'panel.admin.filterActive')}
-              value={usersActive}
-              onChange={(v) => {
-                if (!navigateDashboard) return;
-                navigateDashboard({
-                  usersActive: v || null,
-                  usersPage: 1,
-                  tab: 'users',
-                });
-              }}
-            >
-              <option value="">{t(locale, 'panel.admin.filterAll')}</option>
-              <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
-              <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
-            </AdminListFilterSelect>
-            {companyOptions.length > 0 ? (
-              <AdminListFilterSelect
-                label={t(locale, 'panel.admin.filterCompany')}
-                value={usersCompany}
-                onChange={(v) => {
-                  if (!navigateDashboard) return;
-                  navigateDashboard({
-                    usersCompany: v || null,
-                    usersPage: 1,
-                    tab: 'users',
-                  });
-                }}
-              >
-                <option value="">{t(locale, 'panel.admin.filterAll')}</option>
-                {companyOptions.map((c) => (
-                  <option key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </option>
-                ))}
-              </AdminListFilterSelect>
-            ) : null}
-          </AdminListFilters>
-        </div>
+          ) : null}
+        </AdminListFilters>
         {usersTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
@@ -553,7 +551,11 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           </div>
         ) : (
           <>
-          <AdminTableShell minWidth="640px" className="mt-2.5">
+          <AdminTableShell
+            minWidth="640px"
+            className="mt-2.5"
+            animKey={`${usersQ}|${usersRole}|${usersActive}|${usersCompany}|${usersPage}|${usersPageSize}`}
+          >
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.sortId')}</SortableTh>

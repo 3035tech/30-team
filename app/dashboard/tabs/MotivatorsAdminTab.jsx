@@ -387,7 +387,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter }) {
         </AdminListFilterSelect>
       </AdminListFilters>
       {loading ? <p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.invites.loading')}</p> : null}
-      <AdminTableShell minWidth="640px">
+      <AdminTableShell minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>

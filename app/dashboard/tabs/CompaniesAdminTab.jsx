@@ -15,6 +15,7 @@ import {
   AdminIconButton,
   AdminListPager,
   AdminListSearch,
+  AdminPageHeader,
   AdminTableShell,
   AdminTh,
   AdminViewButton,
@@ -531,18 +532,11 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
         </div>
       ) : null}
 
-      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.admin.companiesTitle')}</span>
-      <div className={cn(S.card, 'px-7 py-[22px]')}>
-        <span className={S.label}>{t(locale, 'panel.admin.companiesRegister')}</span>
-        <p className="mb-0 mt-2.5 text-prose leading-relaxed text-ink-muted">
-          {t(locale, 'panel.admin.companiesRegisterDesc')}
-        </p>
-      </div>
-
-      <div className={S.card}>
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.admin.companiesList')}</span>
-          <div className="flex flex-wrap gap-2">
+      <AdminPageHeader
+        title={t(locale, 'panel.admin.companiesTitle')}
+        subtitle={t(locale, 'panel.admin.companiesRegisterDesc')}
+        actions={
+          <>
             <AdminCreateButton
               label={t(locale, 'panel.admin.newCompanyBtn')}
               onClick={openCreateCompany}
@@ -556,35 +550,36 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
             >
               {t(locale, 'panel.admin.refresh')}
             </button>
-          </div>
-        </div>
-        <div className="mt-3">
-          <AdminListFilters aria-label={t(locale, 'panel.admin.companiesList')}>
-            <AdminListSearch
-              locale={locale}
-              value={searchDraft}
-              onChange={setSearchDraft}
-              onSubmit={(v) => pushCompaniesSearch(String(v || '').trim())}
-              placeholder={t(locale, 'panel.admin.companiesSearchPh')}
-            />
-            <AdminListFilterSelect
-              label={t(locale, 'panel.admin.filterActive')}
-              value={companiesActive}
-              onChange={(v) => {
-                if (!navigateDashboard) return;
-                navigateDashboard({
-                  companiesActive: v || null,
-                  companiesPage: 1,
-                  tab: 'companies',
-                });
-              }}
-            >
-              <option value="">{t(locale, 'panel.admin.filterAll')}</option>
-              <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
-              <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
-            </AdminListFilterSelect>
-          </AdminListFilters>
-        </div>
+          </>
+        }
+      />
+
+      <div className={S.card}>
+        <AdminListFilters aria-label={t(locale, 'panel.admin.companiesList')}>
+          <AdminListSearch
+            locale={locale}
+            value={searchDraft}
+            onChange={setSearchDraft}
+            onSubmit={(v) => pushCompaniesSearch(String(v || '').trim())}
+            placeholder={t(locale, 'panel.admin.companiesSearchPh')}
+          />
+          <AdminListFilterSelect
+            label={t(locale, 'panel.admin.filterActive')}
+            value={companiesActive}
+            onChange={(v) => {
+              if (!navigateDashboard) return;
+              navigateDashboard({
+                companiesActive: v || null,
+                companiesPage: 1,
+                tab: 'companies',
+              });
+            }}
+          >
+            <option value="">{t(locale, 'panel.admin.filterAll')}</option>
+            <option value="active">{t(locale, 'panel.admin.filterActiveYes')}</option>
+            <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
+          </AdminListFilterSelect>
+        </AdminListFilters>
         {companiesTotal === 0 ? (
           <div className="mt-3">
             <EmptyState
@@ -600,7 +595,11 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           </div>
         ) : (
           <>
-          <AdminTableShell minWidth="960px" className="mt-2.5">
+          <AdminTableShell
+            minWidth="960px"
+            className="mt-2.5"
+            animKey={`${companiesQ}|${companiesActive}|${companiesPage}|${companiesPageSize}`}
+          >
               <thead>
                 <tr className="bg-ink/[0.02]">
                   <SortableTh columnKey="id" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.sortId')}</SortableTh>

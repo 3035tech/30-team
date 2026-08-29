@@ -586,7 +586,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         </div>
       ) : (
         <>
-        <AdminTableShell minWidth="560px">
+        <AdminTableShell minWidth="560px" animKey={`${nameQ}|${filterCategoryId}|${filterBenefitType}|${safePage}|${pageSize}`}>
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={toggleSort}>

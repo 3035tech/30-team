@@ -645,7 +645,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                 <option value="inactive">{t(locale, 'panel.admin.filterActiveNo')}</option>
               </AdminListFilterSelect>
             </AdminListFilters>
-            <AdminTableShell minWidth="480px">
+            <AdminTableShell minWidth="480px" animKey={`${courseQ}|${activeFilter}`}>
               <thead>
                 <tr className="border-b border-ink/10">
                   <AdminTh>{t(locale, 'panel.lms.colCourse')}</AdminTh>

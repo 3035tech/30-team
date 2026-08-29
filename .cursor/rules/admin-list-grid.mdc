@@ -21,13 +21,14 @@ alwaysApply: false
    - `AdminListPager` — total + page size + Anterior/Próxima (`PAGE_SIZE_OPTIONS`)
 2b. **Cabeçalho** — `AdminPageHeader` (título + subtítulo + actions).
 2c. **Filtros (obrigatório)** — uma **única linha** horizontal com `AdminListFilters` (`app/_components/AdminListFilters.jsx`):
-   - Filhos: `AdminListSearch` + `AdminListFilterSelect` (0–3 selects relevantes).
+   - Filhos: **somente** `AdminListSearch` + `AdminListFilterSelect` (0–3 selects relevantes). **Proibido** `AdminCreateButton` (ou outro CTA de criar) dentro ou ao lado de `AdminListFilters`.
+   - **Criar** = só em `AdminPageHeader` `actions` (topo-direita do título). Nunca na barra de filtros nem no toolbar “Lista” acima dos filtros.
    - Só filtros alinhados a **colunas da tabela** (status, tipo, ativo, empresa, motivo…). Não inventar filtros para Ações / notas / id.
    - Avaliar listagem a listagem o que é útil; max ~3 selects + busca para caber numa linha (`flex-nowrap` + `overflow-x-auto`).
    - Lista **server-paginated** → filtro na API/SQL (não só na página atual). Lista já carregada → filtro no `useMemo` com a busca.
-   - CTAs de criar ficam no `AdminPageHeader` / fora da barra de filtros.
+   - **Resultados após filtro** — passar `animKey` em `AdminTableShell` (ex. `` `${q}|${status}|${page}|${pageSize}` ``) **ou** envolver empty/tabela com `AdminListResults` (`AdminListFilters.jsx`) para re-rodar o fade `ContentEnter`.
    - Reusar labels compartilhados quando couber: `panel.admin.filterActive` / `filterAll` / `filterActiveYes` / `filterActiveNo` / `filterRole` / `filterCompany`.
-3. **Criar** — só `AdminCreateButton` (`S.btnPrimary` + ícone `plus`). Não inventar outro roxo / `+ ` solto.
+3. **Criar** — só `AdminCreateButton` (`S.btnPrimary` + ícone `plus`) em `AdminPageHeader` `actions`. Não inventar outro roxo / `+ ` solto; não colocar create na barra de filtros.
 4. **Editar** — só `AdminEditButton` (lápis + tint brand).
 5. **Excluir / desativar / arquivar** — só `AdminDeleteButton` (lixeira + tint danger).
 6. **Ver** — `AdminViewButton` (ícone olho + tint info). Ordem canônica na célula: **Ver → Editar → Excluir**.
@@ -66,6 +67,8 @@ import { AdminListSearch, … } from '../dashboard-shared';
 - Card-list **nova** quando a entidade é cadastro tabular (preferir tabela + pager)
 - Segundo pager / sort header inventado
 - CTA create com `btnBrandSoft` como ação primária de “Novo …”
+- `AdminCreateButton` dentro / ao lado de `AdminListFilters` ou no toolbar “Lista” acima dos filtros (create só em `AdminPageHeader` `actions`)
+- Listagem filtrável sem `animKey` em `AdminTableShell` (nem `AdminListResults`)
 - Filtros em **duas+ linhas** ou `flex-wrap` empilhando selects (usar `AdminListFilters`)
 - Só busca sem selects quando a tabela tem colunas categóricas relevantes (status/ativo/tipo…)
 - Filtro client-only em listagem **paginada no servidor** (resultados incompletos)
