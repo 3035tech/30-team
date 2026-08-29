@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { RichTextEditor } from '../../_components/RichTextEditor';
+import { FormField } from '../../_components/FormField';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
@@ -236,16 +237,15 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
             <p className="mb-2.5 mt-0 text-xs leading-[1.55] text-ink-muted">
               {t(locale, 'recruiting.rubricAiIntro')}
             </p>
-            <label className="mb-1 block text-2xs text-ink-muted">
-              {t(locale, 'recruiting.rubricAiJobLabel')}
-            </label>
-            <textarea
-              value={jobDesc}
-              onChange={(e) => setJobDesc(e.target.value)}
-              placeholder={t(locale, 'recruiting.rubricAiJobPh')}
-              rows={10}
-              className="mb-2 box-border w-full resize-y rounded-lg border border-ink/12 bg-surface px-3 py-2.5 font-ui text-xs text-ink"
-            />
+            <FormField label={t(locale, 'recruiting.rubricAiJobLabel')} className="mb-2">
+              <textarea
+                value={jobDesc}
+                onChange={(e) => setJobDesc(e.target.value)}
+                placeholder={t(locale, 'recruiting.rubricAiJobPh')}
+                rows={10}
+                className="box-border w-full resize-y rounded-lg border border-ink/12 bg-surface px-3 py-2.5 font-ui text-xs text-ink"
+              />
+            </FormField>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -281,7 +281,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
         ) : null}
       </div>
 
-      <div className="mb-2">
+      <FormField as="div" label={t(locale, 'recruiting.rubricNotes')} className="mb-2">
         <RichTextEditor
           value={notes}
           onChange={setNotes}
@@ -289,7 +289,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
           minHeight={120}
           locale={locale}
         />
-      </div>
+      </FormField>
       <button
         type="button"
         onClick={save}

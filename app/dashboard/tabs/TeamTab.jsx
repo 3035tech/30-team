@@ -27,6 +27,7 @@ import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
 import { CandidateCvBlock } from '../../_components/CandidateCvBlock';
+import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_components/FormField';
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
@@ -1403,88 +1404,154 @@ export function TeamTab({
                     })()
                   ) : (
                     <div>
-                      <div className="mb-2.5 flex flex-wrap gap-2">
-                        <input
-                          value={formatPhoneBr(profileDraft.phone)}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, phone: stripPhone(e.target.value) || '' }))}
-                          placeholder={t(locale, 'recruiting.phonePh')}
-                          inputMode="tel"
-                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
-                        />
-                        <input
-                          value={profileDraft.linkedinUrl}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, linkedinUrl: e.target.value }))}
-                          placeholder={t(locale, 'recruiting.linkedinPh')}
-                          autoComplete="off"
-                          name="linkedin-url"
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[2_1_200px]"
-                        />
-                        <BrStateSelect
-                          value={profileDraft.state}
-                          onChange={(state) => setProfileDraft((p) => ({ ...p, state, city: '' }))}
-                          locale={locale}
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[0_1_160px] cursor-pointer"
-                        />
-                        <BrCitySelect
-                          uf={profileDraft.state}
-                          value={profileDraft.city}
-                          onChange={(city) => setProfileDraft((p) => ({ ...p, city }))}
-                          locale={locale}
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_180px]"
-                        />
-                        <input
-                          value={formatSalaryBr(profileDraft.salaryExpectation)}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, salaryExpectation: digitsOnly(e.target.value).slice(0, 15) }))}
-                          placeholder={t(locale, 'recruiting.salaryPh')}
-                          inputMode="numeric"
-                          autoComplete="off"
-                          className="rounded-lg border border-ink/12 bg-ink/[0.03] px-2.5 py-2 font-mono text-xs text-ink min-w-0 flex-[1_1_160px]"
-                        />
-                        <select
-                          value={profileDraft.availability}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, availability: e.target.value }))}
-                          aria-label={t(locale, 'recruiting.availabilityLabel')}
-                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
+                      <div className={cn(formFieldRowClass, 'mb-2.5')}>
+                        <FormField
+                          label={t(locale, 'recruiting.phoneLabel')}
+                          className={formFieldGrowClass}
                         >
-                          <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
-                          <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
-                          <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
-                          <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
-                          <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
-                          <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-                        </select>
-                        <select
-                          value={profileDraft.source}
-                          onChange={(e) => setProfileDraft((p) => ({ ...p, source: e.target.value }))}
-                          aria-label={t(locale, 'recruiting.sourceLabel')}
-                          className={cn(S.select, 'min-w-0 flex-[1_1_140px] font-mono text-xs')}
+                          <input
+                            value={formatPhoneBr(profileDraft.phone)}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({ ...p, phone: stripPhone(e.target.value) || '' }))
+                            }
+                            placeholder={t(locale, 'recruiting.phonePh')}
+                            inputMode="tel"
+                            aria-label={t(locale, 'recruiting.phoneLabel')}
+                            className={cn(S.input, 'w-full font-mono text-xs')}
+                          />
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.linkedinLabel')}
+                          className="min-w-0 flex-[2_1_200px]"
                         >
-                          <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
-                          <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
-                          <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
-                          <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
-                          <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
-                          <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-                        </select>
-                        <label className="flex min-w-0 flex-[1_1_160px] flex-col gap-1">
-                          <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.team.birthDate')}</span>
+                          <input
+                            value={profileDraft.linkedinUrl}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({ ...p, linkedinUrl: e.target.value }))
+                            }
+                            placeholder={t(locale, 'recruiting.linkedinPh')}
+                            autoComplete="off"
+                            name="linkedin-url"
+                            aria-label={t(locale, 'recruiting.linkedinLabel')}
+                            className={cn(S.input, 'w-full font-mono text-xs')}
+                          />
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.stateLabel')}
+                          className="min-w-0 flex-[0_1_160px]"
+                        >
+                          <BrStateSelect
+                            value={profileDraft.state}
+                            onChange={(state) =>
+                              setProfileDraft((p) => ({ ...p, state, city: '' }))
+                            }
+                            locale={locale}
+                            className={cn(S.select, 'w-full font-mono text-xs')}
+                          />
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.cityLabel')}
+                          className="min-w-0 flex-[1_1_180px]"
+                        >
+                          <BrCitySelect
+                            uf={profileDraft.state}
+                            value={profileDraft.city}
+                            onChange={(city) => setProfileDraft((p) => ({ ...p, city }))}
+                            locale={locale}
+                            className={cn(S.select, 'w-full font-mono text-xs')}
+                          />
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.salaryExpectationLabel')}
+                          className={formFieldGrowClass}
+                        >
+                          <input
+                            value={formatSalaryBr(profileDraft.salaryExpectation)}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({
+                                ...p,
+                                salaryExpectation: digitsOnly(e.target.value).slice(0, 15),
+                              }))
+                            }
+                            placeholder={t(locale, 'recruiting.salaryPh')}
+                            inputMode="numeric"
+                            autoComplete="off"
+                            aria-label={t(locale, 'recruiting.salaryExpectationLabel')}
+                            className={cn(S.input, 'w-full font-mono text-xs')}
+                          />
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.availabilityLabel')}
+                          className={formFieldGrowClass}
+                        >
+                          <select
+                            value={profileDraft.availability}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({ ...p, availability: e.target.value }))
+                            }
+                            aria-label={t(locale, 'recruiting.availabilityLabel')}
+                            className={cn(S.select, 'w-full font-mono text-xs')}
+                          >
+                            <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+                            <option value="immediate">
+                              {t(locale, 'recruiting.availabilityImmediate')}
+                            </option>
+                            <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+                            <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+                            <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+                            <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+                          </select>
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'recruiting.sourceLabel')}
+                          className={formFieldGrowClass}
+                        >
+                          <select
+                            value={profileDraft.source}
+                            onChange={(e) =>
+                              setProfileDraft((p) => ({ ...p, source: e.target.value }))
+                            }
+                            aria-label={t(locale, 'recruiting.sourceLabel')}
+                            className={cn(S.select, 'w-full font-mono text-xs')}
+                          >
+                            <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+                            <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+                            <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+                            <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+                            <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+                            <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+                          </select>
+                        </FormField>
+                        <FormField
+                          label={t(locale, 'panel.team.birthDate')}
+                          className={formFieldGrowClass}
+                        >
                           <DateField
                             value={profileDraft.birthDate || ''}
                             onChange={(e) =>
                               setProfileDraft((p) => ({ ...p, birthDate: e.target.value || '' }))
                             }
                             aria-label={t(locale, 'panel.team.birthDate')}
-                            className="font-mono text-xs"
+                            className="w-full font-mono text-xs"
                           />
-                        </label>
+                        </FormField>
                         {detail?.candidate?.startDate ? (
-                          <p className="m-0 min-w-0 flex-[1_1_160px] font-mono text-2xs leading-snug text-ink-muted">
-                            {t(locale, 'panel.team.workAnniversary')}:{' '}
-                            {String(detail.candidate.startDate).slice(0, 10)}
-                            <span className="mt-0.5 block text-ink-faint">
-                              {t(locale, 'panel.team.workAnniversaryHint')}
-                            </span>
-                          </p>
+                          <FormField
+                            as="div"
+                            label={t(locale, 'panel.team.workAnniversary')}
+                            hint={t(locale, 'panel.team.workAnniversaryHint')}
+                            className={formFieldGrowClass}
+                          >
+                            <div
+                              className={cn(
+                                S.input,
+                                'flex min-h-touch w-full cursor-default items-center font-mono text-xs text-ink-muted opacity-90'
+                              )}
+                              aria-readonly="true"
+                            >
+                              {String(detail.candidate.startDate).slice(0, 10)}
+                            </div>
+                          </FormField>
                         ) : null}
                       </div>
                       <div className="mb-2.5">

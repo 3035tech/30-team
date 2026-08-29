@@ -73,6 +73,8 @@ const S = {
   cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
   pageTitle: 'm-0 font-display text-xl font-normal text-ink',
+  /** Flex row for FormField — items-start evita altura “esticada” por hint/readonly */
+  fieldRow: 'flex flex-wrap items-start gap-2.5',
 };
 
 const Bar = ({ value, max, color, h = 6 }) => (

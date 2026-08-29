@@ -9,6 +9,7 @@ import { useLocale } from '../../lib/useLocale';
 import { titleCasePersonName } from '../../lib/person-name';
 import { cn } from '../../lib/cn';
 import LanguageSelect from './LanguageSelect';
+import { FormField, formFieldCandLabelClass } from './FormField';
 
 const SESSION_CFG = MOTIVATORS_DEFINITION.config;
 const SESSION_QUESTIONS = SESSION_CFG.questions_per_session ?? 30;
@@ -23,10 +24,9 @@ const SC = {
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
   p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
-  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
-  fieldLabel: 'mb-2 block text-xs text-ink-muted',
-  fields: 'cand-flow-fields',
+  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  fields: 'cand-flow-fields flex flex-col gap-4',
 };
 
 
@@ -154,26 +154,29 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
           </div>
         ) : (
           <>
-            <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'candidate.fullName')}</label>
-            <input
-              className={SC.input}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setName(titleCasePersonName(name))}
-              placeholder={t(locale, 'candidate.namePlaceholder')}
-            />
+            <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
+              <input
+                className={SC.input}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => setName(titleCasePersonName(name))}
+                placeholder={t(locale, 'candidate.namePlaceholder')}
+              />
+            </FormField>
 
-            <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'motivators.emailInvite')}</label>
-            <input className={SC.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+            <FormField label={t(locale, 'motivators.emailInvite')} labelClassName={formFieldCandLabelClass} className="w-full">
+              <input className={SC.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+            </FormField>
           </>
         )}
 
-        <label className="mb-2 block text-xs text-ink-muted">{t(locale, 'motivators.areaLabel')}</label>
-        <select className={cn(SC.select, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
-          {areaOptions.map((a) => (
-            <option key={a.key} value={a.key}>{localizeAreaLabel(a, locale)}</option>
-          ))}
-        </select>
+        <FormField label={t(locale, 'motivators.areaLabel')} labelClassName={formFieldCandLabelClass} className="w-full">
+          <select className={cn(SC.select, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
+            {areaOptions.map((a) => (
+              <option key={a.key} value={a.key}>{localizeAreaLabel(a, locale)}</option>
+            ))}
+          </select>
+        </FormField>
 
         <label className="mb-4 flex gap-2.5 text-xs text-ink-muted">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

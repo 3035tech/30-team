@@ -20,6 +20,7 @@ import { TagInput } from './TagInput';
 import { EntitySearchSelect } from './EntitySearchSelect';
 import { parseTagList } from '../../lib/tag-list';
 import { CompanyLogoCropDialog } from './CompanyLogoCropDialog';
+import { FormField } from './FormField';
 import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
 import { digitsOnly, formatSalaryDisplay } from '../../lib/br-masks';
 
@@ -174,27 +175,29 @@ export function PromptFormDialog({
   });
   const fieldGroups = groupFieldsByRow(visibleFields);
 
-  const renderFieldBlock = (f) => (
-    <div key={fieldKeyOf(f)} className="block min-w-0">
-      {f.type !== 'boolean' ? (
-        <span className="font-mono text-2xs text-ink-faint">{f.label}</span>
-      ) : null}
-      {renderControl(f)}
-      {f.help && f.type !== 'imageUpload' ? (
-        <p
-          className={cn(
-            'text-xs leading-[1.45] text-ink-muted',
-            f.type === 'boolean' ? 'ml-7 mt-1.5 mb-0' : 'mt-1.5 mb-0'
-          )}
-        >
-          {f.help}
-        </p>
-      ) : null}
-      {f.help && f.type === 'imageUpload' && f.storageConfigured !== false ? (
-        <p className="mb-0 mt-1.5 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
-      ) : null}
-    </div>
-  );
+  const renderFieldBlock = (f) => {
+    if (f.type === 'boolean') {
+      return (
+        <div key={fieldKeyOf(f)} className="block min-w-0">
+          {renderControl(f)}
+          {f.help ? (
+            <p className="ml-7 mt-1.5 mb-0 text-xs leading-[1.45] text-ink-muted">{f.help}</p>
+          ) : null}
+        </div>
+      );
+    }
+    return (
+      <FormField
+        key={fieldKeyOf(f)}
+        as={f.type === 'imageUpload' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' ? 'div' : 'label'}
+        label={f.label}
+        hint={f.help || null}
+        className="w-full"
+      >
+        {renderControl(f)}
+      </FormField>
+    );
+  };
 
   const onImageFile = async (f, file) => {
     if (!file) return;

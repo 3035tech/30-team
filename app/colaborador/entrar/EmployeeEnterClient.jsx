@@ -6,6 +6,7 @@ import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading } from '../../_components/AppLoading';
+import { FormField } from '../../_components/FormField';
 
 /**
  * Consume magic-link token → set employee cookie (ou desafio 2FA) → redirect /colaborador
@@ -87,19 +88,18 @@ export default function EmployeeEnterClient() {
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
         <h1 className="font-display text-2xl text-ink">{t(locale, 'login.twoFaTitle')}</h1>
         <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'login.twoFaIntro')}</p>
-        <label className="mt-6 block text-xs text-ink-muted">
-          {t(locale, 'login.twoFaCode')}
+        <FormField label={t(locale, 'login.twoFaCode')} className="mt-6">
           <input
             inputMode="numeric"
             autoComplete="one-time-code"
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={twoFaCode}
             onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
             maxLength={6}
             disabled={busy}
           />
-        </label>
+        </FormField>
         <button
           type="button"
           disabled={busy || twoFaCode.length !== 6}

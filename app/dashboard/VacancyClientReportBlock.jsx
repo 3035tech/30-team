@@ -6,6 +6,7 @@ import { errorMessage, t } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
+import { FormField } from '../_components/FormField';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading } from '../_components/AppLoading';
 import { CopyableLink } from '../_components/CopyableLink';
@@ -1031,31 +1032,37 @@ export function VacancyClientReportBlock({
                             </div>
                           ) : null}
                           {isOn ? (
-                            <div className="flex flex-col gap-1.5 mt-2">
-                              <input
-                                type="text"
-                                value={overrides[c.candidateId]?.why || ''}
-                                onChange={(e) => setStructured(c.candidateId, 'why', e.target.value)}
-                                placeholder={t(locale, 'panel.report.fieldWhyPh')}
-                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                className={fieldInputClass()}
-                              />
-                              <input
-                                type="text"
-                                value={overrides[c.candidateId]?.watchOut || ''}
-                                onChange={(e) => setStructured(c.candidateId, 'watchOut', e.target.value)}
-                                placeholder={t(locale, 'panel.report.fieldWatchPh')}
-                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                className={fieldInputClass()}
-                              />
-                              <input
-                                type="text"
-                                value={overrides[c.candidateId]?.interviewProbe || ''}
-                                onChange={(e) => setStructured(c.candidateId, 'interviewProbe', e.target.value)}
-                                placeholder={t(locale, 'panel.report.fieldProbePh')}
-                                maxLength={STRUCTURED_FIELD_MAX_CHARS}
-                                className={fieldInputClass()}
-                              />
+                            <div className="mt-2 flex flex-col gap-1.5">
+                              <FormField label={t(locale, 'panel.report.fieldWhy')}>
+                                <input
+                                  type="text"
+                                  value={overrides[c.candidateId]?.why || ''}
+                                  onChange={(e) => setStructured(c.candidateId, 'why', e.target.value)}
+                                  placeholder={t(locale, 'panel.report.fieldWhyPh')}
+                                  maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                  className={fieldInputClass()}
+                                />
+                              </FormField>
+                              <FormField label={t(locale, 'panel.report.fieldWatch')}>
+                                <input
+                                  type="text"
+                                  value={overrides[c.candidateId]?.watchOut || ''}
+                                  onChange={(e) => setStructured(c.candidateId, 'watchOut', e.target.value)}
+                                  placeholder={t(locale, 'panel.report.fieldWatchPh')}
+                                  maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                  className={fieldInputClass()}
+                                />
+                              </FormField>
+                              <FormField label={t(locale, 'panel.report.fieldProbe')}>
+                                <input
+                                  type="text"
+                                  value={overrides[c.candidateId]?.interviewProbe || ''}
+                                  onChange={(e) => setStructured(c.candidateId, 'interviewProbe', e.target.value)}
+                                  placeholder={t(locale, 'panel.report.fieldProbePh')}
+                                  maxLength={STRUCTURED_FIELD_MAX_CHARS}
+                                  className={fieldInputClass()}
+                                />
+                              </FormField>
                             </div>
                           ) : null}
                         </td>

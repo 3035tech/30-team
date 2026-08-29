@@ -5,6 +5,7 @@ import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { FormField } from '../../_components/FormField';
 import { RichTextView } from '../../_components/RichTextView';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -286,17 +287,16 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       <section className="mt-8 rounded-control border border-ink/12 bg-canvas/40 p-3">
         <h2 className={cn(S.label, 'mb-2')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h2>
         <p className={cn(S.muted, 'mb-2 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'panel.employeePortal.noteLabel')}
+        <FormField label={t(locale, 'panel.employeePortal.noteLabel')}>
           <textarea
-            className={cn(S.input, 'mt-1 min-h-[80px] w-full')}
+            className={cn(S.input, 'min-h-[80px] w-full')}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={2000}
             placeholder={t(locale, 'panel.employeePortal.notePh')}
             disabled={busy}
           />
-        </label>
+        </FormField>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"

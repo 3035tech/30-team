@@ -9,6 +9,7 @@ import {
   dialogBtnPrimaryClass,
   dialogOverlayElevatedClass,
 } from './app-dialog-styles';
+import { FormField } from './FormField';
 import {
   assertLogoSourceFile,
   clampLogoPan,
@@ -234,8 +235,10 @@ export function CompanyLogoCropDialog({ open, file, locale = 'pt-BR', onCancel, 
           />
         </div>
 
-        <label className="mt-4 flex flex-col gap-1.5 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.admin.companyLogoCropZoom')}
+        <FormField
+          label={t(locale, 'panel.admin.companyLogoCropZoom')}
+          className="mt-4"
+        >
           <input
             type="range"
             min={1}
@@ -246,7 +249,7 @@ export function CompanyLogoCropDialog({ open, file, locale = 'pt-BR', onCancel, 
             onChange={(e) => onZoomChange(e.target.value)}
             className="w-full accent-brand-500"
           />
-        </label>
+        </FormField>
 
         {error ? <p className="mb-0 mt-3 text-xs text-danger">{error}</p> : null}
 

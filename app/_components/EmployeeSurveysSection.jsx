@@ -6,6 +6,7 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
+import { FormField } from './FormField';
 
 /**
  * Clima / pulso autenticados — B-2501.
@@ -121,11 +122,10 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
           </div>
           <div className="space-y-3">
             {(active.questions || []).map((q) => (
-              <label key={q.id} className="block text-xs text-ink">
-                <span className="text-ink-muted">{q.prompt}</span>
+              <FormField key={q.id} label={q.prompt}>
                 {q.questionKind === 'text' ? (
                   <textarea
-                    className={cn(S.input, 'mt-1 min-h-[72px] w-full text-xs')}
+                    className={cn(S.input, 'min-h-[72px] w-full text-xs')}
                     maxLength={1500}
                     value={answers[active.key]?.[q.id] || ''}
                     onChange={(e) =>
@@ -140,7 +140,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
                     type="range"
                     min={q.scaleMin ?? 1}
                     max={q.scaleMax ?? 5}
-                    className="mt-2 w-full"
+                    className="w-full"
                     value={answers[active.key]?.[q.id] ?? q.scaleMin ?? 1}
                     onChange={(e) =>
                       setAnswers((prev) => ({
@@ -150,7 +150,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR' }) {
                     }
                   />
                 )}
-              </label>
+              </FormField>
             ))}
           </div>
           <button

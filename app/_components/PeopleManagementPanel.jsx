@@ -13,6 +13,7 @@ import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { DateField } from './DateField';
+import { FormField } from './FormField';
 
 function todayIso() {
   const d = new Date();
@@ -606,39 +607,32 @@ export function PeopleManagementPanel({
         </span>
 
         <div className="mb-2.5 flex flex-col gap-2">
-          <label className="text-xs text-ink-muted">
-            {t(locale, 'panel.team.oneOnOneDate')}
+          <FormField as="div" label={t(locale, 'panel.team.oneOnOneDate')} className="max-w-[220px]">
             <DateField
               value={meetingDate}
               onChange={(e) => setMeetingDate(e.target.value)}
               aria-label={t(locale, 'panel.team.oneOnOneDate')}
-              className="mt-1 block w-full max-w-[220px] rounded-lg border border-ink/12 bg-white px-2.5 py-2 font-inherit text-ink"
+              className="block w-full rounded-lg border border-ink/12 bg-white px-2.5 py-2 font-inherit text-ink"
             />
-          </label>
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'panel.team.oneOnOneNotes')}
-            <div className="mt-1">
-              <RichTextEditor
-                value={notes}
-                onChange={setNotes}
-                placeholder={t(locale, 'panel.team.oneOnOneNotesPlaceholder')}
-                minHeight={100}
-                locale={locale}
-              />
-            </div>
-          </label>
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'panel.team.oneOnOneNextSteps')}
-            <div className="mt-1">
-              <RichTextEditor
-                value={nextSteps}
-                onChange={setNextSteps}
-                placeholder={t(locale, 'panel.team.oneOnOneNextStepsPlaceholder')}
-                minHeight={80}
-                locale={locale}
-              />
-            </div>
-          </label>
+          </FormField>
+          <FormField as="div" label={t(locale, 'panel.team.oneOnOneNotes')}>
+            <RichTextEditor
+              value={notes}
+              onChange={setNotes}
+              placeholder={t(locale, 'panel.team.oneOnOneNotesPlaceholder')}
+              minHeight={100}
+              locale={locale}
+            />
+          </FormField>
+          <FormField as="div" label={t(locale, 'panel.team.oneOnOneNextSteps')}>
+            <RichTextEditor
+              value={nextSteps}
+              onChange={setNextSteps}
+              placeholder={t(locale, 'panel.team.oneOnOneNextStepsPlaceholder')}
+              minHeight={80}
+              locale={locale}
+            />
+          </FormField>
           <div className="flex items-center gap-2.5">
             <button
               type="button"

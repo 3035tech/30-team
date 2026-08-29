@@ -5,9 +5,10 @@ import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
+import { FormField } from './FormField';
 
 const inputClass =
-  'mt-1.5 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-prose text-ink';
+  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-prose text-ink';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
@@ -190,47 +191,35 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
         {loading ? (
           <p className="mt-4 text-ink-muted">{t(locale, 'panel.common.loading')}</p>
         ) : (
-          <div className="mt-[18px] flex flex-col gap-3.5">
-            <label className="block">
-              <span className="font-mono text-2xs text-ink-faint">
-                {t(locale, 'dashboard.profileDisplayName')}
-              </span>
+          <div className="mt-[18px] flex flex-col gap-3">
+            <FormField label={t(locale, 'dashboard.profileDisplayName')}>
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className={inputClass}
                 maxLength={120}
               />
-            </label>
-            <label className="block">
-              <span className="font-mono text-2xs text-ink-faint">
-                {t(locale, 'dashboard.profileEmail')}
-              </span>
+            </FormField>
+            <FormField label={t(locale, 'dashboard.profileEmail')}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputClass}
               />
-            </label>
+            </FormField>
             <div className="font-mono text-xs text-ink-muted">
               {t(locale, 'dashboard.profileRole')}: {role}
               {companyName ? ` · ${companyName}` : ''}
             </div>
 
-            <div>
-              <span className="mb-1.5 block font-mono text-2xs text-ink-faint">
-                {t(locale, 'dashboard.profileLocale')}
-              </span>
+            <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
               <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
-            </div>
+            </FormField>
 
-            <div className="mt-1 border-t border-ink/12 pt-3.5">
-              <span className={cn(dashS.label, 'mb-2.5')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
-              <label className="mb-2.5 block">
-                <span className="font-mono text-2xs text-ink-faint">
-                  {t(locale, 'dashboard.profileCurrentPassword')}
-                </span>
+            <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
+              <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
+              <FormField label={t(locale, 'dashboard.profileCurrentPassword')}>
                 <input
                   type="password"
                   value={currentPassword}
@@ -238,11 +227,8 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                   autoComplete="current-password"
                   className={inputClass}
                 />
-              </label>
-              <label className="mb-2.5 block">
-                <span className="font-mono text-2xs text-ink-faint">
-                  {t(locale, 'dashboard.profileNewPassword')}
-                </span>
+              </FormField>
+              <FormField label={t(locale, 'dashboard.profileNewPassword')}>
                 <input
                   type="password"
                   value={newPassword}
@@ -250,11 +236,8 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                   autoComplete="new-password"
                   className={inputClass}
                 />
-              </label>
-              <label className="block">
-                <span className="font-mono text-2xs text-ink-faint">
-                  {t(locale, 'dashboard.profileConfirmPassword')}
-                </span>
+              </FormField>
+              <FormField label={t(locale, 'dashboard.profileConfirmPassword')}>
                 <input
                   type="password"
                   value={newPassword2}
@@ -262,7 +245,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                   autoComplete="new-password"
                   className={inputClass}
                 />
-              </label>
+              </FormField>
             </div>
 
             {twoFaCanUse ? (
@@ -277,12 +260,9 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                   {t(locale, 'dashboard.profile2faIntro')}
                 </p>
                 {twoFaEnabled ? (
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-3">
                     <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
-                    <label className="block">
-                      <span className="font-mono text-2xs text-ink-faint">
-                        {t(locale, 'dashboard.profile2faCode')}
-                      </span>
+                    <FormField label={t(locale, 'dashboard.profile2faCode')}>
                       <input
                         inputMode="numeric"
                         autoComplete="one-time-code"
@@ -291,11 +271,8 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                         className={inputClass}
                         maxLength={6}
                       />
-                    </label>
-                    <label className="block">
-                      <span className="font-mono text-2xs text-ink-faint">
-                        {t(locale, 'dashboard.profile2faDisablePassword')}
-                      </span>
+                    </FormField>
+                    <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
                       <input
                         type="password"
                         autoComplete="current-password"
@@ -303,7 +280,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                         onChange={(e) => setTwoFaDisablePassword(e.target.value)}
                         className={inputClass}
                       />
-                    </label>
+                    </FormField>
                     <button
                       type="button"
                       onClick={disable2fa}
@@ -317,15 +294,12 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                     </button>
                   </div>
                 ) : twoFaSetupSecret ? (
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-3">
                     <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
                     <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
                       {twoFaSetupSecret}
                     </code>
-                    <label className="block">
-                      <span className="font-mono text-2xs text-ink-faint">
-                        {t(locale, 'dashboard.profile2faCode')}
-                      </span>
+                    <FormField label={t(locale, 'dashboard.profile2faCode')}>
                       <input
                         inputMode="numeric"
                         autoComplete="one-time-code"
@@ -334,7 +308,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                         className={inputClass}
                         maxLength={6}
                       />
-                    </label>
+                    </FormField>
                     <button
                       type="button"
                       onClick={confirmEnable2fa}

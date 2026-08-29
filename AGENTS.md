@@ -140,6 +140,8 @@ Referência de tela: `ExitAnalysisAdminTab.jsx`. Regra Cursor: `.cursor/rules/ad
 
 **Notas / texto livre com marcação:** `RichTextEditor` + `RichTextView` (`app/_components/`) e `lib/sanitize-html.js`. Não inventar outro editor.
 
+**Campos de formulário:** `FormField` + `formFieldRowClass` / `S.fieldRow` (`app/_components/FormField.jsx`) — label **sempre acima** do controle; grades com `items-start` para hint/readonly não esticarem irmãos. Cadastro modal continua em `PromptFormDialog` (já rotulado).
+
 ## Reaproveitamento (obrigatório)
 
 Em **cada nova tela** e **antes de qualquer função nova**, o agente deve privilegiar reuso. Detalhe operacional: `.cursor/rules/reuse-before-create.mdc`.
@@ -353,6 +355,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Busca de colaborador (nome → id) | `app/_components/EntitySearchSelect.jsx` (+ `type: 'entitySearch'`); `GET /api/admin/employees/search` |
 | Campos de data / datetime | `app/_components/DateField.jsx` (+ `type: 'date'` / `'datetime-local'` no `PromptFormDialog`) |
 | Controles nativos (select/input/checkbox) | `app/_components/form-control-styles.js` + `.ui-select` / `.ui-field` / `.ui-checkbox` em `globals.css`; tokens `S.select` / `S.selectCompact` / `S.input` / `S.checkbox` |
+| Campos de formulário (label acima) | `app/_components/FormField.jsx` (`FormField`, `formFieldRowClass`) + `S.fieldRow` |
 | Links compartilháveis (copiar / abrir) | `app/_components/CopyableLink.jsx`, `lib/clipboard.js` |
 | Cadastro simples (modal) | `PromptFormDialog` via `useAppFeedback().promptForm` — Users, Companies, convites |
 | Cadastro rico (drawer) | `AdminRichFormDrawer` — Vagas create/edit |

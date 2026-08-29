@@ -10,6 +10,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
 import { AppLoading } from '../../_components/AppLoading';
+import { FormField } from '../../_components/FormField';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -119,29 +120,27 @@ function SetPasswordForm() {
               {t(locale, 'employeeHome.emailLabel')}: {emailMasked}
             </p>
           ) : null}
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'employeeHome.passwordLabel')}
+          <FormField label={t(locale, 'employeeHome.passwordLabel')}>
             <input
               type="password"
               autoComplete="new-password"
-              className={cn(S.input, 'mt-1 w-full')}
+              className={cn(S.input, 'w-full')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
             />
-          </label>
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'employeeHome.confirmPasswordLabel')}
+          </FormField>
+          <FormField label={t(locale, 'employeeHome.confirmPasswordLabel')}>
             <input
               type="password"
               autoComplete="new-password"
-              className={cn(S.input, 'mt-1 w-full')}
+              className={cn(S.input, 'w-full')}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               disabled={loading}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
             />
-          </label>
+          </FormField>
           {error ? <p className="m-0 text-xs text-danger">{error}</p> : null}
           <button
             type="button"

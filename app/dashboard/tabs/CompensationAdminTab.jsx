@@ -18,6 +18,7 @@ import {
 } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -133,9 +134,11 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex min-w-[12rem] flex-1 flex-col gap-1">
-          <span className={S.label}>{t(locale, 'panel.compensationRoster.searchLabel')}</span>
+      <div className={cn(formFieldRowClass, 'gap-2')}>
+        <FormField
+          label={t(locale, 'panel.compensationRoster.searchLabel')}
+          className="min-w-[12rem] flex-1"
+        >
           <input
             type="search"
             value={qDraft}
@@ -147,9 +150,8 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
             placeholder={t(locale, 'panel.compensationRoster.searchPh')}
             className={S.input}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={S.label}>{t(locale, 'panel.compensationRoster.statusLabel')}</span>
+        </FormField>
+        <FormField label={t(locale, 'panel.compensationRoster.statusLabel')}>
           <select
             className={S.select}
             value={statusFilter}
@@ -166,9 +168,8 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
             </option>
             <option value="all">{t(locale, 'panel.compensationRoster.statusAll')}</option>
           </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={S.label}>{t(locale, 'panel.compensationRoster.hasSalaryLabel')}</span>
+        </FormField>
+        <FormField label={t(locale, 'panel.compensationRoster.hasSalaryLabel')}>
           <select
             className={S.select}
             value={hasSalary}
@@ -181,7 +182,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
             <option value="with">{t(locale, 'panel.compensationRoster.hasSalaryWith')}</option>
             <option value="without">{t(locale, 'panel.compensationRoster.hasSalaryWithout')}</option>
           </select>
-        </label>
+        </FormField>
       </div>
 
       {items.length === 0 ? (

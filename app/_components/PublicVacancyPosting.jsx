@@ -10,6 +10,7 @@ import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
 import { formatWorkplaceLabel } from '../../lib/vacancy-workplace';
 import { formatVacancySalaryRangeDisplay } from '../../lib/br-masks';
 import { PublicVacancyShareBar } from './PublicVacancyShareBar';
+import { FormField, formFieldRowClass } from './FormField';
 import {
   formatPublicVacancyDate,
   publicVacancyCanApply,
@@ -478,12 +479,7 @@ export function PublicVacanciesIndexView({
           action="/jobs"
           className={cn(SC.card, 'mb-4 flex flex-col gap-3')}
         >
-          <label className="block">
-            <span
-className="mb-1.5 block font-mono text-xs text-ink-muted"
-            >
-              {t(locale, 'publicVacancy.indexSearchLabel')}
-            </span>
+          <FormField label={t(locale, 'publicVacancy.indexSearchLabel')}>
             <input
               type="search"
               name="q"
@@ -492,16 +488,12 @@ className="mb-1.5 block font-mono text-xs text-ink-muted"
               className={SC.input}
               autoComplete="off"
             />
-          </label>
-          <div
-className="flex flex-wrap items-end gap-3"
-          >
-            <label className="min-w-0 flex-[1_1_180px]">
-              <span
-className="mb-1.5 block font-mono text-xs text-ink-muted"
-              >
-                {t(locale, 'publicVacancy.indexEmploymentLabel')}
-              </span>
+          </FormField>
+          <div className={cn(formFieldRowClass, 'gap-3')}>
+            <FormField
+              label={t(locale, 'publicVacancy.indexEmploymentLabel')}
+              className="min-w-0 flex-[1_1_180px]"
+            >
               <select name="employmentType" defaultValue={employmentType} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
                 <option value="clt">{t(locale, 'recruiting.employmentType_clt')}</option>
@@ -509,17 +501,17 @@ className="mb-1.5 block font-mono text-xs text-ink-muted"
                 <option value="internship">{t(locale, 'recruiting.employmentType_internship')}</option>
                 <option value="cooperative">{t(locale, 'recruiting.employmentType_cooperative')}</option>
               </select>
-            </label>
+            </FormField>
             <button
               type="submit"
-className="min-h-[44px] shrink-0 cursor-pointer rounded-control border-none bg-brand-500 px-5 font-display text-base text-white"
+              className="min-h-[44px] shrink-0 cursor-pointer self-end rounded-control border-none bg-brand-500 px-5 font-display text-base text-white"
             >
               {t(locale, 'publicVacancy.indexSearchSubmit')}
             </button>
             {hasFilters ? (
               <Link
                 href="/jobs"
-className="inline-flex min-h-[44px] shrink-0 items-center px-3.5 text-sm text-ink-muted"
+                className="inline-flex min-h-[44px] shrink-0 items-center self-end px-3.5 text-sm text-ink-muted"
               >
                 {t(locale, 'publicVacancy.indexClearFilters')}
               </Link>
@@ -623,12 +615,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
               onSubmit={submitJobAlert}
               className="flex flex-col gap-3"
             >
-              <label className="block">
-                <span
-                  className="mb-1.5 block font-mono text-xs text-ink-muted"
-                >
-                  {t(locale, 'publicVacancy.alertNameLabel')}
-                </span>
+              <FormField label={t(locale, 'publicVacancy.alertNameLabel')}>
                 <input
                   type="text"
                   name="name"
@@ -638,13 +625,8 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
                   className={SC.input}
                   autoComplete="name"
                 />
-              </label>
-              <label className="block">
-                <span
-                  className="mb-1.5 block font-mono text-xs text-ink-muted"
-                >
-                  {t(locale, 'publicVacancy.alertEmailLabel')}
-                </span>
+              </FormField>
+              <FormField label={t(locale, 'publicVacancy.alertEmailLabel')}>
                 <input
                   type="email"
                   name="email"
@@ -655,7 +637,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
                   className={SC.input}
                   autoComplete="email"
                 />
-              </label>
+              </FormField>
               {alertStatus === 'err' ? (
                 <p className="m-0 text-prose text-danger">
                   {t(locale, 'publicVacancy.alertError')}

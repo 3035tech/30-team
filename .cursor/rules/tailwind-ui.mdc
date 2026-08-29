@@ -15,7 +15,8 @@ alwaysApply: true
 2. **Tipografia (escala obrigatória)** — ver `tailwind.config.js` `fontSize` + `FONTS` em `lib/theme.js`:
    - **Famílias:** `font-ui` corpo · `font-mono` labels/meta/CTAs densos · `font-display` títulos de página / marketing (não body de form)
    - **Tamanhos:** `text-2xs` (11) labels · `text-xs` (12) faint · `text-prose` (13) body muted/CTA · `text-sm`+ cards · sem `text-[Npx]` novo
-   - Preferir `S.label` / `S.muted` / `S.faint` / `S.pageTitle` / `S.card*` em vez de inventar
+   - Preferir `S.label` / `S.muted` / `S.faint` / `S.pageTitle` / `S.card*` / `FormField` (+ `S.fieldRow` / `formFieldRowClass`) em vez de inventar
+   - Campos em grade: **sempre** label acima via `FormField`; pai com `items-start` — hint/readonly nunca estica irmãos
 
 3. **Reutilizar antes de inventar** (grep primeiro):
    - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`, `S.pageTitle`

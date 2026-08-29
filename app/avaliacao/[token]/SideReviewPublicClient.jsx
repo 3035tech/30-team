@@ -5,6 +5,7 @@ import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { FormField } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
 const OUTCOMES = ['met', 'exceeded', 'develop', 'not_met'];
@@ -139,8 +140,7 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
                     <p className="mt-1 mb-0 text-xs text-ink-muted">{goal.description}</p>
                   ) : null}
                 </div>
-                <label className="flex flex-col gap-1">
-                  <span className={S.label}>{t(locale, 'performanceReviews.outcomeLabel')}</span>
+                <FormField label={t(locale, 'performanceReviews.outcomeLabel')}>
                   <select
                     className={S.select}
                     value={row.outcome}
@@ -158,9 +158,8 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
                       </option>
                     ))}
                   </select>
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className={S.label}>{t(locale, 'performanceReviews.sideReview.goalNotes')}</span>
+                </FormField>
+                <FormField label={t(locale, 'performanceReviews.sideReview.goalNotes')}>
                   <textarea
                     className={cn(S.input, 'min-h-[72px] resize-y')}
                     value={row.notes || ''}
@@ -172,22 +171,21 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
                       }))
                     }
                   />
-                </label>
+                </FormField>
               </li>
             );
           })}
         </ul>
       )}
 
-      <label className="mt-6 flex flex-col gap-1">
-        <span className={S.label}>{t(locale, 'performanceReviews.overallNotes')}</span>
+      <FormField label={t(locale, 'performanceReviews.overallNotes')} className="mt-6">
         <textarea
           className={cn(S.input, 'min-h-[96px] resize-y')}
           value={overallNotes}
           placeholder={t(locale, 'performanceReviews.overallNotesPlaceholder')}
           onChange={(e) => setOverallNotes(e.target.value)}
         />
-      </label>
+      </FormField>
 
       <div className="mt-6 flex justify-end">
         <button

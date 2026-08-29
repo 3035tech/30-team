@@ -10,6 +10,7 @@ import { cn } from '../../lib/cn';
 import LanguageSelect from './LanguageSelect';
 import { BrStateSelect } from './BrStateSelect';
 import { BrCitySelect } from './BrCitySelect';
+import { FormField, formFieldCandLabelClass, formFieldRowClass } from './FormField';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
 
@@ -22,10 +23,9 @@ const SC = {
   h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
   p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
   btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
-  input: 'ui-field mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
-  select: 'ui-select mb-4 box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
-  fieldLabel: 'mb-2 block text-xs text-ink-muted',
-  fields: 'cand-flow-fields',
+  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  fields: 'cand-flow-fields flex flex-col gap-4',
 };
 
 
@@ -269,8 +269,7 @@ function HomeScreen({
             ) : null}
           </div>
         ) : (
-          <>
-            <label className={SC.fieldLabel}>{t(locale, 'candidate.fullName')}</label>
+          <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
             <input
               className={SC.input}
               placeholder={t(locale, 'candidate.namePlaceholder')}
@@ -279,56 +278,57 @@ function HomeScreen({
               onBlur={() => setName(titleCasePersonName(name))}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
             />
-          </>
+          </FormField>
         )}
 
-        <label className={SC.fieldLabel}>{t(locale, 'candidate.area')}</label>
-        {areasLoading ? (
-          <div className={cn(SC.input, 'mb-4 text-ink-muted')}>{t(locale, 'candidate.loadingAreas')}</div>
-        ) : areasError ? (
-          <div
-            className={cn(SC.input, 'mb-4 border-danger/35 bg-danger/[0.06] text-danger')}
-          >
-            {areasError}
-          </div>
-        ) : (
-          <select
-            value={areaKey}
-            onChange={(e) => setAreaKey(e.target.value)}
-            className={SC.select}
-          >
-            {areaOptions.map((a) => (
-              <option key={a.key} value={a.key}>
-                {localizeAreaLabel(a, locale)}
-              </option>
-            ))}
-          </select>
-        )}
+        <FormField as="div" label={t(locale, 'candidate.area')} labelClassName={formFieldCandLabelClass} className="w-full">
+          {areasLoading ? (
+            <div className={cn(SC.input, 'text-ink-muted')}>{t(locale, 'candidate.loadingAreas')}</div>
+          ) : areasError ? (
+            <div
+              className={cn(SC.input, 'border-danger/35 bg-danger/[0.06] text-danger')}
+            >
+              {areasError}
+            </div>
+          ) : (
+            <select
+              value={areaKey}
+              onChange={(e) => setAreaKey(e.target.value)}
+              className={SC.select}
+            >
+              {areaOptions.map((a) => (
+                <option key={a.key} value={a.key}>
+                  {localizeAreaLabel(a, locale)}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
 
         {!inviteIdentityLoading && !identityLocked ? (
-          <>
-            <label className={cn(SC.fieldLabel, 'mb-1')}>
-              {requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
-            </label>
-            <p className="mb-2 mt-0 text-2xs leading-normal text-ink-faint">
-              {requireCandidateEmail
+          <FormField
+            label={requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
+            hint={
+              requireCandidateEmail
                 ? t(locale, 'candidate.emailHelpRequired')
-                : t(locale, 'candidate.emailHelpOptional')}
-            </p>
+                : t(locale, 'candidate.emailHelpOptional')
+            }
+            labelClassName={formFieldCandLabelClass}
+            className="w-full"
+          >
             <input
-              className={cn(SC.input, 'mb-4', requireCandidateEmail && !emailOk && email.length > 0 && 'border-danger/40')}
+              className={cn(SC.input, requireCandidateEmail && !emailOk && email.length > 0 && 'border-danger/40')}
               placeholder={t(locale, 'candidate.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               inputMode={requireCandidateEmail ? 'email' : undefined}
               autoComplete="email"
             />
-          </>
+          </FormField>
         ) : null}
 
         {!phoneFromHr ? (
-          <>
-            <label className={SC.fieldLabel}>{t(locale, 'candidate.phone')}</label>
+          <FormField label={t(locale, 'candidate.phone')} labelClassName={formFieldCandLabelClass} className="w-full">
             <input
               className={SC.input}
               placeholder={t(locale, 'candidate.phonePlaceholder')}
@@ -337,12 +337,11 @@ function HomeScreen({
               inputMode="tel"
               autoComplete="tel"
             />
-          </>
+          </FormField>
         ) : null}
 
         {!linkedinFromHr ? (
-          <>
-            <label className={SC.fieldLabel}>{t(locale, 'candidate.linkedin')}</label>
+          <FormField label={t(locale, 'candidate.linkedin')} labelClassName={formFieldCandLabelClass} className="w-full">
             <input
               className={SC.input}
               placeholder={t(locale, 'candidate.linkedinPlaceholder')}
@@ -350,13 +349,17 @@ function HomeScreen({
               onChange={(e) => setLinkedinUrl(e.target.value)}
               autoComplete="url"
             />
-          </>
+          </FormField>
         ) : null}
 
         {!locationFromHr ? (
-          <div className="flex flex-wrap gap-2.5">
-            <div className="min-w-[120px] flex-[1_1_120px]">
-              <label className={SC.fieldLabel}>{t(locale, 'candidate.state')}</label>
+          <div className={cn(formFieldRowClass, 'w-full')}>
+            <FormField
+              as="div"
+              label={t(locale, 'candidate.state')}
+              labelClassName={formFieldCandLabelClass}
+              className="min-w-[120px] flex-[1_1_120px]"
+            >
               <BrStateSelect
                 value={stateUf}
                 onChange={(uf) => {
@@ -366,11 +369,15 @@ function HomeScreen({
                 locale={locale}
                 className={SC.input}
               />
-            </div>
-            <div className="min-w-[180px] flex-[2_1_180px]">
-              <label className={SC.fieldLabel}>{t(locale, 'candidate.city')}</label>
+            </FormField>
+            <FormField
+              as="div"
+              label={t(locale, 'candidate.city')}
+              labelClassName={formFieldCandLabelClass}
+              className="min-w-[180px] flex-[2_1_180px]"
+            >
               <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className={SC.input} />
-            </div>
+            </FormField>
           </div>
         ) : null}
 

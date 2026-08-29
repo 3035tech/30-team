@@ -9,6 +9,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { BR_STATES } from '../../../lib/candidate-profile';
 
 export function EmployeeProfileClient({ locale = 'pt-BR' }) {
@@ -208,52 +209,46 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
       <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'employeeHome.profileHint')}</p>
 
       <form className="mt-6 flex flex-col gap-3" onSubmit={saveProfile}>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.fullNameLabel')}
+        <FormField label={t(locale, 'employeeHome.fullNameLabel')}>
           <input
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={form.fullName}
             onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
             required
             disabled={busy}
           />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.emailLabel')}
-          <input className={cn(S.input, 'mt-1 w-full opacity-70')} value={form.email} disabled readOnly />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.phoneLabel')}
+        </FormField>
+        <FormField label={t(locale, 'employeeHome.emailLabel')}>
+          <input className={cn(S.input, 'w-full opacity-70')} value={form.email} disabled readOnly />
+        </FormField>
+        <FormField label={t(locale, 'employeeHome.phoneLabel')}>
           <input
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={form.phone}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
             disabled={busy}
           />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.linkedinLabel')}
+        </FormField>
+        <FormField label={t(locale, 'employeeHome.linkedinLabel')}>
           <input
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={form.linkedinUrl}
             onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
             disabled={busy}
           />
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'employeeHome.cityLabel')}
+        </FormField>
+        <div className={cn(formFieldRowClass, 'gap-3')}>
+          <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0 flex-1">
             <input
-              className={cn(S.input, 'mt-1 w-full')}
+              className={cn(S.input, 'w-full')}
               value={form.city}
               onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
               disabled={busy}
             />
-          </label>
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'employeeHome.stateLabel')}
+          </FormField>
+          <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0 flex-1">
             <select
-              className={cn(S.select, 'mt-1 w-full')}
+              className={cn(S.select, 'w-full')}
               value={form.state}
               onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
               disabled={busy}
@@ -265,17 +260,16 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                 </option>
               ))}
             </select>
-          </label>
+          </FormField>
         </div>
-        <div>
-          <span className="block text-xs text-ink-muted">{t(locale, 'employeeHome.birthDateLabel')}</span>
+        <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')}>
           <DateField
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={form.birthDate}
             onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value || '' }))}
             disabled={busy}
           />
-        </div>
+        </FormField>
         <button type="submit" disabled={busy} className={cn(S.btnPrimary, 'min-h-touch justify-center')}>
           {t(locale, 'employeeHome.saveProfile')}
         </button>
@@ -283,42 +277,39 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
       <form className="mt-10 flex flex-col gap-3 border-t border-ink/10 pt-8" onSubmit={changePassword}>
         <h2 className={cn(S.label, 'm-0')}>{t(locale, 'employeeHome.changePasswordTitle')}</h2>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.currentPasswordLabel')}
+        <FormField label={t(locale, 'employeeHome.currentPasswordLabel')}>
           <input
             type="password"
             autoComplete="current-password"
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={pwd.current}
             onChange={(e) => setPwd((p) => ({ ...p, current: e.target.value }))}
             disabled={busy}
             required
           />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.passwordLabel')}
+        </FormField>
+        <FormField label={t(locale, 'employeeHome.passwordLabel')}>
           <input
             type="password"
             autoComplete="new-password"
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={pwd.next}
             onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
             disabled={busy}
             required
           />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'employeeHome.confirmPasswordLabel')}
+        </FormField>
+        <FormField label={t(locale, 'employeeHome.confirmPasswordLabel')}>
           <input
             type="password"
             autoComplete="new-password"
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={pwd.confirm}
             onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))}
             disabled={busy}
             required
           />
-        </label>
+        </FormField>
         <button type="submit" disabled={busy} className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}>
           {t(locale, 'employeeHome.changePasswordSubmit')}
         </button>
@@ -335,29 +326,27 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         {twoFaEnabled ? (
           <div className="flex flex-col gap-3">
             <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
-            <label className="block text-xs text-ink-muted">
-              {t(locale, 'dashboard.profile2faCode')}
+            <FormField label={t(locale, 'dashboard.profile2faCode')}>
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className={cn(S.input, 'mt-1 w-full')}
+                className={cn(S.input, 'w-full')}
                 value={twoFaCode}
                 onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
                 disabled={twoFaBusy}
               />
-            </label>
-            <label className="block text-xs text-ink-muted">
-              {t(locale, 'dashboard.profile2faDisablePassword')}
+            </FormField>
+            <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
               <input
                 type="password"
                 autoComplete="current-password"
-                className={cn(S.input, 'mt-1 w-full')}
+                className={cn(S.input, 'w-full')}
                 value={twoFaDisablePassword}
                 onChange={(e) => setTwoFaDisablePassword(e.target.value)}
                 disabled={twoFaBusy}
               />
-            </label>
+            </FormField>
             <button
               type="button"
               disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
@@ -373,18 +362,17 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
             <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
               {twoFaSetupSecret}
             </code>
-            <label className="block text-xs text-ink-muted">
-              {t(locale, 'dashboard.profile2faCode')}
+            <FormField label={t(locale, 'dashboard.profile2faCode')}>
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className={cn(S.input, 'mt-1 w-full')}
+                className={cn(S.input, 'w-full')}
                 value={twoFaCode}
                 onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
                 disabled={twoFaBusy}
               />
-            </label>
+            </FormField>
             <button
               type="button"
               disabled={twoFaBusy || twoFaCode.length !== 6}

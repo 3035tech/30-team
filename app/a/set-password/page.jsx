@@ -8,9 +8,10 @@ import { useLocale } from '../../../lib/useLocale';
 import { cn } from '../../../lib/cn';
 import LanguageSelect from '../../_components/LanguageSelect';
 import { BrandMark } from '../../_components/BrandMark';
+import { FormField } from '../../_components/FormField';
 
 const inputClass =
-  'mb-3.5 box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink';
+  'box-border w-full rounded-xl border border-ink/12 bg-ink/[0.04] px-3.5 py-3 font-display text-base text-ink';
 
 function SetPasswordForm() {
   const searchParams = useSearchParams();
@@ -122,45 +123,45 @@ function SetPasswordForm() {
             <p className="mb-5 text-sm leading-[1.65] text-ink-muted">
               {t(locale, 'setPassword.intro', { email: emailMasked })}
             </p>
-            <label htmlFor="set-password-new" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'setPassword.newPassword')}
-            </label>
-            <input
-              id="set-password-new"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-            />
-            <label htmlFor="set-password-confirm" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'setPassword.confirmPassword')}
-            </label>
-            <input
-              id="set-password-confirm"
-              type="password"
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void submit();
-              }}
-              className={inputClass}
-            />
-            {error ? (
-              <p className="mb-3 mt-0 text-prose text-danger">{error}</p>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={loading}
-              className={cn(
-                'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-base font-semibold text-white',
-                loading ? 'cursor-default opacity-70' : 'cursor-pointer'
-              )}
-            >
-              {loading ? t(locale, 'common.loading') : t(locale, 'setPassword.submit')}
-            </button>
+            <div className="flex flex-col gap-3">
+              <FormField htmlFor="set-password-new" label={t(locale, 'setPassword.newPassword')}>
+                <input
+                  id="set-password-new"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClass}
+                />
+              </FormField>
+              <FormField htmlFor="set-password-confirm" label={t(locale, 'setPassword.confirmPassword')}>
+                <input
+                  id="set-password-confirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void submit();
+                  }}
+                  className={inputClass}
+                />
+              </FormField>
+              {error ? (
+                <p className="m-0 text-prose text-danger">{error}</p>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => void submit()}
+                disabled={loading}
+                className={cn(
+                  'min-h-[44px] w-full rounded-xl border-none bg-brand-500 text-base font-semibold text-white',
+                  loading ? 'cursor-default opacity-70' : 'cursor-pointer'
+                )}
+              >
+                {loading ? t(locale, 'common.loading') : t(locale, 'setPassword.submit')}
+              </button>
+            </div>
           </>
         )}
       </div>

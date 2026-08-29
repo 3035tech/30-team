@@ -7,6 +7,7 @@ import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { S, AdminListPager } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 
 function statusChipClass(status) {
   if (status === 'pending') return 'border-warning/25 bg-warning/10 text-warning';
@@ -113,9 +114,8 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
         <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.leads.intro')}</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.leads.filterStatus')}
+      <div className={cn(formFieldRowClass, 'gap-3')}>
+        <FormField label={t(locale, 'panel.leads.filterStatus')}>
           <select
             value={filters.status}
             onChange={(e) => pushFilters({ status: e.target.value, page: 1 })}
@@ -126,9 +126,8 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             <option value="active">{t(locale, 'panel.leads.statusActive')}</option>
             <option value="inactive">{t(locale, 'panel.leads.statusInactive')}</option>
           </select>
-        </label>
-        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.leads.filterSearch')}
+        </FormField>
+        <FormField label={t(locale, 'panel.leads.filterSearch')} className="min-w-[200px] flex-1">
           <input
             type="search"
             value={qDraft}
@@ -142,7 +141,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
             placeholder={t(locale, 'panel.leads.searchPh')}
             className={S.input}
           />
-        </label>
+        </FormField>
       </div>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}

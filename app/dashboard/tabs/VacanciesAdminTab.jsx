@@ -53,15 +53,12 @@ import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { RubricEditor } from '../../_components/RubricEditor';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
 
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-xs`;
-const FIELD_LABEL =
-  'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
-const FIELD_LABEL_INLINE =
-  'flex items-center gap-2 font-mono text-xs text-ink-muted';
 const BTN_GHOST =
   'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND =
@@ -577,35 +574,39 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         <div className="flex flex-col gap-3">
           <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
             {isAdmin ? (
-              <select
-                value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
-                aria-label={t(locale, 'dashboard.allCompanies')}
-                className={cn(FIELD_SELECT, "max-w-[420px]")}
-              >
-                {companies.length === 0 ? (
-                  <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
-                ) : companies.map((c) => (
-                  <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-                ))}
-              </select>
+              <FormField label={t(locale, 'panel.admin.companyLabel')} className="max-w-[420px]">
+                <select
+                  value={companyId}
+                  onChange={(e) => setCompanyId(e.target.value)}
+                  aria-label={t(locale, 'panel.admin.companyLabel')}
+                  className={FIELD_SELECT}
+                >
+                  {companies.length === 0 ? (
+                    <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
+                  ) : companies.map((c) => (
+                    <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
+                  ))}
+                </select>
+              </FormField>
             ) : null}
 
             {jobRoles.length > 0 && (
               <div className="flex flex-col gap-1.5">
-                <label className={FIELD_LABEL}>
-                  {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
+                <FormField
+                  label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
+                  className="max-w-[420px]"
+                >
                   <select
                     value={jobRoleId}
                     onChange={(e) => setJobRoleId(e.target.value)}
-                    className={cn(FIELD_SELECT, "max-w-[420px]")}
+                    className={FIELD_SELECT}
                   >
                     <option value="">{t(locale, 'recruiting.noJobRole')}</option>
                     {jobRoles.map((jr) => (
                       <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
                     ))}
                   </select>
-                </label>
+                </FormField>
                 {(() => {
                   const selected = jobRoles.find((jr) => String(jr.id) === String(jobRoleId));
                   const rubric =
@@ -623,26 +624,29 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               </div>
             )}
 
-            <div className={GRID_AUTO_LG}>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={t(locale, 'recruiting.createTitlePh')}
-                aria-label={t(locale, 'recruiting.createTitlePh')}
-                className={FIELD}
-              />
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder={t(locale, 'recruiting.createSlugPh')}
-                aria-label={t(locale, 'recruiting.createSlugPh')}
-                className={cn(FIELD, "max-w-[320px]")}
-              />
+            <div className={cn(GRID_AUTO_LG, 'items-start')}>
+              <FormField label={t(locale, 'recruiting.vacancyTitlePh')}>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t(locale, 'recruiting.createTitlePh')}
+                  aria-label={t(locale, 'recruiting.vacancyTitlePh')}
+                  className={FIELD}
+                />
+              </FormField>
+              <FormField label={t(locale, 'recruiting.slugLabel')} className="max-w-[320px]">
+                <input
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder={t(locale, 'recruiting.createSlugPh')}
+                  aria-label={t(locale, 'recruiting.slugLabel')}
+                  className={FIELD}
+                />
+              </FormField>
             </div>
 
-            <div className={cn(GRID_AUTO, 'items-end')}>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.sortStatus')}
+            <div className={cn(GRID_AUTO, 'items-start')}>
+              <FormField label={t(locale, 'recruiting.sortStatus')}>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
@@ -651,34 +655,31 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   <option value="open">{t(locale, 'recruiting.openStatus')}</option>
                   <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
                 </select>
-              </label>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.positionsLabel')}
+              </FormField>
+              <FormField label={t(locale, 'recruiting.positionsLabel')}>
                 <input
                   type="number"
                   min="1"
                   value={positionsCount}
                   onChange={(e) => setPositionsCount(e.target.value)}
                   aria-label={t(locale, 'recruiting.positionsLabel')}
-                  className={cn(FIELD, "min-w-[72px] px-2")}
+                  className={cn(FIELD, 'min-w-[72px] px-2')}
                 />
-              </label>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.targetDateLabel')}
+              </FormField>
+              <FormField as="div" label={t(locale, 'recruiting.targetDateLabel')}>
                 <DateField
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
                   aria-label={t(locale, 'recruiting.targetDateLabel')}
                   className={cn(FIELD, 'px-2 py-[9px]')}
                 />
-              </label>
+              </FormField>
             </div>
           </VacancyFormSection>
 
           <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
-            <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.employmentTypeLabel')}
+            <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
+              <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
                 <select
                   value={employmentType}
                   onChange={(e) => setEmploymentType(e.target.value)}
@@ -689,9 +690,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
                   ))}
                 </select>
-              </label>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.salaryMinPh')}
+              </FormField>
+              <FormField label={t(locale, 'recruiting.salaryMinPh')}>
                 <input
                   value={formatSalaryBr(salaryMin)}
                   onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
@@ -700,9 +700,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   aria-label={t(locale, 'recruiting.salaryMinPh')}
                   className={FIELD}
                 />
-              </label>
-              <label className={FIELD_LABEL}>
-                {t(locale, 'recruiting.salaryMaxPh')}
+              </FormField>
+              <FormField label={t(locale, 'recruiting.salaryMaxPh')}>
                 <input
                   value={formatSalaryBr(salaryMax)}
                   onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
@@ -711,7 +710,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   aria-label={t(locale, 'recruiting.salaryMaxPh')}
                   className={FIELD}
                 />
-              </label>
+              </FormField>
             </div>
 
             <VacancyWorkplaceFields
@@ -781,14 +780,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               onApplyDescription={setDescription}
               onBusyChange={setDescAiBusy}
             />
-            <RichTextEditor
-              value={description}
-              onChange={setDescription}
-              placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-              minHeight={120}
-              locale={locale}
-              disabled={descAiBusy}
-            />
+            <FormField as="div" label={t(locale, 'recruiting.vacancyDescriptionLabel')}>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+                minHeight={120}
+                locale={locale}
+                disabled={descAiBusy}
+              />
+            </FormField>
           </VacancyFormSection>
         </div>
       </AdminRichFormDrawer>
@@ -824,21 +825,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
               {jobRoles.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
-                  <label className={FIELD_LABEL}>
-                    {t(locale, 'jobRoles.title')} ({t(locale, 'common.optional')})
+                  <FormField
+                    label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
+                    className="max-w-[420px]"
+                  >
                     <select
                       value={editingVacancy.jobRoleId || ''}
                       onChange={(e) =>
                         setEditingVacancy((cur) => ({ ...cur, jobRoleId: e.target.value }))
                       }
-                      className={cn(FIELD_SELECT, 'max-w-[420px] text-prose')}
+                      className={cn(FIELD_SELECT, 'text-prose')}
                     >
                       <option value="">{t(locale, 'recruiting.noJobRole')}</option>
                       {jobRoles.map((jr) => (
                         <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
                       ))}
                     </select>
-                  </label>
+                  </FormField>
                   {(() => {
                     const selected = jobRoles.find(
                       (jr) => String(jr.id) === String(editingVacancy.jobRoleId || '')
@@ -857,34 +860,39 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   })()}
                 </div>
               ) : null}
-              <div className="flex flex-wrap gap-2.5">
-                <input
-                  value={editingVacancy.title}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                  placeholder={t(locale, 'recruiting.vacancyTitlePh')}
-                  aria-label={t(locale, 'recruiting.vacancyTitlePh')}
-                  className={cn(FIELD, "flex-[2_1_280px] text-prose")}
-                />
-                <input
-                  value={editingVacancy.slug}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                  placeholder={t(locale, 'recruiting.vacancySlugPh')}
-                  aria-label={t(locale, 'recruiting.vacancySlugPh')}
-                  className={cn(FIELD, "flex-[1_1_200px] text-prose")}
-                />
-                <select
-                  value={editingVacancy.status}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                  aria-label={t(locale, 'recruiting.sortStatus')}
-                  className={cn(FIELD_SELECT, "flex-[0_0_140px] text-prose text-ink")}
-                >
-                  <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                  <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-                </select>
+              <div className={formFieldRowClass}>
+                <FormField label={t(locale, 'recruiting.vacancyTitlePh')} className="min-w-0 flex-[2_1_280px]">
+                  <input
+                    value={editingVacancy.title}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
+                    placeholder={t(locale, 'recruiting.vacancyTitlePh')}
+                    aria-label={t(locale, 'recruiting.vacancyTitlePh')}
+                    className={cn(FIELD, 'text-prose')}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'recruiting.slugLabel')} className="min-w-0 flex-[1_1_200px]">
+                  <input
+                    value={editingVacancy.slug}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
+                    placeholder={t(locale, 'recruiting.vacancySlugPh')}
+                    aria-label={t(locale, 'recruiting.slugLabel')}
+                    className={cn(FIELD, 'text-prose')}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'recruiting.sortStatus')} className="flex-[0_0_140px]">
+                  <select
+                    value={editingVacancy.status}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
+                    aria-label={t(locale, 'recruiting.sortStatus')}
+                    className={cn(FIELD_SELECT, 'text-prose text-ink')}
+                  >
+                    <option value="open">{t(locale, 'recruiting.openStatus')}</option>
+                    <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
+                  </select>
+                </FormField>
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                <label className={FIELD_LABEL_INLINE}>
-                  {t(locale, 'recruiting.positionsLabel')}
+              <div className={formFieldRowClass}>
+                <FormField label={t(locale, 'recruiting.positionsLabel')}>
                   <input
                     type="number"
                     min="1"
@@ -893,48 +901,53 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     aria-label={t(locale, 'recruiting.positionsLabel')}
                     className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
                   />
-                </label>
-                <label className={FIELD_LABEL_INLINE}>
-                  {t(locale, 'recruiting.targetDateLabel')}
+                </FormField>
+                <FormField as="div" label={t(locale, 'recruiting.targetDateLabel')}>
                   <DateField
                     value={editingVacancy.targetDate}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
                     aria-label={t(locale, 'recruiting.targetDateLabel')}
                     className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
                   />
-                </label>
+                </FormField>
               </div>
             </VacancyFormSection>
 
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
-              <div className={cn(GRID_AUTO, 'max-w-[640px]')}>
-                <select
-                  value={editingVacancy.employmentType}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
-                  aria-label={t(locale, 'recruiting.employmentTypeLabel')}
-                  className={cn(FIELD_SELECT, "px-2.5 py-2 text-prose")}
-                >
-                  <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
-                  {VACANCY_EMPLOYMENT_TYPES.map((type) => (
-                    <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
-                  ))}
-                </select>
-                <input
-                  value={formatSalaryBr(editingVacancy.salaryMin)}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
-                  placeholder={t(locale, 'recruiting.salaryMinPh')}
-                  inputMode="numeric"
-                  aria-label={t(locale, 'recruiting.salaryMinPh')}
-                  className={cn(FIELD, "px-2.5 py-2 text-prose")}
-                />
-                <input
-                  value={formatSalaryBr(editingVacancy.salaryMax)}
-                  onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
-                  placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                  inputMode="numeric"
-                  aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                  className={cn(FIELD, "px-2.5 py-2 text-prose")}
-                />
+              <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
+                <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
+                  <select
+                    value={editingVacancy.employmentType}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
+                    aria-label={t(locale, 'recruiting.employmentTypeLabel')}
+                    className={cn(FIELD_SELECT, 'px-2.5 py-2 text-prose')}
+                  >
+                    <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
+                    {VACANCY_EMPLOYMENT_TYPES.map((type) => (
+                      <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label={t(locale, 'recruiting.salaryMinPh')}>
+                  <input
+                    value={formatSalaryBr(editingVacancy.salaryMin)}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
+                    placeholder={t(locale, 'recruiting.salaryMinPh')}
+                    inputMode="numeric"
+                    aria-label={t(locale, 'recruiting.salaryMinPh')}
+                    className={cn(FIELD, 'px-2.5 py-2 text-prose')}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'recruiting.salaryMaxPh')}>
+                  <input
+                    value={formatSalaryBr(editingVacancy.salaryMax)}
+                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
+                    placeholder={t(locale, 'recruiting.salaryMaxPh')}
+                    inputMode="numeric"
+                    aria-label={t(locale, 'recruiting.salaryMaxPh')}
+                    className={cn(FIELD, 'px-2.5 py-2 text-prose')}
+                  />
+                </FormField>
               </div>
               <VacancyWorkplaceFields
                 locale={locale}
@@ -999,14 +1012,16 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 }
                 onBusyChange={setDescAiBusy}
               />
-              <RichTextEditor
-                value={editingVacancy.description}
-                onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}
-                placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-                minHeight={140}
-                locale={locale}
-                disabled={descAiBusy}
-              />
+              <FormField as="div" label={t(locale, 'recruiting.vacancyDescriptionLabel')}>
+                <RichTextEditor
+                  value={editingVacancy.description}
+                  onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}
+                  placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
+                  minHeight={140}
+                  locale={locale}
+                  disabled={descAiBusy}
+                />
+              </FormField>
             </VacancyFormSection>
           </div>
         ) : null}

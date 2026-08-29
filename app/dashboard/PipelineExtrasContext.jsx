@@ -5,6 +5,7 @@ import { REJECTION_REASONS, normalizeStartDate } from '../../lib/pipeline';
 import { t } from '../../lib/i18n';
 import { rejectionReasonLabel } from './pipeline-prompts';
 import { DateField } from '../_components/DateField';
+import { FormField } from '../_components/FormField';
 import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 
 const PipelineExtrasContext = createContext(null);
@@ -80,13 +81,10 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
 
         <div className="mt-5">
           {mode === 'rejected' ? (
-            <>
-              <label
-                htmlFor="pipeline-reject-reason"
-                className="mb-2 block font-mono text-2xs uppercase tracking-[1.5px] text-ink-muted"
-              >
-                {t(locale, 'recruiting.rejectionReasonLabel')}
-              </label>
+            <FormField
+              htmlFor="pipeline-reject-reason"
+              label={t(locale, 'recruiting.rejectionReasonLabel')}
+            >
               <select
                 id="pipeline-reject-reason"
                 value={reason}
@@ -99,15 +97,13 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                   </option>
                 ))}
               </select>
-            </>
+            </FormField>
           ) : (
-            <>
-              <label
-                htmlFor="pipeline-hire-date"
-                className="mb-2 block font-mono text-2xs uppercase tracking-[1.5px] text-ink-muted"
-              >
-                {t(locale, 'recruiting.startDateLabel')}
-              </label>
+            <FormField
+              as="div"
+              label={t(locale, 'recruiting.startDateLabel')}
+              hint={t(locale, 'recruiting.hireDateHint')}
+            >
               <DateField
                 id="pipeline-hire-date"
                 value={startDate}
@@ -115,10 +111,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                 className={FIELD}
                 aria-label={t(locale, 'recruiting.startDateLabel')}
               />
-              <p className="mb-0 mt-2 text-xs leading-normal text-ink-faint">
-                {t(locale, 'recruiting.hireDateHint')}
-              </p>
-            </>
+            </FormField>
           )}
         </div>
 

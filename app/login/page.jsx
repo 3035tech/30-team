@@ -9,11 +9,11 @@ import { useLocale } from '../../lib/useLocale';
 import { cn } from '../../lib/cn';
 import LanguageSelect from '../_components/LanguageSelect';
 import { BrandMark } from '../_components/BrandMark';
-
+import { FormField } from '../_components/FormField';
 import TurnstileField from '../_components/TurnstileField';
 
 const inputClass =
-  'mb-4 box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-base text-ink';
+  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-[18px] py-3.5 font-display text-base text-ink';
 
 function LoginForm() {
   const [mode, setMode] = useState('login');
@@ -235,111 +235,102 @@ function LoginForm() {
             {t(locale, 'login.twoFaIntro')}
           </p>
         ) : null}
-        {mustChangePassword ? (
-          <>
-            <label htmlFor="login-current-password" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.changePasswordCurrent')}
-            </label>
-            <input
-              id="login-current-password"
-              type="password"
-              autoComplete="current-password"
-              className={inputClass}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-            <label htmlFor="login-new-password" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.changePasswordNew')}
-            </label>
-            <input
-              id="login-new-password"
-              type="password"
-              autoComplete="new-password"
-              className={inputClass}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <label htmlFor="login-confirm-password" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.changePasswordConfirm')}
-            </label>
-            <input
-              id="login-confirm-password"
-              type="password"
-              autoComplete="new-password"
-              className={cn(inputClass, error && 'border-danger')}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && changePassword()}
-            />
-          </>
-        ) : requires2fa ? (
-          <>
-            <label htmlFor="login-2fa-code" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.twoFaCode')}
-            </label>
-            <input
-              id="login-2fa-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              className={cn(inputClass, error && 'border-danger')}
-              value={twoFaCode}
-              onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
-              maxLength={6}
-            />
-          </>
-        ) : mode === 'forgot' ? (
-          <>
-            <label htmlFor="login-email" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.email')}
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              autoComplete="username"
-              className={inputClass}
-              value={email}
-              placeholder={t(locale, 'login.emailPlaceholder')}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && requestReset()}
-            />
-          </>
-        ) : (
-          <>
-            <label htmlFor="login-email" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.email')}
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              autoComplete="username"
-              className={inputClass}
-              value={email}
-              placeholder={t(locale, 'login.emailPlaceholder')}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-            />
-            <label htmlFor="login-password" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'login.password')}
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              className={cn(inputClass, error && 'border-danger')}
-              value={password}
-              placeholder={t(locale, 'login.passwordPlaceholder')}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-            />
-          </>
-        )}
-        {error ? (
-          <p className="-mt-2 mb-4 text-xs text-danger">{error}</p>
-        ) : null}
-        {success ? (
-          <p className="-mt-2 mb-4 text-xs text-success">{success}</p>
-        ) : null}
+        <div className="mb-4 flex flex-col gap-3">
+          {mustChangePassword ? (
+            <>
+              <FormField htmlFor="login-current-password" label={t(locale, 'login.changePasswordCurrent')}>
+                <input
+                  id="login-current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  className={inputClass}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </FormField>
+              <FormField htmlFor="login-new-password" label={t(locale, 'login.changePasswordNew')}>
+                <input
+                  id="login-new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  className={inputClass}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </FormField>
+              <FormField htmlFor="login-confirm-password" label={t(locale, 'login.changePasswordConfirm')}>
+                <input
+                  id="login-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  className={cn(inputClass, error && 'border-danger')}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && changePassword()}
+                />
+              </FormField>
+            </>
+          ) : requires2fa ? (
+            <FormField htmlFor="login-2fa-code" label={t(locale, 'login.twoFaCode')}>
+              <input
+                id="login-2fa-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={cn(inputClass, error && 'border-danger')}
+                value={twoFaCode}
+                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
+                maxLength={6}
+              />
+            </FormField>
+          ) : mode === 'forgot' ? (
+            <FormField htmlFor="login-email" label={t(locale, 'login.email')}>
+              <input
+                id="login-email"
+                type="email"
+                autoComplete="username"
+                className={inputClass}
+                value={email}
+                placeholder={t(locale, 'login.emailPlaceholder')}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && requestReset()}
+              />
+            </FormField>
+          ) : (
+            <>
+              <FormField htmlFor="login-email" label={t(locale, 'login.email')}>
+                <input
+                  id="login-email"
+                  type="email"
+                  autoComplete="username"
+                  className={inputClass}
+                  value={email}
+                  placeholder={t(locale, 'login.emailPlaceholder')}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && login()}
+                />
+              </FormField>
+              <FormField htmlFor="login-password" label={t(locale, 'login.password')}>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  className={cn(inputClass, error && 'border-danger')}
+                  value={password}
+                  placeholder={t(locale, 'login.passwordPlaceholder')}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && login()}
+                />
+              </FormField>
+            </>
+          )}
+          {error ? (
+            <p className="m-0 text-xs text-danger">{error}</p>
+          ) : null}
+          {success ? (
+            <p className="m-0 text-xs text-success">{success}</p>
+          ) : null}
+        </div>
         {turnstileRequired && turnstileSiteKey && !mustChangePassword ? (
           <TurnstileField
             siteKey={turnstileSiteKey}

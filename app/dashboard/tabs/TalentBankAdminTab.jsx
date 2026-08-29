@@ -17,6 +17,7 @@ import {
   clientSortNextDir,
   TypeBadge,
 } from '../dashboard-shared';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 
 const STAGE_I18N = {
   new: 'recruiting.pipelineNew',
@@ -199,9 +200,11 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
         <p className={cn(S.muted, 'mt-1 max-w-2xl')}>{t(locale, 'panel.talentBank.intro')}</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[200px] flex-1 flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.talentBank.filterSearch')}
+      <div className={cn(formFieldRowClass, 'gap-3')}>
+        <FormField
+          label={t(locale, 'panel.talentBank.filterSearch')}
+          className="min-w-[200px] flex-1"
+        >
           <input
             type="search"
             value={qDraft}
@@ -215,9 +218,8 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
             placeholder={t(locale, 'panel.talentBank.searchPh')}
             className={S.input}
           />
-        </label>
-        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.talentBank.filterVacancy')}
+        </FormField>
+        <FormField label={t(locale, 'panel.talentBank.filterVacancy')}>
           <select
             value={vacancyId}
             onChange={(e) => {
@@ -233,9 +235,8 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.talentBank.filterStage')}
+        </FormField>
+        <FormField label={t(locale, 'panel.talentBank.filterStage')}>
           <select
             value={stage}
             onChange={(e) => {
@@ -251,9 +252,8 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex flex-col gap-1 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.talentBank.filterType')}
+        </FormField>
+        <FormField label={t(locale, 'panel.talentBank.filterType')}>
           <select
             value={topType}
             onChange={(e) => {
@@ -269,7 +269,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
               </option>
             ))}
           </select>
-        </label>
+        </FormField>
       </div>
 
       {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}

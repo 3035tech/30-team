@@ -7,6 +7,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
+import { FormField } from '../../_components/FormField';
 import { EntitySearchSelect } from '../../_components/EntitySearchSelect';
 import { CopyableLink } from '../../_components/CopyableLink';
 import {
@@ -802,29 +803,22 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId }) {
                     <div className="mb-2 font-mono text-2xs uppercase text-ink-faint">
                       {lmsText(locale, 'enrollBatchOpts', 'Opções da turma')}
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block min-w-0">
-                        <span className="font-mono text-2xs text-ink-faint">
-                          {lmsText(locale, 'batchCohortName', 'Nome da turma (opcional)')}
-                        </span>
+                    <div className="grid items-start gap-3 sm:grid-cols-2">
+                      <FormField label={lmsText(locale, 'batchCohortName', 'Nome da turma (opcional)')}>
                         <input
                           type="text"
                           value={cohortName}
                           onChange={(event) => setCohortName(event.target.value)}
-                          className={cn(S.input, 'mt-1 w-full')}
+                          className={cn(S.input, 'w-full')}
                         />
-                      </label>
-                      <label className="block min-w-0">
-                        <span className="font-mono text-2xs text-ink-faint">
-                          {lmsText(locale, 'fieldDueDate', 'Data limite')}
-                        </span>
+                      </FormField>
+                      <FormField as="div" label={lmsText(locale, 'fieldDueDate', 'Data limite')}>
                         <DateField
                           value={dueDate}
                           onChange={(event) => setDueDate(event.target.value)}
-                          className="mt-1"
                           aria-label={lmsText(locale, 'fieldDueDate', 'Data limite')}
                         />
-                      </label>
+                      </FormField>
                     </div>
                     <label className="mt-3 flex min-h-touch cursor-pointer items-center gap-2 text-sm text-ink">
                       <input

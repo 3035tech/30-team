@@ -17,10 +17,11 @@ import { VacancyOfferBlock } from './vacancies/VacancyOfferBlock';
 import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
 import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
 import { CandidateCvBlock } from '../_components/CandidateCvBlock';
+import { FormField, formFieldGrowClass, formFieldRowClass } from '../_components/FormField';
 import { VacancyInterviewSlotsBlock } from '../_components/VacancyInterviewSlotsBlock';
 
-const FIELD = cn(S.input, 'min-w-0 flex-[1_1_180px] bg-surface/80');
-const FIELD_SELECT = cn(S.select, 'min-w-0 flex-[1_1_180px] bg-surface/80');
+const FIELD = cn(S.input, 'w-full bg-surface/80');
+const FIELD_SELECT = cn(S.select, 'w-full bg-surface/80');
 
 function inviteStatusLabel(locale, status) {
   const s = String(status || '');
@@ -445,54 +446,86 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
             />
           ) : null}
 
-          <div className="flex flex-wrap gap-2.5 mb-2.5">
-            <input
-              value={formatPhoneBr(phone)}
-              onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
-              placeholder={t(locale, 'recruiting.phonePh')}
-              inputMode="tel"
-              className={FIELD}
-            />
-            <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} className={FIELD} />
-            <BrStateSelect
-              value={stateUf}
-              onChange={(uf) => {
-                setStateUf(uf);
-                setCity('');
-              }}
-              locale={locale}
-              className={cn(FIELD_SELECT, 'flex-[0_1_160px]')}
-            />
-            <BrCitySelect
-              uf={stateUf}
-              value={city}
-              onChange={setCity}
-              locale={locale}
-              className={cn(FIELD_SELECT, 'flex-[1_1_180px]')}
-            />
-            <input
-              value={formatSalaryBr(salaryExpectation)}
-              onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
-              placeholder={t(locale, 'recruiting.salaryPh')}
-              inputMode="numeric"
-              className={FIELD}
-            />
-            <select value={availability} onChange={(e) => setAvailability(e.target.value)} className={FIELD_SELECT} aria-label={t(locale, 'recruiting.availabilityLabel')}>
-              <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
-              <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
-              <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
-              <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
-              <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
-              <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-            </select>
-            <select value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_SELECT} aria-label={t(locale, 'recruiting.sourceLabel')}>
-              <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
-              <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
-              <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
-              <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
-              <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
-              <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-            </select>
+          <div className={cn(formFieldRowClass, 'mb-2.5')}>
+            <FormField label={t(locale, 'recruiting.phoneLabel')} className={formFieldGrowClass}>
+              <input
+                value={formatPhoneBr(phone)}
+                onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+                placeholder={t(locale, 'recruiting.phonePh')}
+                inputMode="tel"
+                aria-label={t(locale, 'recruiting.phoneLabel')}
+                className={FIELD}
+              />
+            </FormField>
+            <FormField label={t(locale, 'recruiting.linkedinLabel')} className="min-w-0 flex-[2_1_200px]">
+              <input
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder={t(locale, 'recruiting.linkedinPh')}
+                aria-label={t(locale, 'recruiting.linkedinLabel')}
+                className={FIELD}
+              />
+            </FormField>
+            <FormField label={t(locale, 'recruiting.stateLabel')} className="min-w-0 flex-[0_1_160px]">
+              <BrStateSelect
+                value={stateUf}
+                onChange={(uf) => {
+                  setStateUf(uf);
+                  setCity('');
+                }}
+                locale={locale}
+                className={FIELD_SELECT}
+              />
+            </FormField>
+            <FormField label={t(locale, 'recruiting.cityLabel')} className="min-w-0 flex-[1_1_180px]">
+              <BrCitySelect
+                uf={stateUf}
+                value={city}
+                onChange={setCity}
+                locale={locale}
+                className={FIELD_SELECT}
+              />
+            </FormField>
+            <FormField label={t(locale, 'recruiting.salaryExpectationLabel')} className={formFieldGrowClass}>
+              <input
+                value={formatSalaryBr(salaryExpectation)}
+                onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
+                placeholder={t(locale, 'recruiting.salaryPh')}
+                inputMode="numeric"
+                aria-label={t(locale, 'recruiting.salaryExpectationLabel')}
+                className={FIELD}
+              />
+            </FormField>
+            <FormField label={t(locale, 'recruiting.availabilityLabel')} className={formFieldGrowClass}>
+              <select
+                value={availability}
+                onChange={(e) => setAvailability(e.target.value)}
+                className={FIELD_SELECT}
+                aria-label={t(locale, 'recruiting.availabilityLabel')}
+              >
+                <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+                <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
+                <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+                <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+                <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+                <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+              </select>
+            </FormField>
+            <FormField label={t(locale, 'recruiting.sourceLabel')} className={formFieldGrowClass}>
+              <select
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className={FIELD_SELECT}
+                aria-label={t(locale, 'recruiting.sourceLabel')}
+              >
+                <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+                <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+                <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+                <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+                <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+                <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+              </select>
+            </FormField>
           </div>
           <button
             type="button"
@@ -692,62 +725,106 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         >
           {t(locale, 'recruiting.newCandidate')}
         </span>
-        <div className="flex flex-wrap gap-2.5 mb-2.5">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => setName(titleCasePersonName(name))}
-            placeholder={t(locale, 'recruiting.fullNamePh')}
-            className={FIELD}
-          />
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')} className={FIELD} />
-          <input
-            value={formatPhoneBr(phone)}
-            onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
-            placeholder={t(locale, 'recruiting.phonePh')}
-            inputMode="tel"
-            className={FIELD}
-          />
-          <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder={t(locale, 'recruiting.linkedinPh')} className={FIELD} />
-          <BrStateSelect
-            value={stateUf}
-            onChange={(uf) => {
-              setStateUf(uf);
-              setCity('');
-            }}
-            locale={locale}
-            className={cn(FIELD_SELECT, 'flex-[0_1_160px]')}
-          />
-          <BrCitySelect
-            uf={stateUf}
-            value={city}
-            onChange={setCity}
-            locale={locale}
-            className={cn(FIELD_SELECT, 'flex-[1_1_180px]')}
-          />
-          <input
-            value={formatSalaryBr(salaryExpectation)}
-            onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
-            placeholder={t(locale, 'recruiting.salaryPh')}
-            inputMode="numeric"
-            className={FIELD}
-          />
-          <select value={availability} onChange={(e) => setAvailability(e.target.value)} className={FIELD_SELECT}>
-            <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
-            <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
-            <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
-            <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
-            <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
-            <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-          </select>
-          <select value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_SELECT}>
-            <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
-            <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
-            <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
-            <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
-            <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
-            <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-          </select>
+        <div className={cn(formFieldRowClass, 'mb-2.5')}>
+          <FormField label={t(locale, 'recruiting.fullNamePh')} className="min-w-0 flex-[1_1_180px]">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setName(titleCasePersonName(name))}
+              placeholder={t(locale, 'recruiting.fullNamePh')}
+              aria-label={t(locale, 'recruiting.fullNamePh')}
+              className={FIELD}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.inviteCandidateEmailPh')} className="min-w-0 flex-[1_1_180px]">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t(locale, 'recruiting.inviteCandidateEmailPh')}
+              aria-label={t(locale, 'recruiting.inviteCandidateEmailPh')}
+              className={FIELD}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.phoneLabel')} className={formFieldGrowClass}>
+            <input
+              value={formatPhoneBr(phone)}
+              onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+              placeholder={t(locale, 'recruiting.phonePh')}
+              inputMode="tel"
+              aria-label={t(locale, 'recruiting.phoneLabel')}
+              className={FIELD}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.linkedinLabel')} className="min-w-0 flex-[2_1_200px]">
+            <input
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              placeholder={t(locale, 'recruiting.linkedinPh')}
+              aria-label={t(locale, 'recruiting.linkedinLabel')}
+              className={FIELD}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.stateLabel')} className="min-w-0 flex-[0_1_160px]">
+            <BrStateSelect
+              value={stateUf}
+              onChange={(uf) => {
+                setStateUf(uf);
+                setCity('');
+              }}
+              locale={locale}
+              className={FIELD_SELECT}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.cityLabel')} className="min-w-0 flex-[1_1_180px]">
+            <BrCitySelect
+              uf={stateUf}
+              value={city}
+              onChange={setCity}
+              locale={locale}
+              className={FIELD_SELECT}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.salaryExpectationLabel')} className={formFieldGrowClass}>
+            <input
+              value={formatSalaryBr(salaryExpectation)}
+              onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
+              placeholder={t(locale, 'recruiting.salaryPh')}
+              inputMode="numeric"
+              aria-label={t(locale, 'recruiting.salaryExpectationLabel')}
+              className={FIELD}
+            />
+          </FormField>
+          <FormField label={t(locale, 'recruiting.availabilityLabel')} className={formFieldGrowClass}>
+            <select
+              value={availability}
+              onChange={(e) => setAvailability(e.target.value)}
+              className={FIELD_SELECT}
+              aria-label={t(locale, 'recruiting.availabilityLabel')}
+            >
+              <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
+              <option value="immediate">{t(locale, 'recruiting.availabilityImmediate')}</option>
+              <option value="15_days">{t(locale, 'recruiting.availability15')}</option>
+              <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
+              <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
+              <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
+            </select>
+          </FormField>
+          <FormField label={t(locale, 'recruiting.sourceLabel')} className={formFieldGrowClass}>
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              className={FIELD_SELECT}
+              aria-label={t(locale, 'recruiting.sourceLabel')}
+            >
+              <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
+              <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
+              <option value="referral">{t(locale, 'recruiting.sourceReferral')}</option>
+              <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
+              <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
+              <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
+            </select>
+          </FormField>
         </div>
         <RichTextEditor
           value={createNotes}

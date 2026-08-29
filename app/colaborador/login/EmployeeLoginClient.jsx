@@ -8,6 +8,7 @@ import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { BrandMark } from '../../_components/BrandMark';
+import { FormField } from '../../_components/FormField';
 
 /**
  * Collaborator login — password primary (invite = set-password email).
@@ -167,19 +168,18 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         </div>
       ) : requires2fa ? (
         <div className="flex flex-col gap-3">
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'login.twoFaCode')}
+          <FormField label={t(locale, 'login.twoFaCode')}>
             <input
               inputMode="numeric"
               autoComplete="one-time-code"
-              className={cn(S.input, 'mt-1 w-full')}
+              className={cn(S.input, 'w-full')}
               value={twoFaCode}
               onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
               maxLength={6}
               disabled={busy}
             />
-          </label>
+          </FormField>
           <button
             type="button"
             disabled={busy || twoFaCode.length !== 6}
@@ -210,31 +210,29 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
             else void sendMagic();
           }}
         >
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'employeeHome.emailLabel')}
+          <FormField label={t(locale, 'employeeHome.emailLabel')}>
             <input
               type="email"
               required
               autoComplete="email"
-              className={cn(S.input, 'mt-1 w-full')}
+              className={cn(S.input, 'w-full')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={busy}
             />
-          </label>
+          </FormField>
           {mode === 'login' ? (
-            <label className="block text-xs text-ink-muted">
-              {t(locale, 'employeeHome.passwordLabel')}
+            <FormField label={t(locale, 'employeeHome.passwordLabel')}>
               <input
                 type="password"
                 required
                 autoComplete="current-password"
-                className={cn(S.input, 'mt-1 w-full')}
+                className={cn(S.input, 'w-full')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={busy}
               />
-            </label>
+            </FormField>
           ) : null}
 
           {companies?.length ? (

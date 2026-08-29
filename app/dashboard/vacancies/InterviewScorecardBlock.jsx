@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
+import { FormField } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
 /**
@@ -110,13 +111,14 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
                 </button>
               ))}
             </div>
-            <input
-              value={row.comment || ''}
-              onChange={(e) => setComment(idx, e.target.value)}
-              placeholder={t(locale, 'recruiting.scorecardCommentPh')}
-              className={cn(S.input, 'w-full bg-surface/90')}
-              maxLength={2000}
-            />
+            <FormField label={t(locale, 'recruiting.scorecardCommentPh')}>
+              <input
+                value={row.comment || ''}
+                onChange={(e) => setComment(idx, e.target.value)}
+                className={cn(S.input, 'w-full bg-surface/90')}
+                maxLength={2000}
+              />
+            </FormField>
           </li>
         ))}
       </ul>

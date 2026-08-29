@@ -7,6 +7,7 @@ import { useLocale } from '../../lib/useLocale';
 import { t, errorMessage } from '../../lib/i18n';
 import { BrandMark } from '../_components/BrandMark';
 import LanguageSelect from '../_components/LanguageSelect';
+import { FormField } from '../_components/FormField';
 import { cn } from '../../lib/cn';
 import { fieldInputClass, fieldSelectClass } from '../_components/form-control-styles';
 import TurnstileField from '../_components/TurnstileField';
@@ -131,11 +132,15 @@ export default function SignupPage() {
           </Link>
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="signup-fullname" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.fullName')} <span className="text-danger">*</span>
-            </label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <FormField
+            htmlFor="signup-fullname"
+            label={
+              <>
+                {t(locale, 'signup.fullName')} <span className="text-danger">*</span>
+              </>
+            }
+          >
             <input
               id="signup-fullname"
               type="text"
@@ -145,12 +150,16 @@ export default function SignupPage() {
               className={inputClass}
               placeholder={t(locale, 'signup.fullNamePlaceholder')}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="signup-email" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.email')} <span className="text-danger">*</span>
-            </label>
+          <FormField
+            htmlFor="signup-email"
+            label={
+              <>
+                {t(locale, 'signup.email')} <span className="text-danger">*</span>
+              </>
+            }
+          >
             <input
               id="signup-email"
               type="email"
@@ -161,12 +170,16 @@ export default function SignupPage() {
               className={inputClass}
               placeholder={t(locale, 'signup.emailPlaceholder')}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="signup-company" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.companyName')} <span className="text-danger">*</span>
-            </label>
+          <FormField
+            htmlFor="signup-company"
+            label={
+              <>
+                {t(locale, 'signup.companyName')} <span className="text-danger">*</span>
+              </>
+            }
+          >
             <input
               id="signup-company"
               type="text"
@@ -176,12 +189,9 @@ export default function SignupPage() {
               className={inputClass}
               placeholder={t(locale, 'signup.companyNamePlaceholder')}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="signup-jobtitle" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.jobTitle')}
-            </label>
+          <FormField htmlFor="signup-jobtitle" label={t(locale, 'signup.jobTitle')}>
             <input
               id="signup-jobtitle"
               type="text"
@@ -190,12 +200,9 @@ export default function SignupPage() {
               className={inputClass}
               placeholder={t(locale, 'signup.jobTitlePlaceholder')}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="signup-teamsize" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.teamSize')}
-            </label>
+          <FormField htmlFor="signup-teamsize" label={t(locale, 'signup.teamSize')}>
             <select
               id="signup-teamsize"
               value={formData.teamSize}
@@ -208,12 +215,9 @@ export default function SignupPage() {
               <option value="51-200">51-200</option>
               <option value="201+">201+</option>
             </select>
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="signup-pain" className="mb-2 block text-xs text-ink-muted">
-              {t(locale, 'signup.painPoints')}
-            </label>
+          <FormField htmlFor="signup-pain" label={t(locale, 'signup.painPoints')}>
             <textarea
               id="signup-pain"
               value={formData.painPoints}
@@ -222,7 +226,7 @@ export default function SignupPage() {
               className={cn(inputClass, 'resize-none')}
               placeholder={t(locale, 'signup.painPointsPlaceholder')}
             />
-          </div>
+          </FormField>
 
           <div className="rounded-control border border-ink/8 bg-ink/[0.02] px-4 py-3 text-xs leading-relaxed text-ink-muted">
             {t(locale, 'signup.terms')}

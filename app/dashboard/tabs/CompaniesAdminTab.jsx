@@ -25,10 +25,10 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { RichTextEditor } from '../../_components/RichTextEditor';
+import { FormField } from '../../_components/FormField';
 import { CompanyLogoCropDialog } from '../../_components/CompanyLogoCropDialog';
 import { COMPANY_LOGO_ACCEPT } from '../../../lib/company-logo-limits';
 
-const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
 const FIELD_INPUT =
   'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
 const BTN_GHOST =
@@ -810,8 +810,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               ? t(locale, 'panel.admin.editCompanyHelp')
               : t(locale, 'panel.admin.createCompanyHelp')}
           </p>
-          <label className={FIELD_LABEL}>
-            {t(locale, 'panel.admin.editCompanyName')}
+          <FormField label={t(locale, 'panel.admin.editCompanyName')}>
             <input
               value={form.name}
               onChange={(e) => setFormField('name', e.target.value)}
@@ -819,9 +818,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               disabled={formSaving}
               className={FIELD_INPUT}
             />
-          </label>
-          <label className={FIELD_LABEL}>
-            {t(locale, 'panel.admin.editCompanySlug')}
+          </FormField>
+          <FormField label={t(locale, 'panel.admin.editCompanySlug')}>
             <input
               value={form.slug}
               onChange={(e) => setFormField('slug', e.target.value)}
@@ -841,34 +839,33 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               )}
             />
             {slugStatus === 'checking' ? (
-              <span className="text-2xs leading-snug text-ink-muted">
+              <span className="mt-1 block text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.admin.companySlugChecking')}
               </span>
             ) : null}
             {slugStatus === 'ok' ? (
-              <span className="text-2xs leading-snug text-success">
+              <span className="mt-1 block text-2xs leading-snug text-success">
                 {t(locale, 'panel.admin.companySlugAvailable')}
                 {slugNormalized ? ` (${slugNormalized})` : ''}
               </span>
             ) : null}
             {slugStatus === 'taken' ? (
-              <span className="text-2xs leading-snug text-danger">
+              <span className="mt-1 block text-2xs leading-snug text-danger">
                 {t(locale, 'panel.admin.companySlugTaken')}
               </span>
             ) : null}
             {slugStatus === 'invalid' && String(form.slug || '').trim() ? (
-              <span className="text-2xs leading-snug text-warning">
+              <span className="mt-1 block text-2xs leading-snug text-warning">
                 {t(locale, 'panel.admin.companySlugInvalid')}
               </span>
             ) : null}
             {slugStatus === 'idle' || (slugStatus === 'invalid' && !String(form.slug || '').trim()) ? (
-              <span className="text-2xs leading-snug text-ink-muted">
+              <span className="mt-1 block text-2xs leading-snug text-ink-muted">
                 {t(locale, 'panel.admin.companySlugHelp')}
               </span>
             ) : null}
-          </label>
-          <label className={FIELD_LABEL}>
-            {t(locale, 'panel.admin.editCompanyWebsite')}
+          </FormField>
+          <FormField label={t(locale, 'panel.admin.editCompanyWebsite')}>
             <input
               value={form.website}
               onChange={(e) => setFormField('website', e.target.value)}
@@ -876,9 +873,12 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               disabled={formSaving}
               className={FIELD_INPUT}
             />
-          </label>
-          <label className={FIELD_LABEL}>
-            {t(locale, 'panel.admin.editCompanyAnniversary')}
+          </FormField>
+          <FormField
+            as="div"
+            label={t(locale, 'panel.admin.editCompanyAnniversary')}
+            hint={t(locale, 'panel.admin.editCompanyAnniversaryHelp')}
+          >
             <DateField
               value={form.anniversaryDate || ''}
               onChange={(e) => setFormField('anniversaryDate', e.target.value || '')}
@@ -886,10 +886,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               aria-label={t(locale, 'panel.admin.editCompanyAnniversary')}
               className={FIELD_INPUT}
             />
-            <span className="text-2xs leading-snug text-ink-muted">
-              {t(locale, 'panel.admin.editCompanyAnniversaryHelp')}
-            </span>
-          </label>
+          </FormField>
           <CompanyLogoField
             locale={locale}
             previewUrl={logoPreviewUrl}
@@ -927,8 +924,11 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               </span>
             </span>
           </label>
-          <div className={FIELD_LABEL}>
-            {t(locale, 'panel.admin.editCompanyAbout')}
+          <FormField
+            as="div"
+            label={t(locale, 'panel.admin.editCompanyAbout')}
+            hint={t(locale, 'panel.admin.editCompanyAboutHelp')}
+          >
             <RichTextEditor
               value={form.aboutHtml}
               onChange={(html) => setFormField('aboutHtml', html)}
@@ -937,10 +937,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               locale={locale}
               disabled={formSaving}
             />
-            <span className="text-2xs leading-snug text-ink-muted">
-              {t(locale, 'panel.admin.editCompanyAboutHelp')}
-            </span>
-          </div>
+          </FormField>
           {drawerMode === 'edit' ? (
             <label
               className={cn(

@@ -6,6 +6,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S, AdminListPager } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 
 function formatActor(row, locale) {
   if (row.actorKind === 'employee') {
@@ -134,11 +135,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
         <p className={cn(S.muted, 'mt-1 max-w-3xl')}>{t(locale, 'panel.audit.intro')}</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'panel.audit.filterActorKind')}
+      <div className={cn(formFieldRowClass, 'gap-3')}>
+        <FormField label={t(locale, 'panel.audit.filterActorKind')}>
           <select
-            className={cn(S.select, 'mt-1 min-w-[140px]')}
+            className={cn(S.select, 'min-w-[140px]')}
             value={filters.actorKind}
             onChange={(e) => pushFilters({ actorKind: e.target.value, page: 1 })}
           >
@@ -148,11 +148,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
             <option value="system">{t(locale, 'panel.audit.actorKindSystem')}</option>
             <option value="public">{t(locale, 'panel.audit.actorKindPublic')}</option>
           </select>
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'panel.audit.filterCompanyId')}
+        </FormField>
+        <FormField label={t(locale, 'panel.audit.filterCompanyId')}>
           <input
-            className={cn(S.input, 'mt-1 w-28')}
+            className={cn(S.input, 'w-28')}
             inputMode="numeric"
             placeholder={t(locale, 'panel.audit.companyIdPh')}
             value={filters.companyId === 'all' ? '' : filters.companyId}
@@ -161,11 +160,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
               pushFilters({ companyId: v || 'all', page: 1 });
             }}
           />
-        </label>
-        <label className="block text-xs text-ink-muted">
-          {t(locale, 'panel.audit.filterAction')}
+        </FormField>
+        <FormField label={t(locale, 'panel.audit.filterAction')}>
           <input
-            className={cn(S.input, 'mt-1 min-w-[180px]')}
+            className={cn(S.input, 'min-w-[180px]')}
             value={actionDraft}
             placeholder={t(locale, 'panel.audit.actionPh')}
             onChange={(e) => setActionDraft(e.target.value)}
@@ -173,11 +171,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
               if (e.key === 'Enter') pushFilters({ action: actionDraft.trim(), page: 1 });
             }}
           />
-        </label>
-        <label className="block min-w-[200px] flex-1 text-xs text-ink-muted">
-          {t(locale, 'panel.audit.filterSearch')}
+        </FormField>
+        <FormField label={t(locale, 'panel.audit.filterSearch')} className="min-w-[200px] flex-1">
           <input
-            className={cn(S.input, 'mt-1 w-full')}
+            className={cn(S.input, 'w-full')}
             value={qDraft}
             placeholder={t(locale, 'panel.audit.searchPh')}
             onChange={(e) => setQDraft(e.target.value)}
@@ -185,10 +182,10 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
               if (e.key === 'Enter') pushFilters({ q: qDraft.trim(), page: 1 });
             }}
           />
-        </label>
+        </FormField>
         <button
           type="button"
-          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0')}
+          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 self-end')}
           onClick={() => pushFilters({ q: qDraft.trim(), action: actionDraft.trim(), page: 1 })}
         >
           {t(locale, 'panel.audit.applyFilters')}

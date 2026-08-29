@@ -7,6 +7,7 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../_components/AppLoading';
+import { FormField } from '../_components/FormField';
 import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
@@ -570,17 +571,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         <div className="mt-4 rounded-control border border-ink/12 bg-canvas/40 p-3">
           <h3 className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h3>
           <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
-          <label className="block text-xs text-ink-muted">
-            {t(locale, 'panel.employeePortal.noteLabel')}
+          <FormField label={t(locale, 'panel.employeePortal.noteLabel')}>
             <textarea
-              className={cn(S.input, 'mt-1 min-h-[80px] w-full')}
+              className={cn(S.input, 'min-h-[80px] w-full')}
               value={prepNote}
               onChange={(e) => setPrepNote(e.target.value)}
               maxLength={2000}
               placeholder={t(locale, 'panel.employeePortal.notePh')}
               disabled={busy}
             />
-          </label>
+          </FormField>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"

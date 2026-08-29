@@ -25,10 +25,10 @@ import {
   dialogBtnPrimaryClass,
 } from '../../_components/AdminRichFormDrawer';
 import { RubricEditor } from '../../_components/RubricEditor';
+import { FormField } from '../../_components/FormField';
 import { fieldInputClass } from '../../_components/form-control-styles';
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
-const FIELD_LABEL = 'flex flex-col gap-1.5 font-mono text-2xs text-ink-faint';
 
 const emptyForm = () => ({
   name: '',
@@ -478,9 +478,8 @@ export function JobRolesAdminTab({ locale, companyId }) {
           </>
         )}
       >
-        <div className="flex flex-col gap-4">
-          <label className={FIELD_LABEL}>
-            {t(locale, 'jobRoles.nameLabel')}
+        <div className="flex flex-col gap-3.5">
+          <FormField label={t(locale, 'jobRoles.nameLabel')}>
             <input
               value={form.name}
               onChange={(e) => setForm((cur) => ({ ...cur, name: e.target.value }))}
@@ -488,10 +487,9 @@ export function JobRolesAdminTab({ locale, companyId }) {
               className={FIELD}
               autoFocus
             />
-          </label>
+          </FormField>
 
-          <label className={FIELD_LABEL}>
-            {t(locale, 'jobRoles.descriptionLabel')}
+          <FormField label={t(locale, 'jobRoles.descriptionLabel')}>
             <textarea
               value={form.description}
               onChange={(e) => setForm((cur) => ({ ...cur, description: e.target.value }))}
@@ -499,14 +497,13 @@ export function JobRolesAdminTab({ locale, companyId }) {
               rows={3}
               className={cn(FIELD, 'min-h-[72px] resize-y font-ui')}
             />
-          </label>
+          </FormField>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'jobRoles.rubricLabel')}</p>
-                <p className="m-0 mt-0.5 text-xs text-ink-muted">{t(locale, 'jobRoles.rubricHint')}</p>
-              </div>
+          <FormField as="div" label={t(locale, 'jobRoles.rubricLabel')}>
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+              <p className="m-0 min-w-0 flex-1 text-xs text-ink-muted">
+                {t(locale, 'jobRoles.rubricHint')}
+              </p>
               <button
                 type="button"
                 onClick={suggestRubricAi}
@@ -524,13 +521,15 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 )}
               </button>
             </div>
-            <p className="m-0 text-2xs leading-normal text-ink-faint">{t(locale, 'jobRoles.rubricAiHint')}</p>
+            <p className="m-0 mb-2 text-2xs leading-normal text-ink-faint">
+              {t(locale, 'jobRoles.rubricAiHint')}
+            </p>
             <RubricEditor
               value={form.rubric}
               onChange={(rubric) => setForm((cur) => ({ ...cur, rubric }))}
               locale={locale}
             />
-          </div>
+          </FormField>
         </div>
       </AdminRichFormDrawer>
     </div>

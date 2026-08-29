@@ -9,6 +9,7 @@ import { t } from '../../../lib/i18n.js';
 import { useLocale } from '../../../lib/useLocale.js';
 import { S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
+import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
 import { cn } from '../../../lib/cn.js';
@@ -234,43 +235,38 @@ export function AnalyticsTab({ session }) {
 
         {/* Filtros */}
         {activeView === 'metrics' && (
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div>
-            <label className={S.label}>
-              {locale === 'pt-BR' ? 'Data início' : 'Start date'}
-            </label>
+        <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
+          <FormField
+            as="div"
+            label={locale === 'pt-BR' ? 'Data início' : 'Start date'}
+          >
             <DateField
               className={S.input}
               value={filters.startDate}
               onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
               aria-label={locale === 'pt-BR' ? 'Data início' : 'Start date'}
             />
-          </div>
-          <div>
-            <label className={S.label}>
-              {locale === 'pt-BR' ? 'Data fim' : 'End date'}
-            </label>
+          </FormField>
+          <FormField
+            as="div"
+            label={locale === 'pt-BR' ? 'Data fim' : 'End date'}
+          >
             <DateField
               className={S.input}
               value={filters.endDate}
               onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
               aria-label={locale === 'pt-BR' ? 'Data fim' : 'End date'}
             />
-          </div>
-          <div className="flex items-end">
-            <button className={S.btnPrimary} onClick={applyFilters}>
-              {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
-            </button>
-          </div>
+          </FormField>
+          <button className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
+            {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
+          </button>
         </div>
         )}
 
         {activeView === 'trends' && (
-        <div className="flex gap-4 mb-6">
-          <div>
-            <label className={S.label}>
-              {locale === 'pt-BR' ? 'Período (meses)' : 'Period (months)'}
-            </label>
+        <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
+          <FormField label={locale === 'pt-BR' ? 'Período (meses)' : 'Period (months)'}>
             <select
               className={S.select}
               value={trendMonths}
@@ -280,12 +276,10 @@ export function AnalyticsTab({ session }) {
               <option value="12">12 meses</option>
               <option value="24">24 meses</option>
             </select>
-          </div>
-          <div className="flex items-end">
-            <button className={S.btnPrimary} onClick={applyFilters}>
-              {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
-            </button>
-          </div>
+          </FormField>
+          <button className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
+            {locale === 'pt-BR' ? 'Aplicar' : 'Apply'}
+          </button>
         </div>
         )}
 
@@ -429,9 +423,8 @@ export function AnalyticsTab({ session }) {
         <p className={cn(S.muted, 'mb-4')}>
           {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsHelp')}
         </p>
-        <div className="flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.analytics.reportFreq')}</span>
+        <div className={cn(formFieldRowClass, 'gap-4')}>
+          <FormField label={t(locale, 'panel.motivatorsAdmin.analytics.reportFreq')}>
             <select
               className={S.select}
               value={reportPrefs.frequency}
@@ -441,8 +434,8 @@ export function AnalyticsTab({ session }) {
               <option value="monthly">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqMonthly')}</option>
               <option value="off">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqOff')}</option>
             </select>
-          </label>
-          <label className="flex min-h-touch cursor-pointer items-center gap-2 font-ui text-sm text-ink">
+          </FormField>
+          <label className="flex min-h-touch cursor-pointer items-center gap-2 self-end font-ui text-sm text-ink">
             <input
               type="checkbox"
               className={S.checkbox}
@@ -453,7 +446,7 @@ export function AnalyticsTab({ session }) {
           </label>
           <button
             type="button"
-            className={S.btnPrimary}
+            className={cn(S.btnPrimary, 'self-end')}
             disabled={prefsBusy}
             onClick={saveReportPrefs}
           >

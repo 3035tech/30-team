@@ -22,7 +22,7 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
    - Hint em ícone → `IconActionTip` (já nos Admin* / CopyableLink)
    - Não inventar segundo fade/skeleton/spinner
 6. **Alvos tocáveis / clicáveis** — área mínima confortável (~40px); labels e `aria-label` em ícones.
-7. **Consistência** — Tailwind (`tailwind.config.js` tokens) + `C`/`FONTS` onde ainda inline; padrões das tabs existentes; ver `.cursor/rules/tailwind-ui.mdc`.
+7. **Consistência** — Tailwind (`tailwind.config.js` tokens) + `C`/`FONTS` onde ainda inline; padrões das tabs existentes; ver `.cursor/rules/tailwind-ui.mdc`. Formulários: **sempre** `FormField` (label acima); grades com `items-start` / `S.fieldRow`.
 8. **Hierarquia visual** — título → ação primária → conteúdo; evitar competição de CTAs roxos.
 9. **Mobile e desktop** — drawer/overlay no mobile; collapse de sidebar só no desktop; não quebrar o fluxo público (`/t`, `/v`, assessment).
 10. **Acessibilidade básica** — contraste legível, foco visível, `title`/tooltip em modo ícone, não depender só de cor.
@@ -37,6 +37,7 @@ Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.curso
 - Densidade extrema sem agrupamento (especialmente kanban/tabelas)
 - Inventar segundo design system (MUI/Chakra/etc.), cards genéricos IA, roxo-em-tudo / roxo em status
 - Hex solto fora de `theme.js` / `tailwind.config.js`
+- Label de campo **ao lado** do input em grade (ou placeholder como único rótulo) — usar `FormField`
 - Loading ad hoc (`…`, spinner solto) ou fade inventado fora de `ContentEnter` / `variant="panel"`
 
 ## Checklist rápido antes de entregar UI
