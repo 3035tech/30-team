@@ -1,6 +1,6 @@
 # Jornada de chegada do colaborador
 
-Visão do colaborador em `/colaborador` para o ritual pós-contratação já gerenciado pelo RH na Equipe.
+Visão do colaborador em `/employee` para o ritual pós-contratação já gerenciado pelo RH na Equipe.
 
 ## Gestor (Equipe → Jornada)
 

@@ -80,7 +80,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     try {
       const res = await fetch(`/api/employee/home?locale=${encodeURIComponent(locale)}`);
       if (res.status === 401) {
-        router.replace('/colaborador/login');
+        router.replace('/employee/login');
         return;
       }
       const json = await res.json().catch(() => ({}));

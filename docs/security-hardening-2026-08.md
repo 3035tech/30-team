@@ -48,13 +48,13 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 - **Ativar:** Perfil → Configurar 2FA → escanear QR/secret → confirmar código de 6 dígitos.
 - **Desativar:** Perfil → senha atual + código TOTP.
 - **Gestores:** `/dashboard` perfil → `GET/PATCH/DELETE /api/me/2fa`; login em `/api/auth/login` + `/api/auth/2fa/verify`.
-- **Colaboradores:** `/colaborador/perfil` → `GET/PATCH/DELETE /api/employee/me/2fa`; login em `/api/auth/employee/login` + `/api/auth/employee/2fa/verify` (link mágico também exige 2FA se ativo).
+- **Colaboradores:** `/employee/profile` → `GET/PATCH/DELETE /api/employee/me/2fa`; login em `/api/auth/employee/login` + `/api/auth/employee/2fa/verify` (link mágico também exige 2FA se ativo).
 
 Não há política global que force 2FA — cada gestor escolhe.
 
 ## Fluxos públicos (sem login)
 
-O middleware **só** exige sessão de gestor em `/dashboard` e `/api/admin/*`, e sessão de colaborador em `/colaborador` + `/api/employee/*` (exceto login/set-password).
+O middleware **só** exige sessão de gestor em `/dashboard` e `/api/admin/*`, e sessão de colaborador em `/employee` + `/api/employee/*` (exceto login/set-password).
 
 **Permanecem públicos** (token de link ou anônimo):
 
@@ -98,7 +98,7 @@ Regras em `lib/crawler-guard.js` (fonte única para `app/robots.js` + middleware
 | Protegido (Disallow + `X-Robots-Tag: noindex`) | Permanece indexável |
 |------------------------------------------------|---------------------|
 | `/t/`, `/v/`, `/assessment/`, `/clima/`, `/pulso/`, `/e/`, `/r/` | `/jobs`, `/jobs/*` |
-| `/colaborador/`, `/signup`, `/login`, `/dashboard` | `/companies/*` (opt-in) |
+| `/employee/`, `/signup`, `/login`, `/dashboard` | `/companies/*` (opt-in) |
 | `/api/`, `/a/unsubscribe` | `sitemap.xml`, `/llms.txt` |
 | Bots IA (GPTBot, ClaudeBot, …) | `/llms.txt` only — resto Disallow `/` |
 

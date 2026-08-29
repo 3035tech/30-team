@@ -98,7 +98,7 @@ export function EmployeeTopBar({
       /* ignore */
     }
     setNotifOpen(false);
-    router.push(item.href || '/colaborador');
+    router.push(item.href || '/employee');
     void loadNotifs();
   };
 
@@ -113,7 +113,7 @@ export function EmployeeTopBar({
 
   const logout = async () => {
     await fetch('/api/auth/employee/session', { method: 'DELETE' });
-    router.replace('/colaborador/login');
+    router.replace('/employee/login');
   };
 
   return (
@@ -122,7 +122,7 @@ export function EmployeeTopBar({
         ref={wrapRef}
         className="mx-auto flex max-w-lg flex-wrap items-center justify-between gap-2 px-4 py-2.5"
       >
-        <Link href="/colaborador" className="flex min-w-0 items-center gap-2 no-underline">
+        <Link href="/employee" className="flex min-w-0 items-center gap-2 no-underline">
           <BrandMark size={24} withWordmark />
           {companyName ? (
             <span className="hidden truncate font-mono text-2xs text-ink-faint sm:inline">
@@ -216,7 +216,7 @@ export function EmployeeTopBar({
             {profileOpen ? (
               <div className="absolute right-0 z-50 mt-1 w-44 rounded-control border border-ink/12 bg-surface p-1 shadow-card">
                 <Link
-                  href="/colaborador/perfil"
+                  href="/employee/profile"
                   className={cn(S.btnGhost, 'flex min-h-touch w-full justify-start no-underline')}
                   onClick={() => setProfileOpen(false)}
                 >

@@ -8,9 +8,9 @@ ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS access_invited_at TIMESTAMPTZ;
 
 COMMENT ON COLUMN candidates.password_hash IS
-  'bcrypt hash for /colaborador login; NULL until set-password invite completed';
+  'bcrypt hash for /employee login; NULL until set-password invite completed';
 COMMENT ON COLUMN candidates.password_setup_token IS
-  'One-time token for /colaborador/cadastrar-senha; NULL when unused or consumed';
+  'One-time token for /employee/set-password; NULL when unused or consumed';
 COMMENT ON COLUMN candidates.password_setup_expires_at IS
   'Validity of password_setup_token (default 72h)';
 COMMENT ON COLUMN candidates.access_invited_at IS

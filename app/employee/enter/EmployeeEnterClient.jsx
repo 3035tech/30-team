@@ -9,7 +9,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
 
 /**
- * Consume magic-link token → set employee cookie (ou desafio 2FA) → redirect /colaborador
+ * Consume magic-link token → set employee cookie (ou desafio 2FA) → redirect /employee
  */
 export default function EmployeeEnterClient() {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function EmployeeEnterClient() {
           }
           return;
         }
-        if (!cancelled) router.replace('/colaborador');
+        if (!cancelled) router.replace('/employee');
       } catch {
         if (!cancelled) setError(t(locale, 'employeeHome.invalidLink'));
       }
@@ -64,7 +64,7 @@ export default function EmployeeEnterClient() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || '2fa');
-      router.replace('/colaborador');
+      router.replace('/employee');
     } catch {
       setError(t(locale, 'employeeHome.loginError'));
     } finally {
@@ -76,7 +76,7 @@ export default function EmployeeEnterClient() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <p className="m-0 text-sm text-ink-muted">{error}</p>
-        <a href="/colaborador/login" className={cn(S.btnBrandSoft, 'mt-4 inline-flex min-h-touch')}>
+        <a href="/employee/login" className={cn(S.btnBrandSoft, 'mt-4 inline-flex min-h-touch')}>
           {t(locale, 'employeeHome.backToLogin')}
         </a>
       </div>

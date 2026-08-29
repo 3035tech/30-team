@@ -174,7 +174,7 @@ Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard quando
 
 3. **Invite** (✉️)
    - Opção A: Convidar time (outros gestores)
-   - Opção B: Usar link público (candidatos/colaboradores)
+   - Opção B: Usar link público (candidatos/employeees)
    - CTA: "Fazer depois"
 
 4. **Done** (🎉)

@@ -49,7 +49,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
     try {
       const res = await fetch('/api/employee/me');
       if (res.status === 401) {
-        router.replace('/colaborador/login');
+        router.replace('/employee/login');
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -202,7 +202,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   return (
     <ContentEnter animKey="ready">
     <div className="mx-auto max-w-lg px-4 py-8">
-      <Link href="/colaborador" className="font-mono text-xs text-brand-600 no-underline">
+      <Link href="/employee" className="font-mono text-xs text-brand-600 no-underline">
         ← {t(locale, 'employeeHome.backHome')}
       </Link>
       <h1 className="mt-3 font-display text-2xl text-ink">{t(locale, 'employeeHome.profileTitle')}</h1>

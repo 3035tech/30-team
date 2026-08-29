@@ -5,6 +5,11 @@ import { isManagerRole } from './lib/permissions';
 import { ERR } from './lib/api-error-codes';
 import { EMPLOYEE_COOKIE_NAME } from './lib/employee-auth-constants';
 import {
+  EMPLOYEE_PATH,
+  isEmployeeAppPath,
+  isPublicEmployeeAuthPath,
+} from './lib/employee-paths';
+import {
   JOB_ATTR_COOKIE,
   attributionCookieOptions,
   decodeAttributionCookie,
@@ -69,11 +74,9 @@ function withJobAttributionCookie(request, response) {
   return response;
 }
 
-function isPublicEmployeeAuthPath(pathname) {
+function isPublicEmployeeSurface(pathname) {
   return (
-    pathname === '/colaborador/login' ||
-    pathname.startsWith('/colaborador/entrar') ||
-    pathname.startsWith('/colaborador/cadastrar-senha') ||
+    isPublicEmployeeAuthPath(pathname) ||
     pathname === '/api/auth/employee/magic-link' ||
     pathname === '/api/auth/employee/session' ||
     pathname === '/api/auth/employee/login' ||
@@ -155,8 +158,8 @@ export async function middleware(request) {
 
   // Collaborator hub — employee JWT only (never manager cookie alone).
   if (
-    (pathname.startsWith('/colaborador') || pathname.startsWith('/api/employee')) &&
-    !isPublicEmployeeAuthPath(pathname)
+    (isEmployeeAppPath(pathname) || pathname.startsWith('/api/employee')) &&
+    !isPublicEmployeeSurface(pathname)
   ) {
     const empToken = request.cookies.get(EMPLOYEE_COOKIE_NAME)?.value;
     const emp = empToken ? await verifyEmployeeTokenEdge(empToken) : null;
@@ -169,7 +172,7 @@ export async function middleware(request) {
       }
       return secureResponse(
         request,
-        NextResponse.redirect(new URL('/colaborador/login', request.url))
+        NextResponse.redirect(new URL(EMPLOYEE_PATH.LOGIN, request.url))
       );
     }
   }

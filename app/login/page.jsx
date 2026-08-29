@@ -394,7 +394,7 @@ function LoginForm() {
               {t(locale, 'login.forgotPassword')}
             </button>
             <a
-              href="/colaborador/login"
+              href="/employee/login"
               className="mb-4 block font-display text-xs text-ink-muted underline-offset-2 hover:text-brand-600 hover:underline"
             >
               {t(locale, 'login.employeeLogin')}

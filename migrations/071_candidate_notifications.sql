@@ -5,7 +5,7 @@ ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS preferred_locale TEXT;
 
 COMMENT ON COLUMN candidates.preferred_locale IS
-  'UI locale for /colaborador (pt-BR|en); cookie also set client-side';
+  'UI locale for /employee (pt-BR|en); cookie also set client-side';
 
 CREATE TABLE IF NOT EXISTS candidate_notifications (
   id                       BIGSERIAL PRIMARY KEY,
@@ -35,4 +35,4 @@ CREATE INDEX IF NOT EXISTS idx_candidate_notifications_company_created
   ON candidate_notifications (company_id, created_at DESC);
 
 COMMENT ON TABLE candidate_notifications IS
-  'In-app inbox for collaborators (/colaborador). Fan-out by candidate_id within company.';
+  'In-app inbox for collaborators (/employee). Fan-out by candidate_id within company.';

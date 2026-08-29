@@ -11,7 +11,7 @@ ALTER TABLE candidates
   CHECK (char_length(one_on_one_prep_note) <= 2000);
 
 COMMENT ON COLUMN candidates.one_on_one_prep_at IS
-  'Colaborador marcou prep do próximo 1:1 em /colaborador (nota visível ao gestor na Equipe).';
+  'Colaborador marcou prep do próximo 1:1 em /employee (nota visível ao gestor na Equipe).';
 COMMENT ON COLUMN candidates.one_on_one_prep_note IS
   'Nota opcional ao gestor sobre o próximo 1:1 (sessão autenticada).';
 

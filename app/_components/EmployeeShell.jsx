@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { EMPLOYEE_PUBLIC_PATHS } from '../../lib/employee-paths';
 import { useLocale } from '../../lib/useLocale';
 import { AppFeedbackProvider } from './AppFeedback';
 import { ContentEnter } from './AppLoading';
 import { EmployeeTopBar } from './EmployeeTopBar';
-
-const PUBLIC_PATHS = ['/colaborador/login', '/colaborador/entrar', '/colaborador/cadastrar-senha'];
 
 /**
  * Shared chrome for authenticated collaborator pages.
  */
 export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = '', companyName = '' }) {
   const pathname = usePathname() || '';
-  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const isPublic = EMPLOYEE_PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const [locale, setLocale] = useLocale(initialLocale);
   const [displayName, setDisplayName] = useState(personName);
   const [company, setCompany] = useState(companyName);

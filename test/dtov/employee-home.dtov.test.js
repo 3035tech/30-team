@@ -60,7 +60,7 @@ async function main() {
     returnUrl: true,
   });
   assert.equal(invited.ok, true, invited.errorCode);
-  assert.ok(invited.setupUrl?.includes('/colaborador/cadastrar-senha'));
+  assert.ok(invited.setupUrl?.includes('/employee/set-password'));
 
   const tokRow = await query(
     `SELECT password_setup_token AS token FROM candidates WHERE id = $1 AND company_id = $2`,

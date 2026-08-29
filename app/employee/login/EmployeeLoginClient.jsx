@@ -39,7 +39,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       if (!res.ok) throw new Error(json?.error || t(locale, 'login.twoFaVerifying'));
       setRequires2fa(false);
       setChallengeToken('');
-      router.replace('/colaborador');
+      router.replace('/employee');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
     } finally {
@@ -74,7 +74,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         return;
       }
       setCompanies(null);
-      router.replace('/colaborador');
+      router.replace('/employee');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
     } finally {

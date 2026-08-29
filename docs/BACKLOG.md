@@ -442,7 +442,7 @@ _(entregue — `068` turmas/prazo/obrigatório + `development_plan_lms_links`; m
 _(entregue — `069`/`070`/`071`; set-password; hub; chrome tema/idioma/notif; perfil + senha; `candidate_notifications`; LMS enroll/overdue → inbox colaborador.)_
 
 ### Epic B-2501 — Sessão colaborador + packaging consultoria ✅ ENTREGUE (corte 2)
-_(migration `077`; prep 1:1 em `/colaborador`; clima/pulso autenticado + histórico; playbooks operacionais por persona no dashboard; `/r` com templates técnica/liderança/operacional + riscos de composição na shortlist. **Ainda fora:** folha/ponto/docs completos (DP).)_
+_(migration `077`; prep 1:1 em `/employee`; clima/pulso autenticado + histórico; playbooks operacionais por persona no dashboard; `/r` com templates técnica/liderança/operacional + riscos de composição na shortlist. **Ainda fora:** folha/ponto/docs completos (DP).)_
 
 ### Epic B-2510 — Remuneração interna leve ✅ ENTREGUE
 _(migration `072`; `employee_compensation_events`; Equipe → aba Remuneração; salário vigente + timeline; import da oferta aceita; alumni só leitura. **Não** é folha/holerite/ponto.)_
@@ -470,7 +470,7 @@ Fonte: varredura pública [solides.com.br](https://solides.com.br) (home, soluç
 | Engenharia de cargos | `job_roles` + rubrica herdada na vaga |
 | Matcher / comparar pessoas | Compat + Comparativo + intel comportamental |
 | Gestão comportamental (fio condutor) | **T1–T9 + Motivadores** hoje; DISC/Profiler-like → **B-2720** |
-| App colaborador leve | `/colaborador` + `/e` hoje; folha/ponto no app → ondas DP **B-2721+** |
+| App colaborador leve | `/employee` + `/e` hoje; folha/ponto no app → ondas DP **B-2721+** |
 | Benefícios (catálogo) | Company benefits hoje; cartão/marketplace → **B-2731** |
 | People analytics | Analytics B-1100 + Overview + digests |
 | IA assistida | Help + interpretativa hedged + workbench (não “40+ agentes” nem Folh.AI ainda) |
@@ -534,7 +534,7 @@ Sólides: avulso. Temos remuneração interna só.
 
 ### B-2712 — Intranet / feed interno leve
 Sólides: Intranet + SuperApp. Temos hub colaborador sem mural.
-1. Posts da empresa (admin/hr): título, rich text, audiência empresa; lista em `/colaborador`.
+1. Posts da empresa (admin/hr): título, rich text, audiência empresa; lista em `/employee`.
 2. Sem chat; sem rede social completa.
 3. Soft delete; paginação.
 
@@ -558,7 +558,7 @@ Sólides fraco em enterprise; oportunidade se atacarmos o gap inverso (PME → g
 
 ### B-2716 — Feedback contínuo (reconhecimento / feed)
 Já “fora” em B-2000 tipo Feedz — registrar como gap Sólides/engajamento.
-1. MVP: kudos leves (de→para, texto curto) visíveis no `/colaborador` + digest.
+1. MVP: kudos leves (de→para, texto curto) visíveis no `/employee` + digest.
 2. Sem substituir 1:1/PDI.
 3. Prioridade baixa vs 2702–2705.
 
@@ -577,7 +577,7 @@ Sólides: Profiler (DISC + teorias) como fio condutor. Hoje só T1–T9 + Motiva
 
 ### Onda DP (Departamento Pessoal) — unificado no mesmo produto
 
-Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`, `dp.folha`, …); `/colaborador` consome holerite/ponto sem segundo login. Fatias abaixo — **não** big-bang.
+Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`, `dp.folha`, …); `/employee` consome holerite/ponto sem segundo login. Fatias abaixo — **não** big-bang.
 
 ### B-2721 — Ponto digital (MVP)
 1. Batida web/app + geolocalização opcional; espelho do dia; aprovação de inconsistências pelo gestor.
@@ -590,7 +590,7 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 3. Depende de B-2721 para cálculo automático.
 
 ### B-2723 — Férias e afastamentos
-1. Solicitação no `/colaborador`; saldo; aprovação gestor/RH; calendário do time.
+1. Solicitação no `/employee`; saldo; aprovação gestor/RH; calendário do time.
 2. Tipos: férias, atestado, licença (taxonomia fechada).
 3. Integra eventos de folha quando **B-2726** existir.
 
@@ -607,7 +607,7 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 ### B-2726 — Folha de pagamento + eSocial + holerite
 1. Eventos de folha (proventos/descontos) a partir de ponto/férias/banco; fechamento mensal.
 2. Integração eSocial (Portaria 671 / eventos relevantes) — provável parceiro ou motor dedicado; escopo jurídico pesado.
-3. Holerite digital no `/colaborador`; central do contador (acesso read-only por CAP).
+3. Holerite digital no `/employee`; central do contador (acesso read-only por CAP).
 4. **Folh.AI / BPO** = add-on depois (agentes + fila humana).
 
 ### B-2727 — WhatsApp operacional DP

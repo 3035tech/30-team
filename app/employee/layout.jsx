@@ -7,7 +7,7 @@ import { verifyEmployeeToken, isEmployeeSessionPayload } from '../../lib/employe
 
 export const dynamic = 'force-dynamic';
 
-export default function ColaboradorLayout({ children }) {
+export default function EmployeeLayout({ children }) {
   const jar = cookies();
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;

@@ -16,7 +16,7 @@ export default function EmployeeHomePage({ searchParams }) {
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   if (!isEmployeeSessionPayload(payload)) {
-    redirect('/colaborador/login');
+    redirect('/employee/login');
   }
   const locale =
     searchParams?.locale === 'en' || payload.locale === 'en' ? 'en' : 'pt-BR';

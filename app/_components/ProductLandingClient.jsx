@@ -13,7 +13,7 @@ function SectionLabel({ children }) {
   );
 }
 
-/** CTA primário = signup (early access). Login = secundário (já cliente). */
+/** CTA primário = signup. Depois: gestão/RH e colaborador. */
 function Ctas({ copy }) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -28,6 +28,12 @@ function Ctas({ copy }) {
         className="inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
       >
         {copy.ctaLogin}
+      </Link>
+      <Link
+        href="/employee/login"
+        className="inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
+      >
+        {copy.ctaEmployee}
       </Link>
     </div>
   );
@@ -76,6 +82,12 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
               className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
             >
               {copy.navLogin}
+            </Link>
+            <Link
+              href="/employee/login"
+              className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
+            >
+              {copy.navEmployee}
             </Link>
             <Link
               href="/signup"

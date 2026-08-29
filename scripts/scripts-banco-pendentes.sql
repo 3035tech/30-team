@@ -1371,7 +1371,7 @@ CREATE INDEX IF NOT EXISTS idx_employee_login_tokens_candidate
   ON employee_login_tokens (company_id, candidate_id, created_at DESC);
 
 COMMENT ON TABLE employee_login_tokens IS
-  'One-time magic links for employee session (/colaborador). Not manager JWT.';
+  'One-time magic links for employee session (/employee). Not manager JWT.';
 
 INSERT INTO schema_migrations (name) VALUES ('069_employee_login.sql')
 ON CONFLICT (name) DO NOTHING;

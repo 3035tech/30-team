@@ -34,7 +34,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Público | Onde |
 |---------|------|
 | Gestor precisa *saber fazer* | Guia + FAQ opcional |
-| Colaborador (`/colaborador`) | Seção `employeeHome` no Guia (RH convida/configura) |
+| Colaborador (`/employee`) | Seção `employeeHome` no Guia (RH convida/configura) |
 | Super admin (auditoria, leads) | Seção `access` (passos 10–11) ou seção dedicada |
 | Dev/ops (migrate, env, DTOV) | README / `docs/` / `test/README.md` |
 
@@ -44,7 +44,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 |------|------------|
 | Jornada D1 + D30/D60/D90 | `b700Onboarding` + `employeeHome` |
 | Login colaborador / Minha chegada | `employeeHome` |
-| 2FA gestor/colaborador | `access` (Step10) |
+| 2FA gestor/employee | `access` (Step10) |
 | Auditoria (super admin) | `access` (Step11) |
 | Remuneração interna | `compensation` |
 | LMS / cursos | `lmsBasic` |

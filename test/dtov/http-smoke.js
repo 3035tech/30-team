@@ -816,7 +816,7 @@ export async function runHttpSmoke(baseUrl) {
           if (await expectStatus('employee', 'home', homeRes.status, [200])) {
             ok('employee', 'home-shape', homeData?.fullName ? 'ok' : 'minimal');
           }
-          const { res: colPage } = await req(base, '/colaborador', { cookie: empCookie });
+          const { res: colPage } = await req(base, '/employee', { cookie: empCookie });
           if (colPage.status === 200) ok('employee', 'hub-page', 'HTTP 200');
           else fail('employee', 'hub-page', `status ${colPage.status}`);
         }

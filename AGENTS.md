@@ -10,7 +10,7 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 
 - Instrumento principal: avaliação inspirada no Eneagrama, tipos **T1–T9** (estilo de trabalho). **Não** é diagnóstico clínico nem substituto de entrevista técnica.
 - Instrumento secundário: **Motivadores** (Assessment Engine em `lib/ae/`).
-- Candidatos **não têm conta de gestor**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente), `/clima/<token>` (clima), `/pulso/<token>` (pulso de grupo), `/e/<token>` (espaço mínimo pós-hire). Colaboradores (`employment_status = employee`) podem ter senha em `candidates` + sessão em `/colaborador` (cookie `team30_employee_session` — **não** acessa `/dashboard`; convite como set-password de usuário).
+- Candidatos **não têm conta de gestor**. Entram por token: `/t/<token>` (empresa), `/v/<token>` (vaga), `/assessment/motivators/<token>`, `/r/<token>` (relatório cliente), `/clima/<token>` (clima), `/pulso/<token>` (pulso de grupo), `/e/<token>` (espaço mínimo pós-hire). Colaboradores (`employment_status = employee`) podem ter senha em `candidates` + sessão em `/employee` (cookie `team30_employee_session` — **não** acessa `/dashboard`; convite como set-password de usuário).
 - Gestores: `/login` → `/dashboard` (roles `admin` | `direction` | `hr`).
 
 ## Stack (obrigatória)
@@ -109,7 +109,7 @@ Regra Cursor: `.cursor/rules/domain-constants.mdc` (alwaysApply).
 | **Tailwind `className`** em UI nova / bloco em edição; `style={{}}` só para dinâmico (T1–T9, widths) | Big-bang rewrite; segundo kit (MUI etc.); CSS module por tela sem necessidade |
 | `query` / `queryRead` | Cliente `pg` ad-hoc na rota |
 | Soft delete + `deleted = FALSE` | `DELETE` físico sem pedido |
-| Nomes de arquivo/export em inglês | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`) |
+| Nomes de arquivo/export **e segmentos de rota de produto** em inglês (`/employee`, `/login`, `/dashboard`) | Pastas novas de **produto** fora de `app/` / `lib/` / `migrations/` (provas ficam em `test/`). Tokens públicos curtos existentes (`/t`, `/v`, `/e`, `/clima`, `/pulso`) ficam; rotas novas em inglês |
 | **Reutilizar** componente **e** função existente; extrair para `lib/` / `_components` se for compartilhado | Duplicar UI ou helpers; criar função nova sem grep; cópia entre tabs |
 | **Constantes string** (`ERR.*`, `EMPLOYMENT_STATUS.*`, `PIPELINE_STAGES`, `CAP.*`) — ver § Constantes | Literais `'UNAUTHORIZED'` / `'employee'` / `'open'` soltos; enums TypeScript; segundo mapa de status HTTP na rota |
 | **UI/UX:** lista primeiro, criar atrás de ação; uma tarefa principal por viewport; **transição** (`ContentEnter` / `AppLoading panel` / `NavLoadBar` / `CollapsibleBlock`) | Formulário de cadastro sempre aberto acima da listagem; tela sem hierarquia; loading ad hoc |
@@ -340,7 +340,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042`+`050` (Likert + texto descritivo) |
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
-| Sessão colaborador | `lib/employee-auth.js`, `/colaborador`, cookie `team30_employee_session`, `migrations/069`–`071` (senha, notif), perfil + chrome; PDI self-serve (`lib/employee-pdi.js`); LMS embed |
+| Sessão colaborador | `lib/employee-auth.js`, `/employee`, cookie `team30_employee_session`, `migrations/069`–`071` (senha, notif), perfil + chrome; PDI self-serve (`lib/employee-pdi.js`); LMS embed |
 | Remuneração interna | `lib/people/employee-compensation.js`, `CompensationBlock`, `migrations/072`, Equipe → aba Remuneração (não folha) |
 | Notif colaborador | `lib/employee-notifications.js`, `candidate_notifications`, LMS enroll/overdue, Motivadores invite, PDI create/update |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |

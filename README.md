@@ -200,6 +200,8 @@ A partir da migration `054`, `055` e `056`:
 | `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
 | `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
+| `scripts/seed-demo-todos-os-dados.sql` | **Seed completo de apresentação** (migrations ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee` (`todos-os-dados-demo`) |
+| `npm run db:seed-demo-todos-os-dados:confirm` | Mesmo tenant via JS (DTOV / local); exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
 
 ```bash
 # Migrações incrementais
@@ -211,6 +213,14 @@ psql "$DATABASE_URL" -f scripts/rds-bootstrap-completo.sql
 # Seed Eval 20 (tenant isolado slug=eval-20-demo)
 # Login: admin@eval-20.demo / EvalDemo!2026
 psql "$DATABASE_URL" -f scripts/seed-eval-20-employees.sql
+
+# Seed apresentação Todos os Dados (tenant isolado slug=todos-os-dados-demo)
+# Requer migrations através de 080 + areas; Motivadores opcional (db:seed-motivators)
+# HR:           hr@todos-os-dados.demo / DemoTodosDados!2026          → /login
+# Direction:    direction@todos-os-dados.demo / DemoTodosDados!2026   → /login
+# Colaborador:  colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee
+psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
+# ou: npm run db:seed-demo-todos-os-dados:confirm
 ```
 
 ---
@@ -267,8 +277,8 @@ npm run dev
 3. Índice: /j lista vagas públicas abertas 
 4. POST /api/results → grava no Postgres; vê o resultado na tela
 5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
-6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /colaborador/cadastrar-senha
-   → login e-mail/senha em /colaborador/login (cookie team30_employee_session; PDI self-serve,
+6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /employee/set-password
+   → login e-mail/senha em /employee/login (cookie team30_employee_session; PDI self-serve,
    LMS com player YouTube/Vimeo, jornada **Minha chegada** (D1 + D30/D60/D90), seções colapsáveis,
    notifs Motivadores/PDI/LMS; não acessa /dashboard). Magic link opcional. Ver `docs/employee-onboarding-journey.md`.
    /e/<token> continua sem conta.
@@ -486,6 +496,11 @@ server {
 # Dados de desenvolvimento
 npm run db:seed
 npm run db:clear
+
+# Demo apresentação Todos os Dados (slug=todos-os-dados-demo; migrations ≤080)
+# Colaborador: colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee
+npm run db:seed-demo-todos-os-dados:confirm
+# ou: psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
 
 # Provas (Postgres efêmero DTOV + HTTP + browser) — ver test/README.md
 npm run dtov:reset

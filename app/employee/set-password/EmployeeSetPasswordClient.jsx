@@ -83,7 +83,7 @@ function SetPasswordForm() {
         return;
       }
       setSuccess(true);
-      setTimeout(() => router.replace('/colaborador'), 800);
+      setTimeout(() => router.replace('/employee'), 800);
     } catch {
       setError(t(locale, 'login.connectionError'));
     } finally {
@@ -107,7 +107,7 @@ function SetPasswordForm() {
           <p className="text-sm text-danger">
             {errorMessage(locale, tokenError, t(locale, 'employeeHome.invalidLink'))}
           </p>
-          <Link href="/colaborador/login" className="mt-3 inline-block text-sm text-brand-600">
+          <Link href="/employee/login" className="mt-3 inline-block text-sm text-brand-600">
             {t(locale, 'employeeHome.backToLogin')}
           </Link>
         </div>
