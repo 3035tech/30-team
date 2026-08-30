@@ -12,7 +12,6 @@ import { HireJourneyBlock } from './HireJourneyBlock';
 import { useAppFeedback } from './AppFeedback';
 import { CopyableLink } from './CopyableLink';
 import { CollapsibleBlock } from './CollapsibleBlock';
-import { MotivatorsRadarChart } from './MotivatorsRadarChart';
 import { DateField } from './DateField';
 import { FormField } from './FormField';
 
@@ -107,8 +106,6 @@ export function PeopleManagementPanel({
   const prompts = management?.oneOnOnePrompts || [];
   const signals = management?.retentionSignals || [];
   const topMot = management?.motivators?.top || [];
-  const motivatorsDimensions = management?.motivators?.dimensions || [];
-  const motivatorsScores = management?.motivators?.dimensionScores || null;
   const pdiSeedIdeas = management?.synthesis?.pdiIdeas || [];
   const showJourney = section === 'all' || section === 'journey';
 
@@ -448,22 +445,31 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
-      {topMot.length > 0 || motivatorsDimensions.length > 0 || motivatorsScores ? (
+      {topMot.length > 0 ? (
         <CollapsibleBlock
           locale={locale}
-          title={t(locale, 'panel.team.motivatorsRadarTitle')}
-          defaultOpen
-          count={topMot.length || null}
+          title={t(locale, 'panel.team.peopleTopMotivators')}
+          defaultOpen={false}
+          count={topMot.length}
           className="border-t border-ink/10"
         >
-          <MotivatorsRadarChart
-            locale={locale}
-            dimensions={motivatorsDimensions}
-            dimensionScores={motivatorsScores}
-            compact
-            hideHeader
-            showPeaks
-          />
+          <div className="flex flex-wrap gap-1.5">
+            {topMot.map((d) => (
+              <span
+                key={d.key}
+                className={cn(
+                  'inline-flex min-h-8 items-center rounded-control border bg-surface px-2.5 text-xs text-ink',
+                  !d.color && 'border-ink/12'
+                )}
+                style={d.color ? { borderColor: d.color } : undefined}
+              >
+                {d.label} · {Math.round(d.score)}
+              </span>
+            ))}
+          </div>
+          <p className="mb-0 mt-2 font-mono text-2xs text-ink-faint">
+            {t(locale, 'panel.team.motivatorsRadarSeeTab')}
+          </p>
         </CollapsibleBlock>
       ) : null}
 

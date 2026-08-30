@@ -14,11 +14,33 @@ import { CopyableLink } from '../../_components/CopyableLink';
 import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
+import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { EmptyState } from '../../_components/EmptyState';
 
 function dateLocale(locale) {
   return locale === 'en' ? 'en-US' : 'pt-BR';
+}
+
+function MotivatorsDimensionBars({ ranking }) {
+  return (ranking || []).map((dim) => (
+    <div key={dim.key} className="mb-2 flex items-center gap-2.5 last:mb-0">
+      <span
+        className="w-[7.5rem] shrink-0 truncate text-2xs"
+        style={{ color: dim.color }}
+        title={dim.label}
+      >
+        {dim.label}
+      </span>
+      <div className="min-w-0 flex-1">
+        <Bar value={dim.score} max={100} color={dim.color} h={6} />
+      </div>
+      <span className="w-7 shrink-0 text-right font-mono text-2xs text-ink-muted">
+        {dim.score}
+      </span>
+    </div>
+  ));
 }
 
 function getViews(locale) {
@@ -662,6 +684,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           />
       </div>
       {detail?.attempt ? (
+        <ContentEnter animKey={`ae-result-${detail.attempt.id}`}>
         <div className={S.card}>
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
@@ -746,14 +769,53 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
 
           <p className="mb-4 text-sm leading-relaxed text-ink">{detail.attempt.profileSummary}</p>
 
-          <div className="mb-2.5 font-mono text-2xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.results.allDimensions')}</div>
-          {(detail.attempt.ranking || []).map((dim) => (
-            <div key={dim.key} className="mb-2 flex items-center gap-2.5">
-              <span className="w-[110px] text-2xs" style={{ color: dim.color }}>{dim.label}</span>
-              <div className="flex-1"><Bar value={dim.score} max={100} color={dim.color} h={6} /></div>
-              <span className="w-6 text-right text-2xs text-ink-muted">{dim.score}</span>
+          {detail.attempt.dimensionScores || (detail.attempt.ranking || []).length > 0 ? (
+            <div className="mb-1 border-t border-ink/12 pt-4">
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-mono text-2xs text-ink-muted">
+                  {t(locale, 'panel.motivatorsAdmin.results.dimensionsSection')}
+                </span>
+                <span className="font-mono text-2xs text-ink-faint">
+                  {t(locale, 'panel.motivatorsAdmin.results.radarHint')}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
+                <div className="min-w-0">
+                  <div className="mb-1.5 font-mono text-2xs text-ink-faint">
+                    {t(locale, 'panel.motivatorsAdmin.results.radarTitle')}
+                  </div>
+                  <MotivatorsRadarChart
+                    locale={locale}
+                    dimensionScores={detail.attempt.dimensionScores}
+                    dimensions={detail.attempt.ranking}
+                    showPeaks={false}
+                    hideHeader
+                    embedded
+                    compact
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="mb-1.5 hidden font-mono text-2xs text-ink-faint xl:block">
+                    {t(locale, 'panel.motivatorsAdmin.results.allDimensions')}
+                  </div>
+                  <div className="hidden xl:block">
+                    <MotivatorsDimensionBars ranking={detail.attempt.ranking} />
+                  </div>
+                  <div className="xl:hidden">
+                    <CollapsibleBlock
+                      locale={locale}
+                      title={t(locale, 'panel.motivatorsAdmin.results.allDimensions')}
+                      defaultOpen={false}
+                      count={(detail.attempt.ranking || []).length || null}
+                      variant="card"
+                    >
+                      <MotivatorsDimensionBars ranking={detail.attempt.ranking} />
+                    </CollapsibleBlock>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+          ) : null}
 
           {detail.hrInsights?.suggestedActions?.do?.length > 0 ? (
             <div className="mt-5 grid grid-cols-1 gap-4 border-t border-ink/12 pt-4 sm:grid-cols-2">
@@ -798,6 +860,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
             </div>
           ) : null}
         </div>
+        </ContentEnter>
       ) : null}
     </div>
   );

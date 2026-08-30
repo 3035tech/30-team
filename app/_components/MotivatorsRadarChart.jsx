@@ -37,14 +37,25 @@ function RadarTooltip({ active, payload, locale }) {
   );
 }
 
-function AngleTick({ x, y, payload }) {
+function AngleTick({ x, y, cx, cy, payload }) {
   const label = payload?.value ?? '';
+  // Nudge labels slightly outward from the chart center.
+  let tx = x;
+  let ty = y;
+  if (Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(x) && Number.isFinite(y)) {
+    const dx = x - cx;
+    const dy = y - cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const push = 6;
+    tx = x + (dx / len) * push;
+    ty = y + (dy / len) * push;
+  }
   return (
     <text
-      x={x}
-      y={y}
-      dy={4}
+      x={tx}
+      y={ty}
       textAnchor="middle"
+      dominantBaseline="central"
       fill={C.neutral}
       fontSize={10}
       fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
@@ -54,8 +65,25 @@ function AngleTick({ x, y, payload }) {
   );
 }
 
+function PeakDot(props) {
+  const { cx, cy, payload, peakKeys } = props;
+  if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+  const isPeak = peakKeys?.has(payload?.key);
+  const fill = isPeak && payload?.color ? payload.color : LOGO.petalDeep;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={isPeak ? 3.5 : 2.25}
+      fill={fill}
+      stroke={isPeak ? C.surface : 'transparent'}
+      strokeWidth={isPeak ? 1.5 : 0}
+    />
+  );
+}
+
 /**
- * Spider / radar for Motivadores (13 dims) — Equipe ficha.
+ * Spider / radar for Motivadores (13 dims).
  *
  * @param {{
  *   locale?: string,
@@ -65,6 +93,9 @@ function AngleTick({ x, y, payload }) {
  *   compact?: boolean,
  *   hideHeader?: boolean,
  *   showPeaks?: boolean,
+ *   embedded?: boolean,
+ *   title?: string,
+ *   hint?: string,
  * }} props
  */
 export function MotivatorsRadarChart({
@@ -75,6 +106,9 @@ export function MotivatorsRadarChart({
   compact = false,
   hideHeader = false,
   showPeaks = true,
+  embedded = false,
+  title = null,
+  hint = null,
 }) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -105,51 +139,63 @@ export function MotivatorsRadarChart({
   }, [dimensionScores, dimensions, locale]);
 
   const peaks = useMemo(
-    () => (showPeaks ? pickMotivatorsRadarPeaks(data, 3) : []),
-    [data, showPeaks]
+    () => pickMotivatorsRadarPeaks(data, 3),
+    [data]
   );
+  const peakKeys = useMemo(() => new Set(peaks.map((p) => p.key)), [peaks]);
 
   const hasSignal = data.some((d) => d.score > 0);
   if (!hasSignal) return null;
 
-  const height = compact ? 240 : 300;
-  const outerRadius = compact ? '68%' : '70%';
+  const height = compact ? 228 : 288;
+  const outerRadius = compact ? '66%' : '68%';
   const fill = LOGO.primary;
   const stroke = LOGO.petalDeep;
+  const heading = title || t(locale, 'panel.team.motivatorsRadarTitle');
+  const sub = hint || t(locale, 'panel.team.motivatorsRadarHint');
 
   return (
     <div className={cn('w-full', className)}>
       {!hideHeader ? (
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <span className={S.label}>{t(locale, 'panel.team.motivatorsRadarTitle')}</span>
-          <span className="font-mono text-2xs text-ink-faint">
-            {t(locale, 'panel.team.motivatorsRadarHint')}
-          </span>
+          <span className={S.label}>{heading}</span>
+          <span className="font-mono text-2xs text-ink-faint">{sub}</span>
         </div>
       ) : null}
 
       <div
         className={cn(
-          'relative w-full overflow-hidden rounded-control border border-ink/8 bg-canvas/80',
-          compact ? 'px-1 py-1' : 'px-2 py-2'
+          'relative w-full overflow-hidden',
+          embedded
+            ? 'rounded-control bg-canvas/50'
+            : 'rounded-control border border-ink/8 bg-canvas/80',
+          compact ? 'px-0.5 py-0.5' : 'px-1.5 py-1.5'
         )}
       >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{
-            background: `radial-gradient(ellipse at 50% 45%, ${LOGO.petalLavender}33 0%, transparent 62%)`,
-          }}
-          aria-hidden
-        />
+        {!embedded ? (
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.28]"
+            style={{
+              background: `radial-gradient(ellipse at 50% 45%, ${LOGO.petalLavender}40 0%, transparent 64%)`,
+            }}
+            aria-hidden
+          />
+        ) : null}
         <div
           className="relative w-full"
           style={{ height }}
           role="img"
-          aria-label={t(locale, 'panel.team.motivatorsRadarTitle')}
+          aria-label={heading}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="52%" outerRadius={outerRadius} data={data} margin={{ top: 8, right: 12, bottom: 8, left: 12 }}>
-              <PolarGrid stroke={C.border} gridType="polygon" radialLines />
+            <RadarChart
+              cx="50%"
+              cy="52%"
+              outerRadius={outerRadius}
+              data={data}
+              margin={{ top: 10, right: 14, bottom: 10, left: 14 }}
+            >
+              <PolarGrid stroke={C.border} gridType="polygon" radialLines strokeOpacity={0.9} />
               <PolarAngleAxis dataKey="shortLabel" tick={<AngleTick />} tickLine={false} />
               <PolarRadiusAxis
                 angle={90}
@@ -164,12 +210,12 @@ export function MotivatorsRadarChart({
                 dataKey="score"
                 stroke={stroke}
                 fill={fill}
-                fillOpacity={0.22}
+                fillOpacity={0.2}
                 strokeWidth={2}
-                dot={{ r: 2.5, fill: stroke, strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: fill, stroke: stroke, strokeWidth: 1 }}
+                dot={(dotProps) => <PeakDot {...dotProps} peakKeys={peakKeys} />}
+                activeDot={{ r: 4.5, fill, stroke, strokeWidth: 1 }}
                 isAnimationActive={!reduceMotion}
-                animationDuration={reduceMotion ? 0 : 420}
+                animationDuration={reduceMotion ? 0 : 380}
               />
               <Tooltip
                 content={<RadarTooltip locale={locale} />}
@@ -180,7 +226,7 @@ export function MotivatorsRadarChart({
         </div>
       </div>
 
-      {peaks.length > 0 ? (
+      {showPeaks && peaks.length > 0 ? (
         <div className="mt-2.5">
           <span className={cn(S.label, 'mb-1.5')}>
             {t(locale, 'panel.team.motivatorsRadarPeaks')}
@@ -201,12 +247,6 @@ export function MotivatorsRadarChart({
             ))}
           </div>
         </div>
-      ) : null}
-
-      {hideHeader ? (
-        <p className="mb-0 mt-2 font-mono text-2xs text-ink-faint">
-          {t(locale, 'panel.team.motivatorsRadarHint')}
-        </p>
       ) : null}
     </div>
   );

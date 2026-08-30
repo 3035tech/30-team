@@ -24,15 +24,17 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 | Família de produto | O que costumam ter | 30Team hoje | Gap / oportunidade |
 |--------------------|--------------------|-------------|--------------------|
 | **ATS** (Gupy, Greenhouse, Lever) | Pipeline custom, CV/LinkedIn, scorecards, calendário, oferta | Pipeline + kanban + notes + scorecard leve + pool + /j SEO + /r | Fechado no escopo B-400 (sem virar ATS genérico) |
-| **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Empacotar — **não** DISC |
-| **People / engajamento** | Ciclos de review, engajamento | 1:1 + hipóteses + retention + digest + kit hire | OK no escopo atual |
-| **Team analytics** | Heatmaps, org chart | Compat / Grupos / Overview heat T1–T9 | OK no escopo B-400 |
+| **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Empacotar — **não** DISC como fio (add-on **B-2720**) |
+| **People / engajamento** | Ciclos de review, engajamento | 1:1 + hipóteses + retention + digest + kit hire + 360 + 9Box | Calibração / OKR / ouvidoria → **B-3000** |
+| **Team analytics** | Heatmaps, org chart | Compat / Grupos / Overview heat T1–T9 | Organograma visual → **B-3006** |
 | **Carreiras / employer brand** | Portal rico | `/j` + `/c` + funil | OK |
 | **Cliente / consultoria** | Portais white-label | `/r` + print/PDF | OK |
+| **Suíte RH+DP** (Sólides, InCicle, Taggui) | Ponto/folha/admissão + desempenho | DP leve (férias/docs) + GP estratégico no mesmo login | Folha/ponto → **B-2721+**; unificar, não Tangerino |
+| **Suíte performance pura** (TeamCulture, Qulture, Alina, ImpulseUp) | OKR, 1:1, calibração, SSO; **sem** DP | 1:1, 360, 9Box, PDI, clima, HR Score, radar, LMS | OKR/calibração/mapa salarial/RV → **B-3000** |
 
 **Princípio de prioridade:** empacotar o que já medimos > fechar fricção no funil RH > novos scores ou instrumentos.
 
-**Explicitamente fora (ainda):** conta de candidato; merge por nome; segundo hub paralelo a `candidates`. **DISC / DP** deixam de ser “proibido” — ver epic **B-2700** (**B-2720**, **B-2721+**).
+**Explicitamente fora:** conta de candidato; merge por nome; segundo hub paralelo a `candidates`; projetos/Gantt/chat/TV/lojinha (amplitude InCicle); DISC como instrumento principal. **DISC add-on / DP** → **B-2700**. Gaps vs 7 players (ago/2026) → **B-3000**.
 
 ---
 
@@ -619,6 +621,111 @@ Além do catálogo B-1009.
 1. Decisão: parceria (Mastercard multibenefícios, Unimed, etc.) vs build mínimo de elegibilidade + deep-link.
 2. Módulo reembolso de benefício; telemedicina via parceiro embed.
 3. Empréstimo consignado / seguro = só marketplace; não carregar risco de crédito in-house.
+
+---
+
+## Aberto — Epic B-3000 (gaps vs 7 players HR Tech Brasil — ago/2026)
+
+Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rocks, Alina, ImpulseUp. InCicle/Taggui a partir do menu de produtos; demais por site. Marketing ≠ produto logado.
+
+**Dois blocos (não 7 rivais iguais):**
+- **RH+DP:** Sólides, InCicle, TagguiRH — ponto/folha/admissão **e** desempenho. Disputam “sistema único”.
+- **Performance/engajamento puro:** TeamCulture, Qulture, Alina, ImpulseUp — **não** fazem DP; integram folha. Disputam “camada estratégica”.
+
+**Onde o 30Team joga:** profundo no segundo bloco (1:1, 360, 9Box, PDI, clima, eNPS, pulso, LMS, sucessão, exit, HR Score, radar de turnover, analytics) **e** unificando DP leve no mesmo `candidates` / um login (tese B-2700). Cunha = união + T1–T9/Motivadores, **não** amplitude InCicle.
+
+### Já cobrimos (não reabrir como cópia)
+
+| Job | 30Team hoje | Quem também tem | Quem **não** tem (vantagem nossa) |
+|-----|-------------|-----------------|-------------------------------------|
+| 1:1s + hipóteses + prep | Equipe + `/e` + `/employee` | TeamCulture, Qulture, Alina, ImpulseUp | **Sólides e Taggui** (gap de mercado do estudo) |
+| Avaliação 90/180/360 + 9Box | B-1004 + B-2703 + B-2704 | todos os 7 em algum grau | — |
+| PDI ligado a review/concern | B-1004 + People | todos os estratégicos | — |
+| Clima + eNPS + pulso de grupo | Clima + B-2702 + `/pulso` | todos | — |
+| Predição de turnover | HR Score + radar B-1002 | Sólides, TeamCulture, Alina | InCicle, Taggui, Qulture |
+| ATS + Fit T1–T9 + `/j` `/r` | Vagas | só o bloco RH+DP (sem Fit nosso) | **todos os puros** (não fazem R&S) |
+| LMS básico | B-2400/2401 | InCicle, ImpulseUp, Sólides parcial | TeamCulture, Qulture, Alina, Taggui |
+| Feed + kudos | B-2712 + B-2716 | InCicle, Taggui | puros (Qulture tem elogios) |
+| Férias / docs DP leve | B-2723 + B-2724 MVP | bloco RH+DP | **todos os puros** |
+| Sucessão + exit + cultura síntese | B-1005–B-1007 | raro neste recorte | suítes largas raramente neste nível |
+
+**Já no B-2700 (não duplicar aqui):** DISC **B-2720**; ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713**; NR-1 **B-2714**; multi-CNPJ **B-2715**.
+
+**Explicitamente fora deste epic (não copiar InCicle/Sólides):** gestão de projetos, Kanban/Gantt/5W2H, chat interno, TV corporativa, lojinha/gamificação, 40+ agentes de IA, segundo app de DP, DISC como fio condutor (T1–T9 fica).
+
+### Ordem sugerida
+
+1. Empacotar o estratégico que o comprador DHO espera e nós quase temos (**B-3001–B-3004**).
+2. Conformidade + organograma + SSO (**B-3005–B-3007**).
+3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
+4. Aprofundar feedback/copiloto (**B-3010–B-3011**) sem segundo assistente paralelo ao Help.
+
+### B-3001 — Calibração / comitês de avaliação
+Qulture e Alina fazem bem; suítes largas deixam a desejar. Já temos ciclo + 360 + 9Box.
+1. Sessão de calibração por ciclo: lista de reviews submetidas, ajuste de overall/9Box com audit (quem mudou o quê).
+2. Comitê = gestores + RH; CAP `performance.view`; sem SQL solto; cap de N pessoas por sessão.
+3. Linguagem hedged; 9Box continua exploratório (não rótulo de promoção).
+4. Fora: detecção de viés tipo “produto jurídico”; IA só resume divergências (reusar interpretativa B-1904).
+
+### B-3002 — Mapa salarial analítico (além de B-2711)
+Só Alina no recorte. Hoje: `market_salary_min/max` no cargo + eventos de remuneração (B-2510/B-2711).
+1. Visão por `job_role`: faixa, pessoas na faixa / abaixo / acima (salário vigente).
+2. Simulação de aumento (% ou valor) com impacto no orçamento do recorte (empresa/área); cap de roster.
+3. Sem marketplace de salários; CSV import de faixas = follow-up. Não é folha.
+
+### B-3003 — Remuneração variável (metas × avaliação)
+Só ImpulseUp no recorte. Raro de verdade.
+1. Regra por empresa/ciclo: cruzar outcomes de metas (`met`/`exceeded`/…) + review submetida → evento sugerido em `employee_compensation_events` (tipo bônus/PLR).
+2. Aprovação RH; colaborador vê no `/employee` como **proposto/aprovado**, não holerite.
+3. Depende do ciclo B-1004; **não** calcula INSS/IR; folha continua B-2726 ou integração B-3009.
+
+### B-3004 — OKRs leves (árvore, não segundo Qulture)
+Quase todos os “puros” têm OKR; nós temos **metas de ciclo**, que não são árvore.
+1. Objetivos empresa → time/grupo salvo → pessoa; key results numéricos; período.
+2. Ligar KR opcionalmente a `performance_goals` do ciclo (não duplicar cadastro).
+3. Fora: produto OKR completo, iniciativas tipo TeamCulture, Gantt. Cap de objetivos por empresa.
+
+### B-3005 — Ouvidoria / canal de denúncias
+InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.
+1. Token público ou `/employee` com opção anônima; categorias fechadas; triagem RH (CAP nova ou `climate.view` + flag).
+2. Sem PII no relato anônimo; audit de acesso; prazo de resposta; **não** misturar com pesquisa de clima.
+3. Fora: prometar validade jurídica tipo canal Lei 14.457 sozinhos (parceria/advogado se vender compliance).
+
+### B-3006 — Organograma dinâmico
+Alina (forte), InCicle, Sólides. Hoje: grupos + sucessão, sem árvore visual.
+1. `manager_candidate_id` (ou equivalente) no colaborador; árvore por empresa com cap; clique abre Equipe.
+2. Reusar `job_roles` + roster `employee`; empty state se grafo incompleto.
+3. Fora: organograma “engenharia organizacional” InCicle; drag-and-drop de reorg como produto.
+
+### B-3007 — SSO (Google / Microsoft)
+Table stakes dos puros (TeamCulture, Qulture, Alina, ImpulseUp). Hoje: senha + 2FA.
+1. OIDC para gestores (`team30_session`); depois colaborador se a venda pedir.
+2. Domínio da empresa allowlist; fallback senha; audit de vínculo.
+3. Só priorizar com pipeline enterprise real (mesmo critério B-2715).
+
+### B-3008 — Notificações Slack / Teams
+Puros + Qulture. Hoje: in-app + e-mail (digest, alertas).
+1. Webhook por empresa (URL + tipos opt-in: digest, turnover, prazo de vaga).
+2. Reusar catálogo `NOTIF` + prefs; sem segundo motor de copy.
+3. WhatsApp continua B-2708/B-2727 (opt-in separado).
+
+### B-3009 — Integração folha/ERP (consumir, não substituir)
+Como Alina/TeamCulture/ImpulseUp: viver **em cima** da folha. Plano B se **B-2726** atrasar.
+1. Conector mínimo (CSV/API) de headcount + salário + afastamento → `candidates` / eventos de remuneração; tenant `company_id`.
+2. TOTVS/Senior/SAP = parceiro ou mapeamento, não motor próprio.
+3. Não duplicar holerite/eSocial aqui; se B-2726 existir, esta item vira sync bidirecional.
+
+### B-3010 — Feedback contínuo estruturado (pedir / dar / receber)
+Além de kudos B-2716. Job do Qulture; nós já temos 1:1 + kudos.
+1. Pedido de feedback (gestor/par) com token ou sessão; resposta curta; aparece no dossier / 1:1.
+2. Não virar rede social; cap por pessoa/mês; reusar notif.
+3. Só depois de B-3001 se o ciclo de review já cobrir o job.
+
+### B-3011 — Copiloto de pessoas (não misturar com Ajuda)
+Sólides Copilot, TeamCulture Axel, Alina-IA, ImpulseUp IAP. Hoje: Help (só Guia) + B-2601 diagnóstico de lista + IA interpretativa hedged (B-1904).
+1. Superfície **Equipe/Overview**: “o que olhar no próximo 1:1 / quem está no radar”; tool calling só em `lib/` (HR Score, radar, PDI, clima agregado).
+2. Mesmas regras B-2600: sem SQL gerado; tenant da sessão; hedged; rate limit; audit.
+3. Nome de produto opcional; **não** segundo chatbot de navegação (Help permanece Guia-only).
 
 ---
 
