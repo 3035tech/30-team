@@ -56,7 +56,7 @@ function lmsText(locale, key, fallback) {
 export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDashboard }) {
   const { confirm, promptForm, toast } = useAppFeedback();
   const pdfInputRef = useRef(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [courses, setCourses] = useState([]);
   const [courseQ, setCourseQ] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
@@ -97,7 +97,11 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
   }, [navigateDashboard]);
 
   const loadCourses = useCallback(async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setCourses([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(

@@ -18,7 +18,7 @@ alwaysApply: false
    - `SortableTh` — título clicável + `▲`/`▼` (reordenação)
    - `AdminTh` — coluna estática (não ordenável)
    - `AdminActionsTh` — coluna Ações alinhada à direita
-   - `AdminListPager` — total + page size + Anterior/Próxima (`PAGE_SIZE_OPTIONS`)
+   - `AdminListPager` — total + page size + páginas numeradas (com `…`) + Anterior/Próxima (`PAGE_SIZE_OPTIONS`)
 2b. **Cabeçalho** — `AdminPageHeader` (título + subtítulo + actions).
 2c. **Filtros (obrigatório)** — uma **única linha** horizontal com `AdminListFilters` (`app/_components/AdminListFilters.jsx`):
    - Filhos: **somente** `AdminListSearch` + `AdminListFilterSelect` (0–3 selects relevantes). **Proibido** `AdminCreateButton` (ou outro CTA de criar) dentro ou ao lado de `AdminListFilters`.

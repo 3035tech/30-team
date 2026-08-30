@@ -69,7 +69,11 @@ export function JobRolesAdminTab({ locale, companyId }) {
   const [activeFilter, setActiveFilter] = useState('');
 
   const loadRoles = async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setRoles([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -206,6 +210,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            companyId,
             name,
             description: form.description?.trim() || null,
             rubric: form.rubric || {},
@@ -248,9 +253,10 @@ export function JobRolesAdminTab({ locale, companyId }) {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/admin/job-roles/${role.id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `/api/admin/job-roles/${role.id}${companyId ? `?companyId=${companyId}` : ''}`,
+        { method: 'DELETE' }
+      );
 
       if (!res.ok) throw new Error('deactivate_failed');
 

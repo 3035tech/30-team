@@ -36,17 +36,25 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
   const [kudosPage, setKudosPage] = useState(1);
   const [q, setQ] = useState('');
   const [qDraft, setQDraft] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [loadError, setLoadError] = useState(false);
   const pageSize = 20;
 
   const companyQs = companyId ? `companyId=${companyId}` : '';
 
   const load = useCallback(async () => {
+    if (!companyId) {
+      setPosts([]);
+      setKudos([]);
+      setPostsTotal(0);
+      setKudosTotal(0);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError(false);
     try {
-      const qsBase = companyQs ? `${companyQs}&` : '';
+      const qsBase = `${companyQs}&`;
       const qParam = q ? `q=${encodeURIComponent(q)}&` : '';
       const [pr, kr] = await Promise.all([
         fetch(`/api/admin/company-feed/posts?${qsBase}${qParam}page=${page}&pageSize=${pageSize}`),
@@ -73,7 +81,7 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
     } finally {
       setLoading(false);
     }
-  }, [companyQs, page, kudosPage, q]);
+  }, [companyId, companyQs, page, kudosPage, q]);
 
   useEffect(() => {
     load();
@@ -202,6 +210,15 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
     toast(t(locale, 'panel.companyFeed.kudoDeleted'), 'ok');
     if (kudos.length <= 1 && kudosPage > 1) setKudosPage((p) => Math.max(1, p - 1));
     else load();
+  }
+
+  if (!companyId) {
+    return (
+      <EmptyState
+        title={t(locale, 'panel.companyFeed.needCompanyTitle')}
+        message={t(locale, 'panel.companyFeed.needCompanyHint')}
+      />
+    );
   }
 
   if (loading && posts.length === 0 && kudos.length === 0 && !loadError) {

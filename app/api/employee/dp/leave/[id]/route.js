@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../lib/api-error.js';
 import { query } from '../../../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../../../lib/employee-session.js';
-import { cancelEmployeeLeaveRequest } from '../../../../../../lib/people/employee-dp.js';
+import { cancelEmployeeLeaveRequest, getEmployeeDisplayName } from '../../../../../../lib/people/employee-dp.js';
+import { notifyCompanyManagers } from '../../../../../../lib/manager-notifications.js';
+import { NOTIF } from '../../../../../../lib/manager-notification-catalog.js';
 import { checkRateLimit } from '../../../../../../lib/rate-limit.js';
 import { zPositiveInt } from '../../../../../../lib/validate.js';
 
@@ -39,6 +41,27 @@ export async function PATCH(request, { params }) {
       }
     );
     if (!result.ok) return apiErrorFromResult(request, result);
+
+    try {
+      const name = await getEmployeeDisplayName(
+        { query },
+        { companyId: session.companyId, candidateId: session.candidateId }
+      );
+      await notifyCompanyManagers(query, {
+        companyId: session.companyId,
+        type: NOTIF.DP_LEAVE_CANCELLED,
+        entityType: 'leave',
+        entityId: result.item.id,
+        dedupeKey: `dp_leave_cancel:${result.item.id}`,
+        payload: {
+          candidateId: session.candidateId,
+          candidateName: name,
+          leaveId: result.item.id,
+        },
+      });
+    } catch (e) {
+      console.error('[dp] leave cancel notif', e?.message || e);
+    }
 
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {

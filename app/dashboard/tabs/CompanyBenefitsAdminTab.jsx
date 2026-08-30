@@ -27,7 +27,7 @@ import {
 export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [benefits, setBenefits] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [filterCategoryId, setFilterCategoryId] = useState('');
   const [filterBenefitType, setFilterBenefitType] = useState('');
   const [page, setPage] = useState(1);
@@ -36,6 +36,15 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+
+  function companyQs(prefix = '?') {
+    if (!companyId) return '';
+    return `${prefix}companyId=${companyId}`;
+  }
+
+  function withCompanyBody(payload) {
+    return companyId ? { ...payload, companyId } : payload;
+  }
 
   function t(key) {
     const messages = {
@@ -49,6 +58,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         noBenefits: 'Nenhum benefício cadastrado',
         searchNamePh: 'Buscar por nome…',
         noBenefitsDesc: 'Cadastre categorias e depois os benefícios oferecidos pela empresa',
+        needCompanyTitle: 'Selecione uma empresa',
+        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar benefícios.',
         ctaExit: 'Ver Análise Demissional',
         ctaHelp: 'Ver Guia (Benefícios)',
         noCategories: 'Nenhuma categoria ainda. Crie uma antes de classificar benefícios.',
@@ -119,6 +130,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
         noBenefits: 'No benefits registered',
         searchNamePh: 'Search by name…',
         noBenefitsDesc: 'Create categories, then register benefits offered by the company',
+        needCompanyTitle: 'Select a company',
+        needCompanyHint: 'Choose a company in the panel filter to manage benefits.',
         ctaExit: 'Open Exit Analysis',
         ctaHelp: 'Open Help (Benefits)',
         noCategories: 'No categories yet. Create one before classifying benefits.',
@@ -203,15 +216,17 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   }, [filterCategoryId]);
 
   async function loadBenefits() {
-    if (!companyId) return;
+    if (!companyId) {
+      setBenefits([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const qs = new URLSearchParams();
       if (filterCategoryId) qs.set('categoryId', filterCategoryId);
-      const url = qs.toString()
-        ? `/api/admin/company-benefits?${qs}`
-        : '/api/admin/company-benefits';
-      const res = await fetch(url);
+      qs.set('companyId', String(companyId));
+      const res = await fetch(`/api/admin/company-benefits?${qs}`);
       const data = await res.json();
       if (data.ok) setBenefits(data.benefits || []);
       else toast(t('loadError'), 'error');
@@ -225,7 +240,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
   async function loadCategories() {
     if (!companyId) return;
     try {
-      const res = await fetch('/api/admin/benefit-categories');
+      const res = await fetch(`/api/admin/benefit-categories${companyQs('?')}`);
       const data = await res.json();
       if (data.ok) setCategories(data.categories || []);
     } catch (err) {
@@ -293,7 +308,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch('/api/admin/benefit-categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: result.name }),
+        body: JSON.stringify(withCompanyBody({ name: result.name })),
       });
       const data = await res.json();
       if (data.ok) {
@@ -326,7 +341,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch(`/api/admin/benefit-categories/${cat.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: result.name }),
+        body: JSON.stringify(withCompanyBody({ name: result.name })),
       });
       const data = await res.json();
       if (data.ok) {
@@ -345,7 +360,9 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     const ok = await confirm(t('confirmDeactivateCategory'));
     if (!ok) return;
     try {
-      const res = await fetch(`/api/admin/benefit-categories/${cat.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/benefit-categories/${cat.id}${companyQs('?')}`, {
+        method: 'DELETE',
+      });
       const data = await res.json();
       if (data.ok) {
         toast(t('categoryDeactivated'), 'ok');
@@ -374,12 +391,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch('/api/admin/company-benefits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: result.name,
-          description: result.description,
-          categoryId: parseCategoryId(result.categoryId),
-          benefitType: result.benefitType,
-        }),
+        body: JSON.stringify(
+          withCompanyBody({
+            name: result.name,
+            description: result.description,
+            categoryId: parseCategoryId(result.categoryId),
+            benefitType: result.benefitType,
+          })
+        ),
       });
       const data = await res.json();
       if (data.ok) {
@@ -404,12 +423,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch(`/api/admin/company-benefits/${benefit.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: result.name,
-          description: result.description,
-          categoryId: parseCategoryId(result.categoryId),
-          benefitType: result.benefitType,
-        }),
+        body: JSON.stringify(
+          withCompanyBody({
+            name: result.name,
+            description: result.description,
+            categoryId: parseCategoryId(result.categoryId),
+            benefitType: result.benefitType,
+          })
+        ),
       });
       const data = await res.json();
       if (data.ok) {
@@ -428,7 +449,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/admin/company-benefits/${benefit.id}`, {
+      const res = await fetch(`/api/admin/company-benefits/${benefit.id}${companyQs('?')}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -472,6 +493,10 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
     setSortDir(nextDir);
     setPage(1);
   };
+
+  if (!companyId) {
+    return <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />;
+  }
 
   if (loading && benefits.length === 0) return <AppLoading variant="panel" />;
 

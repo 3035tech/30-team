@@ -19,6 +19,7 @@
     "db:seed-motivators": "node scripts/seed-motivators-questions.js",
     "db:seed-motivators-templates": "node scripts/seed-motivators-templates.js",
     "db:seed-motivators-all": "node scripts/seed-motivators-questions.js && node scripts/seed-motivators-templates.js",
+    "db:create-super-admin": "node --env-file=.env scripts/create-super-admin.js",
     "db:clear": "node scripts/clear-data.js",
     "dtov:reset": "node test/dtov/harness.js reset",
     "dtov:up": "node test/dtov/harness.js up",

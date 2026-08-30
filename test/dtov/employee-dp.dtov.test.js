@@ -26,6 +26,12 @@ import {
   upsertDpProfile,
   upsertLeaveBalance,
 } from '../../lib/people/employee-dp.js';
+import {
+  NOTIF,
+  notificationCopySpec,
+  notificationHref,
+} from '../../lib/manager-notification-catalog.js';
+import { notifyCompanyManagers } from '../../lib/manager-notifications.js';
 
 async function main() {
   assert.equal(leaveInclusiveDays('2030-01-10', '2030-01-20'), 11);
@@ -177,6 +183,30 @@ async function main() {
   });
   assert.equal(cancelled.ok, true, cancelled.errorCode);
   assert.equal(cancelled.item.status, DP_LEAVE_STATUS.CANCELLED);
+
+  for (const type of [
+    NOTIF.DP_LEAVE_CANCELLED,
+    NOTIF.DP_LEAVE_FILE,
+    NOTIF.DP_DOC_UPLOADED,
+  ]) {
+    const spec = notificationCopySpec(type, { candidateName: 'Ana', docKey: 'aso', pending: 1 });
+    assert.ok(spec.titleKey, type);
+    assert.ok(notificationHref(type, { candidateId }), type);
+  }
+
+  const notifCancel = await notifyCompanyManagers(query, {
+    companyId,
+    type: NOTIF.DP_LEAVE_CANCELLED,
+    entityType: 'leave',
+    entityId: cancelledProbe.item.id,
+    dedupeKey: `dtov_dp_leave_cancel:${cancelledProbe.item.id}`,
+    payload: {
+      candidateId,
+      candidateName: 'DTOV',
+      leaveId: cancelledProbe.item.id,
+    },
+  });
+  assert.ok((notifCancel.inserted || 0) >= 1, 'cancel notif fan-out');
 
   const notCancel = await cancelEmployeeLeaveRequest({ query }, {
     id: cancelledProbe.item.id,

@@ -47,7 +47,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   const { promptForm, toast, notice } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [error, setError] = useState('');
   const [qDraft, setQDraft] = useState('');
   const [q, setQ] = useState('');
@@ -78,7 +78,12 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   }, []);
 
   const load = useCallback(async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -87,6 +92,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
         pageSize: String(pageSize),
         sort,
         sortDir,
+        companyId: String(companyId),
       });
       if (q) qs.set('q', q);
       if (vacancyId) qs.set('vacancyId', vacancyId);

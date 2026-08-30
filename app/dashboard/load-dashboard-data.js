@@ -28,21 +28,13 @@ import { buildCompatBundles, COMPAT_PEOPLE_CAP } from '../../lib/compat-bundles'
 import { getOnboardingProgress } from '../../lib/onboarding-progress';
 import { isSuperAdminPayload } from '../../lib/permissions';
 import { measureAsync } from '../../lib/monitoring.js';
+import { COHORT_TABS, needsAdminCompaniesList } from '../../lib/dashboard-company-scope.js';
 
 /** Max rows in the vacancy filter dropdown (cohort tabs only). */
 const VACANCIES_FILTER_CAP = 200;
 
 /** Cap when recomputing area_stats from raw scores on a request. */
 const AREA_STATS_SCORES_CAP = 5000;
-
-const COHORT_TABS = new Set([
-  'overview',
-  'team',
-  'compatibility',
-  'compare',
-  'group',
-  'leadership',
-]);
 
 function computeStatsFromScores(rows) {
   const sums = {};
@@ -97,7 +89,7 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
   // Compare/group/leadership não precisam desse par de queries pesadas no SSR.
   const needListMetrics = needTeam || needCompatPairs || needOverview;
   const needAreas = needCohortChrome;
-  const needCompaniesFilter = isAdmin && (needCohortChrome || activeTab === 'motivators' || activeTab === 'climate');
+  const needCompaniesFilter = isAdmin && needsAdminCompaniesList(activeTab);
 
   const selectedArea = (searchParams?.area || 'all').toString();
   const selectedVacancy = (searchParams?.vacancy || 'all').toString();

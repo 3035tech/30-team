@@ -5,8 +5,11 @@ import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-ses
 import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import {
   clearDpDocumentFile,
+  getEmployeeDisplayName,
   uploadDpDocumentFile,
 } from '../../../../../../../lib/people/employee-dp.js';
+import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifications.js';
+import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +43,29 @@ export async function POST(request, { params }) {
       },
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+
+    try {
+      const name = await getEmployeeDisplayName(
+        { query },
+        { companyId, candidateId }
+      );
+      const today = new Date().toISOString().slice(0, 10);
+      await notifyCompanyManagers(query, {
+        companyId,
+        type: NOTIF.DP_DOC_UPLOADED,
+        entityType: 'candidate',
+        entityId: candidateId,
+        dedupeKey: `dp_doc_up:${candidateId}:${docKey}:${today}`,
+        payload: {
+          candidateId,
+          candidateName: name,
+          docKey: String(docKey),
+        },
+      });
+    } catch (e) {
+      console.error('[dp] doc upload notif', e?.message || e);
+    }
+
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('POST /api/employee/dp/documents/.../file', err);

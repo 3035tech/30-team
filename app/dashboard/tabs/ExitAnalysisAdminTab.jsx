@@ -37,7 +37,7 @@ import {
 
 export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [viewRecord, setViewRecord] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -51,6 +51,21 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   /** Tab already gated by USERS_MANAGE; allow write for hr/direction too. */
   const canWrite = Boolean(isAdmin) || Boolean(companyId);
 
+  function companyQs(prefix = '?') {
+    if (!companyId) return '';
+    return `${prefix}companyId=${companyId}`;
+  }
+
+  function withCompanyBody(payload) {
+    return companyId ? { ...payload, companyId } : payload;
+  }
+
+  function employeesSearchUrl() {
+    return companyId
+      ? `/api/admin/employees/search?companyId=${companyId}`
+      : '/api/admin/employees/search';
+  }
+
   function t(key) {
     const messages = {
       'pt-BR': {
@@ -60,6 +75,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         noRecords: 'Nenhuma saída registrada',
         searchNamePh: 'Buscar por colaborador…',
         noRecordsDesc: 'Registre saídas de colaboradores para análise',
+        needCompanyTitle: 'Selecione uma empresa',
+        needCompanyHint: 'Escolha a empresa no filtro do painel para ver saídas.',
         openPerson: 'Abrir na Equipe',
         ctaBenefits: 'Revisar benefícios',
         ctaTeam: 'Ver Equipe / retenção',
@@ -140,6 +157,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         noRecords: 'No exits recorded',
         searchNamePh: 'Search by employee…',
         noRecordsDesc: 'Register employee exits for analysis',
+        needCompanyTitle: 'Select a company',
+        needCompanyHint: 'Choose a company in the panel filter to view exits.',
         openPerson: 'Open on Team',
         ctaBenefits: 'Review benefits',
         ctaTeam: 'Open Team / retention',
@@ -222,10 +241,14 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   }, [companyId]);
 
   async function loadRecords() {
-    if (!companyId) return;
+    if (!companyId) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/exit-analysis?limit=100`);
+      const res = await fetch(`/api/admin/exit-analysis?limit=100${companyQs('&')}`);
       const data = await res.json();
       if (data.ok) setRecords(data.records || []);
       else toast(t('loadError'), 'error');
@@ -253,7 +276,7 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           label: t('formCandidate'),
           type: 'entitySearch',
           required: true,
-          searchUrl: '/api/admin/employees/search',
+          searchUrl: employeesSearchUrl(),
           placeholder: t('formCandidatePh'),
           help: t('formCandidateHelp'),
           minChars: 1,
@@ -302,13 +325,15 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       const res = await fetch('/api/admin/exit-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          candidateId,
-          exitDate: result.exitDate,
-          exitType: result.exitType,
-          exitReason: result.exitReason,
-          notes: result.notes,
-        }),
+        body: JSON.stringify(
+          withCompanyBody({
+            candidateId,
+            exitDate: result.exitDate,
+            exitType: result.exitType,
+            exitReason: result.exitReason,
+            notes: result.notes,
+          })
+        ),
       });
       const data = await res.json();
       if (data.ok) {
@@ -365,12 +390,14 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
       const res = await fetch(`/api/admin/exit-analysis/${rec.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          exitDate: result.exitDate,
-          exitType: result.exitType,
-          exitReason: result.exitReason,
-          notes: result.notes,
-        }),
+        body: JSON.stringify(
+          withCompanyBody({
+            exitDate: result.exitDate,
+            exitType: result.exitType,
+            exitReason: result.exitReason,
+            notes: result.notes,
+          })
+        ),
       });
       const data = await res.json();
       if (data.ok) {
@@ -394,7 +421,9 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/admin/exit-analysis/${rec.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/exit-analysis/${rec.id}${companyQs('?')}`, {
+        method: 'DELETE',
+      });
       const data = await res.json();
       if (data.ok) {
         toast(t('deleted'), 'ok');
@@ -445,6 +474,14 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
     setSortDir(nextDir);
     setPage(1);
   };
+
+  if (!companyId) {
+    return (
+      <ContentEnter>
+        <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />
+      </ContentEnter>
+    );
+  }
 
   if (loading) return <AppLoading variant="panel" />;
 

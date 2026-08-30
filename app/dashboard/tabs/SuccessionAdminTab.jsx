@@ -32,7 +32,7 @@ import {
 
 export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [expandedRoles, setExpandedRoles] = useState(new Set());
   const [successorsByRole, setSuccessorsByRole] = useState({});
   const [page, setPage] = useState(1);
@@ -52,6 +52,8 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         searchNamePh: 'Buscar por título…',
         listEmptyDesc:
           'Comece por um papel de alto impacto; depois atribua sucessores e acompanhe prontidão na Equipe.',
+        needCompanyTitle: 'Selecione uma empresa',
+        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar sucessão.',
         createRoleButton: 'Novo Papel Crítico',
         ctaTeam: 'Ver Equipe',
         ctaHelp: 'Roteiro no Guia',
@@ -108,6 +110,8 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         searchNamePh: 'Search by title…',
         listEmptyDesc:
           'Start with a high-impact role; then assign successors and track readiness in Team.',
+        needCompanyTitle: 'Select a company',
+        needCompanyHint: 'Choose a company in the panel filter to manage succession.',
         createRoleButton: 'New Critical Role',
         ctaTeam: 'Open Team',
         ctaHelp: 'Demo path in Help',
@@ -179,6 +183,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   }, [companyId]);
 
   async function loadRoles() {
+    if (!companyId) {
+      setRoles([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/succession/critical-roles?limit=40${companyQs('&')}`);
@@ -564,6 +573,14 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
     setSortDir(nextDir);
     setPage(1);
   };
+
+  if (!companyId) {
+    return (
+      <ContentEnter>
+        <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />
+      </ContentEnter>
+    );
+  }
 
   if (loading) return <AppLoading variant="panel" />;
 

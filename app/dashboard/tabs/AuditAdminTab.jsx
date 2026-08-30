@@ -7,7 +7,6 @@ import { t } from '../../../lib/i18n';
 import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
-import { FormField } from '../../_components/FormField';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 
@@ -43,14 +42,27 @@ function metadataPreview(meta) {
 /**
  * Super admin: trilha de auditoria cross-tenant (append-only).
  */
-export function AuditAdminTab({ navigateDashboard, locale }) {
+export function AuditAdminTab({
+  navigateDashboard,
+  locale,
+  companies = [],
+  panelCompanyId = null,
+}) {
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
 
   const filters = useMemo(() => {
     const actorKind = (urlParams.get('auditActorKind') || 'all').toLowerCase();
-    const companyId = (urlParams.get('auditCompanyId') || 'all').trim();
+    const rawCompanyParam = urlParams.get('auditCompanyId');
+    let companyId = 'all';
+    if (rawCompanyParam == null || rawCompanyParam === '') {
+      companyId = panelCompanyId ? String(panelCompanyId) : 'all';
+    } else if (String(rawCompanyParam).trim() === 'all') {
+      companyId = 'all';
+    } else {
+      companyId = String(rawCompanyParam).trim();
+    }
     const action = (urlParams.get('auditAction') || '').trim();
     const q = (urlParams.get('auditQ') || '').trim();
     const pageRaw = parseInt(urlParams.get('auditPage') || '1', 10);
@@ -67,7 +79,7 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
       page,
       pageSize,
     };
-  }, [spKey]);
+  }, [spKey, panelCompanyId]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -166,18 +178,18 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
           <option value="system">{t(locale, 'panel.audit.actorKindSystem')}</option>
           <option value="public">{t(locale, 'panel.audit.actorKindPublic')}</option>
         </AdminListFilterSelect>
-        <FormField label={t(locale, 'panel.audit.filterCompanyId')} className="min-w-[7rem] shrink-0">
-          <input
-            className={cn(S.input, 'w-28')}
-            inputMode="numeric"
-            placeholder={t(locale, 'panel.audit.companyIdPh')}
-            value={filters.companyId === 'all' ? '' : filters.companyId}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              pushFilters({ companyId: v || 'all', page: 1 });
-            }}
-          />
-        </FormField>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.audit.filterCompany')}
+          value={filters.companyId === 'all' ? 'all' : String(filters.companyId)}
+          onChange={(v) => pushFilters({ companyId: v || 'all', page: 1 })}
+        >
+          <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
+          {(companies || []).map((co) => (
+            <option key={co.id} value={String(co.id)}>
+              {co.name || `#${co.id}`}
+            </option>
+          ))}
+        </AdminListFilterSelect>
         <AdminListSearch
           locale={locale}
           label={t(locale, 'panel.audit.filterAction')}

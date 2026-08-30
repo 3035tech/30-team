@@ -78,7 +78,8 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee#dp`) — ficha (emergência/endereço), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + **saldo de férias** (direito/ajuste; usado/pendente derivados) + calendário 60d, absenteísmo (atestados) na Overview e lembretes (`POST /api/cron/dp-doc-reminders`). Migrations `083_employee_dp_light.sql` + `087_leave_balance.sql`. Não é ponto/folha/eSocial.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
 - **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
-- **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Ver [`docs/audit-log.md`](docs/audit-log.md).
+- **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Filtro **Empresa** por nome (alinha ao filtro do painel). Ver [`docs/audit-log.md`](docs/audit-log.md).
+- **Super admin sem empresa fixa:** use o filtro **Empresa** no topo (lembrado entre abas). Ops: `npm run db:create-super-admin`.
 - **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
 - **Inteligência comportamental** na Visão geral (`behavioralIntel`): no topo (funil recolhido); filtro ou **grupo salvo** (`teamGroup`); perfis, motivadores, forças/atenções (até 5), Top 5 e ações — agregado, hedged, sem nomes.
 - **Wizard de onboarding** (primeiro acesso):
@@ -207,6 +208,7 @@ A partir da migration `054`, `055` e `056`:
 | `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
 | `scripts/seed-demo-todos-os-dados.sql` | **Seed completo de apresentação** (migrations ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee` (`todos-os-dados-demo`). Inbox HR: ~12 tipos `NOTIF`; colab: ~10 no `/employee` |
 | `npm run db:seed-demo-todos-os-dados:confirm` | Mesmo tenant via JS (DTOV / local); exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
+| `npm run db:create-super-admin` | Cria/atualiza usuário **super admin** (sem `company_id`) via `.env` (`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` ou defaults do script). SQL espelho: `scripts/create-super-admin.sql` |
 | `npm run db:seed-demo-client-jobs-board:confirm` | **Board `/jobs` para demo com cliente**: 10 empresas (`demo-board-*`) + 50 vagas públicas com descrição HTML completa; não toca Todos os Dados / Eval |
 
 ```bash

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
+import { buildAdminPagerPages } from '../../lib/admin-list-pager.js';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { C, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_COLORS_DARK, typeChipSurfaceStyle } from '../../lib/theme';
 import { PIPELINE_STAGE } from '../../lib/pipeline';
@@ -181,10 +182,16 @@ function clientSortNextDir(column, previousKey, previousDir) {
 }
 
 const PAGER_BTN =
-  'rounded-control border px-3 py-1.5 font-mono text-2xs disabled:cursor-default';
+  'min-h-touch min-w-touch rounded-control border px-2.5 py-1.5 font-mono text-2xs disabled:cursor-default';
+const PAGER_BTN_IDLE =
+  'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500 hover:bg-brand-500/[0.14]';
+const PAGER_BTN_DISABLED =
+  'cursor-default border-ink/12 bg-transparent text-ink-faint';
+const PAGER_BTN_ACTIVE =
+  'cursor-default border-brand-500 bg-brand-500 text-white';
 
 /**
- * Canonical list footer: count + page size + prev/next.
+ * Canonical list footer: count + page size + numbered pages + prev/next.
  * Pair with SortableTh headers on admin/table listagens.
  *
  * @param {{
@@ -224,6 +231,9 @@ function AdminListPager({
       totalPages,
     });
 
+  const pageItems = buildAdminPagerPages(safePage, totalPages);
+  let ellipsisIdx = 0;
+
   return (
     <div
       className={cn(
@@ -232,7 +242,7 @@ function AdminListPager({
       )}
     >
       <span className="font-mono text-2xs text-ink-muted">{label}</span>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <select
           value={String(pageSize)}
           onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
@@ -250,25 +260,53 @@ function AdminListPager({
           type="button"
           disabled={loading || safePage <= 1}
           onClick={() => onPageChange?.(Math.max(1, safePage - 1))}
-          className={cn(
-            PAGER_BTN,
-            safePage <= 1
-              ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-              : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-          )}
+          className={cn(PAGER_BTN, safePage <= 1 ? PAGER_BTN_DISABLED : PAGER_BTN_IDLE)}
+          aria-label={t(locale, 'panel.admin.prev')}
         >
           {t(locale, 'panel.admin.prev')}
         </button>
+        <nav
+          className="flex flex-wrap items-center gap-1"
+          aria-label={t(locale, 'panel.common.paginationNav')}
+        >
+          {pageItems.map((item) => {
+            if (item === 'ellipsis') {
+              ellipsisIdx += 1;
+              return (
+                <span
+                  key={`e-${ellipsisIdx}`}
+                  className="min-w-[1.5rem] px-1 text-center font-mono text-2xs text-ink-faint"
+                  aria-hidden
+                >
+                  …
+                </span>
+              );
+            }
+            const active = item === safePage;
+            return (
+              <button
+                key={item}
+                type="button"
+                disabled={loading || active}
+                onClick={() => onPageChange?.(item)}
+                className={cn(PAGER_BTN, active ? PAGER_BTN_ACTIVE : PAGER_BTN_IDLE)}
+                aria-label={t(locale, 'panel.common.pageGoTo', { n: item })}
+                aria-current={active ? 'page' : undefined}
+              >
+                {item}
+              </button>
+            );
+          })}
+        </nav>
         <button
           type="button"
           disabled={loading || safePage >= totalPages}
           onClick={() => onPageChange?.(Math.min(totalPages, safePage + 1))}
           className={cn(
             PAGER_BTN,
-            safePage >= totalPages
-              ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
-              : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
+            safePage >= totalPages ? PAGER_BTN_DISABLED : PAGER_BTN_IDLE
           )}
+          aria-label={t(locale, 'panel.admin.next')}
         >
           {t(locale, 'panel.admin.next')}
         </button>

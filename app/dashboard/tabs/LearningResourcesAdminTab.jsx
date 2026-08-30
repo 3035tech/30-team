@@ -27,7 +27,7 @@ import {
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [resources, setResources] = useState([]);
   const [themes, setThemes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [filterTheme, setFilterTheme] = useState('');
   const [filterType, setFilterType] = useState('');
   const [page, setPage] = useState(1);
@@ -36,6 +36,15 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+
+  function companyQs(prefix = '?') {
+    if (!companyId) return '';
+    return `${prefix}companyId=${companyId}`;
+  }
+
+  function withCompanyBody(payload) {
+    return companyId ? { ...payload, companyId } : payload;
+  }
 
   function t(key) {
     const messages = {
@@ -46,6 +55,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         noResources: 'Nenhum recurso cadastrado',
         searchNamePh: 'Buscar por título…',
         noResourcesDesc: 'Crie ações, cursos, trilhas que o PDI pode apontar',
+        needCompanyTitle: 'Selecione uma empresa',
+        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar a Academy.',
         ctaHelp: 'Ver Guia (PDI → Academy)',
         ctaPdi: 'Abrir Equipe (PDI)',
         filterTheme: 'Filtrar por tema',
@@ -91,6 +102,8 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         noResources: 'No resources registered',
         searchNamePh: 'Search by title…',
         noResourcesDesc: 'Create actions, courses, tracks that PDI can point to',
+        needCompanyTitle: 'Select a company',
+        needCompanyHint: 'Choose a company in the panel filter to manage Academy.',
         ctaHelp: 'Open Help (PDI → Academy)',
         ctaPdi: 'Open Team (PDI)',
         filterTheme: 'Filter by theme',
@@ -143,16 +156,18 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   }, [filterTheme, filterType]);
 
   async function loadResources() {
-    if (!companyId) return;
+    if (!companyId) {
+      setResources([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filterTheme) params.set('theme', filterTheme);
       if (filterType) params.set('resourceType', filterType);
-      const url = params.toString()
-        ? `/api/admin/learning-resources?${params.toString()}`
-        : '/api/admin/learning-resources';
-      const res = await fetch(url);
+      params.set('companyId', String(companyId));
+      const res = await fetch(`/api/admin/learning-resources?${params.toString()}`);
       const data = await res.json();
       if (data.ok) setResources(data.resources || []);
       else toast(t('loadError'), 'error');
@@ -166,7 +181,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   async function loadThemes() {
     if (!companyId) return;
     try {
-      const res = await fetch('/api/admin/learning-resources?themes=true');
+      const res = await fetch(`/api/admin/learning-resources?themes=true${companyQs('&')}`);
       const data = await res.json();
       if (data.ok) setThemes(data.themes || []);
     } catch (err) {
@@ -252,7 +267,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       const res = await fetch('/api/admin/learning-resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadFromForm(result)),
+        body: JSON.stringify(withCompanyBody(payloadFromForm(result))),
       });
       const data = await res.json();
       if (data.ok) {
@@ -275,10 +290,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     if (!result) return;
 
     try {
-      const res = await fetch(`/api/admin/learning-resources/${resource.id}`, {
+      const res = await fetch(`/api/admin/learning-resources/${resource.id}${companyQs('?')}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadFromForm(result)),
+        body: JSON.stringify(withCompanyBody(payloadFromForm(result))),
       });
       const data = await res.json();
       if (data.ok) {
@@ -298,7 +313,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/admin/learning-resources/${resource.id}`, {
+      const res = await fetch(`/api/admin/learning-resources/${resource.id}${companyQs('?')}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -349,6 +364,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     setSortDir(nextDir);
     setPage(1);
   };
+
+  if (!companyId) {
+    return <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />;
+  }
 
   if (loading) return <AppLoading variant="panel" />;
 

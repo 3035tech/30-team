@@ -36,6 +36,13 @@ import { OnboardingTour } from '../_components/OnboardingTour';
 import { useKeyboardShortcuts, KeyboardShortcutsHelp, GModePending } from '../_components/KeyboardShortcuts';
 import OnboardingWizard from '../_components/OnboardingWizard';
 import { PersonaPlaybookCard } from '../_components/PersonaPlaybookCard';
+import { FormField } from '../_components/FormField';
+import {
+  COHORT_TABS,
+  COMPANY_SCOPE_TABS,
+  resolveStickyCompanyPreference,
+  writeStickyCompanyId,
+} from '../../lib/dashboard-company-scope.js';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -247,16 +254,6 @@ const TAB_TO_SECTION = {
   profile: 'account',
 };
 
-/** Tabs that use the shared assessment filter chrome (area/vacancy/hist). */
-const COHORT_TABS = new Set([
-  'overview',
-  'team',
-  'compatibility',
-  'compare',
-  'group',
-  'leadership',
-]);
-
 export default function DashboardClient({
   results,
   areas = [],
@@ -302,6 +299,8 @@ export default function DashboardClient({
   const [area, setArea] = useState(selectedArea);
   const [vacancy, setVacancy] = useState(selectedVacancy);
   const [company, setCompany] = useState(selectedCompany);
+  /** After admin clears company, do not immediately re-apply sticky from localStorage. */
+  const skipStickyCompanyRestoreRef = useRef(false);
   const [enneagram, setEnneagram] = useState(selectedEnneagram);
   const [pipeline, setPipeline] = useState(selectedPipeline);
   const [roster, setRoster] = useState(selectedRoster);
@@ -330,11 +329,21 @@ export default function DashboardClient({
   };
 
   const isAdmin = isAdminRole(sessionAuth);
+  /** Admin without company on the user row: use the panel company filter (not "all"). */
+  const scopedCompanyId =
+    company && company !== 'all'
+      ? Number(company)
+      : (sessionAuth?.companyId ?? null);
   const showLeads = isSuperAdminPayload(sessionAuth);
   const showProductFeedback = isSuperAdminPayload(sessionAuth);
   const showAudit = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
+  /** Super admin: company picker on cohort chrome or company-scoped People/catalog tabs. */
+  const showsCompanyPicker =
+    isAdmin &&
+    companies.length > 0 &&
+    (showsCohortChrome || COMPANY_SCOPE_TABS.has(tab) || tab === 'audit');
   /** Global search duplicates TeamTab; Leadership is chart-first — hide there. */
   const showGlobalSearch = showsCohortChrome && tab !== 'team' && tab !== 'leadership';
   const showVacancies = can(sessionAuth, CAP.VACANCIES_VIEW);
@@ -575,6 +584,44 @@ export default function DashboardClient({
     teamPagination: pagination,
   });
 
+  const applyCompanyFilter = (nextCompany, extraFilters = {}) => {
+    const v = nextCompany == null || nextCompany === '' ? 'all' : String(nextCompany);
+    setCompany(v);
+    if (v === 'all') {
+      skipStickyCompanyRestoreRef.current = true;
+      writeStickyCompanyId(null);
+    } else {
+      skipStickyCompanyRestoreRef.current = false;
+      writeStickyCompanyId(v);
+    }
+    pushFilters({ company: v, ...extraFilters });
+  };
+
+  useEffect(() => {
+    if (!isAdmin || panelLoading || !companies.length) return;
+    if (company && company !== 'all') {
+      writeStickyCompanyId(company);
+      skipStickyCompanyRestoreRef.current = false;
+      return;
+    }
+    if (skipStickyCompanyRestoreRef.current) return;
+    const wantsScope =
+      COMPANY_SCOPE_TABS.has(tab) || showsCohortChrome || tab === 'audit';
+    if (!wantsScope) return;
+    const preferred = resolveStickyCompanyPreference({ urlCompany: 'all', companies });
+    if (!preferred) return;
+    writeStickyCompanyId(preferred);
+    pushFilters({ company: preferred });
+  }, [
+    isAdmin,
+    panelLoading,
+    companies,
+    company,
+    tab,
+    showsCohortChrome,
+    pushFilters,
+  ]);
+
   const pairs = compatMetrics.pairs || [];
   const tensions = compatMetrics.tensions || [];
   const synergies = compatMetrics.synergies || [];
@@ -634,7 +681,11 @@ export default function DashboardClient({
     setDateFrom('');
     setDateTo('');
     setSearch('');
-    if (isAdmin) setCompany('all');
+    if (isAdmin) {
+      skipStickyCompanyRestoreRef.current = true;
+      writeStickyCompanyId(null);
+      setCompany('all');
+    }
     pushFilters({
       area: 'all', vacancy: 'all', pipeline: 'all', roster: 'internal', enneagram: 'all',
       dateFrom: null, dateTo: null, search: null, filter: null,
@@ -655,7 +706,7 @@ export default function DashboardClient({
   if (isAdmin && company !== 'all') {
     const co = companies.find((c) => String(c.id) === company);
     activeChips.push({ key: 'company', label: co?.name || company,
-      onRemove: () => { setCompany('all'); pushFilters({ company: 'all', vacancy: 'all', pipeline: 'all' }); } });
+      onRemove: () => { applyCompanyFilter('all', { vacancy: 'all', pipeline: 'all' }); } });
   }
   if (area !== 'all') {
     const ar = areas.find((a) => a.key === area);
@@ -707,7 +758,7 @@ export default function DashboardClient({
    * (roster/vacancy stay in the always-visible essentials row).
    */
   const advancedChipCount = activeChips.filter((c) =>
-    ['company', 'area', 'enneagram', 'pipeline', 'dateFrom', 'dateTo', 'search'].includes(c.key)
+    ['area', 'enneagram', 'pipeline', 'dateFrom', 'dateTo', 'search'].includes(c.key)
   ).length;
   const filtersExpanded = filtersOpen ?? (tab === 'leadership' ? false : advancedChipCount > 0);
 
@@ -1145,6 +1196,27 @@ export default function DashboardClient({
             role="group"
             aria-label={t(locale, 'dashboard.filtersEssentialsAria')}
           >
+            {showsCompanyPicker ? (
+              <FormField
+                label={t(locale, 'dashboard.companyFilterLabel')}
+                className="min-w-[10rem] shrink-0"
+              >
+                <select
+                  value={company}
+                  onChange={(e) => {
+                    applyCompanyFilter(e.target.value, { vacancy: 'all', pipeline: 'all' });
+                    setPipeline('all');
+                  }}
+                  className={S.select}
+                  aria-label={t(locale, 'dashboard.companyFilterLabel')}
+                >
+                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
+                  {companies.map((co) => (
+                    <option key={co.id} value={String(co.id)}>{co.name}</option>
+                  ))}
+                </select>
+              </FormField>
+            ) : null}
             <select
               value={roster}
               onChange={(e) => {
@@ -1168,8 +1240,8 @@ export default function DashboardClient({
                 if (isAdmin && v !== 'all') {
                   const hit = vacancies.find((x) => String(x.id) === v);
                   if (hit != null && hit.companyId != null) {
-                    setCompany(String(hit.companyId));
-                    pushFilters({ vacancy: v, company: String(hit.companyId), pipeline: 'all' });
+                    setPipeline('all');
+                    applyCompanyFilter(String(hit.companyId), { vacancy: v, pipeline: 'all' });
                     return;
                   }
                 }
@@ -1192,23 +1264,6 @@ export default function DashboardClient({
             role="group"
             aria-label={t(locale, 'dashboard.filtersAdvancedAria')}
           >
-            {isAdmin && companies.length > 0 ? (
-              <select
-                value={company}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCompany(v);
-                  setPipeline('all');
-                  pushFilters({ company: v, vacancy: 'all', pipeline: 'all' });
-                }}
-                className={S.select}
-              >
-                <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
-                {companies.map((co) => (
-                  <option key={co.id} value={String(co.id)}>{co.name}</option>
-                ))}
-              </select>
-            ) : null}
             <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} className={S.select}>
               <option value="all">{t(locale, 'dashboard.allAreas')}</option>
               {areas.map((a) => (
@@ -1284,6 +1339,31 @@ export default function DashboardClient({
             <div className="mb-4" />
           )}
           </>
+          ) : showsCompanyPicker ? (
+            <div
+              className="db-filters mb-2.5 flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label={t(locale, 'dashboard.companyFilterLabel')}
+            >
+              <FormField
+                label={t(locale, 'dashboard.companyFilterLabel')}
+                className="min-w-[12rem] shrink-0"
+              >
+                <select
+                  value={company}
+                  onChange={(e) => {
+                    applyCompanyFilter(e.target.value);
+                  }}
+                  className={S.select}
+                  aria-label={t(locale, 'dashboard.companyFilterLabel')}
+                >
+                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
+                  {companies.map((co) => (
+                    <option key={co.id} value={String(co.id)}>{co.name}</option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
           ) : (
             <div className="mb-3" />
           )}
@@ -1319,7 +1399,7 @@ export default function DashboardClient({
                   typeCount={typeCount}
                   distributionTotal={listTotal}
                   locale={locale}
-                  companyId={sessionAuth?.companyId}
+                  companyId={scopedCompanyId}
                   onboardingProgress={onboardingProgress}
                   filters={{
                     companyLabel:
@@ -1354,11 +1434,7 @@ export default function DashboardClient({
                     onSort={pushTeamSort}
                     locale={locale}
                     isAdmin={isAdmin}
-                    companyId={
-                      company && company !== 'all'
-                        ? Number(company)
-                        : (sessionAuth?.companyId ?? null)
-                    }
+                    companyId={scopedCompanyId}
                     search={selectedSearch}
                     listTotal={listTotal}
                     focusCandidateId={urlParams.get('candidate')}
@@ -1458,7 +1534,7 @@ export default function DashboardClient({
               )}
               {tab === 'vacancies' && showVacancies && <VacanciesAdminTab isAdmin={isAdmin} navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'talent-bank' && showVacancies && (
-                <TalentBankAdminTab locale={locale} companyId={sessionAuth?.companyId} />
+                <TalentBankAdminTab locale={locale} companyId={scopedCompanyId} />
               )}
               {tab === 'motivators' && showMotivators && (
                 <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
@@ -1468,46 +1544,34 @@ export default function DashboardClient({
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={sessionAuth?.companyId} />}
-              {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
-              {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}
+              {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'dp' && showDp && (
                 <DpAdminTab
                   locale={locale}
-                  companyId={
-                    company && company !== 'all'
-                      ? Number(company)
-                      : (sessionAuth?.companyId ?? null)
-                  }
+                  companyId={scopedCompanyId}
                   navigateDashboard={navigateWithOpts}
                 />
               )}
-              {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'lms' && showLearning && (
                 <LmsAdminTab
                   locale={locale}
-                  companyId={
-                    company && company !== 'all'
-                      ? Number(company)
-                      : (sessionAuth?.companyId ?? null)
-                  }
+                  companyId={scopedCompanyId}
                   courseId={urlParams.get('course') || null}
                   navigateDashboard={navigateWithOpts}
                 />
               )}
-              {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'company-feed' && showCompanyFeed && (
-                <CompanyFeedAdminTab locale={locale} companyId={sessionAuth?.companyId} />
+                <CompanyFeedAdminTab locale={locale} companyId={scopedCompanyId} />
               )}
               {tab === 'compensation' && showCompensation && (
                 <CompensationAdminTab
                   locale={locale}
-                  companyId={
-                    company && company !== 'all'
-                      ? Number(company)
-                      : (sessionAuth?.companyId ?? null)
-                  }
+                  companyId={scopedCompanyId}
                 />
               )}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
@@ -1515,7 +1579,12 @@ export default function DashboardClient({
                 <ProductFeedbackAdminTab navigateDashboard={navigateWithOpts} locale={locale} />
               )}
               {tab === 'audit' && showAudit && (
-                <AuditAdminTab navigateDashboard={navigateWithOpts} locale={locale} />
+                <AuditAdminTab
+                  navigateDashboard={navigateWithOpts}
+                  locale={locale}
+                  companies={companies}
+                  panelCompanyId={scopedCompanyId}
+                />
               )}
               {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (

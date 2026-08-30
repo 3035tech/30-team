@@ -5,6 +5,7 @@ Trilha **append-only** de ações sensíveis no painel e autenticação.
 ## Quem vê
 
 - Aba **Auditoria** no menu Conta — **somente super admin** (`role = admin` sem `company_id` fixa), mesmo critério da aba Leads.
+- Filtro **Empresa** por nome (lista das empresas; alinha ao filtro do painel / sticky). Não digite id numérico.
 - API: `GET /api/admin/audit-log` (paginada, filtros).
 
 ## Schema

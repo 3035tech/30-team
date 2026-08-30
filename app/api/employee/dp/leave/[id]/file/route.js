@@ -4,8 +4,11 @@ import { query } from '../../../../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
 import {
   clearLeaveAttachment,
+  getEmployeeDisplayName,
   uploadLeaveAttachment,
 } from '../../../../../../../lib/people/employee-dp.js';
+import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifications.js';
+import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import { zPositiveInt } from '../../../../../../../lib/validate.js';
 
@@ -48,6 +51,29 @@ export async function POST(request, { params }) {
       }
     );
     if (!result.ok) return apiErrorFromResult(request, result);
+
+    try {
+      const name = await getEmployeeDisplayName(
+        { query },
+        { companyId: session.companyId, candidateId: session.candidateId }
+      );
+      const today = new Date().toISOString().slice(0, 10);
+      await notifyCompanyManagers(query, {
+        companyId: session.companyId,
+        type: NOTIF.DP_LEAVE_FILE,
+        entityType: 'leave',
+        entityId: result.item.id,
+        dedupeKey: `dp_leave_file:${result.item.id}:${today}`,
+        payload: {
+          candidateId: session.candidateId,
+          candidateName: name,
+          leaveId: result.item.id,
+        },
+      });
+    } catch (e) {
+      console.error('[dp] leave file notif', e?.message || e);
+    }
+
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('POST employee leave file', err);

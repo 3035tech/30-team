@@ -129,7 +129,7 @@ Telas de **cadastro com listagem** (Usuários, Benefícios, Academy, Análise de
 | Casca da tabela | `AdminTableShell` |
 | Título da aba | `AdminPageHeader` (Create CTA só em `actions`, topo-direita) |
 | Busca + filtros de coluna (1 linha) | `AdminListFilters` + `AdminListSearch` + `AdminListFilterSelect` — só busca/selects (nunca Create); `onClear`/`clearEnabled`; sem botão Buscar; resultados com `AdminTableShell` `animKey` ou `AdminListResults` |
-| Paginação | `AdminListPager` (+ `PAGE_SIZE_OPTIONS`) |
+| Paginação | `AdminListPager` (+ `PAGE_SIZE_OPTIONS`; páginas numeradas + Anterior/Próxima) |
 | Criar | `AdminCreateButton` só em `AdminPageHeader` `actions` (`S.btnPrimary` + ícone `plus`) |
 | Editar | `AdminEditButton` (lápis + brand) |
 | Excluir / desativar / arquivar | `AdminDeleteButton` (lixeira + danger) |

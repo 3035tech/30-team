@@ -33,7 +33,7 @@ import { InlineCallout } from '../../_components/InlineCallout';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState('periodStart');
@@ -41,6 +41,15 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [nameQ, setNameQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+
+  function companyQs(prefix = '?') {
+    if (!companyId) return '';
+    return `${prefix}companyId=${companyId}`;
+  }
+
+  function withCompanyBody(payload) {
+    return companyId ? { ...payload, companyId } : payload;
+  }
 
   const t = (key) => {
     const messages = {
@@ -51,6 +60,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         searchNamePh: 'Buscar por título…',
         listEmptyDesc:
           'Crie um ciclo com metas; outcomes “Desenvolver” geram itens no PDI e pedem 1:1 na Equipe.',
+        needCompanyTitle: 'Selecione uma empresa',
+        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar ciclos.',
         createCycleButton: 'Novo Ciclo',
         editCycleTitle: 'Editar ciclo',
         cycleTitle: 'Título do ciclo',
@@ -103,6 +114,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         searchNamePh: 'Search by title…',
         listEmptyDesc:
           'Create a cycle with goals; “Develop” outcomes seed PDI items and call for a 1:1 in Team.',
+        needCompanyTitle: 'Select a company',
+        needCompanyHint: 'Choose a company in the panel filter to manage review cycles.',
         createCycleButton: 'New Cycle',
         editCycleTitle: 'Edit cycle',
         cycleTitle: 'Cycle title',
@@ -157,9 +170,14 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   }, [companyId]);
 
   async function loadCycles() {
+    if (!companyId) {
+      setCycles([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/performance-cycles?limit=40`);
+      const res = await fetch(`/api/admin/performance-cycles?limit=40${companyQs('&')}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setCycles(data.cycles || []);
@@ -247,7 +265,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       const res = await fetch('/api/admin/performance-cycles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify(withCompanyBody(result)),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       toast(t('createCycleSuccess'), 'ok');
@@ -274,15 +292,17 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       const res = await fetch(`/api/admin/performance-cycles/${cycle.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: result.title,
-          description: result.description,
-          periodStart: result.periodStart || null,
-          periodEnd: result.periodEnd || null,
-          status: result.status,
-          allowSelfReview: Boolean(result.allowSelfReview),
-          allowPeerReview: Boolean(result.allowPeerReview),
-        }),
+        body: JSON.stringify(
+          withCompanyBody({
+            title: result.title,
+            description: result.description,
+            periodStart: result.periodStart || null,
+            periodEnd: result.periodEnd || null,
+            status: result.status,
+            allowSelfReview: Boolean(result.allowSelfReview),
+            allowPeerReview: Boolean(result.allowPeerReview),
+          })
+        ),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       toast(t('updateCycleSuccess'), 'ok');
@@ -477,6 +497,10 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     setSortDir(nextDir);
     setPage(1);
   };
+
+  if (!companyId) {
+    return <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />;
+  }
 
   if (loading) return <AppLoading variant="panel" />;
 
