@@ -52,6 +52,7 @@ export async function POST(request, { params }) {
       reason: body.reason,
       requestedBy: 'manager',
       autoApprove: body.autoApprove !== false,
+      allowOverBalance: body.allowOverBalance === true,
       userId: payload.userId,
     });
     if (!result.ok) return apiErrorFromResult(request, result);

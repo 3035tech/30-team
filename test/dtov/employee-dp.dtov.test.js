@@ -9,20 +9,25 @@ import {
   DP_LEAVE_TYPE,
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
+import { leaveInclusiveDays } from '../../lib/leave-days.js';
 import {
   createLeaveRequest,
   ensureDpDocuments,
   getDpAttentionPulse,
   getDpProfile,
+  getLeaveBalance,
   listLeaveCalendar,
   listLeaveRequests,
   parseLeaveListParams,
   updateDpDocument,
   updateLeaveRequest,
   upsertDpProfile,
+  upsertLeaveBalance,
 } from '../../lib/people/employee-dp.js';
 
 async function main() {
+  assert.equal(leaveInclusiveDays('2030-01-10', '2030-01-20'), 11);
+
   const parsed = parseLeaveListParams({
     page: '2',
     pageSize: '10',
@@ -90,6 +95,16 @@ async function main() {
   assert.equal(doc.ok, true, doc.errorCode);
   assert.equal(doc.item.status, DP_DOCUMENT_STATUS.RECEIVED);
 
+  const seedBal = await upsertLeaveBalance({ query }, {
+    companyId,
+    candidateId,
+    entitlementDays: 90,
+    adjustmentDays: 0,
+    notes: 'dtov seed',
+    userId,
+  });
+  assert.equal(seedBal.ok, true, seedBal.errorCode);
+
   const leave = await createLeaveRequest({ query }, {
     companyId,
     candidateId,
@@ -101,6 +116,10 @@ async function main() {
   });
   assert.equal(leave.ok, true, leave.errorCode);
   assert.equal(leave.item.status, DP_LEAVE_STATUS.REQUESTED);
+
+  const balPending = await getLeaveBalance({ query }, { companyId, candidateId });
+  assert.equal(balPending.ok, true, balPending.errorCode);
+  assert.ok(balPending.balance.pendingDays >= 11);
 
   const listed = await listLeaveRequests({ query }, {
     companyId,
@@ -119,6 +138,48 @@ async function main() {
   });
   assert.equal(decided.ok, true, decided.errorCode);
   assert.equal(decided.item.status, DP_LEAVE_STATUS.APPROVED);
+
+  const balUsed = await getLeaveBalance({ query }, { companyId, candidateId });
+  assert.equal(balUsed.ok, true);
+  assert.ok(balUsed.balance.usedDays >= 11);
+  assert.equal(balUsed.balance.pendingDays, 0);
+
+  const setBal = await upsertLeaveBalance({ query }, {
+    companyId,
+    candidateId,
+    entitlementDays: 5,
+    adjustmentDays: 0,
+    notes: 'dtov low',
+    userId,
+  });
+  assert.equal(setBal.ok, true, setBal.errorCode);
+  assert.equal(setBal.balance.entitlementDays, 5);
+
+  const over = await createLeaveRequest({ query }, {
+    companyId,
+    candidateId,
+    leaveType: DP_LEAVE_TYPE.VACATION,
+    startsOn: '2031-02-01',
+    endsOn: '2031-02-10',
+    reason: 'should fail',
+    requestedBy: 'employee',
+  });
+  assert.equal(over.ok, false);
+  assert.equal(over.errorCode, 'LEAVE_BALANCE_EXCEEDED');
+
+  const forced = await createLeaveRequest({ query }, {
+    companyId,
+    candidateId,
+    leaveType: DP_LEAVE_TYPE.VACATION,
+    startsOn: '2031-03-01',
+    endsOn: '2031-03-02',
+    reason: 'hr exception',
+    requestedBy: 'manager',
+    autoApprove: true,
+    allowOverBalance: true,
+    userId,
+  });
+  assert.equal(forced.ok, true, forced.errorCode);
 
   const cal = await listLeaveCalendar({ query }, {
     companyId,

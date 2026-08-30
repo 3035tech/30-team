@@ -11,11 +11,14 @@ import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
 import { CopyableLink } from './CopyableLink';
+import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import {
   DP_DOCUMENT_STATUS,
   DP_LEAVE_STATUS,
+  DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
 } from '../../lib/domain-status.js';
+import { leaveInclusiveDays } from '../../lib/leave-days.js';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -76,6 +79,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
   const [profile, setProfile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  const [balance, setBalance] = useState(null);
   const [pendingDocs, setPendingDocs] = useState(0);
   const [uploadKey, setUploadKey] = useState(null);
   const fileInputRef = useRef(null);
@@ -89,6 +93,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       setProfile(data.profile || null);
       setDocuments(Array.isArray(data.documents) ? data.documents : []);
       setLeaves(Array.isArray(data.leaves) ? data.leaves : []);
+      setBalance(data.balance || null);
       const badge = Number(data.badge) || 0;
       setPendingDocs(Number(data.pendingDocs) || 0);
       onBadge?.(badge);
@@ -97,6 +102,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       setProfile(null);
       setDocuments([]);
       setLeaves([]);
+      setBalance(null);
       onBadge?.(0);
     } finally {
       setLoading(false);
@@ -234,6 +240,8 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
   };
 
   const requestLeave = async () => {
+    const avail =
+      balance?.availableDays != null ? Number(balance.availableDays) : null;
     const values = await promptForm({
       title: t(locale, 'employeeHome.dpRequestLeave'),
       confirmLabel: t(locale, 'employeeHome.dpLeaveSubmit'),
@@ -242,7 +250,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           key: 'leaveType',
           label: t(locale, 'panel.dp.colType'),
           type: 'select',
-          defaultValue: DP_LEAVE_TYPES[0],
+          defaultValue: DP_LEAVE_TYPE.VACATION,
           options: DP_LEAVE_TYPES.map((v) => ({
             value: v,
             label: leaveTypeLabel(locale, v),
@@ -266,6 +274,10 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           type: 'textarea',
           maxLength: 2000,
           defaultValue: '',
+          help:
+            avail != null
+              ? t(locale, 'employeeHome.dpBalanceFormHint', { n: avail })
+              : undefined,
         },
       ],
     });
@@ -297,7 +309,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
   ).length;
 
   return (
-    <ContentEnter animKey={`emp-dp|${pendingDocs}|${openLeaveCount}|${leaves.length}`}>
+    <ContentEnter animKey={`emp-dp|${pendingDocs}|${openLeaveCount}|${leaves.length}|${balance?.availableDays ?? 'x'}`}>
       <div className="space-y-4">
         <input
           ref={fileInputRef}
@@ -428,13 +440,21 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
               {t(locale, 'employeeHome.dpRequestLeave')}
             </button>
           </div>
+          <LeaveBalanceSummary
+            locale={locale}
+            balance={balance}
+            className="mb-3"
+          />
+          <p className={cn(S.faint, 'mb-3 mt-0')}>{t(locale, 'employeeHome.dpBalanceHint')}</p>
           {leaves.length === 0 ? (
             <div data-emp-empty tabIndex={-1} className="outline-none">
               <EmptyState message={t(locale, 'employeeHome.dpEmptyLeave')} />
             </div>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {leaves.map((row) => (
+              {leaves.map((row) => {
+                const days = leaveInclusiveDays(row.startsOn, row.endsOn);
+                return (
                 <li
                   key={row.id}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
@@ -443,6 +463,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
                     <div className={S.cardMuted}>{leaveTypeLabel(locale, row.leaveType)}</div>
                     <div className="font-mono text-2xs text-ink-faint">
                       {formatDate(row.startsOn, locale)}–{formatDate(row.endsOn, locale)}
+                      {days != null
+                        ? ` · ${t(locale, 'panel.dp.leaveDaysMeta', { n: days })}`
+                        : ''}
                     </div>
                     {row.reason ? (
                       <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{row.reason}</p>
@@ -452,7 +475,8 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
                     {leaveStatusLabel(locale, row.status)}
                   </StatusToneChip>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>

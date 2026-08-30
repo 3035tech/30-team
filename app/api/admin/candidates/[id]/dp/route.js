@@ -11,6 +11,7 @@ import {
   getDpProfile,
   listDpDocuments,
   listLeaveRequests,
+  getLeaveBalance,
   upsertDpProfile,
   ensureDpDocuments,
 } from '../../../../../../lib/people/employee-dp.js';
@@ -49,7 +50,7 @@ export async function GET(request, { params }) {
     }
     const companyId = loaded.candidate.companyId;
     await ensureDpDocuments({ query }, { companyId, candidateId });
-    const [profile, docs, leaves] = await Promise.all([
+    const [profile, docs, leaves, balance] = await Promise.all([
       getDpProfile({ query }, { companyId, candidateId }),
       listDpDocuments({ query }, { companyId, candidateId }),
       listLeaveRequests({ query }, {
@@ -59,6 +60,7 @@ export async function GET(request, { params }) {
         pageSize: 50,
         status: 'all',
       }),
+      getLeaveBalance({ query }, { companyId, candidateId }),
     ]);
     if (!profile.ok) return apiErrorFromResult(request, profile);
     if (!docs.ok) return apiErrorFromResult(request, docs);
@@ -66,6 +68,7 @@ export async function GET(request, { params }) {
       profile: profile.profile,
       documents: docs.items,
       leaves: leaves.items,
+      balance: balance.ok ? balance.balance : null,
       employmentStatus: loaded.candidate.employmentStatus,
     });
   } catch (err) {

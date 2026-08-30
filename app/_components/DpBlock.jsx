@@ -16,14 +16,17 @@ import { StatusToneChip } from './StatusToneChip';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { CopyableLink } from './CopyableLink';
+import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import {
   DP_DOCUMENT_KEYS,
   DP_DOCUMENT_STATUS,
   DP_DOCUMENT_STATUSES,
   DP_LEAVE_STATUS,
+  DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
+import { leaveInclusiveDays } from '../../lib/leave-days.js';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -82,6 +85,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const [profile, setProfile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploadKey, setUploadKey] = useState(null);
@@ -100,6 +104,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       setProfile(null);
       setDocuments([]);
       setLeaves([]);
+      setBalance(null);
       setLoading(false);
       return;
     }
@@ -111,11 +116,13 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       setProfile(data.profile || null);
       setDocuments(Array.isArray(data.documents) ? data.documents : []);
       setLeaves(Array.isArray(data.leaves) ? data.leaves : []);
+      setBalance(data.balance || null);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
       setProfile(null);
       setDocuments([]);
       setLeaves([]);
+      setBalance(null);
     } finally {
       setLoading(false);
     }
@@ -323,6 +330,8 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
   const addLeave = async () => {
     const today = new Date().toISOString().slice(0, 10);
+    const avail =
+      balance?.availableDays != null ? Number(balance.availableDays) : null;
     const values = await promptForm({
       title: t(locale, 'panel.dp.leaveAdd'),
       confirmLabel: t(locale, 'panel.dp.save'),
@@ -331,7 +340,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           key: 'leaveType',
           type: 'select',
           label: t(locale, 'panel.dp.leaveTypeLabel'),
-          defaultValue: DP_LEAVE_TYPES[0],
+          defaultValue: DP_LEAVE_TYPE.VACATION,
           required: true,
           options: DP_LEAVE_TYPES.map((v) => ({
             value: v,
@@ -359,6 +368,17 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           defaultValue: '',
           rows: 2,
           maxLength: 2000,
+          help:
+            avail != null
+              ? t(locale, 'panel.dp.leaveBalanceFormHelp', { n: avail })
+              : undefined,
+        },
+        {
+          key: 'allowOverBalance',
+          type: 'boolean',
+          label: t(locale, 'panel.dp.leaveAllowOver'),
+          defaultValue: false,
+          showWhen: (v) => v.leaveType === DP_LEAVE_TYPE.VACATION,
         },
       ],
     });
@@ -374,15 +394,77 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           endsOn: values.endsOn,
           reason: values.reason,
           autoApprove: true,
+          allowOverBalance: values.allowOverBalance === true,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       if (data.item) setLeaves((prev) => [data.item, ...prev]);
-      else await load();
+      await load();
       toast(t(locale, 'panel.dp.leaveCreated'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.leaveCreateError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editBalance = async () => {
+    const values = await promptForm({
+      title: t(locale, 'panel.dp.balanceEdit'),
+      confirmLabel: t(locale, 'panel.dp.save'),
+      fields: [
+        {
+          key: 'entitlementDays',
+          type: 'number',
+          label: t(locale, 'panel.dp.balanceEntitlement'),
+          defaultValue: String(balance?.entitlementDays ?? 30),
+          required: true,
+          min: 0,
+          max: 365,
+        },
+        {
+          key: 'adjustmentDays',
+          type: 'number',
+          label: t(locale, 'panel.dp.balanceAdjustment'),
+          defaultValue: String(balance?.adjustmentDays ?? 0),
+          min: -365,
+          max: 365,
+        },
+        {
+          key: 'notes',
+          type: 'textarea',
+          label: t(locale, 'panel.dp.balanceNotes'),
+          defaultValue: balance?.notes || '',
+          rows: 2,
+          maxLength: 1000,
+        },
+      ],
+    });
+    if (!values) return;
+    const entitlementDays = Number(values.entitlementDays);
+    const adjustmentDays = Number(values.adjustmentDays || 0);
+    if (!Number.isFinite(entitlementDays) || !Number.isFinite(adjustmentDays)) {
+      toast(t(locale, 'panel.dp.balanceSaveError'), 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`${baseUrl}/leave-balance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entitlementDays,
+          adjustmentDays,
+          notes: values.notes,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      setBalance(data.balance || null);
+      toast(t(locale, 'panel.dp.balanceSaved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.balanceSaveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -438,9 +520,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
-      setLeaves((prev) =>
-        prev.map((l) => (l.id === row.id ? data.item || { ...l, ...values } : l))
-      );
+      await load();
       toast(t(locale, 'panel.dp.leaveUpdated'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.leaveUpdateError'), 'error');
@@ -460,7 +540,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const requestedLeaveCount = leaves.filter((l) => l.status === DP_LEAVE_STATUS.REQUESTED).length;
 
   return (
-    <ContentEnter animKey={`dp-block|${candidateId}|${pendingDocCount}|${leaves.length}`}>
+    <ContentEnter
+      animKey={`dp-block|${candidateId}|${pendingDocCount}|${leaves.length}|${balance?.availableDays ?? 'x'}`}
+    >
     <section
       className="flex flex-col gap-4"
       aria-labelledby="dp-block-title"
@@ -618,6 +700,29 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <span className={S.label}>{t(locale, 'panel.dp.balanceTitle')}</span>
+            <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{t(locale, 'panel.dp.balanceHint')}</p>
+          </div>
+          {!readOnly ? (
+            <AdminEditButton
+              label={t(locale, 'panel.dp.balanceEdit')}
+              onClick={() => void editBalance()}
+              disabled={busy}
+            />
+          ) : null}
+        </div>
+          <LeaveBalanceSummary
+            locale={locale}
+            balance={balance}
+            showPoolMeta
+            showNotes
+            showDefaultHint
+          />
+      </div>
+
+      <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <span className={S.label}>{t(locale, 'panel.dp.leaveTitle')}</span>
           {!readOnly ? (
             <AdminCreateButton
@@ -649,6 +754,12 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       {' · '}
                       {formatDate(row.endsOn, locale)}
                     </span>
+                    {(() => {
+                      const days = leaveInclusiveDays(row.startsOn, row.endsOn);
+                      return days != null ? (
+                        <span>{t(locale, 'panel.dp.leaveDaysMeta', { n: days })}</span>
+                      ) : null;
+                    })()}
                     <StatusToneChip tone={leaveStatusTone(row.status)}>
                       {leaveStatusLabel(locale, row.status)}
                     </StatusToneChip>
