@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME, MAX_AGE, sessionCookieOptions } from './lib/auth';
-import { shouldSlideSession } from './lib/session-ttl';
+import { COOKIE_NAME, sessionCookieOptions } from './lib/session-cookie';
+import { shouldSlideSession, MANAGER_SESSION_MAX_AGE_SEC } from './lib/session-ttl';
 import {
   signEmployeeTokenEdge,
   signManagerTokenEdge,
@@ -30,35 +30,24 @@ import {
 import { applyContentSecurityPolicyHeaders } from './lib/security-csp';
 import { isCrawlerNoIndexPath } from './lib/crawler-guard';
 
-/** Sliding session gestor: reemite cookie se JWT ainda válido e perto do fim. */
-async function applyManagerSessionSlide(response, payload) {
+/**
+ * Sliding: reemite cookie se JWT ainda válido e perto do fim (falha nunca bloqueia o request).
+ * @param {'manager'|'employee'} kind
+ */
+async function applySessionSlide(response, kind, payload) {
   try {
     if (!shouldSlideSession(payload?.exp)) return;
-    const token = await signManagerTokenEdge({
-      userId: payload.userId,
-      role: payload.role,
-      companyId: payload.companyId ?? null,
-      locale: payload.locale || 'pt-BR',
-      sv: payload.sv,
-    });
-    if (!token) return;
-    response.cookies.set(COOKIE_NAME, token, sessionCookieOptions({ maxAge: MAX_AGE }));
-  } catch {
-    /* ignore slide failures */
-  }
-}
-
-/** Sliding session colaborador. */
-async function applyEmployeeSessionSlide(response, payload) {
-  try {
-    if (!shouldSlideSession(payload?.exp)) return;
-    const token = await signEmployeeTokenEdge({
-      candidateId: payload.candidateId,
-      companyId: payload.companyId,
-      email: payload.email,
-      locale: payload.locale || 'pt-BR',
-      sv: payload.sv,
-    });
+    if (kind === 'manager') {
+      const token = await signManagerTokenEdge(payload);
+      if (!token) return;
+      response.cookies.set(
+        COOKIE_NAME,
+        token,
+        sessionCookieOptions({ maxAge: MANAGER_SESSION_MAX_AGE_SEC })
+      );
+      return;
+    }
+    const token = await signEmployeeTokenEdge(payload);
     if (!token) return;
     response.cookies.set(
       EMPLOYEE_COOKIE_NAME,
@@ -69,6 +58,7 @@ async function applyEmployeeSessionSlide(response, payload) {
     /* ignore slide failures */
   }
 }
+
 /** Cabeçalhos de segurança (baseline + HSTS/CSP opcionais via env). */
 function withSecurityHeaders(response, { noindex = false } = {}) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -223,7 +213,7 @@ export async function middleware(request) {
     }
 
     const response = NextResponse.next();
-    await applyManagerSessionSlide(response, payload);
+    await applySessionSlide(response, 'manager', payload);
     return secureResponse(request, response);
   }
 
@@ -261,8 +251,19 @@ export async function middleware(request) {
     }
 
     const response = NextResponse.next();
-    await applyEmployeeSessionSlide(response, emp);
+    await applySessionSlide(response, 'employee', emp);
     return secureResponse(request, response);
+  }
+
+  // Polling /api/me (notif, locale): também conta como atividade para sliding do gestor.
+  if (pathname.startsWith('/api/me')) {
+    const token = request.cookies.get(COOKIE_NAME)?.value;
+    const payload = token ? await verifyTokenEdge(token) : null;
+    if (isManagerRole(payload) && (await isManagerSessionLive(request, payload))) {
+      const response = NextResponse.next();
+      await applySessionSlide(response, 'manager', payload);
+      return secureResponse(request, response);
+    }
   }
 
   return secureResponse(request, NextResponse.next());

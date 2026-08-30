@@ -299,7 +299,7 @@ npm run dev
 
 ```
 1. /login → JWT em cookie httpOnly (TTL **8h**; claim `sv` = `users.session_version`)
-2. Sliding no middleware: gestor (`/dashboard`, `/api/admin`, TTL **8h**) e colaborador (`/employee`, `/api/employee`, TTL **12h**) — se a sessão ainda é válida e faltam ≤ **2h**, reemite o cookie. Sem uso pelo TTL respectivo a sessão cai; `session_version` continua revogando na hora
+2. Sliding no middleware: gestor (`/dashboard`, `/api/admin`, `/api/me`, TTL **8h**) e colaborador (`/employee`, `/api/employee`, TTL **12h**) — se a sessão ainda é válida e faltam ≤ **2h**, reemite o cookie. Sem uso pelo TTL respectivo a sessão cai; `session_version` continua revogando na hora
 3. Logout / troca de senha / desativação incrementam `session_version` e invalidam JWTs antigos
 4. APIs admin e SSR do painel revalidam usuário live (active, role, company) a cada request
 5. /dashboard → auth leve pinta o shell (sidebar); queries da aba em Suspense (`load-dashboard-data.js`)
