@@ -58,7 +58,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | HR Score | `b1000HrScore` |
 | Radar de rotatividade | `b1000TurnoverRadar` |
 | **Para que serve cada tela** | `screens` (mapa aba → função + conexões) |
-| Dicas rápidas do sistema | `tips` |
+| Equipe (mapa Motivadores) | `team` + `motivators` + FAQ `faqMotivators` |
 
 **FAQ rápido — mapa de telas / contexto:** “para que serve cada tela”, “mapa de abas” → `faqScreens` + seção `screens`. Com a aba aberta, o widget envia `activeTab` / `activeSection`; perguntas “para que serve esta tela”, “dicas desta aba”, “o que posso fazer aqui” e “dicas do sistema” usam `lib/help-screen-context.js` (sem LLM). Sugestões do chat: chips da tela atual + chips de sistema (`suggestThisScreen`, `suggestSystemTips`, …).
 

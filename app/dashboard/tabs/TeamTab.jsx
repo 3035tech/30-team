@@ -27,6 +27,7 @@ import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { DpBlock } from '../../_components/DpBlock';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
+import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
 import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
 import { CandidateTimeline } from '../../_components/CandidateTimeline';
@@ -1318,6 +1319,17 @@ export function TeamTab({
                             onGoSubTab={setPeopleSubTab}
                             embedded
                           />
+                          {detail?.people?.management?.motivators?.dimensions?.length ||
+                          detail?.people?.management?.motivators?.dimensionScores ? (
+                            <div className={cn(S.cardTight)}>
+                              <MotivatorsRadarChart
+                                locale={locale}
+                                dimensions={detail.people.management.motivators.dimensions}
+                                dimensionScores={detail.people.management.motivators.dimensionScores}
+                                showPeaks
+                              />
+                            </div>
+                          ) : null}
                           <HrActionBrief
                             locale={locale}
                             brief={detail.people?.decisionBrief}
