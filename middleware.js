@@ -231,10 +231,9 @@ export async function middleware(request) {
           NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
         );
       }
-      return secureResponse(
-        request,
-        NextResponse.redirect(new URL(EMPLOYEE_PATH.LOGIN, request.url))
-      );
+      const loginUrl = new URL(EMPLOYEE_PATH.LOGIN, request.url);
+      loginUrl.searchParams.set('reason', 'expired');
+      return secureResponse(request, NextResponse.redirect(loginUrl));
     }
     const live = await isEmployeeSessionLive(request, emp);
     if (!live) {
@@ -244,10 +243,9 @@ export async function middleware(request) {
           NextResponse.json({ error: 'UNAUTHORIZED', errorCode: ERR.UNAUTHORIZED }, { status: 401 })
         );
       }
-      return secureResponse(
-        request,
-        NextResponse.redirect(new URL(EMPLOYEE_PATH.LOGIN, request.url))
-      );
+      const loginUrl = new URL(EMPLOYEE_PATH.LOGIN, request.url);
+      loginUrl.searchParams.set('reason', 'expired');
+      return secureResponse(request, NextResponse.redirect(loginUrl));
     }
 
     const response = NextResponse.next();

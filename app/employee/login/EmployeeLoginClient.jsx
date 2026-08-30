@@ -2,25 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { useAppFeedback } from '../../_components/AppFeedback';
 import { BrandMark } from '../../_components/BrandMark';
 import { FormField } from '../../_components/FormField';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import { SegmentedControl } from '../../_components/SegmentedControl';
 import TurnstileField from '../../_components/TurnstileField';
+import { EMPLOYEE_PATH } from '../../../lib/employee-paths';
 
 /**
  * Collaborator login — password primary; forgot + magic via SegmentedControl.
  * Multi-empresa: código (slug) digitado — nunca lista de empresas na API.
  */
-export function EmployeeLoginClient({ locale = 'pt-BR' }) {
+export function EmployeeLoginClient({ locale = 'pt-BR', reason: reasonProp = '' }) {
   const router = useRouter();
-  const { toast } = useAppFeedback();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState('login'); // login | forgot | magic
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +35,9 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileRequired, setTurnstileRequired] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formInfo, setFormInfo] = useState('');
+  const sessionReason = reasonProp || searchParams?.get('reason') || '';
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +57,32 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     };
   }, []);
 
+  // Already signed in → go home (avoid double login)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/employee/session');
+        if (cancelled || !res.ok) return;
+        router.replace(EMPLOYEE_PATH.HOME);
+      } catch {
+        /* stay on login */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const prev = document.title;
+    document.title = t(locale, 'employeeHome.loginDocumentTitle');
+    return () => {
+      document.title = prev;
+    };
+  }, [locale]);
+
   const captchaPayload = () => ({
     turnstileToken: turnstileToken || undefined,
   });
@@ -65,7 +94,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
 
   const ensureCaptcha = () => {
     if (turnstileRequired && !turnstileToken) {
-      toast(t(locale, 'errors.TURNSTILE_FAILED'), 'error');
+      setFormError(t(locale, 'errors.TURNSTILE_FAILED'));
       return false;
     }
     return true;
@@ -74,6 +103,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const verify2fa = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
+    setFormError('');
+    setFormInfo('');
     try {
       const res = await fetch('/api/auth/employee/2fa/verify', {
         method: 'POST',
@@ -91,7 +122,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       setChallengeToken('');
       router.replace('/employee');
     } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
+      setFormError(e?.message || t(locale, 'employeeHome.loginError'));
     } finally {
       setBusy(false);
     }
@@ -100,6 +131,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const login = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
+    setFormError('');
+    setFormInfo('');
     try {
       const res = await fetch('/api/auth/employee/login', {
         method: 'POST',
@@ -115,7 +148,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       const json = await res.json().catch(() => ({}));
       if (json.errorCode === 'COMPANY_SLUG_REQUIRED' || json.needsCompanySlug) {
         setNeedsCompanySlug(true);
-        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
+        setFormInfo(t(locale, 'employeeHome.companySlugRequired'));
         return;
       }
       if (!res.ok) {
@@ -134,7 +167,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       setNeedsCompanySlug(false);
       router.replace('/employee');
     } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.loginError'), 'error');
+      setFormError(e?.message || t(locale, 'employeeHome.loginError'));
     } finally {
       setBusy(false);
     }
@@ -143,6 +176,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const sendForgot = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
+    setFormError('');
+    setFormInfo('');
     try {
       const res = await fetch('/api/auth/employee/forgot-password', {
         method: 'POST',
@@ -158,14 +193,13 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       if (!res.ok) throw new Error(json?.error || 'send');
       if (json.needsCompanySlug) {
         setNeedsCompanySlug(true);
-        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
+        setFormInfo(t(locale, 'employeeHome.companySlugRequired'));
         return;
       }
       setNeedsCompanySlug(false);
       setSent(true);
-      toast(t(locale, 'employeeHome.forgotSent'), 'ok');
     } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.linkError'), 'error');
+      setFormError(e?.message || t(locale, 'employeeHome.linkError'));
     } finally {
       setBusy(false);
     }
@@ -174,6 +208,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
   const sendMagic = async () => {
     if (!ensureCaptcha()) return;
     setBusy(true);
+    setFormError('');
+    setFormInfo('');
     try {
       const res = await fetch('/api/auth/employee/magic-link', {
         method: 'POST',
@@ -189,14 +225,13 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       if (!res.ok) throw new Error(json?.error || 'send');
       if (json.needsCompanySlug) {
         setNeedsCompanySlug(true);
-        toast(t(locale, 'employeeHome.companySlugRequired'), 'info');
+        setFormInfo(t(locale, 'employeeHome.companySlugRequired'));
         return;
       }
       setNeedsCompanySlug(false);
       setSent(true);
-      toast(t(locale, 'employeeHome.linkSent'), 'ok');
     } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.linkError'), 'error');
+      setFormError(e?.message || t(locale, 'employeeHome.linkError'));
     } finally {
       setBusy(false);
     }
@@ -206,6 +241,8 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
     setMode(next);
     setSent(false);
     setNeedsCompanySlug(false);
+    setFormError('');
+    setFormInfo('');
   };
 
   const modeHint =
@@ -230,6 +267,34 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
         <p className={cn(S.muted, 'mt-2')}>{modeHint}</p>
       </div>
 
+      {sessionReason === 'expired' ? (
+        <InlineCallout tone="warning" emphasis className="mb-4">
+          {t(locale, 'employeeHome.sessionExpired')}
+        </InlineCallout>
+      ) : null}
+      {sessionReason === 'logout' ? (
+        <InlineCallout tone="info" emphasis className="mb-4">
+          {t(locale, 'employeeHome.logoutOk')}
+        </InlineCallout>
+      ) : null}
+
+      {formError ? (
+        <InlineCallout
+          tone="danger"
+          role="alert"
+          emphasis
+          title={t(locale, 'employeeHome.loginFailedTitle')}
+          className="mb-4"
+        >
+          {formError}
+        </InlineCallout>
+      ) : null}
+      {formInfo && !formError ? (
+        <InlineCallout tone="info" emphasis className="mb-4">
+          {formInfo}
+        </InlineCallout>
+      ) : null}
+
       {!requires2fa && !sent ? (
         <SegmentedControl
           className="mb-4 w-full justify-center"
@@ -246,7 +311,7 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
       ) : null}
 
       {sent && mode !== 'login' && !requires2fa ? (
-        <InlineCallout tone="success">
+        <InlineCallout tone="success" emphasis className="mb-4">
           {mode === 'forgot' ? t(locale, 'employeeHome.forgotSentBody') : t(locale, 'employeeHome.linkSentBody')}
         </InlineCallout>
       ) : requires2fa ? (
@@ -255,9 +320,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
             <input
               inputMode="numeric"
               autoComplete="one-time-code"
-              className={cn(S.input, 'w-full')}
+              className={cn(S.input, 'w-full', formError && 'border-danger')}
               value={twoFaCode}
-              onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => {
+                setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                if (formError) setFormError('');
+              }}
               onKeyDown={(e) => e.key === 'Enter' && verify2fa()}
               maxLength={6}
               disabled={busy}
@@ -306,9 +374,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
               type="email"
               required
               autoComplete="email"
-              className={cn(S.input, 'w-full')}
+              className={cn(S.input, 'w-full', formError && 'border-danger')}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (formError) setFormError('');
+              }}
               disabled={busy}
             />
           </FormField>
@@ -318,9 +389,12 @@ export function EmployeeLoginClient({ locale = 'pt-BR' }) {
                 type="password"
                 required
                 autoComplete="current-password"
-                className={cn(S.input, 'w-full')}
+                className={cn(S.input, 'w-full', formError && 'border-danger')}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (formError) setFormError('');
+                }}
                 disabled={busy}
               />
             </FormField>

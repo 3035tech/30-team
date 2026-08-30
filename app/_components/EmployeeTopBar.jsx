@@ -13,6 +13,7 @@ import LanguageSelect from './LanguageSelect';
 import { EmptyState } from './EmptyState';
 import { Icon } from './Icon';
 import { useEmployeeNav } from './EmployeeNavContext';
+import { employeeLoginUrl, redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
 /**
  * Collaborator chrome — theme, locale, notifications, profile menu.
@@ -36,6 +37,7 @@ export function EmployeeTopBar({
   const loadNotifs = useCallback(async () => {
     try {
       const res = await fetch('/api/employee/notifications?limit=20');
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
       if (!res.ok) return;
       const data = await res.json();
       setItems(Array.isArray(data.items) ? data.items : []);
@@ -43,13 +45,20 @@ export function EmployeeTopBar({
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     loadNotifs();
     pollRef.current = setInterval(loadNotifs, 20000);
+    const onVis = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void loadNotifs();
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener('visibilitychange', onVis);
     };
   }, [loadNotifs]);
 
@@ -60,8 +69,18 @@ export function EmployeeTopBar({
         setProfileOpen(false);
       }
     };
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setNotifOpen(false);
+        setProfileOpen(false);
+      }
+    };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   const persistLocale = async (next) => {
@@ -112,8 +131,14 @@ export function EmployeeTopBar({
   };
 
   const logout = async () => {
-    await fetch('/api/auth/employee/session', { method: 'DELETE' });
-    router.replace('/employee/login');
+    setProfileOpen(false);
+    try {
+      await fetch('/api/auth/employee/session', { method: 'DELETE' });
+    } catch {
+      /* still leave */
+    }
+    // Banner on login (`?reason=logout`) — toast would unmount with this shell
+    router.replace(employeeLoginUrl({ reason: 'logout' }));
   };
 
   return (
@@ -143,6 +168,9 @@ export function EmployeeTopBar({
               type="button"
               className={cn(S.btnGhost, 'relative min-h-touch px-2')}
               aria-label={t(locale, 'employeeHome.notificationsAria')}
+              aria-expanded={notifOpen}
+              aria-haspopup="true"
+              aria-controls="employee-notif-menu"
               onClick={() => {
                 setNotifOpen((v) => !v);
                 setProfileOpen(false);
@@ -157,7 +185,10 @@ export function EmployeeTopBar({
               ) : null}
             </button>
             {notifOpen ? (
-              <div className="absolute right-0 z-50 mt-1 w-[min(100vw-2rem,320px)] rounded-control border border-ink/12 bg-surface p-2 shadow-card">
+              <div
+                id="employee-notif-menu"
+                className="absolute right-0 z-50 mt-1 w-[min(100vw-2rem,320px)] rounded-control border border-ink/12 bg-surface p-2 shadow-card"
+              >
                 <div className="mb-1 flex items-center justify-between gap-2 px-1">
                   <span className={S.label}>{t(locale, 'employeeHome.notificationsTitle')}</span>
                   {unreadCount > 0 ? (
@@ -215,6 +246,9 @@ export function EmployeeTopBar({
               type="button"
               className={cn(S.btnGhost, 'min-h-touch max-w-[140px] truncate px-2 text-xs')}
               aria-label={t(locale, 'employeeHome.profileMenuAria')}
+              aria-expanded={profileOpen}
+              aria-haspopup="true"
+              aria-controls="employee-profile-menu"
               onClick={() => {
                 setProfileOpen((v) => !v);
                 setNotifOpen(false);
@@ -223,7 +257,10 @@ export function EmployeeTopBar({
               {displayName || t(locale, 'employeeHome.profile')}
             </button>
             {profileOpen ? (
-              <div className="absolute right-0 z-50 mt-1 w-44 rounded-control border border-ink/12 bg-surface p-1 shadow-card">
+              <div
+                id="employee-profile-menu"
+                className="absolute right-0 z-50 mt-1 w-44 rounded-control border border-ink/12 bg-surface p-1 shadow-card"
+              >
                 <Link
                   href="/employee/profile"
                   className={cn(S.btnGhost, 'flex min-h-touch w-full justify-start no-underline')}

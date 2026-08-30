@@ -13,7 +13,9 @@ import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
+import { EmptyState } from '../../_components/EmptyState';
 import { BR_STATES } from '../../../lib/candidate-profile';
+import { redirectEmployeeIfUnauthorized } from '../../../lib/employee-client-session';
 
 export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -35,6 +37,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
   const [twoFaBusy, setTwoFaBusy] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const load2fa = useCallback(async () => {
     try {
@@ -49,12 +52,10 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const res = await fetch('/api/employee/me');
-      if (res.status === 401) {
-        router.replace('/employee/login');
-        return;
-      }
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'load');
       const p = data.person || {};
@@ -70,6 +71,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
       await load2fa();
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -78,6 +80,15 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const prev = document.title;
+    document.title = t(locale, 'employeeHome.profileDocumentTitle');
+    return () => {
+      document.title = prev;
+    };
+  }, [locale]);
 
   const start2faSetup = async () => {
     setTwoFaBusy(true);
@@ -158,6 +169,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
           birthDate: form.birthDate || null,
         }),
       });
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       toast(t(locale, 'employeeHome.profileSaved'), 'ok');
@@ -189,6 +201,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
           newPassword: pwd.next,
         }),
       });
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'employeeHome.loginError'));
       setPwd({ current: '', next: '', confirm: '' });
@@ -201,6 +214,18 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   };
 
   if (loading) return <AppLoading variant="panel" />;
+
+  if (loadFailed) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <EmptyState
+          message={t(locale, 'employeeHome.loadError')}
+          actionLabel={t(locale, 'employeeHome.loadRetry')}
+          onAction={() => void load()}
+        />
+      </div>
+    );
+  }
 
   return (
     <ContentEnter animKey="ready">

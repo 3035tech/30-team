@@ -20,6 +20,7 @@ import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeDpSection } from '../_components/EmployeeDpSection';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
+import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
 const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'dp', 'feed', 'kudos', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
@@ -146,10 +147,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     if (!silent) setLoading(true);
     try {
       const res = await fetch(`/api/employee/home?locale=${encodeURIComponent(locale)}`);
-      if (res.status === 401) {
-        router.replace('/employee/login');
-        return;
-      }
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
@@ -171,6 +169,25 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Soft refresh when the tab becomes visible again (keeps session UX fresh)
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void load({ silent: true });
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [load]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const prev = document.title;
+    document.title = t(locale, 'employeeHome.documentTitle');
+    return () => {
+      document.title = prev;
+    };
+  }, [locale]);
 
   // Restore last in-app lesson after first successful load (once per session)
   useEffect(() => {

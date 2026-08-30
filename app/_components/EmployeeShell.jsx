@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { EMPLOYEE_PUBLIC_PATHS } from '../../lib/employee-paths';
+import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 import { useLocale } from '../../lib/useLocale';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -18,6 +19,7 @@ import { Icon } from './Icon';
  */
 export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = '', companyName = '' }) {
   const pathname = usePathname() || '';
+  const router = useRouter();
   const isPublic = EMPLOYEE_PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const [locale, setLocale] = useLocale(initialLocale);
   const [displayName, setDisplayName] = useState(personName);
@@ -26,11 +28,16 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (personName) setDisplayName(personName);
+  }, [personName]);
+
+  useEffect(() => {
     if (isPublic) return;
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch('/api/employee/me');
+        if (redirectEmployeeIfUnauthorized(router, res.status)) return;
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
@@ -45,12 +52,26 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
     return () => {
       cancelled = true;
     };
-  }, [isPublic, setLocale]);
+  }, [isPublic, setLocale, router]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    document.body.classList.toggle('sidebar-open', sidebarOpen);
-    return () => document.body.classList.remove('sidebar-open');
+    if (!sidebarOpen) {
+      document.body.classList.remove('sidebar-open');
+      return undefined;
+    }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('sidebar-open');
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('sidebar-open');
+      window.removeEventListener('keydown', onKey);
+    };
   }, [sidebarOpen]);
 
   if (isPublic) {

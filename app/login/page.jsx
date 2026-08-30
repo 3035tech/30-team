@@ -241,6 +241,23 @@ function LoginForm() {
           <p className={cn(S.muted, 'mb-7')}>{t(locale, 'login.twoFaIntro')}</p>
         ) : null}
 
+        {error ? (
+          <InlineCallout
+            tone="danger"
+            role="alert"
+            emphasis
+            title={t(locale, 'login.errorTitle')}
+            className="mb-5"
+          >
+            {error}
+          </InlineCallout>
+        ) : null}
+        {success ? (
+          <InlineCallout tone="success" emphasis className="mb-5">
+            {success}
+          </InlineCallout>
+        ) : null}
+
         <div className="mb-4 flex w-full flex-col gap-3">
           {mustChangePassword ? (
             <>
@@ -330,16 +347,6 @@ function LoginForm() {
               </FormField>
             </>
           )}
-          {error ? (
-            <InlineCallout tone="danger" role="alert">
-              {error}
-            </InlineCallout>
-          ) : null}
-          {success ? (
-            <InlineCallout tone="success">
-              {success}
-            </InlineCallout>
-          ) : null}
         </div>
 
         {turnstileRequired && turnstileSiteKey && !mustChangePassword ? (
