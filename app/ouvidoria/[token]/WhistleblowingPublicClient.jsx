@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { t } from '../../lib/i18n';
-import { cn } from '../../lib/cn';
-import { S } from '../dashboard/dashboard-shared';
-import { PublicNarrowShell } from '../_components/PublicNarrowShell';
-import { FormField } from '../_components/FormField';
-import { useAppFeedback } from '../_components/AppFeedback';
-import { WHISTLEBLOWING_CATEGORIES } from '../../lib/domain-status';
+import { t } from '../../../lib/i18n';
+import { cn } from '../../../lib/cn';
+import { S } from '../../dashboard/dashboard-shared';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { FormField } from '../../_components/FormField';
+import { useAppFeedback } from '../../_components/AppFeedback';
+import { WHISTLEBLOWING_CATEGORIES } from '../../../lib/domain-status';
 
 const BODY_MIN = 20;
 const BODY_MAX = 4000;

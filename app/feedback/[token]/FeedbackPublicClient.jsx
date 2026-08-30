@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { t } from '../../lib/i18n';
-import { cn } from '../../lib/cn';
-import { S } from '../dashboard/dashboard-shared';
-import { PublicNarrowShell } from '../_components/PublicNarrowShell';
-import { FormField } from '../_components/FormField';
-import { useAppFeedback } from '../_components/AppFeedback';
+import { t } from '../../../lib/i18n';
+import { cn } from '../../../lib/cn';
+import { S } from '../../dashboard/dashboard-shared';
+import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { FormField } from '../../_components/FormField';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 const RESPONSE_MIN = 5;
 const RESPONSE_MAX = 1000;

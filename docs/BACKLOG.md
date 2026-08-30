@@ -659,6 +659,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 2. Conformidade + organograma (**B-3005–B-3006** ✅) + SSO (**B-3007**).
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
 4. Aprofundar feedback (**B-3010** ✅) / copiloto (**B-3011**) sem segundo assistente paralelo ao Help.
+5. Viz lean sobre listas existentes → **B-3020** (P1 mapa salarial / calibração / saídas).
 
 ### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.
@@ -701,6 +702,81 @@ Sólides Copilot, TeamCulture Axel, Alina-IA, ImpulseUp IAP. Hoje: Help (só Gui
 1. Superfície **Equipe/Overview**: “o que olhar no próximo 1:1 / quem está no radar”; tool calling só em `lib/` (HR Score, radar, PDI, clima agregado).
 2. Mesmas regras B-2600: sem SQL gerado; tenant da sessão; hedged; rate limit; audit.
 3. Nome de produto opcional; **não** segundo chatbot de navegação (Help permanece Guia-only).
+
+---
+
+## Aberto — Epic B-3020 (viz lean: mesmo dado, outra forma)
+
+Lista/CRUD continua a superfície de **trabalho**. Gráfico = resumo **acima** da lista quando a decisão é de padrão (distribuição / tendência / gap), não de item.
+
+**Princípio**
+1. Lista = fazer (triage, editar, abrir pessoa). Gráfico = ver padrão em segundos.
+2. Preferir `MeterBar` / SVG leve / padrão CSS do Analytics antes de novo chart kit. Recharts só quando multi-eixo (como radar Motivadores).
+3. Um gráfico collapsível + empty se N pequeno; drill-down = a lista que já existe. Sem segundo BI paralelo ao Analytics.
+4. **Não** forçar: organograma “bonito” tipo InCicle; kudos/mural; segunda cópia de T1–T9/clima; gráfico em cada ficha da Equipe.
+
+**Já temos (não reabrir):** radar Motivadores; trend SVG clima; heat T1–T9 Overview; 9Box; bars Analytics/HR Score; MeterBar em OKR/PDI/LMS.
+
+### Ordem sugerida
+
+1. **P1** (**B-3021–B-3023**): mapa salarial, calibração, motivos de saída.
+2. **P2** (**B-3024–B-3026**): sucessão, HR Score por área, OKR rollup.
+3. **P3** (**B-3027–B-3029**): ouvidoria, turnover dist, férias pool (se API).
+
+### B-3021 — Mapa salarial: barras below / in / above (P1)
+Remuneração → `SalaryMapBlock`. Dados já em `listSalaryMapByJobRole`.
+1. Barras empilhadas por cargo (below / inBand / above) + total folha; tabela permanece drill-down.
+2. Não virar um gráfico por linha da tabela.
+3. Reusar `MeterBar` / stacked CSS; simulação continua texto/números.
+
+### B-3022 — Calibração: histograma overall + 9Box do ciclo (P1)
+Avaliações → topo da fila de calibração.
+1. Histograma de `overallScore` 0–100 do ciclo + ocupação 9Box (reusar dados/`NineBoxBlock` se já no ciclo).
+2. Lista de calibração continua a superfície de edição.
+3. Evitar segundo 9Box redundante na mesma viewport.
+
+### B-3023 — Saídas: barras de motivo (P1)
+Aba Saídas e/ou Overview. Lib já agrega `reasonAgg` / `typeAgg`.
+1. Barras horizontais top ~5 motivos; insights hedged permanecem.
+2. Cap de categorias; sem chart se volume baixo.
+3. Fora: BI genérico de demissão.
+
+### B-3024 — Sucessão: cobertura de bench (P2)
+1. Stacked/donut por cargo crítico: pronto / em desenvolvimento / vazio.
+2. Tabela de sucessores continua; gráfico = gap de cobertura.
+3. Empty se não houver cargos críticos.
+
+### B-3025 — HR Score por área: barras ordenadas (P2)
+Overview `HrScoreCard` já lista byArea.
+1. Trocar/ enriquecer lista por barras horizontais ordenadas.
+2. Sem nova API se o payload já basta.
+3. Clique → Equipe/filtro área se já existir navegação.
+
+### B-3026 — OKR rollup por nível (P2)
+1. % médio de attainment (current/target) por nível empresa/time (e pessoa se útil).
+2. Não duplicar MeterBar de cada KR; rollup no topo do `OkrBlock`.
+3. Cap de objetivos já no lib.
+
+### B-3027 — Ouvidoria: funil status + categorias (P3)
+1. Só se volume > punhado; funil new→triaging→responded/closed + barras por categoria.
+2. Zero texto de relato no gráfico; privacidade.
+3. Inbox/lista continua primaria.
+
+### B-3028 — Turnover: distribuição low/med/high (P3)
+1. Pequena distribuição ao lado/acima da lista do radar (não inventar “radar chart” falso).
+2. Lista at-risk continua a ação.
+3. Reusar sinais já calculados em `lib/turnover-radar.js`.
+
+### B-3029 — Férias: pool empresa / área (P3)
+1. Requer agregação company-level (hoje UI é por pessoa). Stacked used/pending/available ou % utilização.
+2. Não espalhar chart em cada dossier DP.
+3. Só após API/rollup estável.
+
+### B-3030 — Explicitamente fora deste epic
+1. Organograma visual “engenharia” / drag-and-drop (B-3006 lista indentada basta).
+2. Volume de kudos/mural como KPI permanente na Overview.
+3. Segundo dashboard customizável tipo Metabase (B-1000 Analytics já cobre tendência).
+4. Chart em toda ficha da Equipe.
 
 ---
 
