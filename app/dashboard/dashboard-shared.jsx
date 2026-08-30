@@ -344,6 +344,7 @@ const DASHBOARD_TAB_NAV = {
   'learning-resources': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.learningResources' },
   lms: { sectionKey: 'dashboard.sectionLms', labelKey: 'dashboard.lms' },
   'company-benefits': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.companyBenefits' },
+  'company-feed': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.companyFeed' },
   companies: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.companies' },
   users: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.users' },
   leads: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.leads' },

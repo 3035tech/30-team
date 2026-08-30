@@ -28,7 +28,14 @@ export function EntitySearchSelect({
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
 
-  const emptyHint = locale === 'en' ? 'Type to search…' : 'Digite para buscar…';
+  const emptyHint =
+    minChars <= 0
+      ? locale === 'en'
+        ? 'Search or pick…'
+        : 'Busque ou escolha…'
+      : locale === 'en'
+        ? 'Type to search…'
+        : 'Digite para buscar…';
   const noResults = locale === 'en' ? 'No matches' : 'Nenhum resultado';
   const clearLabel = locale === 'en' ? 'Clear' : 'Limpar';
 

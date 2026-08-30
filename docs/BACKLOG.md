@@ -535,11 +535,8 @@ Sólides: avulso. Remuneração interna + faixa no cargo.
 2. ~~Comparar salário vigente × faixa (Equipe Remuneração + Overview Atenção).~~
 3. Sem marketplace de benefícios. CSV import / pesquisa live = follow-up.
 
-### B-2712 — Intranet / feed interno leve
-Sólides: Intranet + SuperApp. Temos hub colaborador sem mural.
-1. Posts da empresa (admin/hr): título, rich text, audiência empresa; lista em `/employee`.
-2. Sem chat; sem rede social completa.
-3. Soft delete; paginação.
+### B-2712 — Intranet / feed interno leve ✅ ENTREGUE
+Posts da empresa (`company_posts`) + mural em `/employee#feed`; admin Catálogos → Mural; soft delete; CAP `company_feed.view`.
 
 ### B-2713 — LMS profundidade (quiz / certificado)
 Já listado como fora de B-2401 — **promover a item** se priorizarmos paridade Academy Sólides.
@@ -559,11 +556,8 @@ Sólides fraco em enterprise; oportunidade se atacarmos o gap inverso (PME → g
 2. Escopo DBA forte (índices, caps); não quebrar isolamento atual.
 3. Só após demanda real de cliente.
 
-### B-2716 — Feedback contínuo (reconhecimento / feed)
-Já “fora” em B-2000 tipo Feedz — registrar como gap Sólides/engajamento.
-1. MVP: kudos leves (de→para, texto curto) visíveis no `/employee` + digest.
-2. Sem substituir 1:1/PDI.
-3. Prioridade baixa vs 2702–2705.
+### B-2716 — Feedback contínuo (reconhecimento / feed) ✅ ENTREGUE
+Kudos peer-to-peer (`company_kudos`, ≤280) em `/employee#kudos`; notif destinatário; digest semanal com contagem; moderação no admin Mural.
 
 ---
 

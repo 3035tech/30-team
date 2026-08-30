@@ -152,6 +152,10 @@ const CompanyBenefitsAdminTab = dynamic(
   () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const CompanyFeedAdminTab = dynamic(
+  () => import('./tabs/CompanyFeedAdminTab').then((m) => ({ default: m.CompanyFeedAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const DpAdminTab = dynamic(
   () => import('./tabs/DpAdminTab').then((m) => ({ default: m.DpAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -231,6 +235,7 @@ const TAB_TO_SECTION = {
   'learning-resources': 'catalogs',
   lms: 'lms',
   'company-benefits': 'catalogs',
+  'company-feed': 'catalogs',
   dp: 'people',
   users: 'account',
   companies: 'account',
@@ -342,10 +347,11 @@ export default function DashboardClient({
   const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
   const showLearning = can(sessionAuth, CAP.LEARNING_VIEW);
   const showBenefits = can(sessionAuth, CAP.BENEFITS_VIEW);
+  const showCompanyFeed = can(sessionAuth, CAP.COMPANY_FEED_VIEW);
   const showDp = can(sessionAuth, CAP.DP_VIEW);
   const showCompensation = can(sessionAuth, CAP.TEAM_VIEW);
   const showPeopleGp = showPerformance || showSuccession || showExitAnalysis || showDp;
-  const showCatalogs = showJobRoles || showLearning || showBenefits;
+  const showCatalogs = showJobRoles || showLearning || showBenefits || showCompanyFeed;
   const showLmsSection = showLearning;
 
   useEffect(() => {
@@ -927,6 +933,9 @@ export default function DashboardClient({
                     {showBenefits ? (
                       <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
                     ) : null}
+                    {showCompanyFeed ? (
+                      <NavLink id="company-feed" icon="list" label={t(locale, 'dashboard.companyFeed')} />
+                    ) : null}
                   </>
                 ))}
               </>
@@ -1470,6 +1479,9 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'company-feed' && showCompanyFeed && (
+                <CompanyFeedAdminTab locale={locale} companyId={sessionAuth?.companyId} />
+              )}
               {tab === 'compensation' && showCompensation && (
                 <CompensationAdminTab
                   locale={locale}

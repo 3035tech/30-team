@@ -19,8 +19,9 @@ import { MeterBar } from '../_components/MeterBar';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeDpSection } from '../_components/EmployeeDpSection';
+import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
 
-const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'dp', 'company'];
+const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'dp', 'feed', 'kudos', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
 const LAST_LESSON_KEY = 'team30_employee_last_lesson';
 
@@ -128,6 +129,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [busy, setBusy] = useState(false);
   const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
   const [dpBadge, setDpBadge] = useState(0);
+  const [feedTotal, setFeedTotal] = useState(0);
+  const [kudosTotal, setKudosTotal] = useState(0);
   const [openMap, setOpenMap] = useState(() => {
     const saved = loadCollapsed();
     const next = {};
@@ -150,6 +153,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
+      setFeedTotal(json?.feed?.total || 0);
+      setKudosTotal(json?.kudos?.total || 0);
       setPrepNote(json?.oneOnOnePrep?.noteToManager || '');
       setLoadFailed(false);
     } catch (e) {
@@ -382,9 +387,11 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         surveys: surveyMeta.openCount || 0,
         lms: lmsOverdue,
         dp: dpBadge,
+        feed: feedTotal,
+        kudos: kudosTotal,
       },
     });
-  }, [data, surveyMeta, dpBadge, setNavMeta]);
+  }, [data, surveyMeta, dpBadge, feedTotal, kudosTotal, setNavMeta]);
 
   // Scroll-spy
   useEffect(() => {
@@ -933,6 +940,38 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           <EmployeeDpSection locale={locale} onBadge={setDpBadge} />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="feed"
+          title={t(locale, 'employeeHome.feedTitle')}
+          count={feedTotal || null}
+          open={openMap.feed !== false}
+          onToggle={() => toggleSection('feed')}
+          locale={locale}
+        >
+          <EmployeeFeedPanel
+            locale={locale}
+            items={data?.feed?.items || []}
+            total={data?.feed?.total || 0}
+            onTotalChange={setFeedTotal}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="kudos"
+          title={t(locale, 'employeeHome.kudosTitle')}
+          count={kudosTotal || null}
+          open={openMap.kudos !== false}
+          onToggle={() => toggleSection('kudos')}
+          locale={locale}
+        >
+          <EmployeeKudosPanel
+            locale={locale}
+            items={data?.kudos?.items || []}
+            total={data?.kudos?.total || 0}
+            onChanged={setKudosTotal}
+          />
         </CollapsibleSection>
 
         <CollapsibleSection

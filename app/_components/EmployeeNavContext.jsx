@@ -24,6 +24,8 @@ export const EMPLOYEE_SECTION_IDS = Object.freeze([
   'surveys',
   'oneOnOne',
   'dp',
+  'feed',
+  'kudos',
   'company',
 ]);
 
