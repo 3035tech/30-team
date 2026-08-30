@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME } from './lib/auth';
-import { verifyTokenEdge, verifyEmployeeTokenEdge } from './lib/auth-edge';
+import { COOKIE_NAME, MAX_AGE, sessionCookieOptions } from './lib/auth';
+import { shouldSlideSession } from './lib/session-ttl';
+import {
+  signEmployeeTokenEdge,
+  signManagerTokenEdge,
+  verifyTokenEdge,
+  verifyEmployeeTokenEdge,
+} from './lib/auth-edge';
 import { isManagerRole } from './lib/permissions';
 import { ERR } from './lib/api-error-codes';
-import { EMPLOYEE_COOKIE_NAME } from './lib/employee-auth-constants';
+import {
+  EMPLOYEE_COOKIE_NAME,
+  EMPLOYEE_SESSION_MAX_AGE,
+} from './lib/employee-auth-constants';
 import {
   EMPLOYEE_PATH,
   isEmployeeAppPath,
@@ -21,6 +30,45 @@ import {
 import { applyContentSecurityPolicyHeaders } from './lib/security-csp';
 import { isCrawlerNoIndexPath } from './lib/crawler-guard';
 
+/** Sliding session gestor: reemite cookie se JWT ainda válido e perto do fim. */
+async function applyManagerSessionSlide(response, payload) {
+  try {
+    if (!shouldSlideSession(payload?.exp)) return;
+    const token = await signManagerTokenEdge({
+      userId: payload.userId,
+      role: payload.role,
+      companyId: payload.companyId ?? null,
+      locale: payload.locale || 'pt-BR',
+      sv: payload.sv,
+    });
+    if (!token) return;
+    response.cookies.set(COOKIE_NAME, token, sessionCookieOptions({ maxAge: MAX_AGE }));
+  } catch {
+    /* ignore slide failures */
+  }
+}
+
+/** Sliding session colaborador. */
+async function applyEmployeeSessionSlide(response, payload) {
+  try {
+    if (!shouldSlideSession(payload?.exp)) return;
+    const token = await signEmployeeTokenEdge({
+      candidateId: payload.candidateId,
+      companyId: payload.companyId,
+      email: payload.email,
+      locale: payload.locale || 'pt-BR',
+      sv: payload.sv,
+    });
+    if (!token) return;
+    response.cookies.set(
+      EMPLOYEE_COOKIE_NAME,
+      token,
+      sessionCookieOptions({ maxAge: EMPLOYEE_SESSION_MAX_AGE })
+    );
+  } catch {
+    /* ignore slide failures */
+  }
+}
 /** Cabeçalhos de segurança (baseline + HSTS/CSP opcionais via env). */
 function withSecurityHeaders(response, { noindex = false } = {}) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -173,6 +221,10 @@ export async function middleware(request) {
       loginUrl.searchParams.set('redirect', pathname);
       return secureResponse(request, NextResponse.redirect(loginUrl));
     }
+
+    const response = NextResponse.next();
+    await applyManagerSessionSlide(response, payload);
+    return secureResponse(request, response);
   }
 
   // Collaborator hub — employee JWT only (never manager cookie alone).
@@ -207,6 +259,10 @@ export async function middleware(request) {
         NextResponse.redirect(new URL(EMPLOYEE_PATH.LOGIN, request.url))
       );
     }
+
+    const response = NextResponse.next();
+    await applyEmployeeSessionSlide(response, emp);
+    return secureResponse(request, response);
   }
 
   return secureResponse(request, NextResponse.next());

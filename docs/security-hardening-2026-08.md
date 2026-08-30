@@ -63,6 +63,16 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 | Vagas públicas | Sem `publicShowCompanyInfo`: não expõe `companyId` / `slug` no payload |
 | Turnstile | Também em `/a/set-password`, magic `POST /session` e set-password colaborador |
 
+## Correções aplicadas (fase 7 — sliding session)
+
+| Item | Mudança |
+|------|---------|
+| Extensão no uso (gestor) | Middleware `/dashboard` + `/api/admin`: JWT válido e `exp` ≤ **2h** → reassinatura Edge + cookie **8h** |
+| Extensão no uso (colaborador) | Middleware `/employee` + `/api/employee`: mesma janela de 2h → cookie **12h** |
+| Sem refresh token | Mesmos cookies (`team30_session` / `team30_employee_session`); claims/`sv` preservados; JWT expirado **não** renova |
+| Idle implícito | Sem request autenticado pelo TTL respectivo → cai; revoke por `session_version` inalterado |
+| Edge-safe TTL | `lib/session-ttl.js` + `EMPLOYEE_SESSION_MAX_AGE` em `employee-auth-constants.js` (sem puxar bcrypt/pg no Edge) |
+
 ### Ops / tokens
 
 - Trate URLs `/r/…`, `/e/…`, `/v/…`, convites e magic links como **segredo** (não logar URL completo; validade curta).

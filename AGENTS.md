@@ -19,7 +19,7 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 - **UI:** **Tailwind CSS** (`tailwind.config.js` + `app/globals.css`) — padrão para UI nova e para blocos que o agente estiver editando. Tokens de marca/semântica alinhados a `lib/theme.js` / `lib/brand.js` (`brand-*`, `canvas`, `ink`, `pipeline-*`, etc.). Ver `.cursor/rules/tailwind-ui.mdc`.
 - Backend: API Routes + Server Components (não Express separado)
 - **PostgreSQL 16** via `pg` — `query` (primário) / `queryRead` (réplica opcional)
-- Auth: tabela `users`, bcrypt, JWT no cookie httpOnly `team30_session` (8h)
+- Auth: tabela `users`, bcrypt, JWT em cookie httpOnly `team30_session` (8h; sliding ≤2h restantes no middleware). Colaborador: `team30_employee_session` (12h, mesmo sliding).
 - E-mail: Nodemailer/SMTP
 - i18n: `pt-BR` e `en` em `lib/i18n.js`
 - Deploy: Docker standalone (`output: 'standalone'`), Compose, GHCR
