@@ -19,10 +19,23 @@ import { MeterBar } from '../_components/MeterBar';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeDpSection } from '../_components/EmployeeDpSection';
+import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySection';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
-const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'dp', 'feed', 'kudos', 'company'];
+const SECTION_KEYS = [
+  'tasks',
+  'journey',
+  'pdi',
+  'lms',
+  'surveys',
+  'oneOnOne',
+  'dp',
+  'variablePay',
+  'feed',
+  'kudos',
+  'company',
+];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
 const LAST_LESSON_KEY = 'team30_employee_last_lesson';
 
@@ -130,6 +143,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [busy, setBusy] = useState(false);
   const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
   const [dpBadge, setDpBadge] = useState(0);
+  const [variablePayBadge, setVariablePayBadge] = useState(0);
   const [feedTotal, setFeedTotal] = useState(0);
   const [kudosTotal, setKudosTotal] = useState(0);
   const [openMap, setOpenMap] = useState(() => {
@@ -957,6 +971,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           <EmployeeDpSection locale={locale} onBadge={setDpBadge} />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="variablePay"
+          title={t(locale, 'employeeHome.variablePayTitle')}
+          count={variablePayBadge || null}
+          open={openMap.variablePay !== false}
+          onToggle={() => toggleSection('variablePay')}
+          locale={locale}
+        >
+          <EmployeeVariablePaySection locale={locale} onBadge={setVariablePayBadge} />
         </CollapsibleSection>
 
         <CollapsibleSection

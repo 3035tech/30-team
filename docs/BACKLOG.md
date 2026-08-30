@@ -655,35 +655,10 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 
 ### Ordem sugerida
 
-1. Empacotar o estratégico que o comprador DHO espera e nós quase temos (**B-3001–B-3004**).
+1. Empacotar o estratégico que o comprador DHO espera e nós quase temos (**B-3001–B-3004** ✅ entregue: calibração, mapa salarial, RV, OKRs leves).
 2. Conformidade + organograma + SSO (**B-3005–B-3007**).
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
 4. Aprofundar feedback/copiloto (**B-3010–B-3011**) sem segundo assistente paralelo ao Help.
-
-### B-3001 — Calibração / comitês de avaliação
-Qulture e Alina fazem bem; suítes largas deixam a desejar. Já temos ciclo + 360 + 9Box.
-1. Sessão de calibração por ciclo: lista de reviews submetidas, ajuste de overall/9Box com audit (quem mudou o quê).
-2. Comitê = gestores + RH; CAP `performance.view`; sem SQL solto; cap de N pessoas por sessão.
-3. Linguagem hedged; 9Box continua exploratório (não rótulo de promoção).
-4. Fora: detecção de viés tipo “produto jurídico”; IA só resume divergências (reusar interpretativa B-1904).
-
-### B-3002 — Mapa salarial analítico (além de B-2711)
-Só Alina no recorte. Hoje: `market_salary_min/max` no cargo + eventos de remuneração (B-2510/B-2711).
-1. Visão por `job_role`: faixa, pessoas na faixa / abaixo / acima (salário vigente).
-2. Simulação de aumento (% ou valor) com impacto no orçamento do recorte (empresa/área); cap de roster.
-3. Sem marketplace de salários; CSV import de faixas = follow-up. Não é folha.
-
-### B-3003 — Remuneração variável (metas × avaliação)
-Só ImpulseUp no recorte. Raro de verdade.
-1. Regra por empresa/ciclo: cruzar outcomes de metas (`met`/`exceeded`/…) + review submetida → evento sugerido em `employee_compensation_events` (tipo bônus/PLR).
-2. Aprovação RH; colaborador vê no `/employee` como **proposto/aprovado**, não holerite.
-3. Depende do ciclo B-1004; **não** calcula INSS/IR; folha continua B-2726 ou integração B-3009.
-
-### B-3004 — OKRs leves (árvore, não segundo Qulture)
-Quase todos os “puros” têm OKR; nós temos **metas de ciclo**, que não são árvore.
-1. Objetivos empresa → time/grupo salvo → pessoa; key results numéricos; período.
-2. Ligar KR opcionalmente a `performance_goals` do ciclo (não duplicar cadastro).
-3. Fora: produto OKR completo, iniciativas tipo TeamCulture, Gantt. Cap de objetivos por empresa.
 
 ### B-3005 — Ouvidoria / canal de denúncias
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.

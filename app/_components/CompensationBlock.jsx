@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatSalaryDisplay, formatVacancySalaryRangeDisplay, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
@@ -14,13 +14,14 @@ import { FormField } from './FormField';
 import { StatusToneChip } from './StatusToneChip';
 import { InlineCallout } from './InlineCallout';
 import {
+  COMPENSATION_APPROVAL_STATUS,
   COMPENSATION_EVENT_TYPE,
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
 import { fieldSelectClass } from './form-control-styles';
 
 function formatDate(value, locale) {
-  if (!value) return '—';
+  if (!value) return t(locale, 'panel.common.notApplicable');
   const raw = String(value).slice(0, 10);
   const [y, m, d] = raw.split('-').map(Number);
   if (!y || !m || !d) return raw;
@@ -64,6 +65,26 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
     employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
 
   const money = (amount) => formatSalaryDisplay(amount, locale);
+
+  const sortedItems = useMemo(() => {
+    const rank = (s) =>
+      s === COMPENSATION_APPROVAL_STATUS.PROPOSED
+        ? 0
+        : s === COMPENSATION_APPROVAL_STATUS.APPROVED
+          ? 1
+          : 2;
+    return [...items].sort((a, b) => {
+      const d = rank(a.approvalStatus) - rank(b.approvalStatus);
+      if (d !== 0) return d;
+      return String(b.effectiveDate || '').localeCompare(String(a.effectiveDate || ''));
+    });
+  }, [items]);
+
+  const proposedCount = useMemo(
+    () =>
+      items.filter((i) => i.approvalStatus === COMPENSATION_APPROVAL_STATUS.PROPOSED).length,
+    [items]
+  );
 
   const load = useCallback(async () => {
     if (!candidateId || !visible) {
@@ -368,6 +389,44 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
     }
   };
 
+  const setApproval = async (row, approvalStatus) => {
+    if (approvalStatus === COMPENSATION_APPROVAL_STATUS.REJECTED) {
+      const ok = await confirm({
+        message: t(locale, 'panel.variablePay.rejectConfirm'),
+        danger: true,
+        confirmLabel: t(locale, 'panel.variablePay.rejectBtn'),
+      });
+      if (!ok) return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/compensation/${encodeURIComponent(row.id)}/approval`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyId,
+            approvalStatus,
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'approval');
+      toast(
+        approvalStatus === COMPENSATION_APPROVAL_STATUS.APPROVED
+          ? t(locale, 'panel.variablePay.approved')
+          : t(locale, 'panel.variablePay.rejected'),
+        'ok'
+      );
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.variablePay.approvalError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) return <AppLoading variant="inline" />;
 
   return (
@@ -467,7 +526,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
             {formatVacancySalaryRangeDisplay(
               market.marketSalaryMin,
               market.marketSalaryMax
-            ) || '—'}
+            ) || t(locale, 'panel.common.notApplicable')}
           </div>
         ) : market?.jobRoleId ? (
           <p className={cn(S.faint, 'mb-0 mt-2 text-2xs')}>
@@ -482,27 +541,47 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
         </InlineCallout>
       ) : null}
 
+      {proposedCount > 0 && !readOnly ? (
+        <InlineCallout tone="warning" className="mb-4 text-xs">
+          {t(locale, 'panel.variablePay.proposedQueue', { n: proposedCount })}
+        </InlineCallout>
+      ) : null}
+
       {readOnly ? (
         <p className={cn(S.muted, 'mb-3 text-xs')}>{t(locale, 'panel.compensation.alumniReadOnly')}</p>
       ) : null}
 
-      {items.length === 0 ? (
+      {sortedItems.length === 0 ? (
         <EmptyState
           title={t(locale, 'panel.compensation.emptyTitle')}
           message={t(locale, 'panel.compensation.emptyHint')}
         />
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {items.map((row) => (
+          {sortedItems.map((row) => (
             <li
               key={row.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
+              className={cn(
+                'flex flex-wrap items-center justify-between gap-2 rounded-control border bg-surface px-3 py-2.5',
+                row.approvalStatus === COMPENSATION_APPROVAL_STATUS.PROPOSED
+                  ? 'border-warning/30'
+                  : 'border-ink/10'
+              )}
             >
               <div className="min-w-0">
                 <div className="font-ui text-sm tabular-nums text-ink">{money(row.amount)}</div>
-                <div className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-2xs text-ink-muted">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-2xs text-ink-muted">
                   <span>{formatDate(row.effectiveDate, locale)}</span>
                   <span>{eventTypeLabel(locale, row.eventType)}</span>
+                  {row.approvalStatus === COMPENSATION_APPROVAL_STATUS.PROPOSED ? (
+                    <StatusToneChip tone="warning">
+                      {t(locale, 'panel.variablePay.statusProposed')}
+                    </StatusToneChip>
+                  ) : row.approvalStatus === COMPENSATION_APPROVAL_STATUS.REJECTED ? (
+                    <StatusToneChip tone="danger">
+                      {t(locale, 'panel.variablePay.statusRejected')}
+                    </StatusToneChip>
+                  ) : null}
                 </div>
                 {!isRichTextEmpty(row.notes) ? (
                   <div className="mt-1">
@@ -514,7 +593,31 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
                 ) : null}
               </div>
               {!readOnly ? (
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 flex-wrap gap-1">
+                  {row.approvalStatus === COMPENSATION_APPROVAL_STATUS.PROPOSED ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                        onClick={() =>
+                          void setApproval(row, COMPENSATION_APPROVAL_STATUS.APPROVED)
+                        }
+                      >
+                        {t(locale, 'panel.variablePay.approveBtn')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'min-h-touch text-2xs text-danger')}
+                        onClick={() =>
+                          void setApproval(row, COMPENSATION_APPROVAL_STATUS.REJECTED)
+                        }
+                      >
+                        {t(locale, 'panel.variablePay.rejectBtn')}
+                      </button>
+                    </>
+                  ) : null}
                   <AdminEditButton
                     label={t(locale, 'panel.compensation.editBtn')}
                     onClick={() => void editEvent(row)}

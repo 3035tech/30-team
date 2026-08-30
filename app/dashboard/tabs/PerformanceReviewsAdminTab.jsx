@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { t as i18nT } from '../../../lib/i18n';
+import { cn } from '../../../lib/cn';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
@@ -30,6 +31,8 @@ import {
 } from '../dashboard-shared';
 import { NineBoxBlock } from './NineBoxBlock';
 import { InlineCallout } from '../../_components/InlineCallout';
+import { CalibrationBlock } from '../../_components/CalibrationBlock';
+import { OkrBlock } from '../../_components/OkrBlock';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
@@ -40,6 +43,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [sortDir, setSortDir] = useState('desc');
   const [nameQ, setNameQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [selectedCycle, setSelectedCycle] = useState(null);
   const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   function companyQs(prefix = '?') {
@@ -314,6 +318,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   }
 
   async function handleViewCycle(cycle) {
+    setSelectedCycle(cycle);
     const lines = [
       `${t('status')}: ${getStatusLabel(cycle.status)}`,
       `${t('periodStart')}: ${formatDate(cycle.periodStart)}`,
@@ -332,7 +337,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         const data = await res.json();
         const reviews = data.reviews || [];
         if (reviews.length) {
-          lines.push('', '—');
+          lines.push('', '·');
           for (const r of reviews.slice(0, 12)) {
             lines.push(
               `• ${r.candidateName || r.candidateEmail || `#${r.candidateId}`}: ${r.status}`
@@ -584,7 +589,13 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
             </thead>
             <tbody className="divide-y divide-ink/5">
               {pageRows.map((cycle) => (
-                <tr key={cycle.id} className="hover:bg-canvas-alt/50">
+                <tr
+                  key={cycle.id}
+                  className={cn(
+                    'hover:bg-canvas-alt/50',
+                    selectedCycle?.id === cycle.id && 'bg-brand-500/[0.06]'
+                  )}
+                >
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-ink">{cycle.title}</p>
                     {cycle.description ? (
@@ -655,6 +666,15 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         </>
       )}
       <NineBoxBlock locale={locale} companyId={companyId} />
+      {selectedCycle ? (
+        <CalibrationBlock
+          locale={locale}
+          companyId={companyId}
+          cycleId={selectedCycle.id}
+          cycleTitle={selectedCycle.title || ''}
+        />
+      ) : null}
+      <OkrBlock locale={locale} companyId={companyId} />
     </div>
   );
 }

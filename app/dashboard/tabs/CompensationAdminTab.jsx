@@ -24,6 +24,7 @@ import { AppLoading } from '../../_components/AppLoading';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
+import { SalaryMapBlock } from '../../_components/SalaryMapBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -149,6 +150,8 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
         title={t(locale, 'panel.compensationRoster.title')}
         subtitle={t(locale, 'panel.compensationRoster.subtitle')}
       />
+
+      <SalaryMapBlock locale={locale} companyId={companyId} />
 
       <AdminListFilters
         aria-label={t(locale, 'panel.compensationRoster.title')}
