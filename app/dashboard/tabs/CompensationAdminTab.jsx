@@ -24,7 +24,22 @@ import { AppLoading } from '../../_components/AppLoading';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
+import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
+
+function marketTone(status) {
+  if (status === 'below') return 'warning';
+  if (status === 'above') return 'info';
+  if (status === 'in_band') return 'success';
+  return null;
+}
+
+function marketChipLabel(locale, status) {
+  if (status === 'below') return t(locale, 'panel.compensation.marketBelow');
+  if (status === 'above') return t(locale, 'panel.compensation.marketAbove');
+  if (status === 'in_band') return t(locale, 'panel.compensation.marketInBand');
+  return '';
+}
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -60,6 +75,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState(EMPLOYMENT_STATUS.EMPLOYEE);
   const [hasSalary, setHasSalary] = useState('all');
+  const [marketBand, setMarketBand] = useState('all');
   const [historyPerson, setHistoryPerson] = useState(null);
 
   const load = useCallback(async () => {
@@ -78,6 +94,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
         sortDir,
         employmentStatus: statusFilter,
         hasSalary,
+        marketBand,
       });
       if (q) params.set('q', q);
       if (companyId) params.set('companyId', String(companyId));
@@ -92,7 +109,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
     } finally {
       setLoading(false);
     }
-  }, [companyId, page, pageSize, sort, sortDir, statusFilter, hasSalary, q, locale, toast]);
+  }, [companyId, page, pageSize, sort, sortDir, statusFilter, hasSalary, marketBand, q, locale, toast]);
 
   useEffect(() => {
     void load();
@@ -141,13 +158,15 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           setQ('');
           setStatusFilter(EMPLOYMENT_STATUS.EMPLOYEE);
           setHasSalary('all');
+          setMarketBand('all');
           setPage(1);
         }}
         clearEnabled={Boolean(
           String(qDraft || '').trim() ||
             q ||
             statusFilter !== EMPLOYMENT_STATUS.EMPLOYEE ||
-            hasSalary !== 'all'
+            hasSalary !== 'all' ||
+            marketBand !== 'all'
         )}
       >
         <AdminListSearch
@@ -187,6 +206,20 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           <option value="with">{t(locale, 'panel.compensationRoster.hasSalaryWith')}</option>
           <option value="without">{t(locale, 'panel.compensationRoster.hasSalaryWithout')}</option>
         </AdminListFilterSelect>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.compensationRoster.marketBandLabel')}
+          value={marketBand}
+          onChange={(v) => {
+            setMarketBand(v);
+            setPage(1);
+          }}
+        >
+          <option value="all">{t(locale, 'panel.compensationRoster.marketBandAll')}</option>
+          <option value="below">{t(locale, 'panel.compensationRoster.marketBandBelow')}</option>
+          <option value="in_band">{t(locale, 'panel.compensationRoster.marketBandIn')}</option>
+          <option value="above">{t(locale, 'panel.compensationRoster.marketBandAbove')}</option>
+          <option value="no_band">{t(locale, 'panel.compensationRoster.marketBandNone')}</option>
+        </AdminListFilterSelect>
       </AdminListFilters>
 
       {items.length === 0 ? (
@@ -195,7 +228,10 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
           message={t(locale, 'panel.compensationRoster.emptyHint')}
         />
       ) : (
-        <AdminTableShell minWidth="640px" animKey={`${q}|${statusFilter}|${hasSalary}|${page}|${pageSize}`}>
+        <AdminTableShell
+          minWidth="640px"
+          animKey={`${q}|${statusFilter}|${hasSalary}|${marketBand}|${page}|${pageSize}`}
+        >
             <thead>
               <tr>
                 <SortableTh columnKey="name" sortKey={sort} dir={sortDir} onSort={onSort}>
@@ -229,7 +265,19 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
                     ) : null}
                   </td>
                   <td className="px-4 py-3 align-middle font-ui text-sm tabular-nums text-ink">
-                    {money(row.current?.amount)}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>{money(row.current?.amount)}</span>
+                      {marketTone(row.marketCompare) ? (
+                        <StatusToneChip tone={marketTone(row.marketCompare)} bordered>
+                          {marketChipLabel(locale, row.marketCompare)}
+                        </StatusToneChip>
+                      ) : null}
+                    </div>
+                    {row.jobRoleName ? (
+                      <div className="mt-0.5 font-mono text-2xs text-ink-faint">
+                        {row.jobRoleName}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 align-middle font-mono text-xs text-ink-muted">
                     {formatDate(row.current?.effectiveDate, locale)}
@@ -296,6 +344,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
             locale={locale}
             candidateId={historyPerson.candidateId}
             employmentStatus={historyPerson.employmentStatus}
+            companyId={companyId}
           />
         ) : null}
       </AdminRichFormDrawer>

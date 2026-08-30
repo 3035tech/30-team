@@ -1,4 +1,5 @@
 import { withAdminApi } from '../../../../lib/admin-api.js';
+import { apiError, ERR } from '../../../../lib/api-error.js';
 import { CAP } from '../../../../lib/ae/require-admin.js';
 import { z, zPositiveInt, zQueryBool } from '../../../../lib/validate.js';
 import { listCompanyJobRoles, createJobRole } from '../../../../lib/job-roles.js';
@@ -13,6 +14,8 @@ const createBodySchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(4000).optional().nullable(),
   rubric: z.record(z.coerce.number()).optional().default({}),
+  marketSalaryMin: z.union([z.string(), z.number()]).optional().nullable(),
+  marketSalaryMax: z.union([z.string(), z.number()]).optional().nullable(),
 });
 
 /**
@@ -50,13 +53,25 @@ export const POST = withAdminApi(
     companyFrom: 'body',
     logLabel: 'job-roles POST',
   },
-  async ({ companyId, body }) => {
-    const newRole = await createJobRole({
-      companyId,
-      name: body.name,
-      description: body.description || null,
-      rubric: body.rubric || {},
-    });
-    return Response.json(newRole, { status: 201 });
+  async ({ request, companyId, body }) => {
+    try {
+      const newRole = await createJobRole({
+        companyId,
+        name: body.name,
+        description: body.description || null,
+        rubric: body.rubric || {},
+        marketSalaryMin: body.marketSalaryMin ?? null,
+        marketSalaryMax: body.marketSalaryMax ?? null,
+      });
+      return Response.json(newRole, { status: 201 });
+    } catch (err) {
+      if (err?.message === 'INVALID_MARKET_BAND' || err?.message === 'INVALID_RUBRIC') {
+        return apiError(request, ERR.INVALID_DATA, 400);
+      }
+      if (err?.code === '23505') {
+        return apiError(request, ERR.JOB_ROLE_NAME_EXISTS, 409);
+      }
+      throw err;
+    }
   }
 );

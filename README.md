@@ -75,7 +75,7 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
 - **Admin Leads** (`/dashboard?tab=leads`) — cohort `/signup` para contato futuro (pendentes e ativos). Em **Usuários**, cadastro normal = Origem Painel; quem veio do onboarding = Early access (também aparece em Usuários quando já está no sistema).
 - **Sugestões de produto** (`/dashboard?tab=product-feedback`) — inbox super admin de ideias/bugs/UX enviados pelos gestores pelo assistente de Ajuda (“Sugerir melhoria”). Migration `082_product_feedback.sql`.
-- **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee#dp`) — ficha (emergência/endereço), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + calendário 60d e lembretes (`POST /api/cron/dp-doc-reminders`). Migration `083_employee_dp_light.sql`. Não é ponto/folha/eSocial.
+- **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee#dp`) — ficha (emergência/endereço), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + calendário 60d, absenteísmo (atestados) na Overview e lembretes (`POST /api/cron/dp-doc-reminders`). Migration `083_employee_dp_light.sql`. Não é ponto/folha/eSocial.
 - **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Ver [`docs/audit-log.md`](docs/audit-log.md).
 - **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
 - **Inteligência comportamental** na Visão geral (`behavioralIntel`): no topo (funil recolhido); filtro ou **grupo salvo** (`teamGroup`); perfis, motivadores, forças/atenções (até 5), Top 5 e ações — agregado, hedged, sem nomes.
@@ -182,6 +182,7 @@ A partir da migration `054`, `055` e `056`:
 - Equipe → ficha da pessoa (contratado/alumni) → aba **Remuneração**: salário vigente + timeline; import opcional da oferta aceita na vaga
 - APIs: `GET/POST /api/admin/candidates/[id]/compensation`, `PATCH/DELETE …/compensation/[eventId]`
 - Lib: `lib/people/employee-compensation.js`; migration `072_employee_compensation.sql`
+- **Faixa de mercado (B-2711):** Cargos com `market_salary_min`/`max` + `candidates.job_role_id`; compare na Remuneração e Atenção na Overview (`084_market_salary_bands.sql`). Não é pesquisa live.
 
 **Epic B-1000 completo** (B-1001 a B-1009) ✅
 

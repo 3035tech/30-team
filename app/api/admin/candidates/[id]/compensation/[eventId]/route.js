@@ -5,6 +5,7 @@ import { audit } from '../../../../../../../lib/audit.js';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../../../lib/ae/require-admin.js';
 import {
   deleteCompensationEvent,
+  getCompensationMarketContext,
   listCompensationEvents,
   updateCompensationEvent,
 } from '../../../../../../../lib/people/employee-compensation.js';
@@ -63,11 +64,21 @@ export async function PATCH(request, { params }) {
     });
 
     const summary = await listCompensationEvents(query, { companyId, candidateId });
+    const market = await getCompensationMarketContext(query, { companyId, candidateId });
     return NextResponse.json({
       ok: true,
       event: result.event,
       items: summary.ok ? summary.items : [],
       current: summary.ok ? summary.current : result.event,
+      market: market.ok
+        ? {
+            jobRoleId: market.jobRoleId,
+            jobRoleName: market.jobRoleName,
+            marketSalaryMin: market.marketSalaryMin,
+            marketSalaryMax: market.marketSalaryMax,
+            compare: market.compare,
+          }
+        : null,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
@@ -110,10 +121,20 @@ export async function DELETE(request, { params }) {
     });
 
     const summary = await listCompensationEvents(query, { companyId, candidateId });
+    const market = await getCompensationMarketContext(query, { companyId, candidateId });
     return NextResponse.json({
       ok: true,
       items: summary.ok ? summary.items : [],
       current: summary.ok ? summary.current : null,
+      market: market.ok
+        ? {
+            jobRoleId: market.jobRoleId,
+            jobRoleName: market.jobRoleName,
+            marketSalaryMin: market.marketSalaryMin,
+            marketSalaryMax: market.marketSalaryMax,
+            compare: market.compare,
+          }
+        : null,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

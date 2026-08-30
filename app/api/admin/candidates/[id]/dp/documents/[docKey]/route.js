@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../../../../lib/db.js';
-import { apiError, apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
+import { query } from '../../../../../../../../lib/db.js';
+import { apiError, apiErrorFromResult, ERR } from '../../../../../../../../lib/api-error.js';
 import {
   CAP,
   getManagerScope,
   getSessionPayload,
   requireAnyCapability,
-} from '../../../../../../../lib/ae/require-admin.js';
-import { updateDpDocument } from '../../../../../../../lib/people/employee-dp.js';
+} from '../../../../../../../../lib/ae/require-admin.js';
+import { updateDpDocument } from '../../../../../../../../lib/people/employee-dp.js';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 

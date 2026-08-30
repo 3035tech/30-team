@@ -47,7 +47,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Login colaborador / Minha chegada | `employeeHome` (`/e` token ~30d vs `/employee` senha) |
 | 2FA gestor/employee | `access` (Step10) |
 | Auditoria (super admin) | `access` (Step11) |
-| Remuneração interna | `compensation` |
+| Remuneração interna | `compensation` (faixa de mercado do cargo + compare) |
+| Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
 | LMS / cursos | `lmsBasic` |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |

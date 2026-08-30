@@ -3,17 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { formatSalaryDisplay, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
+import { formatSalaryDisplay, formatVacancySalaryRangeDisplay, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
 import { S, AdminCreateButton, AdminDeleteButton, AdminEditButton } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
-import { AppLoading } from './AppLoading';
+import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html.js';
+import { FormField } from './FormField';
+import { StatusToneChip } from './StatusToneChip';
+import { InlineCallout } from './InlineCallout';
 import {
   COMPENSATION_EVENT_TYPE,
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
+import { fieldSelectClass } from './form-control-styles';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -44,11 +48,13 @@ function eventTypeLabel(locale, type) {
 /**
  * Internal RH compensation — current salary + timeline (not payroll).
  */
-export function CompensationBlock({ locale, candidateId, employmentStatus }) {
+export function CompensationBlock({ locale, candidateId, employmentStatus, companyId }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [current, setCurrent] = useState(null);
   const [offerHint, setOfferHint] = useState(null);
+  const [market, setMarket] = useState(null);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -63,6 +69,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
     if (!candidateId || !visible) {
       setItems([]);
       setCurrent(null);
+      setMarket(null);
       setLoading(false);
       return;
     }
@@ -76,10 +83,12 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       setItems(Array.isArray(data.items) ? data.items : []);
       setCurrent(data.current || null);
       setOfferHint(data.offerHint || null);
+      setMarket(data.market || null);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.compensation.loadError'), 'error');
       setItems([]);
       setCurrent(null);
+      setMarket(null);
     } finally {
       setLoading(false);
     }
@@ -88,6 +97,90 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!companyId || !visible) {
+      setRoles([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/admin/job-roles?companyId=${encodeURIComponent(companyId)}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || cancelled) return;
+        setRoles(Array.isArray(data.roles) ? data.roles.filter((r) => r.active !== false) : []);
+      } catch {
+        if (!cancelled) setRoles([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, visible]);
+
+  const setJobRole = async (jobRoleId) => {
+    if (readOnly) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/compensation`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'setJobRole',
+            jobRoleId: jobRoleId === '' || jobRoleId == null ? null : Number(jobRoleId),
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'role');
+      setMarket(data.market || null);
+      toast(t(locale, 'panel.compensation.jobRoleSaved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.compensation.jobRoleError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const marketChip = (() => {
+    const status = market?.compare?.status;
+    if (!status || status === 'no_band') return null;
+    if (status === 'no_salary') {
+      return (
+        <StatusToneChip tone="neutral" bordered>
+          {t(locale, 'panel.compensation.marketNeedSalary')}
+        </StatusToneChip>
+      );
+    }
+    if (status === 'below') {
+      return (
+        <StatusToneChip tone="warning" bordered>
+          {t(locale, 'panel.compensation.marketBelow')}
+        </StatusToneChip>
+      );
+    }
+    if (status === 'above') {
+      return (
+        <StatusToneChip tone="info" bordered>
+          {t(locale, 'panel.compensation.marketAbove')}
+        </StatusToneChip>
+      );
+    }
+    return (
+      <StatusToneChip tone="success" bordered>
+        {t(locale, 'panel.compensation.marketInBand')}
+      </StatusToneChip>
+    );
+  })();
+
+  const applyMarketPayload = (data) => {
+    if (data?.market !== undefined) setMarket(data.market || null);
+  };
 
   if (!visible) {
     return (
@@ -162,6 +255,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       if (!res.ok) throw new Error(data?.error || 'save');
       setItems(Array.isArray(data.items) ? data.items : []);
       setCurrent(data.current || data.event || null);
+      applyMarketPayload(data);
       toast(t(locale, 'panel.compensation.saved'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.compensation.saveError'), 'error');
@@ -194,6 +288,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       if (!res.ok) throw new Error(data?.error || 'import');
       setItems(Array.isArray(data.items) ? data.items : []);
       setCurrent(data.current || data.event || null);
+      applyMarketPayload(data);
       setOfferHint(null);
       toast(t(locale, 'panel.compensation.importOfferOk'), 'ok');
     } catch (e) {
@@ -234,6 +329,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       if (!res.ok) throw new Error(data?.error || 'save');
       setItems(Array.isArray(data.items) ? data.items : []);
       setCurrent(data.current || null);
+      applyMarketPayload(data);
       toast(t(locale, 'panel.compensation.saved'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.compensation.saveError'), 'error');
@@ -263,6 +359,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       if (!res.ok) throw new Error(data?.error || 'delete');
       setItems(Array.isArray(data.items) ? data.items : []);
       setCurrent(data.current || null);
+      applyMarketPayload(data);
       toast(t(locale, 'panel.compensation.deleted'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.compensation.deleteError'), 'error');
@@ -274,6 +371,9 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
   if (loading) return <AppLoading variant="inline" />;
 
   return (
+    <ContentEnter
+      animKey={`comp|${candidateId}|${current?.id || 0}|${market?.jobRoleId || 0}|${market?.compare?.status || ''}`}
+    >
     <section
       className="rounded-control border border-ink/12 bg-canvas/40 p-3.5"
       aria-labelledby="compensation-block-title"
@@ -307,26 +407,80 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
       </div>
 
       <div className="mb-4 rounded-control border border-brand/20 bg-brand/[0.04] px-3 py-2.5">
-        <div className={cn(S.faint, 'text-2xs uppercase tracking-wide')}>
-          {t(locale, 'panel.compensation.currentLabel')}
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className={cn(S.faint, 'text-2xs uppercase tracking-wide')}>
+              {t(locale, 'panel.compensation.currentLabel')}
+            </div>
+            {current?.amount ? (
+              <div className="mt-1 font-ui text-base font-medium tabular-nums text-ink">
+                {money(current.amount)}
+              </div>
+            ) : (
+              <div className={cn(S.muted, 'mt-1 text-sm')}>
+                {t(locale, 'panel.compensation.noCurrent')}
+              </div>
+            )}
+            {current?.effectiveDate ? (
+              <div className="mt-1 font-mono text-2xs text-ink-muted">
+                {t(locale, 'panel.compensation.since', {
+                  date: formatDate(current.effectiveDate, locale),
+                })}
+                {' · '}
+                {eventTypeLabel(locale, current.eventType)}
+              </div>
+            ) : null}
+          </div>
+          {marketChip}
         </div>
-        {current?.amount ? (
-          <div className="mt-1 font-ui text-base font-medium tabular-nums text-ink">
-            {money(current.amount)}
+      </div>
+
+      <div className="mb-4 rounded-control border border-ink/10 bg-surface px-3 py-2.5">
+        <FormField label={t(locale, 'panel.compensation.jobRoleLabel')}>
+          <select
+            className={cn(fieldSelectClass, 'w-full max-w-md')}
+            value={market?.jobRoleId != null ? String(market.jobRoleId) : ''}
+            disabled={readOnly || busy || !companyId}
+            onChange={(e) => void setJobRole(e.target.value)}
+            aria-label={t(locale, 'panel.compensation.jobRoleLabel')}
+          >
+            <option value="">{t(locale, 'panel.compensation.jobRoleNone')}</option>
+            {roles.map((role) => {
+              const band = formatVacancySalaryRangeDisplay(
+                role.marketSalaryMin,
+                role.marketSalaryMax
+              );
+              return (
+                <option key={role.id} value={String(role.id)}>
+                  {band ? `${role.name} (${band})` : role.name}
+                </option>
+              );
+            })}
+          </select>
+        </FormField>
+        <p className={cn(S.muted, 'mb-0 mt-1.5 text-xs')}>
+          {t(locale, 'panel.compensation.jobRoleHint')}
+        </p>
+        {(market?.marketSalaryMin || market?.marketSalaryMax) ? (
+          <div className="mt-2 font-mono text-2xs text-ink-muted">
+            {t(locale, 'panel.compensation.marketBandLabel')}:{' '}
+            {formatVacancySalaryRangeDisplay(
+              market.marketSalaryMin,
+              market.marketSalaryMax
+            ) || '—'}
           </div>
-        ) : (
-          <div className={cn(S.muted, 'mt-1 text-sm')}>
-            {t(locale, 'panel.compensation.noCurrent')}
-          </div>
-        )}
-        {current?.effectiveDate ? (
-          <div className="mt-1 font-mono text-2xs text-ink-muted">
-            {t(locale, 'panel.compensation.since', { date: formatDate(current.effectiveDate, locale) })}
-            {' · '}
-            {eventTypeLabel(locale, current.eventType)}
-          </div>
+        ) : market?.jobRoleId ? (
+          <p className={cn(S.faint, 'mb-0 mt-2 text-2xs')}>
+            {t(locale, 'panel.compensation.marketBandEmpty')}
+          </p>
         ) : null}
       </div>
+
+      {market?.compare?.status === 'below' ? (
+        <InlineCallout tone="warning" className="mb-4">
+          {t(locale, 'panel.compensation.marketBelowHint')}
+        </InlineCallout>
+      ) : null}
 
       {readOnly ? (
         <p className={cn(S.muted, 'mb-3 text-xs')}>{t(locale, 'panel.compensation.alumniReadOnly')}</p>
@@ -378,5 +532,6 @@ export function CompensationBlock({ locale, candidateId, employmentStatus }) {
         </ul>
       )}
     </section>
+    </ContentEnter>
   );
 }

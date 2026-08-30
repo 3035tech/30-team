@@ -128,7 +128,7 @@ Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma →
 | M4 Clima + retenção parcial | `/clima`, pulso `/pulso`, `retention_watch` (Motivadores) |
 | Núcleo parcial | Overview, núcleo T1–T9 do time (`company-nucleus`), intel comportamental, Fit vs núcleo |
 
-**Sinal DP omitido de propósito:** absenteísmo. Radar e HR Score usam só sinais já no produto (clima, Motivadores/retenção, PDI, check-in concern, fit).
+**Sinal DP (parcial):** absenteísmo leve no Overview a partir de atestados (`sick`, aprovados/taken) nos últimos 90 dias. Radar/HR Score ainda não reponderam pesos por absenteísmo.
 
 ### Ordem de entrega (conectar antes de expandir)
 
@@ -529,11 +529,11 @@ Sólides: Copilot Carreira. Nós: prep 1:1 é do colaborador/gestor.
 2. Audit; sem armazenar relatório completo se o provedor hospedar.
 3. Fora do MVP se não houver parceiro — manter como integração, não build in-house.
 
-### B-2711 — Pesquisa salarial / benchmarks de mercado
-Sólides: avulso. Temos remuneração interna só.
-1. Campos opcionais: faixa de mercado manual ou import CSV por cargo/`job_roles`.
-2. Comparar salário vigente × faixa (Equipe Remuneração + Overview gap).
-3. Sem marketplace de benefícios.
+### B-2711 — Pesquisa salarial / benchmarks de mercado ✅ ENTREGUE (MVP manual)
+Sólides: avulso. Remuneração interna + faixa no cargo.
+1. ~~Campos opcionais: faixa de mercado manual por cargo/`job_roles`.~~ (`market_salary_min`/`max` + `candidates.job_role_id`)
+2. ~~Comparar salário vigente × faixa (Equipe Remuneração + Overview Atenção).~~
+3. Sem marketplace de benefícios. CSV import / pesquisa live = follow-up.
 
 ### B-2712 — Intranet / feed interno leve
 Sólides: Intranet + SuperApp. Temos hub colaborador sem mural.

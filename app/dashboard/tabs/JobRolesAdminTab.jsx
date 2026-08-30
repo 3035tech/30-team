@@ -32,6 +32,14 @@ import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField } from '../../_components/FormField';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { fieldInputClass } from '../../_components/form-control-styles';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import {
+  digitsOnly,
+  formatSalaryDisplay,
+  formatVacancySalaryRangeDisplay,
+  salaryToCentsDigits,
+  stripSalary,
+} from '../../../lib/br-masks';
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
 
@@ -39,6 +47,8 @@ const emptyForm = () => ({
   name: '',
   description: '',
   rubric: {},
+  marketSalaryMin: '',
+  marketSalaryMax: '',
 });
 
 export function JobRolesAdminTab({ locale, companyId }) {
@@ -93,6 +103,8 @@ export function JobRolesAdminTab({ locale, companyId }) {
       name: role.name || '',
       description: role.description || '',
       rubric: role.rubric && typeof role.rubric === 'object' ? { ...role.rubric } : {},
+      marketSalaryMin: role.marketSalaryMin ? salaryToCentsDigits(role.marketSalaryMin) || '' : '',
+      marketSalaryMax: role.marketSalaryMax ? salaryToCentsDigits(role.marketSalaryMax) || '' : '',
     });
     setDrawerMode('edit');
   };
@@ -158,6 +170,16 @@ export function JobRolesAdminTab({ locale, companyId }) {
       toast(t(locale, 'jobRoles.errorNameRequired'), 'error');
       return;
     }
+    const min = stripSalary(form.marketSalaryMin);
+    const max = stripSalary(form.marketSalaryMax);
+    if (min && max) {
+      const minN = Number(min);
+      const maxN = Number(max);
+      if (Number.isFinite(minN) && Number.isFinite(maxN) && minN > maxN) {
+        toast(t(locale, 'jobRoles.errorMarketBandOrder'), 'error');
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -170,6 +192,8 @@ export function JobRolesAdminTab({ locale, companyId }) {
             name,
             description: form.description?.trim() || null,
             rubric: form.rubric || {},
+            marketSalaryMin: min,
+            marketSalaryMax: max,
           }),
         });
         if (!res.ok) {
@@ -185,6 +209,8 @@ export function JobRolesAdminTab({ locale, companyId }) {
             name,
             description: form.description?.trim() || null,
             rubric: form.rubric || {},
+            marketSalaryMin: min,
+            marketSalaryMax: max,
           }),
         });
         if (!res.ok) {
@@ -344,6 +370,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                   {t(locale, 'jobRoles.nameLabel')}
                 </SortableTh>
                 <AdminTh>{t(locale, 'jobRoles.colDescription')}</AdminTh>
+                <AdminTh>{t(locale, 'jobRoles.colMarketBand')}</AdminTh>
                 <AdminTh>{t(locale, 'jobRoles.colRubric')}</AdminTh>
                 <AdminTh>{t(locale, 'jobRoles.colStatus')}</AdminTh>
                 <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
@@ -362,6 +389,12 @@ export function JobRolesAdminTab({ locale, companyId }) {
                       <span className="line-clamp-1" title={role.description || undefined}>
                         {role.description || '—'}
                       </span>
+                    </td>
+                    <td className="px-3 py-2 align-middle font-mono text-2xs text-ink-muted whitespace-nowrap">
+                      {formatVacancySalaryRangeDisplay(
+                        role.marketSalaryMin,
+                        role.marketSalaryMax
+                      ) || '—'}
                     </td>
                     <td className="px-3 py-2 align-middle font-mono text-2xs text-ink-faint whitespace-nowrap">
                       {rubricKeys.length > 0
@@ -390,6 +423,16 @@ export function JobRolesAdminTab({ locale, companyId }) {
                                 message: [
                                   role.description || t(locale, 'jobRoles.noDescription'),
                                   '',
+                                  formatVacancySalaryRangeDisplay(
+                                    role.marketSalaryMin,
+                                    role.marketSalaryMax
+                                  )
+                                    ? `${t(locale, 'jobRoles.colMarketBand')}: ${formatVacancySalaryRangeDisplay(
+                                        role.marketSalaryMin,
+                                        role.marketSalaryMax
+                                      )}`
+                                    : t(locale, 'jobRoles.marketBandEmptyView'),
+                                  '',
                                   Object.keys(role.rubric || {}).length
                                     ? t(locale, 'jobRoles.rubricLabel') +
                                       ': ' +
@@ -417,7 +460,19 @@ export function JobRolesAdminTab({ locale, companyId }) {
                             onClick={() =>
                               notice({
                                 title: role.name,
-                                message: role.description || t(locale, 'jobRoles.noDescription'),
+                                message: [
+                                  role.description || t(locale, 'jobRoles.noDescription'),
+                                  '',
+                                  formatVacancySalaryRangeDisplay(
+                                    role.marketSalaryMin,
+                                    role.marketSalaryMax
+                                  )
+                                    ? `${t(locale, 'jobRoles.colMarketBand')}: ${formatVacancySalaryRangeDisplay(
+                                        role.marketSalaryMin,
+                                        role.marketSalaryMax
+                                      )}`
+                                    : t(locale, 'jobRoles.marketBandEmptyView'),
+                                ].join('\n'),
                               })
                             }
                           />
@@ -506,6 +561,49 @@ export function JobRolesAdminTab({ locale, companyId }) {
               className={cn(FIELD, 'min-h-[72px] resize-y font-ui')}
             />
           </FormField>
+
+          <CollapsibleBlock
+            title={t(locale, 'jobRoles.marketBandSection')}
+            defaultOpen={Boolean(form.marketSalaryMin || form.marketSalaryMax)}
+            locale={locale}
+            variant="panel"
+          >
+            <div className="flex flex-col gap-3">
+              <p className="m-0 text-xs text-ink-muted">{t(locale, 'jobRoles.marketBandHint')}</p>
+              <div className={cn(S.fieldRow, 'items-start gap-3')}>
+                <FormField label={t(locale, 'jobRoles.marketMinLabel')}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatSalaryDisplay(form.marketSalaryMin, locale)}
+                    onChange={(e) =>
+                      setForm((cur) => ({
+                        ...cur,
+                        marketSalaryMin: digitsOnly(e.target.value).slice(0, 15),
+                      }))
+                    }
+                    placeholder={t(locale, 'jobRoles.marketSalaryPh')}
+                    className={FIELD}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'jobRoles.marketMaxLabel')}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatSalaryDisplay(form.marketSalaryMax, locale)}
+                    onChange={(e) =>
+                      setForm((cur) => ({
+                        ...cur,
+                        marketSalaryMax: digitsOnly(e.target.value).slice(0, 15),
+                      }))
+                    }
+                    placeholder={t(locale, 'jobRoles.marketSalaryPh')}
+                    className={FIELD}
+                  />
+                </FormField>
+              </div>
+            </div>
+          </CollapsibleBlock>
 
           <FormField as="div" label={t(locale, 'jobRoles.rubricLabel')}>
             <div className="mb-2 flex flex-wrap items-start justify-between gap-2">

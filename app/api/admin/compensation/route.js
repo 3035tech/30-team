@@ -13,6 +13,10 @@ const querySchema = z.object({
     .optional()
     .default('employee'),
   hasSalary: z.enum(['all', 'with', 'without']).optional().default('all'),
+  marketBand: z
+    .enum(['all', 'below', 'in_band', 'above', 'no_band'])
+    .optional()
+    .default('all'),
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(1).max(50).optional().default(20),
   sort: z.enum(['name', 'amount', 'effectiveDate', 'eventCount']).optional().default('name'),
@@ -36,6 +40,7 @@ export const GET = withAdminApi(
       q: query.q,
       employmentStatus: query.employmentStatus,
       hasSalary: query.hasSalary,
+      marketBand: query.marketBand,
       page: query.page,
       pageSize: query.pageSize,
       sort: query.sort,

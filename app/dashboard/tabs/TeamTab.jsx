@@ -1342,6 +1342,7 @@ export function TeamTab({
                           locale={locale}
                           candidateId={detail.candidate.id}
                           employmentStatus={detail.candidate.employmentStatus}
+                          companyId={detail.candidate.companyId}
                         />
                       ) : null}
                       {peopleSubTab === 'dp' ? (

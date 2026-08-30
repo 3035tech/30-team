@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { withAdminApi } from '../../../../lib/admin-api.js';
-import { apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
-import { query } from '../../../../lib/db.js';
-import { CAP } from '../../../../lib/permissions.js';
+import { withAdminApi } from '../../../../../lib/admin-api.js';
+import { apiErrorFromResult, ERR } from '../../../../../lib/api-error.js';
+import { query } from '../../../../../lib/db.js';
+import { CAP } from '../../../../../lib/permissions.js';
 import {
   listLeaveCalendar,
   listLeaveRequests,
-} from '../../../../lib/people/employee-dp.js';
+} from '../../../../../lib/people/employee-dp.js';
 
 /** GET /api/admin/dp/leave — company leave inbox + optional calendar */
 export const GET = withAdminApi(

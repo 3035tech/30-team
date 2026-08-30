@@ -6,8 +6,10 @@ import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../.
 import {
   createCompensationEvent,
   getAcceptedOfferHint,
+  getCompensationMarketContext,
   importCompensationFromOffer,
   listCompensationEvents,
+  setCandidateJobRole,
 } from '../../../../../../lib/people/employee-compensation.js';
 
 async function loadCandidateScope(candidateId, scope) {
@@ -47,12 +49,22 @@ export async function GET(request, { params }) {
     }
 
     const offerHint = await getAcceptedOfferHint(query, { companyId, candidateId });
+    const market = await getCompensationMarketContext(query, { companyId, candidateId });
 
     return NextResponse.json({
       items: result.items,
       current: result.current,
       employmentStatus: result.employmentStatus,
       offerHint,
+      market: market.ok
+        ? {
+            jobRoleId: market.jobRoleId,
+            jobRoleName: market.jobRoleName,
+            marketSalaryMin: market.marketSalaryMin,
+            marketSalaryMax: market.marketSalaryMax,
+            compare: market.compare,
+          }
+        : null,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
@@ -89,6 +101,35 @@ export async function POST(request, { params }) {
         candidateId,
         createdByUserId: payload.userId || null,
       });
+    } else if (body.action === 'setJobRole') {
+      const marketResult = await setCandidateJobRole(query, {
+        companyId,
+        candidateId,
+        jobRoleId: body.jobRoleId ?? null,
+      });
+      if (!marketResult.ok) {
+        return apiErrorFromResult(request, marketResult, { fallbackCode: ERR.INVALID_DATA });
+      }
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'compensation.set_job_role',
+        targetType: 'candidate',
+        targetId: candidateId,
+        metadata: { jobRoleId: marketResult.jobRoleId },
+      });
+      const summary = await listCompensationEvents(query, { companyId, candidateId });
+      return NextResponse.json({
+        ok: true,
+        items: summary.ok ? summary.items : [],
+        current: summary.ok ? summary.current : null,
+        market: {
+          jobRoleId: marketResult.jobRoleId,
+          jobRoleName: marketResult.jobRoleName,
+          marketSalaryMin: marketResult.marketSalaryMin,
+          marketSalaryMax: marketResult.marketSalaryMax,
+          compare: marketResult.compare,
+        },
+      });
     } else {
       result = await createCompensationEvent(query, {
         companyId,
@@ -114,11 +155,21 @@ export async function POST(request, { params }) {
     });
 
     const summary = await listCompensationEvents(query, { companyId, candidateId });
+    const market = await getCompensationMarketContext(query, { companyId, candidateId });
     return NextResponse.json({
       ok: true,
       event: result.event,
       items: summary.ok ? summary.items : [],
       current: summary.ok ? summary.current : result.event,
+      market: market.ok
+        ? {
+            jobRoleId: market.jobRoleId,
+            jobRoleName: market.jobRoleName,
+            marketSalaryMin: market.marketSalaryMin,
+            marketSalaryMax: market.marketSalaryMax,
+            compare: market.compare,
+          }
+        : null,
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

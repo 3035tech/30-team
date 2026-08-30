@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { apiError, apiErrorFromResult, ERR } from '../../../../../../lib/api-error.js';
-import { query } from '../../../../../../lib/db.js';
-import { getEmployeeSessionPayload } from '../../../../../../lib/employee-session.js';
-import { checkRateLimit } from '../../../../../../lib/rate-limit.js';
+import { apiError, apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
+import { query } from '../../../../../../../lib/db.js';
+import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
+import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import {
   clearDpDocumentFile,
   uploadDpDocumentFile,
-} from '../../../../../../lib/people/employee-dp.js';
+} from '../../../../../../../lib/people/employee-dp.js';
 
 export const dynamic = 'force-dynamic';
 

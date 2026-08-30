@@ -74,13 +74,15 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const { name, description, rubric, active } = body;
+    const { name, description, rubric, active, marketSalaryMin, marketSalaryMax } = body;
 
     const updates = {};
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
     if (rubric !== undefined) updates.rubric = rubric;
     if (active !== undefined) updates.active = active;
+    if (marketSalaryMin !== undefined) updates.marketSalaryMin = marketSalaryMin;
+    if (marketSalaryMax !== undefined) updates.marketSalaryMax = marketSalaryMax;
 
     if (Object.keys(updates).length === 0) {
       return apiError(request, ERR.NO_UPDATES_PROVIDED, 400);
@@ -94,6 +96,10 @@ export async function PATCH(request, { params }) {
 
     if (err.message === 'INVALID_RUBRIC') {
       return apiError(request, ERR.INVALID_RUBRIC, 400);
+    }
+
+    if (err.message === 'INVALID_MARKET_BAND') {
+      return apiError(request, ERR.INVALID_DATA, 400);
     }
 
     if (err.message === 'JOB_ROLE_NOT_FOUND') {

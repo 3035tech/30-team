@@ -6,6 +6,7 @@ import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
   DP_LEAVE_STATUS,
   DP_LEAVE_STATUSES,
+  DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
 } from '../../../lib/domain-status.js';
 import { cn } from '../../../lib/cn';
@@ -88,6 +89,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const [requestedCount, setRequestedCount] = useState(0);
   const [pendingDocsPeople, setPendingDocsPeople] = useState(0);
   const [firstPendingDocCandidateId, setFirstPendingDocCandidateId] = useState(null);
+  const [absenteeismPeople, setAbsenteeismPeople] = useState(0);
+  const [firstAbsenteeismCandidateId, setFirstAbsenteeismCandidateId] = useState(null);
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -130,6 +133,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       setRequestedCount(0);
       setPendingDocsPeople(0);
       setFirstPendingDocCandidateId(null);
+      setAbsenteeismPeople(0);
+      setFirstAbsenteeismCandidateId(null);
       return;
     }
     try {
@@ -141,6 +146,11 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       setPendingDocsPeople(Number(data.pendingDocsPeople) || 0);
       const first = Array.isArray(data.pendingDocs) ? data.pendingDocs[0] : null;
       setFirstPendingDocCandidateId(first?.candidateId != null ? Number(first.candidateId) : null);
+      setAbsenteeismPeople(Number(data.absenteeismPeople) || 0);
+      const firstAbs = Array.isArray(data.absenteeism) ? data.absenteeism[0] : null;
+      setFirstAbsenteeismCandidateId(
+        firstAbs?.candidateId != null ? Number(firstAbs.candidateId) : null
+      );
     } catch {
       /* non-blocking */
     }
@@ -257,7 +267,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         title={t(locale, 'panel.dp.inboxTitle')}
         subtitle={t(locale, 'panel.dp.inboxSubtitle')}
         actions={
-          requestedCount > 0 || pendingDocsPeople > 0 ? (
+          requestedCount > 0 || pendingDocsPeople > 0 || absenteeismPeople > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             {requestedCount > 0 ? (
               <button
@@ -293,6 +303,30 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
               >
                 <StatusToneChip tone="info">
                   {t(locale, 'panel.dp.docsPendingChip', { n: pendingDocsPeople })}
+                </StatusToneChip>
+              </button>
+            ) : null}
+            {absenteeismPeople > 0 ? (
+              <button
+                type="button"
+                className="min-h-touch"
+                onClick={() => {
+                  if (firstAbsenteeismCandidateId && typeof navigateDashboard === 'function') {
+                    navigateDashboard({
+                      tab: 'team',
+                      candidate: String(firstAbsenteeismCandidateId),
+                      section: 'dp',
+                    });
+                    return;
+                  }
+                  setLeaveTypeFilter(DP_LEAVE_TYPE.SICK);
+                  setStatusFilter('all');
+                  setPage(1);
+                }}
+                aria-label={t(locale, 'panel.dp.absenteeismChipAria', { n: absenteeismPeople })}
+              >
+                <StatusToneChip tone="warning">
+                  {t(locale, 'panel.dp.absenteeismChip', { n: absenteeismPeople })}
                 </StatusToneChip>
               </button>
             ) : null}

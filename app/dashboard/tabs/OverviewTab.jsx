@@ -319,9 +319,11 @@ export function OverviewTab({
                     {t(locale, item.titleKey)}
                   </span>
                   <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
-                  <span className="font-mono text-2xs text-ink-faint">
-                    {t(locale, 'panel.overview.daysAgo', { n: item.days ?? 0 })}
-                  </span>
+                  {item.days != null ? (
+                    <span className="font-mono text-2xs text-ink-faint">
+                      {t(locale, 'panel.overview.daysAgo', { n: item.days })}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
