@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { withAdminApi } from '../../../../../../../lib/admin-api.js';
-import { CAP } from '../../../../../../../lib/ae/require-admin.js';
-import { apiError, apiErrorFromResult, ERR, httpStatusForError } from '../../../../../../../lib/api-error.js';
-import { z, zPositiveInt } from '../../../../../../../lib/validate.js';
+import { withAdminApi } from '../../../../../../lib/admin-api.js';
+import { CAP } from '../../../../../../lib/ae/require-admin.js';
+import { apiError, apiErrorFromResult, ERR, httpStatusForError } from '../../../../../../lib/api-error.js';
+import { z, zPositiveInt } from '../../../../../../lib/validate.js';
 import {
   softDeleteCompanyPost,
   updateCompanyPost,
-} from '../../../../../../../lib/company-posts.js';
+} from '../../../../../../lib/company-posts.js';
 
 const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
