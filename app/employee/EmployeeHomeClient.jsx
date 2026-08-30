@@ -18,8 +18,9 @@ import { EmptyState } from '../_components/EmptyState';
 import { MeterBar } from '../_components/MeterBar';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
+import { EmployeeDpSection } from '../_components/EmployeeDpSection';
 
-const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'company'];
+const SECTION_KEYS = ['tasks', 'journey', 'pdi', 'lms', 'surveys', 'oneOnOne', 'dp', 'company'];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
 const LAST_LESSON_KEY = 'team30_employee_last_lesson';
 
@@ -126,6 +127,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
+  const [dpBadge, setDpBadge] = useState(0);
   const [openMap, setOpenMap] = useState(() => {
     const saved = loadCollapsed();
     const next = {};
@@ -379,9 +381,10 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         tasks: tasks.length,
         surveys: surveyMeta.openCount || 0,
         lms: lmsOverdue,
+        dp: dpBadge,
       },
     });
-  }, [data, surveyMeta, setNavMeta]);
+  }, [data, surveyMeta, dpBadge, setNavMeta]);
 
   // Scroll-spy
   useEffect(() => {
@@ -919,6 +922,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               ) : null}
             </div>
           </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="dp"
+          title={t(locale, 'employeeHome.dpTitle')}
+          count={dpBadge || null}
+          open={openMap.dp !== false}
+          onToggle={() => toggleSection('dp')}
+          locale={locale}
+        >
+          <EmployeeDpSection locale={locale} onBadge={setDpBadge} />
         </CollapsibleSection>
 
         <CollapsibleSection

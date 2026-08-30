@@ -588,6 +588,58 @@ async function runOfflineLibs() {
     return 'audit parse ok';
   });
 
+  await check('lib', 'product-feedback', async () => {
+    const {
+      parseProductFeedbackListParams,
+      PRODUCT_FEEDBACK_KIND,
+      PRODUCT_FEEDBACK_STATUS,
+    } = await import('../../lib/product-feedback.js');
+    const p = parseProductFeedbackListParams({
+      page: '2',
+      pageSize: '10',
+      status: 'new',
+      kind: 'idea',
+      q: 'radar',
+    });
+    if (p.page !== 2 || p.pageSize !== 10 || p.status !== 'new' || p.kind !== 'idea' || p.q !== 'radar') {
+      throw new Error(`parse failed ${JSON.stringify(p)}`);
+    }
+    if (!PRODUCT_FEEDBACK_KIND.IDEA || !PRODUCT_FEEDBACK_STATUS.NEW) {
+      throw new Error('missing constants');
+    }
+    return 'product-feedback parse ok';
+  });
+
+  await check('lib', 'employee-dp', async () => {
+    const { parseLeaveListParams, DP_DOC_MAX_BYTES } = await import('../../lib/people/employee-dp.js');
+    const { DP_LEAVE_STATUS, DP_DOCUMENT_STATUS, DP_DOCUMENT_KEYS } = await import(
+      '../../lib/domain-status.js'
+    );
+    const p = parseLeaveListParams({
+      page: '2',
+      pageSize: '10',
+      status: 'requested',
+      leaveType: 'vacation',
+      q: 'ana',
+    });
+    if (
+      p.page !== 2 ||
+      p.pageSize !== 10 ||
+      p.status !== 'requested' ||
+      p.leaveType !== 'vacation' ||
+      p.q !== 'ana'
+    ) {
+      throw new Error(`parse failed ${JSON.stringify(p)}`);
+    }
+    if (!DP_LEAVE_STATUS.REQUESTED || !DP_DOCUMENT_STATUS.PENDING) {
+      throw new Error('missing domain status');
+    }
+    if (!(DP_DOC_MAX_BYTES > 0) || !DP_DOCUMENT_KEYS.includes('contract')) {
+      throw new Error('bad dp constants');
+    }
+    return 'employee-dp parse ok';
+  });
+
   await check('lib', 'vacancy-public-allow-index-default', async () => {
     const { parseVacancyDetailsFromBody } = await import('../../lib/vacancy-details.js');
     const created = parseVacancyDetailsFromBody({}, { forCreate: true });

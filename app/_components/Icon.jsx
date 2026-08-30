@@ -331,6 +331,15 @@ export function Icon({ name, className }) {
           <path d="M9 14h6" />
         </svg>
       );
+    case 'dp':
+      return (
+        <svg {...props}>
+          <path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H14l4 4v10.5a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 18.5Z" />
+          <path d="M14 4v4h4" />
+          <path d="M8 12h7" />
+          <path d="M8 15h5" />
+        </svg>
+      );
     case 'gift':
     case 'benefits':
       return (

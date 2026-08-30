@@ -152,12 +152,23 @@ const CompanyBenefitsAdminTab = dynamic(
   () => import('./tabs/CompanyBenefitsAdminTab').then((m) => ({ default: m.CompanyBenefitsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const DpAdminTab = dynamic(
+  () => import('./tabs/DpAdminTab').then((m) => ({ default: m.DpAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const CompensationAdminTab = dynamic(
   () => import('./tabs/CompensationAdminTab').then((m) => ({ default: m.CompensationAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
 const LeadsAdminTab = dynamic(
   () => import('./tabs/LeadsAdminTab').then((m) => ({ default: m.LeadsAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+const ProductFeedbackAdminTab = dynamic(
+  () =>
+    import('./tabs/ProductFeedbackAdminTab').then((m) => ({
+      default: m.ProductFeedbackAdminTab,
+    })),
   { loading: () => <TabLoadingFallback /> }
 );
 const AuditAdminTab = dynamic(
@@ -220,9 +231,11 @@ const TAB_TO_SECTION = {
   'learning-resources': 'catalogs',
   lms: 'lms',
   'company-benefits': 'catalogs',
+  dp: 'people',
   users: 'account',
   companies: 'account',
   leads: 'account',
+  'product-feedback': 'account',
   audit: 'account',
   help: 'help',
   profile: 'account',
@@ -312,6 +325,7 @@ export default function DashboardClient({
 
   const isAdmin = isAdminRole(sessionAuth);
   const showLeads = isSuperAdminPayload(sessionAuth);
+  const showProductFeedback = isSuperAdminPayload(sessionAuth);
   const showAudit = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const showsCohortChrome = COHORT_TABS.has(tab);
@@ -328,8 +342,9 @@ export default function DashboardClient({
   const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
   const showLearning = can(sessionAuth, CAP.LEARNING_VIEW);
   const showBenefits = can(sessionAuth, CAP.BENEFITS_VIEW);
+  const showDp = can(sessionAuth, CAP.DP_VIEW);
   const showCompensation = can(sessionAuth, CAP.TEAM_VIEW);
-  const showPeopleGp = showPerformance || showSuccession || showExitAnalysis;
+  const showPeopleGp = showPerformance || showSuccession || showExitAnalysis || showDp;
   const showCatalogs = showJobRoles || showLearning || showBenefits;
   const showLmsSection = showLearning;
 
@@ -883,6 +898,9 @@ export default function DashboardClient({
                     {showExitAnalysis ? (
                       <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
                     ) : null}
+                    {showDp ? (
+                      <NavLink id="dp" icon="dp" label={t(locale, 'dashboard.dp')} />
+                    ) : null}
                     {showMotivators ? (
                       <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
                     ) : null}
@@ -924,7 +942,7 @@ export default function DashboardClient({
               </>
             ) : null}
 
-            {showCompanies || showUsers || showLeads || showAudit ? (
+            {showCompanies || showUsers || showLeads || showProductFeedback || showAudit ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('account', t(locale, 'dashboard.sectionAccount'))}
@@ -935,6 +953,13 @@ export default function DashboardClient({
                       <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
                     ) : null}
                     {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
+                    {showProductFeedback ? (
+                      <NavLink
+                        id="product-feedback"
+                        icon="feedbackInfo"
+                        label={t(locale, 'dashboard.productFeedback')}
+                      />
+                    ) : null}
                     {showAudit ? (
                       <NavLink id="audit" icon="list" label={t(locale, 'dashboard.audit')} />
                     ) : null}
@@ -1420,6 +1445,17 @@ export default function DashboardClient({
               {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
+              {tab === 'dp' && showDp && (
+                <DpAdminTab
+                  locale={locale}
+                  companyId={
+                    company && company !== 'all'
+                      ? Number(company)
+                      : (sessionAuth?.companyId ?? null)
+                  }
+                  navigateDashboard={navigateWithOpts}
+                />
+              )}
               {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={sessionAuth?.companyId} isAdmin={isAdmin} />}
               {tab === 'lms' && showLearning && (
                 <LmsAdminTab
@@ -1445,6 +1481,9 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'product-feedback' && showProductFeedback && (
+                <ProductFeedbackAdminTab navigateDashboard={navigateWithOpts} locale={locale} />
+              )}
               {tab === 'audit' && showAudit && (
                 <AuditAdminTab navigateDashboard={navigateWithOpts} locale={locale} />
               )}

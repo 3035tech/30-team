@@ -596,11 +596,13 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 1. Solicitação no `/employee`; saldo; aprovação gestor/RH; calendário do time.
 2. Tipos: férias, atestado, licença (taxonomia fechada).
 3. Integra eventos de folha quando **B-2726** existir.
+4. **MVP leve entregue:** pedido → aprovação, calendário 60d, tipos fechados, **sem** saldo nem evento de folha (ver Guia → DP leve).
 
 ### B-2724 — Admissão digital + GED + assinatura
 1. Checklist pós-hire (docs: RG, contrato, etc.); upload S3; status por documento.
 2. Assinatura eletrônica (provedor) com trilha de auditoria; validade jurídica = via parceiro, não “inventar ICP”.
 3. Liga funil `hired` → pasta do colaborador no mesmo `candidate_id`.
+4. **MVP leve entregue:** checklist + anexo S3 opcional na Equipe → DP; **sem** assinatura ICP / GED jurídico.
 
 ### B-2725 — Equipe de campo (rota / check-in / reembolso)
 1. Check-in geolocalizado em visitas; rota do dia; fotos opcionais.

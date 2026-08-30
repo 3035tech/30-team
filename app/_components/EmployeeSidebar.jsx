@@ -24,6 +24,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
     labelKey: 'panel.employeePortal.agreementsTitle',
     hash: 'oneOnOne',
   },
+  { id: 'dp', href: '/employee#dp', icon: 'dp', labelKey: 'employeeHome.dpTitle', hash: 'dp' },
   { id: 'company', href: '/employee#company', icon: 'building', labelKey: 'employeeHome.companyTitle', hash: 'company' },
   { id: 'profile', href: '/employee/profile', icon: 'user', labelKey: 'employeeHome.profile' },
 ]);
@@ -43,7 +44,7 @@ const NAV_GROUPS = Object.freeze([
   {
     id: 'account',
     labelKey: 'employeeHome.navGroupAccount',
-    ids: ['company', 'profile'],
+    ids: ['dp', 'company', 'profile'],
   },
 ]);
 
@@ -60,6 +61,7 @@ function badgeFor(itemId, badges) {
   if (itemId === 'tasks') return badges.tasks;
   if (itemId === 'surveys') return badges.surveys;
   if (itemId === 'lms') return badges.lms;
+  if (itemId === 'dp') return badges.dp;
   return 0;
 }
 

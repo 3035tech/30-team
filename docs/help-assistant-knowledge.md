@@ -35,7 +35,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 |---------|------|
 | Gestor precisa *saber fazer* | Guia + FAQ opcional |
 | Colaborador (`/employee`) | Seção `employeeHome` no Guia (RH convida/configura) |
-| Super admin (auditoria, leads) | Seção `access` (passos 10–11) ou seção dedicada |
+| Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
+| DP leve (ficha / docs / férias) | Seção `dpLight` + FAQ `faqDpLight` |
 | Dev/ops (migrate, env, DTOV) | README / `docs/` / `test/README.md` |
 
 ## Exemplos de seções

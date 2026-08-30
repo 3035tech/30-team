@@ -23,6 +23,7 @@ export const EMPLOYEE_SECTION_IDS = Object.freeze([
   'lms',
   'surveys',
   'oneOnOne',
+  'dp',
   'company',
 ]);
 

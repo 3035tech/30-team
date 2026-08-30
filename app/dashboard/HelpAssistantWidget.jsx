@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
 import { helpSuggestionLabels, helpTabLabel } from '../../lib/help-screen-context';
+import { PRODUCT_FEEDBACK_KINDS } from '../../lib/domain-status';
 import { S } from './dashboard-shared';
 import { Icon } from '../_components/Icon';
+import { useAppFeedback } from '../_components/AppFeedback';
+import { AppLoading } from '../_components/AppLoading';
 
 /**
  * Floating AI product-help assistant (B-801) — Guia / navigation only.
@@ -17,6 +20,7 @@ export function HelpAssistantWidget({
   activeTab = null,
   activeSection = null,
 }) {
+  const { promptForm, toast } = useAppFeedback();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
@@ -91,6 +95,63 @@ export function HelpAssistantWidget({
   };
 
   const chipList = messages.length === 0 ? emptySuggestions : followUps;
+
+  const openSuggestForm = async () => {
+    const values = await promptForm({
+      title: t(locale, 'panel.productFeedback.suggestTitle'),
+      fields: [
+        {
+          key: 'kind',
+          label: t(locale, 'panel.productFeedback.filterKind'),
+          type: 'select',
+          defaultValue: 'idea',
+          options: PRODUCT_FEEDBACK_KINDS.map((k) => ({
+            value: k,
+            label: t(locale, `panel.productFeedback.kind.${k}`),
+          })),
+        },
+        {
+          key: 'message',
+          label: t(locale, 'panel.productFeedback.messageLabel'),
+          type: 'textarea',
+          rows: 5,
+          maxLength: 4000,
+          placeholder: t(locale, 'panel.productFeedback.messagePh'),
+          help: t(locale, 'panel.productFeedback.messageHelp'),
+        },
+        {
+          key: 'contactOk',
+          label: t(locale, 'panel.productFeedback.contactOk'),
+          type: 'boolean',
+          defaultValue: true,
+        },
+      ],
+    });
+    if (!values) return;
+    const message = String(values.message || '').trim();
+    if (message.length < 10) {
+      toast(t(locale, 'panel.productFeedback.messageTooShort'), 'error');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/product-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: values.kind,
+          message,
+          contactOk: values.contactOk !== false,
+          activeTab: activeTab || null,
+          activeSection: activeSection || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.productFeedback.sendFailed'));
+      toast(t(locale, 'panel.productFeedback.sendOk'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.productFeedback.sendFailed'), 'error');
+    }
+  };
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[90] flex flex-col items-end gap-2">
@@ -174,8 +235,22 @@ export function HelpAssistantWidget({
                 ))}
               </div>
             ) : null}
-            {busy ? <p className="m-0 font-mono text-2xs text-ink-faint">{t(locale, 'panel.common.loading')}</p> : null}
+            {busy ? (
+              <AppLoading locale={locale} variant="inline" label={t(locale, 'panel.common.loading')} />
+            ) : null}
             {error ? <p className="m-0 text-xs text-danger">{error}</p> : null}
+          </div>
+
+          <div className="border-t border-ink/10 px-3 py-2">
+            <button
+              type="button"
+              className={cn(S.btnBrandSoft, 'min-h-touch w-full justify-center gap-2 text-prose')}
+              onClick={() => void openSuggestForm()}
+              disabled={busy}
+            >
+              <Icon name="sparkles" className="h-4 w-4 shrink-0" />
+              {t(locale, 'panel.productFeedback.suggestCta')}
+            </button>
           </div>
 
           <form

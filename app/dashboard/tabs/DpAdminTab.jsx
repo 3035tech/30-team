@@ -1,0 +1,498 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { t, localeHtmlLang } from '../../../lib/i18n';
+import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
+import {
+  DP_LEAVE_STATUS,
+  DP_LEAVE_STATUSES,
+  DP_LEAVE_TYPES,
+} from '../../../lib/domain-status.js';
+import { cn } from '../../../lib/cn';
+import {
+  AdminActionsCell,
+  AdminActionsTh,
+  AdminEditButton,
+  AdminIconButton,
+  AdminListPager,
+  AdminListSearch,
+  AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
+  S,
+} from '../dashboard-shared';
+import { EmptyState } from '../../_components/EmptyState';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import { StatusToneChip } from '../../_components/StatusToneChip';
+import { useAppFeedback } from '../../_components/AppFeedback';
+
+function formatDate(value, locale) {
+  if (!value) return '—';
+  const raw = String(value).slice(0, 10);
+  const [y, m, d] = raw.split('-').map(Number);
+  if (!y || !m || !d) return raw;
+  return new Date(y, m - 1, d).toLocaleDateString(localeHtmlLang(locale), {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function leaveTypeLabel(locale, type) {
+  const key = `panel.dp.leaveType.${type}`;
+  const label = t(locale, key);
+  return label === key ? type : label;
+}
+
+function leaveStatusLabel(locale, status) {
+  const key = `panel.dp.leaveStatus.${status}`;
+  const label = t(locale, key);
+  return label === key ? status : label;
+}
+
+function leaveStatusTone(status) {
+  if (status === DP_LEAVE_STATUS.APPROVED || status === DP_LEAVE_STATUS.TAKEN) return 'success';
+  if (status === DP_LEAVE_STATUS.REJECTED) return 'danger';
+  if (status === DP_LEAVE_STATUS.CANCELLED) return 'neutral';
+  return 'warning';
+}
+
+function isoToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoPlusDays(days) {
+  return new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+}
+
+/**
+ * Company leave inbox + simple 60-day calendar list (DP leve).
+ */
+export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
+  const { promptForm, toast } = useAppFeedback();
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState('all');
+  const [qDraft, setQDraft] = useState('');
+  const [q, setQ] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [calendarItems, setCalendarItems] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [requestedCount, setRequestedCount] = useState(0);
+  const [pendingDocsPeople, setPendingDocsPeople] = useState(0);
+  const [firstPendingDocCandidateId, setFirstPendingDocCandidateId] = useState(null);
+
+  const load = useCallback(async () => {
+    if (!companyId) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        companyId: String(companyId),
+        page: String(page),
+        pageSize: String(pageSize),
+        status: statusFilter,
+        leaveType: leaveTypeFilter,
+      });
+      if (q) params.set('q', q);
+      const res = await fetch(`/api/admin/dp/leave?${params}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'load');
+      setItems(Array.isArray(data.items) ? data.items : []);
+      setTotal(typeof data.total === 'number' ? data.total : 0);
+      if (typeof data.page === 'number' && data.page !== page) setPage(data.page);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
+      setItems([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId, page, pageSize, statusFilter, leaveTypeFilter, q, locale, toast]);
+
+  useEffect(() => {
+    void load();
+  }, [load, reloadKey]);
+
+  const loadAttention = useCallback(async () => {
+    if (!companyId) {
+      setRequestedCount(0);
+      setPendingDocsPeople(0);
+      setFirstPendingDocCandidateId(null);
+      return;
+    }
+    try {
+      const params = new URLSearchParams({ companyId: String(companyId) });
+      const res = await fetch(`/api/admin/dp/attention?${params}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      setRequestedCount(Number(data.requestedLeaves) || 0);
+      setPendingDocsPeople(Number(data.pendingDocsPeople) || 0);
+      const first = Array.isArray(data.pendingDocs) ? data.pendingDocs[0] : null;
+      setFirstPendingDocCandidateId(first?.candidateId != null ? Number(first.candidateId) : null);
+    } catch {
+      /* non-blocking */
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    void loadAttention();
+  }, [loadAttention, reloadKey]);
+
+  const loadCalendar = useCallback(async () => {
+    if (!companyId) {
+      setCalendarItems([]);
+      return;
+    }
+    setCalendarLoading(true);
+    try {
+      const params = new URLSearchParams({
+        companyId: String(companyId),
+        mode: 'calendar',
+        from: isoToday(),
+        to: isoPlusDays(60),
+      });
+      const res = await fetch(`/api/admin/dp/leave?${params}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'load');
+      setCalendarItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
+      setCalendarItems([]);
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, [companyId, locale, toast]);
+
+  useEffect(() => {
+    void loadCalendar();
+  }, [loadCalendar, reloadKey]);
+
+  const calendarByDate = useMemo(() => {
+    const map = new Map();
+    for (const row of calendarItems) {
+      const key = String(row.startsOn || '').slice(0, 10) || '—';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(row);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [calendarItems]);
+
+  const editLeave = async (row) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.dp.editLeave'),
+      confirmLabel: t(locale, 'panel.dp.save'),
+      fields: [
+        {
+          key: 'status',
+          type: 'select',
+          label: t(locale, 'panel.dp.leaveStatusLabel'),
+          defaultValue: row.status,
+          required: true,
+          options: DP_LEAVE_STATUSES.map((s) => ({
+            value: s,
+            label: leaveStatusLabel(locale, s),
+          })),
+        },
+        {
+          key: 'managerNotes',
+          type: 'textarea',
+          label: t(locale, 'panel.dp.managerNotes'),
+          defaultValue: row.managerNotes || '',
+          rows: 3,
+          maxLength: 2000,
+        },
+      ],
+    });
+    if (!values) return;
+    try {
+      const res = await fetch(`/api/admin/dp/leave/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          status: values.status,
+          managerNotes: values.managerNotes,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      toast(t(locale, 'panel.dp.leaveUpdated'), 'ok');
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.leaveUpdateError'), 'error');
+    }
+  };
+
+  if (!companyId) {
+    return (
+      <ContentEnter animKey="dp-need-company">
+        <EmptyState
+          title={t(locale, 'panel.dp.needCompanyTitle')}
+          message={t(locale, 'panel.dp.needCompanyHint')}
+        />
+      </ContentEnter>
+    );
+  }
+
+  const filtersDirty =
+    Boolean(String(qDraft || '').trim()) ||
+    statusFilter !== 'all' ||
+    leaveTypeFilter !== 'all';
+
+  return (
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        title={t(locale, 'panel.dp.inboxTitle')}
+        subtitle={t(locale, 'panel.dp.inboxSubtitle')}
+        actions={
+          requestedCount > 0 || pendingDocsPeople > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {requestedCount > 0 ? (
+              <button
+                type="button"
+                className="min-h-touch"
+                onClick={() => {
+                  setStatusFilter(DP_LEAVE_STATUS.REQUESTED);
+                  setPage(1);
+                }}
+                aria-label={t(locale, 'panel.dp.requestedChipAria', { n: requestedCount })}
+              >
+                <StatusToneChip tone="warning">
+                  {t(locale, 'panel.dp.requestedChip', { n: requestedCount })}
+                </StatusToneChip>
+              </button>
+            ) : null}
+            {pendingDocsPeople > 0 && typeof navigateDashboard === 'function' ? (
+              <button
+                type="button"
+                className="min-h-touch"
+                onClick={() =>
+                  navigateDashboard(
+                    firstPendingDocCandidateId
+                      ? {
+                          tab: 'team',
+                          candidate: String(firstPendingDocCandidateId),
+                          section: 'dp',
+                        }
+                      : { tab: 'team' }
+                  )
+                }
+                aria-label={t(locale, 'panel.dp.docsPendingChipAria', { n: pendingDocsPeople })}
+              >
+                <StatusToneChip tone="info">
+                  {t(locale, 'panel.dp.docsPendingChip', { n: pendingDocsPeople })}
+                </StatusToneChip>
+              </button>
+            ) : null}
+          </div>
+          ) : null
+        }
+      />
+
+      <AdminListFilters
+        aria-label={t(locale, 'panel.dp.inboxTitle')}
+        locale={locale}
+        onClear={() => {
+          setQDraft('');
+          setQ('');
+          setStatusFilter('all');
+          setLeaveTypeFilter('all');
+          setPage(1);
+        }}
+        clearEnabled={filtersDirty}
+      >
+        <AdminListSearch
+          locale={locale}
+          value={qDraft}
+          onChange={setQDraft}
+          onSubmit={(v) => {
+            setQ(String(v || '').trim());
+            setPage(1);
+          }}
+          placeholder={t(locale, 'panel.dp.searchPh')}
+          className="min-w-[200px] flex-1 items-end self-end"
+          inputClassName="w-full max-w-none"
+        />
+        <AdminListFilterSelect
+          label={t(locale, 'panel.dp.filterStatus')}
+          value={statusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
+          <option value="all">{t(locale, 'panel.dp.statusAll')}</option>
+          {DP_LEAVE_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {leaveStatusLabel(locale, s)}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+        <AdminListFilterSelect
+          label={t(locale, 'panel.dp.filterLeaveType')}
+          value={leaveTypeFilter}
+          onChange={(v) => {
+            setLeaveTypeFilter(v);
+            setPage(1);
+          }}
+        >
+          <option value="all">{t(locale, 'panel.dp.typeAll')}</option>
+          {DP_LEAVE_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {leaveTypeLabel(locale, type)}
+            </option>
+          ))}
+        </AdminListFilterSelect>
+      </AdminListFilters>
+
+      {loading ? (
+        <AppLoading locale={locale} variant="panel" />
+      ) : items.length === 0 ? (
+        <ContentEnter animKey={`dp-empty|${statusFilter}|${leaveTypeFilter}|${q}`}>
+          <EmptyState
+            title={t(locale, 'panel.dp.emptyTitle')}
+            message={t(locale, 'panel.dp.emptyHint')}
+          />
+        </ContentEnter>
+      ) : (
+        <ContentEnter animKey={`dp|${statusFilter}|${leaveTypeFilter}|${q}|${page}|${pageSize}`}>
+          <AdminTableShell animKey={`${statusFilter}|${leaveTypeFilter}|${q}|${page}|${pageSize}`}>
+            <table className="w-full min-w-[640px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-ink/10">
+                  <AdminTh>{t(locale, 'panel.dp.colName')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.dp.colType')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.dp.colStatus')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.dp.colDates')}</AdminTh>
+                  <AdminTh>{t(locale, 'panel.dp.colReason')}</AdminTh>
+                  <AdminActionsTh>{t(locale, 'panel.dp.colActions')}</AdminActionsTh>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-ink/[0.06] last:border-0">
+                    <td className="px-3 py-2.5 align-middle">
+                      <div className="font-ui text-sm text-ink">{row.candidateName || '—'}</div>
+                      {row.candidateEmail ? (
+                        <div className="font-mono text-2xs text-ink-muted">{row.candidateEmail}</div>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2.5 align-middle text-sm text-ink">
+                      {leaveTypeLabel(locale, row.leaveType)}
+                    </td>
+                    <td className="px-3 py-2.5 align-middle">
+                      <StatusToneChip tone={leaveStatusTone(row.status)}>
+                        {leaveStatusLabel(locale, row.status)}
+                      </StatusToneChip>
+                    </td>
+                    <td className="px-3 py-2.5 align-middle font-mono text-2xs text-ink-muted">
+                      {formatDate(row.startsOn, locale)}
+                      {' · '}
+                      {formatDate(row.endsOn, locale)}
+                    </td>
+                    <td className="max-w-[220px] truncate px-3 py-2.5 align-middle text-xs text-ink-muted">
+                      {row.reason || '—'}
+                    </td>
+                    <td className="px-3 py-2.5 text-right align-middle">
+                      <AdminActionsCell>
+                        <AdminEditButton
+                          label={t(locale, 'panel.dp.editLeave')}
+                          onClick={() => void editLeave(row)}
+                        />
+                        {typeof navigateDashboard === 'function' && row.candidateId ? (
+                          <AdminIconButton
+                            icon="users"
+                            label={t(locale, 'panel.dp.openTeam')}
+                            onClick={() =>
+                              navigateDashboard({
+                                tab: 'team',
+                                candidate: String(row.candidateId),
+                                section: 'dp',
+                              })
+                            }
+                          />
+                        ) : null}
+                      </AdminActionsCell>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </AdminTableShell>
+          <AdminListPager
+            locale={locale}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </ContentEnter>
+      )}
+
+      <CollapsibleBlock
+        locale={locale}
+        variant="card"
+        title={t(locale, 'panel.dp.calendarTitle')}
+        defaultOpen={false}
+        count={calendarItems.length || null}
+      >
+        {calendarLoading ? (
+          <AppLoading locale={locale} variant="inline" />
+        ) : calendarByDate.length === 0 ? (
+          <EmptyState message={t(locale, 'panel.dp.calendarEmpty')} />
+        ) : (
+          <ContentEnter animKey={`dp-cal|${calendarItems.length}`}>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {calendarByDate.map(([date, rows]) => (
+              <li key={date}>
+                <div className={cn(S.label, 'mb-1.5')}>{formatDate(date, locale)}</div>
+                <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                  {rows.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <span className="font-ui text-sm text-ink">
+                          {row.candidateName || '—'}
+                        </span>
+                        <span className="ml-2 font-mono text-2xs text-ink-muted">
+                          {leaveTypeLabel(locale, row.leaveType)}
+                          {' · '}
+                          {formatDate(row.startsOn, locale)}
+                          {'–'}
+                          {formatDate(row.endsOn, locale)}
+                        </span>
+                      </div>
+                      <StatusToneChip tone={leaveStatusTone(row.status)}>
+                        {leaveStatusLabel(locale, row.status)}
+                      </StatusToneChip>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          </ContentEnter>
+        )}
+      </CollapsibleBlock>
+    </div>
+  );
+}

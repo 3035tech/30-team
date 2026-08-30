@@ -24,6 +24,7 @@ import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
+import { DpBlock } from '../../_components/DpBlock';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
@@ -248,7 +249,8 @@ export function TeamTab({
       focusSection === 'oneOnOne' ||
       focusSection === 'briefing' ||
       focusSection === 'dossier' ||
-      focusSection === 'compensation'
+      focusSection === 'compensation' ||
+      focusSection === 'dp'
         ? focusSection === 'dossier'
           ? 'briefing'
           : focusSection
@@ -272,7 +274,8 @@ export function TeamTab({
       focusSection === 'oneOnOne' ||
       focusSection === 'briefing' ||
       focusSection === 'dossier' ||
-      focusSection === 'compensation'
+      focusSection === 'compensation' ||
+      focusSection === 'dp'
         ? focusSection === 'dossier'
           ? 'briefing'
           : focusSection
@@ -1286,6 +1289,10 @@ export function TeamTab({
                                 id: 'compensation',
                                 label: t(locale, 'panel.team.peopleSubTabCompensation'),
                               },
+                              {
+                                id: 'dp',
+                                label: t(locale, 'panel.team.peopleSubTabDp'),
+                              },
                             ]
                           : []),
                       ]}
@@ -1335,6 +1342,14 @@ export function TeamTab({
                           locale={locale}
                           candidateId={detail.candidate.id}
                           employmentStatus={detail.candidate.employmentStatus}
+                        />
+                      ) : null}
+                      {peopleSubTab === 'dp' ? (
+                        <DpBlock
+                          locale={locale}
+                          candidateId={detail.candidate.id}
+                          employmentStatus={detail.candidate.employmentStatus}
+                          companyId={detail.candidate.companyId}
                         />
                       ) : null}
                     </ContentEnter>

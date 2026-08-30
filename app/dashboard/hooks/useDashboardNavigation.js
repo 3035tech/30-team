@@ -169,6 +169,21 @@ export function useDashboardNavigation({
     const leadsPageSize = PAGE_SIZE_OPTIONS.includes(Number(leadsPsRaw)) ? Number(leadsPsRaw) : 20;
     p.set('leadsPageSize', String(leadsPageSize));
 
+    const fbStatus =
+      opts.fbStatus !== undefined ? opts.fbStatus : urlParams.get('fbStatus') || 'all';
+    if (fbStatus && fbStatus !== 'all') p.set('fbStatus', String(fbStatus));
+    const fbKind = opts.fbKind !== undefined ? opts.fbKind : urlParams.get('fbKind') || 'all';
+    if (fbKind && fbKind !== 'all') p.set('fbKind', String(fbKind));
+    const fbQ = opts.fbQ !== undefined ? opts.fbQ : urlParams.get('fbQ') || '';
+    if (fbQ) p.set('fbQ', String(fbQ));
+    const fbPageRaw = opts.fbPage != null ? opts.fbPage : parseInt(urlParams.get('fbPage') || '1', 10);
+    const fbPage = Number.isFinite(Number(fbPageRaw)) && Number(fbPageRaw) >= 1 ? Number(fbPageRaw) : 1;
+    p.set('fbPage', String(fbPage));
+    const fbPsRaw =
+      opts.fbPageSize != null ? opts.fbPageSize : parseInt(urlParams.get('fbPageSize') || '20', 10);
+    const fbPageSize = PAGE_SIZE_OPTIONS.includes(Number(fbPsRaw)) ? Number(fbPsRaw) : 20;
+    p.set('fbPageSize', String(fbPageSize));
+
     const auditActorKind =
       opts.auditActorKind !== undefined ? opts.auditActorKind : urlParams.get('auditActorKind') || 'all';
     if (auditActorKind && auditActorKind !== 'all') p.set('auditActorKind', String(auditActorKind));
