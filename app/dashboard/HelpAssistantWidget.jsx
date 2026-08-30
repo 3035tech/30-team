@@ -34,6 +34,15 @@ export function HelpAssistantWidget({
   const emptySuggestions = useMemo(() => helpSuggestionLabels(locale, activeTab), [locale, activeTab]);
   const hereLabel = useMemo(() => helpTabLabel(locale, activeTab), [locale, activeTab]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   // Pin the *start* of the newest message into view (not the bottom of a long answer).
   useEffect(() => {
     if (!open || !listRef.current || !latestMsgRef.current) return;
@@ -159,6 +168,7 @@ export function HelpAssistantWidget({
         <div
           className="pointer-events-auto flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-card border border-ink/12 bg-surface shadow-dialog"
           role="dialog"
+          aria-modal="true"
           aria-label={t(locale, 'panel.helpAssist.title')}
         >
           <div className="flex items-center justify-between gap-2 border-b border-ink/10 bg-canvas/80 px-3 py-2.5">

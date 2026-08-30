@@ -11,6 +11,7 @@ import { useLocale } from '../../lib/useLocale';
 import { CAP, can, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
 import { VACANCY_STATUS, ROSTER_SCOPE } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
+import { managerLoginUrl } from '../../lib/manager-client-session';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
 import { DateField } from '../_components/DateField';
@@ -325,7 +326,7 @@ export default function DashboardClient({
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    router.push(managerLoginUrl({ reason: 'logout' }));
   };
 
   const isAdmin = isAdminRole(sessionAuth);
@@ -361,9 +362,12 @@ export default function DashboardClient({
       const res = await orig(...args);
       try {
         const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
-        if (res.status === 401 && String(url).includes('/api/admin')) {
+        if (
+          res.status === 401 &&
+          (String(url).includes('/api/admin') || String(url).includes('/api/me'))
+        ) {
           const next = `${window.location.pathname}${window.location.search || ''}`;
-          window.location.assign(`/login?redirect=${encodeURIComponent(next)}`);
+          window.location.assign(managerLoginUrl({ reason: 'expired', redirect: next }));
         }
       } catch {
         /* ignore */
@@ -449,6 +453,19 @@ export default function DashboardClient({
   useEffect(() => {
     if (isDesktop) setSidebarOpen(false);
   }, [isDesktop]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const tabKey = `dashboard.${tab}`;
+    const tabLabel = t(locale, tabKey);
+    const label =
+      tabLabel && tabLabel !== tabKey ? tabLabel : t(locale, 'dashboard.panel');
+    const prev = document.title;
+    document.title = t(locale, 'dashboard.documentTitle', { tab: label });
+    return () => {
+      document.title = prev;
+    };
+  }, [locale, tab]);
 
   const navCollapsed = sidebarCollapsed && isDesktop;
 
@@ -795,6 +812,7 @@ export default function DashboardClient({
       <div
         className={`db-overlay${sidebarOpen ? ' db-overlay-visible' : ''}`}
         onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
       />
       <div className="relative z-[1] flex min-h-screen">
         <aside

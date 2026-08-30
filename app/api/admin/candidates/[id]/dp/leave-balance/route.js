@@ -56,6 +56,9 @@ export async function PUT(request, { params }) {
       entitlementDays: body.entitlementDays,
       adjustmentDays: body.adjustmentDays,
       notes: body.notes,
+      periodStart: body.periodStart,
+      periodEnd: body.periodEnd,
+      clearPeriod: body.clearPeriod === true,
       userId: payload.userId,
       allowAlumni: true,
     });

@@ -82,7 +82,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
   const [balance, setBalance] = useState(null);
   const [pendingDocs, setPendingDocs] = useState(0);
   const [uploadKey, setUploadKey] = useState(null);
+  const [leaveUploadId, setLeaveUploadId] = useState(null);
   const fileInputRef = useRef(null);
+  const leaveFileRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -300,6 +302,65 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
     }
   };
 
+  const cancelLeave = async (row) => {
+    const ok = await confirm({
+      title: t(locale, 'employeeHome.dpCancelLeaveTitle'),
+      message: t(locale, 'employeeHome.dpCancelLeaveConfirm'),
+      confirmLabel: t(locale, 'employeeHome.dpCancelLeave'),
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/employee/dp/leave/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'cancel');
+      toast(t(locale, 'employeeHome.dpCancelLeaveOk'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.dpCancelLeaveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startLeaveUpload = (leaveId) => {
+    setLeaveUploadId(leaveId);
+    leaveFileRef.current?.click();
+  };
+
+  const onLeaveFilePicked = async (ev) => {
+    const file = ev.target.files?.[0];
+    const leaveId = leaveUploadId;
+    ev.target.value = '';
+    if (!file || !leaveId) {
+      setLeaveUploadId(null);
+      return;
+    }
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(
+        `/api/employee/dp/leave/${encodeURIComponent(leaveId)}/file`,
+        { method: 'POST', body: fd }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'upload');
+      toast(t(locale, 'panel.dp.uploadOk'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.uploadError'), 'error');
+    } finally {
+      setBusy(false);
+      setLeaveUploadId(null);
+    }
+  };
+
   if (loading) {
     return <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />;
   }
@@ -317,6 +378,13 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           accept="application/pdf,image/jpeg,image/png"
           className="hidden"
           onChange={(e) => void onFilePicked(e)}
+        />
+        <input
+          ref={leaveFileRef}
+          type="file"
+          accept="application/pdf,image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => void onLeaveFilePicked(e)}
         />
         <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'employeeHome.dpHint')}</p>
 
@@ -443,6 +511,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           <LeaveBalanceSummary
             locale={locale}
             balance={balance}
+            showPeriod
             className="mb-3"
           />
           <p className={cn(S.faint, 'mb-3 mt-0')}>{t(locale, 'employeeHome.dpBalanceHint')}</p>
@@ -470,10 +539,48 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
                     {row.reason ? (
                       <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{row.reason}</p>
                     ) : null}
+                    {row.hasFile && row.fileUrl ? (
+                      <div className="mt-1">
+                        <CopyableLink
+                          url={row.fileUrl}
+                          label={row.fileName || t(locale, 'panel.dp.docOpenFile')}
+                          compact
+                          locale={locale}
+                        />
+                      </div>
+                    ) : null}
                   </div>
-                  <StatusToneChip tone={leaveStatusTone(row.status)}>
-                    {leaveStatusLabel(locale, row.status)}
-                  </StatusToneChip>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StatusToneChip tone={leaveStatusTone(row.status)}>
+                      {leaveStatusLabel(locale, row.status)}
+                    </StatusToneChip>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      {row.status === DP_LEAVE_STATUS.REQUESTED ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={cn(S.btnGhost, 'min-h-touch text-2xs text-danger')}
+                          onClick={() => void cancelLeave(row)}
+                        >
+                          {t(locale, 'employeeHome.dpCancelLeave')}
+                        </button>
+                      ) : null}
+                      {row.leaveType === DP_LEAVE_TYPE.SICK &&
+                      row.status !== DP_LEAVE_STATUS.CANCELLED &&
+                      row.status !== DP_LEAVE_STATUS.REJECTED ? (
+                        <button
+                          type="button"
+                          disabled={busy || leaveUploadId === row.id}
+                          className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                          onClick={() => startLeaveUpload(row.id)}
+                        >
+                          {leaveUploadId === row.id
+                            ? t(locale, 'panel.common.loading')
+                            : t(locale, 'panel.dp.leaveAttachFile')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 </li>
                 );
               })}

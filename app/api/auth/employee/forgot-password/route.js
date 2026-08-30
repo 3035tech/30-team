@@ -51,10 +51,6 @@ export async function POST(request) {
       );
     }
 
-    if (result.needsCompanySlug) {
-      return NextResponse.json({ ok: true, needsCompanySlug: true });
-    }
-
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

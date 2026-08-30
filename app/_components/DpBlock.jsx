@@ -8,6 +8,7 @@ import {
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
 } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading, ContentEnter } from './AppLoading';
@@ -89,7 +90,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploadKey, setUploadKey] = useState(null);
+  const [leaveUploadId, setLeaveUploadId] = useState(null);
   const fileInputRef = useRef(null);
+  const leaveFileRef = useRef(null);
 
   const readOnly = employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
   const visible =
@@ -432,6 +435,18 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           max: 365,
         },
         {
+          key: 'periodStart',
+          type: 'date',
+          label: t(locale, 'panel.dp.balancePeriodStart'),
+          defaultValue: balance?.periodStart || '',
+        },
+        {
+          key: 'periodEnd',
+          type: 'date',
+          label: t(locale, 'panel.dp.balancePeriodEnd'),
+          defaultValue: balance?.periodEnd || '',
+        },
+        {
           key: 'notes',
           type: 'textarea',
           label: t(locale, 'panel.dp.balanceNotes'),
@@ -450,14 +465,21 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
     }
     setBusy(true);
     try {
+      const payload = {
+        entitlementDays,
+        adjustmentDays,
+        notes: values.notes,
+      };
+      if (values.periodStart && values.periodEnd) {
+        payload.periodStart = values.periodStart;
+        payload.periodEnd = values.periodEnd;
+      } else if (!values.periodStart && !values.periodEnd && balance?.customPeriod) {
+        payload.clearPeriod = true;
+      }
       const res = await fetch(`${baseUrl}/leave-balance`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entitlementDays,
-          adjustmentDays,
-          notes: values.notes,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
@@ -529,6 +551,68 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
     }
   };
 
+  const decideLeave = async (row, status) => {
+    if (!scopedCompanyId) {
+      toast(t(locale, 'panel.dp.needCompanyHint'), 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/dp/leave/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: scopedCompanyId, status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      await load();
+      toast(
+        status === DP_LEAVE_STATUS.APPROVED
+          ? t(locale, 'panel.dp.leaveApproved')
+          : t(locale, 'panel.dp.leaveRejected'),
+        'ok'
+      );
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.leaveUpdateError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startLeaveUpload = (leaveId) => {
+    setLeaveUploadId(leaveId);
+    leaveFileRef.current?.click();
+  };
+
+  const onLeaveFilePicked = async (ev) => {
+    const file = ev.target.files?.[0];
+    const leaveId = leaveUploadId;
+    ev.target.value = '';
+    if (!file || !leaveId || !scopedCompanyId) {
+      setLeaveUploadId(null);
+      return;
+    }
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const params = new URLSearchParams({ companyId: String(scopedCompanyId) });
+      const res = await fetch(
+        `/api/admin/dp/leave/${encodeURIComponent(leaveId)}/file?${params}`,
+        { method: 'POST', body: fd }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'upload');
+      toast(t(locale, 'panel.dp.uploadOk'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.uploadError'), 'error');
+    } finally {
+      setBusy(false);
+      setLeaveUploadId(null);
+    }
+  };
+
   if (loading) return <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />;
 
   const orderedDocs = [...documents].sort((a, b) => {
@@ -553,6 +637,13 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         accept="application/pdf,image/jpeg,image/png"
         className="hidden"
         onChange={(e) => void onFilePicked(e)}
+      />
+      <input
+        ref={leaveFileRef}
+        type="file"
+        accept="application/pdf,image/jpeg,image/png"
+        className="hidden"
+        onChange={(e) => void onLeaveFilePicked(e)}
       />
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
@@ -718,6 +809,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             showPoolMeta
             showNotes
             showDefaultHint
+            showPeriod
           />
       </div>
 
@@ -772,13 +864,55 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       {t(locale, 'panel.dp.managerNotes')}: {row.managerNotes}
                     </p>
                   ) : null}
+                  {row.hasFile && row.fileUrl ? (
+                    <div className="mt-1">
+                      <CopyableLink
+                        url={row.fileUrl}
+                        label={row.fileName || t(locale, 'panel.dp.docOpenFile')}
+                        compact
+                        locale={locale}
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 {!readOnly && scopedCompanyId ? (
-                  <AdminEditButton
-                    label={t(locale, 'panel.dp.editLeave')}
-                    onClick={() => void editLeave(row)}
-                    disabled={busy}
-                  />
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                    {row.status === DP_LEAVE_STATUS.REQUESTED ? (
+                      <>
+                        <AdminIconButton
+                          icon="check"
+                          label={t(locale, 'panel.dp.approveLeave')}
+                          onClick={() => void decideLeave(row, DP_LEAVE_STATUS.APPROVED)}
+                          disabled={busy}
+                        />
+                        <AdminIconButton
+                          icon="x"
+                          label={t(locale, 'panel.dp.rejectLeave')}
+                          onClick={() => void decideLeave(row, DP_LEAVE_STATUS.REJECTED)}
+                          disabled={busy}
+                        />
+                      </>
+                    ) : null}
+                    {row.leaveType === DP_LEAVE_TYPE.SICK &&
+                    row.status !== DP_LEAVE_STATUS.CANCELLED &&
+                    row.status !== DP_LEAVE_STATUS.REJECTED ? (
+                      <button
+                        type="button"
+                        disabled={busy || leaveUploadId === row.id}
+                        className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                        onClick={() => startLeaveUpload(row.id)}
+                      >
+                        {leaveUploadId === row.id
+                          ? t(locale, 'panel.common.loading')
+                          : t(locale, 'panel.dp.leaveAttachFile')}
+                      </button>
+                    ) : null}
+                    <AdminEditButton
+                      label={t(locale, 'panel.dp.editLeave')}
+                      onClick={() => void editLeave(row)}
+                      disabled={busy}
+                    />
+                  </div>
                 ) : null}
               </li>
             ))}

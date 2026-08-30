@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { apiError, ERR, httpStatusForError } from '../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
 import { verifyTurnstileToken } from '../../../../../lib/turnstile.js';
-import { loginEmployeeWithPassword } from '../../../../../lib/employee-auth.js';
+import {
+  completeEmployeeCompanyPick,
+  loginEmployeeWithPassword,
+} from '../../../../../lib/employee-auth.js';
 import { query } from '../../../../../lib/db.js';
 import { signEmployee2faChallenge } from '../../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
@@ -15,7 +18,29 @@ async function failDelay() {
   await new Promise((r) => setTimeout(r, FAIL_DELAY_MS));
 }
 
-/** POST /api/auth/employee/login — email + password → cookie (ou desafio 2FA se ativo) */
+async function finishLogin(request, result, locale) {
+  if (result.requires2fa) {
+    return NextResponse.json({
+      ok: true,
+      requires2fa: true,
+      challengeToken: signEmployee2faChallenge({
+        candidateId: result.candidateId,
+        companyId: result.companyId,
+      }),
+    });
+  }
+
+  return buildEmployeeLoginResponse({
+    candidateId: result.candidateId,
+    companyId: result.companyId,
+    email: result.email,
+    locale,
+    fullName: result.fullName,
+    request,
+  });
+}
+
+/** POST /api/auth/employee/login — email+password → cookie | 2FA | company pick */
 export async function POST(request) {
   try {
     const ip = clientIpFromRequest(request);
@@ -32,10 +57,25 @@ export async function POST(request) {
       return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
     }
 
+    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const pickToken = String(body.pickToken || '').trim();
+    const pickCandidateId = body.candidateId != null ? Number(body.candidateId) : null;
+
+    // Step 2: choose company after password proved
+    if (pickToken) {
+      const picked = await completeEmployeeCompanyPick(query, {
+        pickToken,
+        candidateId: pickCandidateId,
+      });
+      if (!picked.ok) {
+        await failDelay();
+        return apiError(request, ERR.UNAUTHORIZED, 401);
+      }
+      return finishLogin(request, picked, locale);
+    }
+
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
-    const companySlug = String(body.companySlug || '').trim() || null;
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
 
     if (email) {
       const rlEmail = await checkRateLimit(`employee-login-email:${email}`, 12, 15 * 60 * 1000);
@@ -49,36 +89,25 @@ export async function POST(request) {
     const result = await loginEmployeeWithPassword(query, {
       email,
       password,
-      companySlug,
+      companyId: body.companyId != null ? Number(body.companyId) : null,
+      companySlug: String(body.companySlug || '').trim() || null,
     });
 
-    if (result.needsCompanySlug) {
-      return apiError(request, ERR.COMPANY_SLUG_REQUIRED, httpStatusForError(ERR.COMPANY_SLUG_REQUIRED));
-    }
     if (!result.ok) {
       await failDelay();
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
-    if (result.requires2fa) {
+    if (result.needsCompanyPick) {
       return NextResponse.json({
         ok: true,
-        requires2fa: true,
-        challengeToken: signEmployee2faChallenge({
-          candidateId: result.candidateId,
-          companyId: result.companyId,
-        }),
+        needsCompanyPick: true,
+        pickToken: result.pickToken,
+        companies: result.companies,
       });
     }
 
-    return await buildEmployeeLoginResponse({
-      candidateId: result.candidateId,
-      companyId: result.companyId,
-      email: result.email,
-      locale,
-      fullName: result.fullName,
-      request,
-    });
+    return finishLogin(request, result, locale);
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
       return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

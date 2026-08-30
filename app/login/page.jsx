@@ -35,7 +35,17 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = sanitizeLoginRedirect(searchParams.get('redirect'));
+  const sessionReason = String(searchParams.get('reason') || '').slice(0, 40);
   const [locale, setLocale] = useLocale();
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const prev = document.title;
+    document.title = t(locale, 'login.documentTitle');
+    return () => {
+      document.title = prev;
+    };
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -239,6 +249,17 @@ function LoginForm() {
         ) : null}
         {requires2fa ? (
           <p className={cn(S.muted, 'mb-7')}>{t(locale, 'login.twoFaIntro')}</p>
+        ) : null}
+
+        {sessionReason === 'expired' ? (
+          <InlineCallout tone="warning" emphasis className="mb-5">
+            {t(locale, 'login.sessionExpired')}
+          </InlineCallout>
+        ) : null}
+        {sessionReason === 'logout' ? (
+          <InlineCallout tone="info" emphasis className="mb-5">
+            {t(locale, 'login.logoutOk')}
+          </InlineCallout>
         ) : null}
 
         {error ? (

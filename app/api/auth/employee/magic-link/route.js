@@ -48,10 +48,6 @@ export async function POST(request) {
       return apiError(request, result.errorCode || ERR.INTERNAL, httpStatusForError(result.errorCode || ERR.INTERNAL));
     }
 
-    if (result.needsCompanySlug) {
-      return NextResponse.json({ ok: true, needsCompanySlug: true });
-    }
-
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

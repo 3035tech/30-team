@@ -8,22 +8,6 @@ import { StatMetricTile } from './StatMetricTile';
 
 /**
  * Vacation balance tiles + low/negative callouts (manager DP + /employee).
- * @param {{
- *   locale?: string,
- *   balance: null | {
- *     availableDays?: number,
- *     usedDays?: number,
- *     pendingDays?: number,
- *     entitlementDays?: number,
- *     adjustmentDays?: number,
- *     notes?: string,
- *     defaultEntitlement?: boolean,
- *   },
- *   showPoolMeta?: boolean,
- *   showNotes?: boolean,
- *   showDefaultHint?: boolean,
- *   className?: string,
- * }} props
  */
 export function LeaveBalanceSummary({
   locale = 'pt-BR',
@@ -31,6 +15,7 @@ export function LeaveBalanceSummary({
   showPoolMeta = false,
   showNotes = false,
   showDefaultHint = false,
+  showPeriod = false,
   className = '',
 }) {
   if (!balance) {
@@ -70,6 +55,14 @@ export function LeaveBalanceSummary({
           label={t(locale, 'panel.dp.balancePending')}
         />
       </div>
+      {showPeriod && balance.periodStart && balance.periodEnd ? (
+        <p className={cn(S.faint, 'mb-0 mt-2')}>
+          {t(locale, 'panel.dp.balancePeriodMeta', {
+            start: String(balance.periodStart).slice(0, 10),
+            end: String(balance.periodEnd).slice(0, 10),
+          })}
+        </p>
+      ) : null}
       {showPoolMeta ? (
         <p className={cn(S.faint, 'mb-0 mt-2')}>
           {t(locale, 'panel.dp.balancePoolMeta', {

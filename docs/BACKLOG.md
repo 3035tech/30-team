@@ -587,7 +587,7 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 1. Solicitação no `/employee`; saldo; aprovação gestor/RH; calendário do time.
 2. Tipos: férias, atestado, licença (taxonomia fechada).
 3. Integra eventos de folha quando **B-2726** existir.
-4. **Entregue (saldo leve):** pedido → aprovação, calendário 60d, tipos fechados, **saldo de férias** (direito + ajuste − usado − pendente; bloqueio se exceder; exceção RH). Sem evento de folha (ver Guia → DP leve).
+4. **Entregue (saldo + polish):** pedido → aprovação (1 clique no inbox), calendário 60d expandido por dia, tipos fechados, **saldo de férias no período aquisitivo**, bloqueio por saldo e por sobreposição, cancelamento pelo colaborador (solicitado), anexo de atestado, fila de docs no inbox, export CSV. Sem evento de folha (ver Guia → DP leve).
 
 ### B-2724 — Admissão digital + GED + assinatura
 1. Checklist pós-hire (docs: RG, contrato, etc.); upload S3; status por documento.

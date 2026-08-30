@@ -35,6 +35,7 @@ import {
   clientSortNextDir,
 } from '../dashboard-shared';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { RichTextView } from '../../_components/RichTextView';
 
 const ENROLL_PAGE_THRESHOLD = 10;
 
@@ -181,7 +182,12 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
       title: t(locale, 'panel.lms.createCourse'),
       fields: [
         { name: 'title', label: t(locale, 'panel.lms.fieldTitle'), type: 'text', required: true },
-        { name: 'description', label: t(locale, 'panel.lms.fieldDescription'), type: 'textarea' },
+        {
+          name: 'description',
+          label: t(locale, 'panel.lms.fieldDescription'),
+          type: 'richText',
+          minHeight: 120,
+        },
         {
           name: 'completionPct',
           label: t(locale, 'panel.lms.fieldCompletionPct'),
@@ -228,7 +234,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
         {
           name: 'description',
           label: t(locale, 'panel.lms.fieldDescription'),
-          type: 'textarea',
+          type: 'richText',
+          minHeight: 120,
           defaultValue: c.description || '',
         },
         {
@@ -783,9 +790,10 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
             </div>
 
             {course.description ? (
-              <p className="m-0 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-ink-muted">
-                {course.description}
-              </p>
+              <RichTextView
+                html={course.description}
+                className="m-0 max-w-3xl text-sm leading-relaxed text-ink-muted"
+              />
             ) : null}
 
             {ops ? (

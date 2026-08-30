@@ -9,8 +9,10 @@ import {
   DP_LEAVE_TYPE,
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
-import { leaveInclusiveDays } from '../../lib/leave-days.js';
+import { expandLeaveCalendarByDay, leaveInclusiveDays } from '../../lib/leave-days.js';
 import {
+  buildLeaveExportCsv,
+  cancelEmployeeLeaveRequest,
   createLeaveRequest,
   ensureDpDocuments,
   getDpAttentionPulse,
@@ -27,6 +29,15 @@ import {
 
 async function main() {
   assert.equal(leaveInclusiveDays('2030-01-10', '2030-01-20'), 11);
+
+  const expanded = expandLeaveCalendarByDay(
+    [{ id: 1, startsOn: '2030-01-10', endsOn: '2030-01-12' }],
+    '2030-01-09',
+    '2030-01-15'
+  );
+  assert.equal(expanded.length, 3);
+  assert.equal(expanded[0][0], '2030-01-10');
+  assert.equal(expanded[2][0], '2030-01-12');
 
   const parsed = parseLeaveListParams({
     page: '2',
@@ -101,9 +112,13 @@ async function main() {
     entitlementDays: 90,
     adjustmentDays: 0,
     notes: 'dtov seed',
+    periodStart: '2030-01-01',
+    periodEnd: '2030-12-31',
     userId,
   });
   assert.equal(seedBal.ok, true, seedBal.errorCode);
+  assert.equal(seedBal.balance.periodStart, '2030-01-01');
+  assert.equal(seedBal.balance.customPeriod, true);
 
   const leave = await createLeaveRequest({ query }, {
     companyId,
@@ -117,6 +132,18 @@ async function main() {
   assert.equal(leave.ok, true, leave.errorCode);
   assert.equal(leave.item.status, DP_LEAVE_STATUS.REQUESTED);
 
+  const overlap = await createLeaveRequest({ query }, {
+    companyId,
+    candidateId,
+    leaveType: DP_LEAVE_TYPE.SICK,
+    startsOn: '2030-01-15',
+    endsOn: '2030-01-16',
+    reason: 'should overlap',
+    requestedBy: 'employee',
+  });
+  assert.equal(overlap.ok, false);
+  assert.equal(overlap.errorCode, 'LEAVE_OVERLAP');
+
   const balPending = await getLeaveBalance({ query }, { companyId, candidateId });
   assert.equal(balPending.ok, true, balPending.errorCode);
   assert.ok(balPending.balance.pendingDays >= 11);
@@ -128,6 +155,36 @@ async function main() {
     pageSize: 20,
   });
   assert.ok(listed.items.some((r) => r.id === leave.item.id));
+
+  const csv = buildLeaveExportCsv(listed.items.slice(0, 3));
+  assert.ok(csv.includes('leave_type'));
+  assert.ok(csv.includes('candidate_name'));
+
+  const cancelledProbe = await createLeaveRequest({ query }, {
+    companyId,
+    candidateId,
+    leaveType: DP_LEAVE_TYPE.UNPAID,
+    startsOn: '2030-06-01',
+    endsOn: '2030-06-02',
+    reason: 'cancel me',
+    requestedBy: 'employee',
+  });
+  assert.equal(cancelledProbe.ok, true, cancelledProbe.errorCode);
+  const cancelled = await cancelEmployeeLeaveRequest({ query }, {
+    id: cancelledProbe.item.id,
+    companyId,
+    candidateId,
+  });
+  assert.equal(cancelled.ok, true, cancelled.errorCode);
+  assert.equal(cancelled.item.status, DP_LEAVE_STATUS.CANCELLED);
+
+  const notCancel = await cancelEmployeeLeaveRequest({ query }, {
+    id: cancelledProbe.item.id,
+    companyId,
+    candidateId,
+  });
+  assert.equal(notCancel.ok, false);
+  assert.equal(notCancel.errorCode, 'LEAVE_NOT_CANCELLABLE');
 
   const decided = await updateLeaveRequest({ query }, {
     id: leave.item.id,
@@ -150,10 +207,13 @@ async function main() {
     entitlementDays: 5,
     adjustmentDays: 0,
     notes: 'dtov low',
+    periodStart: '2031-01-01',
+    periodEnd: '2031-12-31',
     userId,
   });
   assert.equal(setBal.ok, true, setBal.errorCode);
   assert.equal(setBal.balance.entitlementDays, 5);
+  assert.equal(setBal.balance.periodStart, '2031-01-01');
 
   const over = await createLeaveRequest({ query }, {
     companyId,
@@ -187,6 +247,8 @@ async function main() {
     to: '2030-01-31',
   });
   assert.ok(cal.items.some((r) => r.id === leave.item.id));
+  assert.ok(Array.isArray(cal.byDay));
+  assert.ok(cal.byDay.some(([d]) => d === '2030-01-15'));
 
   const pulse = await getDpAttentionPulse({ query }, { companyId });
   assert.ok(Array.isArray(pulse.pendingDocs));

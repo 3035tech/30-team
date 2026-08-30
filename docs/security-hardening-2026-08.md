@@ -56,7 +56,7 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 
 | Item | Mudança |
 |------|---------|
-| Auth colaborador multi-empresa | Sem lista `companies`; pede `companySlug` (`COMPANY_SLUG_REQUIRED` / `needsCompanySlug`) |
+| Auth colaborador multi-empresa | Após senha OK: se 2+ vínculos, escolhe empresa **pelo nome** (`needsCompanyPick` + `pickToken`). Lista só empresas cuja senha bateu. Magic/forgot: um e-mail por vínculo (sem slug). |
 | Signup anti-enum | Conta já ativa → `{ ok: true }` + e-mail de lembrete (sem 409 `EMAIL_ALREADY_REGISTERED`) |
 | Login gestor | `password_setup_token` pendente → mesmo `INVALID_CREDENTIALS` + delay (sem `PASSWORD_SETUP_PENDING`) |
 | Tokens públicos | `/e` TTL default **14** dias (máx. 90); `/r` default 14; `lib/redact-secrets.js` em audit metadata |

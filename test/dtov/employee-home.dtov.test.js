@@ -94,6 +94,73 @@ async function main() {
   });
   assert.equal(bad.ok, false);
 
+  // Multi-company pick: clone employee into another company with same password
+  const otherCo = await query(
+    `SELECT id FROM companies WHERE deleted = FALSE AND id <> $1 ORDER BY id ASC LIMIT 1`,
+    [person.companyId]
+  );
+  if (otherCo.rowCount) {
+    const otherCompanyId = Number(otherCo.rows[0].id);
+    const hashRow = await query(
+      `SELECT password_hash AS "passwordHash" FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`,
+      [person.candidateId, person.companyId]
+    );
+    const pwdHash = hashRow.rows[0]?.passwordHash;
+    assert.ok(pwdHash, 'password hash for pick test');
+
+    let cloneId = null;
+    const existing = await query(
+      `SELECT id FROM candidates
+       WHERE company_id = $1 AND LOWER(TRIM(email)) = LOWER(TRIM($2))
+         AND employment_status = $3
+       LIMIT 1`,
+      [otherCompanyId, person.email, EMPLOYMENT_STATUS.EMPLOYEE]
+    );
+    if (existing.rowCount) {
+      cloneId = existing.rows[0].id;
+      await query(`UPDATE candidates SET password_hash = $3 WHERE id = $1 AND company_id = $2`, [
+        cloneId,
+        otherCompanyId,
+        pwdHash,
+      ]);
+    } else {
+      const clone = await query(
+        `INSERT INTO candidates (
+           company_id, full_name, email, employment_status, password_hash
+         ) VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [
+          otherCompanyId,
+          `${person.fullName || 'Clone'} (DTOV)`,
+          person.email,
+          EMPLOYMENT_STATUS.EMPLOYEE,
+          pwdHash,
+        ]
+      );
+      cloneId = clone.rows[0]?.id;
+    }
+
+    if (cloneId) {
+      const multi = await loginEmployeeWithPassword(query, {
+        email: person.email,
+        password: 'ColabTest!2026',
+      });
+      assert.equal(multi.ok, true, multi.errorCode);
+      assert.equal(multi.needsCompanyPick, true);
+      assert.ok(multi.pickToken);
+      assert.ok(Array.isArray(multi.companies) && multi.companies.length >= 2);
+      assert.ok(multi.companies.every((c) => c.companyName));
+      const { completeEmployeeCompanyPick } = await import('../../lib/employee-auth.js');
+      const picked = await completeEmployeeCompanyPick(query, {
+        pickToken: multi.pickToken,
+        candidateId: person.candidateId,
+      });
+      assert.equal(picked.ok, true, picked.errorCode);
+      assert.equal(picked.candidateId, person.candidateId);
+      assert.equal(picked.companyId, person.companyId);
+    }
+  }
+
   const magic = generateEmployeeMagicToken();
   await query(
     `INSERT INTO employee_login_tokens (company_id, candidate_id, token, expires_at)

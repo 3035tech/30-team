@@ -1844,3 +1844,16 @@ COMMENT ON TABLE employee_leave_balances IS
 
 INSERT INTO schema_migrations (name) VALUES ('087_leave_balance.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 088_dp_leave_polish.sql
+ALTER TABLE employee_leave_balances
+  ADD COLUMN IF NOT EXISTS period_start DATE,
+  ADD COLUMN IF NOT EXISTS period_end DATE;
+
+ALTER TABLE employee_leave_requests
+  ADD COLUMN IF NOT EXISTS file_url TEXT,
+  ADD COLUMN IF NOT EXISTS file_key TEXT,
+  ADD COLUMN IF NOT EXISTS file_name TEXT NOT NULL DEFAULT '';
+
+INSERT INTO schema_migrations (name) VALUES ('088_dp_leave_polish.sql')
+ON CONFLICT (name) DO NOTHING;

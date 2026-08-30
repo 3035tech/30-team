@@ -48,16 +48,32 @@ export function EmployeeTopBar({
   }, [router]);
 
   useEffect(() => {
-    loadNotifs();
-    pollRef.current = setInterval(loadNotifs, 20000);
-    const onVis = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        void loadNotifs();
+    const clearPoll = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
       }
+    };
+    const startPoll = () => {
+      clearPoll();
+      pollRef.current = setInterval(loadNotifs, 20000);
+    };
+    const sync = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        clearPoll();
+        return;
+      }
+      void loadNotifs();
+      startPoll();
+    };
+    sync();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') sync();
+      else clearPoll();
     };
     document.addEventListener('visibilitychange', onVis);
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearPoll();
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [loadNotifs]);

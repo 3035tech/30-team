@@ -196,6 +196,7 @@ export async function middleware(request) {
       }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('reason', 'expired');
       return secureResponse(request, NextResponse.redirect(loginUrl));
     }
 
@@ -209,6 +210,7 @@ export async function middleware(request) {
       }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('reason', 'expired');
       return secureResponse(request, NextResponse.redirect(loginUrl));
     }
 

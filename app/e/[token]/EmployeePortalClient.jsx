@@ -284,7 +284,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
                   aria-label={`${course.title}: ${course.progressPct}%`}
                 />
                 {course.description ? (
-                  <p className={cn(S.muted, 'mt-1 text-xs')}>{course.description}</p>
+                  <RichTextView html={course.description} className={cn(S.muted, 'mt-1 text-xs')} />
                 ) : null}
                 {course.dueDate || course.mandatory || course.overdue ? (
                   <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-2xs">

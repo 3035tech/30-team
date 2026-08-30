@@ -9,10 +9,12 @@ import {
   DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
 } from '../../../lib/domain-status.js';
+import { expandLeaveCalendarByDay } from '../../../lib/leave-days.js';
 import { cn } from '../../../lib/cn';
 import {
   AdminActionsCell,
   AdminActionsTh,
+  AdminCreateButton,
   AdminEditButton,
   AdminIconButton,
   AdminListPager,
@@ -85,12 +87,15 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const [reloadKey, setReloadKey] = useState(0);
 
   const [calendarItems, setCalendarItems] = useState([]);
+  const [calendarByDay, setCalendarByDay] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [requestedCount, setRequestedCount] = useState(0);
   const [pendingDocsPeople, setPendingDocsPeople] = useState(0);
+  const [pendingDocsList, setPendingDocsList] = useState([]);
   const [firstPendingDocCandidateId, setFirstPendingDocCandidateId] = useState(null);
   const [absenteeismPeople, setAbsenteeismPeople] = useState(0);
   const [firstAbsenteeismCandidateId, setFirstAbsenteeismCandidateId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -132,6 +137,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
     if (!companyId) {
       setRequestedCount(0);
       setPendingDocsPeople(0);
+      setPendingDocsList([]);
       setFirstPendingDocCandidateId(null);
       setAbsenteeismPeople(0);
       setFirstAbsenteeismCandidateId(null);
@@ -144,7 +150,9 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       if (!res.ok) return;
       setRequestedCount(Number(data.requestedLeaves) || 0);
       setPendingDocsPeople(Number(data.pendingDocsPeople) || 0);
-      const first = Array.isArray(data.pendingDocs) ? data.pendingDocs[0] : null;
+      const docs = Array.isArray(data.pendingDocs) ? data.pendingDocs : [];
+      setPendingDocsList(docs);
+      const first = docs[0] || null;
       setFirstPendingDocCandidateId(first?.candidateId != null ? Number(first.candidateId) : null);
       setAbsenteeismPeople(Number(data.absenteeismPeople) || 0);
       const firstAbs = Array.isArray(data.absenteeism) ? data.absenteeism[0] : null;
@@ -163,23 +171,33 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const loadCalendar = useCallback(async () => {
     if (!companyId) {
       setCalendarItems([]);
+      setCalendarByDay([]);
       return;
     }
     setCalendarLoading(true);
     try {
+      const from = isoToday();
+      const to = isoPlusDays(60);
       const params = new URLSearchParams({
         companyId: String(companyId),
         mode: 'calendar',
-        from: isoToday(),
-        to: isoPlusDays(60),
+        from,
+        to,
       });
       const res = await fetch(`/api/admin/dp/leave?${params}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'load');
-      setCalendarItems(Array.isArray(data.items) ? data.items : []);
+      const items = Array.isArray(data.items) ? data.items : [];
+      setCalendarItems(items);
+      setCalendarByDay(
+        Array.isArray(data.byDay) && data.byDay.length
+          ? data.byDay
+          : expandLeaveCalendarByDay(items, from, to)
+      );
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
       setCalendarItems([]);
+      setCalendarByDay([]);
     } finally {
       setCalendarLoading(false);
     }
@@ -189,15 +207,95 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
     void loadCalendar();
   }, [loadCalendar, reloadKey]);
 
-  const calendarByDate = useMemo(() => {
-    const map = new Map();
-    for (const row of calendarItems) {
-      const key = String(row.startsOn || '').slice(0, 10) || '—';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(row);
+  const calendarByDate = useMemo(() => calendarByDay, [calendarByDay]);
+
+  const createLeave = async () => {
+    const today = isoToday();
+    const values = await promptForm({
+      title: t(locale, 'panel.dp.leaveAdd'),
+      confirmLabel: t(locale, 'panel.dp.save'),
+      fields: [
+        {
+          name: 'candidateId',
+          label: t(locale, 'panel.dp.colName'),
+          type: 'entitySearch',
+          required: true,
+          searchUrl: '/api/admin/employees/search',
+          placeholder: t(locale, 'panel.dp.searchPh'),
+          minChars: 1,
+        },
+        {
+          name: 'leaveType',
+          type: 'select',
+          label: t(locale, 'panel.dp.leaveTypeLabel'),
+          defaultValue: DP_LEAVE_TYPE.VACATION,
+          required: true,
+          options: DP_LEAVE_TYPES.map((v) => ({
+            value: v,
+            label: leaveTypeLabel(locale, v),
+          })),
+        },
+        {
+          name: 'startsOn',
+          type: 'date',
+          label: t(locale, 'panel.dp.leaveStarts'),
+          defaultValue: today,
+          required: true,
+        },
+        {
+          name: 'endsOn',
+          type: 'date',
+          label: t(locale, 'panel.dp.leaveEnds'),
+          defaultValue: today,
+          required: true,
+        },
+        {
+          name: 'reason',
+          type: 'textarea',
+          label: t(locale, 'panel.dp.leaveReason'),
+          defaultValue: '',
+          rows: 2,
+          maxLength: 2000,
+        },
+        {
+          name: 'autoApprove',
+          type: 'boolean',
+          label: t(locale, 'panel.dp.createAutoApprove'),
+          defaultValue: true,
+        },
+        {
+          name: 'allowOverBalance',
+          type: 'boolean',
+          label: t(locale, 'panel.dp.leaveAllowOver'),
+          defaultValue: false,
+          showWhen: (v) => v.leaveType === DP_LEAVE_TYPE.VACATION,
+        },
+      ],
+    });
+    if (!values) return;
+    try {
+      const res = await fetch('/api/admin/dp/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          candidateId: values.candidateId,
+          leaveType: values.leaveType,
+          startsOn: values.startsOn,
+          endsOn: values.endsOn,
+          reason: values.reason,
+          autoApprove: values.autoApprove !== false,
+          allowOverBalance: values.allowOverBalance === true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'create');
+      toast(t(locale, 'panel.dp.leaveCreated'), 'ok');
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.leaveCreateError'), 'error');
     }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [calendarItems]);
+  };
 
   const editLeave = async (row) => {
     const values = await promptForm({
@@ -245,6 +343,55 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
     }
   };
 
+  const decideLeave = async (row, status) => {
+    try {
+      const res = await fetch(`/api/admin/dp/leave/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId, status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'save');
+      toast(
+        status === DP_LEAVE_STATUS.APPROVED
+          ? t(locale, 'panel.dp.leaveApproved')
+          : t(locale, 'panel.dp.leaveRejected'),
+        'ok'
+      );
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.leaveUpdateError'), 'error');
+    }
+  };
+
+  const exportCsv = async () => {
+    if (!companyId || exporting) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ companyId: String(companyId) });
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (leaveTypeFilter !== 'all') params.set('leaveType', leaveTypeFilter);
+      if (q) params.set('q', q);
+      const res = await fetch(`/api/admin/dp/leave/export?${params}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'export');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dp-leave_${isoToday()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast(t(locale, 'panel.dp.exportOk'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.exportError'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (!companyId) {
     return (
       <ContentEnter animKey="dp-need-company">
@@ -267,8 +414,9 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         title={t(locale, 'panel.dp.inboxTitle')}
         subtitle={t(locale, 'panel.dp.inboxSubtitle')}
         actions={
-          requestedCount > 0 || pendingDocsPeople > 0 || absenteeismPeople > 0 ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {requestedCount > 0 || pendingDocsPeople > 0 || absenteeismPeople > 0 ? (
+              <>
             {requestedCount > 0 ? (
               <button
                 type="button"
@@ -330,8 +478,21 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                 </StatusToneChip>
               </button>
             ) : null}
+              </>
+            ) : null}
+            <AdminCreateButton
+              label={t(locale, 'panel.dp.leaveAdd')}
+              onClick={() => void createLeave()}
+            />
+            <button
+              type="button"
+              disabled={exporting}
+              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+              onClick={() => void exportCsv()}
+            >
+              {exporting ? t(locale, 'panel.common.loading') : t(locale, 'panel.dp.exportCsv')}
+            </button>
           </div>
-          ) : null
         }
       />
 
@@ -398,6 +559,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
           <EmptyState
             title={t(locale, 'panel.dp.emptyTitle')}
             message={t(locale, 'panel.dp.emptyHint')}
+            actionLabel={t(locale, 'panel.dp.leaveAdd')}
+            onAction={() => void createLeave()}
           />
         </ContentEnter>
       ) : (
@@ -441,6 +604,20 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                     </td>
                     <td className="px-3 py-2.5 text-right align-middle">
                       <AdminActionsCell>
+                        {row.status === DP_LEAVE_STATUS.REQUESTED ? (
+                          <>
+                            <AdminIconButton
+                              icon="check"
+                              label={t(locale, 'panel.dp.approveLeave')}
+                              onClick={() => void decideLeave(row, DP_LEAVE_STATUS.APPROVED)}
+                            />
+                            <AdminIconButton
+                              icon="x"
+                              label={t(locale, 'panel.dp.rejectLeave')}
+                              onClick={() => void decideLeave(row, DP_LEAVE_STATUS.REJECTED)}
+                            />
+                          </>
+                        ) : null}
                         <AdminEditButton
                           label={t(locale, 'panel.dp.editLeave')}
                           onClick={() => void editLeave(row)}
@@ -483,6 +660,49 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       <CollapsibleBlock
         locale={locale}
         variant="card"
+        title={t(locale, 'panel.dp.docsQueueTitle')}
+        defaultOpen={pendingDocsList.length > 0}
+        count={pendingDocsList.length || null}
+      >
+        {pendingDocsList.length === 0 ? (
+          <EmptyState message={t(locale, 'panel.dp.docsQueueEmpty')} />
+        ) : (
+          <ContentEnter animKey={`dp-docs|${pendingDocsList.length}`}>
+            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+              {pendingDocsList.map((row) => (
+                <li
+                  key={row.candidateId}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <span className="font-ui text-sm text-ink">{row.candidateName || '—'}</span>
+                    <span className="ml-2 font-mono text-2xs text-ink-muted">
+                      {t(locale, 'panel.dp.docsQueuePending', { n: row.pending })}
+                    </span>
+                  </div>
+                  {typeof navigateDashboard === 'function' ? (
+                    <AdminIconButton
+                      icon="users"
+                      label={t(locale, 'panel.dp.openTeam')}
+                      onClick={() =>
+                        navigateDashboard({
+                          tab: 'team',
+                          candidate: String(row.candidateId),
+                          section: 'dp',
+                        })
+                      }
+                    />
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </ContentEnter>
+        )}
+      </CollapsibleBlock>
+
+      <CollapsibleBlock
+        locale={locale}
+        variant="card"
         title={t(locale, 'panel.dp.calendarTitle')}
         defaultOpen={false}
         count={calendarItems.length || null}
@@ -500,7 +720,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                 <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                   {rows.map((row) => (
                     <li
-                      key={row.id}
+                      key={`${date}-${row.id}`}
                       className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2"
                     >
                       <div className="min-w-0">

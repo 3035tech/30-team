@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { redirectManagerIfUnauthorized } from '../../lib/manager-client-session';
 import { notificationCopySpec, notificationVisual, NOTIF } from '../../lib/manager-notification-catalog';
 import { GlobalSearch } from './GlobalSearch';
 import { DarkModeToggle } from './DarkModeProvider';
@@ -151,6 +152,7 @@ export function DashboardTopBarMenus({
   const loadNotifs = useCallback(async () => {
     try {
       const res = await fetch('/api/me/notifications?limit=20');
+      if (redirectManagerIfUnauthorized(res.status)) return;
       if (!res.ok) return;
       const data = await res.json();
       setItems(Array.isArray(data.items) ? data.items : []);
@@ -210,8 +212,18 @@ export function DashboardTopBarMenus({
         setProfileOpen(false);
       }
     };
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setNotifOpen(false);
+        setProfileOpen(false);
+      }
+    };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   const markReadAndGo = async (item) => {
@@ -272,6 +284,8 @@ export function DashboardTopBarMenus({
           onClick={() => { setNotifOpen((v) => !v); setProfileOpen(false); if (!notifOpen) loadNotifs(); }}
           aria-label={t(locale, 'dashboard.notificationsAria')}
           aria-expanded={notifOpen}
+          aria-haspopup="true"
+          aria-controls="dashboard-notif-menu"
           className={cn(
             'relative flex h-[42px] w-[42px] cursor-pointer items-center justify-center rounded-xl border border-ink/12 text-ink-muted',
             notifOpen ? 'bg-brand-500/[0.07]' : 'bg-surface/90'
@@ -288,7 +302,7 @@ export function DashboardTopBarMenus({
           ) : null}
         </button>
         {notifOpen ? (
-          <div className={cn(dropdownClass, 'db-dropdown-panel')} role="menu">
+          <div id="dashboard-notif-menu" className={cn(dropdownClass, 'db-dropdown-panel')} role="menu">
             <div className="flex items-center justify-between border-b border-ink/12 px-3.5 py-3">
               <span className="font-mono text-xs text-ink">
                 {t(locale, 'dashboard.notificationsTitle')}
@@ -368,6 +382,8 @@ export function DashboardTopBarMenus({
           )}
           onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
           aria-expanded={profileOpen}
+          aria-haspopup="true"
+          aria-controls="dashboard-profile-menu"
           aria-label={t(locale, 'dashboard.profileMenuAria')}
         >
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-2xs text-brand-500">
@@ -378,7 +394,7 @@ export function DashboardTopBarMenus({
           </span>
         </button>
         {profileOpen ? (
-          <div className={cn(dropdownClass, 'w-[220px]', 'db-dropdown-panel')} role="menu">
+          <div id="dashboard-profile-menu" className={cn(dropdownClass, 'w-[220px]', 'db-dropdown-panel')} role="menu">
             <button
               type="button"
               onClick={() => { setProfileOpen(false); navigateToTab('profile'); }}
