@@ -77,7 +77,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const { promptForm, toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState('all');

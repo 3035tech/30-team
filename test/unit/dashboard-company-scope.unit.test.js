@@ -59,6 +59,13 @@ test('resolveStickyCompanyPreference prefers URL then sticky', () => {
       resolveStickyCompanyPreference({ urlCompany: 'all', companies }),
       null
     );
+    assert.equal(
+      resolveStickyCompanyPreference({
+        urlCompany: 'all',
+        companies: [{ id: 99, name: 'Only' }],
+      }),
+      '99'
+    );
   } finally {
     if (prevWindow === undefined) delete globalThis.window;
     else globalThis.window = prevWindow;

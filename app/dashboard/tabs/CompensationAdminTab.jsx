@@ -65,7 +65,7 @@ function eventTypeLabel(locale, type) {
 export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
   const { toast } = useAppFeedback();
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(companyId));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);

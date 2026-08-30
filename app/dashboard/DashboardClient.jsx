@@ -597,6 +597,36 @@ export default function DashboardClient({
     pushFilters({ company: v, ...extraFilters });
   };
 
+  const companyFilterAllLabel = COMPANY_SCOPE_TABS.has(tab)
+    ? t(locale, 'dashboard.companyFilterPick')
+    : t(locale, 'dashboard.allCompanies');
+
+  const companyFilterControl = (extraFilters = {}) => (
+    <FormField
+      as="div"
+      label={t(locale, 'dashboard.companyFilterLabel')}
+      className="w-auto min-w-[10rem] max-w-[18rem] shrink-0"
+    >
+      <select
+        value={company}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (extraFilters.pipeline === 'all') setPipeline('all');
+          applyCompanyFilter(v, extraFilters);
+        }}
+        className={cn(S.select, 'w-full min-w-[10rem]')}
+        aria-label={t(locale, 'dashboard.companyFilterLabel')}
+      >
+        <option value="all">{companyFilterAllLabel}</option>
+        {companies.map((co) => (
+          <option key={co.id} value={String(co.id)}>
+            {co.name}
+          </option>
+        ))}
+      </select>
+    </FormField>
+  );
+
   useEffect(() => {
     if (!isAdmin || panelLoading || !companies.length) return;
     if (company && company !== 'all') {
@@ -1190,33 +1220,13 @@ export default function DashboardClient({
           <>
           <div
             className={cn(
-              'db-filters flex flex-wrap items-center gap-2',
+              'db-filters flex flex-wrap items-end gap-2',
               filtersExpanded ? 'mb-2' : 'mb-2.5'
             )}
             role="group"
             aria-label={t(locale, 'dashboard.filtersEssentialsAria')}
           >
-            {showsCompanyPicker ? (
-              <FormField
-                label={t(locale, 'dashboard.companyFilterLabel')}
-                className="min-w-[10rem] shrink-0"
-              >
-                <select
-                  value={company}
-                  onChange={(e) => {
-                    applyCompanyFilter(e.target.value, { vacancy: 'all', pipeline: 'all' });
-                    setPipeline('all');
-                  }}
-                  className={S.select}
-                  aria-label={t(locale, 'dashboard.companyFilterLabel')}
-                >
-                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
-                  {companies.map((co) => (
-                    <option key={co.id} value={String(co.id)}>{co.name}</option>
-                  ))}
-                </select>
-              </FormField>
-            ) : null}
+            {showsCompanyPicker ? companyFilterControl({ vacancy: 'all', pipeline: 'all' }) : null}
             <select
               value={roster}
               onChange={(e) => {
@@ -1341,28 +1351,11 @@ export default function DashboardClient({
           </>
           ) : showsCompanyPicker ? (
             <div
-              className="db-filters mb-2.5 flex flex-wrap items-center gap-2"
+              className="db-filters mb-2.5 flex flex-wrap items-end gap-2"
               role="group"
               aria-label={t(locale, 'dashboard.companyFilterLabel')}
             >
-              <FormField
-                label={t(locale, 'dashboard.companyFilterLabel')}
-                className="min-w-[12rem] shrink-0"
-              >
-                <select
-                  value={company}
-                  onChange={(e) => {
-                    applyCompanyFilter(e.target.value);
-                  }}
-                  className={S.select}
-                  aria-label={t(locale, 'dashboard.companyFilterLabel')}
-                >
-                  <option value="all">{t(locale, 'dashboard.allCompanies')}</option>
-                  {companies.map((co) => (
-                    <option key={co.id} value={String(co.id)}>{co.name}</option>
-                  ))}
-                </select>
-              </FormField>
+              {companyFilterControl()}
             </div>
           ) : (
             <div className="mb-3" />
