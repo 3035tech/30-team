@@ -518,11 +518,8 @@ Hoje: botões share WhatsApp com UTM. Sólides: funil WhatsApp para micro/PME.
 2. Depois: webhook provedor (Twilio/Z-API) opt-in — **só** se houver decisão de custo/ops; rate limit; sem spam.
 3. Pode reutilizar canal WhatsApp de ponto (**B-2721**) só com opt-in e templates separados.
 
-### B-2709 — Simulador / prep de entrevista para o candidato
-Sólides: Copilot Carreira. Nós: prep 1:1 é do colaborador/gestor.
-1. Página token na vaga: perguntas derivadas da rubrica/briefing (hedged); respostas só para o candidato (não grava score clínico).
-2. Opcional: gestor vê “preparou-se” sem conteúdo sensível.
-3. i18n; pode oferecer trilha DISC (**B-2720**) além da rubrica T1–T9.
+### B-2709 — Simulador / prep de entrevista para o candidato ✅ ENTREGUE
+Página `/prep/<token>`; perguntas hedged (`buildInterviewQuestions` + rubrica); notas só no dispositivo; `prepared_at` visível ao RH. Admin: bloco na ficha do candidato na vaga.
 
 ### B-2710 — Checagem de antecedentes (integração)
 1. Flag + provedor externo (API) no estágio screening/approved; status na ficha.

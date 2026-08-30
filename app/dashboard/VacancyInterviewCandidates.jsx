@@ -13,6 +13,7 @@ import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, Spinner } from '../_components/AppLoading';
 import { HrActionBrief } from '../_components/HrActionBrief';
 import { InterviewScorecardBlock } from './vacancies/InterviewScorecardBlock';
+import { InterviewPrepBlock } from './vacancies/InterviewPrepBlock';
 import { VacancyOfferBlock } from './vacancies/VacancyOfferBlock';
 import { HireReadinessBlock } from './vacancies/HireReadinessBlock';
 import { VacancyFitDecisionStrip } from './vacancies/VacancyFitDecisionStrip';
@@ -437,6 +438,14 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
                 offerNotes: row.offerNotes,
               }}
               onSaved={() => onChanged?.()}
+            />
+          ) : null}
+
+          {row.candidateId ? (
+            <InterviewPrepBlock
+              vacancyId={vacancyId}
+              candidateId={row.candidateId}
+              locale={locale}
             />
           ) : null}
 

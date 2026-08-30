@@ -77,6 +77,7 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Sugestões de produto** (`/dashboard?tab=product-feedback`) — inbox super admin de ideias/bugs/UX enviados pelos gestores pelo assistente de Ajuda (“Sugerir melhoria”). Migration `082_product_feedback.sql`.
 - **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee#dp`) — ficha (emergência/endereço), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + calendário 60d, absenteísmo (atestados) na Overview e lembretes (`POST /api/cron/dp-doc-reminders`). Migration `083_employee_dp_light.sql`. Não é ponto/folha/eSocial.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
+- **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
 - **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Ver [`docs/audit-log.md`](docs/audit-log.md).
 - **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
 - **Inteligência comportamental** na Visão geral (`behavioralIntel`): no topo (funil recolhido); filtro ou **grupo salvo** (`teamGroup`); perfis, motivadores, forças/atenções (até 5), Top 5 e ações — agregado, hedged, sem nomes.
