@@ -163,7 +163,7 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
   async function viewKudo(row) {
     await notice({
       title: `${row.fromName} → ${row.toName}`,
-      message: row.message || t(locale, 'panel.companyFeed.emptyBody'),
+      message: row.message || t(locale, 'panel.companyFeed.emptyKudo'),
       tone: 'info',
     });
   }
@@ -209,12 +209,15 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
   }
 
   return (
-    <ContentEnter>
+    <ContentEnter animKey={`company-feed-${q}-${page}-${kudosPage}-${postsTotal}-${kudosTotal}`}>
       <AdminPageHeader
         title={t(locale, 'dashboard.companyFeed')}
         subtitle={t(locale, 'panel.companyFeed.subtitle')}
         actions={
-          <AdminCreateButton onClick={createPost}>{t(locale, 'panel.companyFeed.createPost')}</AdminCreateButton>
+          <AdminCreateButton
+            label={t(locale, 'panel.companyFeed.createPost')}
+            onClick={createPost}
+          />
         }
       />
 
@@ -278,14 +281,25 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
               {posts.map((p) => (
                 <tr key={p.id}>
                   <td className="font-ui text-sm text-ink">{p.title}</td>
-                  <td className="font-mono text-prose text-ink-muted">{p.authorName || '—'}</td>
+                  <td className="font-mono text-prose text-ink-muted">
+                    {p.authorName || t(locale, 'panel.common.notApplicable')}
+                  </td>
                   <td className="font-mono text-2xs text-ink-faint">
                     {formatDisplayDateTime(p.createdAt, locale)}
                   </td>
                   <AdminActionsCell>
-                    <AdminViewButton onClick={() => viewPost(p)} />
-                    <AdminEditButton onClick={() => editPost(p)} />
-                    <AdminDeleteButton onClick={() => removePost(p)} />
+                    <AdminViewButton
+                      label={t(locale, 'panel.common.view')}
+                      onClick={() => viewPost(p)}
+                    />
+                    <AdminEditButton
+                      label={t(locale, 'panel.common.edit')}
+                      onClick={() => editPost(p)}
+                    />
+                    <AdminDeleteButton
+                      label={t(locale, 'panel.common.delete')}
+                      onClick={() => removePost(p)}
+                    />
                   </AdminActionsCell>
                 </tr>
               ))}
@@ -310,7 +324,6 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
           defaultOpen={kudosTotal > 0}
           collapsedHint={t(locale, 'panel.companyFeed.kudosHint')}
         >
-          <p className={`${S.faint} mb-3`}>{t(locale, 'panel.companyFeed.kudosHint')}</p>
           {kudos.length === 0 ? (
             <EmptyState
               title={t(locale, 'panel.companyFeed.noKudos')}
@@ -340,8 +353,14 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
                         {formatDisplayDateTime(k.createdAt, locale)}
                       </td>
                       <AdminActionsCell>
-                        <AdminViewButton onClick={() => viewKudo(k)} />
-                        <AdminDeleteButton onClick={() => removeKudo(k)} />
+                        <AdminViewButton
+                          label={t(locale, 'panel.common.view')}
+                          onClick={() => viewKudo(k)}
+                        />
+                        <AdminDeleteButton
+                          label={t(locale, 'panel.common.delete')}
+                          onClick={() => removeKudo(k)}
+                        />
                       </AdminActionsCell>
                     </tr>
                   ))}

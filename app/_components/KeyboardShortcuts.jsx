@@ -1,30 +1,37 @@
 'use client';
 
 /**
- * Sistema de Atalhos de Teclado
- * UX/UX Melhoria #8 — Navegação rápida para power users
+ * Keyboard shortcuts help + g-mode navigation for the dashboard.
  */
 
 import { useState, useEffect } from 'react';
+import { t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
+import { S } from '../dashboard/dashboard-shared';
+import {
+  dialogBtnPrimaryClass,
+  dialogCardClass,
+  dialogOverlayClass,
+} from './app-dialog-styles';
 
 const SHORTCUTS = {
   navigation: [
-    { key: 'j', description: 'Próximo item na lista', mac: 'j', windows: 'j' },
-    { key: 'k', description: 'Item anterior na lista', mac: 'k', windows: 'k' },
-    { key: 'g h', description: 'Ir para Overview', mac: 'g h', windows: 'g h' },
-    { key: 'g t', description: 'Ir para Equipe', mac: 'g t', windows: 'g t' },
-    { key: 'g v', description: 'Ir para Vagas', mac: 'g v', windows: 'g v' },
-    { key: 'g a', description: 'Ir para Analytics', mac: 'g a', windows: 'g a' },
+    { key: 'j', descriptionKey: 'panel.shortcuts.nextItem', mac: 'j', windows: 'j' },
+    { key: 'k', descriptionKey: 'panel.shortcuts.prevItem', mac: 'k', windows: 'k' },
+    { key: 'g h', descriptionKey: 'panel.shortcuts.goOverview', mac: 'g h', windows: 'g h' },
+    { key: 'g t', descriptionKey: 'panel.shortcuts.goTeam', mac: 'g t', windows: 'g t' },
+    { key: 'g v', descriptionKey: 'panel.shortcuts.goVacancies', mac: 'g v', windows: 'g v' },
+    { key: 'g a', descriptionKey: 'panel.shortcuts.goAnalytics', mac: 'g a', windows: 'g a' },
   ],
   actions: [
-    { key: '⌘K', description: 'Busca global', mac: '⌘K', windows: 'Ctrl+K' },
-    { key: 'c', description: 'Criar nova vaga/item', mac: 'c', windows: 'c' },
-    { key: 'e', description: 'Editar item selecionado', mac: 'e', windows: 'e' },
-    { key: 'Esc', description: 'Fechar modal/cancelar', mac: 'Esc', windows: 'Esc' },
+    { key: '⌘K', descriptionKey: 'panel.shortcuts.globalSearch', mac: '⌘K', windows: 'Ctrl+K' },
+    { key: 'c', descriptionKey: 'panel.shortcuts.create', mac: 'c', windows: 'c' },
+    { key: 'e', descriptionKey: 'panel.shortcuts.edit', mac: 'e', windows: 'e' },
+    { key: 'Esc', descriptionKey: 'panel.shortcuts.escape', mac: 'Esc', windows: 'Esc' },
   ],
   help: [
-    { key: '?', description: 'Mostrar atalhos', mac: '?', windows: '?' },
-    { key: '⌘/', description: 'Buscar na ajuda', mac: '⌘/', windows: 'Ctrl+/' },
+    { key: '?', descriptionKey: 'panel.shortcuts.showHelp', mac: '?', windows: '?' },
+    { key: '⌘/', descriptionKey: 'panel.shortcuts.helpSearch', mac: '⌘/', windows: 'Ctrl+/' },
   ],
 };
 
@@ -43,26 +50,21 @@ export function useKeyboardShortcuts({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignorar se estiver em input/textarea
       const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
       if (isInputActive && e.key !== 'Escape') return;
 
-      // Esc — fechar modais
       if (e.key === 'Escape') {
-        // Fechar qualquer modal aberto
-        const closeButtons = document.querySelectorAll('[data-close-modal], [aria-label="Fechar"]');
+        const closeButtons = document.querySelectorAll('[data-close-modal], [aria-label="Fechar"], [aria-label="Close"]');
         closeButtons[closeButtons.length - 1]?.click();
         return;
       }
 
-      // ? — mostrar ajuda
       if (e.key === '?' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setShowHelp(true);
         return;
       }
 
-      // Navegação com j/k
       if (e.key === 'j' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         onNavigateNext?.();
@@ -75,7 +77,6 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // g + tecla para navegação
       if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setGPressed(true);
@@ -93,18 +94,15 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // c — criar
       if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         onCreate?.();
         return;
       }
 
-      // e — editar
       if (e.key === 'e' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         onEdit?.();
-        return;
       }
     };
 
@@ -121,75 +119,61 @@ export function useKeyboardShortcuts({
 export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
   const isMac = typeof window !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
-  const labels = locale === 'en' ? {
-    title: 'Keyboard Shortcuts',
-    navigation: 'Navigation',
-    actions: 'Actions',
-    help: 'Help',
-    close: 'Close',
-  } : {
-    title: 'Atalhos de Teclado',
-    navigation: 'Navegação',
-    actions: 'Ações',
-    help: 'Ajuda',
-    close: 'Fechar',
-  };
-
   useEffect(() => {
+    if (!isOpen) return undefined;
     const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
+    document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
+  const categories = [
+    { id: 'navigation', title: t(locale, 'panel.shortcuts.navTitle') },
+    { id: 'actions', title: t(locale, 'panel.shortcuts.actionsTitle') },
+    { id: 'help', title: t(locale, 'panel.shortcuts.helpTitle') },
+  ];
+
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      className={cn('app-dialog-overlay', dialogOverlayClass)}
+      role="presentation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+        className={cn(dialogCardClass, 'max-h-[80vh] !max-w-xl overflow-y-auto')}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t(locale, 'panel.shortcuts.title')}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">{labels.title}</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/10 bg-surface px-5 py-4">
+          <h2 className="font-display text-lg text-ink">{t(locale, 'panel.shortcuts.title')}</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label={labels.close}
+            className="min-h-touch px-2 font-mono text-prose text-ink-muted hover:text-ink"
+            aria-label={t(locale, 'panel.shortcuts.close')}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            ×
           </button>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-4 space-y-6">
-          {Object.entries({
-            navigation: labels.navigation,
-            actions: labels.actions,
-            help: labels.help,
-          }).map(([category, title]) => (
-            <div key={category}>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
-                {title}
-              </h3>
-              <div className="space-y-2">
-                {SHORTCUTS[category].map((shortcut, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2">
-                    <span className="text-sm text-gray-700">{shortcut.description}</span>
-                    <kbd className="px-3 py-1.5 text-sm font-mono bg-gray-100 border border-gray-300 rounded">
+        <div className="flex flex-col gap-6 px-5 py-4">
+          {categories.map(({ id, title }) => (
+            <div key={id}>
+              <h3 className={S.label}>{title}</h3>
+              <div className="mt-2 flex flex-col gap-1">
+                {SHORTCUTS[id].map((shortcut) => (
+                  <div key={shortcut.key} className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="font-ui text-prose text-ink-muted">
+                      {t(locale, shortcut.descriptionKey)}
+                    </span>
+                    <kbd className="rounded-control border border-ink/12 bg-canvas px-2.5 py-1 font-mono text-2xs text-ink">
                       {isMac ? shortcut.mac : shortcut.windows}
                     </kbd>
                   </div>
@@ -199,13 +183,9 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-canvas px-6 py-4 border-t border-ink/10 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors min-h-touch"
-          >
-            {labels.close}
+        <div className="sticky bottom-0 flex justify-end border-t border-ink/10 bg-surface px-5 py-3">
+          <button type="button" onClick={onClose} className={cn(dialogBtnPrimaryClass, 'min-h-touch')}>
+            {t(locale, 'panel.shortcuts.close')}
           </button>
         </div>
       </div>
@@ -219,14 +199,11 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
 export function GModePending({ isActive, locale = 'pt-BR' }) {
   if (!isActive) return null;
 
-  const waiting =
-    locale === 'en' ? 'Waiting for key…' : 'Aguardando tecla…';
-
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-      <div className="bg-brand-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-        <kbd className="px-2 py-1 bg-brand-700 rounded font-mono text-sm">g</kbd>
-        <span className="text-sm">{waiting}</span>
+    <div className="fixed bottom-4 right-4 z-50">
+      <div className="flex items-center gap-2 rounded-control bg-brand-500 px-4 py-2 text-white shadow-md">
+        <kbd className="rounded-control bg-brand-700 px-2 py-1 font-mono text-xs">g</kbd>
+        <span className="font-ui text-prose">{t(locale, 'panel.shortcuts.waitingKey')}</span>
       </div>
     </div>
   );

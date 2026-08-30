@@ -250,7 +250,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         body: JSON.stringify(result),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast(t('createCycleSuccess'), 'success');
+      toast(t('createCycleSuccess'), 'ok');
       loadCycles();
     } catch (err) {
       console.error('Create cycle error:', err);
@@ -285,7 +285,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast(t('updateCycleSuccess'), 'success');
+      toast(t('updateCycleSuccess'), 'ok');
       loadCycles();
     } catch (err) {
       console.error('Edit cycle error:', err);
@@ -387,7 +387,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         }
         throw new Error(data?.error || `HTTP ${res.status}`);
       }
-      toast(t('sideReviewCreated'), 'success');
+      toast(t('sideReviewCreated'), 'ok');
       await notice({
         title: t('sideReviewCreated'),
         message: data.publicUrl

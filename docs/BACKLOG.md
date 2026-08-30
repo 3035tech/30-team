@@ -637,7 +637,7 @@ JSON stdout via `lib/monitoring.js` ligado a Postgres (`lib/db.js`), Redis (`lib
 
 ## Aberto — Polish residual (pós waves 1–12 / demo beta)
 
-_(B-2901–B-2906 + adoção/packaging + B-2904 dark T1–T9/Compare — entregues ago/2026. Polish residual vazio.)_
+_(B-2901–B-2906 + adoção/packaging + B-2904 dark T1–T9/Compare — entregues ago/2026. Passada cross-app ago/2026: Feed CTA/`label`, Benefícios toast order, atalhos i18n+dialog tokens, Empty `notApplicable`, DP toast `ok`, Overview date chip. Residual aberto: Audit search → `AdminListSearch`; Equipe wrap `AdminListFilters`; spinners ad hoc → `Spinner` compartilhado.)_
 
 **Skip (explícito):** aliases `/climate`/`/pulse`; DISC/DP.
 

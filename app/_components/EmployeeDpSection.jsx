@@ -167,7 +167,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       setProfile(data.profile || profile);
-      toast(t(locale, 'employeeHome.dpSaved'), 'success');
+      toast(t(locale, 'employeeHome.dpSaved'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.dpSaveError'), 'error');
     } finally {
@@ -198,7 +198,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'upload');
-      toast(t(locale, 'panel.dp.uploadOk'), 'success');
+      toast(t(locale, 'panel.dp.uploadOk'), 'ok');
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.uploadError'), 'error');
@@ -224,7 +224,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'delete');
-      toast(t(locale, 'panel.dp.fileDeleted'), 'success');
+      toast(t(locale, 'panel.dp.fileDeleted'), 'ok');
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.fileDeleteError'), 'error');
@@ -279,7 +279,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'leave');
-      toast(t(locale, 'employeeHome.dpLeaveOk'), 'success');
+      toast(t(locale, 'employeeHome.dpLeaveOk'), 'ok');
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.dpLeaveError'), 'error');

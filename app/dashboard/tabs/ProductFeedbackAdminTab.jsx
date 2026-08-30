@@ -167,14 +167,15 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
   };
 
   const formatWhen = (iso) => {
-    if (!iso) return '—';
+    const na = t(locale, 'panel.common.notApplicable');
+    if (!iso) return na;
     try {
       return new Date(iso).toLocaleString(dateLocale, {
         dateStyle: 'short',
         timeStyle: 'short',
       });
     } catch {
-      return '—';
+      return na;
     }
   };
 
@@ -283,7 +284,9 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
                       ) : null}
                     </td>
                     <td className="text-prose">
-                      <div className="font-medium text-ink">{row.userName || row.userEmail || '—'}</div>
+                      <div className="font-medium text-ink">
+                        {row.userName || row.userEmail || t(locale, 'panel.common.notApplicable')}
+                      </div>
                       {row.userEmail && row.userName ? (
                         <div className="text-2xs text-ink-faint">{row.userEmail}</div>
                       ) : null}
@@ -298,7 +301,7 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
                       ) : null}
                     </td>
                     <td className="font-mono text-2xs text-ink-muted">
-                      {row.activeTab || '—'}
+                      {row.activeTab || t(locale, 'panel.common.notApplicable')}
                       {row.activeSection ? ` / ${row.activeSection}` : ''}
                     </td>
                     <td>

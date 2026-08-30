@@ -214,9 +214,9 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch(url);
       const data = await res.json();
       if (data.ok) setBenefits(data.benefits || []);
-      else toast('error', t('loadError'));
+      else toast(t('loadError'), 'error');
     } catch {
-      toast('error', t('loadError'));
+      toast(t('loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -297,13 +297,13 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('categoryCreated'));
+        toast(t('categoryCreated'), 'ok');
         await loadCategories();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -330,14 +330,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('categoryUpdated'));
+        toast(t('categoryUpdated'), 'ok');
         await loadCategories();
         loadBenefits();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -348,21 +348,21 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       const res = await fetch(`/api/admin/benefit-categories/${cat.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('categoryDeactivated'));
+        toast(t('categoryDeactivated'), 'ok');
         if (String(filterCategoryId) === String(cat.id)) setFilterCategoryId('');
         await loadCategories();
         loadBenefits();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 
   async function handleCreate() {
     if (categories.length === 0) {
-      toast('info', t('noCategories'));
+      toast(t('noCategories'), 'info');
     }
     const result = await promptForm({
       title: t('formTitle'),
@@ -383,13 +383,13 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('benefitCreated'));
+        toast(t('benefitCreated'), 'ok');
         loadBenefits();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -413,13 +413,13 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('benefitUpdated'));
+        toast(t('benefitUpdated'), 'ok');
         loadBenefits();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 
@@ -433,13 +433,13 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       });
       const data = await res.json();
       if (data.ok) {
-        toast('success', t('benefitDeactivated'));
+        toast(t('benefitDeactivated'), 'ok');
         loadBenefits();
       } else {
-        toast('error', data.error || t('saveError'));
+        toast(data.error || t('saveError'), 'error');
       }
     } catch {
-      toast('error', t('saveError'));
+      toast(t('saveError'), 'error');
     }
   }
 

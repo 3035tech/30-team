@@ -264,7 +264,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
                     disabled={busy}
                   >
-                    <option value="">—</option>
+                    <option value="">{t(locale, 'panel.common.notApplicable')}</option>
                     {BR_STATES.map((s) => (
                       <option key={s.uf} value={s.uf}>
                         {s.uf}

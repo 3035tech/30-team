@@ -66,10 +66,11 @@ function filterChips(locale, filters = {}) {
   if (filters.area && filters.area !== 'all') chips.push(filters.areaLabel || filters.area);
   if (filters.vacancy && filters.vacancy !== 'all') chips.push(filters.vacancyLabel || filters.vacancy);
   if (filters.dateFrom || filters.dateTo) {
+    const na = t(locale, 'panel.common.notApplicable');
     chips.push(
       t(locale, 'panel.overview.dateRangeChip', {
-        from: filters.dateFrom || '…',
-        to: filters.dateTo || '…',
+        from: filters.dateFrom || na,
+        to: filters.dateTo || na,
       })
     );
   }

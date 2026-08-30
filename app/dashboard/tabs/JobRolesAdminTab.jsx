@@ -149,7 +149,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
         throw new Error(t(locale, 'jobRoles.rubricAiParseError'));
       }
       setForm((cur) => ({ ...cur, rubric }));
-      toast(t(locale, 'jobRoles.rubricAiApplied'), 'success');
+      toast(t(locale, 'jobRoles.rubricAiApplied'), 'ok');
       if (data.notes) {
         void notice({
           title: t(locale, 'jobRoles.rubricAiNotesTitle'),
@@ -200,7 +200,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.errorCode || data?.error || 'create_failed');
         }
-        toast(t(locale, 'jobRoles.createSuccess'), 'success');
+        toast(t(locale, 'jobRoles.createSuccess'), 'ok');
       } else if (drawerMode === 'edit' && editingId) {
         const res = await fetch(`/api/admin/job-roles/${editingId}`, {
           method: 'PATCH',
@@ -217,7 +217,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.errorCode || data?.error || 'update_failed');
         }
-        toast(t(locale, 'jobRoles.updateSuccess'), 'success');
+        toast(t(locale, 'jobRoles.updateSuccess'), 'ok');
       }
       setDrawerMode(null);
       setEditingId(null);
@@ -254,7 +254,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
 
       if (!res.ok) throw new Error('deactivate_failed');
 
-      toast(t(locale, 'jobRoles.deactivateSuccess'), 'success');
+      toast(t(locale, 'jobRoles.deactivateSuccess'), 'ok');
       loadRoles();
     } catch (err) {
       console.error('[JobRolesAdminTab] Deactivate error:', err);
