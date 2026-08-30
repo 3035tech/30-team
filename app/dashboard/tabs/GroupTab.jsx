@@ -11,7 +11,7 @@ import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
-import { ContentEnter } from '../../_components/AppLoading';
+import { ContentEnter, Spinner } from '../../_components/AppLoading';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { ROSTER_SCOPE } from '../../../lib/domain-status';
 import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-intel';
@@ -370,7 +370,7 @@ export function GroupTab({
         <div className="mt-3.5 rounded-control border border-ink/10 bg-ink/[0.02] px-3 py-2.5">
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
             <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.savedTitle')}</span>
-            {savedLoading ? <span className="font-mono text-2xs text-ink-faint">…</span> : null}
+            {savedLoading ? <Spinner size={12} className="text-ink-faint" /> : null}
           </div>
           <p className="mb-2 mt-0 text-2xs leading-snug text-ink-faint">
             {t(locale, 'panel.group.savedHint')}

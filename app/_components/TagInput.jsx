@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
+import { t } from '../../lib/i18n';
 import { parseTagList } from '../../lib/tag-list';
 
 /**
@@ -24,7 +25,7 @@ export function TagInput({
   const inputRef = useRef(null);
   const tags = Array.isArray(value) ? value : parseTagList(value);
 
-  const removeLabel = locale === 'en' ? 'Remove' : 'Remover';
+  const removeLabel = t(locale, 'panel.common.remove');
 
   function commit(raw) {
     const nextParts = parseTagList(raw, { tagMax });

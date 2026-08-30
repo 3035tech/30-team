@@ -7,6 +7,7 @@ import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { AdminListSearch, getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
+import { AdminListFilters } from '../../_components/AdminListFilters';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
 import { DateField } from '../../_components/DateField';
@@ -708,7 +709,15 @@ export function TeamTab({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-2.5">
+      <AdminListFilters
+        locale={locale}
+        aria-label={t(locale, 'panel.team.searchAriaLabel')}
+        onClear={() => {
+          setSearchDraft('');
+          commitSearch('');
+        }}
+        clearEnabled={Boolean(activeSearch || String(searchDraft || '').trim())}
+      >
         <AdminListSearch
           locale={locale}
           value={searchDraft}
@@ -719,11 +728,11 @@ export function TeamTab({
           className="min-w-[12rem] max-w-none grow"
         />
         {activeSearch ? (
-          <span className="mb-2.5 font-mono text-2xs text-ink-faint">
+          <span className="mb-2.5 self-end font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
         ) : null}
-      </div>
+      </AdminListFilters>
       {listFilter === 'turnover_risk' ? (
         <InlineCallout tone="warning" className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
           <span>{t(locale, 'panel.team.filterTurnoverRisk')}</span>
@@ -1175,17 +1184,17 @@ export function TeamTab({
                           body: JSON.stringify({ candidateId: r.candidateId }),
                         });
                         if (res.ok) {
-                          toast(locale === 'en' ? 'Score recalculated' : 'Score recalculado', 'ok');
+                          toast(t(locale, 'hrScore.recalculated'), 'ok');
                           if (typeof onRefresh === 'function') onRefresh();
                         } else {
                           throw new Error('recalc_failed');
                         }
                       } catch (err) {
-                        toast(locale === 'en' ? 'Failed to recalculate' : 'Erro ao recalcular', 'error');
+                        toast(t(locale, 'hrScore.recalculateFailed'), 'error');
                       }
                     }}
-                    title={locale === 'en' ? 'Recalculate HR Score' : 'Recalcular HR Score'}
-                    aria-label={locale === 'en' ? 'Recalculate HR Score' : 'Recalcular HR Score'}
+                    title={t(locale, 'hrScore.recalculateOne')}
+                    aria-label={t(locale, 'hrScore.recalculateOne')}
                     className="inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-info/35 bg-info/[0.08] p-0 text-info"
                   >
                     <Icon name="refresh" />

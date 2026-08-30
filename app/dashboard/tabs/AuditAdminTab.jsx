@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
-import { S, AdminListPager, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
+import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { FormField } from '../../_components/FormField';
@@ -178,35 +178,24 @@ export function AuditAdminTab({ navigateDashboard, locale }) {
             }}
           />
         </FormField>
-        <FormField label={t(locale, 'panel.audit.filterAction')} className="min-w-[11rem] shrink-0">
-          <input
-            className={cn(S.input, 'min-w-[180px]')}
-            value={actionDraft}
-            placeholder={t(locale, 'panel.audit.actionPh')}
-            onChange={(e) => setActionDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') pushFilters({ action: actionDraft.trim(), page: 1 });
-            }}
-          />
-        </FormField>
-        <FormField label={t(locale, 'panel.audit.filterSearch')} className="min-w-[200px] shrink-0 flex-1">
-          <input
-            className={cn(S.input, 'w-full')}
-            value={qDraft}
-            placeholder={t(locale, 'panel.audit.searchPh')}
-            onChange={(e) => setQDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') pushFilters({ q: qDraft.trim(), page: 1 });
-            }}
-          />
-        </FormField>
-        <button
-          type="button"
-          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 self-end')}
-          onClick={() => pushFilters({ q: qDraft.trim(), action: actionDraft.trim(), page: 1 })}
-        >
-          {t(locale, 'panel.audit.applyFilters')}
-        </button>
+        <AdminListSearch
+          locale={locale}
+          label={t(locale, 'panel.audit.filterAction')}
+          value={actionDraft}
+          onChange={setActionDraft}
+          onSubmit={(v) => pushFilters({ action: String(v ?? actionDraft).trim(), page: 1 })}
+          placeholder={t(locale, 'panel.audit.actionPh')}
+          className="min-w-[11rem] max-w-xs shrink-0 grow-0"
+        />
+        <AdminListSearch
+          locale={locale}
+          label={t(locale, 'panel.audit.filterSearch')}
+          value={qDraft}
+          onChange={setQDraft}
+          onSubmit={(v) => pushFilters({ q: String(v ?? qDraft).trim(), page: 1 })}
+          placeholder={t(locale, 'panel.audit.searchPh')}
+          className="min-w-[12rem] max-w-md shrink-0 grow"
+        />
       </AdminListFilters>
 
       {error ? <p className="m-0 font-mono text-xs text-danger">{error}</p> : null}

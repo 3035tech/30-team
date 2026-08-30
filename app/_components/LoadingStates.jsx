@@ -103,7 +103,7 @@ export function ProgressBar({
       
       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-purple-600 transition-all duration-300 ease-out"
+          className="h-full bg-brand-500 transition-all duration-300 ease-out"
           style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
       </div>
@@ -130,7 +130,7 @@ export function Spinner({ size = 'md', message = null, className = '' }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
       <svg
-        className={cn('animate-spin text-purple-600', sizes[size])}
+        className={cn('animate-spin text-brand-500', sizes[size])}
         fill="none"
         viewBox="0 0 24 24"
       >

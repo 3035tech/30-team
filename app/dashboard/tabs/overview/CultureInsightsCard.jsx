@@ -39,6 +39,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         ctaClimate: 'Abrir Clima',
         ctaCompanies: 'Editar Sobre',
         ctaTeam: 'Ver mix na Equipe',
+        viewLink: 'Ver →',
       },
       en: {
         title: 'Organizational Culture',
@@ -64,6 +65,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         ctaClimate: 'Open Climate',
         ctaCompanies: 'Edit About',
         ctaTeam: 'See mix on Team',
+        viewLink: 'View →',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -248,7 +250,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
                   ) : null}
                   {actionLink ? (
                     <Link href={actionLink} className={cn(S.cardLink, 'mt-1 inline-block')}>
-                      {locale === 'en' ? 'View' : 'Ver'} →
+                      {t('viewLink')}
                     </Link>
                   ) : null}
                 </InsightListItem>

@@ -66,7 +66,8 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
       loadTrends();
     }
     // Compare loads on-demand via button
-  }, [activeView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: reload when filters change
+  }, [activeView, filters.startDate, filters.endDate, trendMonths]);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,16 +191,6 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
     }
   }
 
-  function applyFilters() {
-    if (activeView === 'metrics') {
-      loadMetrics();
-    } else if (activeView === 'trends') {
-      loadTrends();
-    } else if (activeView === 'compare') {
-      loadComparison();
-    }
-  }
-
   if (loading) {
     return <AppLoading locale={locale} variant="panel" />;
   }
@@ -278,9 +269,6 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
               aria-label={t(locale, 'panel.analytics.endDate')}
             />
           </FormField>
-          <button type="button" className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
-            {t(locale, 'panel.analytics.apply')}
-          </button>
         </div>
         )}
 
@@ -290,16 +278,13 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
             <select
               className={S.select}
               value={trendMonths}
-              onChange={(e) => setTrendMonths(parseInt(e.target.value))}
+              onChange={(e) => setTrendMonths(parseInt(e.target.value, 10))}
             >
               <option value="6">{t(locale, 'panel.analytics.months6')}</option>
               <option value="12">{t(locale, 'panel.analytics.months12')}</option>
               <option value="24">{t(locale, 'panel.analytics.months24')}</option>
             </select>
           </FormField>
-          <button type="button" className={cn(S.btnPrimary, 'self-end')} onClick={applyFilters}>
-            {t(locale, 'panel.analytics.apply')}
-          </button>
         </div>
         )}
 

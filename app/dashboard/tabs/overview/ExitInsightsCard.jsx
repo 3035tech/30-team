@@ -22,6 +22,8 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
         high: 'Alto',
         medium: 'Médio',
         viewAll: 'Ver detalhes →',
+        linkBenefits: 'Revisar benefícios →',
+        linkTeam: 'Equipe / retenção →',
       },
       en: {
         title: 'Exit Analysis',
@@ -33,6 +35,8 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
         high: 'High',
         medium: 'Medium',
         viewAll: 'View details →',
+        linkBenefits: 'Review benefits →',
+        linkTeam: 'Team / retention →',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -142,10 +146,10 @@ export default function ExitInsightsCard({ locale = 'pt-BR', companyId }) {
           {t('viewAll')}
         </Link>
         <Link href="/dashboard?tab=company-benefits" className={S.cardLink}>
-          {locale === 'en' ? 'Review benefits' : 'Revisar benefícios'} →
+          {t('linkBenefits')}
         </Link>
         <Link href="/dashboard?tab=team" className={S.cardLink}>
-          {locale === 'en' ? 'Team / retention' : 'Equipe / retenção'} →
+          {t('linkTeam')}
         </Link>
       </div>
     </div>
