@@ -26,6 +26,8 @@ import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { DpBlock } from '../../_components/DpBlock';
+import { OrgManagerBlock } from '../../_components/OrgManagerBlock';
+import { ContinuousFeedbackBlock } from '../../_components/ContinuousFeedbackBlock';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
 import { HrActionBrief } from '../../_components/HrActionBrief';
 import { PersonDossierBlock } from '../../_components/PersonDossierBlock';
@@ -1318,6 +1320,14 @@ export function TeamTab({
                             onGoSubTab={setPeopleSubTab}
                             embedded
                           />
+                          {(detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
+                            detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI) && (
+                            <OrgManagerBlock
+                              locale={locale}
+                              companyId={detail.candidate.companyId}
+                              candidateId={detail.candidate.id}
+                            />
+                          )}
                           <HrActionBrief
                             locale={locale}
                             brief={detail.people?.decisionBrief}
@@ -1327,7 +1337,16 @@ export function TeamTab({
                         </div>
                       ) : null}
                       {peopleSubTab === 'oneOnOne' ? (
-                        <PeopleManagementPanel
+                        <div className="space-y-4">
+                          {detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
+                            <ContinuousFeedbackBlock
+                              locale={locale}
+                              companyId={detail.candidate.companyId}
+                              candidateId={detail.candidate.id}
+                              subjectName={openRow.name}
+                            />
+                          ) : null}
+                          <PeopleManagementPanel
                           locale={locale}
                           candidateId={detail.candidate.id}
                           people={detail.people}
@@ -1335,6 +1354,7 @@ export function TeamTab({
                           onRefresh={() => loadDetail(detail.candidate.id)}
                           section="oneOnOne"
                         />
+                        </div>
                       ) : null}
                       {peopleSubTab === 'journey' ? (
                         <PeopleManagementPanel

@@ -655,20 +655,20 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 
 ### Ordem sugerida
 
-1. Empacotar o estratégico que o comprador DHO espera e nós quase temos (**B-3001–B-3004** ✅ entregue: calibração, mapa salarial, RV, OKRs leves).
-2. Conformidade + organograma + SSO (**B-3005–B-3007**).
+1. Empacotar o estratégico que o comprador DHO espera e nós quase temos (**B-3001–B-3004** ✅).
+2. Conformidade + organograma (**B-3005–B-3006** ✅) + SSO (**B-3007**).
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
-4. Aprofundar feedback/copiloto (**B-3010–B-3011**) sem segundo assistente paralelo ao Help.
+4. Aprofundar feedback (**B-3010** ✅) / copiloto (**B-3011**) sem segundo assistente paralelo ao Help.
 
-### B-3005 — Ouvidoria / canal de denúncias
+### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.
-1. Token público ou `/employee` com opção anônima; categorias fechadas; triagem RH (CAP nova ou `climate.view` + flag).
+1. Token público `/ouvidoria/{token}` + CAP `whistleblowing.view`; categorias fechadas; triagem RH.
 2. Sem PII no relato anônimo; audit de acesso; prazo de resposta; **não** misturar com pesquisa de clima.
 3. Fora: prometar validade jurídica tipo canal Lei 14.457 sozinhos (parceria/advogado se vender compliance).
 
-### B-3006 — Organograma dinâmico
+### B-3006 — Organograma dinâmico ✅ ENTREGUE
 Alina (forte), InCicle, Sólides. Hoje: grupos + sucessão, sem árvore visual.
-1. `manager_candidate_id` (ou equivalente) no colaborador; árvore por empresa com cap; clique abre Equipe.
+1. `manager_candidate_id` no colaborador; árvore por empresa com cap; clique abre Equipe.
 2. Reusar `job_roles` + roster `employee`; empty state se grafo incompleto.
 3. Fora: organograma “engenharia organizacional” InCicle; drag-and-drop de reorg como produto.
 
@@ -690,7 +690,7 @@ Como Alina/TeamCulture/ImpulseUp: viver **em cima** da folha. Plano B se **B-272
 2. TOTVS/Senior/SAP = parceiro ou mapeamento, não motor próprio.
 3. Não duplicar holerite/eSocial aqui; se B-2726 existir, esta item vira sync bidirecional.
 
-### B-3010 — Feedback contínuo estruturado (pedir / dar / receber)
+### B-3010 — Feedback contínuo estruturado (pedir / dar / receber) ✅ ENTREGUE
 Além de kudos B-2716. Job do Qulture; nós já temos 1:1 + kudos.
 1. Pedido de feedback (gestor/par) com token ou sessão; resposta curta; aparece no dossier / 1:1.
 2. Não virar rede social; cap por pessoa/mês; reusar notif.

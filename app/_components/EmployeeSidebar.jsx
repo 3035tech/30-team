@@ -24,6 +24,13 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
     labelKey: 'panel.employeePortal.agreementsTitle',
     hash: 'oneOnOne',
   },
+  {
+    id: 'feedback',
+    href: '/employee#feedback',
+    icon: 'feedbackInfo',
+    labelKey: 'employeeHome.feedbackTitle',
+    hash: 'feedback',
+  },
   { id: 'dp', href: '/employee#dp', icon: 'dp', labelKey: 'employeeHome.dpTitle', hash: 'dp' },
   {
     id: 'variablePay',
@@ -48,7 +55,7 @@ const NAV_GROUPS = Object.freeze([
   {
     id: 'grow',
     labelKey: 'employeeHome.navGroupGrow',
-    ids: ['pdi', 'lms', 'oneOnOne'],
+    ids: ['pdi', 'lms', 'oneOnOne', 'feedback'],
   },
   {
     id: 'account',
@@ -73,6 +80,7 @@ function badgeFor(itemId, badges) {
   if (itemId === 'dp') return badges.dp;
   if (itemId === 'feed') return badges.feed;
   if (itemId === 'kudos') return badges.kudos;
+  if (itemId === 'feedback') return badges.feedback;
   return 0;
 }
 

@@ -202,6 +202,13 @@ const ClimateTab = dynamic(
   () => import('./tabs/ClimateTab').then((m) => ({ default: m.ClimateTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const WhistleblowingAdminTab = dynamic(
+  () =>
+    import('./tabs/WhistleblowingAdminTab').then((m) => ({
+      default: m.WhistleblowingAdminTab,
+    })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const HelpTab = dynamic(
   () => import('./tabs/HelpTab').then((m) => ({ default: m.HelpTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -239,6 +246,7 @@ const TAB_TO_SECTION = {
   'exit-analysis': 'people',
   motivators: 'people',
   climate: 'people',
+  whistleblowing: 'people',
   'job-roles': 'catalogs',
   'learning-resources': 'catalogs',
   lms: 'lms',
@@ -349,6 +357,7 @@ export default function DashboardClient({
   const showVacancies = can(sessionAuth, CAP.VACANCIES_VIEW);
   const showMotivators = can(sessionAuth, CAP.MOTIVATORS_VIEW);
   const showClimate = can(sessionAuth, CAP.CLIMATE_VIEW);
+  const showWhistleblowing = can(sessionAuth, CAP.WHISTLEBLOWING_VIEW);
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
   const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
   const showJobRoles = can(sessionAuth, CAP.JOB_ROLES_VIEW);
@@ -988,7 +997,7 @@ export default function DashboardClient({
               </>
             ) : null}
 
-            {showMotivators || showClimate || showPeopleGp ? (
+            {showMotivators || showClimate || showWhistleblowing || showPeopleGp ? (
               <>
                 <div className="my-2 h-px bg-ink/[0.08]" />
                 {sectionLabel('people', t(locale, 'dashboard.sectionPeople'))}
@@ -1011,6 +1020,13 @@ export default function DashboardClient({
                     ) : null}
                     {showClimate ? (
                       <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
+                    ) : null}
+                    {showWhistleblowing ? (
+                      <NavLink
+                        id="whistleblowing"
+                        icon="feedbackInfo"
+                        label={t(locale, 'dashboard.whistleblowing')}
+                      />
                     ) : null}
                   </>
                 ))}
@@ -1534,6 +1550,9 @@ export default function DashboardClient({
               )}
               {tab === 'climate' && showClimate && (
                 <ClimateTab isAdmin={isAdmin} companies={companies} locale={locale} />
+              )}
+              {tab === 'whistleblowing' && showWhistleblowing && (
+                <WhistleblowingAdminTab locale={locale} companyId={scopedCompanyId} />
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}

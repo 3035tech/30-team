@@ -10,6 +10,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { CompatBadge, S, TypeBadge } from '../dashboard-shared';
 import { TeamPulseBlock } from '../../_components/TeamPulseBlock';
 import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
+import { OrgChartBlock } from '../../_components/OrgChartBlock';
 import { RosterEmptyHint } from '../../_components/RosterEmptyHint';
 import { ContentEnter, Spinner } from '../../_components/AppLoading';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
@@ -315,16 +316,31 @@ export function GroupTab({
 
   if ((results || []).length === 0) {
     return (
-      <RosterEmptyHint
-        locale={locale}
-        roster={roster || ROSTER_SCOPE.INTERNAL}
-        navigateDashboard={navigateDashboard}
-      />
+      <div className="space-y-4">
+        {resolvedCompanyId ? (
+          <OrgChartBlock
+            locale={locale}
+            companyId={resolvedCompanyId}
+            navigateDashboard={navigateDashboard}
+          />
+        ) : null}
+        <RosterEmptyHint
+          locale={locale}
+          roster={roster || ROSTER_SCOPE.INTERNAL}
+          navigateDashboard={navigateDashboard}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="space-y-4">
+      <OrgChartBlock
+        locale={locale}
+        companyId={resolvedCompanyId}
+        navigateDashboard={navigateDashboard}
+      />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div className={S.card}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.group.title')}</span>
@@ -775,6 +791,7 @@ export function GroupTab({
           </ContentEnter>
         )}
       </div>
+    </div>
     </div>
   );
 }

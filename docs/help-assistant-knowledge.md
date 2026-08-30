@@ -38,6 +38,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / férias / saldo) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
+| Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` |
 | Prep de entrevista | Seção `interviewPrep` + FAQ `faqInterviewPrep` |
 | Dev/ops (migrate, env, DTOV) | README / `docs/` / `test/README.md` |
 

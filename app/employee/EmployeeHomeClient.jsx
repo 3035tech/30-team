@@ -20,6 +20,7 @@ import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeDpSection } from '../_components/EmployeeDpSection';
 import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySection';
+import { EmployeeFeedbackSection } from '../_components/ContinuousFeedbackBlock';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
@@ -30,6 +31,7 @@ const SECTION_KEYS = [
   'lms',
   'surveys',
   'oneOnOne',
+  'feedback',
   'dp',
   'variablePay',
   'feed',
@@ -144,6 +146,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
   const [dpBadge, setDpBadge] = useState(0);
   const [variablePayBadge, setVariablePayBadge] = useState(0);
+  const [feedbackBadge, setFeedbackBadge] = useState(0);
   const [feedTotal, setFeedTotal] = useState(0);
   const [kudosTotal, setKudosTotal] = useState(0);
   const [openMap, setOpenMap] = useState(() => {
@@ -420,9 +423,10 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         dp: dpBadge,
         feed: feedTotal,
         kudos: kudosTotal,
+        feedback: feedbackBadge,
       },
     });
-  }, [data, surveyMeta, dpBadge, feedTotal, kudosTotal, setNavMeta]);
+  }, [data, surveyMeta, dpBadge, feedTotal, kudosTotal, feedbackBadge, setNavMeta]);
 
   // Scroll-spy
   useEffect(() => {
@@ -960,6 +964,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               ) : null}
             </div>
           </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="feedback"
+          title={t(locale, 'employeeHome.feedbackTitle')}
+          count={feedbackBadge || null}
+          open={openMap.feedback !== false}
+          onToggle={() => toggleSection('feedback')}
+          locale={locale}
+        >
+          <EmployeeFeedbackSection locale={locale} onBadge={setFeedbackBadge} />
         </CollapsibleSection>
 
         <CollapsibleSection
