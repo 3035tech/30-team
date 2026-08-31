@@ -779,106 +779,78 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <EmptyState message={t(locale, 'employeeHome.lmsEmptyHint')} />
             </EmpEmpty>
           ) : (
-            <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {courses.map((course) => (
-                <li key={course.enrollmentId} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <div className={S.cardBody}>{course.title}</div>
-                    <span className="font-mono text-2xs text-ink-muted">
-                      {course.progressPct}%
-                      {course.isComplete ? ` · ${t(locale, 'panel.employeePortal.courseDone')}` : ''}
-                    </span>
-                  </div>
-                  <MeterBar
-                    percent={course.progressPct}
-                    height={6}
-                    className="mt-2"
-                    toneClass={course.isComplete ? 'bg-success' : 'bg-brand-500'}
-                    aria-label={`${course.title}: ${course.progressPct}%`}
-                  />
-                  {course.dueDate ? (
-                    <p
-                      className={cn(
-                        'mt-1 m-0 font-mono text-2xs',
-                        course.overdue ? 'text-danger' : 'text-ink-faint'
-                      )}
-                    >
-                      {course.overdue
+            <div className="flex flex-col gap-3">
+              {courses.some((c) => c.overdue) ? (
+                <InlineCallout tone="warning">
+                  {t(locale, 'employeeHome.lmsOverdueHub', {
+                    n: courses.filter((c) => c.overdue).length,
+                  })}
+                </InlineCallout>
+              ) : courses.some((c) => c.daysLeft != null && c.daysLeft <= 3 && !c.isComplete) ? (
+                <InlineCallout tone="info">
+                  {t(locale, 'employeeHome.lmsDueSoonHub')}
+                </InlineCallout>
+              ) : null}
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {courses.slice(0, 4).map((course) => {
+                  const due =
+                    !course.dueDate || course.isComplete
+                      ? null
+                      : course.overdue
                         ? t(locale, 'panel.employeePortal.courseOverdue')
-                        : t(locale, 'panel.employeePortal.courseDue', {
-                            date: formatDisplayDate(course.dueDate, locale),
-                          })}
-                      {course.mandatory ? ` · ${t(locale, 'panel.employeePortal.courseMandatory')}` : ''}
-                    </p>
-                  ) : null}
-                  <ul className="mt-2 m-0 list-none space-y-2 p-0">
-                    {(course.lessons || []).map((lesson) => (
-                      <li
-                        key={lesson.id}
+                        : course.daysLeft === 0
+                          ? t(locale, 'employeeHome.lmsDueToday')
+                          : course.daysLeft === 1
+                            ? t(locale, 'employeeHome.lmsDueTomorrow')
+                            : course.daysLeft != null && course.daysLeft > 1
+                              ? t(locale, 'employeeHome.lmsDueInDays', { n: course.daysLeft })
+                              : t(locale, 'panel.employeePortal.courseDue', {
+                                  date: formatDisplayDate(course.dueDate, locale),
+                                });
+                  return (
+                    <li key={course.enrollmentId}>
+                      <a
+                        href={`/employee/lms?course=${course.courseId}`}
                         className={cn(
-                          'flex flex-wrap items-center justify-between gap-2 rounded-control border px-2.5 py-2',
-                          watching?.lessonId === lesson.id
-                            ? 'border-brand-500/40 bg-brand-500/[0.06]'
-                            : 'border-ink/8 bg-canvas/40'
+                          'block rounded-control border px-3 py-2.5 no-underline transition-colors hover:border-brand-500/30',
+                          course.overdue ? 'border-danger/25 bg-danger/[0.04]' : 'border-ink/12 bg-canvas/50'
                         )}
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className={S.cardMuted}>
-                            {lesson.completed ? '✓ ' : '○ '}
-                            {lesson.title}
-                            {lesson.contentKind && lesson.contentKind !== 'link' ? (
-                              <span className="ml-1 font-mono text-2xs uppercase text-ink-faint">
-                                {lesson.contentKind}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {lesson.embedUrl ? (
-                              <button
-                                type="button"
-                                className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
-                                onClick={() => openWatch(lesson)}
-                              >
-                                {lesson.contentKind === 'pdf'
-                                  ? t(locale, 'employeeHome.viewPdfInApp')
-                                  : t(locale, 'employeeHome.watchInApp')}
-                              </button>
-                            ) : null}
-                            <a
-                              href={lesson.contentUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={cn(S.btnGhost, 'min-h-touch text-2xs no-underline')}
-                            >
-                              {t(locale, 'panel.employeePortal.openLesson')}
-                            </a>
-                          </div>
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className={S.cardBody}>{course.title}</span>
+                          <span className="font-mono text-2xs text-ink-muted">{course.progressPct}%</span>
                         </div>
-                        {!lesson.completed ? (
-                          <button
-                            type="button"
-                            disabled={busy}
-                            className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-2xs')}
-                            onClick={() => lessonAction(lesson.id, 'completeLesson')}
+                        <MeterBar
+                          percent={course.progressPct}
+                          height={6}
+                          className="mt-2"
+                          toneClass={
+                            course.isComplete
+                              ? 'bg-success'
+                              : course.overdue
+                                ? 'bg-danger'
+                                : 'bg-brand-500'
+                          }
+                        />
+                        {due ? (
+                          <p
+                            className={cn(
+                              'mb-0 mt-1 font-mono text-2xs',
+                              course.overdue ? 'text-danger' : 'text-ink-faint'
+                            )}
                           >
-                            {t(locale, 'panel.employeePortal.markLessonDone')}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={busy}
-                            className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
-                            onClick={() => lessonAction(lesson.id, 'uncompleteLesson')}
-                          >
-                            {t(locale, 'panel.employeePortal.unmarkLesson')}
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
+                            {due}
+                          </p>
+                        ) : null}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+              <a href="/employee/lms" className={cn(S.btnPrimary, 'min-h-touch self-start no-underline')}>
+                {t(locale, 'employeeHome.lmsOpenPage')}
+              </a>
+            </div>
           )}
         </CollapsibleSection>
 

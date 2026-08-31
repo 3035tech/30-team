@@ -54,7 +54,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Auditoria (super admin) | `access` (Step11) + FAQ `faqAudit` |
 | Remuneração interna | `compensation` (faixa de mercado do cargo + compare) |
 | Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
-| LMS / cursos | `lmsBasic` |
+| LMS / cursos | `lmsBasic` (incl. `/employee/lms` player+resume, quiz, certificado, relatório por turma) |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |
 | HR Score | `b1000HrScore` |

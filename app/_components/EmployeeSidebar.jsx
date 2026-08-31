@@ -16,7 +16,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   { id: 'journey', href: '/employee#journey', icon: 'sparkles', labelKey: 'employeeHome.journeyTitle', hash: 'journey' },
   { id: 'surveys', href: '/employee#surveys', icon: 'climate', labelKey: 'employeeHome.surveysTitle', hash: 'surveys' },
   { id: 'pdi', href: '/employee#pdi', icon: 'clipboard', labelKey: 'panel.employeePortal.pdiTitle', hash: 'pdi' },
-  { id: 'lms', href: '/employee#lms', icon: 'book', labelKey: 'employeeHome.lmsTitle', hash: 'lms' },
+  { id: 'lms', href: '/employee/lms', icon: 'book', labelKey: 'employeeHome.lmsTitle' },
   {
     id: 'oneOnOne',
     href: '/employee#oneOnOne',
@@ -107,19 +107,21 @@ export function EmployeeSidebar({
   const router = useRouter();
   const onHome = pathname === '/employee' || pathname === '/employee/';
   const onProfile = pathname.startsWith('/employee/profile');
+  const onLms = pathname.startsWith('/employee/lms');
   const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection } = useEmployeeNav();
 
   const itemById = Object.fromEntries(EMPLOYEE_NAV_ITEMS.map((it) => [it.id, it]));
 
   const isActive = (item) => {
     if (item.id === 'profile') return onProfile;
+    if (item.id === 'lms') return onLms;
     if (onHome) return activeSection === item.hash || activeSection === item.id;
     return false;
   };
 
   const goItem = (item, e) => {
     onClose?.();
-    if (item.id === 'profile') return; // let Link navigate
+    if (item.id === 'profile' || item.id === 'lms') return; // let Link navigate
     e.preventDefault();
     if (onHome) {
       focusSection(item.hash || item.id);

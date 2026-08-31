@@ -36,6 +36,8 @@ import {
 } from '../dashboard-shared';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { RichTextView } from '../../_components/RichTextView';
+import { MeterBar } from '../../_components/MeterBar';
+import { InlineCallout } from '../../_components/InlineCallout';
 
 const ENROLL_PAGE_THRESHOLD = 10;
 
@@ -77,6 +79,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
   const [sortDir, setSortDir] = useState('asc');
   const [enrollPage, setEnrollPage] = useState(1);
   const [enrollPageSize, setEnrollPageSize] = useState(ENROLL_PAGE_THRESHOLD);
+  const [cohortReport, setCohortReport] = useState(null);
+  const [cohortReportLoading, setCohortReportLoading] = useState(false);
 
   const openCourse = useCallback(
     (id) => {
@@ -93,6 +97,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
     setDetail(null);
     setEnrollments([]);
     setOps(null);
+    setCohortReport(null);
     navigateDashboard?.({ tab: 'lms', course: null });
   }, [navigateDashboard]);
 
@@ -506,6 +511,125 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
     }
   };
 
+  const editLessonQuiz = async (lesson) => {
+    setLessonBusy(true);
+    let existing = [];
+    try {
+      const qs = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
+      const res = await fetch(
+        `/api/admin/lms/lessons/${encodeURIComponent(lesson.id)}/quiz${qs}`
+      );
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) existing = Array.isArray(json.questions) ? json.questions : [];
+    } catch {
+      /* empty quiz */
+    } finally {
+      setLessonBusy(false);
+    }
+    const fields = [];
+    const QUIZ_SLOTS = 5;
+    for (let i = 0; i < QUIZ_SLOTS; i += 1) {
+      const q = existing[i];
+      const choices = (q?.choices || []).map((c) => c.text).join(' | ');
+      fields.push(
+        {
+          key: `q${i}prompt`,
+          type: 'text',
+          label: t(locale, 'panel.lms.quizPromptN', { n: i + 1 }),
+          defaultValue: q?.prompt || '',
+        },
+        {
+          key: `q${i}choices`,
+          type: 'text',
+          label: t(locale, 'panel.lms.quizChoicesN', { n: i + 1 }),
+          help: i === 0 ? t(locale, 'panel.lms.quizChoicesHelp') : undefined,
+          defaultValue: choices,
+        },
+        {
+          key: `q${i}correct`,
+          type: 'select',
+          label: t(locale, 'panel.lms.quizCorrectN', { n: i + 1 }),
+          defaultValue: '0',
+          options: [
+            { value: '0', label: 'A' },
+            { value: '1', label: 'B' },
+            { value: '2', label: 'C' },
+            { value: '3', label: 'D' },
+          ],
+        }
+      );
+      if (q?.correctChoiceId && Array.isArray(q.choices)) {
+        const idx = q.choices.findIndex((c) => c.id === q.correctChoiceId);
+        if (idx >= 0) fields[fields.length - 1].defaultValue = String(idx);
+      }
+    }
+    const values = await promptForm({
+      title: t(locale, 'panel.lms.quizEditTitle', { title: lesson.title }),
+      confirmLabel: t(locale, 'panel.common.save'),
+      fields,
+    });
+    if (!values) return;
+    const questions = [];
+    for (let i = 0; i < QUIZ_SLOTS; i += 1) {
+      const prompt = String(values[`q${i}prompt`] || '').trim();
+      if (!prompt) continue;
+      const parts = String(values[`q${i}choices`] || '')
+        .split('|')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+      if (parts.length < 2) {
+        toast(t(locale, 'panel.lms.quizNeedChoices'), 'error');
+        return;
+      }
+      const correctIdx = Math.min(parts.length - 1, Math.max(0, Number(values[`q${i}correct`]) || 0));
+      const choices = parts.map((text, j) => ({
+        id: String.fromCharCode(97 + j),
+        text,
+      }));
+      questions.push({
+        prompt,
+        choices,
+        correctChoiceId: choices[correctIdx].id,
+      });
+    }
+    setLessonBusy(true);
+    try {
+      const res = await fetch(`/api/admin/lms/lessons/${encodeURIComponent(lesson.id)}/quiz`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId, questions }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'quiz');
+      toast(t(locale, 'panel.lms.quizSaved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
+    }
+  };
+
+  const loadCohortReport = async () => {
+    if (!selectedId || !companyId) return;
+    setCohortReportLoading(true);
+    try {
+      const params = new URLSearchParams({
+        companyId: String(companyId),
+        courseId: String(selectedId),
+      });
+      const res = await fetch(`/api/admin/lms/cohort-report?${params}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'report');
+      setCohortReport(json);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+      setCohortReport(null);
+    } finally {
+      setCohortReportLoading(false);
+    }
+  };
+
   const enroll = async (target) => {
     if (!selectedId) return;
     setEnrollBusy(true);
@@ -904,6 +1028,12 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                           disabled={lessonBusy}
                           label={lmsText(locale, 'lessonEdit', 'Editar aula')}
                         />
+                        <AdminIconButton
+                          icon="clipboard"
+                          label={t(locale, 'panel.lms.quizEdit')}
+                          disabled={lessonBusy}
+                          onClick={() => void editLessonQuiz(l)}
+                        />
                         {l.active ? (
                           <AdminDeleteButton
                             onClick={() => deactivateLesson(l)}
@@ -915,6 +1045,76 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                     </li>
                   ))}
                 </ul>
+              )}
+            </CollapsibleBlock>
+
+            <CollapsibleBlock
+              locale={locale}
+              variant="card"
+              title={t(locale, 'panel.lms.cohortReportTitle')}
+              defaultOpen={false}
+              collapsedHint={t(locale, 'panel.lms.cohortReportHint')}
+            >
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={cn(S.btnBrandSoft, 'min-h-touch')}
+                  disabled={cohortReportLoading}
+                  onClick={() => void loadCohortReport()}
+                >
+                  {cohortReportLoading
+                    ? t(locale, 'panel.common.loading')
+                    : t(locale, 'panel.lms.cohortReportLoad')}
+                </button>
+              </div>
+              {cohortReportLoading ? (
+                <AppLoading variant="panel" />
+              ) : cohortReport?.items?.length ? (
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                  {cohortReport.items.map((row, idx) => (
+                    <li
+                      key={row.id ?? `unassigned-${idx}`}
+                      className={cn(
+                        'rounded-control border bg-surface px-3 py-2.5',
+                        row.overdue ? 'border-warning/30' : 'border-ink/10'
+                      )}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="font-ui text-sm text-ink">
+                            {row.name || t(locale, 'panel.lms.cohortUnassigned')}
+                          </span>
+                          {row.overdue ? (
+                            <StatusToneChip tone="warning">
+                              {t(locale, 'panel.lms.cohortOverdueN', { n: row.overdue })}
+                            </StatusToneChip>
+                          ) : null}
+                        </div>
+                        <span className="font-mono text-2xs text-ink-muted">
+                          {row.completionPct}% · {row.completed}/{row.enrolled}
+                        </span>
+                      </div>
+                      <MeterBar
+                        percent={row.completionPct}
+                        height={6}
+                        className="mt-2"
+                        toneClass={
+                          row.completionPct >= 100
+                            ? 'bg-success'
+                            : row.overdue
+                              ? 'bg-warning'
+                              : 'bg-brand-500'
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <InlineCallout tone="info">
+                  {cohortReport
+                    ? t(locale, 'panel.lms.cohortReportNone')
+                    : t(locale, 'panel.lms.cohortReportIdle')}
+                </InlineCallout>
               )}
             </CollapsibleBlock>
 

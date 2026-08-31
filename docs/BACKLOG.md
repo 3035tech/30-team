@@ -537,11 +537,11 @@ Sólides: avulso. Remuneração interna + faixa no cargo.
 ### B-2712 — Intranet / feed interno leve ✅ ENTREGUE
 Posts da empresa (`company_posts`) + mural em `/employee#feed`; admin Catálogos → Mural; soft delete; CAP `company_feed.view`.
 
-### B-2713 — LMS profundidade (quiz / certificado)
-Já listado como fora de B-2401 — **promover a item** se priorizarmos paridade Academy Sólides.
-1. Quiz por aula; certificado PDF ao concluir curso obrigatório.
-2. Ainda sem SCORM/player proprietário.
-3. Reusar enrollments/completions.
+### B-2713 — LMS profundidade (quiz / certificado) ✅ ENTREGUE
+_(entregue — `094` quiz por aula + gate na conclusão; `/employee/lms` (Continuar, prazos); certificado print/PDF; relatório RH por turma. **Fora:** SCORM, player proprietário, trilha multi-curso.)_
+
+### B-2717 — LMS player “tipo Udemy” (embed + progresso de vídeo) ✅ ENTREGUE
+_(entregue — `095` `lms_lesson_watch_progress`; layout curso lista+player em `/employee/lms`; resume YouTube/Vimeo; PDF viewer full-height. **Fora:** MP4 próprio, SCORM, auto-complete por %.)_
 
 ### B-2714 — NR-1 / riscos psicossociais (conformidade)
 Sólides 2026: PGR + eSocial S-2240. Urgência regulatória de venda.
@@ -650,7 +650,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 | Férias / docs DP leve + ponto MVP | B-2723 + B-2724 MVP + **B-2721** ✅ | bloco RH+DP | **todos os puros** |
 | Sucessão + exit + cultura síntese | B-1005–B-1007 | raro neste recorte | suítes largas raramente neste nível |
 
-**Já no B-2700 (não duplicar aqui):** DISC **B-2720**; ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713**; NR-1 **B-2714**; multi-CNPJ **B-2715**.
+**Já no B-2700 (não duplicar aqui):** DISC **B-2720**; ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713** ✅; LMS player/progresso **B-2717** ✅; NR-1 **B-2714**; multi-CNPJ **B-2715**.
 
 **Explicitamente fora deste epic (não copiar InCicle/Sólides):** gestão de projetos, Kanban/Gantt/5W2H, chat interno, TV corporativa, lojinha/gamificação, 40+ agentes de IA, segundo app de DP, DISC como fio condutor (T1–T9 fica).
 
