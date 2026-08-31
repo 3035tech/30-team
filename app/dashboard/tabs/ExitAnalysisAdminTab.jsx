@@ -19,6 +19,9 @@ import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
 import { formatDisplayDate, toDateOnlyIso } from '../../../lib/format-display-date.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { cn } from '../../../lib/cn';
+import { CHART_MIN_N, topCategoryCounts } from '../../../lib/chart-aggregates';
+import { CategoryBars } from '../../_components/CategoryBars';
+import { ChartPanel } from '../../_components/ChartPanel';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -149,6 +152,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         pickEmployee: 'Selecione um colaborador na busca.',
         confirmDelete:
           'Excluir este registro de saída? O colaborador volta ao status ativo se ainda estiver como alumni. Esta ação não desfaz o histórico de insights já agregados em outras telas até o próximo refresh.',
+        reasonsTitle: 'Principais motivos',
+        reasonsHint: 'Top motivos no total registrado (independente dos filtros da lista).',
       },
       en: {
         title: 'Exit Analysis',
@@ -231,6 +236,8 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
         pickEmployee: 'Select an employee from search.',
         confirmDelete:
           'Delete this exit record? The employee returns to active status if still alumni. Aggregated insights on other screens refresh on the next load.',
+        reasonsTitle: 'Top reasons',
+        reasonsHint: 'Top reasons across all recorded exits (independent of list filters).',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -463,6 +470,16 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
     return rows;
   }, [records, sort, sortDir, locale, nameQ, exitTypeFilter, exitReasonFilter]);
 
+  const reasonBars = useMemo(() => {
+    const counted = records.map((r) => ({ exitReason: r.exitReason, count: 1 }));
+    return topCategoryCounts(counted, { key: 'exitReason', limit: 5 }).map((r) => ({
+      id: r.id,
+      label: t(r.id),
+      value: r.value,
+      toneClass: 'rounded-full bg-warning',
+    }));
+  }, [records, locale]);
+
   const total = sortedRecords.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
   const safePage = Math.min(page, totalPages);
@@ -497,6 +514,12 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
           ) : null
         }
       />
+
+      {records.length >= CHART_MIN_N && reasonBars.length > 0 ? (
+        <ChartPanel title={t('reasonsTitle')} hint={t('reasonsHint')}>
+          <CategoryBars items={reasonBars} height={8} total={records.length} />
+        </ChartPanel>
+      ) : null}
 
       {records.length > 0 ? (
         <AdminListFilters

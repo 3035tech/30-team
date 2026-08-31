@@ -14,6 +14,10 @@ import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { ChartPanel, ChartLegend } from '../../_components/ChartPanel';
+import { StackedSegmentBar } from '../../_components/StackedSegmentBar';
+import { cn } from '../../../lib/cn';
+import { successionCoverage } from '../../../lib/chart-aggregates';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -102,6 +106,16 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         alreadyAssigned: 'Este colaborador já está atribuído a este papel',
         openOnTeam: 'Abrir na Equipe',
         openPdi: 'Abrir PDI na Equipe',
+        coverageTitle: 'Cobertura de bench',
+        coverageHint: 'Papéis com pelo menos um sucessor pronto vs só em desenvolvimento vs sem sucessor.',
+        coverageGapHint: '{n} papel(éis) sem sucessor. Priorize atribuição antes da urgência.',
+        coverageReady: 'Com pronto',
+        coverageDeveloping: 'Só em desenvolvimento',
+        coverageEmpty: 'Sem sucessor',
+        coverageMix: 'Mix de prontidão',
+        coverageCountShort: 'n',
+        coverageCap: 'Gráfico: {shown} de {total} papéis (lista completa abaixo)',
+        coverageRowAria: '{title}: pronto {ready}, em desenvolvimento {developing}, não pronto {notReady}',
       },
       en: {
         title: 'Succession',
@@ -160,6 +174,16 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         alreadyAssigned: 'This employee is already assigned to this role',
         openOnTeam: 'Open on Team',
         openPdi: 'Open PDI on Team',
+        coverageTitle: 'Bench coverage',
+        coverageHint: 'Roles with at least one ready successor vs developing-only vs no successor.',
+        coverageGapHint: '{n} role(s) with no successor. Prioritize assignment before urgency.',
+        coverageReady: 'Has ready',
+        coverageDeveloping: 'Developing only',
+        coverageEmpty: 'No successor',
+        coverageMix: 'Readiness mix',
+        coverageCountShort: 'n',
+        coverageCap: 'Chart: {shown} of {total} roles (full list below)',
+        coverageRowAria: '{title}: ready {ready}, developing {developing}, not ready {notReady}',
       },
     };
     return messages[locale]?.[key] || messages['pt-BR'][key] || key;
@@ -562,6 +586,40 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
     return rows;
   }, [roles, sort, sortDir, locale, nameQ, impactFilter]);
 
+  /** Coverage chart uses unfiltered company roles (pattern, not list filters). */
+  const coverage = useMemo(() => successionCoverage(roles), [roles]);
+  const coverageRows = useMemo(() => {
+    return [...roles]
+      .sort((a, b) => {
+        const gapA = (Number(a.successorCount) || 0) === 0 ? 0 : 1;
+        const gapB = (Number(b.successorCount) || 0) === 0 ? 0 : 1;
+        if (gapA !== gapB) return gapA - gapB;
+        return (Number(b.successorCount) || 0) - (Number(a.successorCount) || 0);
+      })
+      .slice(0, 12);
+  }, [roles]);
+
+  const roleSegments = (role) => [
+    {
+      id: 'ready',
+      value: Number(role.readyCount) || 0,
+      toneClass: 'bg-success',
+      label: t('readinessReady'),
+    },
+    {
+      id: 'developing',
+      value: Number(role.developingCount) || 0,
+      toneClass: 'bg-warning',
+      label: t('readinessDeveloping'),
+    },
+    {
+      id: 'notReady',
+      value: Number(role.notReadyCount) || 0,
+      toneClass: 'bg-danger/70',
+      label: t('readinessNotReady'),
+    },
+  ];
+
   const total = sortedRoles.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
   const safePage = Math.min(page, totalPages);
@@ -592,6 +650,130 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t('subtitle')}
         actions={<AdminCreateButton label={t('createRoleButton')} onClick={handleCreateRole} />}
       />
+
+      {roles.length > 0 ? (
+        <ChartPanel
+          title={t('coverageTitle')}
+          hint={
+            coverage.empty > 0
+              ? t('coverageGapHint').replace('{n}', String(coverage.empty))
+              : t('coverageHint')
+          }
+        >
+          <StackedSegmentBar
+            segments={[
+              {
+                id: 'hasReady',
+                value: coverage.hasReady,
+                toneClass: 'bg-success',
+                label: t('coverageReady'),
+              },
+              {
+                id: 'developingOnly',
+                value: coverage.developingOnly,
+                toneClass: 'bg-warning',
+                label: t('coverageDeveloping'),
+              },
+              {
+                id: 'empty',
+                value: coverage.empty,
+                toneClass: 'bg-danger/70',
+                label: t('coverageEmpty'),
+              },
+            ]}
+            height={12}
+            className="mb-2"
+            aria-label={`${t('coverageReady')}: ${coverage.hasReady}; ${t('coverageDeveloping')}: ${coverage.developingOnly}; ${t('coverageEmpty')}: ${coverage.empty}`}
+          />
+          <ChartLegend
+            className="mb-3"
+            total={coverage.roles}
+            items={[
+              {
+                id: 'r',
+                toneClass: 'bg-success',
+                label: t('coverageReady'),
+                value: coverage.hasReady,
+              },
+              {
+                id: 'd',
+                toneClass: 'bg-warning',
+                label: t('coverageDeveloping'),
+                value: coverage.developingOnly,
+              },
+              {
+                id: 'e',
+                toneClass: 'bg-danger/70',
+                label: t('coverageEmpty'),
+                value: coverage.empty,
+              },
+            ]}
+          />
+          {coverageRows.length > 0 ? (
+            <>
+              <div className="mb-1.5 flex items-center gap-3 font-mono text-2xs text-ink-faint">
+                <span className="w-[7.5rem] shrink-0 sm:w-[9.5rem]">{t('roleTitle')}</span>
+                <span className="min-w-0 flex-1">{t('coverageMix')}</span>
+                <span className="w-8 shrink-0 text-right">{t('coverageCountShort')}</span>
+              </div>
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {coverageRows.map((role) => {
+                  const segs = roleSegments(role);
+                  const hasAny = segs.some((s) => s.value > 0);
+                  const empty = !hasAny;
+                  return (
+                    <li
+                      key={`cov-${role.id}`}
+                      className={cn(
+                        'flex items-center gap-3 rounded-control px-1 py-0.5',
+                        empty && 'bg-danger/[0.05]'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'w-[7.5rem] shrink-0 truncate text-prose sm:w-[9.5rem]',
+                          empty ? 'font-medium text-danger' : 'text-ink'
+                        )}
+                        title={role.title}
+                      >
+                        {role.title}
+                      </div>
+                      {hasAny ? (
+                        <StackedSegmentBar
+                          segments={segs}
+                          height={8}
+                          className="min-w-0 flex-1"
+                          aria-label={t('coverageRowAria')
+                            .replace('{title}', role.title || '')
+                            .replace('{ready}', String(role.readyCount || 0))
+                            .replace('{developing}', String(role.developingCount || 0))
+                            .replace('{notReady}', String(role.notReadyCount || 0))}
+                        />
+                      ) : (
+                        <div className="min-w-0 flex-1">
+                          <span className="font-mono text-2xs text-danger">
+                            {t('coverageEmpty')}
+                          </span>
+                        </div>
+                      )}
+                      <span className="w-8 shrink-0 text-right font-mono text-2xs tabular-nums text-ink-muted">
+                        {role.successorCount || 0}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : null}
+          {roles.length > coverageRows.length ? (
+            <p className="mb-0 mt-2.5 font-mono text-2xs text-ink-faint">
+              {t('coverageCap')
+                .replace('{shown}', String(coverageRows.length))
+                .replace('{total}', String(roles.length))}
+            </p>
+          ) : null}
+        </ChartPanel>
+      ) : null}
 
       {roles.length > 0 ? (
         <AdminListFilters

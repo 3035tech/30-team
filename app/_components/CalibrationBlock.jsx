@@ -1,18 +1,38 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { S, AdminEditButton } from '../dashboard/dashboard-shared';
+import { AdminEditButton } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
 import { CollapsibleBlock } from './CollapsibleBlock';
+import { CategoryBars } from './CategoryBars';
+import { ChartPanel } from './ChartPanel';
+import {
+  CHART_MIN_N,
+  SCORE_HIST_BINS,
+  nineBoxOccupancy,
+  scoreHistogram,
+} from '../../lib/chart-aggregates';
+
+/** 9Box display order: high performance top row; potential left → right. */
+const NINE_BOX_ORDER = [7, 8, 9, 4, 5, 6, 1, 2, 3];
+
+const HIST_TONE = {
+  bin0: 'bg-warning/70',
+  bin20: 'bg-warning',
+  bin40: 'bg-info',
+  bin60: 'bg-success/80',
+  bin80: 'bg-success',
+};
 
 /**
  * B-3001 — Calibration queue for submitted reviews in a cycle.
+ * B-3022 — overall histogram + compact 9Box occupancy (not a second full 9Box).
  * Hedged: scores / 9Box are conversation aids, not promotion labels.
  */
 export function CalibrationBlock({ locale = 'pt-BR', companyId, cycleId, cycleTitle = '' }) {
@@ -48,8 +68,6 @@ export function CalibrationBlock({ locale = 'pt-BR', companyId, cycleId, cycleTi
   useEffect(() => {
     void load();
   }, [load]);
-
-  if (!companyId || !cycleId) return null;
 
   const calibrate = async (row) => {
     const values = await promptForm({
@@ -132,6 +150,28 @@ export function CalibrationBlock({ locale = 'pt-BR', companyId, cycleId, cycleTi
     }
   };
 
+  const hist = useMemo(() => {
+    const scores = items.map((r) => r.overallScore);
+    return scoreHistogram(scores, SCORE_HIST_BINS);
+  }, [items]);
+
+  const histItems = useMemo(
+    () =>
+      hist.bins.map((b) => ({
+        id: b.id,
+        label: t(locale, `panel.calibration.${b.labelKey}`),
+        value: b.value,
+        toneClass: HIST_TONE[b.labelKey] || 'bg-info',
+      })),
+    [hist.bins, locale]
+  );
+
+  const boxOcc = useMemo(() => nineBoxOccupancy(items), [items]);
+  const showHist = hist.scored >= CHART_MIN_N;
+  const showBox = boxOcc.placed >= CHART_MIN_N;
+
+  if (!companyId || !cycleId) return null;
+
   if (loading) {
     return (
       <CollapsibleBlock
@@ -182,6 +222,66 @@ export function CalibrationBlock({ locale = 'pt-BR', companyId, cycleId, cycleTi
         <InlineCallout tone="info" className="mb-3 text-xs">
           {t(locale, 'panel.calibration.hedgedNote')}
         </InlineCallout>
+
+        {showHist || showBox ? (
+          <div
+            className={cn(
+              'mb-4 grid gap-3',
+              showHist && showBox ? 'sm:grid-cols-2' : 'grid-cols-1'
+            )}
+          >
+            {showHist ? (
+              <ChartPanel
+                title={t(locale, 'panel.calibration.histTitle')}
+                hint={t(locale, 'panel.calibration.histHint', { n: hist.scored })}
+              >
+                <CategoryBars
+                  items={histItems}
+                  includeZero
+                  max={Math.max(...histItems.map((i) => i.value), 1)}
+                  total={hist.scored}
+                  height={8}
+                  labelClassName="w-14 shrink-0 font-mono text-2xs tabular-nums text-ink-muted"
+                />
+              </ChartPanel>
+            ) : null}
+            {showBox ? (
+              <ChartPanel
+                title={t(locale, 'panel.calibration.boxTitle')}
+                hint={t(locale, 'panel.calibration.boxHint', { n: boxOcc.placed })}
+              >
+                <p className="mb-2 mt-0 font-mono text-2xs text-ink-faint">
+                  {t(locale, 'panel.calibration.boxAxes')}
+                </p>
+                <div
+                  className="grid max-w-[12rem] grid-cols-3 gap-1"
+                  role="img"
+                  aria-label={t(locale, 'panel.calibration.boxAria')}
+                >
+                  {NINE_BOX_ORDER.map((cell) => {
+                    const n = boxOcc.cells[cell] || 0;
+                    return (
+                      <div
+                        key={cell}
+                        className={cn(
+                          'flex min-h-touch flex-col items-center justify-center rounded-control border border-ink/10 bg-surface px-1 py-1',
+                          n > 0 && 'border-info/30 bg-info/[0.06]'
+                        )}
+                        title={t(locale, 'panel.calibration.boxCellTitle', {
+                          cell,
+                          n,
+                        })}
+                      >
+                        <span className="font-mono text-2xs text-ink-faint">{cell}</span>
+                        <span className="font-mono text-prose tabular-nums text-ink">{n}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ChartPanel>
+            ) : null}
+          </div>
+        ) : null}
 
         {ordered.length === 0 ? (
           <EmptyState

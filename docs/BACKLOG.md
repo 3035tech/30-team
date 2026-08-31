@@ -659,7 +659,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 2. Conformidade + organograma (**B-3005–B-3006** ✅) + SSO (**B-3007**).
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
 4. Aprofundar feedback (**B-3010** ✅) / copiloto (**B-3011**) sem segundo assistente paralelo ao Help.
-5. Viz lean sobre listas existentes → **B-3020** (P1 mapa salarial / calibração / saídas).
+5. Viz lean sobre listas existentes → **B-3020** (P1+P2 ✅; P3 ouvidoria/turnover/férias).
 
 ### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.
@@ -719,40 +719,40 @@ Lista/CRUD continua a superfície de **trabalho**. Gráfico = resumo **acima** d
 
 ### Ordem sugerida
 
-1. **P1** (**B-3021–B-3023**): mapa salarial, calibração, motivos de saída.
-2. **P2** (**B-3024–B-3026**): sucessão, HR Score por área, OKR rollup.
+1. **P1** (**B-3021–B-3023**): mapa salarial, calibração, motivos de saída. ✅ ENTREGUE
+2. **P2** (**B-3024–B-3026**): sucessão, HR Score por área, OKR rollup. ✅ ENTREGUE
 3. **P3** (**B-3027–B-3029**): ouvidoria, turnover dist, férias pool (se API).
 
-### B-3021 — Mapa salarial: barras below / in / above (P1)
+### B-3021 — Mapa salarial: barras below / in / above (P1) ✅ ENTREGUE
 Remuneração → `SalaryMapBlock`. Dados já em `listSalaryMapByJobRole`.
 1. Barras empilhadas por cargo (below / inBand / above) + total folha; tabela permanece drill-down.
 2. Não virar um gráfico por linha da tabela.
 3. Reusar `MeterBar` / stacked CSS; simulação continua texto/números.
 
-### B-3022 — Calibração: histograma overall + 9Box do ciclo (P1)
+### B-3022 — Calibração: histograma overall + 9Box do ciclo (P1) ✅ ENTREGUE
 Avaliações → topo da fila de calibração.
 1. Histograma de `overallScore` 0–100 do ciclo + ocupação 9Box (reusar dados/`NineBoxBlock` se já no ciclo).
 2. Lista de calibração continua a superfície de edição.
 3. Evitar segundo 9Box redundante na mesma viewport.
 
-### B-3023 — Saídas: barras de motivo (P1)
+### B-3023 — Saídas: barras de motivo (P1) ✅ ENTREGUE
 Aba Saídas e/ou Overview. Lib já agrega `reasonAgg` / `typeAgg`.
 1. Barras horizontais top ~5 motivos; insights hedged permanecem.
 2. Cap de categorias; sem chart se volume baixo.
 3. Fora: BI genérico de demissão.
 
-### B-3024 — Sucessão: cobertura de bench (P2)
+### B-3024 — Sucessão: cobertura de bench (P2) ✅ ENTREGUE
 1. Stacked/donut por cargo crítico: pronto / em desenvolvimento / vazio.
 2. Tabela de sucessores continua; gráfico = gap de cobertura.
 3. Empty se não houver cargos críticos.
 
-### B-3025 — HR Score por área: barras ordenadas (P2)
+### B-3025 — HR Score por área: barras ordenadas (P2) ✅ ENTREGUE
 Overview `HrScoreCard` já lista byArea.
 1. Trocar/ enriquecer lista por barras horizontais ordenadas.
 2. Sem nova API se o payload já basta.
 3. Clique → Equipe/filtro área se já existir navegação.
 
-### B-3026 — OKR rollup por nível (P2)
+### B-3026 — OKR rollup por nível (P2) ✅ ENTREGUE
 1. % médio de attainment (current/target) por nível empresa/time (e pessoa se útil).
 2. Não duplicar MeterBar de cada KR; rollup no topo do `OkrBlock`.
 3. Cap de objetivos já no lib.

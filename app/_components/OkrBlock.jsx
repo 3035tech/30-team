@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import {
@@ -18,6 +18,9 @@ import { StatusToneChip } from './StatusToneChip';
 import { OKR_OBJECTIVE_LEVEL } from '../../lib/domain-status.js';
 import { MeterBar } from './MeterBar';
 import { CollapsibleBlock } from './CollapsibleBlock';
+import { CategoryBars } from './CategoryBars';
+import { ChartPanel } from './ChartPanel';
+import { okrLevelRollup } from '../../lib/chart-aggregates';
 
 /**
  * B-3004 — Light OKRs (company / team / person objectives + key results).
@@ -54,13 +57,38 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     void load();
   }, [load]);
 
-  if (!companyId) return null;
-
   const levelLabel = (level) => {
     const key = `panel.okr.level.${level}`;
     const label = t(locale, key);
     return label === key ? level : label;
   };
+
+  const rollup = useMemo(() => okrLevelRollup(objectives), [objectives]);
+  const rollupBars = useMemo(() => {
+    const labelFor = (level) => {
+      const key = `panel.okr.level.${level}`;
+      const label = t(locale, key);
+      return label === key ? level : label;
+    };
+    return rollup.map((r) => ({
+      id: r.id,
+      label: t(locale, 'panel.okr.rollupLevelLabel', {
+        level: labelFor(r.level),
+        n: r.krCount,
+      }),
+      value: r.avgPct ?? 0,
+      toneClass:
+        (r.avgPct ?? 0) >= 75
+          ? 'bg-success'
+          : (r.avgPct ?? 0) >= 40
+            ? 'bg-info'
+            : 'bg-warning',
+    }));
+  }, [rollup, locale]);
+  const rollupKrTotal = useMemo(
+    () => rollup.reduce((n, r) => n + (r.krCount || 0), 0),
+    [rollup]
+  );
 
   const periodLabel = (obj) => {
     const a = obj.periodStart ? String(obj.periodStart).slice(0, 10) : '';
@@ -287,6 +315,22 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
             disabled={busy}
           />
         </div>
+
+        {rollupBars.length > 0 ? (
+          <ChartPanel
+            className="mb-4"
+            title={t(locale, 'panel.okr.rollupTitle')}
+            hint={t(locale, 'panel.okr.rollupHint', { n: rollupKrTotal })}
+          >
+            <CategoryBars
+              items={rollupBars}
+              max={100}
+              height={8}
+              valueSuffix="%"
+              labelClassName="w-[8.5rem] shrink-0 truncate text-prose text-ink sm:w-[11rem]"
+            />
+          </ChartPanel>
+        ) : null}
 
         {objectives.length === 0 ? (
           <EmptyState

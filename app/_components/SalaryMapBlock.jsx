@@ -17,9 +17,13 @@ import { InlineCallout } from './InlineCallout';
 import { fieldInputClass } from './form-control-styles';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { SegmentedControl } from './SegmentedControl';
+import { StackedSegmentBar } from './StackedSegmentBar';
+import { ChartPanel, ChartLegend } from './ChartPanel';
+import { CHART_MIN_N, salaryBandTotals } from '../../lib/chart-aggregates';
 
 /**
  * B-3002 — Analytic salary map by job role + simple % raise simulation.
+ * B-3021 — stacked below / in-band / above above the table.
  */
 export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
   const { toast } = useAppFeedback();
@@ -73,6 +77,39 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
     () => visible.reduce((n, r) => n + (Number(r.below) || 0), 0),
     [visible]
   );
+
+  const bandTotals = useMemo(() => salaryBandTotals(visible), [visible]);
+
+  const bandedRows = useMemo(() => {
+    return visible.filter(
+      (r) => (Number(r.below) || 0) + (Number(r.inBand) || 0) + (Number(r.above) || 0) > 0
+    );
+  }, [visible]);
+
+  const chartRows = useMemo(() => bandedRows.slice(0, 12), [bandedRows]);
+
+  const showBandChart = bandTotals.banded >= CHART_MIN_N;
+
+  const bandSegments = (row) => [
+    {
+      id: 'below',
+      value: Number(row.below) || 0,
+      toneClass: 'bg-warning',
+      label: t(locale, 'panel.salaryMap.colBelow'),
+    },
+    {
+      id: 'inBand',
+      value: Number(row.inBand) || 0,
+      toneClass: 'bg-success',
+      label: t(locale, 'panel.salaryMap.colInBand'),
+    },
+    {
+      id: 'above',
+      value: Number(row.above) || 0,
+      toneClass: 'bg-info',
+      label: t(locale, 'panel.salaryMap.colAbove'),
+    },
+  ];
 
   const runSimulate = async () => {
     if (!companyId) return;
@@ -135,6 +172,98 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
           />
         </div>
 
+        {showBandChart ? (
+          <ChartPanel
+            className="mb-4"
+            title={t(locale, 'panel.salaryMap.chartTitle')}
+            hint={t(locale, 'panel.salaryMap.chartHint', { n: bandTotals.banded })}
+          >
+            <StackedSegmentBar
+              segments={bandSegments(bandTotals)}
+              height={12}
+              className="mb-2"
+              aria-label={t(locale, 'panel.salaryMap.chartSummaryAria', {
+                below: bandTotals.below,
+                inBand: bandTotals.inBand,
+                above: bandTotals.above,
+              })}
+            />
+            <ChartLegend
+              className="mb-3"
+              total={bandTotals.banded}
+              items={[
+                {
+                  id: 'below',
+                  toneClass: 'bg-warning',
+                  label: t(locale, 'panel.salaryMap.colBelow'),
+                  value: bandTotals.below,
+                },
+                {
+                  id: 'inBand',
+                  toneClass: 'bg-success',
+                  label: t(locale, 'panel.salaryMap.colInBand'),
+                  value: bandTotals.inBand,
+                },
+                {
+                  id: 'above',
+                  toneClass: 'bg-info',
+                  label: t(locale, 'panel.salaryMap.colAbove'),
+                  value: bandTotals.above,
+                },
+              ]}
+            />
+            {chartRows.length > 0 ? (
+              <>
+                <div className="mb-1.5 flex items-center gap-3 font-mono text-2xs text-ink-faint">
+                  <span className="w-[7.5rem] shrink-0 sm:w-[9.5rem]">
+                    {t(locale, 'panel.salaryMap.colRole')}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    {t(locale, 'panel.salaryMap.chartMix')}
+                  </span>
+                  <span className="w-8 shrink-0 text-right">
+                    {t(locale, 'panel.salaryMap.colHeadcountShort')}
+                  </span>
+                </div>
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                  {chartRows.map((row) => (
+                    <li key={`chart-${row.jobRoleId}`} className="flex items-center gap-3">
+                      <div
+                        className="w-[7.5rem] shrink-0 truncate text-prose text-ink sm:w-[9.5rem]"
+                        title={row.name}
+                      >
+                        {row.name}
+                      </div>
+                      <StackedSegmentBar
+                        segments={bandSegments(row)}
+                        height={8}
+                        className="min-w-0 flex-1"
+                        aria-label={t(locale, 'panel.salaryMap.chartRowAria', {
+                          name: row.name,
+                          below: row.below,
+                          inBand: row.inBand,
+                          above: row.above,
+                        })}
+                      />
+                      <span className="w-8 shrink-0 text-right font-mono text-2xs tabular-nums text-ink-muted">
+                        {row.headcount}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            {bandedRows.length > chartRows.length ? (
+              <p className="mb-0 mt-2.5 font-mono text-2xs text-ink-faint">
+                {t(locale, 'panel.salaryMap.chartCap', {
+                  shown: chartRows.length,
+                  total: bandedRows.length,
+                })}
+              </p>
+            ) : null}
+          </ChartPanel>
+        ) : null}
+
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <FormField label={t(locale, 'panel.salaryMap.pctLabel')} className="w-28">
             <input
@@ -154,7 +283,9 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
             disabled={simBusy || visible.length === 0}
             onClick={() => void runSimulate()}
           >
-            {t(locale, 'panel.salaryMap.simulateBtn')}
+            {simBusy
+              ? t(locale, 'panel.salaryMap.simulateBusy')
+              : t(locale, 'panel.salaryMap.simulateBtn')}
           </button>
         </div>
 
