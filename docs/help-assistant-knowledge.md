@@ -56,7 +56,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Remuneração interna + bônus variável | `compensation` + `b3000Pack` / FAQ `faqVariablePay` |
 | Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
 | LMS / cursos | `lmsBasic` (incl. `/employee/lms` player+resume, quiz, certificado, relatório por turma) |
-| OKRs (ciclo / assignees) | `b3000Pack` + FAQ `faqOkr` |
+| OKRs (ciclo / peso / check-in / assignees) | `b3000Pack` + FAQ `faqOkr` |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |
 | HR Score | `b1000HrScore` |

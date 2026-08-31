@@ -15,6 +15,7 @@ const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   title: z.string().trim().min(1).max(300).optional(),
   progressPct: z.coerce.number().int().min(0).max(100).optional(),
+  weight: z.coerce.number().int().min(1).max(100).optional(),
   deadline: z.string().min(8).max(10).optional().nullable(),
 });
 
@@ -35,6 +36,7 @@ export const PATCH = withAdminApi(
       activityId,
       title: body.title,
       progressPct: body.progressPct,
+      weight: body.weight,
       deadline: body.deadline,
     });
     if (!result.ok) {
@@ -46,7 +48,7 @@ export const PATCH = withAdminApi(
       companyId,
       targetType: 'okr_activity',
       targetId: activityId,
-      metadata: { progressPct: result.activity.progressPct },
+      metadata: { progressPct: result.activity.progressPct, weight: result.activity.weight },
     });
     return NextResponse.json(result);
   }

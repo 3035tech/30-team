@@ -137,7 +137,7 @@ function EmpEmpty({ children }) {
  */
 export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const router = useRouter();
-  const { toast } = useAppFeedback();
+  const { toast, promptForm } = useAppFeedback();
   const { setNavMeta, setActiveSection, sectionFocus } = useEmployeeNav();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -310,6 +310,54 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     },
     [load]
   );
+
+  const submitOkrCheckin = async (act) => {
+    const values = await promptForm({
+      title: t(locale, 'employeeHome.okrCheckinTitle'),
+      confirmLabel: t(locale, 'employeeHome.okrCheckinConfirm'),
+      fields: [
+        {
+          key: 'progressPct',
+          type: 'number',
+          label: t(locale, 'panel.okr.progressPctLabel'),
+          defaultValue: String(act.progressPct ?? 0),
+          min: 0,
+          max: 100,
+          required: true,
+        },
+        {
+          key: 'note',
+          type: 'textarea',
+          label: t(locale, 'panel.okr.checkinNoteLabel'),
+          defaultValue: '',
+          maxLength: 500,
+          rows: 3,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/employee/okr/checkins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activityId: act.id,
+          progressPct: Number(values.progressPct) || 0,
+          note: values.note || '',
+        }),
+      });
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'checkin');
+      toast(t(locale, 'employeeHome.okrCheckinSaved'), 'ok');
+      await load({ silent: true });
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const onSurveyMeta = useCallback((meta) => {
     setSurveyMeta(meta || { openCount: 0, hasAny: false });
@@ -746,8 +794,21 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                               {` · ${t(locale, 'employeeHome.okrImportanceValue', {
                                 pct: act.progressPct ?? 0,
                               })}`}
+                              {act.weight != null && Number(act.weight) !== 1
+                                ? ` · ${t(locale, 'panel.okr.weightChip', { n: act.weight })}`
+                                : ''}
                             </p>
                           </div>
+                          {group.cycleStatus !== OKR_CYCLE_STATUS.CLOSED ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              className={cn(S.btnBrandSoft, 'min-h-touch shrink-0')}
+                              onClick={() => void submitOkrCheckin(act)}
+                            >
+                              {t(locale, 'employeeHome.okrCheckinBtn')}
+                            </button>
+                          ) : null}
                         </div>
                         <MeterBar
                           percent={act.progressPct ?? 0}

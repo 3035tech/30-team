@@ -685,7 +685,7 @@ Puros (Qulture, Alina, ImpulseUp). Árvore leve + KRs numéricos.
 1. ~~Aba Avaliações: objetivos com parent + KRs.~~ **Fase 1 (2026-08):** ciclo nomeado + áreas + atividades (`%`, deadline, urgência, barras). Migration `096_okr_cycles.sql` (tabelas leves antigas preservadas).
 2. Cap por empresa; MeterBar por atividade/área/ciclo.
 3. **Assignees (2026-08):** `097_okr_activity_assignees.sql` — 1+ pessoas por atividade; `/employee#okr` (prazo / progresso / urgência) + notificação `okr_activity_assigned`.
-4. Fora ainda: pesos, bônus por atingimento, check-ins semanais enterprise.
+4. **Pesos + check-ins (2026-08):** `098_okr_weights_checkins.sql` — `weight` 1–100 (rollup ponderado); check-in atualiza `%` + nota (RH e colaborador assignee). Fora ainda: bônus por atingimento.
 
 ### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.

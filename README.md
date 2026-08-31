@@ -82,7 +82,7 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Ponto digital MVP** (`/employee/time-clock`; hub DP → Ponto digital) — batida web, espelho do dia, escala simples, revisão e CSV. Migration `091_time_clock.sql`. **Não** é folha/eSocial/facial.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
 - **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
-- **OKRs leves** (aba Avaliações) — ciclo/área/atividade, vínculo de pessoas, hub `/employee` → Meus OKRs + notificação. Migrations `096`+`097`.
+- **OKRs leves** (aba Avaliações) — ciclo/área/atividade, peso relativo, check-ins, vínculo de pessoas, hub `/employee` → Meus OKRs + notificação. Migrations `096`+`097`+`098`.
 - **Ouvidoria** (`/dashboard?tab=whistleblowing`, `/ouvidoria/{token}`) — canal anônimo + triagem RH. Migration `090`.
 - **Organograma** + **feedback contínuo** (Equipe/Grupos + `/employee` / `/feedback/{token}`). Migration `090`.
 - **Bônus / remuneração variável** (proposta RH → aprovação; status no hub). Migration `090`.
@@ -293,7 +293,7 @@ npm run dev
 ```
 
 **Checklist local rápido**
-1. `npm run db:migrate` até a migration mais recente (ex.: `097_okr_activity_assignees.sql`).
+1. `npm run db:migrate` até a migration mais recente (ex.: `098_okr_weights_checkins.sql`).
 2. Seed de demo: `npm run db:seed-demo-todos-os-dados:confirm` (massa rica; pode não cobrir 100% dos módulos pós-080).
 3. Guia/assistente: `npm run test:full:offline` inclui cobertura `panel.help.*` + FAQ.
 4. Client vs server: helpers LMS de URL/PDF ficam em `lib/lms-media.js` (não importar `lib/lms.js` em componentes `'use client'`).

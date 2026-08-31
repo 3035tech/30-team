@@ -50,6 +50,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
   const [activeCycleId, setActiveCycleId] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [busy, setBusy] = useState(false);
+  const [historyForId, setHistoryForId] = useState(null);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const companyQs = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
   const companyBody = companyId ? { companyId: Number(companyId) } : {};
@@ -237,6 +240,15 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           min: 0,
           max: 100,
         },
+        {
+          key: 'weight',
+          type: 'number',
+          label: t(locale, 'panel.okr.weightLabel'),
+          defaultValue: '1',
+          min: 1,
+          max: 100,
+          help: t(locale, 'panel.okr.weightHelp'),
+        },
         { key: 'deadline', type: 'date', label: t(locale, 'panel.okr.deadlineLabel') },
       ],
     });
@@ -251,6 +263,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           areaId: area.id,
           title: values.title,
           progressPct: Number(values.progressPct) || 0,
+          weight: Number(values.weight) || 1,
           deadline: values.deadline || null,
         }),
       });
@@ -280,6 +293,16 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           required: true,
         },
         {
+          key: 'weight',
+          type: 'number',
+          label: t(locale, 'panel.okr.weightLabel'),
+          defaultValue: String(act.weight ?? 1),
+          min: 1,
+          max: 100,
+          required: true,
+          help: t(locale, 'panel.okr.weightHelp'),
+        },
+        {
           key: 'deadline',
           type: 'date',
           label: t(locale, 'panel.okr.deadlineLabel'),
@@ -296,6 +319,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
         body: JSON.stringify({
           ...companyBody,
           progressPct: Number(values.progressPct) || 0,
+          weight: Number(values.weight) || 1,
           deadline: values.deadline || null,
         }),
       });
@@ -307,6 +331,80 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const addCheckin = async (act) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.okr.checkinTitle'),
+      confirmLabel: t(locale, 'panel.okr.checkinConfirm'),
+      fields: [
+        {
+          key: 'progressPct',
+          type: 'number',
+          label: t(locale, 'panel.okr.progressPctLabel'),
+          defaultValue: String(act.progressPct ?? 0),
+          min: 0,
+          max: 100,
+          required: true,
+        },
+        {
+          key: 'note',
+          type: 'textarea',
+          label: t(locale, 'panel.okr.checkinNoteLabel'),
+          defaultValue: '',
+          maxLength: 500,
+          rows: 3,
+        },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/okr/activities/${act.id}/checkins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...companyBody,
+          progressPct: Number(values.progressPct) || 0,
+          note: values.note || '',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'checkin');
+      toast(t(locale, 'panel.okr.checkinSaved'), 'ok');
+      setHistoryForId(null);
+      setHistoryItems([]);
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleCheckinHistory = async (act) => {
+    if (historyForId === act.id) {
+      setHistoryForId(null);
+      setHistoryItems([]);
+      return;
+    }
+    setHistoryForId(act.id);
+    setHistoryLoading(true);
+    setHistoryItems([]);
+    try {
+      const qs = companyId
+        ? `?companyId=${encodeURIComponent(companyId)}&limit=12`
+        : '?limit=12';
+      const res = await fetch(`/api/admin/okr/activities/${act.id}/checkins${qs}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'list');
+      setHistoryItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.loadError'), 'error');
+      setHistoryForId(null);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -605,18 +703,38 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                             n: act.assignees.length,
                                           })}`
                                         : ''}
+                                      {act.checkinCount > 0
+                                        ? ` · ${t(locale, 'panel.okr.checkinCount', {
+                                            n: act.checkinCount,
+                                          })}`
+                                        : ''}
                                     </p>
-                                  ) : (act.assignees || []).length > 0 ? (
+                                  ) : (act.assignees || []).length > 0 || act.checkinCount > 0 ? (
                                     <p className="mb-0 mt-1 font-mono text-2xs text-ink-faint">
-                                      {t(locale, 'panel.okr.assigneeCount', {
-                                        n: act.assignees.length,
-                                      })}
+                                      {(act.assignees || []).length > 0
+                                        ? t(locale, 'panel.okr.assigneeCount', {
+                                            n: act.assignees.length,
+                                          })
+                                        : ''}
+                                      {(act.assignees || []).length > 0 && act.checkinCount > 0
+                                        ? ' · '
+                                        : ''}
+                                      {act.checkinCount > 0
+                                        ? t(locale, 'panel.okr.checkinCount', {
+                                            n: act.checkinCount,
+                                          })
+                                        : ''}
                                     </p>
                                   ) : null}
                                   <div className="mt-2">
                                     <div className="mb-1 flex items-baseline justify-between gap-2">
                                       <span className="font-mono text-2xs text-ink-faint">
                                         {t(locale, 'panel.okr.activityProgress')}
+                                        {act.weight != null && Number(act.weight) !== 1
+                                          ? ` · ${t(locale, 'panel.okr.weightChip', {
+                                              n: act.weight,
+                                            })}`
+                                          : ''}
                                       </span>
                                       <span className="font-mono text-2xs text-ink-muted">
                                         {act.progressPct}%
@@ -642,7 +760,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                         </span>
                                         <button
                                           type="button"
-                                          disabled={busy}
+                                          disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
                                           className={cn(
                                             S.btnGhost,
                                             'min-h-touch min-w-touch shrink-0 px-1.5 text-ink-faint hover:text-danger'
@@ -657,25 +775,84 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                         </button>
                                       </span>
                                     ))}
-                                    <AdminIconButton
-                                      icon="team"
-                                      label={t(locale, 'panel.okr.assignBtn')}
-                                      onClick={() => void addAssignee(act)}
-                                      disabled={busy}
-                                    />
+                                    {cycle.status !== OKR_CYCLE_STATUS.CLOSED ? (
+                                      <AdminIconButton
+                                        icon="team"
+                                        label={t(locale, 'panel.okr.assignBtn')}
+                                        onClick={() => void addAssignee(act)}
+                                        disabled={busy}
+                                      />
+                                    ) : null}
                                   </div>
+                                  {historyForId === act.id ? (
+                                    <div className="mt-3 rounded-control border border-ink/10 bg-canvas-alt/50 px-2.5 py-2">
+                                      <div className={cn(S.label, 'mb-1.5')}>
+                                        {t(locale, 'panel.okr.checkinHistoryTitle')}
+                                      </div>
+                                      {historyLoading ? (
+                                        <AppLoading locale={locale} variant="inline" />
+                                      ) : historyItems.length === 0 ? (
+                                        <p className={cn(S.faint, 'mb-0 text-2xs')}>
+                                          {t(locale, 'panel.okr.checkinHistoryEmpty')}
+                                        </p>
+                                      ) : (
+                                        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                                          {historyItems.map((c) => (
+                                            <li
+                                              key={c.id}
+                                              className="font-mono text-2xs leading-snug text-ink-muted"
+                                            >
+                                              <span className="text-ink">
+                                                {c.createdAt
+                                                  ? formatDisplayDate(
+                                                      String(c.createdAt).slice(0, 10),
+                                                      locale
+                                                    )
+                                                  : '—'}
+                                              </span>
+                                              {` · ${c.progressPct}%`}
+                                              {c.createdByName ? ` · ${c.createdByName}` : ''}
+                                              {c.note ? (
+                                                <span className="mt-0.5 block text-ink-faint">
+                                                  {c.note}
+                                                </span>
+                                              ) : null}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                  ) : null}
                                 </div>
                                 <div className="flex flex-wrap gap-1">
                                   <AdminEditButton
                                     locale={locale}
                                     onClick={() => void editActivityProgress(act)}
-                                    disabled={busy}
+                                    disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
                                     label={t(locale, 'panel.okr.progressBtn')}
+                                  />
+                                  {cycle.status !== OKR_CYCLE_STATUS.CLOSED ? (
+                                    <AdminIconButton
+                                      icon="check"
+                                      label={t(locale, 'panel.okr.checkinBtn')}
+                                      onClick={() => void addCheckin(act)}
+                                      disabled={busy}
+                                    />
+                                  ) : null}
+                                  <AdminIconButton
+                                    icon="list"
+                                    label={
+                                      historyForId === act.id
+                                        ? t(locale, 'panel.common.collapse')
+                                        : t(locale, 'panel.okr.checkinHistoryBtn')
+                                    }
+                                    onClick={() => void toggleCheckinHistory(act)}
+                                    disabled={busy || historyLoading}
                                   />
                                   <AdminDeleteButton
                                     locale={locale}
                                     onClick={() => void deleteActivity(act)}
-                                    disabled={busy}
+                                    disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
                                   />
                                 </div>
                               </div>

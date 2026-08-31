@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
-import { AppLoading } from './AppLoading';
+import { AppLoading, ContentEnter } from './AppLoading';
 import { ChartPanel, ChartLegend } from './ChartPanel';
 import { StackedSegmentBar } from './StackedSegmentBar';
 import { CategoryBars } from './CategoryBars';
@@ -20,14 +20,19 @@ import {
 export function VacationPoolBlock({ locale = 'pt-BR', companyId, reloadKey = 0 }) {
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
+  const [loadError, setLoadError] = useState(false);
+  const hasDataRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!companyId) {
       setPool(null);
       setLoading(false);
+      setLoadError(false);
+      hasDataRef.current = false;
       return;
     }
-    setLoading(true);
+    if (!hasDataRef.current) setLoading(true);
+    setLoadError(false);
     try {
       const params = new URLSearchParams({
         companyId: String(companyId),
@@ -36,9 +41,12 @@ export function VacationPoolBlock({ locale = 'pt-BR', companyId, reloadKey = 0 }
       const res = await fetch(`/api/admin/dp/leave?${params}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'pool');
-      setPool(data.pool || null);
+      const next = data.pool || null;
+      setPool(next);
+      hasDataRef.current = Boolean(next && next.headcount > 0);
     } catch {
-      setPool(null);
+      setLoadError(true);
+      if (!hasDataRef.current) setPool(null);
     } finally {
       setLoading(false);
     }
@@ -76,27 +84,31 @@ export function VacationPoolBlock({ locale = 'pt-BR', companyId, reloadKey = 0 }
 
   const roleBars = useMemo(() => {
     if (!pool?.byJobRole?.length) return [];
-    const labeled = pool.byJobRole
-      .filter((r) => r.label)
-      .map((r) => ({
-        ...r,
-        label: r.label,
-      }));
-    return vacationPoolByAreaBars(labeled, { limit: 8 }).map((r) => ({
+    const rows = pool.byJobRole.map((r) => ({
+      ...r,
+      label: r.label || t(locale, 'panel.dp.vacationPoolNoRole'),
+    }));
+    return vacationPoolByAreaBars(rows, { limit: 8 }).map((r) => ({
       id: r.id,
       label: r.label,
       value: r.value,
       toneClass: 'rounded-full bg-info',
     }));
-  }, [pool]);
+  }, [pool, locale]);
 
   if (!companyId) return null;
 
-  if (loading) {
+  if (loading && !pool) {
     return (
       <div className={cn(S.card, 'mb-0')}>
         <AppLoading locale={locale} variant="inline" />
       </div>
+    );
+  }
+
+  if (loadError && !pool) {
+    return (
+      <p className={cn(S.faint, 'mb-0 text-2xs')}>{t(locale, 'panel.dp.vacationPoolLoadError')}</p>
     );
   }
 
@@ -113,34 +125,36 @@ export function VacationPoolBlock({ locale = 'pt-BR', companyId, reloadKey = 0 }
   if (!showChart) return null;
 
   return (
-    <ChartPanel
-      title={t(locale, 'panel.dp.vacationPoolTitle')}
-      hint={t(locale, 'panel.dp.vacationPoolHint', {
-        n: pool.headcount,
-        year: pool.periodHint?.periodStart?.slice(0, 4) || '',
-      })}
-    >
-      <StackedSegmentBar
-        segments={stackSegments}
-        height={10}
-        className="mb-2"
-        aria-label={t(locale, 'panel.dp.vacationPoolTitle')}
-      />
-      <ChartLegend items={stackSegments} total={stackTotal} className="mb-3" />
-      {roleBars.length > 0 ? (
-        <div>
-          <div className={cn(S.label, 'mb-2')}>{t(locale, 'panel.dp.vacationPoolByRole')}</div>
-          <CategoryBars items={roleBars} height={8} />
-        </div>
-      ) : null}
-      {pool.truncated ? (
-        <p className={cn(S.faint, 'mb-0 mt-2')}>
-          {t(locale, 'panel.dp.vacationPoolTruncated', {
-            scanned: pool.scanned,
-            cap: pool.scanCap,
-          })}
-        </p>
-      ) : null}
-    </ChartPanel>
+    <ContentEnter animKey={`vac-pool|${companyId}|${pool.headcount}|${stackTotal}`}>
+      <ChartPanel
+        title={t(locale, 'panel.dp.vacationPoolTitle')}
+        hint={t(locale, 'panel.dp.vacationPoolHint', {
+          n: pool.headcount,
+          year: pool.periodHint?.periodStart?.slice(0, 4) || '',
+        })}
+      >
+        <StackedSegmentBar
+          segments={stackSegments}
+          height={10}
+          className="mb-2"
+          aria-label={t(locale, 'panel.dp.vacationPoolTitle')}
+        />
+        <ChartLegend items={stackSegments} total={stackTotal} className="mb-3" />
+        {roleBars.length > 0 ? (
+          <div>
+            <div className={cn(S.label, 'mb-2')}>{t(locale, 'panel.dp.vacationPoolByRole')}</div>
+            <CategoryBars items={roleBars} height={8} />
+          </div>
+        ) : null}
+        {pool.truncated ? (
+          <p className={cn(S.faint, 'mb-0 mt-2')}>
+            {t(locale, 'panel.dp.vacationPoolTruncated', {
+              scanned: pool.scanned,
+              cap: pool.scanCap,
+            })}
+          </p>
+        ) : null}
+      </ChartPanel>
+    </ContentEnter>
   );
 }

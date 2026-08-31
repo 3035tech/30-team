@@ -7,7 +7,7 @@ import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { statusToneClass } from '../../../_components/StatusToneChip';
 import { Icon } from '../../../_components/Icon';
-import { AppLoading } from '../../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../../_components/AppLoading';
 import { ChartPanel, ChartLegend } from '../../../_components/ChartPanel';
 import { StackedSegmentBar } from '../../../_components/StackedSegmentBar';
 import { CHART_MIN_N, turnoverRiskDistribution } from '../../../../lib/chart-aggregates';
@@ -144,6 +144,7 @@ export default function TurnoverRadarCard({ locale, companyId }) {
         : t(locale, 'turnoverRadar.noAtRiskList');
 
   return (
+    <ContentEnter animKey={`turnover|${companyId}|${dist.scanned}|${risks.length}`}>
     <div className={S.card}>
       <div className="mb-4 flex items-start justify-between">
         <div>
@@ -296,5 +297,6 @@ export default function TurnoverRadarCard({ locale, companyId }) {
         </div>
       ) : null}
     </div>
+    </ContentEnter>
   );
 }

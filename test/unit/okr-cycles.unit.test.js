@@ -1,10 +1,15 @@
 /**
- * OKR phase 1: mean rollup + deadline urgency (pure).
+ * OKR phase 1–2: mean/weighted rollup + deadline urgency (pure).
  */
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { activityUrgency, meanProgressPct } from '../../lib/okr-cycles.js';
+import {
+  activityUrgency,
+  meanProgressPct,
+  weightedProgressPct,
+  clampWeight,
+} from '../../lib/okr-cycles.js';
 
 describe('meanProgressPct', () => {
   it('returns null for empty', () => {
@@ -15,6 +20,41 @@ describe('meanProgressPct', () => {
   it('averages and rounds', () => {
     assert.equal(meanProgressPct([100, 50]), 75);
     assert.equal(meanProgressPct([10, 20, 30]), 20);
+  });
+});
+
+describe('weightedProgressPct', () => {
+  it('returns null for empty', () => {
+    assert.equal(weightedProgressPct([]), null);
+  });
+
+  it('equals mean when weights are equal', () => {
+    assert.equal(
+      weightedProgressPct([
+        { progressPct: 100, weight: 1 },
+        { progressPct: 50, weight: 1 },
+      ]),
+      75
+    );
+  });
+
+  it('weights higher activities more', () => {
+    assert.equal(
+      weightedProgressPct([
+        { progressPct: 100, weight: 3 },
+        { progressPct: 0, weight: 1 },
+      ]),
+      75
+    );
+  });
+});
+
+describe('clampWeight', () => {
+  it('defaults and clamps', () => {
+    assert.equal(clampWeight(0), 1);
+    assert.equal(clampWeight(null), 1);
+    assert.equal(clampWeight(50), 50);
+    assert.equal(clampWeight(200), 100);
   });
 });
 
