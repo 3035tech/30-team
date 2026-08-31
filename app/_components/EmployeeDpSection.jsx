@@ -16,6 +16,7 @@ import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import { BR_STATES } from '../../lib/candidate-profile.js';
 import { formatCepBr, formatCpfBr, formatPhoneBr } from '../../lib/br-masks.js';
 import { SignaturePadField, SignatureStrokePreview } from './SignaturePadField';
+import { Icon } from './Icon';
 import {
   DP_DOCUMENT_STATUS,
   DP_DOCUMENT_SIGNATURE_STATUS,
@@ -122,8 +123,23 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
   const leaveFileRef = useRef(null);
   const padApiRef = useRef(null);
   const signPanelRef = useRef(null);
+  const signerNameRef = useRef(null);
   const onBadgeRef = useRef(onBadge);
   onBadgeRef.current = onBadge;
+
+  useEffect(() => {
+    if (!signingDocKey) return undefined;
+    const onKey = (ev) => {
+      if (ev.key !== 'Escape' || busy) return;
+      setSigningDocKey(null);
+      setSignerName('');
+      setSignConsent(false);
+      setPadEmpty(true);
+      padApiRef.current?.clear?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [signingDocKey, busy]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -307,6 +323,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
     padApiRef.current?.clear?.();
     requestAnimationFrame(() => {
       signPanelRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+      padApiRef.current?.focus?.();
     });
   };
 
@@ -578,7 +595,15 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
             </div>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {documents.map((doc) => {
+              {[...documents]
+                .sort((a, b) => {
+                  const rank = (d) =>
+                    (d.signatureStatus || '') === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED
+                      ? 0
+                      : 1;
+                  return rank(a) - rank(b);
+                })
+                .map((doc) => {
                 const sig = doc.signatureStatus || DP_DOCUMENT_SIGNATURE_STATUS.NONE;
                 const isSigning = signingDocKey === doc.docKey;
                 const canConfirmSign =
@@ -586,6 +611,13 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                   && !padEmpty
                   && signerName.trim().length >= 3
                   && signConsent;
+                const nextHint = padEmpty
+                  ? t(locale, 'employeeHome.dpSignStrokeRequired')
+                  : signerName.trim().length < 3
+                    ? t(locale, 'employeeHome.dpSignNeedName')
+                    : !signConsent
+                      ? t(locale, 'employeeHome.dpSignNeedConsent')
+                      : '';
                 return (
                 <li
                   key={doc.docKey}
@@ -634,6 +666,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       <SignatureStrokePreview
                         src={doc.signerStrokePng}
                         alt={t(locale, 'panel.dp.sigStrokeAlt')}
+                        caption={t(locale, 'panel.dp.sigStrokeLabel')}
                         maxHeightClass="max-h-16"
                       />
                     ) : null}
@@ -690,6 +723,15 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         <p className={cn(S.muted, 'mb-3 mt-0 text-prose')}>
                           {t(locale, 'employeeHome.dpSignPadHint')}
                         </p>
+                        {doc.fileUrl ? (
+                          <div className="mb-3">
+                            <CopyableLink
+                              url={doc.fileUrl}
+                              label={t(locale, 'panel.dp.docOpenFile')}
+                              locale={locale}
+                            />
+                          </div>
+                        ) : null}
                         <FormField label={t(locale, 'panel.dp.sigStrokeLabel')}>
                           <SignaturePadField
                             locale={locale}
@@ -705,6 +747,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                             hint={t(locale, 'employeeHome.dpSignNameHelp')}
                           >
                             <input
+                              ref={signerNameRef}
                               type="text"
                               className={S.input}
                               value={signerName}
@@ -725,13 +768,19 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                             <span>{t(locale, 'employeeHome.dpSignConsent')}</span>
                           </label>
                         </div>
+                        {!canConfirmSign && nextHint ? (
+                          <p className={cn(S.faint, 'mb-0 mt-2')} aria-live="polite">
+                            {nextHint}
+                          </p>
+                        ) : null}
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
-                            className={cn(S.btnPrimary, 'min-h-touch')}
+                            className={cn(S.btnPrimary, 'inline-flex min-h-touch items-center gap-1.5')}
                             disabled={!canConfirmSign}
                             onClick={() => void submitSignature(doc)}
                           >
+                            {busy ? null : <Icon name="check" className="h-4 w-4" />}
                             {busy
                               ? t(locale, 'panel.common.loading')
                               : t(locale, 'employeeHome.dpSignConfirm')}

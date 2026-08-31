@@ -13,6 +13,7 @@ import { Icon } from './Icon';
 export function SignatureStrokePreview({
   src,
   alt = '',
+  caption = '',
   className = '',
   maxHeightClass = 'max-h-20',
 }) {
@@ -24,22 +25,26 @@ export function SignatureStrokePreview({
         className
       )}
     >
-      {/* data URL stroke — not a remote asset */}
       <img
         src={src}
         alt={alt}
         className={cn(
-          'block w-full object-contain object-left px-2 py-1.5',
+          'block w-full object-contain object-left px-2.5 py-2',
           maxHeightClass
         )}
       />
+      {caption ? (
+        <figcaption className="border-t border-ink/8 bg-canvas/50 px-2.5 py-1 font-mono text-2xs text-ink-faint">
+          {caption}
+        </figcaption>
+      ) : null}
     </figure>
   );
 }
 
 /**
  * Pointer-friendly signature pad (mouse / touch / stylus) via `signature_pad`.
- * Ref API: clear(), isEmpty(), toDataURL().
+ * Ref API: clear(), undo(), isEmpty(), toDataURL(), focus().
  */
 export function SignaturePadField({
   locale = 'pt-BR',
@@ -55,10 +60,14 @@ export function SignaturePadField({
   const onEmptyChangeRef = useRef(onEmptyChange);
   onEmptyChangeRef.current = onEmptyChange;
   const [empty, setEmpty] = useState(true);
+  const [strokeCount, setStrokeCount] = useState(0);
 
-  const setEmptyState = (next) => {
-    setEmpty(next);
-    onEmptyChangeRef.current?.(next);
+  const syncFromPad = (pad) => {
+    if (!pad) return;
+    const nextEmpty = pad.isEmpty();
+    setEmpty(nextEmpty);
+    setStrokeCount(pad.toData()?.length || 0);
+    onEmptyChangeRef.current?.(nextEmpty);
   };
 
   useEffect(() => {
@@ -76,29 +85,33 @@ export function SignaturePadField({
     });
     padInstanceRef.current = pad;
 
-    const syncEmpty = () => setEmptyState(pad.isEmpty());
-    pad.addEventListener('endStroke', syncEmpty);
-    pad.addEventListener('beginStroke', () => setEmptyState(false));
+    const onEnd = () => syncFromPad(pad);
+    const onBegin = () => {
+      setEmpty(false);
+      onEmptyChangeRef.current?.(false);
+    };
+    pad.addEventListener('endStroke', onEnd);
+    pad.addEventListener('beginStroke', onBegin);
 
+    let raf = 0;
     const resize = () => {
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const rect = wrap.getBoundingClientRect();
-      const w = Math.max(1, Math.floor(rect.width));
-      const h = Math.max(1, Math.floor(height));
-      const data = pad.isEmpty() ? null : pad.toData();
-      canvas.width = w * ratio;
-      canvas.height = h * ratio;
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      pad.clear();
-      if (data?.length) {
-        pad.fromData(data);
-        setEmptyState(pad.isEmpty());
-      } else {
-        setEmptyState(true);
-      }
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const rect = wrap.getBoundingClientRect();
+        const w = Math.max(1, Math.floor(rect.width));
+        const h = Math.max(1, Math.floor(height));
+        const data = pad.isEmpty() ? null : pad.toData();
+        canvas.width = w * ratio;
+        canvas.height = h * ratio;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        pad.clear();
+        if (data?.length) pad.fromData(data);
+        syncFromPad(pad);
+      });
     };
 
     resize();
@@ -112,23 +125,31 @@ export function SignaturePadField({
       padRef.current = {
         clear: () => {
           pad.clear();
-          setEmptyState(true);
+          syncFromPad(pad);
+        },
+        undo: () => {
+          const data = pad.toData();
+          if (!data?.length) return;
+          data.pop();
+          pad.fromData(data);
+          syncFromPad(pad);
         },
         isEmpty: () => pad.isEmpty(),
         toDataURL: (type = 'image/png', encoderOptions) =>
           pad.toDataURL(type, encoderOptions),
+        focus: () => canvas.focus({ preventScroll: true }),
       };
     }
 
     return () => {
+      cancelAnimationFrame(raf);
       ro?.disconnect();
       window.removeEventListener('resize', resize);
       pad.off();
       padInstanceRef.current = null;
       if (padRef) padRef.current = null;
     };
-    // padRef is a stable useRef from parent; height is the only remount trigger we want.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid remounting when parent re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable padRef from parent
   }, [height]);
 
   useEffect(() => {
@@ -137,6 +158,25 @@ export function SignaturePadField({
     if (disabled) pad.off();
     else pad.on();
   }, [disabled]);
+
+  const guideBottom = Math.max(40, Math.round(height * 0.3));
+
+  const undoStroke = () => {
+    const pad = padInstanceRef.current;
+    if (!pad) return;
+    const data = pad.toData();
+    if (!data?.length) return;
+    data.pop();
+    pad.fromData(data);
+    syncFromPad(pad);
+  };
+
+  const clearPad = () => {
+    const pad = padInstanceRef.current;
+    if (!pad) return;
+    pad.clear();
+    syncFromPad(pad);
+  };
 
   return (
     <div className={cn('w-full', className)}>
@@ -147,7 +187,7 @@ export function SignaturePadField({
           'border-ink/15 shadow-sm',
           'focus-within:border-brand-500/50 focus-within:ring-2 focus-within:ring-brand-500/20',
           !empty && 'border-success/35',
-          disabled && 'opacity-60'
+          disabled && 'pointer-events-none opacity-60'
         )}
       >
         <canvas
@@ -157,16 +197,15 @@ export function SignaturePadField({
           tabIndex={disabled ? -1 : 0}
           aria-label={t(locale, 'panel.dp.sigPadAria')}
         />
-        {/* Signature guideline */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-4 z-0 border-b border-dashed border-ink/15"
-          style={{ bottom: Math.max(36, Math.round(height * 0.28)) }}
+          className="pointer-events-none absolute inset-x-5 z-[2] border-b border-dashed border-ink/20"
+          style={{ bottom: guideBottom }}
         />
         {empty ? (
           <p
             aria-hidden
-            className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center px-4 text-center font-mono text-2xs text-ink-faint"
+            className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center px-4 text-center font-mono text-prose text-ink-faint"
           >
             {t(locale, 'panel.dp.sigPadEmpty')}
           </p>
@@ -184,19 +223,26 @@ export function SignaturePadField({
             ? t(locale, 'panel.dp.sigPadHintStatus')
             : t(locale, 'panel.dp.sigPadDrawn')}
         </p>
-        <button
-          type="button"
-          className={cn(S.btnGhost, 'inline-flex min-h-touch items-center gap-1.5 text-2xs')}
-          disabled={disabled || empty}
-          onClick={() => {
-            padInstanceRef.current?.clear();
-            setEmptyState(true);
-          }}
-          aria-label={t(locale, 'panel.dp.sigPadClear')}
-        >
-          <Icon name="refresh" className="h-3.5 w-3.5" />
-          {t(locale, 'panel.dp.sigPadClear')}
-        </button>
+        <div className="flex flex-wrap gap-1">
+          <button
+            type="button"
+            className={cn(S.btnGhost, 'min-h-touch px-2 text-2xs')}
+            disabled={disabled || strokeCount < 1}
+            onClick={undoStroke}
+          >
+            {t(locale, 'panel.dp.sigPadUndo')}
+          </button>
+          <button
+            type="button"
+            className={cn(S.btnGhost, 'inline-flex min-h-touch items-center gap-1.5 px-2 text-2xs')}
+            disabled={disabled || empty}
+            onClick={clearPad}
+            aria-label={t(locale, 'panel.dp.sigPadClear')}
+          >
+            <Icon name="refresh" className="h-3.5 w-3.5" />
+            {t(locale, 'panel.dp.sigPadClear')}
+          </button>
+        </div>
       </div>
     </div>
   );

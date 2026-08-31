@@ -864,8 +864,14 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                     <SignatureStrokePreview
                       src={doc.signerStrokePng}
                       alt={t(locale, 'panel.dp.sigStrokeAlt')}
+                      caption={t(locale, 'panel.dp.sigStrokeLabel')}
                       maxHeightClass="max-h-20"
                     />
+                  ) : null}
+                  {sig === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED ? (
+                    <p className={cn(S.faint, 'mb-0 mt-1')}>
+                      {t(locale, 'panel.dp.sigWaiting')}
+                    </p>
                   ) : null}
                   {doc.notes ? (
                     <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{doc.notes}</p>
