@@ -592,11 +592,11 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 3. Integra eventos de folha quando **B-2726** existir.
 4. **Entregue (saldo + polish):** pedido → aprovação (1 clique no inbox), calendário 60d expandido por dia, tipos fechados, **saldo de férias no período aquisitivo**, bloqueio por saldo e por sobreposição, cancelamento pelo colaborador (solicitado), anexo de atestado, fila de docs no inbox, export CSV. Sem evento de folha (ver Guia → DP leve).
 
-### B-2724 — Admissão digital + GED + assinatura
+### B-2724 — Admissão digital + GED + assinatura ✅ ENTREGUE (MVP)
 1. Checklist pós-hire (docs: RG, contrato, etc.); upload S3; status por documento.
-2. Assinatura eletrônica (provedor) com trilha de auditoria; validade jurídica = via parceiro, não “inventar ICP”.
+2. **Assinatura interna** (traço PNG no canvas + nome digitado + consentimento + IP/UA + `audit_log`); **não** ICP-Brasil / ClickSign. Parceiro externo = fase 2.
 3. Liga funil `hired` → pasta do colaborador no mesmo `candidate_id`.
-4. **MVP leve entregue:** checklist + anexo S3 opcional na Equipe → DP; **sem** assinatura ICP / GED jurídico.
+4. Schema `083` + `100` + `101_dp_signature_stroke.sql`; Guia → DP leve.
 
 ### B-2725 — Equipe de campo (rota / check-in / reembolso)
 1. Check-in geolocalizado em visitas; rota do dia; fotos opcionais.

@@ -15,8 +15,10 @@ import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import { BR_STATES } from '../../lib/candidate-profile.js';
 import { formatCepBr, formatCpfBr, formatPhoneBr } from '../../lib/br-masks.js';
+import { SignaturePadField, SignatureStrokePreview } from './SignaturePadField';
 import {
   DP_DOCUMENT_STATUS,
+  DP_DOCUMENT_SIGNATURE_STATUS,
   DP_LEAVE_STATUS,
   DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
@@ -35,6 +37,19 @@ function formatDate(value, locale) {
   });
 }
 
+function formatDateTime(value, locale) {
+  if (!value) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(localeHtmlLang(locale), {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function docKeyLabel(locale, key) {
   const k = `panel.dp.docKey.${key}`;
   const label = t(locale, k);
@@ -43,6 +58,12 @@ function docKeyLabel(locale, key) {
 
 function docStatusLabel(locale, status) {
   const k = `panel.dp.docStatus.${status}`;
+  const label = t(locale, k);
+  return label === k ? status : label;
+}
+
+function sigStatusLabel(locale, status) {
+  const k = `panel.dp.sigStatus.${status}`;
   const label = t(locale, k);
   return label === k ? status : label;
 }
@@ -63,6 +84,13 @@ function docStatusTone(status) {
   if (status === DP_DOCUMENT_STATUS.RECEIVED) return 'success';
   if (status === DP_DOCUMENT_STATUS.WAIVED) return 'neutral';
   return 'warning';
+}
+
+function sigStatusTone(status) {
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED) return 'success';
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED) return 'warning';
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.WAIVED) return 'neutral';
+  return 'neutral';
 }
 
 function leaveStatusTone(status) {
@@ -86,8 +114,14 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
   const [pendingDocs, setPendingDocs] = useState(0);
   const [uploadKey, setUploadKey] = useState(null);
   const [leaveUploadId, setLeaveUploadId] = useState(null);
+  const [signingDocKey, setSigningDocKey] = useState(null);
+  const [signerName, setSignerName] = useState('');
+  const [signConsent, setSignConsent] = useState(false);
+  const [padEmpty, setPadEmpty] = useState(true);
   const fileInputRef = useRef(null);
   const leaveFileRef = useRef(null);
+  const padApiRef = useRef(null);
+  const signPanelRef = useRef(null);
   const onBadgeRef = useRef(onBadge);
   onBadgeRef.current = onBadge;
 
@@ -260,6 +294,65 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.fileDeleteError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const signDocument = async (doc) => {
+    setSigningDocKey(doc.docKey);
+    setSignerName(String(profile?.fullName || '').trim());
+    setSignConsent(false);
+    setPadEmpty(true);
+    padApiRef.current?.clear?.();
+    requestAnimationFrame(() => {
+      signPanelRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+    });
+  };
+
+  const cancelSign = () => {
+    setSigningDocKey(null);
+    setSignerName('');
+    setSignConsent(false);
+    setPadEmpty(true);
+    padApiRef.current?.clear?.();
+  };
+
+  const submitSignature = async (doc) => {
+    if (!padApiRef.current || padApiRef.current.isEmpty()) {
+      toast(t(locale, 'employeeHome.dpSignStrokeRequired'), 'error');
+      return;
+    }
+    const strokePng = padApiRef.current.toDataURL('image/png');
+    if (!signerName.trim() || signerName.trim().length < 3) {
+      toast(t(locale, 'errors.DP_SIGNATURE_NAME_REQUIRED'), 'error');
+      return;
+    }
+    if (!signConsent) {
+      toast(t(locale, 'errors.DP_SIGNATURE_CONSENT_REQUIRED'), 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/sign`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signerName: signerName.trim(),
+            consent: true,
+            strokePng,
+          }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'sign');
+      toast(t(locale, 'employeeHome.dpSignOk'), 'ok');
+      cancelSign();
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'employeeHome.dpSignError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -476,23 +569,45 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
         <div className={cn(S.card, 'p-3')}>
           <h3 className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h3>
           <p className={cn(S.muted, 'mb-3 mt-0 text-xs')}>{t(locale, 'employeeHome.dpDocsUploadHint')}</p>
+          <InlineCallout tone="info" className="mb-3">
+            {t(locale, 'employeeHome.dpSignHint')}
+          </InlineCallout>
           {documents.length === 0 ? (
             <div data-emp-empty tabIndex={-1} className="outline-none">
               <EmptyState message={t(locale, 'panel.dp.docsEmptyHint')} />
             </div>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {documents.map((doc) => (
+              {documents.map((doc) => {
+                const sig = doc.signatureStatus || DP_DOCUMENT_SIGNATURE_STATUS.NONE;
+                const isSigning = signingDocKey === doc.docKey;
+                const canConfirmSign =
+                  !busy
+                  && !padEmpty
+                  && signerName.trim().length >= 3
+                  && signConsent;
+                return (
                 <li
                   key={doc.docKey}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
+                  className={cn(
+                    'flex flex-col gap-2 rounded-control border bg-canvas/40 px-2.5 py-2',
+                    isSigning
+                      ? 'border-brand-500/40 ring-1 ring-brand-500/15'
+                      : 'border-ink/8'
+                  )}
                 >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className={S.cardMuted}>{docKeyLabel(locale, doc.docKey)}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <StatusToneChip tone={docStatusTone(doc.status)}>
                         {docStatusLabel(locale, doc.status)}
                       </StatusToneChip>
+                      {sig !== DP_DOCUMENT_SIGNATURE_STATUS.NONE ? (
+                        <StatusToneChip tone={sigStatusTone(sig)}>
+                          {sigStatusLabel(locale, sig)}
+                        </StatusToneChip>
+                      ) : null}
                       <span className="font-mono text-2xs text-ink-muted">
                         {doc.hasFile
                           ? doc.fileName || t(locale, 'panel.dp.docHasFile')
@@ -507,9 +622,36 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         />
                       ) : null}
                     </div>
+                    {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
+                      <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>
+                        {t(locale, 'panel.dp.sigSignedMeta', {
+                          name: doc.signerName || '—',
+                          when: formatDateTime(doc.signedAt, locale),
+                        })}
+                      </p>
+                    ) : null}
+                    {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED && doc.signerStrokePng ? (
+                      <SignatureStrokePreview
+                        src={doc.signerStrokePng}
+                        alt={t(locale, 'panel.dp.sigStrokeAlt')}
+                        maxHeightClass="max-h-16"
+                      />
+                    ) : null}
                   </div>
+                  {!isSigning ? (
                   <div className="flex shrink-0 flex-wrap gap-1">
-                    {doc.status !== DP_DOCUMENT_STATUS.WAIVED ? (
+                    {sig === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED && doc.hasFile ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnPrimary, 'min-h-touch text-2xs')}
+                        onClick={() => void signDocument(doc)}
+                      >
+                        {t(locale, 'employeeHome.dpSignBtn')}
+                      </button>
+                    ) : null}
+                    {doc.status !== DP_DOCUMENT_STATUS.WAIVED
+                      && sig !== DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
                       <button
                         type="button"
                         disabled={busy || uploadKey === doc.docKey}
@@ -521,7 +663,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                           : t(locale, 'panel.dp.docUpload')}
                       </button>
                     ) : null}
-                    {doc.hasFile ? (
+                    {doc.hasFile && sig !== DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
                       <button
                         type="button"
                         disabled={busy}
@@ -532,8 +674,83 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       </button>
                     ) : null}
                   </div>
+                  ) : null}
+                  </div>
+                  {isSigning ? (
+                    <ContentEnter animKey={`sign|${doc.docKey}`}>
+                      <div
+                        ref={signPanelRef}
+                        className="rounded-control border border-brand-500/25 bg-surface p-3 shadow-sm"
+                      >
+                        <p className={cn(S.label, 'mb-1')}>
+                          {t(locale, 'employeeHome.dpSignTitle', {
+                            doc: docKeyLabel(locale, doc.docKey),
+                          })}
+                        </p>
+                        <p className={cn(S.muted, 'mb-3 mt-0 text-prose')}>
+                          {t(locale, 'employeeHome.dpSignPadHint')}
+                        </p>
+                        <FormField label={t(locale, 'panel.dp.sigStrokeLabel')}>
+                          <SignaturePadField
+                            locale={locale}
+                            padRef={padApiRef}
+                            disabled={busy}
+                            height={168}
+                            onEmptyChange={setPadEmpty}
+                          />
+                        </FormField>
+                        <div className="mt-3 grid grid-cols-1 gap-3 sm:items-start">
+                          <FormField
+                            label={t(locale, 'employeeHome.dpSignNameLabel')}
+                            hint={t(locale, 'employeeHome.dpSignNameHelp')}
+                          >
+                            <input
+                              type="text"
+                              className={S.input}
+                              value={signerName}
+                              maxLength={120}
+                              autoComplete="name"
+                              disabled={busy}
+                              onChange={(e) => setSignerName(e.target.value)}
+                            />
+                          </FormField>
+                          <label className="inline-flex min-h-touch cursor-pointer items-start gap-2 font-ui text-prose text-ink">
+                            <input
+                              type="checkbox"
+                              className={cn(S.checkbox, 'mt-1')}
+                              checked={signConsent}
+                              disabled={busy}
+                              onChange={(e) => setSignConsent(e.target.checked)}
+                            />
+                            <span>{t(locale, 'employeeHome.dpSignConsent')}</span>
+                          </label>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className={cn(S.btnPrimary, 'min-h-touch')}
+                            disabled={!canConfirmSign}
+                            onClick={() => void submitSignature(doc)}
+                          >
+                            {busy
+                              ? t(locale, 'panel.common.loading')
+                              : t(locale, 'employeeHome.dpSignConfirm')}
+                          </button>
+                          <button
+                            type="button"
+                            className={cn(S.btnGhost, 'min-h-touch')}
+                            disabled={busy}
+                            onClick={cancelSign}
+                          >
+                            {t(locale, 'panel.common.cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    </ContentEnter>
+                  ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>

@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { query } from '../../../../../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../../../lib/api-error.js';
 import {
@@ -7,7 +6,17 @@ import {
   getSessionPayload,
   requireAnyCapability,
 } from '../../../../../../../../lib/ae/require-admin.js';
-import { updateDpDocument } from '../../../../../../../../lib/people/employee-dp.js';
+import {
+  updateDpDocument,
+  requestDpDocumentSignature,
+  waiveDpDocumentSignature,
+} from '../../../../../../../../lib/people/employee-dp.js';
+import { audit, auditRequestContext, AUDIT_ACTOR_KIND } from '../../../../../../../../lib/audit.js';
+import {
+  notifyCandidates,
+  EMPLOYEE_NOTIF,
+} from '../../../../../../../../lib/employee-notifications.js';
+import { NextResponse } from 'next/server';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
@@ -42,8 +51,59 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const action = String(body.action || '').trim();
+    const companyId = loaded.candidate.companyId;
+
+    if (action === 'requestSignature') {
+      const result = await requestDpDocumentSignature({ query }, {
+        companyId,
+        candidateId,
+        docKey,
+        requestedByUserId: payload.userId,
+      });
+      if (!result.ok) return apiErrorFromResult(request, result);
+      await audit({
+        actorUserId: payload.userId || null,
+        actorKind: AUDIT_ACTOR_KIND.MANAGER,
+        companyId,
+        action: 'dp_doc.signature_request',
+        targetType: 'employee_dp_document',
+        targetId: result.item.id,
+        metadata: { candidateId: Number(candidateId), docKey },
+        ...auditRequestContext(request),
+      });
+      await notifyCandidates({ query }, {
+        companyId,
+        candidateIds: [Number(candidateId)],
+        type: EMPLOYEE_NOTIF.DP_SIGNATURE_REQUESTED,
+        payload: { docKey, candidateId: Number(candidateId) },
+      }).catch(() => {});
+      return NextResponse.json({ ok: true, item: result.item });
+    }
+
+    if (action === 'waiveSignature') {
+      const result = await waiveDpDocumentSignature({ query }, {
+        companyId,
+        candidateId,
+        docKey,
+        waivedByUserId: payload.userId,
+      });
+      if (!result.ok) return apiErrorFromResult(request, result);
+      await audit({
+        actorUserId: payload.userId || null,
+        actorKind: AUDIT_ACTOR_KIND.MANAGER,
+        companyId,
+        action: 'dp_doc.signature_waive',
+        targetType: 'employee_dp_document',
+        targetId: result.item.id,
+        metadata: { candidateId: Number(candidateId), docKey },
+        ...auditRequestContext(request),
+      });
+      return NextResponse.json({ ok: true, item: result.item });
+    }
+
     const result = await updateDpDocument({ query }, {
-      companyId: loaded.candidate.companyId,
+      companyId,
       candidateId,
       docKey,
       status: body.status,

@@ -19,12 +19,14 @@ import { InlineCallout } from './InlineCallout';
 import { CopyableLink } from './CopyableLink';
 import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
+import { SignatureStrokePreview } from './SignaturePadField';
 import { BR_STATES } from '../../lib/candidate-profile.js';
 import { formatCepBr, formatCpfBr, formatPhoneBr } from '../../lib/br-masks.js';
 import {
   DP_DOCUMENT_KEYS,
   DP_DOCUMENT_STATUS,
   DP_DOCUMENT_STATUSES,
+  DP_DOCUMENT_SIGNATURE_STATUS,
   DP_LEAVE_STATUS,
   DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
@@ -44,6 +46,19 @@ function formatDate(value, locale) {
   });
 }
 
+function formatDateTime(value, locale) {
+  if (!value) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(localeHtmlLang(locale), {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function docKeyLabel(locale, key) {
   const k = `panel.dp.docKey.${key}`;
   const label = t(locale, k);
@@ -52,6 +67,12 @@ function docKeyLabel(locale, key) {
 
 function docStatusLabel(locale, status) {
   const k = `panel.dp.docStatus.${status}`;
+  const label = t(locale, k);
+  return label === k ? status : label;
+}
+
+function sigStatusLabel(locale, status) {
+  const k = `panel.dp.sigStatus.${status}`;
   const label = t(locale, k);
   return label === k ? status : label;
 }
@@ -72,6 +93,13 @@ function docStatusTone(status) {
   if (status === DP_DOCUMENT_STATUS.RECEIVED) return 'success';
   if (status === DP_DOCUMENT_STATUS.WAIVED) return 'neutral';
   return 'warning';
+}
+
+function sigStatusTone(status) {
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED) return 'success';
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED) return 'warning';
+  if (status === DP_DOCUMENT_SIGNATURE_STATUS.WAIVED) return 'neutral';
+  return 'neutral';
 }
 
 function leaveStatusTone(status) {
@@ -348,6 +376,35 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       toast(t(locale, 'panel.dp.fileDeleted'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.fileDeleteError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const signatureAction = async (doc, action) => {
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `${baseUrl}/documents/${encodeURIComponent(doc.docKey)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'signature');
+      setDocuments((prev) =>
+        prev.map((d) => (d.docKey === doc.docKey ? data.item || d : d))
+      );
+      toast(
+        action === 'requestSignature'
+          ? t(locale, 'panel.dp.sigRequested')
+          : t(locale, 'panel.dp.sigWaived'),
+        'ok'
+      );
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.dp.saveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -753,6 +810,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <span className={cn(S.label, 'mb-3 block')}>{t(locale, 'panel.dp.docsTitle')}</span>
+        <InlineCallout tone="info" className="mb-3">
+          {t(locale, 'panel.dp.sigHint')}
+        </InlineCallout>
         {orderedDocs.length === 0 ? (
           <EmptyState
             title={t(locale, 'panel.dp.docsEmptyTitle')}
@@ -760,7 +820,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           />
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {orderedDocs.map((doc) => (
+            {orderedDocs.map((doc) => {
+              const sig = doc.signatureStatus || DP_DOCUMENT_SIGNATURE_STATUS.NONE;
+              return (
               <li
                 key={doc.docKey}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
@@ -771,6 +833,11 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                     <StatusToneChip tone={docStatusTone(doc.status)}>
                       {docStatusLabel(locale, doc.status)}
                     </StatusToneChip>
+                    {sig !== DP_DOCUMENT_SIGNATURE_STATUS.NONE ? (
+                      <StatusToneChip tone={sigStatusTone(sig)}>
+                        {sigStatusLabel(locale, sig)}
+                      </StatusToneChip>
+                    ) : null}
                     <span className="font-mono text-2xs text-ink-muted">
                       {doc.hasFile
                         ? doc.fileName || t(locale, 'panel.dp.docHasFile')
@@ -785,12 +852,27 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       />
                     ) : null}
                   </div>
+                  {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
+                    <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>
+                      {t(locale, 'panel.dp.sigSignedMeta', {
+                        name: doc.signerName || '—',
+                        when: formatDateTime(doc.signedAt, locale),
+                      })}
+                    </p>
+                  ) : null}
+                  {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED && doc.signerStrokePng ? (
+                    <SignatureStrokePreview
+                      src={doc.signerStrokePng}
+                      alt={t(locale, 'panel.dp.sigStrokeAlt')}
+                      maxHeightClass="max-h-20"
+                    />
+                  ) : null}
                   {doc.notes ? (
                     <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{doc.notes}</p>
                   ) : null}
                 </div>
                 {!readOnly ? (
-                  <div className="flex shrink-0 gap-1">
+                  <div className="flex shrink-0 flex-wrap gap-1">
                     <AdminEditButton
                       label={t(locale, 'panel.dp.docEdit')}
                       onClick={() => void editDocument(doc)}
@@ -806,17 +888,40 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                         ? t(locale, 'panel.common.loading')
                         : t(locale, 'panel.dp.docUpload')}
                     </button>
+                    {doc.hasFile
+                      && sig !== DP_DOCUMENT_SIGNATURE_STATUS.SIGNED
+                      && sig !== DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnBrandSoft, 'min-h-touch text-xs')}
+                        onClick={() => void signatureAction(doc, 'requestSignature')}
+                      >
+                        {t(locale, 'panel.dp.sigRequestBtn')}
+                      </button>
+                    ) : null}
+                    {sig === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'min-h-touch text-xs')}
+                        onClick={() => void signatureAction(doc, 'waiveSignature')}
+                      >
+                        {t(locale, 'panel.dp.sigWaiveBtn')}
+                      </button>
+                    ) : null}
                     {doc.hasFile ? (
                       <AdminDeleteButton
                         label={t(locale, 'panel.dp.docDeleteFile')}
                         onClick={() => void removeFile(doc)}
-                        disabled={busy}
+                        disabled={busy || sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED}
                       />
                     ) : null}
                   </div>
                 ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
