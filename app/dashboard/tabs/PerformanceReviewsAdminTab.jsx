@@ -33,6 +33,8 @@ import { NineBoxBlock } from './NineBoxBlock';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { CalibrationBlock } from '../../_components/CalibrationBlock';
 import { OkrBlock } from '../../_components/OkrBlock';
+import { StatusToneChip } from '../../_components/StatusToneChip';
+import { htmlToPlainText } from '../../../lib/sanitize-html';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
@@ -205,8 +207,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       {
         name: 'description',
         label: t('cycleDescription'),
-        type: 'textarea',
-        rows: 3,
+        type: 'richText',
+        minHeight: 100,
         value: cycle?.description || '',
       },
       {
@@ -450,10 +452,10 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     }
   }
 
-  function getStatusColor(status) {
-    if (status === PERFORMANCE_CYCLE_STATUS.ACTIVE) return 'text-success';
-    if (status === PERFORMANCE_CYCLE_STATUS.CLOSED) return 'text-ink-muted';
-    return 'text-warning';
+  function getStatusTone(status) {
+    if (status === PERFORMANCE_CYCLE_STATUS.ACTIVE) return 'success';
+    if (status === PERFORMANCE_CYCLE_STATUS.CLOSED) return 'neutral';
+    return 'warning';
   }
 
   function getStatusLabel(status) {
@@ -601,10 +603,12 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-ink">{cycle.title}</p>
                     {cycle.description ? (
-                      <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{cycle.description}</p>
+                      <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">
+                        {htmlToPlainText(cycle.description)}
+                      </p>
                     ) : null}
                     {cycle.allowSelfReview || cycle.allowPeerReview ? (
-                      <p className="mt-1 font-mono text-2xs text-brand-600">
+                      <p className="mt-1 font-mono text-2xs text-ink-muted">
                         {cycle.allowSelfReview ? t('allowSelfReview') : ''}
                         {cycle.allowSelfReview && cycle.allowPeerReview ? ' · ' : ''}
                         {cycle.allowPeerReview ? t('allowPeerReview') : ''}
@@ -617,9 +621,9 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                     ) : null}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium ${getStatusColor(cycle.status)}`}>
+                    <StatusToneChip tone={getStatusTone(cycle.status)}>
                       {getStatusLabel(cycle.status)}
-                    </span>
+                    </StatusToneChip>
                   </td>
                   <td className="px-4 py-3 text-sm text-ink-muted">{formatDate(cycle.periodStart)}</td>
                   <td className="px-4 py-3 text-sm text-ink-muted">

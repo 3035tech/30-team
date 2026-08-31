@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { StatusToneChip } from './StatusToneChip';
+import { lmsPdfCanEmbed } from '../../lib/lms.js';
+import { EmptyState } from './EmptyState';
 
 function loadScript(src, globalKey) {
   if (typeof window === 'undefined') return Promise.resolve(null);
@@ -62,6 +64,7 @@ function PlayerChrome({ title, kindLabel, resumeLabel, loadingLabel, loading, on
 
 /**
  * YouTube / Vimeo / PDF in-app viewer with optional resume + progress callback.
+ * PDFs: iframe only for same-origin (CSP frame-src 'self'); external → open CTA.
  * Does not auto-complete lessons.
  */
 export function LmsMediaPlayer({
@@ -73,6 +76,8 @@ export function LmsMediaPlayer({
   kindLabel,
   resumeLabel,
   loadingLabel = '…',
+  openLabel,
+  pdfExternalHint,
   className,
 }) {
   const hostRef = useRef(null);
@@ -84,11 +89,17 @@ export function LmsMediaPlayer({
   const [showResumeChip, setShowResumeChip] = useState(
     () => Math.max(0, Math.floor(Number(startAtSec) || 0)) >= 15
   );
+  const [pageOrigin, setPageOrigin] = useState('');
 
   const kind = lesson?.contentKind;
   const videoId = lesson?.videoId;
   const embedUrl = lesson?.embedUrl;
+  const contentUrl = lesson?.contentUrl || embedUrl;
   const title = lesson?.title || 'Lesson';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') setPageOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     onProgressRef.current = onProgress;
@@ -279,7 +290,9 @@ export function LmsMediaPlayer({
 
   if (!lesson) return null;
 
-  if (kind === 'pdf' && embedUrl) {
+  if (kind === 'pdf') {
+    const pdfSrc = contentUrl || embedUrl;
+    const canEmbed = Boolean(pdfSrc) && lmsPdfCanEmbed(pdfSrc, pageOrigin);
     return (
       <div className={cn(className)}>
         <PlayerChrome
@@ -291,9 +304,28 @@ export function LmsMediaPlayer({
           onClose={onClose}
           closeLabel={closeLabel}
         >
-          <div className="h-[min(75vh,720px)] w-full bg-canvas">
-            <iframe title={title} src={embedUrl} className="h-full w-full border-0" />
-          </div>
+          {canEmbed ? (
+            <div className="h-[min(75vh,720px)] w-full bg-canvas">
+              <iframe title={title} src={pdfSrc} className="h-full w-full border-0" />
+            </div>
+          ) : (
+            <div className="flex min-h-[240px] flex-col items-center justify-center gap-4 bg-canvas px-4 py-10 text-center">
+              <EmptyState
+                message={pdfExternalHint || 'Open the PDF in a new tab to read this lesson.'}
+                className="w-full max-w-md border-0 bg-transparent py-0"
+              />
+              {pdfSrc ? (
+                <a
+                  href={pdfSrc}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(S.btnPrimary, 'min-h-touch no-underline')}
+                >
+                  {openLabel || 'Open material'}
+                </a>
+              ) : null}
+            </div>
+          )}
         </PlayerChrome>
       </div>
     );

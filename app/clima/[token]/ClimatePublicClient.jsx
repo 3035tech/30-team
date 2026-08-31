@@ -7,6 +7,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import { ScaleRatingButtons } from '../../_components/ScaleRatingButtons';
+import { RichTextView } from '../../_components/RichTextView';
 
 function isTextQuestion(q) {
   return String(q?.questionKind || '').toLowerCase() === 'text';
@@ -123,7 +124,9 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
 
   return (
     <PublicNarrowShell variant="form" locale={locale} title={meta?.title}>
-      {meta?.description ? <p className={cn(S.muted, 'mt-2 text-sm')}>{meta.description}</p> : null}
+      {meta?.description ? (
+        <RichTextView html={meta.description} className={cn(S.muted, 'mt-2 text-sm')} />
+      ) : null}
       <p className={cn(S.faint, 'mt-2 text-xs')}>{t(locale, 'panel.climate.publicAnonymous')}</p>
       <ol className="mt-6 flex list-none flex-col gap-5 p-0">
         {(meta?.questions || []).map((q, idx) => {

@@ -996,7 +996,9 @@ export function VacancyClientReportBlock({
             className="mt-3 max-h-[360px] overflow-auto rounded-control border border-ink/12"
           >
             {loading ? (
-              <p className="p-3 text-xs text-ink-muted">{t(locale, 'panel.common.loading')}</p>
+              <div className="p-3">
+                <AppLoading variant="inline" label={t(locale, 'panel.common.loading')} />
+              </div>
             ) : visible.length === 0 ? (
               <p className="p-3 text-xs text-ink-muted">{t(locale, 'panel.report.noCandidates')}</p>
             ) : (

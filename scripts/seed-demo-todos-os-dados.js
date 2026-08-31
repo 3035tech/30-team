@@ -1660,7 +1660,7 @@ async function main() {
         `INSERT INTO lms_lessons (company_id, course_id, title, content_url, content_kind, sort_order)
          VALUES
            ($1, $2, 'Bem-vindo à empresa', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'youtube', 0),
-           ($1, $2, 'Como usamos o 30Team', 'https://example.com/demo-lms-guide.pdf', 'pdf', 1)
+           ($1, $2, 'Como usamos o 30Team', '/demo/lms-guide.pdf', 'pdf', 1)
          RETURNING id`,
         [companyId, courseId]
       );

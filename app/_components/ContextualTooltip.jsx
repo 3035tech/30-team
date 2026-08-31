@@ -88,10 +88,10 @@ export function ContextualTooltip({
   };
 
   const arrowClasses = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-purple-600',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-purple-600',
-    left: 'left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-purple-600',
-    right: 'right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-purple-600',
+    top: 'top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-brand-500',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-brand-500',
+    left: 'left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-brand-500',
+    right: 'right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-brand-500',
   };
 
   return (
@@ -110,7 +110,7 @@ export function ContextualTooltip({
         />
         
         {/* Content */}
-        <div className="bg-purple-600 text-white rounded-lg shadow-xl p-4">
+        <div className="rounded-control bg-brand-500 p-4 text-white shadow-toast">
           {title && (
             <div className="font-semibold text-sm mb-2 flex items-start justify-between">
               <span>{title}</span>

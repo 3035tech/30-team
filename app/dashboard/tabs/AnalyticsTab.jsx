@@ -15,6 +15,7 @@ import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
 import { EmptyState } from '../../_components/EmptyState';
 import { cn } from '../../../lib/cn.js';
 import { StatMetricTile } from '../../_components/StatMetricTile';
+import { SegmentedControl } from '../../_components/SegmentedControl';
 
 const TREND_TONE = {
   brand: { bar: 'bg-brand-500', value: 'text-brand-600' },
@@ -217,29 +218,17 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
     <ContentEnter animKey={activeView}>
     <div className="space-y-6">
       <div className={S.card}>
-        {/* View Toggle */}
-        <div className="flex gap-2 mb-6">
-          <button
-            type="button"
-            className={activeView === 'metrics' ? S.btnPrimary : S.btnGhost}
-            onClick={() => setActiveView('metrics')}
-          >
-            {t(locale, 'panel.analytics.viewMetrics')}
-          </button>
-          <button
-            type="button"
-            className={activeView === 'trends' ? S.btnPrimary : S.btnGhost}
-            onClick={() => setActiveView('trends')}
-          >
-            {t(locale, 'panel.analytics.viewTrends')}
-          </button>
-          <button
-            type="button"
-            className={activeView === 'compare' ? S.btnPrimary : S.btnGhost}
-            onClick={() => setActiveView('compare')}
-          >
-            {t(locale, 'panel.analytics.viewCompare')}
-          </button>
+        <div className="mb-6">
+          <SegmentedControl
+            aria-label={t(locale, 'panel.analytics.titleMetrics')}
+            value={activeView}
+            onChange={setActiveView}
+            options={[
+              { id: 'metrics', label: t(locale, 'panel.analytics.viewMetrics') },
+              { id: 'trends', label: t(locale, 'panel.analytics.viewTrends') },
+              { id: 'compare', label: t(locale, 'panel.analytics.viewCompare') },
+            ]}
+          />
         </div>
 
         <h2 className="font-display text-xl mb-4">{viewTitle}</h2>

@@ -62,7 +62,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
       defaultOpen
       count={placed > 0 ? placed : null}
       className="mt-6"
-      bordered={false}
+      variant="card"
     >
       {loading ? (
         <AppLoading variant="panel" label={t(locale, 'nineBox.loading')} />
@@ -70,11 +70,8 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
         <p className={cn(S.muted, 'm-0 text-sm text-danger')}>{error}</p>
       ) : (
         <ContentEnter animKey={`nine-box-${companyId}-${placed}`}>
-          <section className={cn(S.cardTight)}>
+          <div>
             <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="m-0 font-ui text-lg font-semibold text-ink">
-                {t(locale, 'nineBox.title')}
-              </h2>
               <span className={cn(S.faint, 'font-mono text-2xs')}>
                 {t(locale, 'nineBox.placed', { placed, scanned })}
               </span>
@@ -149,7 +146,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
                 {t(locale, 'nineBox.unplaced', { n: data.unplaced.length })}
               </p>
             ) : null}
-          </section>
+          </div>
         </ContentEnter>
       )}
     </CollapsibleBlock>

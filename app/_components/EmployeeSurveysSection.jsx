@@ -86,7 +86,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
     }
   };
 
-  if (loading) return <AppLoading variant="inline" />;
+  if (loading) return <AppLoading variant="panel" />;
 
   const open = [
     ...(inbox?.openClimate || []).map((s) => ({ ...s, kind: 'climate', key: `c-${s.surveyId}` })),

@@ -42,12 +42,12 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   {
     id: 'variablePay',
     href: '/employee#variablePay',
-    icon: 'clipboard',
+    icon: 'salary',
     labelKey: 'employeeHome.variablePayTitle',
     hash: 'variablePay',
   },
-  { id: 'feed', href: '/employee#feed', icon: 'list', labelKey: 'employeeHome.feedTitle', hash: 'feed' },
-  { id: 'kudos', href: '/employee#kudos', icon: 'sparkles', labelKey: 'employeeHome.kudosTitle', hash: 'kudos' },
+  { id: 'feed', href: '/employee#feed', icon: 'bell', labelKey: 'employeeHome.feedTitle', hash: 'feed' },
+  { id: 'kudos', href: '/employee#kudos', icon: 'gift', labelKey: 'employeeHome.kudosTitle', hash: 'kudos' },
   { id: 'company', href: '/employee#company', icon: 'building', labelKey: 'employeeHome.companyTitle', hash: 'company' },
   { id: 'profile', href: '/employee/profile', icon: 'user', labelKey: 'employeeHome.profile' },
 ]);
@@ -84,8 +84,10 @@ function badgeFor(itemId, badges) {
   if (itemId === 'tasks') return badges.tasks;
   if (itemId === 'surveys') return badges.surveys;
   if (itemId === 'lms') return badges.lms;
+  if (itemId === 'okr') return badges.okr;
   if (itemId === 'dp') return badges.dp;
   if (itemId === 'timeClock') return badges.timeClock;
+  if (itemId === 'variablePay') return badges.variablePay;
   if (itemId === 'feed') return badges.feed;
   if (itemId === 'kudos') return badges.kudos;
   if (itemId === 'feedback') return badges.feedback;

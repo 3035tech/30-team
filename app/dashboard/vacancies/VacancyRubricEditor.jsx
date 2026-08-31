@@ -206,7 +206,7 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
       <p className="mb-2.5 mt-0 text-2xs leading-normal text-ink-faint">
         {t(locale, 'recruiting.rubricWeightHint')}
       </p>
-      {loading ? <p className="text-2xs text-ink-faint">…</p> : null}
+      {loading ? <AppLoading variant="inline" label={t(locale, 'panel.common.loading')} /> : null}
       <div className="mb-2.5 flex flex-wrap gap-2">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
           <label key={typeNum} className="flex items-center gap-1 text-xs text-ink-muted">

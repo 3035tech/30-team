@@ -1274,7 +1274,7 @@ $html$,
     INSERT INTO lms_lessons (company_id, course_id, title, content_url, content_kind, sort_order)
     VALUES
       (v_company_id, v_course_id, 'Como usamos o 30Team',
-       'https://example.com/demo-lms-guide.pdf', 'pdf', 1)
+       '/demo/lms-guide.pdf', 'pdf', 1)
     RETURNING id INTO v_lesson2_id;
 
     IF to_regclass('public.lms_cohorts') IS NOT NULL THEN

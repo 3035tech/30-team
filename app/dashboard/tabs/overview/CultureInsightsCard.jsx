@@ -13,7 +13,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [loading, setLoading] = useState(true);
   const [showFull, setShowFull] = useState(false);
 
-  function t(key) {
+  function t(key, values = {}) {
     const messages = {
       'pt-BR': {
         title: 'Cultura Organizacional',
@@ -22,6 +22,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         noDataDesc: 'Execute pesquisas de clima, pulsos e tenha avaliações T1–T9',
         overallHealth: 'Saúde geral',
         dominantArchetype: 'Arquétipo dominante',
+        dominantArchetypeValue: '{type}: {pct}% do time',
         positive: 'Positiva',
         neutral: 'Neutra',
         concern: 'Atenção',
@@ -29,7 +30,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         viewFull: 'Ver insights completos',
         viewSummary: 'Ver resumo',
         insightsTitle: 'Insights',
-        hedgingNote: '💡 Leitura baseada em indicadores; não substitui observação direta.',
+        hedgingNote: 'Leitura baseada em indicadores; não substitui observação direta.',
         climate: 'Clima',
         typeMix: 'Mix T1–T9',
         pulse: 'Pulso',
@@ -48,6 +49,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         noDataDesc: 'Run climate surveys, pulses, and have T1–T9 assessments',
         overallHealth: 'Overall health',
         dominantArchetype: 'Dominant archetype',
+        dominantArchetypeValue: '{type}: {pct}% of the team',
         positive: 'Positive',
         neutral: 'Neutral',
         concern: 'Concern',
@@ -55,7 +57,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         viewFull: 'View full insights',
         viewSummary: 'View summary',
         insightsTitle: 'Insights',
-        hedgingNote: '💡 Reading based on indicators; does not replace direct observation.',
+        hedgingNote: 'Reading based on indicators; does not replace direct observation.',
         climate: 'Climate',
         typeMix: 'T1–T9 Mix',
         pulse: 'Pulse',
@@ -68,7 +70,11 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         viewLink: 'View →',
       },
     };
-    return messages[locale]?.[key] || messages['pt-BR'][key] || key;
+    let out = messages[locale]?.[key] || messages['pt-BR'][key] || key;
+    for (const [k, v] of Object.entries(values || {})) {
+      out = String(out).split(`{${k}}`).join(String(v));
+    }
+    return out;
   }
 
   useEffect(() => {
@@ -188,8 +194,10 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             <div>
               <p className={S.cardSection}>{t('dominantArchetype')}</p>
               <p className={S.cardBody}>
-                <span className="font-semibold">{data.dominantArchetype.type}</span> —{' '}
-                {data.dominantArchetype.percentage}% do time
+                {t('dominantArchetypeValue', {
+                  type: data.dominantArchetype.type,
+                  pct: data.dominantArchetype.percentage,
+                })}
               </p>
             </div>
           )}

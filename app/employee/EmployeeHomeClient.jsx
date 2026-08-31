@@ -365,12 +365,23 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         ).length,
         dp: dpBadge,
         timeClock: timeClockBadge,
+        variablePay: variablePayBadge,
         feed: feedTotal,
         kudos: kudosTotal,
         feedback: feedbackBadge,
       },
     });
-  }, [data, surveyMeta, dpBadge, timeClockBadge, feedTotal, kudosTotal, feedbackBadge, setNavMeta]);
+  }, [
+    data,
+    surveyMeta,
+    dpBadge,
+    timeClockBadge,
+    variablePayBadge,
+    feedTotal,
+    kudosTotal,
+    feedbackBadge,
+    setNavMeta,
+  ]);
 
   // Scroll-spy
   useEffect(() => {
@@ -444,26 +455,31 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
   const lmsOverdueCount = courses.filter((c) => c.overdue).length;
+  const okrUrgentCount = okrActivities.filter(
+    (a) => a.urgency === 'overdue' || a.urgency === 'critical'
+  ).length;
   const startHere =
     tasks.length > 0
       ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
       : surveyMeta.openCount > 0
         ? { href: '#surveys', labelKey: 'employeeHome.startHereSurveys', count: surveyMeta.openCount }
-        : dpBadge > 0
-          ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
-          : timeClockBadge > 0
-            ? {
-                href: '/employee/time-clock',
-                labelKey: 'employeeHome.startHereTimeClock',
-                count: 1,
-              }
-            : lmsOverdueCount > 0
+        : okrUrgentCount > 0
+          ? { href: '#okr', labelKey: 'employeeHome.startHereOkr', count: okrUrgentCount }
+          : dpBadge > 0
+            ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
+            : timeClockBadge > 0
               ? {
-                  href: '/employee/lms',
-                  labelKey: 'employeeHome.startHereLms',
-                  count: lmsOverdueCount,
+                  href: '/employee/time-clock',
+                  labelKey: 'employeeHome.startHereTimeClock',
+                  count: 1,
                 }
-              : null;
+              : lmsOverdueCount > 0
+                ? {
+                    href: '/employee/lms',
+                    labelKey: 'employeeHome.startHereLms',
+                    count: lmsOverdueCount,
+                  }
+                : null;
 
   return (
     <ContentEnter animKey="ready">
@@ -820,7 +836,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                               ? 'bg-success'
                               : course.overdue
                                 ? 'bg-danger'
-                                : 'bg-brand-500'
+                                : 'bg-info'
                           }
                         />
                         {due ? (

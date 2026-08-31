@@ -12,6 +12,7 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { formatRelativeAgo, inviteStatusShort, daysInStage, stageAgingTone } from './vacancy-admin-shared';
 import { VacancyOfferBlock } from './VacancyOfferBlock';
 import { EmptyState } from '../../_components/EmptyState';
+import { AppLoading } from '../../_components/AppLoading';
 
 export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
@@ -111,7 +112,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
         <span className="font-mono text-xs uppercase tracking-[1.5px] text-ink-muted">
           {t(locale, 'recruiting.pipelineTitle')}
         </span>
-        {loading && <span className="spinner text-ink-muted" />}
+        {loading ? <AppLoading variant="inline" /> : null}
         {!loading && hasAny && (
           <span className="font-mono text-2xs text-ink-faint">
             {t(locale, 'recruiting.candidatesCount', { n: rows.length })}

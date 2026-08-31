@@ -33,6 +33,8 @@ import { FormField } from '../../_components/FormField';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { fieldInputClass } from '../../_components/form-control-styles';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import { RichTextEditor } from '../../_components/RichTextEditor';
+import { htmlToPlainText } from '../../../lib/sanitize-html';
 import {
   digitsOnly,
   formatSalaryDisplay,
@@ -392,8 +394,17 @@ export function JobRolesAdminTab({ locale, companyId }) {
                       {role.name}
                     </td>
                     <td className="max-w-[280px] px-3 py-2 align-middle text-xs text-ink-muted">
-                      <span className="line-clamp-1" title={role.description || undefined}>
-                        {role.description || '—'}
+                      <span
+                        className="line-clamp-1"
+                        title={
+                          role.description
+                            ? htmlToPlainText(role.description) || undefined
+                            : undefined
+                        }
+                      >
+                        {role.description
+                          ? htmlToPlainText(role.description) || '—'
+                          : '—'}
                       </span>
                     </td>
                     <td className="px-3 py-2 align-middle font-mono text-2xs text-ink-muted whitespace-nowrap">
@@ -427,7 +438,10 @@ export function JobRolesAdminTab({ locale, companyId }) {
                               notice({
                                 title: role.name,
                                 message: [
-                                  role.description || t(locale, 'jobRoles.noDescription'),
+                                  role.description
+                                    ? htmlToPlainText(role.description) ||
+                                      t(locale, 'jobRoles.noDescription')
+                                    : t(locale, 'jobRoles.noDescription'),
                                   '',
                                   formatVacancySalaryRangeDisplay(
                                     role.marketSalaryMin,
@@ -467,7 +481,10 @@ export function JobRolesAdminTab({ locale, companyId }) {
                               notice({
                                 title: role.name,
                                 message: [
-                                  role.description || t(locale, 'jobRoles.noDescription'),
+                                  role.description
+                                    ? htmlToPlainText(role.description) ||
+                                      t(locale, 'jobRoles.noDescription')
+                                    : t(locale, 'jobRoles.noDescription'),
                                   '',
                                   formatVacancySalaryRangeDisplay(
                                     role.marketSalaryMin,
@@ -558,13 +575,13 @@ export function JobRolesAdminTab({ locale, companyId }) {
             />
           </FormField>
 
-          <FormField label={t(locale, 'jobRoles.descriptionLabel')}>
-            <textarea
+          <FormField as="div" label={t(locale, 'jobRoles.descriptionLabel')}>
+            <RichTextEditor
               value={form.description}
-              onChange={(e) => setForm((cur) => ({ ...cur, description: e.target.value }))}
+              onChange={(html) => setForm((cur) => ({ ...cur, description: html }))}
               placeholder={t(locale, 'jobRoles.descriptionPlaceholder')}
-              rows={3}
-              className={cn(FIELD, 'min-h-[72px] resize-y font-ui')}
+              minHeight={100}
+              locale={locale}
             />
           </FormField>
 

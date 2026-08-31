@@ -629,7 +629,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       />
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
-        {loading ? <p className="text-ink-muted">{t(locale, 'panel.common.loading')}</p> : null}
+        {loading ? <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} /> : null}
         <AdminTableShell minWidth="480px">
           <thead>
             <tr className="bg-ink/[0.02]">
@@ -877,7 +877,13 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
       .then(setData);
   }, [isAdmin, companyFilter]);
 
-  if (!data) return <div className={S.card}><p className="text-ink-muted">{t(locale, 'panel.motivatorsAdmin.analytics.loading')}</p></div>;
+  if (!data) {
+    return (
+      <div className={S.card}>
+        <AppLoading variant="panel" label={t(locale, 'panel.motivatorsAdmin.analytics.loading')} />
+      </div>
+    );
+  }
 
   const maxAvg = Math.max(...(data.distribution || []).map((d) => d.average), 1);
 
@@ -1001,17 +1007,15 @@ function ConfigPanel({ locale }) {
                   {!def.active ? t(locale, 'panel.motivatorsAdmin.config.defInactive') : ''}
                 </div>
               </div>
-              <button
-                type="button"
+              <AdminDeleteButton
+                label={
+                  deleteBusy === def.id
+                    ? t(locale, 'panel.motivatorsAdmin.config.deleting')
+                    : t(locale, 'panel.motivatorsAdmin.config.delete')
+                }
                 disabled={deleteBusy === def.id}
                 onClick={() => removeDefinition(def)}
-                className={cn(
-                  'shrink-0 rounded-lg border border-danger/25 bg-transparent px-2.5 py-1 text-2xs text-danger',
-                  deleteBusy === def.id ? 'cursor-not-allowed' : 'cursor-pointer'
-                )}
-              >
-                {deleteBusy === def.id ? t(locale, 'panel.motivatorsAdmin.config.deleting') : t(locale, 'panel.motivatorsAdmin.config.delete')}
-              </button>
+              />
             </div>
           ))}
         </div>

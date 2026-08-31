@@ -498,7 +498,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                   <div className="mb-1 flex items-baseline justify-between gap-2">
                     <span className={S.label}>{t(locale, 'panel.okr.totalProgress')}</span>
                     <span className="font-mono text-2xs text-ink-muted">
-                      {cycle.progressPct != null ? `${cycle.progressPct}%` : '—'}
+                      {cycle.progressPct != null
+                        ? `${cycle.progressPct}%`
+                        : t(locale, 'panel.common.notApplicable')}
                     </span>
                   </div>
                   <MeterBar
@@ -512,12 +514,15 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
 
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className={S.label}>{t(locale, 'panel.okr.areasTitle')}</span>
-                <AdminCreateButton
-                  locale={locale}
-                  label={t(locale, 'panel.okr.createAreaBtn')}
-                  onClick={() => void createArea()}
+                <button
+                  type="button"
+                  className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-2xs')}
                   disabled={busy}
-                />
+                  onClick={() => void createArea()}
+                >
+                  <Icon name="plus" className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  {t(locale, 'panel.okr.createAreaBtn')}
+                </button>
               </div>
 
               {(cycle.areas || []).length === 0 ? (
@@ -525,10 +530,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
               ) : (
                 <ul className="m-0 flex list-none flex-col gap-3 p-0">
                   {(cycle.areas || []).map((area) => (
-                    <li
-                      key={area.id}
-                      className="rounded-card border border-ink/12 bg-canvas/40 p-3 sm:p-4"
-                    >
+                    <li key={area.id} className={cn(S.cardTight, 'bg-canvas/40 p-3 sm:p-4')}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h4 className={cn(S.cardBody, 'm-0')}>{area.title}</h4>
@@ -538,7 +540,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                 {t(locale, 'panel.okr.areaProgress')}
                               </span>
                               <span className="font-mono text-2xs text-ink-muted">
-                                {area.progressPct != null ? `${area.progressPct}%` : '—'}
+                                {area.progressPct != null
+                                  ? `${area.progressPct}%`
+                                  : t(locale, 'panel.common.notApplicable')}
                               </span>
                             </div>
                             <MeterBar
@@ -549,8 +553,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          <AdminCreateButton
-                            locale={locale}
+                          <AdminIconButton
+                            icon="plus"
                             label={t(locale, 'panel.okr.createActivityBtn')}
                             onClick={() => void createActivity(area)}
                             disabled={busy}
@@ -564,9 +568,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                       </div>
 
                       {(area.activities || []).length === 0 ? (
-                        <p className={cn(S.muted, 'mb-0 mt-3 text-prose')}>
-                          {t(locale, 'panel.okr.activitiesEmpty')}
-                        </p>
+                        <div className="mt-3">
+                          <EmptyState message={t(locale, 'panel.okr.activitiesEmpty')} />
+                        </div>
                       ) : (
                         <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
                           {(area.activities || []).map((act) => (
@@ -644,10 +648,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                             'min-h-touch min-w-touch shrink-0 px-1.5 text-ink-faint hover:text-danger'
                                           )}
                                           onClick={() => void removeAssignee(act, person)}
-                                          aria-label={t(locale, 'panel.okr.unassignConfirm', {
-                                            name: person.fullName || person.email,
-                                            title: act.title,
-                                          })}
+                                          aria-label={`${t(locale, 'panel.okr.unassignBtn')}: ${
+                                            person.fullName || person.email || ''
+                                          }`}
                                           title={t(locale, 'panel.okr.unassignBtn')}
                                         >
                                           <Icon name="close" className="h-3.5 w-3.5" aria-hidden />

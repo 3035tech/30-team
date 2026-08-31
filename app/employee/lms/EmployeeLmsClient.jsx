@@ -507,6 +507,8 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   kindLabel={kindLabelFor(locale, watching.contentKind)}
                   resumeLabel={formatWatchHint(locale, watching)}
                   loadingLabel={t(locale, 'employeeHome.lmsLoadingPlayer')}
+                  openLabel={t(locale, 'panel.employeePortal.openLesson')}
+                  pdfExternalHint={t(locale, 'employeeHome.lmsPdfExternalHint')}
                 />
               ) : (
                 <InlineCallout tone="info" className="mb-4">

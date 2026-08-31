@@ -20,23 +20,23 @@ export function EmptyStateActionable({
       {illustration ? (
         <div className="mb-6">{illustration}</div>
       ) : icon ? (
-        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-canvas text-ink-muted">
           {icon}
         </div>
       ) : null}
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <h3 className="mb-2 font-display text-lg font-semibold text-ink">{title}</h3>
 
       {/* Message */}
-      <p className="text-sm text-gray-600 max-w-md mb-6">{message}</p>
+      <p className="mb-6 max-w-md font-ui text-sm text-ink-muted">{message}</p>
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         {primaryAction && (
           <button
             onClick={primaryAction.onClick}
-            className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+            className="inline-flex min-h-touch items-center justify-center rounded-control bg-brand-500 px-6 py-3 font-ui text-prose font-semibold text-white transition-colors hover:bg-brand-600"
           >
             {primaryAction.icon && <span className="mr-2">{primaryAction.icon}</span>}
             {primaryAction.label}
@@ -46,7 +46,7 @@ export function EmptyStateActionable({
         {secondaryAction && (
           <button
             onClick={secondaryAction.onClick}
-            className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="inline-flex min-h-touch items-center justify-center rounded-control border border-ink/15 bg-surface px-6 py-3 font-ui text-prose font-medium text-ink transition-colors hover:bg-canvas"
           >
             {secondaryAction.icon && <span className="mr-2">{secondaryAction.icon}</span>}
             {secondaryAction.label}
@@ -67,7 +67,7 @@ export function EmptyStateActionable({
                 className="flex items-start gap-2 text-left p-3 bg-gray-50 rounded-lg border border-gray-200"
               >
                 <svg
-                  className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0"
+                  className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

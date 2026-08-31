@@ -14,6 +14,7 @@ import { C } from '../../../lib/theme';
 import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { RichTextView } from '../../_components/RichTextView';
 
 function dateLocale(locale) {
   return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
@@ -449,6 +450,8 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
       {
         key: 'description',
         label: t(locale, 'panel.climate.descLabel'),
+        type: 'richText',
+        minHeight: 100,
         placeholder: t(locale, 'panel.climate.descPh'),
       },
     ];
@@ -886,7 +889,10 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                         </div>
                         <h3 className="m-0 font-ui text-2xl font-semibold leading-tight text-ink">{detail.title}</h3>
                         {detail.description ? (
-                          <p className={cn(S.muted, 'm-0 mt-2 text-sm')}>{detail.description}</p>
+                          <RichTextView
+                            html={detail.description}
+                            className={cn(S.muted, 'mt-2 text-sm')}
+                          />
                         ) : null}
                       </div>
                     </div>
