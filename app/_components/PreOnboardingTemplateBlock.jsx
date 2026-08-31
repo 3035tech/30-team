@@ -9,7 +9,7 @@ import { useAppFeedback } from './AppFeedback';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { EmptyState } from './EmptyState';
 import { StatusToneChip } from './StatusToneChip';
-import { PRE_ONBOARDING_OWNER_ROLES } from '../../lib/people/pre-onboarding-template.js';
+import { PRE_ONBOARDING_OWNER_ROLES } from '../../lib/people/pre-onboarding-constants.js';
 
 const OWNER_TONE = Object.freeze({
   rh: 'brand',
