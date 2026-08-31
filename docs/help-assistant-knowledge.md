@@ -36,7 +36,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Gestor precisa *saber fazer* | Guia + FAQ opcional |
 | Colaborador (`/employee`) | Seção `employeeHome` no Guia (RH convida/configura) |
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
-| DP leve (ficha / docs / assinatura interna / férias / saldo) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
+| DP leve (ficha / docs / assinatura interna / férias / saldo / template D1) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |
 | Banco de horas | Seção `hourBank` + FAQ `faqHourBank` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
@@ -56,7 +56,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Auditoria (super admin) | `access` (Step11) + FAQ `faqAudit` |
 | Remuneração interna + bônus variável | `compensation` + `b3000Pack` / FAQ `faqVariablePay` |
 | Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
-| LMS / cursos | `lmsBasic` (incl. `/employee/lms` player+resume, quiz, certificado, relatório por turma) |
+| LMS / cursos / trilha por cargo | `lmsBasic` (player, quiz, certificado; Cargos → Trilha LMS + auto-enroll no hire, `102`) |
 | OKRs (ciclo / peso / check-in / assignees) | `b3000Pack` + FAQ `faqOkr` |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |
@@ -64,9 +64,12 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Radar de rotatividade | `b1000TurnoverRadar` (+ distribuição low/med/high na Overview) |
 | Gráficos lean (padrão) | `b3020Viz` (mapa salarial, calibração, saídas, sucessão, HR Score área, OKR, ouvidoria, turnover, pool de férias) |
 | **Para que serve cada tela** | `screens` (mapa aba → função + conexões) |
+| **Você é novo / configurar o sistema** | `setupPath` (pré-requisitos e ordem por módulo) + FAQ `faqSetupPath` |
 | Motivadores (mapa radar no perfil) | `motivators` + FAQ `faqMotivators` |
 
-**FAQ rápido — mapa de telas / contexto:** “para que serve cada tela”, “mapa de abas” → `faqScreens` + seção `screens`. Com a aba aberta, o widget envia `activeTab` / `activeSection`; perguntas “para que serve esta tela”, “dicas desta aba”, “o que posso fazer aqui” e “dicas do sistema” usam `lib/help-screen-context.js` (sem LLM). Sugestões do chat: chips da tela atual + chips de sistema (`suggestThisScreen`, `suggestSystemTips`, …).
+**FAQ rápido — novo no sistema:** “sou novo”, “como configurar”, “o que cadastrar antes”, “passo a passo”, “antes de OKR/vaga/PDI” → `faqSetupPath` + seção Guia `setupPath`. O prompt da IA exige listar dependências primeiro.
+
+**FAQ rápido — mapa de telas / contexto:** “para que serve cada tela”, “mapa de abas” → `faqScreens` + seção `screens`. Com a aba aberta, o widget envia `activeTab` / `activeSection`; perguntas “para que serve esta tela”, “dicas desta aba”, “o que posso fazer aqui” e “dicas do sistema” usam `lib/help-screen-context.js` (sem LLM). Sugestões do chat: chips da tela atual + chips de sistema (`suggestSetupPath`, `suggestThisScreen`, `suggestSystemTips`, …).
 
 **FAQ rápido — OKR / ouvidoria / variável:** “como criar OKR”, “Meus OKRs”, “ouvidoria”, “denúncia”, “bônus/PLR” → `faqOkr`, `faqWhistleblowing`, `faqVariablePay` (seção Guia `b3000Pack` / `b3005Pack`).
 

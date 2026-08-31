@@ -34,6 +34,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
 import { HourBankAdminBlock } from '../../_components/HourBankAdminBlock';
 import { VacationPoolBlock } from '../../_components/VacationPoolBlock';
+import { PreOnboardingTemplateBlock } from '../../_components/PreOnboardingTemplateBlock';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -516,6 +517,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       />
 
       <VacationPoolBlock locale={locale} companyId={companyId} reloadKey={reloadKey} />
+
+      <PreOnboardingTemplateBlock locale={locale} companyId={companyId} />
 
       <AdminListFilters
         aria-label={t(locale, 'panel.dp.inboxTitle')}

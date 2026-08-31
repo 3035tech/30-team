@@ -92,18 +92,21 @@ export async function PATCH(request, { params }) {
       outcome,
       notes: body.notes,
       meetUrl: body.meetUrl,
+      extendDays: body.extendDays,
       completedByUserId: payload.userId || null,
       seedPdi:
         Boolean(body.seedPdi) ||
         outcome === 'develop' ||
         outcome === 'concern' ||
         outcome === 'fail' ||
-        outcome === 'extend',
+        outcome === 'extend' ||
+        outcome === 'terminate',
       seedRetention:
         Boolean(body.seedRetention) ||
         outcome === 'fail' ||
         outcome === 'extend' ||
-        outcome === 'concern',
+        outcome === 'concern' ||
+        outcome === 'terminate',
       locale,
     });
     if (!result.ok) {
@@ -123,6 +126,8 @@ export async function PATCH(request, { params }) {
         status: result.item?.status,
         outcome: result.item?.outcome,
         milestoneDays: result.item?.milestoneDays,
+        extendDays: result.item?.extendDays,
+        extendedMilestones: result.extendedMilestones || 0,
       },
     });
 
@@ -130,6 +135,8 @@ export async function PATCH(request, { params }) {
       item: result.item,
       pdiItem: result.pdiItem,
       retentionFollowUp: result.retentionFollowUp || null,
+      extendedMilestones: result.extendedMilestones || 0,
+      suggestExit: Boolean(result.suggestExit),
     });
   } catch (err) {
     console.error('PATCH onboarding-checkins', err);

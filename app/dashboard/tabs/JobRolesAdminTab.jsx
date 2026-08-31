@@ -10,6 +10,7 @@ import {
   AdminCreateButton,
   AdminDeleteButton,
   AdminEditButton,
+  AdminIconButton,
   AdminListPager,
   AdminListSearch,
   AdminPageHeader,
@@ -54,7 +55,7 @@ const emptyForm = () => ({
 });
 
 export function JobRolesAdminTab({ locale, companyId }) {
-  const { toast, confirm, notice } = useAppFeedback();
+  const { toast, confirm, notice, promptForm } = useAppFeedback();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
@@ -96,6 +97,88 @@ export function JobRolesAdminTab({ locale, companyId }) {
   useEffect(() => {
     loadRoles();
   }, [companyId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openLmsTrail = async (role) => {
+    try {
+      const [coursesRes, trailRes] = await Promise.all([
+        fetch(`/api/admin/lms/courses?companyId=${companyId}&limit=80`),
+        fetch(
+          `/api/admin/job-roles/${encodeURIComponent(role.id)}/lms-trail?companyId=${companyId}`
+        ),
+      ]);
+      const coursesData = await coursesRes.json().catch(() => ({}));
+      const trailData = await trailRes.json().catch(() => ({}));
+      if (!coursesRes.ok) throw new Error(coursesData?.error || 'courses');
+      if (!trailRes.ok) throw new Error(trailData?.error || 'trail');
+      const courses = Array.isArray(coursesData.courses) ? coursesData.courses : [];
+      if (!courses.length) {
+        toast(t(locale, 'jobRoles.lmsTrailEmptyCourses'), 'error');
+        return;
+      }
+      const trailItems = Array.isArray(trailData.items) ? trailData.items : [];
+      const selected = trailItems.map((x) => String(x.courseId));
+      const dueDefault = trailItems[0]?.dueOffsetDays || 30;
+      const mandatoryDefault = trailItems.length
+        ? trailItems.every((x) => x.mandatory)
+        : true;
+      const values = await promptForm({
+        title: t(locale, 'jobRoles.lmsTrailTitle', { name: role.name }),
+        confirmLabel: t(locale, 'panel.common.save'),
+        fields: [
+          {
+            key: 'courseIds',
+            type: 'checkboxGroup',
+            label: t(locale, 'jobRoles.lmsTrailCourses'),
+            help: t(locale, 'jobRoles.lmsTrailHint'),
+            options: courses.map((c) => ({
+              value: String(c.id),
+              label: c.title,
+            })),
+            initialValue: selected,
+          },
+          {
+            key: 'dueOffsetDays',
+            type: 'number',
+            label: t(locale, 'jobRoles.lmsTrailDue'),
+            initialValue: String(dueDefault),
+          },
+          {
+            key: 'mandatory',
+            type: 'boolean',
+            label: t(locale, 'jobRoles.lmsTrailMandatory'),
+            initialValue: mandatoryDefault,
+          },
+        ],
+      });
+      if (!values) return;
+      const ids = Array.isArray(values.courseIds) ? values.courseIds : [];
+      const dueOffsetDays = Math.min(365, Math.max(1, Number(values.dueOffsetDays) || 30));
+      const items = ids.map((id, i) => ({
+        courseId: Number(id),
+        sortOrder: i,
+        mandatory: values.mandatory !== false,
+        dueOffsetDays,
+      }));
+      const saveRes = await fetch(
+        `/api/admin/job-roles/${encodeURIComponent(role.id)}/lms-trail`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companyId, items }),
+        }
+      );
+      const saveData = await saveRes.json().catch(() => ({}));
+      if (!saveRes.ok) throw new Error(saveData?.error || 'save');
+      toast(
+        items.length
+          ? t(locale, 'jobRoles.lmsTrailSavedCount', { n: items.length })
+          : t(locale, 'jobRoles.lmsTrailCleared'),
+        'ok'
+      );
+    } catch (e) {
+      toast(e?.message || t(locale, 'jobRoles.lmsTrailError'), 'error');
+    }
+  };
 
   const openCreate = () => {
     setEditingId(null);
@@ -467,6 +550,11 @@ export function JobRolesAdminTab({ locale, companyId }) {
                           <AdminEditButton
                             label={t(locale, 'jobRoles.editButton')}
                             onClick={() => openEdit(role)}
+                          />
+                          <AdminIconButton
+                            icon="academy"
+                            label={t(locale, 'jobRoles.lmsTrailBtn')}
+                            onClick={() => void openLmsTrail(role)}
                           />
                           <AdminDeleteButton
                             label={t(locale, 'jobRoles.deactivateButton')}

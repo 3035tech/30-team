@@ -538,10 +538,13 @@ Sólides: avulso. Remuneração interna + faixa no cargo.
 Posts da empresa (`company_posts`) + mural em `/employee#feed`; admin Catálogos → Mural; soft delete; CAP `company_feed.view`.
 
 ### B-2713 — LMS profundidade (quiz / certificado) ✅ ENTREGUE
-_(entregue — `094` quiz por aula + gate na conclusão; `/employee/lms` (Continuar, prazos); certificado print/PDF; relatório RH por turma. **Fora:** SCORM, player proprietário, trilha multi-curso.)_
+_(entregue — `094` quiz por aula + gate na conclusão; `/employee/lms` (Continuar, prazos); certificado print/PDF; relatório RH por turma. **Fora:** SCORM, player proprietário.)_
 
 ### B-2717 — LMS player “tipo Udemy” (embed + progresso de vídeo) ✅ ENTREGUE
 _(entregue — `095` `lms_lesson_watch_progress`; layout curso lista+player em `/employee/lms`; resume YouTube/Vimeo; PDF viewer full-height. **Fora:** MP4 próprio, SCORM, auto-complete por %.)_
+
+### B-2718 — Trilha LMS por cargo + experiência formal + D1 template ✅ ENTREGUE (P0 jornada)
+_(entregue — `102_journey_p0_trail_experience_onboarding.sql`: `lms_job_role_courses`; auto-enroll no hire; Cargos → Trilha LMS; decisão `terminate` + `extend_days` nos check-ins D30/60/90; `company_pre_onboarding_templates` no hub DP. **Fora:** MP4 próprio, offboarding checklist completo, SCORM.)_
 
 ### B-2714 — NR-1 / riscos psicossociais (conformidade)
 Sólides 2026: PGR + eSocial S-2240. Urgência regulatória de venda.

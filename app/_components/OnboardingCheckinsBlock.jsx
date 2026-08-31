@@ -10,6 +10,18 @@ import { useAppFeedback } from './AppFeedback';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
 import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
+import { StatusToneChip } from './StatusToneChip';
+import { MeterBar } from './MeterBar';
+
+const OUTCOME_TONE = Object.freeze({
+  pass: 'success',
+  continue: 'info',
+  develop: 'brand',
+  concern: 'warning',
+  extend: 'warning',
+  fail: 'danger',
+  terminate: 'danger',
+});
 
 /**
  * Post-hire check-ins D30/D60/D90 — B-701 (light, not AVD).
@@ -69,13 +81,22 @@ export function OnboardingCheckinsBlock({
         required: status === 'done',
         help: t(locale, 'panel.onboarding.outcomeHelp'),
         options: [
+          { value: 'pass', label: t(locale, 'panel.onboarding.outcome.pass') },
           { value: 'continue', label: t(locale, 'panel.onboarding.outcome.continue') },
           { value: 'develop', label: t(locale, 'panel.onboarding.outcome.develop') },
           { value: 'concern', label: t(locale, 'panel.onboarding.outcome.concern') },
-          { value: 'pass', label: t(locale, 'panel.onboarding.outcome.pass') },
-          { value: 'fail', label: t(locale, 'panel.onboarding.outcome.fail') },
           { value: 'extend', label: t(locale, 'panel.onboarding.outcome.extend') },
+          { value: 'fail', label: t(locale, 'panel.onboarding.outcome.fail') },
+          { value: 'terminate', label: t(locale, 'panel.onboarding.outcome.terminate') },
         ],
+      },
+      {
+        key: 'extendDays',
+        type: 'number',
+        label: t(locale, 'panel.onboarding.extendDaysLabel'),
+        help: t(locale, 'panel.onboarding.extendDaysHelp'),
+        initialValue: '30',
+        showWhen: (vals) => vals.outcome === 'extend',
       },
       {
         key: 'notes',
@@ -104,26 +125,33 @@ export function OnboardingCheckinsBlock({
             outcome: values.outcome || '',
             notes: values.notes || '',
             meetUrl: values.meetUrl,
+            extendDays: values.extendDays,
             locale,
             seedPdi:
               values.outcome === 'develop' ||
               values.outcome === 'concern' ||
               values.outcome === 'fail' ||
-              values.outcome === 'extend',
+              values.outcome === 'extend' ||
+              values.outcome === 'terminate',
             seedRetention:
               values.outcome === 'concern' ||
               values.outcome === 'fail' ||
-              values.outcome === 'extend',
+              values.outcome === 'extend' ||
+              values.outcome === 'terminate',
           }),
         }
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       toast(
-        data.pdiItem || data.retentionFollowUp
-          ? t(locale, 'panel.onboarding.savedWithPdi')
-          : t(locale, 'panel.onboarding.saved'),
-        'ok'
+        data.suggestExit
+          ? t(locale, 'panel.onboarding.savedTerminate')
+          : data.extendedMilestones
+            ? t(locale, 'panel.onboarding.savedExtend', { n: data.extendedMilestones })
+            : data.pdiItem || data.retentionFollowUp
+              ? t(locale, 'panel.onboarding.savedWithPdi')
+              : t(locale, 'panel.onboarding.saved'),
+        data.suggestExit ? 'warning' : 'ok'
       );
       await load();
       if (data.pdiItem && typeof onPdiChanged === 'function') onPdiChanged();
@@ -174,14 +202,32 @@ export function OnboardingCheckinsBlock({
     }
   };
 
+  const doneCount = items.filter((i) => i.status === 'done' || i.status === 'skipped').length;
+
   return (
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.onboarding.sectionAria')}>
       <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.onboarding.title')}</h3>
-      <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'panel.onboarding.hint')}</p>
+      <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{t(locale, 'panel.onboarding.hint')}</p>
+      {items.length > 0 ? (
+        <div className="mt-2">
+          <p className={cn(S.faint, 'm-0 mb-1.5 font-mono text-2xs')}>
+            {t(locale, 'panel.onboarding.progress', { done: doneCount, total: items.length })}
+          </p>
+          <MeterBar
+            value={doneCount}
+            max={items.length}
+            height={6}
+            aria-label={t(locale, 'panel.onboarding.progress', {
+              done: doneCount,
+              total: items.length,
+            })}
+          />
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="mt-3">
-          <AppLoading variant="inline" />
+          <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />
         </div>
       ) : items.length === 0 ? (
         <div className="mt-3">
@@ -191,89 +237,111 @@ export function OnboardingCheckinsBlock({
           />
         </div>
       ) : (
-        <ContentEnter className="mt-3">
-        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {items.map((row) => {
-            const done = row.status === 'done' || row.status === 'skipped';
-            return (
-              <li
-                key={row.id}
-                className={cn(
-                  'flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-2',
-                  row.overdue
-                    ? 'border-warning/30 bg-warning/[0.05]'
-                    : 'border-ink/10 bg-white/60'
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm text-ink">
-                    {t(locale, 'panel.onboarding.milestone', { days: row.milestoneDays })}
-                    {row.overdue ? (
-                      <span className="ml-1.5 font-mono text-2xs text-warning">
-                        {t(locale, 'panel.onboarding.overdue')}
+        <ContentEnter className="mt-3" animKey={`onb-chk|${items.length}|${doneCount}`}>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+            {items.map((row) => {
+              const done = row.status === 'done' || row.status === 'skipped';
+              const outcomeTone = OUTCOME_TONE[row.outcome] || 'neutral';
+              return (
+                <li
+                  key={row.id}
+                  className={cn(
+                    'flex flex-wrap items-center gap-2 rounded-control border px-2.5 py-2',
+                    row.overdue
+                      ? 'border-warning/30 bg-warning/[0.05]'
+                      : 'border-ink/10 bg-surface'
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 font-ui text-sm text-ink">
+                      <span>
+                        {t(locale, 'panel.onboarding.milestone', { days: row.milestoneDays })}
                       </span>
+                      {row.overdue ? (
+                        <StatusToneChip tone="warning">
+                          {t(locale, 'panel.onboarding.overdue')}
+                        </StatusToneChip>
+                      ) : null}
+                      {done && row.outcome ? (
+                        <StatusToneChip
+                          tone={outcomeTone}
+                          title={t(locale, `panel.onboarding.outcome.${row.outcome}`)}
+                        >
+                          {t(locale, `panel.onboarding.outcomeChip.${row.outcome}`)}
+                        </StatusToneChip>
+                      ) : null}
+                      {done ? (
+                        <StatusToneChip tone={row.status === 'skipped' ? 'neutral' : 'success'}>
+                          {t(locale, `panel.onboarding.status.${row.status}`)}
+                        </StatusToneChip>
+                      ) : null}
+                    </div>
+                    <div className="mt-0.5 font-mono text-2xs text-ink-muted">
+                      {t(locale, 'panel.onboarding.due', { date: row.dueDate || '—' })}
+                      {done && row.outcome === 'extend' && row.extendDays != null ? (
+                        <span>
+                          {' · '}
+                          {t(locale, 'panel.onboarding.extendedBy', { days: row.extendDays })}
+                        </span>
+                      ) : null}
+                      {row.employeeAckAt ? (
+                        <span className="text-success">
+                          {' · '}
+                          {t(locale, 'panel.onboarding.employeeAcked')}
+                        </span>
+                      ) : null}
+                    </div>
+                    {row.meetUrl ? (
+                      <a
+                        href={row.meetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-flex min-h-touch items-center font-mono text-2xs text-brand-600"
+                      >
+                        {t(locale, 'panel.onboarding.openMeet')}
+                      </a>
+                    ) : null}
+                    {done && !isRichTextEmpty(row.notes) ? (
+                      <div className="mt-1.5 text-prose text-ink-muted">
+                        <RichTextView
+                          html={row.notes}
+                          className="text-prose leading-snug text-ink-muted"
+                        />
+                      </div>
                     ) : null}
                   </div>
-                  <div className="font-mono text-2xs text-ink-muted">
-                    {t(locale, 'panel.onboarding.due', { date: row.dueDate || '—' })}
-                    {done && row.outcome
-                      ? ` · ${t(locale, `panel.onboarding.outcome.${row.outcome}`)}`
-                      : ''}
-                    {done ? ` · ${t(locale, `panel.onboarding.status.${row.status}`)}` : ''}
-                    {row.employeeAckAt ? (
-                      <span className="ml-1 text-success">
-                        · {t(locale, 'panel.onboarding.employeeAcked')}
-                      </span>
-                    ) : null}
-                  </div>
-                  {row.meetUrl ? (
-                    <a
-                      href={row.meetUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 inline-flex font-mono text-2xs text-brand-600"
-                    >
-                      {t(locale, 'panel.onboarding.openMeet')}
-                    </a>
-                  ) : null}
-                  {done && !isRichTextEmpty(row.notes) ? (
-                    <div className="mt-1.5 text-xs text-ink-muted">
-                      <RichTextView html={row.notes} className="text-xs leading-snug text-ink-muted" />
+                  {!done ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'min-h-touch')}
+                        onClick={() => setMeetUrl(row)}
+                      >
+                        {t(locale, 'panel.onboarding.meetUrlBtn')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnBrandSoft, 'min-h-touch')}
+                        onClick={() => complete(row, 'done')}
+                      >
+                        {t(locale, 'panel.onboarding.markDone')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(S.btnGhost, 'min-h-touch')}
+                        onClick={() => complete(row, 'skipped')}
+                      >
+                        {t(locale, 'panel.onboarding.skip')}
+                      </button>
                     </div>
                   ) : null}
-                </div>
-                {!done ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className={S.btnGhost}
-                      onClick={() => setMeetUrl(row)}
-                    >
-                      {t(locale, 'panel.onboarding.meetUrlBtn')}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className={S.btnBrandSoft}
-                      onClick={() => complete(row, 'done')}
-                    >
-                      {t(locale, 'panel.onboarding.markDone')}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className={S.btnGhost}
-                      onClick={() => complete(row, 'skipped')}
-                    >
-                      {t(locale, 'panel.onboarding.skip')}
-                    </button>
-                  </div>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
         </ContentEnter>
       )}
     </section>
