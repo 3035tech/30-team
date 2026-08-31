@@ -8,14 +8,14 @@ import { CAP } from '../../../../../lib/ae/require-admin.js';
 import { apiErrorFromResult, ERR } from '../../../../../lib/api-error.js';
 import { audit } from '../../../../../lib/audit.js';
 import { z, zPositiveInt } from '../../../../../lib/validate.js';
-import { createOkrActivity } from '../../../../../lib/okr-cycles.js';
+import { createOkrActivity, OKR_WEIGHT_MAX, OKR_WEIGHT_MIN } from '../../../../../lib/okr-cycles.js';
 
 const createBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   areaId: zPositiveInt,
   title: z.string().trim().min(1).max(300),
   progressPct: z.coerce.number().int().min(0).max(100).optional(),
-  weight: z.coerce.number().int().min(1).max(100).optional(),
+  weight: z.coerce.number().int().min(OKR_WEIGHT_MIN).max(OKR_WEIGHT_MAX).optional(),
   deadline: z.string().min(8).max(10).optional().nullable(),
   sortOrder: z.coerce.number().int().min(0).max(999).optional(),
 });

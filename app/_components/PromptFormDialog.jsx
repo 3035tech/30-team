@@ -28,12 +28,14 @@ import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneB
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key (or legacy name), label, defaultValue? (or legacy value?),
- *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'salary'|'cep'|'cpf'|'phone',
+ *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'range'|'salary'|'cep'|'cpf'|'phone',
  *   options?: [{value,label}],
  *   suggestions?: string[], // tags
  *   maxTags?: number, tagMax?: number, // tags
  *   searchUrl?: string, minChars?: number, // entitySearch — stores id string
  *   showWhen?: (values) => boolean,
+ *   disabledWhen?: (values) => boolean,
+ *   whenTrue?: object, whenFalse?: object, // boolean: merge into values on toggle
  *   placeholder?: string,
  *   help?: string,
  *   rows?: number,
@@ -58,6 +60,17 @@ function fieldInitial(f) {
 }
 function fieldKeyOf(f) {
   return f?.key || f?.name || '';
+}
+
+function fieldIsDisabled(f, values) {
+  if (typeof f?.disabledWhen === 'function') {
+    try {
+      return Boolean(f.disabledWhen(values));
+    } catch {
+      return false;
+    }
+  }
+  return Boolean(f?.disabled);
 }
 
 /** Consecutive fields sharing `row` render in a 2-col grid. */
@@ -247,7 +260,7 @@ export function PromptFormDialog({
     return (
       <FormField
         key={fieldKeyOf(f)}
-        as={f.type === 'imageUpload' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' ? 'div' : 'label'}
+        as={f.type === 'imageUpload' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' || f.type === 'range' ? 'div' : 'label'}
         label={f.label}
         hint={
           f.type === 'cep' && cepBusyKey === fieldKeyOf(f)
@@ -310,6 +323,7 @@ export function PromptFormDialog({
 
   const renderControl = (f) => {
     const fk = fieldKeyOf(f);
+    const disabled = fieldIsDisabled(f, values);
     if (f.type === 'imageUpload') {
       const cur = values[fk] && typeof values[fk] === 'object' ? values[fk] : { url: '', file: null };
       const preview = String(cur.url || '').trim();
@@ -431,7 +445,16 @@ export function PromptFormDialog({
           <input
             type="checkbox"
             checked={checked}
-            onChange={(e) => setField(fk, e.target.checked)}
+            disabled={disabled}
+            onChange={(e) => {
+              const nextChecked = e.target.checked;
+              setValues((prev) => {
+                const next = { ...prev, [fk]: nextChecked };
+                const patch = nextChecked ? f.whenTrue : f.whenFalse;
+                if (patch && typeof patch === 'object') Object.assign(next, patch);
+                return next;
+              });
+            }}
             className={dialogCheckboxClass}
           />
           <span>{f.label}</span>
@@ -576,6 +599,43 @@ export function PromptFormDialog({
       );
     }
 
+    if (f.type === 'range') {
+      const min = f.min != null ? Number(f.min) : 0;
+      const max = f.max != null ? Number(f.max) : 100;
+      const step = f.step != null ? Number(f.step) : 1;
+      const parsed = Number(values[fk]);
+      const val = Number.isFinite(parsed) ? parsed : min;
+      return (
+        <div className="mt-1">
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={Number.isFinite(step) && step > 0 ? step : 1}
+              value={val}
+              disabled={disabled}
+              onChange={(e) => setField(fk, e.target.value)}
+              className="ui-range"
+              aria-valuemin={min}
+              aria-valuemax={max}
+              aria-valuenow={val}
+              aria-label={f.label}
+            />
+            <span className="min-w-[3.5rem] shrink-0 rounded-control bg-canvas-alt px-2 py-1 text-right font-mono text-sm tabular-nums text-ink">
+              {val}
+              {f.suffix || ''}
+            </span>
+          </div>
+          <div className="mt-0.5 flex justify-between font-mono text-2xs text-ink-muted">
+            <span>{f.minLabel != null ? f.minLabel : String(min)}</span>
+            {f.midLabel ? <span>{f.midLabel}</span> : null}
+            <span>{f.maxLabel != null ? f.maxLabel : String(max)}</span>
+          </div>
+        </div>
+      );
+    }
+
     if (f.type === 'date' || f.type === 'datetime-local') {
       return (
         <DateField
@@ -584,6 +644,7 @@ export function PromptFormDialog({
           onChange={(e) => setField(fk, e.target.value)}
           min={f.min}
           max={f.max}
+          disabled={disabled}
           required={Boolean(f.required)}
           aria-label={f.label}
           className={dialogFieldClass}

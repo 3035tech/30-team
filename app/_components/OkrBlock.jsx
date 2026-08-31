@@ -9,15 +9,20 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminIconButton,
+  AdminPageHeader,
 } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
-import { InlineCallout } from './InlineCallout';
+import { FormField } from './FormField';
 import { StatusToneChip } from './StatusToneChip';
 import { MeterBar } from './MeterBar';
-import { CollapsibleBlock } from './CollapsibleBlock';
-import { OKR_CYCLE_STATUS } from '../../lib/domain-status.js';
+import {
+  OKR_CYCLE_STATUS,
+  OKR_WEIGHT_DEFAULT,
+  OKR_WEIGHT_MAX,
+  OKR_WEIGHT_MIN,
+} from '../../lib/domain-status.js';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { Icon } from './Icon';
 
@@ -39,6 +44,91 @@ function meterToneForActivity(act) {
   if (act.urgency === 'overdue' || act.urgency === 'critical') return 'bg-danger';
   if (act.urgency === 'warn') return 'bg-warning';
   return pctTone(act.progressPct);
+}
+
+function isoDateOnly(value) {
+  return value ? String(value).slice(0, 10) : '';
+}
+
+function activityDeadlineIsCycleEnd(act, cycle) {
+  const d = isoDateOnly(act?.deadline);
+  const end = isoDateOnly(cycle?.endsOn);
+  return Boolean(d && end && d === end);
+}
+
+function resolveActivityDeadline(values, cycleEndsOn) {
+  if (values?.deadlineCycleEnd === true || values?.deadlineCycleEnd === 'true') {
+    return isoDateOnly(cycleEndsOn) || null;
+  }
+  return isoDateOnly(values?.deadline) || null;
+}
+
+function parseOkrWeight(raw) {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : OKR_WEIGHT_DEFAULT;
+}
+
+function activityMetricFields({ locale, act, cycle, includeTitle }) {
+  const cycleEnd = isoDateOnly(cycle?.endsOn);
+  const usesCycleEnd = act ? activityDeadlineIsCycleEnd(act, cycle) : Boolean(cycleEnd);
+  const fields = [];
+  if (includeTitle) {
+    fields.push({
+      key: 'title',
+      label: t(locale, 'panel.okr.activityTitleLabel'),
+      required: true,
+      maxLength: 300,
+    });
+  }
+  fields.push(
+    {
+      key: 'progressPct',
+      type: 'range',
+      label: t(locale, 'panel.okr.progressPctLabel'),
+      defaultValue: String(act?.progressPct ?? 0),
+      min: 0,
+      max: 100,
+      step: 1,
+      suffix: '%',
+      minLabel: '0%',
+      midLabel: '50%',
+      maxLabel: '100%',
+    },
+    {
+      key: 'weight',
+      type: 'range',
+      label: t(locale, 'panel.okr.weightLabel'),
+      defaultValue: String(act?.weight ?? OKR_WEIGHT_DEFAULT),
+      min: OKR_WEIGHT_MIN,
+      max: OKR_WEIGHT_MAX,
+      step: 1,
+      help: t(locale, 'panel.okr.weightHelp'),
+      minLabel: t(locale, 'panel.okr.weightMinLabel'),
+      midLabel: '5',
+      maxLabel: t(locale, 'panel.okr.weightMaxLabel'),
+    },
+    {
+      key: 'deadlineCycleEnd',
+      type: 'boolean',
+      label: t(locale, 'panel.okr.deadlineCycleEndLabel'),
+      help: cycleEnd
+        ? t(locale, 'panel.okr.deadlineCycleEndHelp', {
+            date: formatDisplayDate(cycleEnd, locale),
+          })
+        : t(locale, 'panel.okr.deadlineCycleEndHelpNoDate'),
+      defaultValue: usesCycleEnd,
+      whenTrue: cycleEnd ? { deadline: cycleEnd } : undefined,
+    },
+    {
+      key: 'deadline',
+      type: 'date',
+      label: t(locale, 'panel.okr.deadlineCustomLabel'),
+      defaultValue: usesCycleEnd ? cycleEnd : isoDateOnly(act?.deadline),
+      disabledWhen: (v) => v.deadlineCycleEnd === true,
+      help: t(locale, 'panel.okr.deadlineCustomHelp'),
+    }
+  );
+  return fields;
 }
 
 /**
@@ -230,27 +320,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     const values = await promptForm({
       title: t(locale, 'panel.okr.createActivityTitle'),
       confirmLabel: t(locale, 'panel.okr.createActivityConfirm'),
-      fields: [
-        { key: 'title', label: t(locale, 'panel.okr.activityTitleLabel'), required: true, maxLength: 300 },
-        {
-          key: 'progressPct',
-          type: 'number',
-          label: t(locale, 'panel.okr.progressPctLabel'),
-          defaultValue: '0',
-          min: 0,
-          max: 100,
-        },
-        {
-          key: 'weight',
-          type: 'number',
-          label: t(locale, 'panel.okr.weightLabel'),
-          defaultValue: '1',
-          min: 1,
-          max: 100,
-          help: t(locale, 'panel.okr.weightHelp'),
-        },
-        { key: 'deadline', type: 'date', label: t(locale, 'panel.okr.deadlineLabel') },
-      ],
+      fields: activityMetricFields({ locale, cycle, includeTitle: true }),
     });
     if (!values) return;
     setBusy(true);
@@ -263,8 +333,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           areaId: area.id,
           title: values.title,
           progressPct: Number(values.progressPct) || 0,
-          weight: Number(values.weight) || 1,
-          deadline: values.deadline || null,
+          weight: parseOkrWeight(values.weight),
+          deadline: resolveActivityDeadline(values, cycle?.endsOn),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -282,33 +352,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     const values = await promptForm({
       title: t(locale, 'panel.okr.progressTitle'),
       confirmLabel: t(locale, 'panel.okr.progressConfirm'),
-      fields: [
-        {
-          key: 'progressPct',
-          type: 'number',
-          label: t(locale, 'panel.okr.progressPctLabel'),
-          defaultValue: String(act.progressPct ?? 0),
-          min: 0,
-          max: 100,
-          required: true,
-        },
-        {
-          key: 'weight',
-          type: 'number',
-          label: t(locale, 'panel.okr.weightLabel'),
-          defaultValue: String(act.weight ?? 1),
-          min: 1,
-          max: 100,
-          required: true,
-          help: t(locale, 'panel.okr.weightHelp'),
-        },
-        {
-          key: 'deadline',
-          type: 'date',
-          label: t(locale, 'panel.okr.deadlineLabel'),
-          defaultValue: act.deadline || '',
-        },
-      ],
+      fields: activityMetricFields({ locale, act, cycle }),
     });
     if (!values) return;
     setBusy(true);
@@ -319,8 +363,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
         body: JSON.stringify({
           ...companyBody,
           progressPct: Number(values.progressPct) || 0,
-          weight: Number(values.weight) || 1,
-          deadline: values.deadline || null,
+          weight: parseOkrWeight(values.weight),
+          deadline: resolveActivityDeadline(values, cycle?.endsOn),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -341,12 +385,16 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       fields: [
         {
           key: 'progressPct',
-          type: 'number',
+          type: 'range',
           label: t(locale, 'panel.okr.progressPctLabel'),
           defaultValue: String(act.progressPct ?? 0),
           min: 0,
           max: 100,
-          required: true,
+          step: 1,
+          suffix: '%',
+          minLabel: '0%',
+          midLabel: '50%',
+          maxLabel: '100%',
         },
         {
           key: 'note',
@@ -503,55 +551,44 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     }
   };
 
+  const cycleClosed = cycle?.status === OKR_CYCLE_STATUS.CLOSED;
+
   if (!companyId) {
     return (
-      <InlineCallout tone="info" className="mt-4">
-        {t(locale, 'panel.okr.needCompany')}
-      </InlineCallout>
+      <div className="space-y-4">
+        <AdminPageHeader
+          title={t(locale, 'panel.okr.title')}
+          subtitle={t(locale, 'panel.okr.hint')}
+          className="mb-0"
+        />
+        <EmptyState
+          title={t(locale, 'panel.okr.needCompany')}
+          message={t(locale, 'panel.okr.needCompanyHint')}
+        />
+      </div>
     );
   }
 
   return (
-    <CollapsibleBlock
-      locale={locale}
-      title={t(locale, 'panel.okr.title')}
-      open
-      variant="card"
-      className="mt-6"
-    >
-      <p className={cn(S.muted, 'mb-3 mt-0 text-prose')}>{t(locale, 'panel.okr.hint')}</p>
-      <InlineCallout tone="info" className="mb-4">
-        {t(locale, 'panel.okr.hedgedNote')}
-      </InlineCallout>
+    <div className="space-y-4">
+      <AdminPageHeader
+        title={t(locale, 'panel.okr.title')}
+        subtitle={t(locale, 'panel.okr.hint')}
+        className="mb-0"
+        actions={
+          <AdminCreateButton
+            locale={locale}
+            label={t(locale, 'panel.okr.createCycleBtn')}
+            onClick={() => void createCycle()}
+            disabled={busy}
+          />
+        }
+      />
 
       {loading ? (
         <AppLoading variant="panel" />
       ) : (
         <ContentEnter animKey={`okr|${cycles.length}|${activeCycleId || 0}`}>
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <AdminCreateButton
-              locale={locale}
-              label={t(locale, 'panel.okr.createCycleBtn')}
-              onClick={() => void createCycle()}
-              disabled={busy}
-            />
-            {cycles.length > 0 ? (
-              <select
-                className={cn(S.select, 'min-h-touch max-w-xs')}
-                value={activeCycleId || ''}
-                onChange={(e) => setActiveCycleId(Number(e.target.value) || null)}
-                aria-label={t(locale, 'panel.okr.cycleSelectAria')}
-              >
-                {cycles.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                    {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-          </div>
-
           {!cycle ? (
             <EmptyState
               title={t(locale, 'panel.okr.emptyTitle')}
@@ -560,15 +597,25 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           ) : (
             <div className="flex flex-col gap-4">
               <div className={cn(S.cardTight, 'p-4')}>
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className={cn(S.cardSection, 'm-0')}>{cycle.title}</h3>
-                    <p className={cn(S.faint, 'mb-0 mt-1 font-mono text-2xs')}>
-                      {formatDisplayDate(cycle.startsOn, locale)}
-                      {' – '}
-                      {formatDisplayDate(cycle.endsOn, locale)}
-                    </p>
-                  </div>
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <FormField
+                    label={t(locale, 'panel.okr.cycleSelectLabel')}
+                    className="min-w-[12rem] max-w-sm flex-1"
+                  >
+                    <select
+                      className={cn(S.select, 'min-h-touch w-full')}
+                      value={activeCycleId || ''}
+                      onChange={(e) => setActiveCycleId(Number(e.target.value) || null)}
+                      aria-label={t(locale, 'panel.okr.cycleSelectAria')}
+                    >
+                      {cycles.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
+                          {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <StatusToneChip
                       tone={cycle.status === OKR_CYCLE_STATUS.ACTIVE ? 'success' : 'neutral'}
@@ -581,7 +628,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                       disabled={busy}
                       onClick={() => void toggleCycleStatus()}
                     >
-                      {cycle.status === OKR_CYCLE_STATUS.CLOSED
+                      {cycleClosed
                         ? t(locale, 'panel.okr.reopenCycle')
                         : t(locale, 'panel.okr.closeCycle')}
                     </button>
@@ -592,6 +639,11 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     />
                   </div>
                 </div>
+                <p className={cn(S.faint, 'mb-0 mt-2 font-mono text-2xs')}>
+                  {formatDisplayDate(cycle.startsOn, locale)}
+                  {'–'}
+                  {formatDisplayDate(cycle.endsOn, locale)}
+                </p>
                 <div className="mt-3">
                   <div className="mb-1 flex items-baseline justify-between gap-2">
                     <span className={S.label}>{t(locale, 'panel.okr.totalProgress')}</span>
@@ -615,7 +667,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                 <button
                   type="button"
                   className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-2xs')}
-                  disabled={busy}
+                  disabled={busy || cycleClosed}
                   onClick={() => void createArea()}
                 >
                   <Icon name="plus" className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -651,24 +703,27 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          <AdminIconButton
-                            icon="plus"
-                            label={t(locale, 'panel.okr.createActivityBtn')}
+                          <button
+                            type="button"
+                            className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-2xs')}
+                            disabled={busy || cycleClosed}
                             onClick={() => void createActivity(area)}
-                            disabled={busy}
-                          />
+                          >
+                            <Icon name="plus" className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {t(locale, 'panel.okr.createActivityBtn')}
+                          </button>
                           <AdminDeleteButton
                             locale={locale}
                             onClick={() => void deleteArea(area)}
-                            disabled={busy}
+                            disabled={busy || cycleClosed}
                           />
                         </div>
                       </div>
 
                       {(area.activities || []).length === 0 ? (
-                        <div className="mt-3">
-                          <EmptyState message={t(locale, 'panel.okr.activitiesEmpty')} />
-                        </div>
+                        <p className={cn(S.faint, 'mb-0 mt-3')}>
+                          {t(locale, 'panel.okr.activitiesEmpty')}
+                        </p>
                       ) : (
                         <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
                           {(area.activities || []).map((act) => (
@@ -730,11 +785,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                     <div className="mb-1 flex items-baseline justify-between gap-2">
                                       <span className="font-mono text-2xs text-ink-faint">
                                         {t(locale, 'panel.okr.activityProgress')}
-                                        {act.weight != null && Number(act.weight) !== 1
-                                          ? ` · ${t(locale, 'panel.okr.weightChip', {
-                                              n: act.weight,
-                                            })}`
-                                          : ''}
+                                        {` · ${t(locale, 'panel.okr.weightChip', {
+                                          n: act.weight ?? OKR_WEIGHT_DEFAULT,
+                                        })}`}
                                       </span>
                                       <span className="font-mono text-2xs text-ink-muted">
                                         {act.progressPct}%
@@ -760,7 +813,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                         </span>
                                         <button
                                           type="button"
-                                          disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
+                                          disabled={busy || cycleClosed}
                                           className={cn(
                                             S.btnGhost,
                                             'min-h-touch min-w-touch shrink-0 px-1.5 text-ink-faint hover:text-danger'
@@ -775,14 +828,14 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                         </button>
                                       </span>
                                     ))}
-                                    {cycle.status !== OKR_CYCLE_STATUS.CLOSED ? (
+                                    {cycleClosed ? null : (
                                       <AdminIconButton
                                         icon="team"
                                         label={t(locale, 'panel.okr.assignBtn')}
                                         onClick={() => void addAssignee(act)}
                                         disabled={busy}
                                       />
-                                    ) : null}
+                                    )}
                                   </div>
                                   {historyForId === act.id ? (
                                     <div className="mt-3 rounded-control border border-ink/10 bg-canvas-alt/50 px-2.5 py-2">
@@ -828,17 +881,17 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                   <AdminEditButton
                                     locale={locale}
                                     onClick={() => void editActivityProgress(act)}
-                                    disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
+                                    disabled={busy || cycleClosed}
                                     label={t(locale, 'panel.okr.progressBtn')}
                                   />
-                                  {cycle.status !== OKR_CYCLE_STATUS.CLOSED ? (
+                                  {cycleClosed ? null : (
                                     <AdminIconButton
                                       icon="check"
                                       label={t(locale, 'panel.okr.checkinBtn')}
                                       onClick={() => void addCheckin(act)}
                                       disabled={busy}
                                     />
-                                  ) : null}
+                                  )}
                                   <AdminIconButton
                                     icon="list"
                                     label={
@@ -852,7 +905,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                   <AdminDeleteButton
                                     locale={locale}
                                     onClick={() => void deleteActivity(act)}
-                                    disabled={busy || cycle.status === OKR_CYCLE_STATUS.CLOSED}
+                                    disabled={busy || cycleClosed}
                                   />
                                 </div>
                               </div>
@@ -868,6 +921,6 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           )}
         </ContentEnter>
       )}
-    </CollapsibleBlock>
+    </div>
   );
 }

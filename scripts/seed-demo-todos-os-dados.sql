@@ -7,6 +7,9 @@
 -- Preferência JS (DTOV): CONFIRM_DEMO_PURGE=1 npm run db:seed-demo-todos-os-dados
 --
 -- Requer / Requires: migrations através de 080 + tabela areas populada.
+-- Módulos pós-080 (DP, mural, OKR ciclos, ouvidoria, ponto/banco de horas):
+--   após este arquivo, rode scripts/seed-demo-todos-os-dados-modules.sql
+--   (ou use o seed JS, que já inclui tudo até 103).
 -- Motivadores opcional: ae_definitions slug=motivators (npm run db:seed-motivators).
 --
 -- Logins (senha = DemoTodosDados!2026):
@@ -1548,7 +1551,7 @@ $html$,
     NULL;
   END;
 
-  RAISE NOTICE 'OK Todos os Dados id=% (migrations ≤080 presentation seed)', v_company_id;
+  RAISE NOTICE 'OK Todos os Dados id=% (base ≤080). Rode seed-demo-todos-os-dados-modules.sql para DP/mural/OKR/ouvidoria.', v_company_id;
   RAISE NOTICE 'HR: hr@todos-os-dados.demo / DemoTodosDados!2026';
   RAISE NOTICE 'Direction: direction@todos-os-dados.demo / DemoTodosDados!2026';
   RAISE NOTICE 'Colaborador: colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee';

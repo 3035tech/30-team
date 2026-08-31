@@ -48,7 +48,7 @@ Script HTTP: `test/dtov/http-smoke.js`. Playwright: `playwright.config.js` + `te
 
 | id | papel |
 |----|--------|
-| `baseline` | áreas + motivadores + seed demo “Todos os Dados” |
+| `baseline` | áreas + motivadores + seed demo “Todos os Dados” (módulos até 103) |
 | `public-vacancy-page` | flags `/vaga`, site/about da empresa (feature 030) |
 
 ### Feature nova → nova massa

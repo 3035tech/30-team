@@ -32,7 +32,6 @@ import {
 import { NineBoxBlock } from './NineBoxBlock';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { CalibrationBlock } from '../../_components/CalibrationBlock';
-import { OkrBlock } from '../../_components/OkrBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 
@@ -680,7 +679,6 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           cycleTitle={selectedCycle.title || ''}
         />
       ) : null}
-      <OkrBlock locale={locale} companyId={companyId} />
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../_components/AppLoading';
 import { FormField } from '../_components/FormField';
 import { RichTextView } from '../_components/RichTextView';
-import { DEVELOPMENT_PLAN_ITEM_STATUS, OKR_CYCLE_STATUS } from '../../lib/domain-status';
+import { DEVELOPMENT_PLAN_ITEM_STATUS, OKR_CYCLE_STATUS, OKR_WEIGHT_DEFAULT } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
 import { CollapsibleBlock } from '../_components/CollapsibleBlock';
@@ -318,12 +318,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       fields: [
         {
           key: 'progressPct',
-          type: 'number',
+          type: 'range',
           label: t(locale, 'panel.okr.progressPctLabel'),
           defaultValue: String(act.progressPct ?? 0),
           min: 0,
           max: 100,
-          required: true,
+          step: 1,
+          suffix: '%',
+          minLabel: '0%',
+          midLabel: '50%',
+          maxLabel: '100%',
         },
         {
           key: 'note',
@@ -794,9 +798,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                               {` · ${t(locale, 'employeeHome.okrImportanceValue', {
                                 pct: act.progressPct ?? 0,
                               })}`}
-                              {act.weight != null && Number(act.weight) !== 1
-                                ? ` · ${t(locale, 'panel.okr.weightChip', { n: act.weight })}`
-                                : ''}
+                              {` · ${t(locale, 'panel.okr.weightChip', {
+                                n: act.weight ?? OKR_WEIGHT_DEFAULT,
+                              })}`}
                             </p>
                           </div>
                           {group.cycleStatus !== OKR_CYCLE_STATUS.CLOSED ? (

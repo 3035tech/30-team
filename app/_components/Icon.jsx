@@ -402,6 +402,15 @@ export function Icon({ name, className }) {
           <path d="M7 12h0.01M17 12h0.01" />
         </svg>
       );
+    case 'okr':
+    case 'target':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="8" />
+          <circle cx="12" cy="12" r="4.5" />
+          <circle cx="12" cy="12" r="1.5" />
+        </svg>
+      );
     default:
       return null;
   }

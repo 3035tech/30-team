@@ -376,6 +376,7 @@ const DASHBOARD_TAB_NAV = {
   climate: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.climate' },
   'job-roles': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.jobRoles' },
   'performance-reviews': { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.performanceReviews' },
+  okr: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.okr' },
   succession: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.succession' },
   'exit-analysis': { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.exitAnalysis' },
   dp: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.dp' },
@@ -736,7 +737,8 @@ function AdminTableShell({ children, minWidth = '640px', className, animKey }) {
 /** Standard admin tab title + optional subtitle + primary actions (create).
  * Create CTA stays top-right of the title row — never inside AdminListFilters.
  */
-function AdminPageHeader({ title, subtitle = null, actions = null, className }) {
+function AdminPageHeader({ title, subtitle = null, description = null, actions = null, className }) {
+  const lead = subtitle || description;
   return (
     <header
       className={cn(
@@ -746,8 +748,8 @@ function AdminPageHeader({ title, subtitle = null, actions = null, className }) 
     >
       <div className="min-w-0 flex-1">
         <h1 className={S.pageTitle}>{title}</h1>
-        {subtitle ? (
-          <p className={cn(S.muted, 'm-0 mt-1.5 max-w-[62ch] text-prose')}>{subtitle}</p>
+        {lead ? (
+          <p className={cn(S.muted, 'm-0 mt-1.5 max-w-[62ch] text-prose')}>{lead}</p>
         ) : null}
       </div>
       {actions ? (

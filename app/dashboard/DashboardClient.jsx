@@ -140,6 +140,10 @@ const PerformanceReviewsAdminTab = dynamic(
   () => import('./tabs/PerformanceReviewsAdminTab').then((m) => ({ default: m.PerformanceReviewsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const OkrAdminTab = dynamic(
+  () => import('./tabs/OkrAdminTab').then((m) => ({ default: m.OkrAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const SuccessionAdminTab = dynamic(
   () => import('./tabs/SuccessionAdminTab').then((m) => ({ default: m.SuccessionAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -242,6 +246,7 @@ const TAB_TO_SECTION = {
   vacancies: 'recruiting',
   'talent-bank': 'recruiting',
   'performance-reviews': 'people',
+  okr: 'people',
   succession: 'people',
   'exit-analysis': 'people',
   motivators: 'people',
@@ -1006,6 +1011,9 @@ export default function DashboardClient({
                     {showPerformance ? (
                       <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
                     ) : null}
+                    {showPerformance ? (
+                      <NavLink id="okr" icon="okr" label={t(locale, 'dashboard.okr')} />
+                    ) : null}
                     {showSuccession ? (
                       <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
                     ) : null}
@@ -1558,6 +1566,9 @@ export default function DashboardClient({
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'okr' && showPerformance && (
+                <OkrAdminTab locale={locale} companyId={scopedCompanyId} />
+              )}
               {tab === 'succession' && showSuccession && <SuccessionAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'exit-analysis' && showExitAnalysis && <ExitAnalysisAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'dp' && showDp && (

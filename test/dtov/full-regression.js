@@ -1790,6 +1790,25 @@ async function runSqlSuite(client) {
     return tables.join(',');
   });
 
+  await check('sql', 'demo-all-employees-dp', async () => {
+    const r = await client.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM candidates c WHERE c.company_id = $1 AND c.employment_status = 'employee') AS emp,
+         (SELECT COUNT(*)::int FROM candidate_dp_profiles p WHERE p.company_id = $1) AS dp,
+         (SELECT COUNT(*)::int FROM company_kudos k WHERE k.company_id = $1 AND k.deleted = FALSE) AS kudos,
+         (SELECT COUNT(*)::int FROM okr_activity_assignees a WHERE a.company_id = $1) AS okr,
+         (SELECT COUNT(*)::int FROM employee_hour_bank_entries h WHERE h.company_id = $1) AS bank`,
+      [companyId]
+    );
+    const row = r.rows[0];
+    if (row.emp < 8) throw new Error(`employees ${row.emp}`);
+    if (row.dp < row.emp) throw new Error(`dp ${row.dp} < emp ${row.emp}`);
+    if (row.kudos < 1) throw new Error('kudos');
+    if (row.okr < row.emp) throw new Error(`okr assignees ${row.okr} < emp ${row.emp}`);
+    if (row.bank < 1) throw new Error('hour bank');
+    return `emp=${row.emp} dp=${row.dp} kudos=${row.kudos} okr=${row.okr} bank=${row.bank}`;
+  });
+
   await check('lib', 'turnover-radar-shape', async () => {
     const { getCompanyTurnoverRisks } = await import('../../lib/turnover-radar.js');
     const out = await getCompanyTurnoverRisks(companyId, { limit: 5, minRisk: 'low' });

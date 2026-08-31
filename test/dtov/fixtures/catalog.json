@@ -15,7 +15,13 @@
         "motivators-ae",
         "one-on-ones",
         "public-tokens-t-v-r",
-        "notifications"
+        "notifications",
+        "dp-light",
+        "company-feed-kudos",
+        "okr-cycles",
+        "whistleblowing",
+        "hour-bank",
+        "lms-quiz-watch"
       ],
       "dependsOn": [],
       "smoke": [
@@ -30,6 +36,26 @@
         {
           "name": "motivators-def",
           "sql": "SELECT 1 FROM ae_definitions WHERE LOWER(slug) = 'motivators' AND active = TRUE LIMIT 1"
+        },
+        {
+          "name": "dp-profiles-all-employees",
+          "sql": "SELECT 1 WHERE (SELECT COUNT(*) FROM candidates c JOIN candidate_dp_profiles p ON p.candidate_id = c.id WHERE c.company_id = (SELECT id FROM companies WHERE slug = 'todos-os-dados-demo' AND deleted = FALSE) AND c.employment_status = 'employee') >= (SELECT COUNT(*) FROM candidates c2 JOIN companies co ON co.id = c2.company_id WHERE co.slug = 'todos-os-dados-demo' AND co.deleted = FALSE AND c2.employment_status = 'employee')"
+        },
+        {
+          "name": "company-kudos",
+          "sql": "SELECT 1 FROM company_kudos k JOIN companies co ON co.id = k.company_id WHERE co.slug = 'todos-os-dados-demo' AND k.deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "okr-cycle-assignees",
+          "sql": "SELECT 1 FROM okr_activity_assignees a JOIN companies co ON co.id = a.company_id WHERE co.slug = 'todos-os-dados-demo' LIMIT 1"
+        },
+        {
+          "name": "whistleblowing-channel",
+          "sql": "SELECT 1 FROM whistleblowing_channels ch JOIN companies co ON co.id = ch.company_id WHERE co.slug = 'todos-os-dados-demo' AND ch.deleted = FALSE LIMIT 1"
+        },
+        {
+          "name": "hour-bank-entries",
+          "sql": "SELECT 1 FROM employee_hour_bank_entries e JOIN companies co ON co.id = e.company_id WHERE co.slug = 'todos-os-dados-demo' LIMIT 1"
         }
       ]
     },

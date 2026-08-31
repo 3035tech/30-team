@@ -1,14 +1,15 @@
 /**
  * Seed DEMO — empresa "Todos os Dados" (tenant isolado, apresentação completa)
  *
- * Popula o máximo possível do produto (migrations ≤080):
+ * Popula o máximo possível do produto (migrations ≤103):
  * Equipe, Comparar, Vagas/pipeline, Motivadores, 1:1, PDI, clima+eNPS, pulso,
- * grupos, benefícios, Academy, LMS, performance+side reviews, sucessão, saídas,
- * compensação, jornada onboarding, scorecards, interview slots, /r, /t, /v, /e,
- * /employee, notificações gestor + colaborador.
+ * grupos, benefícios, Academy, LMS (quiz/watch/trilha), performance+side reviews,
+ * sucessão, saídas, compensação, jornada onboarding, scorecards, interview slots,
+ * DP leve, mural/kudos, ouvidoria, feedback contínuo, OKR ciclos, ponto + banco
+ * de horas, prep de entrevista, /r, /t, /v, /e, /employee, notificações.
  *
  * Pré-requisitos:
- *   - migrations através de 080
+ *   - migrations através de 103
  *   - areas populadas
  *   - npm run db:seed-motivators  (ae_definitions slug=motivators; opcional)
  *
@@ -39,6 +40,7 @@ import {
   rubricWeightedTypes,
 } from '../lib/vacancy-report-shared.js';
 import { isRichTextEmpty, sanitizeRichTextHtml } from '../lib/sanitize-html.js';
+import { seedTodosOsDadosModules, MODULE_TOK } from './seed-demo-todos-os-dados-modules.js';
 
 const require = createRequire(import.meta.url);
 const { Client } = require('pg');
@@ -65,6 +67,8 @@ const TOK = {
   climate: 'c1c1todosdadose5f60718293a4b5c6d7e8f08',
   pulse: 'p1p1todosdadose5f60718293a4b5c6d7e8f09',
   sidePeer: 's1s1todosdadose5f60718293a4b5c6d7e8f0a',
+  whistle: MODULE_TOK.whistle,
+  prepPedro: MODULE_TOK.prepPedro,
 };
 
 const ASSIGNABLE_CAPS = [
@@ -83,6 +87,9 @@ const ASSIGNABLE_CAPS = [
   'exit_analysis.view',
   'learning.view',
   'benefits.view',
+  'whistleblowing.view',
+  'dp.view',
+  'company_feed.view',
   'help.view',
 ];
 
@@ -503,6 +510,10 @@ async function main() {
         throw new Error(`ABORTADO: company_id=${companyId} parece tenant real (usuários sem *.demo).`);
       }
 
+      await deleteIfExists(client, `DELETE FROM lms_lesson_quiz_attempts WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM lms_lesson_watch_progress WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM lms_lesson_quiz_questions WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM lms_job_role_courses WHERE company_id = $1`, [companyId]);
       await deleteIfExists(
         client,
         `DELETE FROM development_plan_lms_links l
@@ -516,6 +527,24 @@ async function main() {
       await deleteIfExists(client, `DELETE FROM lms_cohorts WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM lms_courses WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM employee_compensation_events WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM employee_hour_bank_entries WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM employee_dp_documents WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM employee_leave_requests WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM employee_leave_balances WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM candidate_dp_profiles WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM company_kudos WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM company_posts WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM feedback_requests WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM whistleblowing_reports WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM whistleblowing_channels WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM interview_prep_links WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM company_pre_onboarding_templates WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_activity_checkins WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_activity_assignees WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_activities WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_areas WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_cycles WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM product_feedback WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM candidate_notifications WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM employee_login_tokens WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM performance_side_reviews WHERE company_id = $1`, [companyId]);
@@ -667,6 +696,9 @@ async function main() {
     await deleteIfExists(client, `DELETE FROM climate_survey_invites WHERE token LIKE $1`, [tokenLike]);
     await deleteIfExists(client, `DELETE FROM team_pulse_invites WHERE token LIKE $1`, [tokenLike]);
     await deleteIfExists(client, `DELETE FROM performance_side_reviews WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM whistleblowing_channels WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM interview_prep_links WHERE token LIKE $1`, [tokenLike]);
+    await deleteIfExists(client, `DELETE FROM feedback_requests WHERE token LIKE $1`, [tokenLike]);
 
     const co = await client.query(
       `INSERT INTO companies (
@@ -1306,10 +1338,10 @@ async function main() {
       /* optional */
     }
 
-    // People package for subset of employees
+    // People package for every employee (PDI, chegada, reviews, HR score)
     let lastPlanItemId = null;
     let lastPlanId = null;
-    const peopleTargets = employees.filter((_, i) => i < 6 || _.key === 'colaborador');
+    const peopleTargets = employees;
     for (let i = 0; i < peopleTargets.length; i += 1) {
       const emp = peopleTargets[i];
       const start = emp.startDate || calendarYmd(-(90 + i * 11), 0);
@@ -1675,7 +1707,7 @@ async function main() {
       } catch (_) {
         /* cohorts optional */
       }
-      const enrollTargets = [employees[0], employees.find((e) => e.key === 'elena'), colaborador].filter(Boolean);
+      const enrollTargets = employees.filter(Boolean);
       for (const emp of enrollTargets) {
         const enr = await client.query(
           `INSERT INTO lms_enrollments (
@@ -1752,7 +1784,7 @@ async function main() {
            updated_at = NOW()`,
         [companyId, hrUserId]
       );
-      const punchTargets = [colaborador, employees[0]].filter(Boolean);
+      const punchTargets = employees.filter(Boolean);
       for (const emp of punchTargets) {
         await deleteIfExists(
           client,
@@ -2196,11 +2228,17 @@ async function main() {
       [companyId, [hrUserId, dirUserId], hrUserId]
     );
 
+    const modulesOut = await seedTodosOsDadosModules(client, {
+      companyId,
+      hrUserId,
+      dirUserId,
+    });
+
     await client.query('COMMIT');
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
     console.log('\n══════════════════════════════════════════════════');
-    console.log('  DEMO Todos os Dados pronta (apresentação ≤080)');
+    console.log('  DEMO Todos os Dados pronta (apresentação ≤103)');
     console.log('══════════════════════════════════════════════════');
     console.log(`  Empresa:        ${COMPANY_NAME}  slug=${SLUG}  id=${companyId}`);
     console.log(`  Login HR:       ${HR_EMAIL}`);
@@ -2230,12 +2268,19 @@ async function main() {
     console.log(`    Portal /e:     ${appUrl}/e/${TOK.employeePortal}`);
     console.log(`    Clima:         ${appUrl}/clima/${TOK.climate}`);
     console.log(`    Pulso:         ${appUrl}/pulso/${TOK.pulse}`);
+    if (modulesOut?.whistleToken) {
+      console.log(`    Ouvidoria:     ${appUrl}/ouvidoria/${modulesOut.whistleToken}`);
+    }
+    if (modulesOut?.prepToken) {
+      console.log(`    Prep /prep:    ${appUrl}/prep/${modulesOut.prepToken}`);
+    }
     if (motivatorsDefId) {
       console.log(`    Motivadores:   ${appUrl}/assessment/motivators/${TOK.aeInvite}`);
     }
     console.log('');
     console.log('  Validar: Overview, Equipe, Comparar, Vagas, Motivadores, 1:1, PDI,');
-    console.log('  Clima+eNPS, Pulso, LMS, Performance, Sucessão, Saídas, /r, /e, /employee.');
+    console.log('  Clima+eNPS, Pulso, LMS, Performance, Sucessão, Saídas, DP, Mural,');
+    console.log('  Ouvidoria, OKRs, ponto/banco de horas, /r, /e, /employee.');
     console.log('══════════════════════════════════════════════════\n');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

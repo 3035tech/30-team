@@ -82,7 +82,7 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Banco de horas** (hub DP → Banco de horas; saldo/pedido em `/employee/time-clock`) — teto por empresa, lançamento manual, créditos do ponto (≥15 min), aprovação RH, CSV mensal. Migration `099_hour_bank.sql`. **Não** é folha/acordo coletivo.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
 - **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
-- **OKRs leves** (aba Avaliações) — ciclo/área/atividade, peso relativo, check-ins, vínculo de pessoas, hub `/employee` → Meus OKRs + notificação. Migrations `096`+`097`+`098`.
+- **OKRs leves** (aba Pessoas → OKRs) — ciclo/área/atividade, peso 0–10, check-ins, vínculo de pessoas, hub `/employee` → Meus OKRs + notificação. Migrations `096`+`097`+`098`+`104`.
 - **Ouvidoria** (`/dashboard?tab=whistleblowing`, `/ouvidoria/{token}`) — canal anônimo + triagem RH. Migration `090`.
 - **Organograma** + **feedback contínuo** (Equipe/Grupos + `/employee` / `/feedback/{token}`). Migration `090`.
 - **Bônus / remuneração variável** (proposta RH → aprovação; status no hub). Migration `090`.
@@ -215,8 +215,8 @@ A partir da migration `054`, `055` e `056`:
 | `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
 | `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
-| `scripts/seed-demo-todos-os-dados.sql` | **Seed completo de apresentação** (migrations ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee` (`todos-os-dados-demo`). Inbox HR: ~12 tipos `NOTIF`; colab: ~10 no `/employee` |
-| `npm run db:seed-demo-todos-os-dados:confirm` | Mesmo tenant via JS (DTOV / local); exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
+| `scripts/seed-demo-todos-os-dados.sql` | **Seed de apresentação** (base ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee`. **Módulos novos:** rode em seguida `scripts/seed-demo-todos-os-dados-modules.sql` (DP, mural/kudos, OKR ciclos, ouvidoria, banco de horas). Inbox HR: ~12 tipos `NOTIF`; colab: tipos `EMPLOYEE_NOTIF` |
+| `npm run db:seed-demo-todos-os-dados:confirm` | **Mesmo tenant via JS (canônico, até 103)** — todos os colaboradores com dados em todos os módulos; DTOV / local. Exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
 | `npm run db:create-super-admin` | Cria/atualiza usuário **super admin** (sem `company_id`) via `.env` (`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` ou defaults do script). SQL espelho: `scripts/create-super-admin.sql` |
 | `npm run db:seed-demo-client-jobs-board:confirm` | **Board `/jobs` para demo com cliente**: 10 empresas (`demo-board-*`) + 50 vagas públicas com descrição HTML completa; não toca Todos os Dados / Eval |
 
@@ -232,13 +232,15 @@ psql "$DATABASE_URL" -f scripts/rds-bootstrap-completo.sql
 psql "$DATABASE_URL" -f scripts/seed-eval-20-employees.sql
 
 # Seed apresentação Todos os Dados (tenant isolado slug=todos-os-dados-demo)
-# Requer migrations através de 080 + areas; Motivadores opcional (db:seed-motivators)
+# Requer migrations através de 103 + areas; Motivadores opcional (db:seed-motivators)
 # HR:           hr@todos-os-dados.demo / DemoTodosDados!2026          → /login
 # Direction:    direction@todos-os-dados.demo / DemoTodosDados!2026   → /login
 # Colaborador:  colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee
-# Notifs:       HR inbox ~12 tipos NOTIF; colaborador ~10 no /employee
-psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
-# ou: npm run db:seed-demo-todos-os-dados:confirm
+# JS (recomendado): todos os módulos até 103, dados em cada colaborador
+npm run db:seed-demo-todos-os-dados:confirm
+# pgAdmin: base SQL + módulos
+# psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
+# psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados-modules.sql
 
 # Board /jobs para demo com cliente (10 empresas · 50 vagas públicas)
 # Não apaga Todos os Dados / Eval — só slugs demo-board-*
@@ -535,10 +537,11 @@ server {
 npm run db:seed
 npm run db:clear
 
-# Demo apresentação Todos os Dados (slug=todos-os-dados-demo; migrations ≤080)
+# Demo apresentação Todos os Dados (slug=todos-os-dados-demo; migrations ≤103)
 # Colaborador: colaborador@todos-os-dados.demo / DemoTodosDados!2026 → /employee
 npm run db:seed-demo-todos-os-dados:confirm
 # ou: psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados.sql
+#     psql "$DATABASE_URL" -f scripts/seed-demo-todos-os-dados-modules.sql
 
 # Provas (Postgres efêmero DTOV + HTTP + browser) — ver test/README.md
 npm run dtov:reset

@@ -47,14 +47,25 @@ describe('weightedProgressPct', () => {
       75
     );
   });
+
+  it('skips weight 0 in the rollup', () => {
+    assert.equal(
+      weightedProgressPct([
+        { progressPct: 100, weight: 0 },
+        { progressPct: 50, weight: 10 },
+      ]),
+      50
+    );
+  });
 });
 
 describe('clampWeight', () => {
-  it('defaults and clamps', () => {
-    assert.equal(clampWeight(0), 1);
-    assert.equal(clampWeight(null), 1);
-    assert.equal(clampWeight(50), 50);
-    assert.equal(clampWeight(200), 100);
+  it('defaults and clamps to 0–10', () => {
+    assert.equal(clampWeight(0), 0);
+    assert.equal(clampWeight(null), 5);
+    assert.equal(clampWeight(5), 5);
+    assert.equal(clampWeight(50), 10);
+    assert.equal(clampWeight(-2), 0);
   });
 });
 
