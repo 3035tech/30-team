@@ -15,39 +15,67 @@ import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
-import { OKR_OBJECTIVE_LEVEL } from '../../lib/domain-status.js';
 import { MeterBar } from './MeterBar';
 import { CollapsibleBlock } from './CollapsibleBlock';
-import { CategoryBars } from './CategoryBars';
-import { ChartPanel } from './ChartPanel';
-import { okrLevelRollup } from '../../lib/chart-aggregates';
+import { OKR_CYCLE_STATUS } from '../../lib/domain-status.js';
+import { formatDisplayDate } from '../../lib/format-display-date';
+import { Icon } from './Icon';
+
+function pctTone(pct) {
+  const n = pct == null ? 0 : Number(pct);
+  if (n >= 75) return 'bg-success';
+  if (n >= 40) return 'bg-info';
+  return 'bg-warning';
+}
+
+function urgencyTone(urgency) {
+  if (urgency === 'overdue' || urgency === 'critical') return 'danger';
+  if (urgency === 'warn') return 'warning';
+  if (urgency === 'done') return 'success';
+  return 'neutral';
+}
+
+function meterToneForActivity(act) {
+  if (act.urgency === 'overdue' || act.urgency === 'critical') return 'bg-danger';
+  if (act.urgency === 'warn') return 'bg-warning';
+  return pctTone(act.progressPct);
+}
 
 /**
- * B-3004 — Light OKRs (company / team / person objectives + key results).
+ * OKR phase 1: cycles → areas → activities (% + deadline urgency).
  */
 export function OkrBlock({ locale = 'pt-BR', companyId }) {
   const { toast, promptForm, confirm } = useAppFeedback();
-  const [objectives, setObjectives] = useState([]);
+  const [cycles, setCycles] = useState([]);
+  const [activeCycleId, setActiveCycleId] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [busy, setBusy] = useState(false);
 
   const companyQs = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
+  const companyBody = companyId ? { companyId: Number(companyId) } : {};
 
   const load = useCallback(async () => {
     if (!companyId) {
-      setObjectives([]);
+      setCycles([]);
+      setActiveCycleId(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/okr${companyQs}`);
+      const res = await fetch(`/api/admin/okr/cycles${companyQs}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'load');
-      setObjectives(Array.isArray(data.objectives) ? data.objectives : []);
+      const list = Array.isArray(data.cycles) ? data.cycles : [];
+      setCycles(list);
+      setActiveCycleId((prev) => {
+        if (prev && list.some((c) => c.id === prev)) return prev;
+        const active = list.find((c) => c.status === OKR_CYCLE_STATUS.ACTIVE);
+        return active?.id || list[0]?.id || null;
+      });
     } catch (e) {
       toast(e?.message || t(locale, 'panel.okr.loadError'), 'error');
-      setObjectives([]);
+      setCycles([]);
     } finally {
       setLoading(false);
     }
@@ -57,170 +85,178 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     void load();
   }, [load]);
 
-  const levelLabel = (level) => {
-    const key = `panel.okr.level.${level}`;
-    const label = t(locale, key);
-    return label === key ? level : label;
-  };
-
-  const rollup = useMemo(() => okrLevelRollup(objectives), [objectives]);
-  const rollupBars = useMemo(() => {
-    const labelFor = (level) => {
-      const key = `panel.okr.level.${level}`;
-      const label = t(locale, key);
-      return label === key ? level : label;
-    };
-    return rollup.map((r) => ({
-      id: r.id,
-      label: t(locale, 'panel.okr.rollupLevelLabel', {
-        level: labelFor(r.level),
-        n: r.krCount,
-      }),
-      value: r.avgPct ?? 0,
-      toneClass:
-        (r.avgPct ?? 0) >= 75
-          ? 'bg-success'
-          : (r.avgPct ?? 0) >= 40
-            ? 'bg-info'
-            : 'bg-warning',
-    }));
-  }, [rollup, locale]);
-  const rollupKrTotal = useMemo(
-    () => rollup.reduce((n, r) => n + (r.krCount || 0), 0),
-    [rollup]
+  const cycle = useMemo(
+    () => cycles.find((c) => c.id === activeCycleId) || null,
+    [cycles, activeCycleId]
   );
 
-  const periodLabel = (obj) => {
-    const a = obj.periodStart ? String(obj.periodStart).slice(0, 10) : '';
-    const b = obj.periodEnd ? String(obj.periodEnd).slice(0, 10) : '';
-    if (a && b) return `${a}–${b}`;
-    return a || b || '';
-  };
-
-  const createObjective = async () => {
-    let teamGroups = [];
-    try {
-      const res = await fetch(`/api/admin/team-groups${companyQs}`);
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && Array.isArray(data.items)) teamGroups = data.items;
-    } catch {
-      /* optional */
-    }
-    const parentOptions = [
-      { value: '', label: t(locale, 'panel.okr.parentNone') },
-      ...objectives
-        .filter((o) => o.level === OKR_OBJECTIVE_LEVEL.COMPANY || o.level === OKR_OBJECTIVE_LEVEL.TEAM)
-        .map((o) => ({
-          value: String(o.id),
-          label: `${levelLabel(o.level)}: ${o.title}`.slice(0, 80),
-        })),
-    ];
-    const groupOptions = [
-      { value: '', label: t(locale, 'panel.okr.groupNone') },
-      ...teamGroups.map((g) => ({
-        value: String(g.id),
-        label: g.name || `#${g.id}`,
-      })),
-    ];
-
+  const createCycle = async () => {
     const values = await promptForm({
-      title: t(locale, 'panel.okr.createObjTitle'),
-      confirmLabel: t(locale, 'panel.okr.createObjConfirm'),
+      title: t(locale, 'panel.okr.createCycleTitle'),
+      confirmLabel: t(locale, 'panel.okr.createCycleConfirm'),
       fields: [
-        {
-          key: 'title',
-          type: 'text',
-          label: t(locale, 'panel.okr.titleLabel'),
-          required: true,
-        },
-        {
-          key: 'description',
-          type: 'textarea',
-          label: t(locale, 'panel.okr.descLabel'),
-        },
-        {
-          key: 'level',
-          type: 'select',
-          label: t(locale, 'panel.okr.levelLabel'),
-          defaultValue: OKR_OBJECTIVE_LEVEL.COMPANY,
-          options: [
-            { value: OKR_OBJECTIVE_LEVEL.COMPANY, label: levelLabel('company') },
-            { value: OKR_OBJECTIVE_LEVEL.TEAM, label: levelLabel('team') },
-            { value: OKR_OBJECTIVE_LEVEL.PERSON, label: levelLabel('person') },
-          ],
-        },
-        {
-          key: 'parentId',
-          type: 'select',
-          label: t(locale, 'panel.okr.parentLabel'),
-          help: t(locale, 'panel.okr.parentHelp'),
-          defaultValue: '',
-          options: parentOptions,
-        },
-        {
-          key: 'teamGroupId',
-          type: 'select',
-          label: t(locale, 'panel.okr.groupLabel'),
-          help: t(locale, 'panel.okr.groupHelp'),
-          defaultValue: '',
-          options: groupOptions,
-        },
-        {
-          key: 'candidateId',
-          type: 'entitySearch',
-          label: t(locale, 'panel.okr.personLabel'),
-          help: t(locale, 'panel.okr.personHelp'),
-          searchUrl: `/api/admin/employees/search?companyId=${encodeURIComponent(companyId)}`,
-          minChars: 2,
-        },
-        {
-          key: 'periodStart',
-          type: 'date',
-          label: t(locale, 'panel.okr.periodStart'),
-        },
-        {
-          key: 'periodEnd',
-          type: 'date',
-          label: t(locale, 'panel.okr.periodEnd'),
-        },
+        { key: 'title', label: t(locale, 'panel.okr.cycleTitleLabel'), required: true, maxLength: 200 },
+        { key: 'startsOn', type: 'date', label: t(locale, 'panel.okr.periodStart'), required: true },
+        { key: 'endsOn', type: 'date', label: t(locale, 'panel.okr.periodEnd'), required: true },
       ],
     });
-    if (!values?.title) return;
-    const level = values.level || OKR_OBJECTIVE_LEVEL.COMPANY;
-    if (level === OKR_OBJECTIVE_LEVEL.TEAM && !values.teamGroupId) {
-      toast(t(locale, 'panel.okr.teamGroupRequired'), 'error');
-      return;
-    }
-    if (level === OKR_OBJECTIVE_LEVEL.PERSON && !values.candidateId) {
-      toast(t(locale, 'panel.okr.personRequired'), 'error');
-      return;
-    }
+    if (!values) return;
     setBusy(true);
     try {
-      const res = await fetch('/api/admin/okr', {
+      const res = await fetch('/api/admin/okr/cycles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...companyBody, ...values }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'create');
+      toast(t(locale, 'panel.okr.cycleCreated'), 'ok');
+      await load();
+      if (data.cycle?.id) setActiveCycleId(data.cycle.id);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleCycleStatus = async () => {
+    if (!cycle) return;
+    const next =
+      cycle.status === OKR_CYCLE_STATUS.CLOSED
+        ? OKR_CYCLE_STATUS.ACTIVE
+        : OKR_CYCLE_STATUS.CLOSED;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/okr/cycles/${cycle.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...companyBody, status: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'patch');
+      toast(t(locale, 'panel.okr.cycleStatusSaved'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteCycle = async () => {
+    if (!cycle) return;
+    const ok = await confirm({
+      title: t(locale, 'panel.okr.deleteCycleTitle'),
+      message: t(locale, 'panel.okr.deleteCycleConfirm', { title: cycle.title }),
+      confirmLabel: t(locale, 'panel.okr.deleteBtn'),
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/okr/cycles/${cycle.id}${companyQs}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'delete');
+      toast(t(locale, 'panel.okr.cycleDeleted'), 'ok');
+      setActiveCycleId(null);
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createArea = async () => {
+    if (!cycle) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.okr.createAreaTitle'),
+      confirmLabel: t(locale, 'panel.okr.createAreaConfirm'),
+      fields: [
+        { key: 'title', label: t(locale, 'panel.okr.areaTitleLabel'), required: true, maxLength: 200 },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/okr/areas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...companyBody, cycleId: cycle.id, title: values.title }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'create');
+      toast(t(locale, 'panel.okr.areaCreated'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteArea = async (area) => {
+    const ok = await confirm({
+      title: t(locale, 'panel.okr.deleteAreaTitle'),
+      message: t(locale, 'panel.okr.deleteAreaConfirm', { title: area.title }),
+      confirmLabel: t(locale, 'panel.okr.deleteBtn'),
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/okr/areas/${area.id}${companyQs}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'delete');
+      toast(t(locale, 'panel.okr.areaDeleted'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createActivity = async (area) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.okr.createActivityTitle'),
+      confirmLabel: t(locale, 'panel.okr.createActivityConfirm'),
+      fields: [
+        { key: 'title', label: t(locale, 'panel.okr.activityTitleLabel'), required: true, maxLength: 300 },
+        {
+          key: 'progressPct',
+          type: 'number',
+          label: t(locale, 'panel.okr.progressPctLabel'),
+          defaultValue: '0',
+          min: 0,
+          max: 100,
+        },
+        { key: 'deadline', type: 'date', label: t(locale, 'panel.okr.deadlineLabel') },
+      ],
+    });
+    if (!values) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/okr/activities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyId,
+          ...companyBody,
+          areaId: area.id,
           title: values.title,
-          description: values.description || '',
-          level,
-          parentId: values.parentId ? Number(values.parentId) : null,
-          teamGroupId:
-            level === OKR_OBJECTIVE_LEVEL.TEAM && values.teamGroupId
-              ? Number(values.teamGroupId)
-              : null,
-          candidateId:
-            level === OKR_OBJECTIVE_LEVEL.PERSON && values.candidateId
-              ? Number(values.candidateId)
-              : null,
-          periodStart: values.periodStart || null,
-          periodEnd: values.periodEnd || null,
+          progressPct: Number(values.progressPct) || 0,
+          deadline: values.deadline || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'create');
-      toast(t(locale, 'panel.okr.created'), 'ok');
+      toast(t(locale, 'panel.okr.activityCreated'), 'ok');
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
@@ -229,96 +265,38 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     }
   };
 
-  const addKeyResult = async (obj) => {
-    const values = await promptForm({
-      title: t(locale, 'panel.okr.addKrTitle'),
-      confirmLabel: t(locale, 'panel.okr.addKrConfirm'),
-      fields: [
-        {
-          key: 'title',
-          type: 'text',
-          label: t(locale, 'panel.okr.krTitleLabel'),
-          required: true,
-        },
-        {
-          key: 'unit',
-          type: 'text',
-          label: t(locale, 'panel.okr.unitLabel'),
-          defaultValue: '%',
-        },
-        {
-          key: 'targetValue',
-          type: 'number',
-          label: t(locale, 'panel.okr.targetLabel'),
-          required: true,
-          defaultValue: '100',
-        },
-        {
-          key: 'currentValue',
-          type: 'number',
-          label: t(locale, 'panel.okr.currentLabel'),
-          defaultValue: '0',
-        },
-      ],
-    });
-    if (!values?.title) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/admin/okr/${encodeURIComponent(obj.id)}/key-results`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyId,
-          title: values.title,
-          unit: values.unit || '',
-          targetValue: Number(values.targetValue) || 0,
-          currentValue: Number(values.currentValue) || 0,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'kr');
-      toast(t(locale, 'panel.okr.krCreated'), 'ok');
-      await load();
-    } catch (e) {
-      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const updateProgress = async (kr) => {
+  const editActivityProgress = async (act) => {
     const values = await promptForm({
       title: t(locale, 'panel.okr.progressTitle'),
       confirmLabel: t(locale, 'panel.okr.progressConfirm'),
       fields: [
         {
-          key: 'currentValue',
+          key: 'progressPct',
           type: 'number',
-          label: t(locale, 'panel.okr.currentLabel'),
+          label: t(locale, 'panel.okr.progressPctLabel'),
+          defaultValue: String(act.progressPct ?? 0),
+          min: 0,
+          max: 100,
           required: true,
-          defaultValue: String(kr.currentValue ?? 0),
         },
         {
-          key: 'targetValue',
-          type: 'number',
-          label: t(locale, 'panel.okr.targetLabel'),
-          defaultValue: String(kr.targetValue ?? 0),
+          key: 'deadline',
+          type: 'date',
+          label: t(locale, 'panel.okr.deadlineLabel'),
+          defaultValue: act.deadline || '',
         },
       ],
     });
     if (!values) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/okr/key-results/${encodeURIComponent(kr.id)}`, {
+      const res = await fetch(`/api/admin/okr/activities/${act.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyId,
-          currentValue: Number(values.currentValue),
-          targetValue:
-            values.targetValue !== '' && values.targetValue != null
-              ? Number(values.targetValue)
-              : undefined,
+          ...companyBody,
+          progressPct: Number(values.progressPct) || 0,
+          deadline: values.deadline || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -332,22 +310,22 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     }
   };
 
-  const removeObjective = async (obj) => {
+  const deleteActivity = async (act) => {
     const ok = await confirm({
-      message: t(locale, 'panel.okr.deleteConfirm'),
-      danger: true,
+      title: t(locale, 'panel.okr.deleteActivityTitle'),
+      message: t(locale, 'panel.okr.deleteActivityConfirm', { title: act.title }),
       confirmLabel: t(locale, 'panel.okr.deleteBtn'),
+      danger: true,
     });
     if (!ok) return;
     setBusy(true);
     try {
-      const res = await fetch(
-        `/api/admin/okr/${encodeURIComponent(obj.id)}${companyQs}`,
-        { method: 'DELETE' }
-      );
+      const res = await fetch(`/api/admin/okr/activities/${act.id}${companyQs}`, {
+        method: 'DELETE',
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'delete');
-      toast(t(locale, 'panel.okr.deleted'), 'ok');
+      toast(t(locale, 'panel.okr.activityDeleted'), 'ok');
       await load();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
@@ -356,150 +334,359 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
     }
   };
 
-  if (!companyId) return null;
+  const addAssignee = async (act) => {
+    const values = await promptForm({
+      title: t(locale, 'panel.okr.assignTitle'),
+      confirmLabel: t(locale, 'panel.okr.assignConfirm'),
+      fields: [
+        {
+          key: 'candidateId',
+          label: t(locale, 'panel.okr.assignPersonLabel'),
+          type: 'entitySearch',
+          searchUrl: `/api/admin/employees/search?companyId=${encodeURIComponent(companyId)}`,
+          required: true,
+        },
+      ],
+    });
+    if (!values?.candidateId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/okr/activities/${act.id}/assignees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...companyBody,
+          candidateId: Number(values.candidateId),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'assign');
+      toast(
+        data.inserted
+          ? t(locale, 'panel.okr.assigneeAdded')
+          : t(locale, 'panel.okr.assigneeAlready'),
+        'ok'
+      );
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeAssignee = async (act, person) => {
+    const ok = await confirm({
+      title: t(locale, 'panel.okr.unassignTitle'),
+      message: t(locale, 'panel.okr.unassignConfirm', {
+        name: person.fullName || person.email || String(person.candidateId),
+        title: act.title,
+      }),
+      confirmLabel: t(locale, 'panel.okr.unassignBtn'),
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const qs = new URLSearchParams();
+      if (companyId) qs.set('companyId', String(companyId));
+      qs.set('candidateId', String(person.candidateId));
+      const res = await fetch(`/api/admin/okr/activities/${act.id}/assignees?${qs}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'unassign');
+      toast(t(locale, 'panel.okr.assigneeRemoved'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.okr.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!companyId) {
+    return (
+      <InlineCallout tone="info" className="mt-4">
+        {t(locale, 'panel.okr.needCompany')}
+      </InlineCallout>
+    );
+  }
 
   return (
     <CollapsibleBlock
       locale={locale}
       title={t(locale, 'panel.okr.title')}
-      count={!loading ? objectives.length || null : null}
-      defaultOpen={false}
+      open
       variant="card"
-      className="mt-2"
-      collapsedHint={t(locale, 'panel.okr.hint')}
+      className="mt-6"
     >
+      <p className={cn(S.muted, 'mb-3 mt-0 text-prose')}>{t(locale, 'panel.okr.hint')}</p>
+      <InlineCallout tone="info" className="mb-4">
+        {t(locale, 'panel.okr.hedgedNote')}
+      </InlineCallout>
+
       {loading ? (
         <AppLoading variant="panel" />
       ) : (
-      <ContentEnter animKey={`okr|${companyId}|${objectives.length}`}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <InlineCallout tone="info" className="mb-0 flex-1">
-            {t(locale, 'panel.okr.hedgedNote')}
-          </InlineCallout>
-          <AdminCreateButton
-            label={t(locale, 'panel.okr.createObjBtn')}
-            onClick={() => void createObjective()}
-            disabled={busy}
-          />
-        </div>
-
-        {rollupBars.length > 0 ? (
-          <ChartPanel
-            className="mb-4"
-            title={t(locale, 'panel.okr.rollupTitle')}
-            hint={t(locale, 'panel.okr.rollupHint', { n: rollupKrTotal })}
-          >
-            <CategoryBars
-              items={rollupBars}
-              max={100}
-              height={8}
-              valueSuffix="%"
-              labelClassName="w-[8.5rem] shrink-0 truncate text-prose text-ink sm:w-[11rem]"
+        <ContentEnter animKey={`okr|${cycles.length}|${activeCycleId || 0}`}>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <AdminCreateButton
+              locale={locale}
+              label={t(locale, 'panel.okr.createCycleBtn')}
+              onClick={() => void createCycle()}
+              disabled={busy}
             />
-          </ChartPanel>
-        ) : null}
+            {cycles.length > 0 ? (
+              <select
+                className={cn(S.select, 'min-h-touch max-w-xs')}
+                value={activeCycleId || ''}
+                onChange={(e) => setActiveCycleId(Number(e.target.value) || null)}
+                aria-label={t(locale, 'panel.okr.cycleSelectAria')}
+              >
+                {cycles.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                    {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
 
-        {objectives.length === 0 ? (
-          <EmptyState
-            title={t(locale, 'panel.okr.emptyTitle')}
-            message={t(locale, 'panel.okr.emptyHint')}
-            actionLabel={t(locale, 'panel.okr.createObjBtn')}
-            onAction={() => void createObjective()}
-          />
-        ) : (
-          <ul className="m-0 flex list-none flex-col gap-3 p-0">
-            {objectives.map((obj) => {
-              const period = periodLabel(obj);
-              return (
-                <li
-                  key={obj.id}
-                  className="rounded-control border border-ink/10 bg-surface px-3 py-2.5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-ui text-sm font-medium text-ink">{obj.title}</span>
-                        <StatusToneChip tone="neutral">{levelLabel(obj.level)}</StatusToneChip>
-                      </div>
-                      {(obj.teamGroupName || obj.candidateName || obj.parentTitle) ? (
-                        <div className="mt-0.5 font-mono text-2xs text-ink-faint">
-                          {[
-                            obj.parentTitle
-                              ? t(locale, 'panel.okr.metaParent', { title: obj.parentTitle })
-                              : null,
-                            obj.teamGroupName
-                              ? t(locale, 'panel.okr.metaGroup', { name: obj.teamGroupName })
-                              : null,
-                            obj.candidateName
-                              ? t(locale, 'panel.okr.metaPerson', { name: obj.candidateName })
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </div>
-                      ) : null}
-                      {period ? (
-                        <div className="mt-0.5 font-mono text-2xs text-ink-faint">{period}</div>
-                      ) : null}
-                      {obj.description ? (
-                        <p className={cn(S.muted, 'mb-0 mt-1 text-prose')}>{obj.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <AdminIconButton
-                        icon="plus"
-                        label={t(locale, 'panel.okr.addKrBtn')}
-                        onClick={() => void addKeyResult(obj)}
-                        disabled={busy}
-                      />
-                      <AdminDeleteButton
-                        label={t(locale, 'panel.okr.deleteBtn')}
-                        onClick={() => void removeObjective(obj)}
-                        disabled={busy}
-                      />
-                    </div>
-                  </div>
-                  {(obj.keyResults || []).length === 0 ? (
-                    <p className={cn(S.faint, 'mb-0 mt-2 text-2xs')}>
-                      {t(locale, 'panel.okr.noKrs')}
+          {!cycle ? (
+            <EmptyState
+              title={t(locale, 'panel.okr.emptyTitle')}
+              message={t(locale, 'panel.okr.emptyHint')}
+            />
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className={cn(S.cardTight, 'p-4')}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className={cn(S.cardSection, 'm-0')}>{cycle.title}</h3>
+                    <p className={cn(S.faint, 'mb-0 mt-1 font-mono text-2xs')}>
+                      {formatDisplayDate(cycle.startsOn, locale)}
+                      {' – '}
+                      {formatDisplayDate(cycle.endsOn, locale)}
                     </p>
-                  ) : (
-                    <ul className="mt-2 m-0 flex list-none flex-col gap-2 p-0">
-                      {obj.keyResults.map((kr) => (
-                        <li
-                          key={kr.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/60 px-2.5 py-2"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="font-ui text-prose text-ink">{kr.title}</div>
-                            <div className="mt-1 max-w-xs">
-                              <MeterBar
-                                value={Number(kr.currentValue) || 0}
-                                max={Math.max(Number(kr.targetValue) || 1, 1)}
-                                aria-label={kr.title}
-                              />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusToneChip
+                      tone={cycle.status === OKR_CYCLE_STATUS.ACTIVE ? 'success' : 'neutral'}
+                    >
+                      {t(locale, `panel.okr.status.${cycle.status}`)}
+                    </StatusToneChip>
+                    <button
+                      type="button"
+                      className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                      disabled={busy}
+                      onClick={() => void toggleCycleStatus()}
+                    >
+                      {cycle.status === OKR_CYCLE_STATUS.CLOSED
+                        ? t(locale, 'panel.okr.reopenCycle')
+                        : t(locale, 'panel.okr.closeCycle')}
+                    </button>
+                    <AdminDeleteButton
+                      locale={locale}
+                      onClick={() => void deleteCycle()}
+                      disabled={busy}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="mb-1 flex items-baseline justify-between gap-2">
+                    <span className={S.label}>{t(locale, 'panel.okr.totalProgress')}</span>
+                    <span className="font-mono text-2xs text-ink-muted">
+                      {cycle.progressPct != null ? `${cycle.progressPct}%` : '—'}
+                    </span>
+                  </div>
+                  <MeterBar
+                    percent={cycle.progressPct ?? 0}
+                    height={8}
+                    toneClass={pctTone(cycle.progressPct)}
+                    aria-label={t(locale, 'panel.okr.totalProgress')}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={S.label}>{t(locale, 'panel.okr.areasTitle')}</span>
+                <AdminCreateButton
+                  locale={locale}
+                  label={t(locale, 'panel.okr.createAreaBtn')}
+                  onClick={() => void createArea()}
+                  disabled={busy}
+                />
+              </div>
+
+              {(cycle.areas || []).length === 0 ? (
+                <EmptyState message={t(locale, 'panel.okr.areasEmpty')} />
+              ) : (
+                <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                  {(cycle.areas || []).map((area) => (
+                    <li
+                      key={area.id}
+                      className="rounded-card border border-ink/12 bg-canvas/40 p-3 sm:p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className={cn(S.cardBody, 'm-0')}>{area.title}</h4>
+                          <div className="mt-2">
+                            <div className="mb-1 flex items-baseline justify-between gap-2">
+                              <span className="font-mono text-2xs text-ink-faint">
+                                {t(locale, 'panel.okr.areaProgress')}
+                              </span>
+                              <span className="font-mono text-2xs text-ink-muted">
+                                {area.progressPct != null ? `${area.progressPct}%` : '—'}
+                              </span>
                             </div>
-                            <div className="mt-0.5 font-mono text-2xs text-ink-muted">
-                              {kr.currentValue}
-                              {kr.unit ? ` ${kr.unit}` : ''} / {kr.targetValue}
-                              {kr.unit ? ` ${kr.unit}` : ''}
-                            </div>
+                            <MeterBar
+                              percent={area.progressPct ?? 0}
+                              height={6}
+                              toneClass={pctTone(area.progressPct)}
+                            />
                           </div>
-                          <AdminEditButton
-                            label={t(locale, 'panel.okr.progressBtn')}
-                            onClick={() => void updateProgress(kr)}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          <AdminCreateButton
+                            locale={locale}
+                            label={t(locale, 'panel.okr.createActivityBtn')}
+                            onClick={() => void createActivity(area)}
                             disabled={busy}
                           />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </ContentEnter>
+                          <AdminDeleteButton
+                            locale={locale}
+                            onClick={() => void deleteArea(area)}
+                            disabled={busy}
+                          />
+                        </div>
+                      </div>
+
+                      {(area.activities || []).length === 0 ? (
+                        <p className={cn(S.muted, 'mb-0 mt-3 text-prose')}>
+                          {t(locale, 'panel.okr.activitiesEmpty')}
+                        </p>
+                      ) : (
+                        <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
+                          {(area.activities || []).map((act) => (
+                            <li
+                              key={act.id}
+                              className={cn(
+                                'rounded-control border bg-surface px-3 py-2.5',
+                                act.urgency === 'overdue' || act.urgency === 'critical'
+                                  ? 'border-danger/30'
+                                  : act.urgency === 'warn'
+                                    ? 'border-warning/30'
+                                    : 'border-ink/10'
+                              )}
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className={S.cardMuted}>{act.title}</span>
+                                    {act.urgency && act.urgency !== 'none' ? (
+                                      <StatusToneChip tone={urgencyTone(act.urgency)}>
+                                        {t(locale, `panel.okr.urgency.${act.urgency}`)}
+                                      </StatusToneChip>
+                                    ) : null}
+                                  </div>
+                                  {act.deadline ? (
+                                    <p className="mb-0 mt-1 font-mono text-2xs text-ink-faint">
+                                      {t(locale, 'panel.okr.deadlineDue', {
+                                        date: formatDisplayDate(act.deadline, locale),
+                                      })}
+                                      {(act.assignees || []).length > 0
+                                        ? ` · ${t(locale, 'panel.okr.assigneeCount', {
+                                            n: act.assignees.length,
+                                          })}`
+                                        : ''}
+                                    </p>
+                                  ) : (act.assignees || []).length > 0 ? (
+                                    <p className="mb-0 mt-1 font-mono text-2xs text-ink-faint">
+                                      {t(locale, 'panel.okr.assigneeCount', {
+                                        n: act.assignees.length,
+                                      })}
+                                    </p>
+                                  ) : null}
+                                  <div className="mt-2">
+                                    <div className="mb-1 flex items-baseline justify-between gap-2">
+                                      <span className="font-mono text-2xs text-ink-faint">
+                                        {t(locale, 'panel.okr.activityProgress')}
+                                      </span>
+                                      <span className="font-mono text-2xs text-ink-muted">
+                                        {act.progressPct}%
+                                      </span>
+                                    </div>
+                                    <MeterBar
+                                      percent={act.progressPct}
+                                      height={6}
+                                      toneClass={meterToneForActivity(act)}
+                                    />
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                    {(act.assignees || []).map((person) => (
+                                      <span
+                                        key={person.candidateId}
+                                        className="inline-flex min-h-touch max-w-full items-center gap-0.5 rounded-control border border-ink/12 bg-canvas/70 pl-2.5 pr-1"
+                                      >
+                                        <span
+                                          className="max-w-[9rem] truncate font-ui text-prose text-ink"
+                                          title={person.email || person.fullName || undefined}
+                                        >
+                                          {person.fullName || person.email}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          disabled={busy}
+                                          className={cn(
+                                            S.btnGhost,
+                                            'min-h-touch min-w-touch shrink-0 px-1.5 text-ink-faint hover:text-danger'
+                                          )}
+                                          onClick={() => void removeAssignee(act, person)}
+                                          aria-label={t(locale, 'panel.okr.unassignConfirm', {
+                                            name: person.fullName || person.email,
+                                            title: act.title,
+                                          })}
+                                          title={t(locale, 'panel.okr.unassignBtn')}
+                                        >
+                                          <Icon name="close" className="h-3.5 w-3.5" aria-hidden />
+                                        </button>
+                                      </span>
+                                    ))}
+                                    <AdminIconButton
+                                      icon="team"
+                                      label={t(locale, 'panel.okr.assignBtn')}
+                                      onClick={() => void addAssignee(act)}
+                                      disabled={busy}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  <AdminEditButton
+                                    locale={locale}
+                                    onClick={() => void editActivityProgress(act)}
+                                    disabled={busy}
+                                    label={t(locale, 'panel.okr.progressBtn')}
+                                  />
+                                  <AdminDeleteButton
+                                    locale={locale}
+                                    onClick={() => void deleteActivity(act)}
+                                    disabled={busy}
+                                  />
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </ContentEnter>
       )}
     </CollapsibleBlock>
   );

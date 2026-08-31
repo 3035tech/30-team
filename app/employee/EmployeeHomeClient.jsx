@@ -10,12 +10,13 @@ import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../_components/AppLoading';
 import { FormField } from '../_components/FormField';
 import { RichTextView } from '../_components/RichTextView';
-import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../lib/domain-status';
+import { DEVELOPMENT_PLAN_ITEM_STATUS, OKR_CYCLE_STATUS } from '../../lib/domain-status';
 import { EmployeeOnboardingJourneySection } from '../_components/EmployeeOnboardingJourneySection';
 import { EmployeeSurveysSection } from '../_components/EmployeeSurveysSection';
 import { CollapsibleBlock } from '../_components/CollapsibleBlock';
 import { EmptyState } from '../_components/EmptyState';
 import { MeterBar } from '../_components/MeterBar';
+import { StatusToneChip } from '../_components/StatusToneChip';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySection';
@@ -30,6 +31,7 @@ const SECTION_KEYS = [
   'journey',
   'surveys',
   'pdi',
+  'okr',
   'oneOnOne',
   'feedback',
   'variablePay',
@@ -47,6 +49,42 @@ function itemStatusLabel(locale, status) {
   if (status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE) return t(locale, 'employeeHome.pdiDone');
   if (status === DEVELOPMENT_PLAN_ITEM_STATUS.DOING) return t(locale, 'employeeHome.pdiDoing');
   return t(locale, 'employeeHome.pdiTodo');
+}
+
+function okrUrgencyTone(urgency) {
+  if (urgency === 'overdue' || urgency === 'critical') return 'danger';
+  if (urgency === 'warn') return 'warning';
+  if (urgency === 'done') return 'success';
+  return 'neutral';
+}
+
+function okrMeterTone(act) {
+  if (act.urgency === 'overdue' || act.urgency === 'critical') return 'bg-danger';
+  if (act.urgency === 'warn') return 'bg-warning';
+  const n = Number(act.progressPct) || 0;
+  if (n >= 75) return 'bg-success';
+  if (n >= 40) return 'bg-info';
+  return 'bg-warning';
+}
+
+/** Group assigned activities by cycle for scanability. */
+function groupOkrByCycle(items) {
+  const order = [];
+  const map = new Map();
+  for (const act of items || []) {
+    const key = Number(act.cycleId) || 0;
+    if (!map.has(key)) {
+      map.set(key, {
+        cycleId: key,
+        cycleTitle: act.cycleTitle || '',
+        cycleStatus: act.cycleStatus,
+        items: [],
+      });
+      order.push(key);
+    }
+    map.get(key).items.push(act);
+  }
+  return order.map((k) => map.get(k));
 }
 
 function loadCollapsed() {
@@ -322,6 +360,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         tasks: tasks.length,
         surveys: surveyMeta.openCount || 0,
         lms: lmsOverdue,
+        okr: (data.okrActivities || []).filter(
+          (a) => a.urgency === 'overdue' || a.urgency === 'critical'
+        ).length,
         dp: dpBadge,
         timeClock: timeClockBadge,
         feed: feedTotal,
@@ -396,6 +437,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const journey = data.journey;
   const courses = data.courses || [];
   const plans = data.plans || [];
+  const okrActivities = data.okrActivities || [];
   const agreements = data.recentAgreements || [];
   const prompts = data.oneOnOnePrompts || [];
   const company = data.company;
@@ -629,6 +671,81 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 );
               })}
             </ul>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="okr"
+          title={t(locale, 'employeeHome.okrTitle')}
+          count={okrActivities.length || undefined}
+          open={openMap.okr !== false}
+          onToggle={() => toggleSection('okr')}
+          locale={locale}
+        >
+          {okrActivities.length === 0 ? (
+            <EmpEmpty>
+              <EmptyState message={t(locale, 'employeeHome.okrEmptyHint')} />
+            </EmpEmpty>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className={cn(S.muted, 'm-0 text-prose')}>{t(locale, 'employeeHome.okrHint')}</p>
+              {groupOkrByCycle(okrActivities).map((group) => (
+                <div key={group.cycleId || 'x'} className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={S.label}>{group.cycleTitle || t(locale, 'employeeHome.okrTitle')}</span>
+                    {group.cycleStatus === OKR_CYCLE_STATUS.CLOSED ? (
+                      <StatusToneChip tone="neutral">
+                        {t(locale, 'panel.okr.status.closed')}
+                      </StatusToneChip>
+                    ) : null}
+                  </div>
+                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {group.items.map((act) => (
+                      <li
+                        key={act.id}
+                        className={cn(
+                          'rounded-control border bg-canvas/50 px-3 py-2.5',
+                          act.urgency === 'overdue' || act.urgency === 'critical'
+                            ? 'border-danger/30'
+                            : act.urgency === 'warn'
+                              ? 'border-warning/30'
+                              : 'border-ink/12'
+                        )}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={S.cardBody}>{act.title}</span>
+                              {act.urgency && act.urgency !== 'none' ? (
+                                <StatusToneChip tone={okrUrgencyTone(act.urgency)}>
+                                  {t(locale, `panel.okr.urgency.${act.urgency}`)}
+                                </StatusToneChip>
+                              ) : null}
+                            </div>
+                            <p className={cn(S.faint, 'mb-0 mt-1')}>
+                              {act.areaTitle || t(locale, 'panel.common.notApplicable')}
+                              {act.deadline
+                                ? ` · ${t(locale, 'employeeHome.okrDeadline')}: ${formatDisplayDate(act.deadline, locale)}`
+                                : ''}
+                              {` · ${t(locale, 'employeeHome.okrImportanceValue', {
+                                pct: act.progressPct ?? 0,
+                              })}`}
+                            </p>
+                          </div>
+                        </div>
+                        <MeterBar
+                          percent={act.progressPct ?? 0}
+                          height={6}
+                          className="mt-2"
+                          toneClass={okrMeterTone(act)}
+                          aria-label={`${act.title}: ${act.progressPct ?? 0}%`}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </CollapsibleSection>
 

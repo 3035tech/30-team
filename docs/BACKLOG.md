@@ -682,9 +682,10 @@ Qulture / TeamCulture. Sugestão a partir de review submetida; RH aprova/recusa.
 
 ### B-3004 — OKRs leves (empresa / time / pessoa) ✅ ENTREGUE
 Puros (Qulture, Alina, ImpulseUp). Árvore leve + KRs numéricos.
-1. Aba Avaliações: objetivos com parent, grupo salvo ou colaborador; key results + rollup %.
-2. Cap por empresa; MeterBar por KR; rollup no topo.
-3. Fora: OKR enterprise (check-ins semanais, cascata profunda, segundo BI).
+1. ~~Aba Avaliações: objetivos com parent + KRs.~~ **Fase 1 (2026-08):** ciclo nomeado + áreas + atividades (`%`, deadline, urgência, barras). Migration `096_okr_cycles.sql` (tabelas leves antigas preservadas).
+2. Cap por empresa; MeterBar por atividade/área/ciclo.
+3. **Assignees (2026-08):** `097_okr_activity_assignees.sql` — 1+ pessoas por atividade; `/employee#okr` (prazo / progresso / urgência) + notificação `okr_activity_assigned`.
+4. Fora ainda: pesos, bônus por atingimento, check-ins semanais enterprise.
 
 ### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.

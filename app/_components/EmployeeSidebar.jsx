@@ -16,6 +16,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   { id: 'journey', href: '/employee#journey', icon: 'sparkles', labelKey: 'employeeHome.journeyTitle', hash: 'journey' },
   { id: 'surveys', href: '/employee#surveys', icon: 'climate', labelKey: 'employeeHome.surveysTitle', hash: 'surveys' },
   { id: 'pdi', href: '/employee#pdi', icon: 'clipboard', labelKey: 'panel.employeePortal.pdiTitle', hash: 'pdi' },
+  { id: 'okr', href: '/employee#okr', icon: 'chart', labelKey: 'employeeHome.okrTitle', hash: 'okr' },
   { id: 'lms', href: '/employee/lms', icon: 'book', labelKey: 'employeeHome.lmsTitle' },
   {
     id: 'oneOnOne',
@@ -61,7 +62,7 @@ const NAV_GROUPS = Object.freeze([
   {
     id: 'grow',
     labelKey: 'employeeHome.navGroupGrow',
-    ids: ['pdi', 'lms', 'oneOnOne', 'feedback'],
+    ids: ['pdi', 'okr', 'lms', 'oneOnOne', 'feedback'],
   },
   {
     id: 'account',
