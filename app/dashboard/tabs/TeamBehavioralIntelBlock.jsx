@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
@@ -8,21 +8,67 @@ import {
   DisclosureToggle,
   disclosureToggleButtonClass,
 } from '../../_components/CollapsibleBlock';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 
 const BCI_OPEN_KEY = '30team_overview_bci_open';
 
+function syncTeamGroupInUrl(teamGroupId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const u = new URL(window.location.href);
+    if (teamGroupId) u.searchParams.set('teamGroup', String(teamGroupId));
+    else u.searchParams.delete('teamGroup');
+    const next = `${u.pathname}${u.search}${u.hash}`;
+    window.history.replaceState(window.history.state, '', next);
+  } catch {
+    /* ignore */
+  }
+}
+
+function buildIntelQuery({ companyId, teamGroupId }) {
+  const p = new URLSearchParams();
+  if (companyId) p.set('companyId', String(companyId));
+  if (teamGroupId) p.set('teamGroupId', String(teamGroupId));
+  if (typeof window !== 'undefined') {
+    const cur = new URL(window.location.href);
+    for (const key of ['area', 'vacancy', 'dateFrom', 'dateTo', 'search', 'roster']) {
+      const v = cur.searchParams.get(key);
+      if (v) p.set(key, v);
+    }
+  }
+  return p;
+}
+
 /**
  * Inteligência Comportamental da Equipe — dashboard executivo (Overview).
+ * Troca de recorte: fetch local (sem router.push) para não scrollar a Overview.
  */
-export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navigateDashboard }) {
+export function TeamBehavioralIntelBlock({
+  locale = 'pt-BR',
+  intel: intelProp = null,
+  companyId = null,
+  navigateDashboard,
+  onIntelChange = null,
+}) {
   const [motivatorsOpen, setMotivatorsOpen] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(false);
+  const [intel, setIntel] = useState(intelProp);
+  const [cohortBusy, setCohortBusy] = useState(false);
+  const [selectedTeamGroupId, setSelectedTeamGroupId] = useState(
+    () => intelProp?.selectedTeamGroupId ?? intelProp?.meta?.teamGroupId ?? null
+  );
+
+  useEffect(() => {
+    setIntel(intelProp);
+    setSelectedTeamGroupId(
+      intelProp?.selectedTeamGroupId ?? intelProp?.meta?.teamGroupId ?? null
+    );
+  }, [intelProp]);
 
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
         const v = localStorage.getItem(BCI_OPEN_KEY);
-        // Default collapsed (first viewport lighter). Only '1' opens.
         if (v === '1') setSectionOpen(true);
         if (v === '0') setSectionOpen(false);
       }
@@ -43,22 +89,64 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
     });
   };
 
-  const teamGroups = Array.isArray(intel?.teamGroups) ? intel.teamGroups : [];
-  const selectedTeamGroupId = intel?.selectedTeamGroupId ?? intel?.meta?.teamGroupId ?? null;
-  const cohortIsGroup = intel?.meta?.cohortKind === 'team_group';
+  const applyIntel = useCallback(
+    (next) => {
+      setIntel(next);
+      if (typeof onIntelChange === 'function') onIntelChange(next);
+    },
+    [onIntelChange]
+  );
 
-  const onGroupChange = (e) => {
+  const onGroupChange = async (e) => {
     const v = e.target.value;
-    if (typeof navigateDashboard !== 'function') return;
-    navigateDashboard({
-      tab: 'overview',
-      teamGroup: v ? v : null,
-    });
+    const nextId = v ? Number(v) : null;
+    setSelectedTeamGroupId(Number.isFinite(nextId) && nextId > 0 ? nextId : null);
+    setMotivatorsOpen(false);
+
+    if (!companyId) {
+      if (typeof navigateDashboard === 'function') {
+        navigateDashboard({ tab: 'overview', teamGroup: v || null, scroll: false });
+      }
+      return;
+    }
+
+    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    setCohortBusy(true);
+    try {
+      const qs = buildIntelQuery({
+        companyId,
+        teamGroupId: Number.isFinite(nextId) && nextId > 0 ? nextId : null,
+      });
+      const res = await fetch(`/api/admin/behavioral-intel?${qs}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.intel) {
+        applyIntel(data.intel);
+        syncTeamGroupInUrl(
+          data.intel.selectedTeamGroupId ?? data.intel.meta?.teamGroupId ?? null
+        );
+      }
+    } catch {
+      /* keep previous intel */
+    } finally {
+      setCohortBusy(false);
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+      }
+    }
   };
 
   const goGroup = () => {
     if (typeof navigateDashboard === 'function') navigateDashboard({ tab: 'group' });
   };
+
+  const teamGroups = Array.isArray(intel?.teamGroups)
+    ? intel.teamGroups
+    : Array.isArray(intelProp?.teamGroups)
+      ? intelProp.teamGroups
+      : [];
+  const cohortIsGroup = intel?.meta?.cohortKind === 'team_group';
 
   const groupSelect =
     teamGroups.length > 0 ? (
@@ -69,7 +157,9 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
         <select
           className={cn(S.select, 'min-h-touch')}
           value={selectedTeamGroupId != null ? String(selectedTeamGroupId) : ''}
-          onChange={onGroupChange}
+          onChange={(ev) => void onGroupChange(ev)}
+          disabled={cohortBusy || !companyId}
+          aria-busy={cohortBusy}
           aria-label={t(locale, 'panel.overview.bci.groupFilterLabel')}
         >
           <option value="">{t(locale, 'panel.overview.bci.groupFilterAll')}</option>
@@ -178,8 +268,16 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
       </div>
 
       {sectionOpen ? (
-        <>
+        cohortBusy ? (
+          <div className={S.cardTight}>
+            <AppLoading variant="panel" />
+          </div>
+        ) : (
+        <ContentEnter
+          animKey={`bci|${selectedTeamGroupId || 'all'}|${meta.nEneagram}|${meta.nMotivators}`}
+        >
           {/* 1. Profiles */}
+          <div className="flex flex-col gap-3">
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
             <p className="mt-0.5 mb-1 text-xs text-ink-muted">
@@ -389,7 +487,9 @@ export function TeamBehavioralIntelBlock({ locale = 'pt-BR', intel = null, navig
               </div>
             )}
           </div>
-        </>
+          </div>
+        </ContentEnter>
+        )
       ) : null}
     </section>
   );

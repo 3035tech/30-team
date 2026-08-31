@@ -92,6 +92,11 @@ export function OverviewTab({
   const [recruitingOpen, setRecruitingOpen] = useState(false);
   const [opsIntelOpen, setOpsIntelOpen] = useState(false);
   const [noPlanExpanded, setNoPlanExpanded] = useState(false);
+  const [bciIntel, setBciIntel] = useState(() => overview?.behavioralIntel ?? null);
+
+  useEffect(() => {
+    setBciIntel(overview?.behavioralIntel ?? null);
+  }, [overview?.behavioralIntel]);
 
   useEffect(() => {
     try {
@@ -334,16 +339,21 @@ export function OverviewTab({
 
       <TeamBehavioralIntelBlock
         locale={locale}
-        intel={data.behavioralIntel}
+        intel={bciIntel ?? data.behavioralIntel}
+        companyId={companyId}
         navigateDashboard={navigateDashboard}
+        onIntelChange={setBciIntel}
       />
 
       {companyId ? (
         <TeamTensionNarrativeBlock
           locale={locale}
-          intel={data.behavioralIntel}
+          intel={bciIntel ?? data.behavioralIntel}
           companyId={companyId}
-          teamGroupId={data.behavioralIntel?.selectedTeamGroupId ?? data.behavioralIntel?.meta?.teamGroupId}
+          teamGroupId={
+            (bciIntel ?? data.behavioralIntel)?.selectedTeamGroupId ??
+            (bciIntel ?? data.behavioralIntel)?.meta?.teamGroupId
+          }
           navigateDashboard={navigateDashboard}
         />
       ) : null}

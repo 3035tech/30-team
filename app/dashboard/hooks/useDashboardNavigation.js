@@ -228,8 +228,10 @@ export function useDashboardNavigation({
     return p;
   };
 
-  const navigateWithOpts = (opts) => {
-    router.push(`/dashboard?${buildDashboardUrl(opts).toString()}`);
+  const navigateWithOpts = (opts = {}) => {
+    const scroll = opts.scroll !== false;
+    const { scroll: _scrollOpt, ...urlOpts } = opts;
+    router.push(`/dashboard?${buildDashboardUrl(urlOpts).toString()}`, { scroll });
   };
 
   const navigateToTab = (id) => {
