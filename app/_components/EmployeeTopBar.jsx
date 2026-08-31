@@ -276,20 +276,31 @@ export function EmployeeTopBar({
               <div
                 id="employee-profile-menu"
                 className="absolute right-0 z-50 mt-1 w-44 rounded-control border border-ink/12 bg-surface p-1 shadow-card"
+                role="menu"
               >
                 <Link
                   href="/employee/profile"
-                  className={cn(S.btnGhost, 'flex min-h-touch w-full justify-start no-underline')}
+                  role="menuitem"
+                  className={cn(
+                    S.btnGhost,
+                    'flex min-h-touch w-full items-center justify-start gap-2.5 no-underline'
+                  )}
                   onClick={() => setProfileOpen(false)}
                 >
-                  {t(locale, 'employeeHome.profile')}
+                  <Icon name="user" className="h-4 w-4 shrink-0 opacity-80" />
+                  <span>{t(locale, 'employeeHome.profile')}</span>
                 </Link>
                 <button
                   type="button"
-                  className={cn(S.btnGhost, 'flex min-h-touch w-full justify-start text-danger')}
+                  role="menuitem"
+                  className={cn(
+                    S.btnGhost,
+                    'flex min-h-touch w-full items-center justify-start gap-2.5 text-danger'
+                  )}
                   onClick={logout}
                 >
-                  {t(locale, 'employeeHome.logout')}
+                  <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />
+                  <span>{t(locale, 'employeeHome.logout')}</span>
                 </button>
               </div>
             ) : null}

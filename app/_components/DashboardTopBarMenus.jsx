@@ -10,6 +10,7 @@ import { DarkModeToggle } from './DarkModeProvider';
 import { statusToneClass } from './StatusToneChip';
 import { EmptyState } from './EmptyState';
 import { ContentEnter } from './AppLoading';
+import { Icon } from './Icon';
 
 function formatWhen(iso, locale) {
   if (!iso) return '';
@@ -397,17 +398,21 @@ export function DashboardTopBarMenus({
           <div id="dashboard-profile-menu" className={cn(dropdownClass, 'w-[220px]', 'db-dropdown-panel')} role="menu">
             <button
               type="button"
+              role="menuitem"
               onClick={() => { setProfileOpen(false); navigateToTab('profile'); }}
-              className="block w-full cursor-pointer border-none border-b border-ink/12 bg-transparent px-3.5 py-3 text-left font-mono text-xs text-ink"
+              className="flex w-full cursor-pointer items-center gap-2.5 border-none border-b border-ink/12 bg-transparent px-3.5 py-3 text-left font-mono text-xs text-ink"
             >
-              {t(locale, 'dashboard.profile')}
+              <Icon name="user" className="h-4 w-4 shrink-0 opacity-80" />
+              <span>{t(locale, 'dashboard.profile')}</span>
             </button>
             <button
               type="button"
+              role="menuitem"
               onClick={() => { setProfileOpen(false); onLogout(); }}
-              className="block w-full cursor-pointer border-none bg-transparent px-3.5 py-3 text-left font-mono text-xs text-danger/75"
+              className="flex w-full cursor-pointer items-center gap-2.5 border-none bg-transparent px-3.5 py-3 text-left font-mono text-xs text-danger/75"
             >
-              {t(locale, 'dashboard.logout')}
+              <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />
+              <span>{t(locale, 'dashboard.logout')}</span>
             </button>
           </div>
         ) : null}

@@ -15,16 +15,13 @@ function readCollapsed() {
   }
 }
 
-/** Home section hashes the sidebar can focus. */
+/** Home section hashes the sidebar can focus (dedicated modules use their own routes). */
 export const EMPLOYEE_SECTION_IDS = Object.freeze([
   'tasks',
   'journey',
-  'pdi',
-  'lms',
   'surveys',
+  'pdi',
   'oneOnOne',
-  'dp',
-  'timeClock',
   'variablePay',
   'feedback',
   'feed',

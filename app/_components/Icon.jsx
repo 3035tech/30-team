@@ -359,6 +359,14 @@ export function Icon({ name, className }) {
           <path d="M5 5.5V21.5" />
         </svg>
       );
+    case 'clock':
+    case 'timeClock':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      );
     case 'exit':
     case 'door':
       return (

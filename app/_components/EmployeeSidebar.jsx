@@ -31,13 +31,12 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
     labelKey: 'employeeHome.feedbackTitle',
     hash: 'feedback',
   },
-  { id: 'dp', href: '/employee#dp', icon: 'dp', labelKey: 'employeeHome.dpTitle', hash: 'dp' },
+  { id: 'dp', href: '/employee/dp', icon: 'dp', labelKey: 'employeeHome.dpTitle' },
   {
     id: 'timeClock',
-    href: '/employee#timeClock',
-    icon: 'list',
+    href: '/employee/time-clock',
+    icon: 'clock',
     labelKey: 'employeeHome.timeClockTitle',
-    hash: 'timeClock',
   },
   {
     id: 'variablePay',
@@ -108,20 +107,27 @@ export function EmployeeSidebar({
   const onHome = pathname === '/employee' || pathname === '/employee/';
   const onProfile = pathname.startsWith('/employee/profile');
   const onLms = pathname.startsWith('/employee/lms');
+  const onDp = pathname.startsWith('/employee/dp');
+  const onTimeClock = pathname.startsWith('/employee/time-clock');
   const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection } = useEmployeeNav();
 
   const itemById = Object.fromEntries(EMPLOYEE_NAV_ITEMS.map((it) => [it.id, it]));
 
+  const isDedicatedRoute = (itemId) =>
+    itemId === 'profile' || itemId === 'lms' || itemId === 'dp' || itemId === 'timeClock';
+
   const isActive = (item) => {
     if (item.id === 'profile') return onProfile;
     if (item.id === 'lms') return onLms;
+    if (item.id === 'dp') return onDp;
+    if (item.id === 'timeClock') return onTimeClock;
     if (onHome) return activeSection === item.hash || activeSection === item.id;
     return false;
   };
 
   const goItem = (item, e) => {
     onClose?.();
-    if (item.id === 'profile' || item.id === 'lms') return; // let Link navigate
+    if (isDedicatedRoute(item.id)) return; // let Link navigate
     e.preventDefault();
     if (onHome) {
       focusSection(item.hash || item.id);

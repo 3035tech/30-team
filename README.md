@@ -75,8 +75,8 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Confirmação** via `/a/set-password?token=...` → usuário define senha e entra
 - **Admin Leads** (`/dashboard?tab=leads`) — cohort `/signup` para contato futuro (pendentes e ativos). Em **Usuários**, cadastro normal = Origem Painel; quem veio do onboarding = Early access (também aparece em Usuários quando já está no sistema).
 - **Sugestões de produto** (`/dashboard?tab=product-feedback`) — inbox super admin de ideias/bugs/UX enviados pelos gestores pelo assistente de Ajuda (“Sugerir melhoria”). Migration `082_product_feedback.sql`.
-- **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee#dp`) — ficha (CEP/ViaCEP, CPF, emergência), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + **saldo de férias** + calendário 60d, absenteísmo na Overview e lembretes (`POST /api/cron/dp-doc-reminders`). Migrations `083`+`087`+`092`+`093`.
-- **Ponto digital MVP** (`/employee` → Ponto; hub DP → Ponto digital) — batida web, espelho do dia, escala simples, revisão e CSV. Migration `091_time_clock.sql`. **Não** é folha/eSocial/facial.
+- **DP leve** (`/dashboard?tab=dp`, Equipe → DP, `/employee/dp`) — ficha (CEP/ViaCEP, CPF, emergência), checklist documental com anexo S3 (RH ou colaborador), pedidos de férias/afastamento + **saldo de férias** + calendário 60d, absenteísmo na Overview e lembretes (`POST /api/cron/dp-doc-reminders`). Migrations `083`+`087`+`092`+`093`.
+- **Ponto digital MVP** (`/employee/time-clock`; hub DP → Ponto digital) — batida web, espelho do dia, escala simples, revisão e CSV. Migration `091_time_clock.sql`. **Não** é folha/eSocial/facial.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
 - **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
 - **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Filtro **Empresa** por nome (alinha ao filtro do painel). Ver [`docs/audit-log.md`](docs/audit-log.md).
@@ -295,7 +295,8 @@ npm run dev
 5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /employee/set-password
    → login e-mail/senha em /employee/login (cookie team30_employee_session; PDI self-serve,
-   **/employee/lms** Meus cursos: layout curso (lista + player), retoma vídeo YouTube/Vimeo,
+   hub “Hoje” + páginas dedicadas **/employee/lms**, **/employee/dp**, **/employee/time-clock**;
+   LMS: layout curso (lista + player), retoma vídeo YouTube/Vimeo,
    PDF in-app, quiz, certificado print; hub resume prazos;
    jornada **Minha chegada**, notifs Motivadores/PDI/LMS; não acessa /dashboard).
    Magic link opcional. Ver `docs/employee-onboarding-journey.md`. /e/<token> continua sem conta.

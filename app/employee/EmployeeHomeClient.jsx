@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -18,30 +18,26 @@ import { EmptyState } from '../_components/EmptyState';
 import { MeterBar } from '../_components/MeterBar';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
-import { EmployeeDpSection } from '../_components/EmployeeDpSection';
-import { EmployeeTimeClockSection } from '../_components/EmployeeTimeClockSection';
 import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySection';
 import { EmployeeFeedbackSection } from '../_components/ContinuousFeedbackBlock';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
+import { EmployeeModuleTeaser } from '../_components/EmployeeModuleTeaser';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
+/** Home “Hoje” scroll (dedicated LMS/DP/ponto use EmployeeModuleTeaser, not collapse). */
 const SECTION_KEYS = [
   'tasks',
   'journey',
-  'pdi',
-  'lms',
   'surveys',
+  'pdi',
   'oneOnOne',
   'feedback',
-  'dp',
-  'timeClock',
   'variablePay',
   'feed',
   'kudos',
   'company',
 ];
 const COLLAPSE_STORAGE = 'team30_employee_sections';
-const LAST_LESSON_KEY = 'team30_employee_last_lesson';
 
 function taskLabel(locale, task) {
   return t(locale, task.titleKey, task.titleValues || {});
@@ -61,43 +57,6 @@ function loadCollapsed() {
   } catch {
     return {};
   }
-}
-
-function readLastLesson() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(LAST_LESSON_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeLastLesson(payload) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (!payload) localStorage.removeItem(LAST_LESSON_KEY);
-    else localStorage.setItem(LAST_LESSON_KEY, JSON.stringify(payload));
-  } catch {
-    /* ignore */
-  }
-}
-
-function patchLessonInCourses(courses, lessonId, completed) {
-  return (courses || []).map((course) => {
-    const lessons = (course.lessons || []).map((l) =>
-      l.id === lessonId ? { ...l, completed } : l
-    );
-    const done = lessons.filter((l) => l.completed).length;
-    const total = lessons.length;
-    const progressPct = total ? Math.round((done / total) * 100) : 0;
-    return {
-      ...course,
-      lessons,
-      progressPct,
-      isComplete: progressPct >= 100,
-    };
-  });
 }
 
 function patchPdiItem(plans, itemId, status) {
@@ -136,7 +95,7 @@ function EmpEmpty({ children }) {
 }
 
 /**
- * Authenticated collaborator home — collapsible sections, PDI actions, LMS player.
+ * Authenticated collaborator home: “Hoje” scroll + teasers for dedicated modules.
  */
 export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const router = useRouter();
@@ -158,10 +117,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     for (const k of SECTION_KEYS) next[k] = saved[k] !== false;
     return next;
   });
-  const [watching, setWatching] = useState(null); // { lessonId, embedUrl, title, contentKind, completed }
   const [prepNote, setPrepNote] = useState('');
   const [loadFailed, setLoadFailed] = useState(false);
-  const lastLessonRestored = useRef(false);
 
   const load = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -209,36 +166,41 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     };
   }, [locale]);
 
-  // Restore last in-app lesson after first successful load (once per session)
+  // Legacy hashes → dedicated modules
   useEffect(() => {
-    if (lastLessonRestored.current || loading || !data?.courses?.length) return;
-    lastLessonRestored.current = true;
-    const last = readLastLesson();
-    if (!last?.lessonId) return;
-    for (const course of data.courses) {
-      const lesson = (course.lessons || []).find((l) => l.id === last.lessonId && l.embedUrl);
-      if (lesson) {
-        setWatching({
-          lessonId: lesson.id,
-          embedUrl: lesson.embedUrl,
-          title: lesson.title,
-          contentKind: lesson.contentKind || 'link',
-          completed: Boolean(lesson.completed),
-        });
-        break;
-      }
-    }
-  }, [loading, data]);
+    if (typeof window === 'undefined') return;
+    const h = (window.location.hash || '').replace(/^#/, '');
+    if (h === 'dp') router.replace('/employee/dp');
+    else if (h === 'timeClock') router.replace('/employee/time-clock');
+    else if (h === 'lms') router.replace('/employee/lms');
+  }, [router]);
 
-  // Escape closes sticky player
+  // Light badge fetch for dedicated modules (avoid mounting heavy sections on home)
   useEffect(() => {
-    if (!watching) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') setWatching(null);
+    let cancelled = false;
+    (async () => {
+      try {
+        const [dpRes, tcRes] = await Promise.all([
+          fetch('/api/employee/dp'),
+          fetch('/api/employee/time-clock'),
+        ]);
+        if (cancelled) return;
+        if (dpRes.ok) {
+          const json = await dpRes.json().catch(() => ({}));
+          setDpBadge(Number(json.badge) || 0);
+        }
+        if (tcRes.ok) {
+          const json = await tcRes.json().catch(() => ({}));
+          setTimeClockBadge(json.open ? 1 : 0);
+        }
+      } catch {
+        /* ignore badge errors */
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [watching]);
+  }, []);
 
   const toggleSection = (key) => {
     setOpenMap((prev) => {
@@ -250,40 +212,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       }
       return next;
     });
-  };
-
-  const lessonAction = async (lessonId, action) => {
-    const completed = action === 'completeLesson';
-    setData((prev) =>
-      prev ? { ...prev, courses: patchLessonInCourses(prev.courses, lessonId, completed) } : prev
-    );
-    if (watching?.lessonId === lessonId) {
-      setWatching((prev) => (prev ? { ...prev, completed } : prev));
-    }
-    setBusy(true);
-    try {
-      const res = await fetch('/api/employee/home', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, lessonId }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || 'lesson');
-      toast(
-        t(
-          locale,
-          action === 'uncompleteLesson'
-            ? 'panel.employeePortal.lessonUnmarked'
-            : 'panel.employeePortal.lessonMarked'
-        ),
-        'ok'
-      );
-    } catch (e) {
-      toast(e?.message || t(locale, 'panel.employeePortal.lessonError'), 'error');
-      await load({ silent: true });
-    } finally {
-      setBusy(false);
-    }
   };
 
   const pdiAction = async (itemId, status) => {
@@ -344,35 +272,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     },
     [load]
   );
-
-  const openWatch = useCallback((lesson) => {
-    if (!lesson?.embedUrl) return;
-    setOpenMap((prev) => {
-      if (prev.lms !== false) return prev;
-      const next = { ...prev, lms: true };
-      try {
-        localStorage.setItem(COLLAPSE_STORAGE, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-    setWatching({
-      lessonId: lesson.id,
-      embedUrl: lesson.embedUrl,
-      title: lesson.title,
-      contentKind: lesson.contentKind || 'link',
-      completed: Boolean(lesson.completed),
-    });
-    writeLastLesson({ lessonId: lesson.id });
-    if (typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        const el =
-          document.getElementById('emp-video-player') || document.getElementById('lms');
-        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-  }, []);
 
   const onSurveyMeta = useCallback((meta) => {
     setSurveyMeta(meta || { openCount: 0, hasAny: false });
@@ -502,13 +401,27 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const company = data.company;
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
-  const isPdf = watching?.contentKind === 'pdf';
+  const lmsOverdueCount = courses.filter((c) => c.overdue).length;
   const startHere =
     tasks.length > 0
       ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
       : surveyMeta.openCount > 0
         ? { href: '#surveys', labelKey: 'employeeHome.startHereSurveys', count: surveyMeta.openCount }
-        : null;
+        : dpBadge > 0
+          ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
+          : timeClockBadge > 0
+            ? {
+                href: '/employee/time-clock',
+                labelKey: 'employeeHome.startHereTimeClock',
+                count: 1,
+              }
+            : lmsOverdueCount > 0
+              ? {
+                  href: '/employee/lms',
+                  labelKey: 'employeeHome.startHereLms',
+                  count: lmsOverdueCount,
+                }
+              : null;
 
   return (
     <ContentEnter animKey="ready">
@@ -526,72 +439,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </InlineCallout>
           ) : null}
         </div>
-
-        {watching?.embedUrl ? (
-          <div
-            id="emp-video-player"
-            className="emp-player sticky top-14 z-20 mb-6 overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
-              <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{watching.title}</span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {!watching.completed ? (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-2xs')}
-                    onClick={() => lessonAction(watching.lessonId, 'completeLesson')}
-                  >
-                    {t(locale, 'panel.employeePortal.markLessonDone')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
-                    onClick={() => lessonAction(watching.lessonId, 'uncompleteLesson')}
-                  >
-                    {t(locale, 'panel.employeePortal.unmarkLesson')}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={cn(S.btnGhost, 'min-h-touch shrink-0')}
-                  onClick={() => {
-                    setWatching(null);
-                  }}
-                >
-                  {isPdf ? t(locale, 'employeeHome.closePdf') : t(locale, 'employeeHome.closePlayer')}
-                </button>
-              </div>
-            </div>
-            {isPdf ? (
-              <div className="h-[min(70vh,560px)] w-full bg-canvas">
-                <iframe
-                  title={watching.title}
-                  src={watching.embedUrl}
-                  className="h-full w-full border-0"
-                />
-              </div>
-            ) : (
-              <div className="aspect-video w-full bg-black">
-                <iframe
-                  title={watching.title}
-                  src={`${watching.embedUrl}${watching.embedUrl.includes('?') ? '&' : '?'}rel=0`}
-                  className="h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-              </div>
-            )}
-            <p className={cn(S.faint, 'm-0 px-3 py-2')}>
-              {isPdf
-                ? t(locale, 'employeeHome.viewPdfHint')
-                : t(locale, 'employeeHome.watchInAppHint')}
-            </p>
-          </div>
-        ) : null}
 
         <CollapsibleSection
           id="tasks"
@@ -612,7 +459,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       ? t(locale, 'employeeHome.emptyGoPdi')
                       : undefined
                 }
-                actionHref={courses.length ? '#lms' : plans.length ? '#pdi' : undefined}
+                actionHref={courses.length ? '/employee/lms' : plans.length ? '#pdi' : undefined}
               />
             </EmpEmpty>
           ) : (
@@ -641,15 +488,23 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     >
                       {t(locale, 'employeeHome.openTask')}
                     </a>
+                  ) : task.href?.startsWith('/employee') ? (
+                    <a href={task.href} className={cn(S.cardLink, 'mt-2')}>
+                      {task.href.startsWith('/employee/lms')
+                        ? t(locale, 'employeeHome.goToLms')
+                        : task.href.startsWith('/employee/dp')
+                          ? t(locale, 'employeeHome.dpOpenPage')
+                          : task.href.startsWith('/employee/time-clock')
+                            ? t(locale, 'employeeHome.timeClockOpenPage')
+                            : t(locale, 'employeeHome.openTask')}
+                    </a>
                   ) : task.href?.startsWith('#') ? (
                     <a href={task.href} className={cn(S.cardLink, 'mt-2')}>
-                      {task.href === '#lms'
-                        ? t(locale, 'employeeHome.goToLms')
-                        : task.href === '#pdi'
-                          ? t(locale, 'employeeHome.goToPdi')
-                          : task.href === '#journey'
-                            ? t(locale, 'employeeHome.goToJourney')
-                            : t(locale, 'employeeHome.openTask')}
+                      {task.href === '#pdi'
+                        ? t(locale, 'employeeHome.goToPdi')
+                        : task.href === '#journey'
+                          ? t(locale, 'employeeHome.goToJourney')
+                          : t(locale, 'employeeHome.openTask')}
                     </a>
                   ) : null}
                 </li>
@@ -676,6 +531,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <EmptyState message={t(locale, 'employeeHome.journeyEmptyHint')} />
             </EmpEmpty>
           )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="surveys"
+          title={t(locale, 'employeeHome.surveysTitle')}
+          count={surveyMeta.openCount || undefined}
+          open={openMap.surveys !== false}
+          onToggle={() => toggleSection('surveys')}
+          locale={locale}
+        >
+          <EmployeeSurveysSection locale={locale} onMeta={onSurveyMeta} />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -766,30 +632,34 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           )}
         </CollapsibleSection>
 
-        <CollapsibleSection
+        <EmployeeModuleTeaser
           id="lms"
+          href="/employee/lms"
           title={t(locale, 'employeeHome.lmsTitle')}
-          count={courses.length}
-          open={openMap.lms !== false}
-          onToggle={() => toggleSection('lms')}
-          locale={locale}
+          hint={
+            courses.length === 0
+              ? t(locale, 'employeeHome.lmsEmptyHint')
+              : t(locale, 'employeeHome.lmsTeaserHint')
+          }
+          ctaLabel={t(locale, 'employeeHome.lmsOpenPage')}
+          icon="book"
+          chipLabel={
+            lmsOverdueCount > 0
+              ? t(locale, 'employeeHome.lmsOverdueChip', { n: lmsOverdueCount })
+              : courses.length
+                ? `${courses.length}`
+                : null
+          }
+          chipTone={lmsOverdueCount > 0 ? 'danger' : 'neutral'}
         >
-          {courses.length === 0 ? (
-            <EmpEmpty>
-              <EmptyState message={t(locale, 'employeeHome.lmsEmptyHint')} />
-            </EmpEmpty>
-          ) : (
+          {courses.length === 0 ? null : (
             <div className="flex flex-col gap-3">
-              {courses.some((c) => c.overdue) ? (
+              {lmsOverdueCount > 0 ? (
                 <InlineCallout tone="warning">
-                  {t(locale, 'employeeHome.lmsOverdueHub', {
-                    n: courses.filter((c) => c.overdue).length,
-                  })}
+                  {t(locale, 'employeeHome.lmsOverdueHub', { n: lmsOverdueCount })}
                 </InlineCallout>
               ) : courses.some((c) => c.daysLeft != null && c.daysLeft <= 3 && !c.isComplete) ? (
-                <InlineCallout tone="info">
-                  {t(locale, 'employeeHome.lmsDueSoonHub')}
-                </InlineCallout>
+                <InlineCallout tone="info">{t(locale, 'employeeHome.lmsDueSoonHub')}</InlineCallout>
               ) : null}
               <ul className="m-0 flex list-none flex-col gap-2 p-0">
                 {courses.slice(0, 4).map((course) => {
@@ -813,12 +683,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         href={`/employee/lms?course=${course.courseId}`}
                         className={cn(
                           'block rounded-control border px-3 py-2.5 no-underline transition-colors hover:border-brand-500/30',
-                          course.overdue ? 'border-danger/25 bg-danger/[0.04]' : 'border-ink/12 bg-canvas/50'
+                          course.overdue
+                            ? 'border-danger/25 bg-danger/[0.04]'
+                            : 'border-ink/12 bg-canvas/50'
                         )}
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                           <span className={S.cardBody}>{course.title}</span>
-                          <span className="font-mono text-2xs text-ink-muted">{course.progressPct}%</span>
+                          <span className="font-mono text-2xs text-ink-muted">
+                            {course.progressPct}%
+                          </span>
                         </div>
                         <MeterBar
                           percent={course.progressPct}
@@ -847,23 +721,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   );
                 })}
               </ul>
-              <a href="/employee/lms" className={cn(S.btnPrimary, 'min-h-touch self-start no-underline')}>
-                {t(locale, 'employeeHome.lmsOpenPage')}
-              </a>
             </div>
           )}
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          id="surveys"
-          title={t(locale, 'employeeHome.surveysTitle')}
-          count={surveyMeta.openCount || undefined}
-          open={openMap.surveys !== false}
-          onToggle={() => toggleSection('surveys')}
-          locale={locale}
-        >
-          <EmployeeSurveysSection locale={locale} onMeta={onSurveyMeta} />
-        </CollapsibleSection>
+        </EmployeeModuleTeaser>
 
         <CollapsibleSection
           id="oneOnOne"
@@ -953,27 +813,30 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           <EmployeeFeedbackSection locale={locale} onBadge={setFeedbackBadge} />
         </CollapsibleSection>
 
-        <CollapsibleSection
+        <EmployeeModuleTeaser
           id="dp"
+          href="/employee/dp"
           title={t(locale, 'employeeHome.dpTitle')}
-          count={dpBadge || null}
-          open={openMap.dp !== false}
-          onToggle={() => toggleSection('dp')}
-          locale={locale}
-        >
-          <EmployeeDpSection locale={locale} onBadge={setDpBadge} />
-        </CollapsibleSection>
-
-        <CollapsibleSection
+          hint={t(locale, 'employeeHome.dpTeaserHint')}
+          ctaLabel={t(locale, 'employeeHome.dpOpenPage')}
+          icon="dp"
+          chipLabel={
+            dpBadge > 0 ? t(locale, 'employeeHome.dpPendingChip', { n: dpBadge }) : null
+          }
+          chipTone="warning"
+        />
+        <EmployeeModuleTeaser
           id="timeClock"
+          href="/employee/time-clock"
           title={t(locale, 'employeeHome.timeClockTitle')}
-          count={timeClockBadge || null}
-          open={openMap.timeClock !== false}
-          onToggle={() => toggleSection('timeClock')}
-          locale={locale}
-        >
-          <EmployeeTimeClockSection locale={locale} onBadge={setTimeClockBadge} />
-        </CollapsibleSection>
+          hint={t(locale, 'employeeHome.timeClockTeaserHint')}
+          ctaLabel={t(locale, 'employeeHome.timeClockOpenPage')}
+          icon="clock"
+          chipLabel={
+            timeClockBadge > 0 ? t(locale, 'employeeHome.timeClock.openShift') : null
+          }
+          chipTone="success"
+        />
 
         <CollapsibleSection
           id="variablePay"

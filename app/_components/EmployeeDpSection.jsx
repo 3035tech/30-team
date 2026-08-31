@@ -75,7 +75,7 @@ function leaveStatusTone(status) {
 /**
  * Collaborator DP: emergency contact, doc checklist (read), leave request.
  */
-export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
+export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -410,7 +410,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           className="hidden"
           onChange={(e) => void onLeaveFilePicked(e)}
         />
-        <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'employeeHome.dpHint')}</p>
+        {showIntro ? (
+          <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'employeeHome.dpHint')}</p>
+        ) : null}
 
         {pendingDocs > 0 ? (
           <InlineCallout tone="warning">
