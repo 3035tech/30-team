@@ -39,9 +39,10 @@ Não inventar merge por nome nem segundo hub paralelo.
 | /r/{token} | Relatório shortlist para o cliente (+ print/PDF) |
 | /clima/{token} | Pesquisa de clima anônima (um uso; Likert + texto descritivo) |
 | /pulso/{token} | Pulso curto de grupo (anônimo, um uso) |
-| /e/{token} | Espaço mínimo do colaborador (PDI + combinados + prep 1:1 + LMS; sem conta) |
-| /employee | Sessão do colaborador (magic link; tarefas + LMS) |
-| /a/set-password , /a/unsubscribe | Setup/reset de senha / cancelar job alert |
+| `/e/{token}` | Espaço mínimo do colaborador (PDI + combinados + prep 1:1 + LMS; sem conta) |
+| `/employee` | Hub do colaborador (senha): chegada, OKRs, mural/kudos, feedback, LMS/DP/ponto |
+| `/ouvidoria/{token}` | Canal de ouvidoria anônimo |
+| `/a/set-password` , `/a/unsubscribe` | Setup/reset de senha / cancelar job alert |
 
 Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
 

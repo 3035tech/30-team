@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import assert from 'node:assert/strict';
 import { getPgBaseConfig } from '../../lib/pg-config.js';
 import { DTOV_DEFAULTS, assertDtovTarget, dtovEnv } from './harness.js';
 

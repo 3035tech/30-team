@@ -39,7 +39,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | DP leve (ficha / docs / férias / saldo) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
-| Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` |
+| OKRs + bônus variável | Seção `b3000Pack` + FAQ `faqOkr` / `faqVariablePay` |
+| Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` + FAQ `faqWhistleblowing` |
 | Prep de entrevista | Seção `interviewPrep` + FAQ `faqInterviewPrep` |
 | Dev/ops (migrate, env, DTOV) | README / `docs/` / `test/README.md` |
 
@@ -48,13 +49,14 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Tema | Seção Guia |
 |------|------------|
 | Jornada D1 + D30/D60/D90 | `b700Onboarding` + `employeeHome` |
-| Login colaborador / Minha chegada | `employeeHome` (`/e` token ~30d vs `/employee` senha) |
+| Login colaborador / Minha chegada / OKRs no hub | `employeeHome` (`/e` token ~30d vs `/employee` senha; passo OKRs) |
 | 2FA gestor/employee | `access` (Step10) |
 | Filtro de empresa / sticky (admin + super admin) | `access` (Step6) + `dashboardCohort` + FAQ `faqDashboardCohort` |
 | Auditoria (super admin) | `access` (Step11) + FAQ `faqAudit` |
-| Remuneração interna | `compensation` (faixa de mercado do cargo + compare) |
+| Remuneração interna + bônus variável | `compensation` + `b3000Pack` / FAQ `faqVariablePay` |
 | Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
 | LMS / cursos | `lmsBasic` (incl. `/employee/lms` player+resume, quiz, certificado, relatório por turma) |
+| OKRs (ciclo / assignees) | `b3000Pack` + FAQ `faqOkr` |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |
 | HR Score | `b1000HrScore` |
@@ -63,6 +65,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Motivadores (mapa radar no perfil) | `motivators` + FAQ `faqMotivators` |
 
 **FAQ rápido — mapa de telas / contexto:** “para que serve cada tela”, “mapa de abas” → `faqScreens` + seção `screens`. Com a aba aberta, o widget envia `activeTab` / `activeSection`; perguntas “para que serve esta tela”, “dicas desta aba”, “o que posso fazer aqui” e “dicas do sistema” usam `lib/help-screen-context.js` (sem LLM). Sugestões do chat: chips da tela atual + chips de sistema (`suggestThisScreen`, `suggestSystemTips`, …).
+
+**FAQ rápido — OKR / ouvidoria / variável:** “como criar OKR”, “Meus OKRs”, “ouvidoria”, “denúncia”, “bônus/PLR” → `faqOkr`, `faqWhistleblowing`, `faqVariablePay` (seção Guia `b3000Pack` / `b3005Pack`).
 
 **FAQ rápido — remuneração:** perguntas com “salário/aumento/reajuste + colaborador/equipe” (ou “lista de salários”) caem em `faqCompensation`. Link canônico da lista: `/dashboard?tab=compensation`; ficha: Equipe → Remuneração (`&section=compensation`). Folha/holerite continua fora de escopo.
 

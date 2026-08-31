@@ -29,12 +29,14 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 ```
 30Team/
 ├── app/
-│   ├── page.jsx                 ← Landing / teste (client) + analytics
+│   ├── page.jsx                 ← Landpage SEO / early access
 │   ├── signup/                  ← Self-service signup (early access)
+│   ├── employee/                ← Hub colaborador (senha) + lms / dp / time-clock
 │   ├── t/[token]/               ← Entrada pública por empresa (assessment)
 │   ├── v/[token]/               ← Entrada pública por vaga (assessment; noindex)
-│   ├── jobs/                       ← Índice + `/jobs/remote` + `/jobs/city/{slug}` + página SEO `/jobs/{slug}-{id}`
-│   ├── companies/[companySlug]/         ← Perfil público da empresa (opt-in)
+│   ├── jobs/                    ← Índice + agregadores + página SEO
+│   ├── companies/[companySlug]/ ← Perfil público da empresa (opt-in)
+│   ├── ouvidoria/[token]/       ← Canal de ouvidoria (anônimo)
 │   ├── a/unsubscribe/           ← Cancelar alerta de vagas
 │   ├── a/set-password/          ← Ativação de senha (signup + reset)
 │   ├── r/[token]/               ← Relatório cliente (shortlist)
@@ -43,12 +45,13 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── dashboard/               ← Painel (SSR + tabs; Guia = HelpTab)
 │   └── api/                     ← results, auth, admin, ae, public, cron…
 ├── lib/                         ← DB, auth, i18n, pipeline, métricas, scoring…
-├── migrations/                  ← Schema versionado (fonte canônica)
+│   ├── lms-media.js             ← Helpers LMS seguros no client (sem pg)
+│   ├── help-sections.js         ← Índice do Guia / assistente IA
+│   └── help-assistant.js        ← FAQ + retrieval do assistente
+├── migrations/                  ← Schema versionado (fonte canônica; hoje até ~097)
 ├── test/                        ← Provas (DTOV + Playwright) — ver test/README.md
-│   ├── dtov/                    ← Postgres efêmero, fixtures, SQL/HTTP smoke
-│   └── e2e/                     ← Browser (Chromium)
 ├── scripts/                     ← migrate, seeds, ops (não harness de teste)
-├── docs/                        ← Rubrica, LGPD
+├── docs/                        ← Rubrica, LGPD, help-assistant-knowledge, backlog
 ├── playwright.config.js
 ├── init.sql                     ← Stub Docker only (vazio de propósito)
 ├── docker-compose.yml
@@ -79,6 +82,10 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Ponto digital MVP** (`/employee/time-clock`; hub DP → Ponto digital) — batida web, espelho do dia, escala simples, revisão e CSV. Migration `091_time_clock.sql`. **Não** é folha/eSocial/facial.
 - **Mural e reconhecimento** (`/dashboard?tab=company-feed`, `/employee#feed` / `#kudos`) — avisos da empresa (rich text) + kudos peer-to-peer (≤280); notif ao destinatário; contagem no digest semanal. Migration `085_company_feed_kudos.sql`. Sem chat.
 - **Prep de entrevista** (`/prep/<token>`) — perguntas hedged para o candidato (notas só no dispositivo); RH vê chip “Preparou-se”. Migration `086_interview_prep.sql`.
+- **OKRs leves** (aba Avaliações) — ciclo/área/atividade, vínculo de pessoas, hub `/employee` → Meus OKRs + notificação. Migrations `096`+`097`.
+- **Ouvidoria** (`/dashboard?tab=whistleblowing`, `/ouvidoria/{token}`) — canal anônimo + triagem RH. Migration `090`.
+- **Organograma** + **feedback contínuo** (Equipe/Grupos + `/employee` / `/feedback/{token}`). Migration `090`.
+- **Bônus / remuneração variável** (proposta RH → aprovação; status no hub). Migration `090`.
 - **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Filtro **Empresa** por nome (alinha ao filtro do painel). Ver [`docs/audit-log.md`](docs/audit-log.md).
 - **Super admin sem empresa fixa:** use o filtro **Empresa** no topo (lembrado entre abas). Ops: `npm run db:create-super-admin`.
 - **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
@@ -274,12 +281,22 @@ docker compose -f docker-compose.dev.yml up
 
 ### 4. Local sem Docker (Postgres já rodando)
 
+Recomendado: **Node 22** (imagem Docker de build usa `node:22-alpine`). Node 20+ costuma funcionar; evite Node 18.
+
 ```bash
 npm install
 cp .env.example .env
+# Ajuste POSTGRES_* / JWT_SECRET / NEXT_PUBLIC_APP_URL
 npm run db:migrate
 npm run dev
 ```
+
+**Checklist local rápido**
+1. `npm run db:migrate` até a migration mais recente (ex.: `097_okr_activity_assignees.sql`).
+2. Seed de demo: `npm run db:seed-demo-todos-os-dados:confirm` (massa rica; pode não cobrir 100% dos módulos pós-080).
+3. Guia/assistente: `npm run test:full:offline` inclui cobertura `panel.help.*` + FAQ.
+4. Client vs server: helpers LMS de URL/PDF ficam em `lib/lms-media.js` (não importar `lib/lms.js` em componentes `'use client'`).
+5. Docs do assistente: [`docs/help-assistant-knowledge.md`](docs/help-assistant-knowledge.md).
 
 ---
 
@@ -298,7 +315,8 @@ npm run dev
    hub “Hoje” + páginas dedicadas **/employee/lms**, **/employee/dp**, **/employee/time-clock**;
    LMS: layout curso (lista + player), retoma vídeo YouTube/Vimeo,
    PDF in-app, quiz, certificado print; hub resume prazos;
-   jornada **Minha chegada**, notifs Motivadores/PDI/LMS; não acessa /dashboard).
+   jornada **Minha chegada**, **Meus OKRs**, mural/kudos/feedback,
+   notifs Motivadores/PDI/LMS/OKR; não acessa /dashboard).
    Magic link opcional. Ver `docs/employee-onboarding-journey.md`. /e/<token> continua sem conta.
 ```
 
