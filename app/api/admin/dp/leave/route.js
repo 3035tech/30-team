@@ -9,6 +9,7 @@ import {
   createLeaveRequest,
   listLeaveCalendar,
   listLeaveRequests,
+  getCompanyVacationPool,
 } from '../../../../../lib/people/employee-dp.js';
 import { notifyCandidate, EMPLOYEE_NOTIF } from '../../../../../lib/employee-notifications.js';
 
@@ -23,7 +24,7 @@ const createBodySchema = z.object({
   allowOverBalance: z.boolean().optional().default(false),
 });
 
-/** GET /api/admin/dp/leave — company leave inbox + optional calendar */
+/** GET /api/admin/dp/leave — company leave inbox + optional calendar / vacation pool */
 export const GET = withAdminApi(
   {
     anyCap: [CAP.DP_VIEW, CAP.TEAM_VIEW],
@@ -31,7 +32,7 @@ export const GET = withAdminApi(
     companyFrom: 'query',
     logLabel: 'dp-leave-list',
   },
-  async ({ query: q, companyId }) => {
+  async ({ request, query: q, companyId }) => {
     const mode = String(q.mode || 'list');
     if (mode === 'calendar') {
       const data = await listLeaveCalendar({ query }, {
@@ -41,6 +42,13 @@ export const GET = withAdminApi(
         limit: q.limit,
       });
       return NextResponse.json(data);
+    }
+    if (mode === 'pool') {
+      const result = await getCompanyVacationPool({ query }, { companyId });
+      if (!result.ok) {
+        return apiErrorFromResult(request, result, { fallbackCode: ERR.COMPANY_REQUIRED });
+      }
+      return NextResponse.json({ ok: true, pool: result.pool });
     }
     const data = await listLeaveRequests({ query }, {
       companyId,

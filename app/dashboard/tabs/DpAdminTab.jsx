@@ -32,6 +32,7 @@ import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
+import { VacationPoolBlock } from '../../_components/VacationPoolBlock';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -506,6 +507,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         companyId={companyId}
         navigateDashboard={navigateDashboard}
       />
+
+      <VacationPoolBlock locale={locale} companyId={companyId} reloadKey={reloadKey} />
 
       <AdminListFilters
         aria-label={t(locale, 'panel.dp.inboxTitle')}

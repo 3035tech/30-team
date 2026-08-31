@@ -55,6 +55,7 @@ export async function GET(request) {
       truncated: result.truncated,
       scanned: result.scanned,
       scanCap: result.scanCap,
+      distribution: result.distribution || { low: 0, medium: 0, high: 0 },
     });
   } catch (err) {
     console.error('[turnover-radar] GET company error:', err);

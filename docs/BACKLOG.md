@@ -660,7 +660,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 2. Conformidade + organograma (**B-3005–B-3006** ✅) + SSO (**B-3007**).
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
 4. Aprofundar feedback (**B-3010** ✅) / copiloto (**B-3011**) sem segundo assistente paralelo ao Help.
-5. Viz lean sobre listas existentes → **B-3020** (P1+P2 ✅; P3 ouvidoria/turnover/férias).
+5. Viz lean sobre listas existentes → **B-3020** (P1+P2+P3 ✅).
 
 ### B-3001 — Calibração de reviews (overall + 9Box) ✅ ENTREGUE
 TeamCulture / Qulture / Alina. Ciclo já existia; faltava calibrar scores submetidos.
@@ -747,7 +747,7 @@ Lista/CRUD continua a superfície de **trabalho**. Gráfico = resumo **acima** d
 
 1. **P1** (**B-3021–B-3023**): mapa salarial, calibração, motivos de saída. ✅ ENTREGUE
 2. **P2** (**B-3024–B-3026**): sucessão, HR Score por área, OKR rollup. ✅ ENTREGUE
-3. **P3** (**B-3027–B-3029**): ouvidoria, turnover dist, férias pool (se API).
+3. **P3** (**B-3027–B-3029**): ouvidoria, turnover dist, férias pool. ✅ ENTREGUE
 
 ### B-3021 — Mapa salarial: barras below / in / above (P1) ✅ ENTREGUE
 Remuneração → `SalaryMapBlock`. Dados já em `listSalaryMapByJobRole`.
@@ -783,20 +783,20 @@ Overview `HrScoreCard` já lista byArea.
 2. Não duplicar MeterBar de cada KR; rollup no topo do `OkrBlock`.
 3. Cap de objetivos já no lib.
 
-### B-3027 — Ouvidoria: funil status + categorias (P3)
-1. Só se volume > punhado; funil new→triaging→responded/closed + barras por categoria.
+### B-3027 — Ouvidoria: funil status + categorias (P3) ✅ ENTREGUE
+1. Funil new→triaging→responded/closed + barras por categoria (`aggregateWhistleblowingReports`; só contagens).
 2. Zero texto de relato no gráfico; privacidade.
-3. Inbox/lista continua primaria.
+3. Inbox/lista continua primaria. Chart só com N ≥ `CHART_MIN_N`.
 
-### B-3028 — Turnover: distribuição low/med/high (P3)
-1. Pequena distribuição ao lado/acima da lista do radar (não inventar “radar chart” falso).
-2. Lista at-risk continua a ação.
-3. Reusar sinais já calculados em `lib/turnover-radar.js`.
+### B-3028 — Turnover: distribuição low/med/high (P3) ✅ ENTREGUE
+1. `StackedSegmentBar` no `TurnoverRadarCard` a partir de `distribution` no GET company.
+2. Lista at-risk continua a ação (médio/alto).
+3. Reusa sinais já calculados em `lib/turnover-radar.js`.
 
-### B-3029 — Férias: pool empresa / área (P3)
-1. Requer agregação company-level (hoje UI é por pessoa). Stacked used/pending/available ou % utilização.
-2. Não espalhar chart em cada dossier DP.
-3. Só após API/rollup estável.
+### B-3029 — Férias: pool empresa / cargo (P3) ✅ ENTREGUE
+1. `getCompanyVacationPool` + `GET …/dp/leave?mode=pool`; `VacationPoolBlock` no inbox DP.
+2. Stacked used/pending/available + barras por cargo (job role). Cap 500 colaboradores.
+3. Sem chart em cada dossier DP.
 
 ### B-3030 — Explicitamente fora deste epic
 1. Organograma visual “engenharia” / drag-and-drop (B-3006 lista indentada basta).

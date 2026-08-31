@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { t } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
@@ -8,6 +8,9 @@ import { S } from '../../dashboard-shared';
 import { statusToneClass } from '../../../_components/StatusToneChip';
 import { Icon } from '../../../_components/Icon';
 import { AppLoading } from '../../../_components/AppLoading';
+import { ChartPanel, ChartLegend } from '../../../_components/ChartPanel';
+import { StackedSegmentBar } from '../../../_components/StackedSegmentBar';
+import { CHART_MIN_N, turnoverRiskDistribution } from '../../../../lib/chart-aggregates';
 
 const SIGNAL_META = {
   climate: { emoji: '🌡️', labelKey: 'turnoverRadar.signalLabelClimate', hintKey: 'turnoverRadar.signalClimateHint' },
@@ -34,7 +37,7 @@ function actionHref(action, candidateId) {
 
 /**
  * Card de Turnover Radar na Overview (B-1002)
- * Lista colaboradores em risco médio/alto
+ * Lista colaboradores em risco médio/alto + distribuição low/med/high (B-3028)
  */
 export default function TurnoverRadarCard({ locale, companyId }) {
   const [data, setData] = useState(null);
@@ -59,6 +62,37 @@ export default function TurnoverRadarCard({ locale, companyId }) {
 
     fetchRisks();
   }, [companyId]);
+
+  const dist = useMemo(
+    () => turnoverRiskDistribution(data?.distribution),
+    [data?.distribution]
+  );
+
+  const showDist = dist.scanned >= CHART_MIN_N;
+
+  const distSegments = useMemo(
+    () => [
+      {
+        id: 'high',
+        value: dist.high,
+        toneClass: 'bg-danger',
+        label: t(locale, 'turnoverRadar.riskHigh'),
+      },
+      {
+        id: 'medium',
+        value: dist.medium,
+        toneClass: 'bg-warning',
+        label: t(locale, 'turnoverRadar.riskMedium'),
+      },
+      {
+        id: 'low',
+        value: dist.low,
+        toneClass: 'bg-success',
+        label: t(locale, 'turnoverRadar.riskLow'),
+      },
+    ],
+    [dist, locale]
+  );
 
   const riskTone = (risk) => {
     if (risk === 'high') return 'danger';
@@ -87,7 +121,10 @@ export default function TurnoverRadarCard({ locale, companyId }) {
     );
   }
 
-  if (!data || data.risks.length === 0) {
+  const risks = Array.isArray(data?.risks) ? data.risks : [];
+  const hasList = risks.length > 0;
+
+  if (!data || (dist.scanned === 0 && !hasList)) {
     return (
       <div className={S.card}>
         <h3 className={cn(S.cardTitle, 'mb-2')}>{t(locale, 'turnoverRadar.title')}</h3>
@@ -100,9 +137,11 @@ export default function TurnoverRadarCard({ locale, companyId }) {
   }
 
   const atRiskLabel =
-    data.risks.length === 1
+    risks.length === 1
       ? t(locale, 'turnoverRadar.peopleAtRiskOne')
-      : t(locale, 'turnoverRadar.peopleAtRiskMany', { n: data.risks.length });
+      : risks.length > 0
+        ? t(locale, 'turnoverRadar.peopleAtRiskMany', { n: risks.length })
+        : t(locale, 'turnoverRadar.noAtRiskList');
 
   return (
     <div className={S.card}>
@@ -121,8 +160,27 @@ export default function TurnoverRadarCard({ locale, companyId }) {
         </div>
       </div>
 
+      {showDist ? (
+        <ChartPanel
+          className="mb-4"
+          title={t(locale, 'turnoverRadar.distTitle')}
+          hint={t(locale, 'turnoverRadar.distHint', { n: dist.scanned })}
+        >
+          <StackedSegmentBar
+            segments={distSegments}
+            height={10}
+            aria-label={t(locale, 'turnoverRadar.distTitle')}
+            className="mb-2"
+          />
+          <ChartLegend items={distSegments} total={dist.scanned} />
+        </ChartPanel>
+      ) : null}
+
+      {!hasList ? (
+        <p className={cn(S.cardMuted, 'mb-0')}>{t(locale, 'turnoverRadar.noAtRiskList')}</p>
+      ) : (
       <div className="space-y-3">
-        {data.risks.slice(0, 8).map((person) => {
+        {risks.slice(0, 8).map((person) => {
           const riskLabel =
             person.risk === 'high'
               ? t(locale, 'turnoverRadar.riskHigh')
@@ -225,14 +283,15 @@ export default function TurnoverRadarCard({ locale, companyId }) {
           );
         })}
       </div>
+      )}
 
-      {data.risks.length > 8 ? (
+      {risks.length > 8 ? (
         <div className="mt-4 text-center">
           <Link
             href="/dashboard?tab=team&roster=internal&filter=turnover_risk"
             className={cn(S.cardLink, 'hover:underline')}
           >
-            {t(locale, 'turnoverRadar.viewAll', { n: data.risks.length })}
+            {t(locale, 'turnoverRadar.viewAll', { n: risks.length })}
           </Link>
         </div>
       ) : null}

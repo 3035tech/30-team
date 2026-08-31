@@ -60,7 +60,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
 | Roteiro demo | `demoRoteiro` |
 | HR Score | `b1000HrScore` |
-| Radar de rotatividade | `b1000TurnoverRadar` |
+| Radar de rotatividade | `b1000TurnoverRadar` (+ distribuição low/med/high na Overview) |
+| Gráficos lean (padrão) | `b3020Viz` (mapa salarial, calibração, saídas, sucessão, HR Score área, OKR, ouvidoria, turnover, pool de férias) |
 | **Para que serve cada tela** | `screens` (mapa aba → função + conexões) |
 | Motivadores (mapa radar no perfil) | `motivators` + FAQ `faqMotivators` |
 

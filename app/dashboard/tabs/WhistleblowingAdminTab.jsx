@@ -16,7 +16,10 @@ import { SegmentedControl } from '../../_components/SegmentedControl';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { InlineCallout } from '../../_components/InlineCallout';
+import { ChartPanel } from '../../_components/ChartPanel';
+import { CategoryBars } from '../../_components/CategoryBars';
 import { WHISTLEBLOWING_REPORT_STATUS } from '../../../lib/domain-status';
+import { CHART_MIN_N, whistleStatusFunnel, topCategoryCounts } from '../../../lib/chart-aggregates';
 
 function statusTone(status) {
   if (status === WHISTLEBLOWING_REPORT_STATUS.NEW) return 'warning';
@@ -53,6 +56,7 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
   const [loading, setLoading] = useState(true);
   const [channels, setChannels] = useState([]);
   const [reports, setReports] = useState([]);
+  const [aggregates, setAggregates] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [inboxFilter, setInboxFilter] = useState('open');
 
@@ -60,6 +64,7 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
     if (!companyId) {
       setChannels([]);
       setReports([]);
+      setAggregates(null);
       setLoading(false);
       return;
     }
@@ -72,10 +77,12 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
       if (!res.ok) throw new Error(data?.error || 'load');
       setChannels(Array.isArray(data.channels) ? data.channels : []);
       setReports(Array.isArray(data.reports) ? data.reports : []);
+      setAggregates(data.aggregates || null);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.whistleblowing.loadError'), 'error');
       setChannels([]);
       setReports([]);
+      setAggregates(null);
     } finally {
       setLoading(false);
     }
@@ -97,6 +104,48 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
     if (inboxFilter === 'all') return reports;
     return reports.filter((r) => isOpenStatus(r.status));
   }, [reports, inboxFilter]);
+
+  const statusToneClassForBar = (status) => {
+    if (status === WHISTLEBLOWING_REPORT_STATUS.NEW) return 'rounded-full bg-warning';
+    if (status === WHISTLEBLOWING_REPORT_STATUS.TRIAGING) return 'rounded-full bg-info';
+    if (status === WHISTLEBLOWING_REPORT_STATUS.RESPONDED) return 'rounded-full bg-success';
+    return 'rounded-full bg-ink/30';
+  };
+
+  const funnelBars = useMemo(() => {
+    const funnel = whistleStatusFunnel(aggregates?.byStatus || []);
+    if (funnel.total < CHART_MIN_N) return null;
+    return {
+      total: funnel.total,
+      items: funnel.items
+        .filter((i) => i.value > 0)
+        .map((i) => ({
+          id: i.id,
+          label: t(locale, `panel.whistleblowing.status.${i.id}`),
+          value: i.value,
+          toneClass: statusToneClassForBar(i.id),
+        })),
+    };
+  }, [aggregates, locale]);
+
+  const categoryBars = useMemo(() => {
+    const total = Number(aggregates?.total) || 0;
+    if (total < CHART_MIN_N) return null;
+    const top = topCategoryCounts(aggregates?.byCategory || [], {
+      key: 'category',
+      limit: 6,
+    });
+    if (!top.length) return null;
+    return {
+      total,
+      items: top.map((c) => ({
+        id: c.id,
+        label: t(locale, `panel.whistleblowing.category.${c.id}`),
+        value: c.value,
+        toneClass: 'rounded-full bg-info',
+      })),
+    };
+  }, [aggregates, locale]);
 
   const createChannel = async () => {
     const values = await promptForm({
@@ -229,6 +278,27 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
             <InlineCallout tone="warning" className="mb-3">
               {t(locale, 'panel.whistleblowing.overdueBanner', { n: overdueCount })}
             </InlineCallout>
+          ) : null}
+
+          {funnelBars || categoryBars ? (
+            <div className="mb-4 grid gap-3 md:grid-cols-2">
+              {funnelBars ? (
+                <ChartPanel
+                  title={t(locale, 'panel.whistleblowing.funnelTitle')}
+                  hint={t(locale, 'panel.whistleblowing.funnelHint')}
+                >
+                  <CategoryBars items={funnelBars.items} total={funnelBars.total} height={8} />
+                </ChartPanel>
+              ) : null}
+              {categoryBars ? (
+                <ChartPanel
+                  title={t(locale, 'panel.whistleblowing.categoriesTitle')}
+                  hint={t(locale, 'panel.whistleblowing.categoriesHint')}
+                >
+                  <CategoryBars items={categoryBars.items} total={categoryBars.total} height={8} />
+                </ChartPanel>
+              ) : null}
+            </div>
           ) : null}
 
           <CollapsibleBlock

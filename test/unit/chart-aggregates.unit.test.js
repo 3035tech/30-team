@@ -1,5 +1,5 @@
 /**
- * Unit proof — B-3020 chart aggregates (P1 + P2). No DB.
+ * Unit proof — B-3020 chart aggregates (P1 + P2 + P3). No DB.
  */
 import assert from 'node:assert/strict';
 import {
@@ -11,6 +11,10 @@ import {
   scoreHistogram,
   successionCoverage,
   topCategoryCounts,
+  turnoverRiskDistribution,
+  whistleStatusFunnel,
+  vacationPoolTotals,
+  vacationPoolByAreaBars,
 } from '../../lib/chart-aggregates.js';
 
 function main() {
@@ -91,6 +95,38 @@ function main() {
   assert.equal(areas[0].id, 'Sales');
   assert.equal(areas[0].value, 80);
   assert.equal(areas.length, 2);
+
+  const risk = turnoverRiskDistribution({ low: 10, medium: 3, high: 1 });
+  assert.equal(risk.scanned, 14);
+  assert.equal(risk.atRisk, 4);
+
+  const funnel = whistleStatusFunnel([
+    { status: 'new', count: 2 },
+    { status: 'triaging', count: 1 },
+    { status: 'closed', count: 4 },
+  ]);
+  assert.equal(funnel.total, 7);
+  assert.equal(funnel.items.find((i) => i.id === 'new').value, 2);
+  assert.equal(funnel.items.find((i) => i.id === 'responded').value, 0);
+
+  const pool = vacationPoolTotals({
+    entitlementDays: 30,
+    adjustmentDays: 0,
+    usedDays: 10,
+    pendingDays: 5,
+  });
+  assert.equal(pool.availableDays, 15);
+  assert.equal(pool.utilizedDays, 15);
+
+  const roleBars = vacationPoolByAreaBars(
+    [
+      { id: 'a', label: 'Eng', usedDays: 5, pendingDays: 1, availableDays: 20, headcount: 3 },
+      { id: 'b', label: 'Sales', usedDays: 2, pendingDays: 0, availableDays: 10, headcount: 2 },
+    ],
+    { limit: 5 }
+  );
+  assert.equal(roleBars[0].id, 'a');
+  assert.equal(roleBars[0].value, 6);
 
   console.log('chart-aggregates.unit.test.js OK');
 }

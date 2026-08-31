@@ -13,6 +13,7 @@ import {
   createWhistleblowingChannel,
   listWhistleblowingChannels,
   listWhistleblowingReports,
+  aggregateWhistleblowingReports,
 } from '../../../../lib/people/whistleblowing.js';
 
 const listQuerySchema = z.object({
@@ -53,6 +54,10 @@ export const GET = withAdminApi(
     if (!reports.ok) {
       return apiErrorFromResult(request, reports, { fallbackCode: ERR.COMPANY_REQUIRED });
     }
+    const aggregates = await aggregateWhistleblowingReports(null, { companyId });
+    if (!aggregates.ok) {
+      return apiErrorFromResult(request, aggregates, { fallbackCode: ERR.COMPANY_REQUIRED });
+    }
     await audit({
       actorUserId: payload.userId || null,
       action: 'whistleblowing.inbox_view',
@@ -64,6 +69,11 @@ export const GET = withAdminApi(
     return NextResponse.json({
       channels: channels.channels,
       reports: reports.reports,
+      aggregates: {
+        total: aggregates.total,
+        byStatus: aggregates.byStatus,
+        byCategory: aggregates.byCategory,
+      },
     });
   }
 );

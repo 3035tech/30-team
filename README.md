@@ -123,9 +123,10 @@ A partir da migration `054`, `055` e `056`:
 ### B-1002 — Radar de Rotatividade (Multi-sinal)
 - **Turnover Radar** focado em 4 sinais críticos de saída: Clima (30%), Motivadores/retenção (30%), PDI concern (25%), Check-ins concern (15%)
 - Calcula risco de turnover (low/medium/high) e sugere ações
-- UI: `TurnoverRadarCard` na Visão Geral listando top at-risk employees com breakdown visual de sinais
-- API: `GET /api/admin/turnover-radar/company`
+- UI: `TurnoverRadarCard` na Visão Geral com distribuição low/med/high + lista top at-risk e breakdown visual de sinais
+- API: `GET /api/admin/turnover-radar/company` (inclui `distribution`)
 - Lib: `lib/turnover-radar.js` (calcula radar, detecta trend change para notificações futuras)
+- **Viz lean P3:** ouvidoria (funil/categorias), pool de férias no inbox DP (`VacationPoolBlock`, `mode=pool`)
 
 ### B-1003 — Engenharia de Cargos (Leve)
 - **Cargos (Job Roles)** com rubrica T1-T9 que podem ser herdados por vagas via FK `vacancies.job_role_id`
