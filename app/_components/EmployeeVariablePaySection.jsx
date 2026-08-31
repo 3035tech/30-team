@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatSalaryDisplay } from '../../lib/br-masks';
@@ -39,6 +39,8 @@ export function EmployeeVariablePaySection({ locale = 'pt-BR', onBadge }) {
   const { toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const onBadgeRef = useRef(onBadge);
+  onBadgeRef.current = onBadge;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,19 +51,19 @@ export function EmployeeVariablePaySection({ locale = 'pt-BR', onBadge }) {
       if (!res.ok) throw new Error(data?.error || 'load');
       const next = Array.isArray(data.items) ? data.items : [];
       setItems(next);
-      if (typeof onBadge === 'function') {
-        onBadge(
+      if (typeof onBadgeRef.current === 'function') {
+        onBadgeRef.current(
           next.filter((i) => i.approvalStatus === COMPENSATION_APPROVAL_STATUS.PROPOSED).length
         );
       }
     } catch (e) {
       toast(e?.message || t(locale, 'panel.variablePay.employeeLoadError'), 'error');
       setItems([]);
-      if (typeof onBadge === 'function') onBadge(0);
+      if (typeof onBadgeRef.current === 'function') onBadgeRef.current(0);
     } finally {
       setLoading(false);
     }
-  }, [locale, onBadge, router, toast]);
+  }, [locale, router, toast]);
 
   useEffect(() => {
     void load();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { t } from '../../../lib/i18n';
 import { EmployeeDedicatedShell } from '../../_components/EmployeeDedicatedShell';
 import { EmployeeTimeClockSection } from '../../_components/EmployeeTimeClockSection';
@@ -11,6 +11,11 @@ import { useEmployeeNav } from '../../_components/EmployeeNavContext';
  */
 export function EmployeeTimeClockClient({ locale = 'pt-BR' }) {
   const { setNavMeta } = useEmployeeNav();
+
+  const onBadge = useCallback(
+    (n) => setNavMeta({ badges: { timeClock: Number(n) || 0 } }),
+    [setNavMeta]
+  );
 
   useEffect(() => {
     const prev = document.title;
@@ -26,10 +31,7 @@ export function EmployeeTimeClockClient({ locale = 'pt-BR' }) {
       title={t(locale, 'employeeHome.timeClockPageTitle')}
       hint={t(locale, 'employeeHome.timeClockPageHint')}
     >
-      <EmployeeTimeClockSection
-        locale={locale}
-        onBadge={(n) => setNavMeta({ badges: { timeClock: Number(n) || 0 } })}
-      />
+      <EmployeeTimeClockSection locale={locale} onBadge={onBadge} />
     </EmployeeDedicatedShell>
   );
 }

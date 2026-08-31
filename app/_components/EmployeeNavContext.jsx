@@ -58,7 +58,18 @@ export function EmployeeNavProvider({ children }) {
   }, []);
 
   const setNavMeta = useCallback(({ badges: nextBadges, active } = {}) => {
-    if (nextBadges) setBadges((prev) => ({ ...prev, ...nextBadges }));
+    if (nextBadges) {
+      setBadges((prev) => {
+        let changed = false;
+        for (const key of Object.keys(nextBadges)) {
+          if (prev[key] !== nextBadges[key]) {
+            changed = true;
+            break;
+          }
+        }
+        return changed ? { ...prev, ...nextBadges } : prev;
+      });
+    }
     if (active) setActiveSection(active);
   }, []);
 

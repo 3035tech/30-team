@@ -88,6 +88,8 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
   const [leaveUploadId, setLeaveUploadId] = useState(null);
   const fileInputRef = useRef(null);
   const leaveFileRef = useRef(null);
+  const onBadgeRef = useRef(onBadge);
+  onBadgeRef.current = onBadge;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,18 +103,18 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       setBalance(data.balance || null);
       const badge = Number(data.badge) || 0;
       setPendingDocs(Number(data.pendingDocs) || 0);
-      onBadge?.(badge);
+      onBadgeRef.current?.(badge);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
       setProfile(null);
       setDocuments([]);
       setLeaves([]);
       setBalance(null);
-      onBadge?.(0);
+      onBadgeRef.current?.(0);
     } finally {
       setLoading(false);
     }
-  }, [locale, toast, onBadge]);
+  }, [locale, toast]);
 
   useEffect(() => {
     void load();

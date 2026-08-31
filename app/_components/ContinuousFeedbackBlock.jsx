@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
@@ -199,6 +199,8 @@ export function EmployeeFeedbackSection({ locale = 'pt-BR', onBadge }) {
   const [prompt, setPrompt] = useState('');
   const [answerDrafts, setAnswerDrafts] = useState({});
   const [busy, setBusy] = useState(false);
+  const onBadgeRef = useRef(onBadge);
+  onBadgeRef.current = onBadge;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -209,15 +211,15 @@ export function EmployeeFeedbackSection({ locale = 'pt-BR', onBadge }) {
       const inboxItems = Array.isArray(data.inbox) ? data.inbox : [];
       setInbox(inboxItems);
       setAboutMe(Array.isArray(data.aboutMe) ? data.aboutMe : []);
-      onBadge?.(inboxItems.length);
+      onBadgeRef.current?.(inboxItems.length);
     } catch {
       setInbox([]);
       setAboutMe([]);
-      onBadge?.(0);
+      onBadgeRef.current?.(0);
     } finally {
       setLoading(false);
     }
-  }, [onBadge]);
+  }, []);
 
   useEffect(() => {
     void load();

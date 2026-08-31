@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { TIME_PUNCH_KIND } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
@@ -30,6 +30,8 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [useGeo, setUseGeo] = useState(false);
+  const onBadgeRef = useRef(onBadge);
+  onBadgeRef.current = onBadge;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,8 +40,8 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
-      if (typeof onBadge === 'function') {
-        onBadge(json.open ? 1 : 0);
+      if (typeof onBadgeRef.current === 'function') {
+        onBadgeRef.current(json.open ? 1 : 0);
       }
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.timeClock.loadError'), 'error');
@@ -47,7 +49,7 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
     } finally {
       setLoading(false);
     }
-  }, [locale, onBadge, toast]);
+  }, [locale, toast]);
 
   useEffect(() => {
     void load();
@@ -88,7 +90,7 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'punch');
       setData(json);
-      if (typeof onBadge === 'function') onBadge(json.open ? 1 : 0);
+      if (typeof onBadgeRef.current === 'function') onBadgeRef.current(json.open ? 1 : 0);
       toast(
         kind === TIME_PUNCH_KIND.IN
           ? t(locale, 'employeeHome.timeClock.punchedIn')

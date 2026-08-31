@@ -705,7 +705,7 @@ async function main() {
     // Full assignable module caps (overrides ⇒ capabilitiesCustomized=true)
     for (const uid of [hrUserId, dirUserId]) {
       for (const cap of ASSIGNABLE_CAPS) {
-        await client.query(
+    await client.query(
           `INSERT INTO user_capability_overrides (user_id, capability, granted) VALUES ($1, $2, TRUE)`,
           [uid, cap]
         );
@@ -1835,15 +1835,15 @@ async function main() {
         hoursAgo: 48,
       });
       managerNotifs.push({
-        type: 'motivators_completed',
-        recipient: hrUserId,
-        payload: {
-          candidateId: pedro.candidateId,
+          type: 'motivators_completed',
+          recipient: hrUserId,
+          payload: {
+            candidateId: pedro.candidateId,
           attemptId: pedro.attemptId || undefined,
-          candidateName: pedro.fullName,
-        },
-        entityType: 'candidate',
-        entityId: pedro.candidateId,
+            candidateName: pedro.fullName,
+          },
+          entityType: 'candidate',
+          entityId: pedro.candidateId,
         dedupe: `motivators:${pedro.candidateId}`,
         hoursAgo: 40,
       });
@@ -2021,7 +2021,7 @@ async function main() {
         managerNotifs.push({
           type: 'lms_completed',
           recipient: hrUserId,
-          payload: {
+      payload: {
             candidateId: ana.candidateId,
             candidateName: ana.fullName,
             courseId,
