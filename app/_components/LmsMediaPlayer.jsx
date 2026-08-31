@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
+import { StatusToneChip } from './StatusToneChip';
 
 function loadScript(src, globalKey) {
   if (typeof window === 'undefined') return Promise.resolve(null);
@@ -24,6 +25,41 @@ function loadScript(src, globalKey) {
   });
 }
 
+function PlayerChrome({ title, kindLabel, resumeLabel, loadingLabel, loading, onClose, closeLabel, children }) {
+  return (
+    <div className="overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
+        <div className="min-w-0 flex flex-wrap items-center gap-2">
+          <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{title}</span>
+          {kindLabel ? <StatusToneChip tone="neutral">{kindLabel}</StatusToneChip> : null}
+          {resumeLabel ? <StatusToneChip tone="info">{resumeLabel}</StatusToneChip> : null}
+        </div>
+        {onClose ? (
+          <button
+            type="button"
+            className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
+            onClick={onClose}
+            aria-label={closeLabel}
+          >
+            {closeLabel}
+          </button>
+        ) : null}
+      </div>
+      <div className="relative">
+        {loading ? (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center bg-ink/80 font-mono text-2xs text-canvas"
+            aria-live="polite"
+          >
+            {loadingLabel}
+          </div>
+        ) : null}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /**
  * YouTube / Vimeo / PDF in-app viewer with optional resume + progress callback.
  * Does not auto-complete lessons.
@@ -34,12 +70,20 @@ export function LmsMediaPlayer({
   onProgress,
   onClose,
   closeLabel = 'Close',
+  kindLabel,
+  resumeLabel,
+  loadingLabel = '…',
   className,
 }) {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const lastSentRef = useRef(0);
-  const startAt = Math.max(0, Math.floor(Number(startAtSec) || 0));
+  const onProgressRef = useRef(onProgress);
+  const seekOnceRef = useRef(Math.max(0, Math.floor(Number(startAtSec) || 0)));
+  const [loading, setLoading] = useState(false);
+  const [showResumeChip, setShowResumeChip] = useState(
+    () => Math.max(0, Math.floor(Number(startAtSec) || 0)) >= 15
+  );
 
   const kind = lesson?.contentKind;
   const videoId = lesson?.videoId;
@@ -47,14 +91,29 @@ export function LmsMediaPlayer({
   const title = lesson?.title || 'Lesson';
 
   useEffect(() => {
-    if (!lesson || !onProgress) return undefined;
-    const flush = (positionSec, durationSec) => {
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
+
+  // Capture resume position once per lesson open (avoid remount when progress updates).
+  useEffect(() => {
+    const s = Math.max(0, Math.floor(Number(startAtSec) || 0));
+    seekOnceRef.current = s;
+    setShowResumeChip(s >= 15);
+  }, [lesson?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- startAt only on lesson change
+
+  useEffect(() => {
+    if (!lesson) return undefined;
+    const startAt = seekOnceRef.current;
+
+    const flush = (positionSec, durationSec, { force = false } = {}) => {
+      const cb = onProgressRef.current;
+      if (!cb) return;
       const pos = Math.floor(Number(positionSec) || 0);
       if (pos < 0) return;
       const now = Date.now();
-      if (now - lastSentRef.current < 12000 && pos > 0) return;
+      if (!force && now - lastSentRef.current < 12000 && pos > 0) return;
       lastSentRef.current = now;
-      onProgress({
+      cb({
         lessonId: lesson.id,
         positionSec: pos,
         durationSec: Math.floor(Number(durationSec) || 0),
@@ -66,98 +125,129 @@ export function LmsMediaPlayer({
 
     const setupYoutube = async () => {
       if (!videoId || !hostRef.current) return;
-      await loadScript('https://www.youtube.com/iframe_api', null);
-      await new Promise((resolve) => {
-        if (window.YT?.Player) resolve();
-        else {
-          const prev = window.onYouTubeIframeAPIReady;
-          window.onYouTubeIframeAPIReady = () => {
-            if (typeof prev === 'function') prev();
-            resolve();
-          };
-        }
-      });
-      if (cancelled || !hostRef.current) return;
-      hostRef.current.innerHTML = '';
-      const el = document.createElement('div');
-      hostRef.current.appendChild(el);
-      const player = new window.YT.Player(el, {
-        videoId,
-        playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1, origin: window.location.origin },
-        events: {
-          onReady: (e) => {
-            if (startAt > 0) {
-              try {
-                e.target.seekTo(startAt, true);
-              } catch {
-                /* ignore */
-              }
-            }
-          },
-          onStateChange: (e) => {
-            if (e.data === window.YT.PlayerState.PAUSED || e.data === window.YT.PlayerState.ENDED) {
-              try {
-                flush(e.target.getCurrentTime(), e.target.getDuration());
-              } catch {
-                /* ignore */
-              }
-            }
-          },
-        },
-      });
-      playerRef.current = player;
-      pollId = window.setInterval(() => {
-        try {
-          if (player.getPlayerState?.() === window.YT.PlayerState.PLAYING) {
-            flush(player.getCurrentTime(), player.getDuration());
+      setLoading(true);
+      try {
+        await loadScript('https://www.youtube.com/iframe_api', null);
+        await new Promise((resolve) => {
+          if (window.YT?.Player) resolve();
+          else {
+            const prev = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => {
+              if (typeof prev === 'function') prev();
+              resolve();
+            };
           }
-        } catch {
-          /* ignore */
-        }
-      }, 15000);
+        });
+        if (cancelled || !hostRef.current) return;
+        hostRef.current.innerHTML = '';
+        const el = document.createElement('div');
+        el.style.width = '100%';
+        el.style.height = '100%';
+        hostRef.current.appendChild(el);
+        const player = new window.YT.Player(el, {
+          videoId,
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+            playsinline: 1,
+          },
+          events: {
+            onReady: (e) => {
+              setLoading(false);
+              if (startAt > 0) {
+                try {
+                  e.target.seekTo(startAt, true);
+                } catch {
+                  /* ignore */
+                }
+              }
+            },
+            onStateChange: (e) => {
+              if (
+                e.data === window.YT.PlayerState.PAUSED ||
+                e.data === window.YT.PlayerState.ENDED
+              ) {
+                try {
+                  flush(e.target.getCurrentTime(), e.target.getDuration(), { force: true });
+                } catch {
+                  /* ignore */
+                }
+              }
+            },
+            onError: () => setLoading(false),
+          },
+        });
+        playerRef.current = player;
+        pollId = window.setInterval(() => {
+          try {
+            if (player.getPlayerState?.() === window.YT.PlayerState.PLAYING) {
+              flush(player.getCurrentTime(), player.getDuration());
+            }
+          } catch {
+            /* ignore */
+          }
+        }, 15000);
+      } catch {
+        setLoading(false);
+      }
     };
 
     const setupVimeo = async () => {
       if (!videoId || !hostRef.current) return;
-      await loadScript('https://player.vimeo.com/api/player.js', 'Vimeo');
-      if (cancelled || !hostRef.current || !window.Vimeo?.Player) return;
-      hostRef.current.innerHTML = '';
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://player.vimeo.com/video/${encodeURIComponent(videoId)}`;
-      iframe.className = 'h-full w-full border-0';
-      iframe.allow = 'autoplay; fullscreen; picture-in-picture';
-      iframe.allowFullscreen = true;
-      hostRef.current.appendChild(iframe);
-      const player = new window.Vimeo.Player(iframe);
-      playerRef.current = player;
-      if (startAt > 0) {
-        try {
-          await player.setCurrentTime(startAt);
-        } catch {
-          /* ignore */
+      setLoading(true);
+      try {
+        await loadScript('https://player.vimeo.com/api/player.js', 'Vimeo');
+        if (cancelled || !hostRef.current || !window.Vimeo?.Player) {
+          setLoading(false);
+          return;
         }
+        hostRef.current.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://player.vimeo.com/video/${encodeURIComponent(videoId)}`;
+        iframe.className = 'absolute inset-0 h-full w-full border-0';
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.title = title;
+        hostRef.current.appendChild(iframe);
+        const player = new window.Vimeo.Player(iframe);
+        playerRef.current = player;
+        if (startAt > 0) {
+          try {
+            await player.setCurrentTime(startAt);
+          } catch {
+            /* ignore */
+          }
+        }
+        setLoading(false);
+        const tick = async (force = false) => {
+          try {
+            const [pos, dur] = await Promise.all([player.getCurrentTime(), player.getDuration()]);
+            flush(pos, dur, { force });
+          } catch {
+            /* ignore */
+          }
+        };
+        player.on('pause', () => void tick(true));
+        player.on('ended', () => void tick(true));
+        pollId = window.setInterval(() => void tick(false), 15000);
+      } catch {
+        setLoading(false);
       }
-      const tick = async () => {
-        try {
-          const [pos, dur] = await Promise.all([player.getCurrentTime(), player.getDuration()]);
-          flush(pos, dur);
-        } catch {
-          /* ignore */
-        }
-      };
-      player.on('pause', tick);
-      player.on('ended', tick);
-      pollId = window.setInterval(tick, 15000);
     };
 
     if (kind === 'youtube' && videoId) void setupYoutube();
     else if (kind === 'vimeo' && videoId) void setupVimeo();
+    else setLoading(false);
 
     const onUnload = () => {
       try {
         const p = playerRef.current;
         if (kind === 'youtube' && p?.getCurrentTime) {
-          flush(p.getCurrentTime(), p.getDuration?.());
+          flush(p.getCurrentTime(), p.getDuration?.(), { force: true });
         }
       } catch {
         /* ignore */
@@ -172,11 +262,11 @@ export function LmsMediaPlayer({
       try {
         const p = playerRef.current;
         if (kind === 'youtube' && p?.getCurrentTime) {
-          flush(p.getCurrentTime(), p.getDuration?.());
+          flush(p.getCurrentTime(), p.getDuration?.(), { force: true });
           p.destroy?.();
         } else if (kind === 'vimeo' && p?.getCurrentTime) {
           void p.getCurrentTime().then((pos) =>
-            p.getDuration().then((dur) => flush(pos, dur))
+            p.getDuration().then((dur) => flush(pos, dur, { force: true }))
           );
           p.unload?.();
         }
@@ -185,50 +275,44 @@ export function LmsMediaPlayer({
       }
       playerRef.current = null;
     };
-  }, [lesson?.id, kind, videoId, startAt, onProgress]);
+  }, [lesson?.id, kind, videoId, title]);
 
   if (!lesson) return null;
 
   if (kind === 'pdf' && embedUrl) {
     return (
-      <div
-        className={cn(
-          'overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card',
-          className
-        )}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
-          <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{title}</span>
-          {onClose ? (
-            <button type="button" className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')} onClick={onClose}>
-              {closeLabel}
-            </button>
-          ) : null}
-        </div>
-        <div className="h-[min(75vh,720px)] w-full bg-canvas">
-          <iframe title={title} src={embedUrl} className="h-full w-full border-0" />
-        </div>
+      <div className={cn(className)}>
+        <PlayerChrome
+          title={title}
+          kindLabel={kindLabel}
+          resumeLabel={null}
+          loading={false}
+          loadingLabel={loadingLabel}
+          onClose={onClose}
+          closeLabel={closeLabel}
+        >
+          <div className="h-[min(75vh,720px)] w-full bg-canvas">
+            <iframe title={title} src={embedUrl} className="h-full w-full border-0" />
+          </div>
+        </PlayerChrome>
       </div>
     );
   }
 
   if ((kind === 'youtube' || kind === 'vimeo') && videoId) {
     return (
-      <div
-        className={cn(
-          'overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card',
-          className
-        )}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
-          <span className={cn(S.cardRowTitle, 'min-w-0 truncate')}>{title}</span>
-          {onClose ? (
-            <button type="button" className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')} onClick={onClose}>
-              {closeLabel}
-            </button>
-          ) : null}
-        </div>
-        <div className="aspect-video w-full bg-ink/90" ref={hostRef} />
+      <div className={cn(className)}>
+        <PlayerChrome
+          title={title}
+          kindLabel={kindLabel}
+          resumeLabel={showResumeChip ? resumeLabel : null}
+          loading={loading}
+          loadingLabel={loadingLabel}
+          onClose={onClose}
+          closeLabel={closeLabel}
+        >
+          <div className="relative aspect-video w-full bg-ink/90" ref={hostRef} />
+        </PlayerChrome>
       </div>
     );
   }

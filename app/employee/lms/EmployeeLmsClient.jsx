@@ -41,14 +41,30 @@ function continueDueSuffix(locale, info) {
   return '';
 }
 
+function formatWatchTime(sec) {
+  const pos = Math.max(0, Math.floor(Number(sec) || 0));
+  const m = Math.floor(pos / 60);
+  const s = pos % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function formatWatchHint(locale, lesson) {
   const pos = Number(lesson?.watchPositionSec) || 0;
   if (pos < 15) return null;
-  const m = Math.floor(pos / 60);
-  const s = pos % 60;
-  return t(locale, 'employeeHome.lmsResumeAt', {
-    time: `${m}:${String(s).padStart(2, '0')}`,
-  });
+  return t(locale, 'employeeHome.lmsResumeAt', { time: formatWatchTime(pos) });
+}
+
+function watchPct(lesson) {
+  const pos = Number(lesson?.watchPositionSec) || 0;
+  const dur = Number(lesson?.watchDurationSec) || 0;
+  if (dur < 30 || pos <= 0) return 0;
+  return Math.min(100, Math.round((pos / dur) * 100));
+}
+
+function kindLabelFor(locale, kind) {
+  if (kind === 'pdf') return t(locale, 'employeeHome.lmsKindPdf');
+  if (kind === 'youtube' || kind === 'vimeo') return t(locale, 'employeeHome.lmsKindVideo');
+  return null;
 }
 
 /**
@@ -59,6 +75,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
   const searchParams = useSearchParams();
   const { toast } = useAppFeedback();
   const quizRef = useRef(null);
+  const lessonListRef = useRef(null);
   const [courses, setCourses] = useState([]);
   const [continueInfo, setContinueInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -162,6 +179,36 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
     () => courses.find((c) => c.enrollmentId === activeEnrollmentId) || null,
     [courses, activeEnrollmentId]
   );
+
+  // Keep player lesson flags in sync after complete/quiz refreshes.
+  useEffect(() => {
+    if (!watching?.id || !activeCourse) return;
+    const fresh = (activeCourse.lessons || []).find((l) => Number(l.id) === Number(watching.id));
+    if (!fresh) return;
+    setWatching((w) => {
+      if (!w || Number(w.id) !== Number(fresh.id)) return w;
+      if (
+        w.completed === fresh.completed &&
+        w.quizPassed === fresh.quizPassed &&
+        w.watchPositionSec === fresh.watchPositionSec &&
+        w.watchDurationSec === fresh.watchDurationSec
+      ) {
+        return w;
+      }
+      return fresh;
+    });
+  }, [activeCourse, watching?.id]);
+
+  useEffect(() => {
+    if (!watching?.id || !lessonListRef.current) return;
+    const el = lessonListRef.current.querySelector(`[data-lesson-id="${watching.id}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [watching?.id, activeEnrollmentId]);
+
+  const lessonIndex = useMemo(() => {
+    if (!activeCourse || !watching) return -1;
+    return (activeCourse.lessons || []).findIndex((l) => Number(l.id) === Number(watching.id));
+  }, [activeCourse, watching]);
 
   const quizReady =
     quiz &&
@@ -377,11 +424,45 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
             <h1 className={cn(S.pageTitle, 'mt-3 mb-1')}>
               {inCourseView ? activeCourse.title : t(locale, 'employeeHome.lmsPageTitle')}
             </h1>
-            <p className={cn(S.muted, 'mb-0 text-prose')}>
-              {inCourseView
-                ? t(locale, 'employeeHome.lmsCourseHint')
-                : t(locale, 'employeeHome.lmsPageHint')}
-            </p>
+            {inCourseView ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {activeCourse.isComplete ? (
+                  <StatusToneChip tone="success">
+                    {t(locale, 'panel.employeePortal.courseDone')}
+                  </StatusToneChip>
+                ) : null}
+                {activeCourse.mandatory ? (
+                  <StatusToneChip tone="info">
+                    {t(locale, 'panel.employeePortal.courseMandatory')}
+                  </StatusToneChip>
+                ) : null}
+                {activeCourse.overdue ? (
+                  <StatusToneChip tone="danger">
+                    {t(locale, 'panel.employeePortal.courseOverdue')}
+                  </StatusToneChip>
+                ) : null}
+                {dueLabel(locale, activeCourse) ? (
+                  <span
+                    className={cn(
+                      'font-mono text-2xs',
+                      activeCourse.overdue ? 'text-danger' : 'text-ink-faint'
+                    )}
+                  >
+                    {dueLabel(locale, activeCourse)}
+                  </span>
+                ) : null}
+                <span className="font-mono text-2xs text-ink-muted">
+                  {activeCourse.progressPct}%
+                </span>
+              </div>
+            ) : (
+              <p className={cn(S.muted, 'mb-0 text-prose')}>{t(locale, 'employeeHome.lmsPageHint')}</p>
+            )}
+            {inCourseView ? (
+              <p className={cn(S.muted, 'mt-2 mb-0 text-prose')}>
+                {t(locale, 'employeeHome.lmsCourseHint')}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -393,9 +474,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                 {dueSuffix ? ` · ${dueSuffix}` : ''}
                 {continueInfo.watchPositionSec >= 15
                   ? ` · ${t(locale, 'employeeHome.lmsResumeAt', {
-                      time: `${Math.floor(continueInfo.watchPositionSec / 60)}:${String(
-                        continueInfo.watchPositionSec % 60
-                      ).padStart(2, '0')}`,
+                      time: formatWatchTime(continueInfo.watchPositionSec),
                     })}`
                   : ''}
               </span>
@@ -415,7 +494,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
             <div className="min-w-0">
               {watching ? (
                 <LmsMediaPlayer
-                  className="sticky top-14 z-10 mb-4"
+                  className="emp-player mb-4 lg:sticky lg:top-14 lg:z-10"
                   lesson={watching}
                   startAtSec={watching.watchPositionSec || 0}
                   onProgress={saveWatchProgress}
@@ -425,6 +504,9 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       ? t(locale, 'employeeHome.closePdf')
                       : t(locale, 'employeeHome.closePlayer')
                   }
+                  kindLabel={kindLabelFor(locale, watching.contentKind)}
+                  resumeLabel={formatWatchHint(locale, watching)}
+                  loadingLabel={t(locale, 'employeeHome.lmsLoadingPlayer')}
                 />
               ) : (
                 <InlineCallout tone="info" className="mb-4">
@@ -501,6 +583,32 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
+                    disabled={busy || lessonIndex <= 0}
+                    className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                    onClick={() => {
+                      const prev = activeCourse.lessons[lessonIndex - 1];
+                      if (prev) openLesson(activeCourse, prev);
+                    }}
+                  >
+                    {t(locale, 'employeeHome.lmsPrevLesson')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      busy ||
+                      lessonIndex < 0 ||
+                      lessonIndex >= (activeCourse.lessons || []).length - 1
+                    }
+                    className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                    onClick={() => {
+                      const next = activeCourse.lessons[lessonIndex + 1];
+                      if (next) openLesson(activeCourse, next);
+                    }}
+                  >
+                    {t(locale, 'employeeHome.lmsNextLesson')}
+                  </button>
+                  <button
+                    type="button"
                     disabled={busy}
                     className={cn(
                       watching.completed ? S.btnGhost : S.btnBrandSoft,
@@ -545,16 +653,20 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       : 'bg-brand-500'
                 }
               />
-              <ul className="m-0 flex max-h-[min(70vh,560px)] list-none flex-col gap-1.5 overflow-y-auto p-0">
+              <ul
+                ref={lessonListRef}
+                className="m-0 flex max-h-[min(70vh,560px)] list-none flex-col gap-1.5 overflow-y-auto p-0"
+              >
                 {(activeCourse.lessons || []).map((lesson, idx) => {
                   const active = watching?.id === lesson.id;
                   const resume = formatWatchHint(locale, lesson);
+                  const pct = watchPct(lesson);
                   return (
-                    <li key={lesson.id}>
+                    <li key={lesson.id} data-lesson-id={lesson.id}>
                       <button
                         type="button"
                         className={cn(
-                          'flex w-full flex-col items-start gap-0.5 rounded-control border px-2.5 py-2 text-left transition-colors',
+                          'flex w-full flex-col items-start gap-1 rounded-control border px-2.5 py-2 text-left transition-colors',
                           active
                             ? 'border-brand-500/40 bg-brand-500/[0.08]'
                             : 'border-ink/8 bg-canvas/40 hover:border-ink/20'
@@ -566,6 +678,11 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                           {lesson.title}
                         </span>
                         <span className="flex flex-wrap items-center gap-1">
+                          {kindLabelFor(locale, lesson.contentKind) ? (
+                            <StatusToneChip tone="neutral">
+                              {kindLabelFor(locale, lesson.contentKind)}
+                            </StatusToneChip>
+                          ) : null}
                           {lesson.quizRequired ? (
                             <StatusToneChip tone={lesson.quizPassed ? 'success' : 'neutral'}>
                               {lesson.quizPassed
@@ -577,6 +694,14 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                             <span className="font-mono text-2xs text-ink-faint">{resume}</span>
                           ) : null}
                         </span>
+                        {pct > 0 && !lesson.completed ? (
+                          <MeterBar
+                            percent={pct}
+                            height={4}
+                            className="mt-0.5 w-full"
+                            toneClass="bg-info"
+                          />
+                        ) : null}
                       </button>
                     </li>
                   );
