@@ -578,13 +578,13 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 ### B-2721 — Ponto digital (MVP) ✅ ENTREGUE
 1. Batida web em `/employee` + geolocalização opcional; espelho do dia; revisão de inconsistências (ok/flagged) no hub DP.
 2. Escala simples por empresa (turno fixo + tolerância); ajuste manual RH; export CSV.
-3. **Fora (fase 2):** facial / offline / WhatsApp ponto; banco de horas (**B-2722**); folha (**B-2726**).
+3. **Fora (fase 2):** facial / offline / WhatsApp ponto; folha (**B-2726**).
 4. Schema `091_time_clock.sql`; Guia → Ponto digital.
 
-### B-2722 — Banco de horas / horas extras
-1. Regras configuráveis por empresa; saldo por colaborador; lançamentos manuais + derivados do ponto (**B-2721**).
-2. Aprovação RH; relatório mensal.
-3. Depende de B-2721 para cálculo automático.
+### B-2722 — Banco de horas / horas extras ✅ ENTREGUE
+1. Regras por empresa (ativar + teto de saldo); saldo por colaborador; lançamentos manuais + créditos derivados do ponto (**B-2721**, ≥15 min além da escala, idempotente por pessoa/dia).
+2. Aprovação RH (fila pendente); pedido de débito no `/employee`; CSV mensal.
+3. Schema `099_hour_bank.sql`; Guia → Banco de horas. **Não** é folha/eSocial/acordo coletivo.
 
 ### B-2723 — Férias e afastamentos
 1. Solicitação no `/employee`; saldo; aprovação gestor/RH; calendário do time.

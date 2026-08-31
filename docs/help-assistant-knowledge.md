@@ -38,6 +38,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / férias / saldo) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |
+| Banco de horas | Seção `hourBank` + FAQ `faqHourBank` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
 | OKRs + bônus variável | Seção `b3000Pack` + FAQ `faqOkr` / `faqVariablePay` |
 | Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` + FAQ `faqWhistleblowing` |

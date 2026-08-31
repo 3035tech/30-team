@@ -41,6 +41,8 @@ const reviewBodySchema = z.object({
   breakMinutes: z.coerce.number().int().min(0).max(240).optional(),
   timezone: z.string().max(64).optional(),
   lateGraceMinutes: z.coerce.number().int().min(0).max(120).optional(),
+  hourBankEnabled: z.boolean().optional(),
+  hourBankMaxMinutes: z.coerce.number().int().min(0).max(20000).optional(),
 });
 
 const createBodySchema = z.object({
@@ -107,6 +109,8 @@ export const PATCH = withAdminApi(
         breakMinutes: body.breakMinutes,
         timezone: body.timezone,
         lateGraceMinutes: body.lateGraceMinutes,
+        hourBankEnabled: body.hourBankEnabled,
+        hourBankMaxMinutes: body.hourBankMaxMinutes,
         updatedByUserId: payload.userId || null,
       });
       if (!result.ok) {

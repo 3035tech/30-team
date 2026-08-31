@@ -32,6 +32,7 @@ import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
+import { HourBankAdminBlock } from '../../_components/HourBankAdminBlock';
 import { VacationPoolBlock } from '../../_components/VacationPoolBlock';
 
 function formatDate(value, locale) {
@@ -503,6 +504,12 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       />
 
       <TimeClockAdminBlock
+        locale={locale}
+        companyId={companyId}
+        navigateDashboard={navigateDashboard}
+      />
+
+      <HourBankAdminBlock
         locale={locale}
         companyId={companyId}
         navigateDashboard={navigateDashboard}
