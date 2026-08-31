@@ -25,6 +25,7 @@ import { AdminListFilters, AdminListFilterSelect } from '../../_components/Admin
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { SalaryMapBlock } from '../../_components/SalaryMapBlock';
+import { VariablePayInboxBlock } from '../../_components/VariablePayInboxBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
 
@@ -63,7 +64,7 @@ function eventTypeLabel(locale, type) {
 /**
  * Unified internal compensation roster — list salaries + history drawer.
  */
-export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
+export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const { toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -152,6 +153,21 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId }) {
       />
 
       <SalaryMapBlock locale={locale} companyId={companyId} />
+
+      <VariablePayInboxBlock
+        locale={locale}
+        companyId={companyId}
+        onOpenPerson={
+          typeof navigateDashboard === 'function'
+            ? (candidateId) =>
+                navigateDashboard({
+                  tab: 'team',
+                  candidate: candidateId,
+                  section: 'compensation',
+                })
+            : null
+        }
+      />
 
       <AdminListFilters
         aria-label={t(locale, 'panel.compensationRoster.title')}

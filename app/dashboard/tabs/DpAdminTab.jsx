@@ -10,6 +10,7 @@ import {
   DP_LEAVE_TYPES,
 } from '../../../lib/domain-status.js';
 import { expandLeaveCalendarByDay } from '../../../lib/leave-days.js';
+import { htmlToPlainText } from '../../../lib/sanitize-html.js';
 import { cn } from '../../../lib/cn';
 import {
   AdminActionsCell,
@@ -30,6 +31,7 @@ import { AdminListFilters, AdminListFilterSelect } from '../../_components/Admin
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -216,16 +218,17 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       confirmLabel: t(locale, 'panel.dp.save'),
       fields: [
         {
-          name: 'candidateId',
+          key: 'candidateId',
           label: t(locale, 'panel.dp.colName'),
           type: 'entitySearch',
           required: true,
-          searchUrl: '/api/admin/employees/search',
-          placeholder: t(locale, 'panel.dp.searchPh'),
+          searchUrl: `/api/admin/employees/search?companyId=${encodeURIComponent(companyId)}`,
+          placeholder: t(locale, 'panel.dp.personSearchPh'),
+          help: t(locale, 'panel.dp.personSearchHelp'),
           minChars: 1,
         },
         {
-          name: 'leaveType',
+          key: 'leaveType',
           type: 'select',
           label: t(locale, 'panel.dp.leaveTypeLabel'),
           defaultValue: DP_LEAVE_TYPE.VACATION,
@@ -236,35 +239,37 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
           })),
         },
         {
-          name: 'startsOn',
+          key: 'startsOn',
           type: 'date',
           label: t(locale, 'panel.dp.leaveStarts'),
           defaultValue: today,
           required: true,
+          row: 'leaveDates',
         },
         {
-          name: 'endsOn',
+          key: 'endsOn',
           type: 'date',
           label: t(locale, 'panel.dp.leaveEnds'),
           defaultValue: today,
           required: true,
+          row: 'leaveDates',
         },
         {
-          name: 'reason',
-          type: 'textarea',
+          key: 'reason',
+          type: 'richText',
           label: t(locale, 'panel.dp.leaveReason'),
           defaultValue: '',
-          rows: 2,
-          maxLength: 2000,
+          minHeight: 120,
+          help: t(locale, 'panel.dp.leaveReasonHelp'),
         },
         {
-          name: 'autoApprove',
+          key: 'autoApprove',
           type: 'boolean',
           label: t(locale, 'panel.dp.createAutoApprove'),
           defaultValue: true,
         },
         {
-          name: 'allowOverBalance',
+          key: 'allowOverBalance',
           type: 'boolean',
           label: t(locale, 'panel.dp.leaveAllowOver'),
           defaultValue: false,
@@ -496,6 +501,12 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         }
       />
 
+      <TimeClockAdminBlock
+        locale={locale}
+        companyId={companyId}
+        navigateDashboard={navigateDashboard}
+      />
+
       <AdminListFilters
         aria-label={t(locale, 'panel.dp.inboxTitle')}
         locale={locale}
@@ -600,7 +611,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                       {formatDate(row.endsOn, locale)}
                     </td>
                     <td className="max-w-[220px] truncate px-3 py-2.5 align-middle text-xs text-ink-muted">
-                      {row.reason || '—'}
+                      {htmlToPlainText(row.reason || '') || '—'}
                     </td>
                     <td className="px-3 py-2.5 text-right align-middle">
                       <AdminActionsCell>

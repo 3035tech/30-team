@@ -652,7 +652,20 @@ async function runOfflineLibs() {
   });
 
   await check('lib', 'br-masks-salary', async () => {
-    const { salaryAmountNumber, formatVacancySalaryRangeDisplay } = await import('../../lib/br-masks.js');
+    const {
+      salaryAmountNumber,
+      formatVacancySalaryRangeDisplay,
+      formatCepBr,
+      stripCep,
+      formatCpfBr,
+      stripCpf,
+      formatPhoneBr,
+    } = await import('../../lib/br-masks.js');
+    assert.equal(stripCep('01310-100'), '01310100');
+    assert.equal(formatCepBr('01310100'), '01310-100');
+    assert.equal(stripCpf('529.982.247-25'), '52998224725');
+    assert.equal(formatCpfBr('52998224725'), '529.982.247-25');
+    assert.ok(formatPhoneBr('11987654321').includes('98765'));
     if (salaryAmountNumber('3500.00') !== 3500) throw new Error(`expected 3500 got ${salaryAmountNumber('3500.00')}`);
     const range = formatVacancySalaryRangeDisplay('3500.00', '5000.00');
     if (!range || !range.includes('3.500')) throw new Error(`bad range ${range}`);

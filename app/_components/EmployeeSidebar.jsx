@@ -33,6 +33,13 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   },
   { id: 'dp', href: '/employee#dp', icon: 'dp', labelKey: 'employeeHome.dpTitle', hash: 'dp' },
   {
+    id: 'timeClock',
+    href: '/employee#timeClock',
+    icon: 'list',
+    labelKey: 'employeeHome.timeClockTitle',
+    hash: 'timeClock',
+  },
+  {
     id: 'variablePay',
     href: '/employee#variablePay',
     icon: 'clipboard',
@@ -60,7 +67,7 @@ const NAV_GROUPS = Object.freeze([
   {
     id: 'account',
     labelKey: 'employeeHome.navGroupAccount',
-    ids: ['dp', 'variablePay', 'feed', 'kudos', 'company', 'profile'],
+    ids: ['dp', 'timeClock', 'variablePay', 'feed', 'kudos', 'company', 'profile'],
   },
 ]);
 
@@ -78,6 +85,7 @@ function badgeFor(itemId, badges) {
   if (itemId === 'surveys') return badges.surveys;
   if (itemId === 'lms') return badges.lms;
   if (itemId === 'dp') return badges.dp;
+  if (itemId === 'timeClock') return badges.timeClock;
   if (itemId === 'feed') return badges.feed;
   if (itemId === 'kudos') return badges.kudos;
   if (itemId === 'feedback') return badges.feedback;

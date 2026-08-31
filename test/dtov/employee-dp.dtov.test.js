@@ -86,16 +86,20 @@ async function main() {
     companyId,
     candidateId,
     emergencyName: 'DTOV Contato',
-    emergencyPhone: '11999990000',
+    emergencyPhone: '(11) 99999-0000',
     emergencyRelation: 'cônjuge',
+    cpf: '529.982.247-25',
     addressLine: 'Rua Teste 1',
     addressCity: 'São Paulo',
     addressState: 'SP',
-    addressPostal: '01001000',
+    addressPostal: '01001-000',
     internalNotes: 'nota dtov',
     userId,
   });
   assert.equal(profile.ok, true, profile.errorCode);
+  assert.equal(profile.profile.cpf, '52998224725');
+  assert.equal(profile.profile.addressPostal, '01001000');
+  assert.equal(profile.profile.emergencyPhone, '11999990000');
 
   const loaded = await getDpProfile({ query }, { companyId, candidateId });
   assert.equal(loaded.ok, true);

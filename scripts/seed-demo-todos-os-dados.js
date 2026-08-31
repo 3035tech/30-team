@@ -579,6 +579,10 @@ async function main() {
         [companyId]
       );
       await deleteIfExists(client, `DELETE FROM team_pulses WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_key_results WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM okr_objectives WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM employee_time_punches WHERE company_id = $1`, [companyId]);
+      await deleteIfExists(client, `DELETE FROM company_time_schedules WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM team_groups WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM succession_plans WHERE company_id = $1`, [companyId]);
       await deleteIfExists(client, `DELETE FROM critical_roles WHERE company_id = $1`, [companyId]);
@@ -727,13 +731,18 @@ async function main() {
     let jobRoleId = null;
     try {
       const roleIns = await client.query(
-        `INSERT INTO job_roles (company_id, name, description, rubric, active)
-         VALUES ($1, $2, $3, $4::jsonb, TRUE) RETURNING id`,
+        `INSERT INTO job_roles (
+           company_id, name, description, rubric, active,
+           market_salary_min, market_salary_max
+         )
+         VALUES ($1, $2, $3, $4::jsonb, TRUE, $5, $6) RETURNING id`,
         [
           companyId,
           'Engenheiro(a) de Plataforma',
           'Cargo demo vinculado à vaga fullstack.',
           JSON.stringify({ 5: 3, 1: 2, 6: 2, 3: 1 }),
+          '11000.00',
+          '16000.00',
         ]
       );
       jobRoleId = roleIns.rows[0].id;
@@ -1412,8 +1421,10 @@ async function main() {
           await client.query(
             `INSERT INTO performance_reviews (
                cycle_id, company_id, candidate_id, reviewer_user_id, outcomes,
-               overall_notes, status, submitted_at
-             ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,'submitted', NOW() - ($7||' days')::interval)`,
+               overall_notes, status, submitted_at,
+               overall_score, nine_box_cell, calibrated_at, calibrated_by_user_id, calibration_notes
+             ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,'submitted', NOW() - ($7||' days')::interval,
+               $8, $9, NOW() - ($7||' days')::interval, $4, $10)`,
             [
               cycleId,
               companyId,
@@ -1422,6 +1433,9 @@ async function main() {
               JSON.stringify({ [goalId]: { outcome: i < 3 ? 'exceeded' : 'met', notes: 'Review demo.' } }),
               '<p>Review demo: há indícios de progresso.</p>',
               String(i + 1),
+              i < 3 ? 78 + i * 4 : 62 + i,
+              i < 3 ? 7 : 5,
+              i < 3 ? 'Calibração demo: tendência positiva.' : 'Calibração demo: acompanhar.',
             ]
           );
         }
@@ -1536,12 +1550,65 @@ async function main() {
            ) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
           [companyId, 'Núcleo Plataforma', memberAss[0], memberAss.slice(1), hrUserId]
         );
+        const teamGroupId = grp.rows[0].id;
+        try {
+          const obj = await client.query(
+            `INSERT INTO okr_objectives (
+               company_id, level, title, description, period_start, period_end, created_by_user_id
+             ) VALUES ($1,'company','Crescer a plataforma 2026','OKR empresa demo.', CURRENT_DATE - 30, CURRENT_DATE + 150, $2)
+             RETURNING id`,
+            [companyId, hrUserId]
+          );
+          const companyObjId = obj.rows[0].id;
+          await client.query(
+            `INSERT INTO okr_key_results (
+               company_id, objective_id, title, unit, current_value, target_value, sort_order
+             ) VALUES
+               ($1,$2,'NPS interno','pts',42,60,0),
+               ($1,$2,'Features shipped','un',8,12,1)`,
+            [companyId, companyObjId]
+          );
+          const teamObj = await client.query(
+            `INSERT INTO okr_objectives (
+               company_id, parent_id, level, title, description, team_group_id,
+               period_start, period_end, created_by_user_id
+             ) VALUES ($1,$2,'team','Entregar núcleo plataforma','OKR time demo.',$3,
+               CURRENT_DATE - 30, CURRENT_DATE + 150, $4)
+             RETURNING id`,
+            [companyId, companyObjId, teamGroupId, hrUserId]
+          );
+          await client.query(
+            `INSERT INTO okr_key_results (
+               company_id, objective_id, title, unit, current_value, target_value, sort_order
+             ) VALUES ($1,$2,'PRs merged','un',24,40,0)`,
+            [companyId, teamObj.rows[0].id]
+          );
+          if (colaborador) {
+            const personObj = await client.query(
+              `INSERT INTO okr_objectives (
+                 company_id, parent_id, level, title, description, candidate_id,
+                 period_start, period_end, created_by_user_id
+               ) VALUES ($1,$2,'person','Contribuir no núcleo','OKR pessoa demo.',$3,
+                 CURRENT_DATE - 30, CURRENT_DATE + 150, $4)
+               RETURNING id`,
+              [companyId, teamObj.rows[0].id, colaborador.candidateId, hrUserId]
+            );
+            await client.query(
+              `INSERT INTO okr_key_results (
+                 company_id, objective_id, title, unit, current_value, target_value, sort_order
+               ) VALUES ($1,$2,'Stories done','un',6,10,0)`,
+              [companyId, personObj.rows[0].id]
+            );
+          }
+        } catch (_) {
+          /* OKR optional if migration missing */
+        }
         const pulse = await client.query(
           `INSERT INTO team_pulses (
              company_id, team_group_id, title, status, opens_at, closes_at, created_by_user_id
            ) VALUES ($1,$2,$3,'open', NOW() - INTERVAL '3 days', NOW() + INTERVAL '14 days', $4)
            RETURNING id`,
-          [companyId, grp.rows[0].id, 'Pulso: Núcleo Plataforma', hrUserId]
+          [companyId, teamGroupId, 'Pulso: Núcleo Plataforma', hrUserId]
         );
         const pq = await client.query(
           `INSERT INTO team_pulse_questions (pulse_id, company_id, prompt_key, prompt, sort_order)
@@ -1642,12 +1709,13 @@ async function main() {
       await deleteIfExists(
         client,
         `INSERT INTO employee_compensation_events (
-           company_id, candidate_id, event_type, amount, effective_date, notes, created_by_user_id
+           company_id, candidate_id, event_type, amount, effective_date, notes, created_by_user_id, approval_status
          ) VALUES
-           ($1,$2,'hire','12000.00', CURRENT_DATE - 200, '<p>Contratação CLT (demo).</p>', $3),
-           ($1,$2,'raise','13200.00', CURRENT_DATE - 40, '<p>Ajuste 10%.</p>', $3),
-           ($1,$4,'hire','14000.00', CURRENT_DATE - 300, '<p>Contratação Ana.</p>', $3),
-           ($1,$5,'bonus','3000.00', CURRENT_DATE - 20, '<p>Bônus Q2.</p>', $3)`,
+           ($1,$2,'hire','12000.00', CURRENT_DATE - 200, '<p>Contratação CLT (demo).</p>', $3, 'approved'),
+           ($1,$2,'raise','13200.00', CURRENT_DATE - 40, '<p>Ajuste 10%.</p>', $3, 'approved'),
+           ($1,$4,'hire','14000.00', CURRENT_DATE - 300, '<p>Contratação Ana.</p>', $3, 'approved'),
+           ($1,$5,'bonus','3000.00', CURRENT_DATE - 20, '<p>Bônus Q2.</p>', $3, 'approved'),
+           ($1,$2,'bonus','1500.00', CURRENT_DATE + 15, '<p>Bônus proposto (demo RV).</p>', $3, 'proposed')`,
         [
           companyId,
           colaborador.candidateId,
@@ -1656,6 +1724,48 @@ async function main() {
           employees.find((e) => e.key === 'elena')?.candidateId || colaborador.candidateId,
         ]
       );
+      if (jobRoleId) {
+        const linkIds = [
+          colaborador.candidateId,
+          employees[0]?.candidateId,
+          employees.find((e) => e.key === 'elena')?.candidateId,
+        ].filter(Boolean);
+        await deleteIfExists(
+          client,
+          `UPDATE candidates SET job_role_id = $1
+           WHERE company_id = $2 AND id = ANY($3::bigint[])`,
+          [jobRoleId, companyId, linkIds]
+        );
+      }
+    }
+
+    // Time clock MVP (schedule + today punches)
+    if (colaborador) {
+      await deleteIfExists(
+        client,
+        `INSERT INTO company_time_schedules (
+           company_id, workday_start, workday_end, break_minutes, timezone, late_grace_minutes, updated_by_user_id
+         ) VALUES ($1, '09:00', '18:00', 60, 'America/Sao_Paulo', 10, $2)
+         ON CONFLICT (company_id) DO UPDATE SET
+           workday_start = EXCLUDED.workday_start,
+           workday_end = EXCLUDED.workday_end,
+           updated_at = NOW()`,
+        [companyId, hrUserId]
+      );
+      const punchTargets = [colaborador, employees[0]].filter(Boolean);
+      for (const emp of punchTargets) {
+        await deleteIfExists(
+          client,
+          `INSERT INTO employee_time_punches (
+             company_id, candidate_id, punched_at, punch_kind, source, flag, review_status, notes
+           ) VALUES
+             ($1,$2, (CURRENT_DATE + TIME '09:12') AT TIME ZONE 'America/Sao_Paulo', 'in', 'web', 'late', 'none', 'Demo entrada'),
+             ($1,$2, (CURRENT_DATE + TIME '12:05') AT TIME ZONE 'America/Sao_Paulo', 'out', 'web', NULL, 'ok', 'Demo almoço'),
+             ($1,$2, (CURRENT_DATE + TIME '13:05') AT TIME ZONE 'America/Sao_Paulo', 'in', 'web', NULL, 'none', ''),
+             ($1,$2, (CURRENT_DATE + TIME '18:02') AT TIME ZONE 'America/Sao_Paulo', 'out', 'web', NULL, 'none', '')`,
+          [companyId, emp.candidateId]
+        );
+      }
     }
 
     // Interview scorecards + slots

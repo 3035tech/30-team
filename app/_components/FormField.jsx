@@ -33,7 +33,7 @@ export function FormField({
       htmlFor={as === 'label' ? htmlFor : undefined}
       className={cn(
         /* w-full: em coluna, self-start sozinho encolhe o campo ao conteúdo (e-mail ≠ senha). */
-        'flex w-full min-w-0 flex-col gap-1',
+        'flex w-full min-w-0 flex-col gap-1.5',
         className
       )}
     >

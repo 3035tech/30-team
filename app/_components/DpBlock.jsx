@@ -17,7 +17,10 @@ import { StatusToneChip } from './StatusToneChip';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { CopyableLink } from './CopyableLink';
+import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
+import { BR_STATES } from '../../lib/candidate-profile.js';
+import { formatCepBr, formatCpfBr, formatPhoneBr } from '../../lib/br-masks.js';
 import {
   DP_DOCUMENT_KEYS,
   DP_DOCUMENT_STATUS,
@@ -149,6 +152,49 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       confirmLabel: t(locale, 'panel.dp.save'),
       fields: [
         {
+          key: 'addressPostal',
+          type: 'cep',
+          label: t(locale, 'panel.dp.addressPostal'),
+          defaultValue: profile?.addressPostal || '',
+          help: t(locale, 'panel.dp.cepHelp'),
+          cepAutofill: {
+            addressLine: 'addressLine',
+            addressCity: 'addressCity',
+            addressState: 'addressState',
+          },
+        },
+        {
+          key: 'addressLine',
+          label: t(locale, 'panel.dp.addressLine'),
+          defaultValue: profile?.addressLine || '',
+          maxLength: 240,
+        },
+        {
+          key: 'addressCity',
+          label: t(locale, 'panel.dp.addressCity'),
+          defaultValue: profile?.addressCity || '',
+          maxLength: 120,
+          row: 'cityUf',
+        },
+        {
+          key: 'addressState',
+          type: 'select',
+          label: t(locale, 'panel.dp.addressState'),
+          defaultValue: profile?.addressState || '',
+          options: [
+            { value: '', label: t(locale, 'panel.dp.ufEmpty') },
+            ...BR_STATES.map((s) => ({ value: s.uf, label: s.uf })),
+          ],
+          row: 'cityUf',
+        },
+        {
+          key: 'cpf',
+          type: 'cpf',
+          label: t(locale, 'panel.dp.cpf'),
+          defaultValue: profile?.cpf || '',
+          help: t(locale, 'panel.dp.cpfHelp'),
+        },
+        {
           key: 'emergencyName',
           label: t(locale, 'panel.dp.emergencyName'),
           defaultValue: profile?.emergencyName || '',
@@ -156,39 +202,15 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         },
         {
           key: 'emergencyPhone',
+          type: 'phone',
           label: t(locale, 'panel.dp.emergencyPhone'),
           defaultValue: profile?.emergencyPhone || '',
-          maxLength: 40,
         },
         {
           key: 'emergencyRelation',
           label: t(locale, 'panel.dp.emergencyRelation'),
           defaultValue: profile?.emergencyRelation || '',
           maxLength: 80,
-        },
-        {
-          key: 'addressLine',
-          label: t(locale, 'panel.dp.addressLine'),
-          defaultValue: profile?.addressLine || '',
-          maxLength: 200,
-        },
-        {
-          key: 'addressCity',
-          label: t(locale, 'panel.dp.addressCity'),
-          defaultValue: profile?.addressCity || '',
-          maxLength: 80,
-        },
-        {
-          key: 'addressState',
-          label: t(locale, 'panel.dp.addressState'),
-          defaultValue: profile?.addressState || '',
-          maxLength: 40,
-        },
-        {
-          key: 'addressPostal',
-          label: t(locale, 'panel.dp.addressPostal'),
-          defaultValue: profile?.addressPostal || '',
-          maxLength: 20,
         },
         {
           key: 'internalNotes',
@@ -356,6 +378,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           label: t(locale, 'panel.dp.leaveStarts'),
           defaultValue: today,
           required: true,
+          row: 'leaveDates',
         },
         {
           key: 'endsOn',
@@ -363,18 +386,18 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           label: t(locale, 'panel.dp.leaveEnds'),
           defaultValue: today,
           required: true,
+          row: 'leaveDates',
         },
         {
           key: 'reason',
-          type: 'textarea',
+          type: 'richText',
           label: t(locale, 'panel.dp.leaveReason'),
           defaultValue: '',
-          rows: 2,
-          maxLength: 2000,
+          minHeight: 100,
           help:
             avail != null
               ? t(locale, 'panel.dp.leaveBalanceFormHelp', { n: avail })
-              : undefined,
+              : t(locale, 'panel.dp.leaveReasonHelp'),
         },
         {
           key: 'allowOverBalance',
@@ -687,16 +710,17 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         </div>
         {profile ? (
           <dl className="m-0 grid gap-2 sm:grid-cols-2">
-            <FormField as="div" label={t(locale, 'panel.dp.emergencyName')}>
-              <p className="m-0 text-sm text-ink">{profile.emergencyName || '—'}</p>
+            <FormField as="div" label={t(locale, 'panel.dp.addressPostal')}>
+              <p className="m-0 text-sm text-ink">
+                {profile.addressPostal ? formatCepBr(profile.addressPostal) : '—'}
+              </p>
             </FormField>
-            <FormField as="div" label={t(locale, 'panel.dp.emergencyPhone')}>
-              <p className="m-0 text-sm text-ink">{profile.emergencyPhone || '—'}</p>
+            <FormField as="div" label={t(locale, 'panel.dp.cpf')}>
+              <p className="m-0 text-sm text-ink">
+                {profile.cpf ? formatCpfBr(profile.cpf) : '—'}
+              </p>
             </FormField>
-            <FormField as="div" label={t(locale, 'panel.dp.emergencyRelation')}>
-              <p className="m-0 text-sm text-ink">{profile.emergencyRelation || '—'}</p>
-            </FormField>
-            <FormField as="div" label={t(locale, 'panel.dp.addressLine')}>
+            <FormField as="div" label={t(locale, 'panel.dp.addressLine')} className="sm:col-span-2">
               <p className="m-0 text-sm text-ink">{profile.addressLine || '—'}</p>
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.addressCity')}>
@@ -705,8 +729,16 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             <FormField as="div" label={t(locale, 'panel.dp.addressState')}>
               <p className="m-0 text-sm text-ink">{profile.addressState || '—'}</p>
             </FormField>
-            <FormField as="div" label={t(locale, 'panel.dp.addressPostal')}>
-              <p className="m-0 text-sm text-ink">{profile.addressPostal || '—'}</p>
+            <FormField as="div" label={t(locale, 'panel.dp.emergencyName')}>
+              <p className="m-0 text-sm text-ink">{profile.emergencyName || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.emergencyPhone')}>
+              <p className="m-0 text-sm text-ink">
+                {profile.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : '—'}
+              </p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.emergencyRelation')}>
+              <p className="m-0 text-sm text-ink">{profile.emergencyRelation || '—'}</p>
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.internalNotes')} className="sm:col-span-2">
               <p className="m-0 whitespace-pre-wrap text-sm text-ink">
@@ -857,7 +889,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                     </StatusToneChip>
                   </div>
                   {row.reason ? (
-                    <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{row.reason}</p>
+                    <div className="mt-1 text-xs text-ink-muted">
+                      <RichTextView html={row.reason} />
+                    </div>
                   ) : null}
                   {row.managerNotes ? (
                     <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>

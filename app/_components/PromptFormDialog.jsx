@@ -22,13 +22,13 @@ import { parseTagList } from '../../lib/tag-list';
 import { CompanyLogoCropDialog } from './CompanyLogoCropDialog';
 import { FormField } from './FormField';
 import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
-import { digitsOnly, formatSalaryDisplay } from '../../lib/br-masks';
+import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneBr, stripCep, stripCpf, stripPhone } from '../../lib/br-masks';
 
 /**
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key (or legacy name), label, defaultValue? (or legacy value?),
- *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'salary',
+ *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'salary'|'cep'|'cpf'|'phone',
  *   options?: [{value,label}],
  *   suggestions?: string[], // tags
  *   maxTags?: number, tagMax?: number, // tags
@@ -41,6 +41,8 @@ import { digitsOnly, formatSalaryDisplay } from '../../lib/br-masks';
  *   minHeight?: number, // richText
  *   min?: string, max?: string, // date / datetime-local
  *   row?: string, // same key → side-by-side on one row (e.g. start/end dates)
+ *   // cep autofill (keys of other fields in the same form):
+ *   cepAutofill?: { addressLine?: string, addressCity?: string, addressState?: string, neighborhoodAppend?: boolean },
  *   // imageUpload:
  *   uploadUrl?: string,
  *   storageConfigured?: boolean,
@@ -89,7 +91,10 @@ export function PromptFormDialog({
   const [uploadBusyKey, setUploadBusyKey] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [cropTarget, setCropTarget] = useState(null); // { field, file }
+  const [cepBusyKey, setCepBusyKey] = useState('');
+  const [cepHint, setCepHint] = useState('');
   const blobUrlsRef = useRef([]);
+  const cepLookupRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -98,6 +103,8 @@ export function PromptFormDialog({
   useEffect(() => {
     if (!open) return;
     setCropTarget(null);
+    setCepBusyKey('');
+    setCepHint('');
     const init = {};
     for (const f of fields) {
       const fieldKey = fieldKeyOf(f);
@@ -115,6 +122,12 @@ export function PromptFormDialog({
           file: null,
           removed: false,
         };
+      } else if (f.type === 'cep') {
+        init[fieldKey] = formatCepBr(initial || '');
+      } else if (f.type === 'cpf') {
+        init[fieldKey] = formatCpfBr(initial || '');
+      } else if (f.type === 'phone') {
+        init[fieldKey] = formatPhoneBr(initial || '');
       } else {
         init[fieldKey] = initial != null ? String(initial) : '';
       }
@@ -165,6 +178,51 @@ export function PromptFormDialog({
 
   const setField = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
 
+  const applyCepLookup = async (fk, digits, autofill) => {
+    if (!autofill || digits.length !== 8) return;
+    const token = ++cepLookupRef.current;
+    setCepBusyKey(fk);
+    setCepHint('');
+    try {
+      const res = await fetch(`/api/public/br-cep?cep=${encodeURIComponent(digits)}`);
+      const data = await res.json().catch(() => ({}));
+      if (token !== cepLookupRef.current) return;
+      if (!res.ok || !data?.ok) {
+        setCepHint(
+          data?.error ||
+            t(locale, res.status === 404 ? 'errors.CEP_NOT_FOUND' : 'errors.CEP_LOOKUP_FAILED')
+        );
+        return;
+      }
+      setValues((prev) => {
+        const next = { ...prev, [fk]: formatCepBr(digits) };
+        if (autofill.addressLine) {
+          const street = String(data.street || '').trim();
+          const neighborhood = String(data.neighborhood || '').trim();
+          const line =
+            autofill.neighborhoodAppend !== false && street && neighborhood
+              ? `${street}, ${neighborhood}`
+              : street || prev[autofill.addressLine] || '';
+          if (line) next[autofill.addressLine] = line.slice(0, 240);
+        }
+        if (autofill.addressCity && data.city) {
+          next[autofill.addressCity] = String(data.city).slice(0, 120);
+        }
+        if (autofill.addressState && data.state) {
+          next[autofill.addressState] = String(data.state).toUpperCase().slice(0, 2);
+        }
+        return next;
+      });
+      setCepHint(t(locale, 'panel.dp.cepFound'));
+    } catch {
+      if (token === cepLookupRef.current) {
+        setCepHint(t(locale, 'errors.CEP_LOOKUP_FAILED'));
+      }
+    } finally {
+      if (token === cepLookupRef.current) setCepBusyKey('');
+    }
+  };
+
   const visibleFields = fields.filter((f) => {
     if (typeof f.showWhen !== 'function') return true;
     try {
@@ -191,7 +249,13 @@ export function PromptFormDialog({
         key={fieldKeyOf(f)}
         as={f.type === 'imageUpload' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' ? 'div' : 'label'}
         label={f.label}
-        hint={f.help || null}
+        hint={
+          f.type === 'cep' && cepBusyKey === fieldKeyOf(f)
+            ? t(locale, 'panel.dp.cepLooking')
+            : f.type === 'cep' && cepHint
+              ? cepHint
+              : f.help || null
+        }
         className="w-full"
       >
         {renderControl(f)}
@@ -450,6 +514,68 @@ export function PromptFormDialog({
       );
     }
 
+    if (f.type === 'cep') {
+      return (
+        <input
+          type="text"
+          inputMode="numeric"
+          autoComplete="postal-code"
+          value={values[fk] ?? ''}
+          onChange={(e) => {
+            const digits = stripCep(e.target.value) || '';
+            setField(fk, formatCepBr(digits));
+            setCepHint('');
+            if (digits.length === 8) {
+              void applyCepLookup(fk, digits, f.cepAutofill || null);
+            }
+          }}
+          placeholder={f.placeholder || '00000-000'}
+          disabled={Boolean(f.disabled) || cepBusyKey === fk}
+          className={cn(dialogFieldClass, (f.disabled || cepBusyKey === fk) && 'opacity-60')}
+          aria-label={f.label}
+          aria-busy={cepBusyKey === fk}
+        />
+      );
+    }
+
+    if (f.type === 'cpf') {
+      return (
+        <input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={values[fk] ?? ''}
+          onChange={(e) => {
+            const digits = stripCpf(e.target.value) || '';
+            setField(fk, formatCpfBr(digits));
+          }}
+          placeholder={f.placeholder || '000.000.000-00'}
+          disabled={Boolean(f.disabled)}
+          className={cn(dialogFieldClass, f.disabled && 'opacity-60')}
+          aria-label={f.label}
+        />
+      );
+    }
+
+    if (f.type === 'phone') {
+      return (
+        <input
+          type="text"
+          inputMode="tel"
+          autoComplete="tel"
+          value={values[fk] ?? ''}
+          onChange={(e) => {
+            const digits = stripPhone(e.target.value) || '';
+            setField(fk, formatPhoneBr(digits));
+          }}
+          placeholder={f.placeholder || '(11) 99999-9999'}
+          disabled={Boolean(f.disabled)}
+          className={cn(dialogFieldClass, f.disabled && 'opacity-60')}
+          aria-label={f.label}
+        />
+      );
+    }
+
     if (f.type === 'date' || f.type === 'datetime-local') {
       return (
         <DateField
@@ -510,12 +636,12 @@ export function PromptFormDialog({
           {message ? (
             <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
           ) : null}
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-5">
             {fieldGroups.map((group, gi) =>
               group.row && group.fields.length > 1 ? (
                 <div
                   key={`row-${group.row}-${gi}`}
-                  className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                  className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
                 >
                   {group.fields.map((f) => renderFieldBlock(f))}
                 </div>

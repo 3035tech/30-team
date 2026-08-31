@@ -1584,6 +1584,7 @@ export default function DashboardClient({
                 <CompensationAdminTab
                   locale={locale}
                   companyId={scopedCompanyId}
+                  navigateDashboard={navigateWithOpts}
                 />
               )}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}

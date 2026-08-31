@@ -98,6 +98,31 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
   };
 
   const createObjective = async () => {
+    let teamGroups = [];
+    try {
+      const res = await fetch(`/api/admin/team-groups${companyQs}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(data.items)) teamGroups = data.items;
+    } catch {
+      /* optional */
+    }
+    const parentOptions = [
+      { value: '', label: t(locale, 'panel.okr.parentNone') },
+      ...objectives
+        .filter((o) => o.level === OKR_OBJECTIVE_LEVEL.COMPANY || o.level === OKR_OBJECTIVE_LEVEL.TEAM)
+        .map((o) => ({
+          value: String(o.id),
+          label: `${levelLabel(o.level)}: ${o.title}`.slice(0, 80),
+        })),
+    ];
+    const groupOptions = [
+      { value: '', label: t(locale, 'panel.okr.groupNone') },
+      ...teamGroups.map((g) => ({
+        value: String(g.id),
+        label: g.name || `#${g.id}`,
+      })),
+    ];
+
     const values = await promptForm({
       title: t(locale, 'panel.okr.createObjTitle'),
       confirmLabel: t(locale, 'panel.okr.createObjConfirm'),
@@ -125,6 +150,30 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           ],
         },
         {
+          key: 'parentId',
+          type: 'select',
+          label: t(locale, 'panel.okr.parentLabel'),
+          help: t(locale, 'panel.okr.parentHelp'),
+          defaultValue: '',
+          options: parentOptions,
+        },
+        {
+          key: 'teamGroupId',
+          type: 'select',
+          label: t(locale, 'panel.okr.groupLabel'),
+          help: t(locale, 'panel.okr.groupHelp'),
+          defaultValue: '',
+          options: groupOptions,
+        },
+        {
+          key: 'candidateId',
+          type: 'entitySearch',
+          label: t(locale, 'panel.okr.personLabel'),
+          help: t(locale, 'panel.okr.personHelp'),
+          searchUrl: `/api/admin/employees/search?companyId=${encodeURIComponent(companyId)}`,
+          minChars: 2,
+        },
+        {
           key: 'periodStart',
           type: 'date',
           label: t(locale, 'panel.okr.periodStart'),
@@ -137,6 +186,15 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       ],
     });
     if (!values?.title) return;
+    const level = values.level || OKR_OBJECTIVE_LEVEL.COMPANY;
+    if (level === OKR_OBJECTIVE_LEVEL.TEAM && !values.teamGroupId) {
+      toast(t(locale, 'panel.okr.teamGroupRequired'), 'error');
+      return;
+    }
+    if (level === OKR_OBJECTIVE_LEVEL.PERSON && !values.candidateId) {
+      toast(t(locale, 'panel.okr.personRequired'), 'error');
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/admin/okr', {
@@ -146,7 +204,16 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
           companyId,
           title: values.title,
           description: values.description || '',
-          level: values.level || OKR_OBJECTIVE_LEVEL.COMPANY,
+          level,
+          parentId: values.parentId ? Number(values.parentId) : null,
+          teamGroupId:
+            level === OKR_OBJECTIVE_LEVEL.TEAM && values.teamGroupId
+              ? Number(values.teamGroupId)
+              : null,
+          candidateId:
+            level === OKR_OBJECTIVE_LEVEL.PERSON && values.candidateId
+              ? Number(values.candidateId)
+              : null,
           periodStart: values.periodStart || null,
           periodEnd: values.periodEnd || null,
         }),
@@ -306,7 +373,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       ) : (
       <ContentEnter animKey={`okr|${companyId}|${objectives.length}`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <InlineCallout tone="info" className="mb-0 flex-1 text-xs">
+          <InlineCallout tone="info" className="mb-0 flex-1">
             {t(locale, 'panel.okr.hedgedNote')}
           </InlineCallout>
           <AdminCreateButton
@@ -354,11 +421,28 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                         <span className="font-ui text-sm font-medium text-ink">{obj.title}</span>
                         <StatusToneChip tone="neutral">{levelLabel(obj.level)}</StatusToneChip>
                       </div>
+                      {(obj.teamGroupName || obj.candidateName || obj.parentTitle) ? (
+                        <div className="mt-0.5 font-mono text-2xs text-ink-faint">
+                          {[
+                            obj.parentTitle
+                              ? t(locale, 'panel.okr.metaParent', { title: obj.parentTitle })
+                              : null,
+                            obj.teamGroupName
+                              ? t(locale, 'panel.okr.metaGroup', { name: obj.teamGroupName })
+                              : null,
+                            obj.candidateName
+                              ? t(locale, 'panel.okr.metaPerson', { name: obj.candidateName })
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      ) : null}
                       {period ? (
                         <div className="mt-0.5 font-mono text-2xs text-ink-faint">{period}</div>
                       ) : null}
                       {obj.description ? (
-                        <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{obj.description}</p>
+                        <p className={cn(S.muted, 'mb-0 mt-1 text-prose')}>{obj.description}</p>
                       ) : null}
                     </div>
                     <div className="flex shrink-0 gap-1">

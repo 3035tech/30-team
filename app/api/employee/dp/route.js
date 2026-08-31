@@ -49,6 +49,7 @@ export async function PATCH(request) {
       emergencyName: body.emergencyName ?? prev.emergencyName,
       emergencyPhone: body.emergencyPhone ?? prev.emergencyPhone,
       emergencyRelation: body.emergencyRelation ?? prev.emergencyRelation,
+      cpf: body.cpf ?? prev.cpf,
       addressLine: body.addressLine ?? prev.addressLine,
       addressCity: body.addressCity ?? prev.addressCity,
       addressState: body.addressState ?? prev.addressState,

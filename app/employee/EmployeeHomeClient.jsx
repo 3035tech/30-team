@@ -19,6 +19,7 @@ import { MeterBar } from '../_components/MeterBar';
 import { useEmployeeNav } from '../_components/EmployeeNavContext';
 import { InlineCallout } from '../_components/InlineCallout';
 import { EmployeeDpSection } from '../_components/EmployeeDpSection';
+import { EmployeeTimeClockSection } from '../_components/EmployeeTimeClockSection';
 import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySection';
 import { EmployeeFeedbackSection } from '../_components/ContinuousFeedbackBlock';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
@@ -33,6 +34,7 @@ const SECTION_KEYS = [
   'oneOnOne',
   'feedback',
   'dp',
+  'timeClock',
   'variablePay',
   'feed',
   'kudos',
@@ -145,6 +147,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [busy, setBusy] = useState(false);
   const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
   const [dpBadge, setDpBadge] = useState(0);
+  const [timeClockBadge, setTimeClockBadge] = useState(0);
   const [variablePayBadge, setVariablePayBadge] = useState(0);
   const [feedbackBadge, setFeedbackBadge] = useState(0);
   const [feedTotal, setFeedTotal] = useState(0);
@@ -421,12 +424,13 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         surveys: surveyMeta.openCount || 0,
         lms: lmsOverdue,
         dp: dpBadge,
+        timeClock: timeClockBadge,
         feed: feedTotal,
         kudos: kudosTotal,
         feedback: feedbackBadge,
       },
     });
-  }, [data, surveyMeta, dpBadge, feedTotal, kudosTotal, feedbackBadge, setNavMeta]);
+  }, [data, surveyMeta, dpBadge, timeClockBadge, feedTotal, kudosTotal, feedbackBadge, setNavMeta]);
 
   // Scroll-spy
   useEffect(() => {
@@ -986,6 +990,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           <EmployeeDpSection locale={locale} onBadge={setDpBadge} />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="timeClock"
+          title={t(locale, 'employeeHome.timeClockTitle')}
+          count={timeClockBadge || null}
+          open={openMap.timeClock !== false}
+          onToggle={() => toggleSection('timeClock')}
+          locale={locale}
+        >
+          <EmployeeTimeClockSection locale={locale} onBadge={setTimeClockBadge} />
         </CollapsibleSection>
 
         <CollapsibleSection

@@ -103,6 +103,7 @@ export async function PATCH(request, { params }) {
       emergencyName: body.emergencyName,
       emergencyPhone: body.emergencyPhone,
       emergencyRelation: body.emergencyRelation,
+      cpf: body.cpf,
       addressLine: body.addressLine,
       addressCity: body.addressCity,
       addressState: body.addressState,

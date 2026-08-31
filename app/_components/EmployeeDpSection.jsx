@@ -11,7 +11,10 @@ import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
 import { CopyableLink } from './CopyableLink';
+import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
+import { BR_STATES } from '../../lib/candidate-profile.js';
+import { formatCepBr, formatCpfBr, formatPhoneBr } from '../../lib/br-masks.js';
 import {
   DP_DOCUMENT_STATUS,
   DP_LEAVE_STATUS,
@@ -121,6 +124,49 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
       confirmLabel: t(locale, 'panel.dp.save'),
       fields: [
         {
+          key: 'addressPostal',
+          type: 'cep',
+          label: t(locale, 'panel.dp.addressPostal'),
+          defaultValue: profile?.addressPostal || '',
+          help: t(locale, 'panel.dp.cepHelp'),
+          cepAutofill: {
+            addressLine: 'addressLine',
+            addressCity: 'addressCity',
+            addressState: 'addressState',
+          },
+        },
+        {
+          key: 'addressLine',
+          label: t(locale, 'panel.dp.addressLine'),
+          defaultValue: profile?.addressLine || '',
+          maxLength: 240,
+        },
+        {
+          key: 'addressCity',
+          label: t(locale, 'panel.dp.addressCity'),
+          defaultValue: profile?.addressCity || '',
+          maxLength: 120,
+          row: 'cityUf',
+        },
+        {
+          key: 'addressState',
+          type: 'select',
+          label: t(locale, 'panel.dp.addressState'),
+          defaultValue: profile?.addressState || '',
+          options: [
+            { value: '', label: t(locale, 'panel.dp.ufEmpty') },
+            ...BR_STATES.map((s) => ({ value: s.uf, label: s.uf })),
+          ],
+          row: 'cityUf',
+        },
+        {
+          key: 'cpf',
+          type: 'cpf',
+          label: t(locale, 'panel.dp.cpf'),
+          defaultValue: profile?.cpf || '',
+          help: t(locale, 'panel.dp.cpfHelp'),
+        },
+        {
           key: 'emergencyName',
           label: t(locale, 'panel.dp.emergencyName'),
           defaultValue: profile?.emergencyName || '',
@@ -128,39 +174,15 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
         },
         {
           key: 'emergencyPhone',
+          type: 'phone',
           label: t(locale, 'panel.dp.emergencyPhone'),
           defaultValue: profile?.emergencyPhone || '',
-          maxLength: 40,
         },
         {
           key: 'emergencyRelation',
           label: t(locale, 'panel.dp.emergencyRelation'),
           defaultValue: profile?.emergencyRelation || '',
           maxLength: 80,
-        },
-        {
-          key: 'addressLine',
-          label: t(locale, 'panel.dp.addressLine'),
-          defaultValue: profile?.addressLine || '',
-          maxLength: 200,
-        },
-        {
-          key: 'addressCity',
-          label: t(locale, 'panel.dp.addressCity'),
-          defaultValue: profile?.addressCity || '',
-          maxLength: 80,
-        },
-        {
-          key: 'addressState',
-          label: t(locale, 'panel.dp.addressState'),
-          defaultValue: profile?.addressState || '',
-          maxLength: 40,
-        },
-        {
-          key: 'addressPostal',
-          label: t(locale, 'panel.dp.addressPostal'),
-          defaultValue: profile?.addressPostal || '',
-          maxLength: 20,
         },
       ],
     });
@@ -263,23 +285,25 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
           label: t(locale, 'panel.dp.leaveStarts'),
           type: 'date',
           required: true,
+          row: 'leaveDates',
         },
         {
           key: 'endsOn',
           label: t(locale, 'panel.dp.leaveEnds'),
           type: 'date',
           required: true,
+          row: 'leaveDates',
         },
         {
           key: 'reason',
           label: t(locale, 'panel.dp.leaveReason'),
-          type: 'textarea',
-          maxLength: 2000,
+          type: 'richText',
           defaultValue: '',
+          minHeight: 100,
           help:
             avail != null
               ? t(locale, 'employeeHome.dpBalanceFormHint', { n: avail })
-              : undefined,
+              : t(locale, 'panel.dp.leaveReasonHelp'),
         },
       ],
     });
@@ -406,27 +430,41 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
               {t(locale, 'panel.dp.editProfile')}
             </button>
           </div>
-          {!profile?.emergencyName && !profile?.addressLine ? (
+          {!profile?.emergencyName && !profile?.addressLine && !profile?.addressPostal && !profile?.cpf ? (
             <InlineCallout tone="info" className="mb-3">
               {t(locale, 'panel.dp.noProfile')}
             </InlineCallout>
           ) : null}
           <dl className="m-0 grid gap-2 sm:grid-cols-2">
+            <FormField label={t(locale, 'panel.dp.addressPostal')}>
+              <p className={cn(S.cardMuted, 'm-0')}>
+                {profile?.addressPostal ? formatCepBr(profile.addressPostal) : '—'}
+              </p>
+            </FormField>
+            <FormField label={t(locale, 'panel.dp.cpf')}>
+              <p className={cn(S.cardMuted, 'm-0')}>
+                {profile?.cpf ? formatCpfBr(profile.cpf) : '—'}
+              </p>
+            </FormField>
+            <FormField label={t(locale, 'panel.dp.addressLine')} className="sm:col-span-2">
+              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressLine || '—'}</p>
+            </FormField>
+            <FormField label={t(locale, 'panel.dp.addressCity')}>
+              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressCity || '—'}</p>
+            </FormField>
+            <FormField label={t(locale, 'panel.dp.addressState')}>
+              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressState || '—'}</p>
+            </FormField>
             <FormField label={t(locale, 'panel.dp.emergencyName')}>
               <p className={cn(S.cardMuted, 'm-0')}>{profile?.emergencyName || '—'}</p>
             </FormField>
             <FormField label={t(locale, 'panel.dp.emergencyPhone')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.emergencyPhone || '—'}</p>
+              <p className={cn(S.cardMuted, 'm-0')}>
+                {profile?.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : '—'}
+              </p>
             </FormField>
             <FormField label={t(locale, 'panel.dp.emergencyRelation')}>
               <p className={cn(S.cardMuted, 'm-0')}>{profile?.emergencyRelation || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.addressLine')}>
-              <p className={cn(S.cardMuted, 'm-0')}>
-                {[profile?.addressLine, profile?.addressCity, profile?.addressState, profile?.addressPostal]
-                  .filter(Boolean)
-                  .join(' · ') || '—'}
-              </p>
             </FormField>
           </dl>
         </div>
@@ -537,7 +575,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge }) {
                         : ''}
                     </div>
                     {row.reason ? (
-                      <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{row.reason}</p>
+                      <div className="mt-1 text-xs text-ink-muted">
+                        <RichTextView html={row.reason} />
+                      </div>
                     ) : null}
                     {row.hasFile && row.fileUrl ? (
                       <div className="mt-1">

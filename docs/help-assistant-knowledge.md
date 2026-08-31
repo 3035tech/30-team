@@ -37,6 +37,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Colaborador (`/employee`) | Seção `employeeHome` no Guia (RH convida/configura) |
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / férias / saldo) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
+| Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
 | Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` |
 | Prep de entrevista | Seção `interviewPrep` + FAQ `faqInterviewPrep` |

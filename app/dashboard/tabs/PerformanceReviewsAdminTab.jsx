@@ -371,7 +371,9 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           key: 'candidateId',
           type: 'entitySearch',
           label: t('sideReviewCandidate'),
-          searchUrl: '/api/admin/employees/search',
+          searchUrl: companyId
+            ? `/api/admin/employees/search?companyId=${encodeURIComponent(companyId)}`
+            : '/api/admin/employees/search',
           minChars: 2,
           required: true,
         },

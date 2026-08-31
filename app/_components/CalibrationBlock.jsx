@@ -219,7 +219,7 @@ export function CalibrationBlock({ locale = 'pt-BR', companyId, cycleId, cycleTi
         {cycleTitle ? (
           <p className="mb-2 font-mono text-2xs text-ink-faint">{cycleBit}</p>
         ) : null}
-        <InlineCallout tone="info" className="mb-3 text-xs">
+        <InlineCallout tone="info" className="mb-3">
           {t(locale, 'panel.calibration.hedgedNote')}
         </InlineCallout>
 

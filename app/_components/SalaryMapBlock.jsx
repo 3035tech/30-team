@@ -157,7 +157,7 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
         <AppLoading variant="panel" />
       ) : (
       <ContentEnter animKey={`smap|${companyId}|${items.length}|${scope}`}>
-        <p className={cn(S.muted, 'mb-3 text-xs')}>{t(locale, 'panel.salaryMap.hint')}</p>
+        <p className={cn(S.muted, 'mb-3 text-prose')}>{t(locale, 'panel.salaryMap.hint')}</p>
 
         <div className="mb-3">
           <SegmentedControl
@@ -290,7 +290,7 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
         </div>
 
         {simulation ? (
-          <InlineCallout tone="info" className="mb-4 text-xs">
+          <InlineCallout tone="info" className="mb-4">
             {t(locale, 'panel.salaryMap.simResult', {
               delta: money(simulation.delta),
               next: money(simulation.nextPayroll),

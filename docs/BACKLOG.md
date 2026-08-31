@@ -575,10 +575,11 @@ Sólides: Profiler (DISC + teorias) como fio condutor. Hoje só T1–T9 + Motiva
 
 Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`, `dp.folha`, …); `/employee` consome holerite/ponto sem segundo login. Fatias abaixo — **não** big-bang.
 
-### B-2721 — Ponto digital (MVP)
-1. Batida web/app + geolocalização opcional; espelho do dia; aprovação de inconsistências pelo gestor.
-2. Escalas simples (turno fixo); export CSV.
-3. Facial / offline / WhatsApp ponto = fase 2 do mesmo item ou follow-up.
+### B-2721 — Ponto digital (MVP) ✅ ENTREGUE
+1. Batida web em `/employee` + geolocalização opcional; espelho do dia; revisão de inconsistências (ok/flagged) no hub DP.
+2. Escala simples por empresa (turno fixo + tolerância); ajuste manual RH; export CSV.
+3. **Fora (fase 2):** facial / offline / WhatsApp ponto; banco de horas (**B-2722**); folha (**B-2726**).
+4. Schema `091_time_clock.sql`; Guia → Ponto digital.
 
 ### B-2722 — Banco de horas / horas extras
 1. Regras configuráveis por empresa; saldo por colaborador; lançamentos manuais + derivados do ponto (**B-2721**).
@@ -646,7 +647,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 | ATS + Fit T1–T9 + `/j` `/r` | Vagas | só o bloco RH+DP (sem Fit nosso) | **todos os puros** (não fazem R&S) |
 | LMS básico | B-2400/2401 | InCicle, ImpulseUp, Sólides parcial | TeamCulture, Qulture, Alina, Taggui |
 | Feed + kudos | B-2712 + B-2716 | InCicle, Taggui | puros (Qulture tem elogios) |
-| Férias / docs DP leve | B-2723 + B-2724 MVP | bloco RH+DP | **todos os puros** |
+| Férias / docs DP leve + ponto MVP | B-2723 + B-2724 MVP + **B-2721** ✅ | bloco RH+DP | **todos os puros** |
 | Sucessão + exit + cultura síntese | B-1005–B-1007 | raro neste recorte | suítes largas raramente neste nível |
 
 **Já no B-2700 (não duplicar aqui):** DISC **B-2720**; ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713**; NR-1 **B-2714**; multi-CNPJ **B-2715**.
@@ -660,6 +661,30 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 3. Canais e folha-como-integração (**B-3008–B-3009**) se B-2726 atrasar ou venda enterprise pedir.
 4. Aprofundar feedback (**B-3010** ✅) / copiloto (**B-3011**) sem segundo assistente paralelo ao Help.
 5. Viz lean sobre listas existentes → **B-3020** (P1+P2 ✅; P3 ouvidoria/turnover/férias).
+
+### B-3001 — Calibração de reviews (overall + 9Box) ✅ ENTREGUE
+TeamCulture / Qulture / Alina. Ciclo já existia; faltava calibrar scores submetidos.
+1. Em Avaliações → ciclo: fila de calibração (`overall_score` 0–100, `nine_box_cell` 1–9 opcional, notas + auditoria).
+2. Histograma / ocupação 9Box do ciclo acima da lista (≥3 scores). Linguagem hedged: não é rótulo de promoção.
+3. Fora: segundo ciclo paralelo só para calibração; “forced ranking” rígido.
+
+### B-3002 — Mapa salarial por cargo ✅ ENTREGUE
+Alina / ImpulseUp. Dados: `job_roles` + salário vigente aprovado.
+1. Remuneração (lista): below / in band / above + barras empilhadas + simulação de aumento %.
+2. Drill-down na tabela; não é folha.
+3. Fora: survey salarial externo / benchmarking pago.
+
+### B-3003 — Remuneração variável / bônus proposto ✅ ENTREGUE
+Qulture / TeamCulture. Sugestão a partir de review submetida; RH aprova/recusa.
+1. Evento `bonus` com `approval_status=proposed`; inbox empresa + ficha; colaborador vê status em `/employee` → Bônus / variável.
+2. Não calcula INSS/folha; não substitui PLR jurídico.
+3. Cap/listagem por empresa; audit na decisão.
+
+### B-3004 — OKRs leves (empresa / time / pessoa) ✅ ENTREGUE
+Puros (Qulture, Alina, ImpulseUp). Árvore leve + KRs numéricos.
+1. Aba Avaliações: objetivos com parent, grupo salvo ou colaborador; key results + rollup %.
+2. Cap por empresa; MeterBar por KR; rollup no topo.
+3. Fora: OKR enterprise (check-ins semanais, cascata profunda, segundo BI).
 
 ### B-3005 — Ouvidoria / canal de denúncias ✅ ENTREGUE
 InCicle, Taggui, TeamCulture. Distinto de clima (anônimo estatístico) e de kudos.
