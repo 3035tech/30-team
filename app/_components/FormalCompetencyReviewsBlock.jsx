@@ -5,8 +5,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { errorMessage, t } from '../../../lib/i18n';
-import { cn } from '../../../lib/cn';
+import { errorMessage, t } from '../../lib/i18n';
+import { cn } from '../../lib/cn';
 import {
   FORMAL_LIKERT_MAX,
   FORMAL_LIKERT_MIN,
@@ -15,16 +15,16 @@ import {
   FORMAL_REVIEW_CYCLE_STATUS,
   FORMAL_REVIEW_MODEL,
   FORMAL_REVIEW_STATUS,
-} from '../../../lib/domain-status.js';
-import { useAppFeedback } from '../AppFeedback';
-import { EmptyState } from '../EmptyState';
-import { AppLoading, ContentEnter } from '../AppLoading';
-import { CollapsibleBlock } from '../CollapsibleBlock';
-import { CopyableLink } from '../CopyableLink';
-import { FormField } from '../FormField';
-import { InlineCallout } from '../InlineCallout';
-import { ScaleRatingButtons } from '../ScaleRatingButtons';
-import { StatusToneChip } from '../StatusToneChip';
+} from '../../lib/domain-status.js';
+import { useAppFeedback } from './AppFeedback';
+import { EmptyState } from './EmptyState';
+import { AppLoading, ContentEnter } from './AppLoading';
+import { CollapsibleBlock } from './CollapsibleBlock';
+import { CopyableLink } from './CopyableLink';
+import { FormField } from './FormField';
+import { InlineCallout } from './InlineCallout';
+import { ScaleRatingButtons } from './ScaleRatingButtons';
+import { StatusToneChip } from './StatusToneChip';
 import {
   AdminActionsCell,
   AdminActionsTh,
@@ -34,7 +34,7 @@ import {
   AdminTh,
   AdminViewButton,
   S,
-} from '../../dashboard/dashboard-shared';
+} from '../dashboard/dashboard-shared';
 
 function tf(locale, key, vars) {
   return t(locale, `performanceReviews.formal.${key}`, vars || {});
