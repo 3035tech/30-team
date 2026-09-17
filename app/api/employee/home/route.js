@@ -29,7 +29,10 @@ export async function GET(request) {
     if (!home.ok) {
       return apiErrorFromResult(request, home, { fallbackCode: ERR.UNAUTHORIZED });
     }
-    return NextResponse.json(home);
+    return NextResponse.json({
+      ...home,
+      companyModules: session.companyModules ?? null,
+    });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {
       return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);

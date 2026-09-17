@@ -25,6 +25,7 @@ import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFe
 import { EmployeeModuleTeaser } from '../_components/EmployeeModuleTeaser';
 import { EmployeeFormalReviewsSection } from '../_components/EmployeeFormalReviewsSection';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
+import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
 
 /** Home “Hoje” scroll (dedicated LMS/DP/ponto use EmployeeModuleTeaser, not collapse). */
 const SECTION_KEYS = [
@@ -418,6 +419,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     const courses = data.courses || [];
     const lmsOverdue = courses.filter((c) => c.overdue).length;
     setNavMeta({
+      companyModules: data.companyModules ?? null,
       badges: {
         tasks: tasks.length,
         surveys: surveyMeta.openCount || 0,
@@ -514,6 +516,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const agreements = data.recentAgreements || [];
   const prompts = data.oneOnOnePrompts || [];
   const company = data.company;
+  const companyModules = data.companyModules ?? null;
+  const sectionOk = (id) => employeeSectionAllowedByCompanyModules(companyModules, id);
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || company.website);
   const lmsOverdueCount = courses.filter((c) => c.overdue).length;
@@ -521,21 +525,21 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     (a) => a.urgency === 'overdue' || a.urgency === 'critical'
   ).length;
   const startHere =
-    tasks.length > 0
+    sectionOk('tasks') && tasks.length > 0
       ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
-      : surveyMeta.openCount > 0
+      : sectionOk('surveys') && surveyMeta.openCount > 0
         ? { href: '#surveys', labelKey: 'employeeHome.startHereSurveys', count: surveyMeta.openCount }
-        : okrUrgentCount > 0
+        : sectionOk('okr') && okrUrgentCount > 0
           ? { href: '#okr', labelKey: 'employeeHome.startHereOkr', count: okrUrgentCount }
-          : dpBadge > 0
+          : sectionOk('dp') && dpBadge > 0
             ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
-            : timeClockBadge > 0
+            : sectionOk('dp') && timeClockBadge > 0
               ? {
                   href: '/employee/time-clock',
                   labelKey: 'employeeHome.startHereTimeClock',
                   count: 1,
                 }
-              : lmsOverdueCount > 0
+              : sectionOk('lms') && lmsOverdueCount > 0
                 ? {
                     href: '/employee/lms',
                     labelKey: 'employeeHome.startHereLms',
@@ -560,6 +564,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           ) : null}
         </div>
 
+        {sectionOk('tasks') ? (
         <CollapsibleSection
           id="tasks"
           title={t(locale, 'employeeHome.tasksTitle')}
@@ -632,7 +637,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </ul>
           )}
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('journey') ? (
         <CollapsibleSection
           id="journey"
           title={t(locale, 'employeeHome.journeyTitle')}
@@ -652,7 +659,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </EmpEmpty>
           )}
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('surveys') ? (
         <CollapsibleSection
           id="surveys"
           title={t(locale, 'employeeHome.surveysTitle')}
@@ -663,7 +672,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         >
           <EmployeeSurveysSection locale={locale} onMeta={onSurveyMeta} />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('pdi') ? (
         <CollapsibleSection
           id="pdi"
           title={t(locale, 'panel.employeePortal.pdiTitle')}
@@ -751,7 +762,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </ul>
           )}
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('formalReviews') ? (
         <CollapsibleSection
           id="formalReviews"
           title={t(locale, 'performanceReviews.formal.employeeSection')}
@@ -761,7 +774,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         >
           <EmployeeFormalReviewsSection locale={locale} />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('okr') ? (
         <CollapsibleSection
           id="okr"
           title={t(locale, 'employeeHome.okrTitle')}
@@ -849,7 +864,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </div>
           )}
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('lms') ? (
         <EmployeeModuleTeaser
           id="lms"
           href="/employee/lms"
@@ -942,7 +959,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </div>
           )}
         </EmployeeModuleTeaser>
+        ) : null}
 
+        {sectionOk('oneOnOne') ? (
         <CollapsibleSection
           id="oneOnOne"
           title={t(locale, 'panel.employeePortal.agreementsTitle')}
@@ -1024,7 +1043,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </p>
           </div>
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('feedback') ? (
         <CollapsibleSection
           id="feedback"
           title={t(locale, 'employeeHome.feedbackTitle')}
@@ -1035,7 +1056,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         >
           <EmployeeFeedbackSection locale={locale} onBadge={setFeedbackBadge} />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('dp') ? (
         <EmployeeModuleTeaser
           id="dp"
           href="/employee/dp"
@@ -1048,6 +1071,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           }
           chipTone="warning"
         />
+        ) : null}
+        {sectionOk('timeClock') ? (
         <EmployeeModuleTeaser
           id="timeClock"
           href="/employee/time-clock"
@@ -1060,7 +1085,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           }
           chipTone="success"
         />
+        ) : null}
 
+        {sectionOk('variablePay') ? (
         <CollapsibleSection
           id="variablePay"
           title={t(locale, 'employeeHome.variablePayTitle')}
@@ -1071,7 +1098,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         >
           <EmployeeVariablePaySection locale={locale} onBadge={setVariablePayBadge} />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('feed') ? (
         <CollapsibleSection
           id="feed"
           title={t(locale, 'employeeHome.feedTitle')}
@@ -1087,7 +1116,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             onTotalChange={setFeedTotal}
           />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('kudos') ? (
         <CollapsibleSection
           id="kudos"
           title={t(locale, 'employeeHome.kudosTitle')}
@@ -1103,7 +1134,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             onChanged={setKudosTotal}
           />
         </CollapsibleSection>
+        ) : null}
 
+        {sectionOk('company') ? (
         <CollapsibleSection
           id="company"
           title={t(locale, 'employeeHome.companyTitle')}
@@ -1135,6 +1168,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </>
           )}
         </CollapsibleSection>
+        ) : null}
       </div>
     </ContentEnter>
   );

@@ -354,6 +354,7 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | DP light (docs / assinatura / licenças / férias) | `lib/people/employee-dp.js`, `lib/leave-days.js`, `DpAdminTab`, `migrations/083`+`087`+`088`+`092`+`093`+`100`+`101` (`DP_DOCUMENT_*`, `DP_LEAVE_STATUS`); banco de perguntas / assinatura riscada + traço |
 | OKR / ciclos | `lib/okr.js`, `lib/okr-cycles.js`, `OkrAdminTab`, `migrations/096`–`098`+`104` (`OKR_*`, pesos 0–10, check-ins, atribuídos) |
 | Performance reviews / 9-box / calibração / formal competências | `lib/performance-reviews.js`, `lib/performance-side-reviews.js`, `lib/people/performance-calibration.js`, `lib/people/formal-competency-reviews.js`, `PerformanceReviewsAdminTab`, `FormalCompetencyReviewsBlock`, `/formal-review/[token]`, `migrations/108` |
+| Módulos comerciais da empresa (SKU) | `lib/company-modules.js`, `lib/company-module-entitlements.js`, `companies.enabled_modules` (`migrations/109`), onboarding wizard, `GET/PUT /api/admin/company-modules`; CAP ∩ módulos; NULL = todos |
 | Sucessão | `lib/succession-plans.js`, `SuccessionAdminTab` (`SUCCESSION_IMPACT` / `SUCCESSION_READINESS`) |
 | Análise de saída (exit) | `lib/exit-analysis.js`, `ExitAnalysisAdminTab` (`EXIT_TYPE` / `EXIT_REASON`) |
 | Cargos / job roles | `lib/job-roles.js`, `JobRolesAdminTab`, GET `/api/admin/job-roles` (`VACANCIES_MANAGE` ou `JOB_ROLES_VIEW`) |

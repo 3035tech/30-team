@@ -8,6 +8,7 @@ import { S } from '../dashboard/dashboard-shared';
 import { BrandMark } from './BrandMark';
 import { Icon } from './Icon';
 import { useEmployeeNav } from './EmployeeNavContext';
+import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
 
 /** @typedef {{ id: string, href: string, icon: string, labelKey: string, hash?: string }} EmpNavItem */
 
@@ -112,9 +113,14 @@ export function EmployeeSidebar({
   const onLms = pathname.startsWith('/employee/lms');
   const onDp = pathname.startsWith('/employee/dp');
   const onTimeClock = pathname.startsWith('/employee/time-clock');
-  const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection } = useEmployeeNav();
+  const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection, companyModules } =
+    useEmployeeNav();
 
   const itemById = Object.fromEntries(EMPLOYEE_NAV_ITEMS.map((it) => [it.id, it]));
+  const allowedGroups = NAV_GROUPS.map((g) => ({
+    ...g,
+    ids: g.ids.filter((id) => employeeSectionAllowedByCompanyModules(companyModules, id)),
+  })).filter((g) => g.ids.length > 0);
 
   const isDedicatedRoute = (itemId) =>
     itemId === 'profile' || itemId === 'lms' || itemId === 'dp' || itemId === 'timeClock';
@@ -234,7 +240,7 @@ export function EmployeeSidebar({
         className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
         aria-label={t(locale, 'employeeHome.sectionNavAria')}
       >
-        {NAV_GROUPS.map((group, gIdx) => {
+        {allowedGroups.map((group, gIdx) => {
           const items = group.ids.map((id) => itemById[id]).filter(Boolean);
           if (!items.length) return null;
           return (

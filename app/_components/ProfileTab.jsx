@@ -6,12 +6,22 @@ import { cn } from '../../lib/cn';
 import { S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
 import { FormField } from './FormField';
+import { CompanyModulesField } from './CompanyModulesField';
+import { InlineCallout } from './InlineCallout';
+import { AppLoading, ContentEnter } from './AppLoading';
+import { useAppFeedbackOptional } from './AppFeedback';
+import {
+  modulesSelectionEqual,
+  modulesSelectionForPersist,
+  modulesSelectionForUi,
+} from '../../lib/company-modules';
 
 const inputClass =
   'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-prose text-ink';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
+ * Early-access: também edita módulos comerciais da empresa.
  */
 export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [loading, setLoading] = useState(true);
@@ -31,6 +41,12 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
   const [twoFaBusy, setTwoFaBusy] = useState(false);
+  const [canEditCompanyModules, setCanEditCompanyModules] = useState(false);
+  const [companyModuleIds, setCompanyModuleIds] = useState([]);
+  const [companyModulesBaseline, setCompanyModulesBaseline] = useState([]);
+  const [modulesSaving, setModulesSaving] = useState(false);
+  const feedback = useAppFeedbackOptional();
+  const toast = feedback?.toast;
 
   const load2fa = async () => {
     try {
@@ -48,7 +64,10 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/me');
+      const [res, modRes] = await Promise.all([
+        fetch('/api/me'),
+        fetch('/api/me/company-modules'),
+      ]);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.loadFailed'));
       const u = data.user || {};
@@ -57,10 +76,60 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       setRole(u.role || '');
       setCompanyName(u.companyName || '');
       await load2fa();
+
+      if (modRes.ok) {
+        const mod = await modRes.json().catch(() => ({}));
+        const ids = modulesSelectionForUi(mod.enabledModules);
+        setCanEditCompanyModules(Boolean(mod.canEdit));
+        setCompanyModuleIds(ids);
+        setCompanyModulesBaseline(ids);
+      } else {
+        setCanEditCompanyModules(false);
+        setCompanyModuleIds([]);
+        setCompanyModulesBaseline([]);
+      }
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const modulesDirty = !modulesSelectionEqual(companyModuleIds, companyModulesBaseline);
+
+  const saveCompanyModules = async () => {
+    if (!modulesDirty) {
+      toast?.(t(locale, 'dashboard.profileModulesNoChange'), 'info');
+      return;
+    }
+    setModulesSaving(true);
+    setError('');
+    setMsg('');
+    try {
+      const toStore = modulesSelectionForPersist(companyModuleIds);
+      const res = await fetch('/api/me/company-modules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modules: toStore }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data.errorCode ? errorMessage(locale, data.errorCode) : data.error || t(locale, 'panel.common.error')
+        );
+      }
+      const next = modulesSelectionForUi(data.enabledModules);
+      setCompanyModuleIds(next);
+      setCompanyModulesBaseline(next);
+      toast?.(t(locale, 'dashboard.profileModulesSaved'), 'ok');
+      setTimeout(() => {
+        if (typeof window !== 'undefined') window.location.reload();
+      }, 500);
+    } catch (e) {
+      setError(e?.message || t(locale, 'panel.common.error'));
+      toast?.(e?.message || t(locale, 'panel.common.error'), 'error');
+    } finally {
+      setModulesSaving(false);
     }
   };
 
@@ -189,8 +258,11 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
         </p>
 
         {loading ? (
-          <p className="mt-4 text-ink-muted">{t(locale, 'panel.common.loading')}</p>
+          <div className="mt-4">
+            <AppLoading variant="panel" />
+          </div>
         ) : (
+          <ContentEnter animKey="profile-ready">
           <div className="mt-[18px] flex flex-col gap-3">
             <FormField label={t(locale, 'dashboard.profileDisplayName')}>
               <input
@@ -216,6 +288,48 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
             <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
               <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
             </FormField>
+
+            {canEditCompanyModules ? (
+              <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
+                <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profileModulesTitle')}</span>
+                <InlineCallout tone="info" className="text-xs text-ink-muted">
+                  {t(locale, 'dashboard.profileModulesHint')}
+                </InlineCallout>
+                <CompanyModulesField
+                  locale={locale}
+                  selectedIds={companyModuleIds}
+                  onChange={setCompanyModuleIds}
+                  disabled={modulesSaving}
+                  maxHeightClass="max-h-[320px]"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void saveCompanyModules()}
+                    disabled={modulesSaving || !modulesDirty}
+                    className={cn(
+                      dashS.btnPrimary,
+                      'min-h-touch',
+                      (modulesSaving || !modulesDirty) && 'cursor-default opacity-60'
+                    )}
+                  >
+                    {modulesSaving
+                      ? t(locale, 'panel.common.loading')
+                      : t(locale, 'dashboard.profileModulesSave')}
+                  </button>
+                  {modulesDirty ? (
+                    <button
+                      type="button"
+                      disabled={modulesSaving}
+                      onClick={() => setCompanyModuleIds([...companyModulesBaseline])}
+                      className={cn(dashS.btnGhost, 'min-h-touch')}
+                    >
+                      {t(locale, 'panel.common.cancel')}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
               <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
@@ -359,6 +473,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileSave')}
             </button>
           </div>
+          </ContentEnter>
         )}
       </div>
     </div>

@@ -1,12 +1,16 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '../../../../../lib/auth.js';
 import { query } from '../../../../../lib/db.js';
-import { apiError, ERR } from '../../../../../lib/api-error.js';
+import { apiError, apiErrorFromResult, ERR } from '../../../../../lib/api-error.js';
 import { hydrateSessionPayload } from '../../../../../lib/session.js';
+import { setCompanyEnabledModules } from '../../../../../lib/company-module-entitlements.js';
+import { modulesSelectionForPersist } from '../../../../../lib/company-modules.js';
+import { audit } from '../../../../../lib/audit.js';
 
 /**
  * POST /api/admin/onboarding/complete
- * Marca o wizard de onboarding como completo para o usuário atual.
+ * Marca o wizard como completo. Body opcional: { modules: string[] } grava entitlements da empresa.
+ * Sem modules / skip → não altera enabled_modules (continua NULL = todos).
  */
 export async function POST(request) {
   try {
@@ -23,8 +27,25 @@ export async function POST(request) {
     }
 
     const userId = payload.userId;
+    const body = await request.json().catch(() => ({}));
 
-    // Marca onboarding como completo
+    if (Array.isArray(body.modules) && payload.companyId) {
+      const result = await setCompanyEnabledModules(query, {
+        companyId: payload.companyId,
+        modules: modulesSelectionForPersist(body.modules),
+      });
+      if (!result.ok) {
+        return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
+      }
+      await audit({
+        action: 'company_modules_onboarding',
+        actorUserId: userId,
+        targetType: 'company',
+        targetId: payload.companyId,
+        metadata: { modules: result.enabledModules },
+      });
+    }
+
     await query(
       `UPDATE users
        SET onboarding_completed = TRUE,
@@ -35,8 +56,18 @@ export async function POST(request) {
       [userId]
     );
 
-    return Response.json({ ok: true });
+    return Response.json({
+      ok: true,
+      companyModules: payload.companyId
+        ? body.modules != null
+          ? body.modules
+          : undefined
+        : undefined,
+    });
   } catch (err) {
+    if (err?.code === '42703') {
+      return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
+    }
     console.error('[onboarding] Complete error:', err);
     return apiError(request, ERR.INTERNAL, 500);
   }

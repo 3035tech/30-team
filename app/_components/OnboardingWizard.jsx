@@ -7,9 +7,15 @@ import { cn } from '../../lib/cn';
 import { BrandMark } from './BrandMark';
 import { InlineCallout } from './InlineCallout';
 import { Icon } from './Icon';
+import { CompanyModulesField } from './CompanyModulesField';
+import {
+  SELECTABLE_COMPANY_MODULE_IDS,
+  modulesSelectionForPersist,
+} from '../../lib/company-modules';
 
 const STEPS = [
   { id: 'welcome', icon: 'sparkles' },
+  { id: 'modules', icon: 'clipboard' },
   { id: 'vacancy', icon: 'vacancies' },
   { id: 'invite', icon: 'team' },
   { id: 'done', icon: 'check' },
@@ -23,6 +29,8 @@ const STEPS = [
 export default function OnboardingWizard({ locale, userName, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [modulesTouched, setModulesTouched] = useState(false);
+  const [selectedModules, setSelectedModules] = useState(() => [...SELECTABLE_COMPANY_MODULE_IDS]);
 
   const step = STEPS[currentStep];
 
@@ -33,22 +41,27 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
   };
 
   const handleSkip = async () => {
-    await markComplete();
+    await markComplete({ skipModules: true });
   };
 
   const handleComplete = async () => {
-    await markComplete();
+    await markComplete({ skipModules: false });
   };
 
-  const markComplete = async () => {
+  const markComplete = async ({ skipModules = false } = {}) => {
     setCompleting(true);
     try {
+      const body = {};
+      if (!skipModules && modulesTouched) {
+        const toStore = modulesSelectionForPersist(selectedModules);
+        if (toStore != null) body.modules = toStore;
+      }
       await fetch('/api/admin/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
       if (onComplete) onComplete();
-      // Não precisa de refresh, o dashboard já vai esconder o wizard
     } catch (err) {
       console.error('[onboarding] Complete error:', err);
     } finally {
@@ -117,6 +130,43 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-base text-white"
               >
                 {t(locale, 'onboarding.welcome.cta')} →
+              </button>
+            </div>
+          )}
+
+          {step.id === 'modules' && (
+            <div>
+              <div className="mb-4 flex justify-center text-brand-500">
+                <Icon name="clipboard" className="h-12 w-12" />
+              </div>
+              <h2 className="mb-3 text-center text-2xl font-normal text-ink">
+                {t(locale, 'onboarding.modules.title')}
+              </h2>
+              <p className="mb-4 text-center text-base leading-relaxed text-ink-muted">
+                {t(locale, 'onboarding.modules.body')}
+              </p>
+              <InlineCallout tone="info" className="mb-4 text-left text-xs text-ink-muted">
+                {t(locale, 'onboarding.modules.hint')}
+              </InlineCallout>
+              <div className="mb-6">
+                <CompanyModulesField
+                  locale={locale}
+                  selectedIds={selectedModules}
+                  onChange={(next) => {
+                    setModulesTouched(true);
+                    setSelectedModules(next);
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModulesTouched(true);
+                  handleNext();
+                }}
+                className="w-full rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-6 py-3 text-base text-white"
+              >
+                {t(locale, 'onboarding.modules.cta')}
               </button>
             </div>
           )}

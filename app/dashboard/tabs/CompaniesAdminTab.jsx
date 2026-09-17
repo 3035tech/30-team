@@ -33,6 +33,12 @@ import { RichTextEditor } from '../../_components/RichTextEditor';
 import { FormField } from '../../_components/FormField';
 import { CompanyLogoCropDialog } from '../../_components/CompanyLogoCropDialog';
 import { COMPANY_LOGO_ACCEPT } from '../../../lib/company-logo-limits';
+import { CompanyModulesField } from '../../_components/CompanyModulesField';
+import {
+  modulesSelectionForPersist,
+  modulesSelectionForUi,
+  SELECTABLE_COMPANY_MODULE_IDS,
+} from '../../../lib/company-modules';
 
 const FIELD_INPUT =
   'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-xs text-ink';
@@ -202,6 +208,7 @@ function emptyCompanyForm() {
     publicProfileEnabled: false,
     anniversaryDate: '',
     active: true,
+    moduleIds: [],
   };
 }
 
@@ -234,6 +241,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState('');
   const [formSaving, setFormSaving] = useState(false);
+  const [modulesLoading, setModulesLoading] = useState(false);
   /** idle | checking | ok | taken | invalid */
   const [slugStatus, setSlugStatus] = useState('idle');
   const [slugNormalized, setSlugNormalized] = useState('');
@@ -361,14 +369,17 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
 
   const openCreateCompany = () => {
     setEditingCompany(null);
-    setForm(emptyCompanyForm());
+    setForm({
+      ...emptyCompanyForm(),
+      moduleIds: [...SELECTABLE_COMPANY_MODULE_IDS],
+    });
     setLogoPreviewUrl('');
     setPendingLogoFile(null);
     setLogoError('');
     setDrawerMode('create');
   };
 
-  const editCompany = (c) => {
+  const editCompany = async (c) => {
     setEditingCompany(c);
     setForm({
       name: c?.name ?? '',
@@ -379,11 +390,31 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
       anniversaryDate:
         c?.anniversaryDate != null ? String(c.anniversaryDate).slice(0, 10) : '',
       active: Boolean(c?.active),
+      moduleIds: [...SELECTABLE_COMPANY_MODULE_IDS],
     });
     setLogoPreviewUrl(c?.logoUrl ?? '');
     setPendingLogoFile(null);
     setLogoError('');
     setDrawerMode('edit');
+    if (c?.id) {
+      setModulesLoading(true);
+      try {
+        const res = await fetch(
+          `/api/admin/company-modules?companyId=${encodeURIComponent(c.id)}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setForm((prev) => ({
+            ...prev,
+            moduleIds: modulesSelectionForUi(data.enabledModules),
+          }));
+        }
+      } catch {
+        /* keep all-on default */
+      } finally {
+        setModulesLoading(false);
+      }
+    }
   };
 
   const submitCompanyForm = async () => {
@@ -433,6 +464,20 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           const upData = await up.json().catch(() => ({}));
           if (!up.ok) throw new Error(upData?.error || t(locale, 'panel.admin.companyLogoUploadFailed'));
         }
+        if (data?.id) {
+          const modRes = await fetch('/api/admin/company-modules', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              companyId: data.id,
+              modules: modulesSelectionForPersist(form.moduleIds),
+            }),
+          });
+          const modData = await modRes.json().catch(() => ({}));
+          if (!modRes.ok) {
+            throw new Error(modData?.error || t(locale, 'panel.admin.companyModulesSaveFailed'));
+          }
+        }
         setMsg(t(locale, 'panel.admin.companyCreated'));
         closeDrawer();
         await loadCompanies();
@@ -462,6 +507,18 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                 ? t(locale, 'errors.SLUG_TAKEN')
                 : t(locale, 'panel.admin.updateCompanyFailed'))
           );
+        }
+        const modRes = await fetch('/api/admin/company-modules', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyId: editingCompany.id,
+            modules: modulesSelectionForPersist(form.moduleIds),
+          }),
+        });
+        const modData = await modRes.json().catch(() => ({}));
+        if (!modRes.ok) {
+          throw new Error(modData?.error || t(locale, 'panel.admin.companyModulesSaveFailed'));
         }
         setMsg(t(locale, 'panel.admin.companyUpdated'));
         closeDrawer();
@@ -793,6 +850,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                 formSaving ||
                 logoBusy ||
                 loading ||
+                modulesLoading ||
                 !String(form.name || '').trim() ||
                 slugStatus === 'taken' ||
                 slugStatus === 'invalid' ||
@@ -803,6 +861,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                 (formSaving ||
                   logoBusy ||
                   loading ||
+                  modulesLoading ||
                   !String(form.name || '').trim() ||
                   slugStatus === 'taken' ||
                   slugStatus === 'invalid' ||
@@ -969,6 +1028,23 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
               {t(locale, 'panel.admin.editCompanyActive')}
             </label>
           ) : null}
+          <FormField
+            as="div"
+            label={t(locale, 'panel.admin.companyModulesLabel')}
+            hint={t(locale, 'panel.admin.companyModulesHint')}
+          >
+            {modulesLoading ? (
+              <p className={cn(S.faint, 'mb-0')}>{t(locale, 'panel.common.loading')}</p>
+            ) : (
+              <CompanyModulesField
+                locale={locale}
+                selectedIds={form.moduleIds || []}
+                onChange={(ids) => setFormField('moduleIds', ids)}
+                disabled={formSaving || modulesLoading}
+                maxHeightClass="max-h-[240px]"
+              />
+            )}
+          </FormField>
         </div>
       </AdminRichFormDrawer>
 

@@ -40,6 +40,8 @@ export function EmployeeNavProvider({ children }) {
   const [navCollapsed, setNavCollapsedState] = useState(false);
   /** { id, nonce } — nonce bumps so re-clicking the same item still opens + scrolls. */
   const [sectionFocus, setSectionFocus] = useState(null);
+  /** null = unrestricted (all modules). */
+  const [companyModules, setCompanyModules] = useState(null);
 
   useEffect(() => {
     setNavCollapsedState(readCollapsed());
@@ -57,7 +59,7 @@ export function EmployeeNavProvider({ children }) {
     });
   }, []);
 
-  const setNavMeta = useCallback(({ badges: nextBadges, active } = {}) => {
+  const setNavMeta = useCallback(({ badges: nextBadges, active, companyModules: nextModules } = {}) => {
     if (nextBadges) {
       setBadges((prev) => {
         let changed = false;
@@ -71,6 +73,7 @@ export function EmployeeNavProvider({ children }) {
       });
     }
     if (active) setActiveSection(active);
+    if (nextModules !== undefined) setCompanyModules(nextModules);
   }, []);
 
   const focusSection = useCallback((id) => {
@@ -89,6 +92,7 @@ export function EmployeeNavProvider({ children }) {
       setNavCollapsed,
       sectionFocus,
       focusSection,
+      companyModules,
     }),
     [
       activeSection,
@@ -98,6 +102,7 @@ export function EmployeeNavProvider({ children }) {
       setNavCollapsed,
       sectionFocus,
       focusSection,
+      companyModules,
     ]
   );
 
@@ -116,6 +121,7 @@ export function useEmployeeNav() {
       setNavCollapsed: () => {},
       sectionFocus: null,
       focusSection: () => {},
+      companyModules: null,
     };
   }
   return ctx;

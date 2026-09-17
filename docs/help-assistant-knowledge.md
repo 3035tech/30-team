@@ -40,6 +40,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Clima versionado (arquivar / nova versão / perguntas travadas) | Guia `climate` + `docs/RH2-decisions.md` (B-RH2-16) |
 | Benefícios por colaborador | Guia `b1000Benefits` + Equipe → Remuneração + `docs/RH2-decisions.md` (B-RH2-14) |
 | Avaliação formal por competências (90/180/360) | Guia `formalCompetency` + Avaliações → Competências + `/formal-review/[token]` + `docs/RH2-decisions.md` (B-RH2-15) |
+| Módulos da empresa (SKU / early access) | Guia `companyModules` + onboarding wizard + `companies.enabled_modules` + `lib/company-modules.js` |
 | Motivadores: copy situacional + templates hedged + sync sem DELETE | Guia `motivators` + `npm run db:seed-motivators-all` + `docs/RH2-decisions.md` (B-RH2-20) |
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / assinatura interna / férias / saldo / template D1) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
@@ -63,6 +64,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | Remuneração interna + bônus variável | `compensation` + `b3000Pack` / FAQ `faqVariablePay` |
 | Cargos | `b1000JobRoles` (rubrica + faixa mercado opcional) |
 | Avaliação formal (competências 90/180/360) | `formalCompetency` |
+| Módulos da empresa (SKU / early access) | `companyModules` |
 | LMS / cursos / trilha por cargo | `lmsBasic` (player, quiz, certificado; Cargos → Trilha LMS + auto-enroll no hire, `102`) |
 | OKRs (ciclo / peso 0–10 / check-in / assignees) | `b3000Pack` + FAQ `faqOkr` |
 | Primeira semana (risco · fit · PDI) | `firstWeek` |
