@@ -149,7 +149,9 @@ async function isManagerSessionLive(request, payload) {
       cache: 'no-store',
     });
     if (res.ok) return true;
-    if (res.status === 401) return false;
+    // Resposta chegou mas negou (401) ou falhou (5xx/etc.) — não caímos no
+    // fallback permissivo; só o `throw` do fetch (rede indisponível) libera.
+    return false;
   } catch {
     /* Self-fetch do middleware falha em alguns deploys (ingress/edge) — ver fallback abaixo. */
   }
@@ -165,7 +167,7 @@ async function isEmployeeSessionLive(request, payload) {
       cache: 'no-store',
     });
     if (res.ok) return true;
-    if (res.status === 401) return false;
+    return false;
   } catch {
     /* Self-fetch falha em alguns deploys — fallback: claim sv presente. */
   }

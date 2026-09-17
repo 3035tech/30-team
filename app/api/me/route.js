@@ -145,8 +145,10 @@ export async function PATCH(request) {
      LIMIT 1`,
     [payload.userId]
   );
+  if (refreshed.rowCount === 0) return apiError(request, ERR.USER_NOT_FOUND, 404);
+  const user = refreshed.rows[0];
 
-  const response = NextResponse.json({ ok: true, user: refreshed.rows[0] });
-  setSessionCookies(response, { ...payload, role: refreshed.rows[0].role, companyId: refreshed.rows[0].companyId, sv: nextSv }, nextLocale);
+  const response = NextResponse.json({ ok: true, user });
+  setSessionCookies(response, { ...payload, role: user.role, companyId: user.companyId, sv: nextSv }, nextLocale);
   return response;
 }

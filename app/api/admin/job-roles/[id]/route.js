@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
     }
 
     const isAdmin = isAdminRole(payload);
-    const id = parseInt(params.id);
+    const id = parseInt(params.id, 10);
 
     if (isNaN(id)) {
       return apiError(request, ERR.INVALID_ID, 400);
@@ -56,7 +56,7 @@ export async function PATCH(request, { params }) {
     }
 
     const isAdmin = isAdminRole(payload);
-    const id = parseInt(params.id);
+    const id = parseInt(params.id, 10);
 
     if (isNaN(id)) {
       return apiError(request, ERR.INVALID_ID, 400);
@@ -127,7 +127,7 @@ export async function DELETE(request, { params }) {
     }
 
     const isAdmin = isAdminRole(payload);
-    const id = parseInt(params.id);
+    const id = parseInt(params.id, 10);
 
     if (isNaN(id)) {
       return apiError(request, ERR.INVALID_ID, 400);

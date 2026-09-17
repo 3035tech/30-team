@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
@@ -101,6 +101,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const companyFilterFromUrl = String(urlParams.get('company') || 'all');
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
+
+  // Auto-limpa msg após 3s; cancela timer anterior a cada nova msg e ao desmontar
+  // (evita setState em componente desmontado quando o gestor troca de aba/vaga).
+  const msgTimerRef = useRef(null);
+  useEffect(() => () => {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+  }, []);
+  const showMsg = useCallback((text) => {
+    setMsg(text);
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    msgTimerRef.current = setTimeout(() => setMsg(''), 3000);
+  }, []);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -308,9 +320,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setPublicShowCompanyInfo(false); setPublicShowSalary(false);
       setJobRoleId('');
       setShowCreate(false);
-      setMsg(t(locale, 'recruiting.vacancyCreated'));
       await loadVacancies();
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.vacancyCreated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -327,10 +338,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/link`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.admin.rotateLinkFailed'));
-      setMsg(t(locale, 'recruiting.linkRotated'));
       if (isDetailView) await loadVacancyDetail(vacancyId);
       else await loadVacancies();
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.linkRotated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -356,11 +366,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateExpiryFailed'));
-      setMsg(t(locale, 'recruiting.expiryUpdated'));
       setLinkExpiryEdit(null);
       if (isDetailView) await loadVacancyDetail(linkExpiryEdit.vacancyId);
       else await loadVacancies();
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.expiryUpdated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -380,10 +389,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
-      setMsg(t(locale, 'recruiting.vacancyUpdated'));
       if (isDetailView) await loadVacancyDetail(vacancyId);
       else await loadVacancies();
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.vacancyUpdated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -498,11 +506,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
-      setMsg(t(locale, 'recruiting.vacancyUpdated'));
       setEditingVacancy(null);
       if (isDetailView) await loadVacancyDetail(id);
       else await loadVacancies();
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.vacancyUpdated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
@@ -523,13 +530,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.archiveVacancyFailed'));
-      setMsg(t(locale, 'recruiting.vacancyArchived'));
       if (isDetailView) {
         backToVacanciesList();
       } else {
         await loadVacancies();
       }
-      setTimeout(() => setMsg(''), 3000);
+      showMsg(t(locale, 'recruiting.vacancyArchived'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {

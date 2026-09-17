@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
 
-    const candidateId = parseInt(params.candidateId);
+    const candidateId = parseInt(params.candidateId, 10);
     if (!Number.isFinite(candidateId) || candidateId <= 0) {
       return apiError(request, ERR.INVALID_PARAMS, 400);
     }

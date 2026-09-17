@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
-import { query } from '../../../../../lib/db';
+import { query, queryRead } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError, ERR } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
   if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
 
   const id = params?.id;
-  const c = await query(
+  const c = await queryRead(
     `SELECT c.id, c.company_id AS "companyId", c.full_name AS "fullName", c.email, c.hr_notes AS "hrNotes",
             c.phone, c.linkedin_url AS "linkedinUrl", c.city, c.state,
             c.salary_expectation AS "salaryExpectation", c.availability, c.source,
@@ -47,7 +47,7 @@ export async function GET(request, { params }) {
     return apiError(request, ERR.UNAUTHORIZED, 401);
   }
 
-  const a = await query(
+  const a = await queryRead(
     `SELECT ass.id,
             ar.key AS "areaKey",
             ar.label AS "areaLabel",
@@ -77,7 +77,7 @@ export async function GET(request, { params }) {
   if (a.rows.length > 0) {
     const assessmentIds = a.rows.map((r) => r.id);
     try {
-      const h = await query(
+      const h = await queryRead(
         `SELECT assessment_id AS "assessmentId", from_stage AS "fromStage", to_stage AS "toStage",
                 reason, start_date AS "startDate", changed_at AS "changedAt"
          FROM assessment_pipeline_history

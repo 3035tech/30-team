@@ -77,10 +77,19 @@ export function GroupTab({
     void reloadSaved();
   }, [reloadSaved]);
 
+  // Lookup O(1) por assessmentId em vez de .find() dentro de .map() (n·m por render).
+  const resultsById = useMemo(() => {
+    const map = new Map();
+    for (const r of results || []) {
+      if (r?.assessmentId != null) map.set(String(r.assessmentId), r);
+    }
+    return map;
+  }, [results]);
+
   const nucleusAdvice = useMemo(() => {
     if (!groupBase) return null;
     const members = (groupIds || [])
-      .map((id) => (results || []).find((r) => String(r.assessmentId) === String(id)))
+      .map((id) => resultsById.get(String(id)))
       .filter(Boolean);
     if (members.length < 1) return null;
     const nucleus = [
@@ -109,12 +118,12 @@ export function GroupTab({
       limitCompleters: 5,
       limitRisks: 3,
     });
-  }, [groupBase, groupIds, results, dismissedIds, locale]);
+  }, [groupBase, groupIds, results, resultsById, dismissedIds, locale]);
 
   const groupIntel = useMemo(() => {
     if (!groupBase) return null;
     const members = (groupIds || [])
-      .map((id) => (results || []).find((r) => String(r.assessmentId) === String(id)))
+      .map((id) => resultsById.get(String(id)))
       .filter(Boolean);
     const eneagramPeople = [
       { topType: groupBase.topType, scores: groupBase.scores || null },
@@ -714,7 +723,7 @@ export function GroupTab({
               ) : (
                 <div className="flex flex-col gap-2">
                   {groupIds.map(id => {
-                    const p = results.find(r => String(r.assessmentId) === String(id));
+                    const p = resultsById.get(String(id));
                     if (!p) return null;
                     const baseCompat =
                       groupBase && String(p.assessmentId) !== String(groupBase.assessmentId)

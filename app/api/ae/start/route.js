@@ -98,6 +98,10 @@ export async function POST(request) {
         String(invite.version || '1'),
       ]
     );
+    if (attempt.rowCount === 0) {
+      return apiError(request, ERR.INTERNAL, 500);
+    }
+    const attemptRow = attempt.rows[0];
 
     await query(
       `UPDATE ae_invites SET candidate_id = $2, status = 'opened', opened_at = COALESCE(opened_at, NOW())
@@ -107,8 +111,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       ok: true,
-      attemptId: attempt.rows[0].id,
-      startedAt: attempt.rows[0].startedAt,
+      attemptId: attemptRow.id,
+      startedAt: attemptRow.startedAt,
       definition: drawn.definition,
       questions: toPublicQuestions(drawn.questions, locale),
       meta: drawn.meta,

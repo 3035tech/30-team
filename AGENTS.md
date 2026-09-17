@@ -58,7 +58,7 @@ scripts/                                           → migrate, seeds, ops (não
 | `/api/cron/*` | `CRON_SECRET` |
 | Erros de API | `apiError` / `apiErrorFromResult` / `ERR` / `httpStatusForError` em `lib/api-error.js` + `lib/api-error-codes.js` (constantes string — sem enums TS; **proibido** `'CODE'` solto) |
 | Status de domínio | `lib/domain-status.js` (`EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `CLIMATE_SURVEY_STATUS`, `ROSTER_SCOPE`, …) + `PIPELINE_STAGES` em `lib/pipeline.js` |
-| Abas B-1000 (cargos, reviews, sucessão, saídas, academy, benefícios) | `TAB_CAPABILITY` → CAPs dedicadas (`job_roles.view`, `performance.view`, …) em `ASSIGNABLE_MODULE_CAPS`; defaults em hr/direction. Usuários/Empresas/Leads continuam `USERS_MANAGE` / `COMPANIES_MANAGE` (admin-only). Cards Overview / analytics → `CAP.OVERVIEW_VIEW`. GET `/api/admin/job-roles` → `VACANCIES_MANAGE` **ou** `JOB_ROLES_VIEW`. |
+| Abas B-1000 / B-3000 (cargos, reviews, OKR, sucessão, saídas, academy/LMS, benefícios, DP light, feed, ouvidoria) | `TAB_CAPABILITY` → CAPs dedicadas (`job_roles.view`, `performance.view`, `succession.view`, `exit_analysis.view`, `learning.view`, `benefits.view`, `dp.view`, `company_feed.view`, `whistleblowing.view`, …) em `ASSIGNABLE_MODULE_CAPS`; defaults em hr/direction. Usuários/Empresas/Leads/Product-Feedback continuam `USERS_MANAGE` / `COMPANIES_MANAGE` (admin-only). Cards Overview / analytics → `CAP.OVERVIEW_VIEW`. Abas OKR e Performance Reviews compartilham `PERFORMANCE_VIEW`; `learning-resources` e `lms` compartilham `LEARNING_VIEW`. GET `/api/admin/job-roles` → `VACANCIES_MANAGE` **ou** `JOB_ROLES_VIEW`. Lista canônica em `lib/permissions.js` (`CAP`, `ASSIGNABLE_MODULE_CAPS`, `B1000_MODULE_CAPS`, `TAB_CAPABILITY`). |
 
 Reusar `requireManagerRole` / `getManagerScope` (`lib/ae/require-admin.js`) e, para visões/módulos, `can` / `CAP` / `requireCapability` em `lib/permissions.js`. **Rotas `app/api/admin/**` novas ou em edição:** preferir `withAdminApi` (`lib/admin-api.js`) + schemas Zod (`lib/validate.js`) — não recopiar cookie/CAP/`companyId`. Rate limit: `await checkRateLimit` (`lib/rate-limit.js`); opcional Redis clássico via `REDIS_URL` (+ `REDIS_KEY_PREFIX`, default `team30`). Overrides por usuário: tabela `user_capability_overrides` + `lib/user-capabilities.js` (whitelist de módulos; vazio = default da role). **Links públicos de assessment** (`/t`, `/v`, token AE, `vacancy_links`) autenticam por token — não por CAP; revogar capability do gestor não invalida convites já emitidos. Ações sensíveis: `audit()` em `lib/audit.js`.
 
@@ -80,7 +80,7 @@ O projeto é **JavaScript puro**. Não introduzir `enum` TS. Valores fechados (e
 |-------------|-----|---------|
 | Código de erro de API (`errorCode`) | `ERR.UNAUTHORIZED`, `ERR.NOT_FOUND`, … | `lib/api-error-codes.js` (reexport em `lib/api-error.js`) |
 | Status HTTP a partir do código | `httpStatusForError(code)` ou `apiErrorFromResult(request, result)` | idem |
-| Employment / vaga / clima / roster / ciclo review / PDI / pulso | `EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `OFFER_STATUS`, `INTERVIEW_SLOT_STATUS`, `CHECKLIST_ITEM_STATUS`, `CLIMATE_SURVEY_STATUS`, `CLIMATE_QUESTION_KIND`, `ROSTER_SCOPE`, `PERFORMANCE_*` (incl. `PERFORMANCE_GOAL_OUTCOME`), `DEVELOPMENT_PLAN_*` (incl. `DEVELOPMENT_PLAN_ITEM_SOURCE`), `TEAM_PULSE_STATUS`, `SUCCESSION_*`, `LEARNING_RESOURCE_TYPE`, `ONBOARDING_ACK_KIND` | `lib/domain-status.js` |
+| Employment / vaga / clima / roster / ciclo review / PDI / pulso / OKR / ponto / banco de horas / DP / ouvidoria / feedback contínuo / remuneração / saída / benefício / produto-feedback | `EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `OFFER_STATUS`, `INTERVIEW_SLOT_STATUS`, `CHECKLIST_ITEM_STATUS`, `CLIMATE_SURVEY_STATUS`, `CLIMATE_QUESTION_KIND`, `ROSTER_SCOPE`, `PERFORMANCE_*` (incl. `PERFORMANCE_GOAL_OUTCOME`, `SIDE_REVIEW_*`), `DEVELOPMENT_PLAN_*` (incl. `DEVELOPMENT_PLAN_ITEM_SOURCE`), `TEAM_PULSE_STATUS`, `SUCCESSION_IMPACT` / `SUCCESSION_READINESS`, `LEARNING_RESOURCE_TYPE`, `ONBOARDING_ACK_KIND`, `ONBOARDING_CHECKIN_OUTCOME`, `OKR_OBJECTIVE_LEVEL` / `OKR_CYCLE_STATUS` / `OKR_WEIGHT_{MIN,MAX,DEFAULT}`, `TIME_PUNCH_{KIND,SOURCE,FLAG,REVIEW}`, `HOUR_BANK_{ENTRY_KIND,STATUS,SOURCE}`, `DP_DOCUMENT_{KEY,STATUS}`, `DP_LEAVE_STATUS`, `WHISTLEBLOWING_{CATEGORY,REPORT_STATUS}`, `FEEDBACK_REQUEST_STATUS`, `COMPENSATION_EVENT_TYPE` / `COMPENSATION_APPROVAL_STATUS`, `EXIT_TYPE` / `EXIT_REASON`, `BENEFIT_TYPE`, `PRODUCT_FEEDBACK_{KIND,STATUS}` | `lib/domain-status.js` |
 | Roles de gestor | `ROLES` (`admin` \| `direction` \| `hr`) | `lib/permissions.js` |
 | Estágios do funil / motivos de rejeição | `PIPELINE_STAGE.HIRED`, `PIPELINE_STAGES`, `REJECTION_REASONS` | `lib/pipeline.js` |
 | Capabilities / roles | `CAP`, `ROLES`, `can`, `requireCapability` | `lib/permissions.js` |
@@ -337,12 +337,47 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 | Overview inteligência comportamental | `lib/people/team-behavioral-intel.js`, `load-team-behavioral-intel.js`, `TeamBehavioralIntelBlock`, Overview (`teamGroup`) |
 | Overview fila PDI | `getCompanyPdiPulse` — planos ativos + fila → Equipe |
 | Pós-hire check-ins | `lib/people/onboarding-checkins.js` (D30/D60/D90), Equipe + Overview; seed PDI `onboarding` |
+| Pré-onboarding / journey (P0) | `lib/people/pre-onboarding*.js`, `lib/people/employee-onboarding-journey.js`, `docs/employee-onboarding-journey.md`, `migrations/076`+`102`+`103` |
+| Nove Box | `lib/people/nine-box.js`, `NineBoxBlock.jsx`, `lib/people/performance-calibration.js` |
+| Dossiê da pessoa | `lib/people/person-dossier.js`, `lib/people/multi-signal-workbench.js`, `lib/people/management-hypotheses.js`, `lib/people/pdi-action-lines.js` |
+| Núcleo / org chart | `lib/people/company-nucleus.js`, `lib/people/org-chart.js`, `lib/people/upcoming-anniversaries.js`, `lib/people/team-tension-narrative.js` |
+| Diagnóstico de absenteísmo / turnover radar | `lib/people/list-absence-diagnostics{,-core}.js`, `lib/turnover-radar.js`, `lib/people/retention-watch.js` |
+| Feedback contínuo | `lib/people/continuous-feedback.js`, notificações in-app (`FEEDBACK_REQUEST_STATUS`) |
+| Oferta / candidato | `lib/people/candidate-offer.js`, `lib/people/interpret-ai.js` |
 | Relatório cliente print | `lib/client-report-print.js`, `/r/[token]` |
 | Pesquisa de clima | `lib/people/climate-surveys.js`, aba Clima, `/clima/[token]`, `GET/POST /api/public/climate/[token]`, `migrations/042`+`050` (Likert + texto descritivo) |
 | Pulso de grupo | `lib/people/team-pulses.js`, Grupos + `TeamPulseBlock`, `/pulso/[token]`, `migrations/045_team_pulse.sql` |
 | Link colaborador | `lib/people/employee-portal.js`, `/e/[token]`, prep + nota, `migrations/046`+`047` |
 | Sessão colaborador | `lib/employee-auth.js`, `/employee`, cookie `team30_employee_session`, `migrations/069`–`071` (senha, notif), perfil + chrome; PDI self-serve (`lib/employee-pdi.js`); LMS embed |
-| Remuneração interna | `lib/people/employee-compensation.js`, `CompensationBlock`, `migrations/072`, Equipe → aba Remuneração (não folha) |
+| Remuneração interna | `lib/people/employee-compensation.js`, `lib/people/variable-pay.js`, `lib/people/salary-map.js`, `CompensationBlock`, `CompensationAdminTab`, `migrations/072`+`078`+`084`, Equipe → aba Remuneração (não folha) |
+| Ponto / banco de horas | `lib/people/time-clock.js`, `lib/people/hour-bank.js`, `migrations/091`+`099` (`TIME_PUNCH_*` / `HOUR_BANK_*`) |
+| DP light (docs / assinatura / licenças / férias) | `lib/people/employee-dp.js`, `lib/leave-days.js`, `DpAdminTab`, `migrations/083`+`087`+`088`+`092`+`093`+`100`+`101` (`DP_DOCUMENT_*`, `DP_LEAVE_STATUS`); banco de perguntas / assinatura riscada + traço |
+| OKR / ciclos | `lib/okr.js`, `lib/okr-cycles.js`, `OkrAdminTab`, `migrations/096`–`098`+`104` (`OKR_*`, pesos 0–10, check-ins, atribuídos) |
+| Performance reviews / 9-box / calibração | `lib/performance-reviews.js`, `lib/performance-side-reviews.js`, `lib/people/performance-calibration.js`, `PerformanceReviewsAdminTab`, `NineBoxBlock` |
+| Sucessão | `lib/succession-plans.js`, `SuccessionAdminTab` (`SUCCESSION_IMPACT` / `SUCCESSION_READINESS`) |
+| Análise de saída (exit) | `lib/exit-analysis.js`, `ExitAnalysisAdminTab` (`EXIT_TYPE` / `EXIT_REASON`) |
+| Cargos / job roles | `lib/job-roles.js`, `JobRolesAdminTab`, GET `/api/admin/job-roles` (`VACANCIES_MANAGE` ou `JOB_ROLES_VIEW`) |
+| Academy / LMS (trilhas, quiz, cert, watch progress) | `lib/lms.js`, `lib/lms-quiz.js`, `lib/lms-media.js`, `lib/lms-asset.js`, `lib/lms-job-role-trail.js`, `lib/learning-resources.js`, `LmsAdminTab` + `LearningResourcesAdminTab`, `migrations/094`+`095` (`LEARNING_RESOURCE_TYPE`) |
+| Benefícios / atribuições | `lib/company-benefits.js`, `lib/people/employee-benefit-assignments.js`, `CompanyBenefitsAdminTab`, `migrations/107` (`BENEFIT_TYPE`) |
+| Feed / kudos (intranet leve) | `lib/company-posts.js`, `lib/company-kudos.js`, `CompanyFeedAdminTab`, `migrations/085` (CAP `COMPANY_FEED_VIEW`) |
+| Ouvidoria / canal de denúncias | `lib/people/whistleblowing.js`, `WhistleblowingAdminTab`, `/ouvidoria`, CAP `WHISTLEBLOWING_VIEW` (`WHISTLEBLOWING_*`) |
+| Interview prep (candidato) | `lib/interview-prep.js`, `migrations/086`, `/prep` (candidato / colaborador) |
+| Feedback de produto (super-admin) | `lib/product-feedback.js`, `ProductFeedbackAdminTab`, `migrations/082` (`PRODUCT_FEEDBACK_*`) |
+| Leads (super-admin) | `lib/admin-leads.js`, `LeadsAdminTab` |
+| Assinatura digital de documentos | `migrations/100`+`101` (docs DP + traço), player/uploader em `RichTextEditor` / DP |
+| 2FA / TOTP (gestor + colaborador) | `lib/totp.js`, `lib/manager-2fa.js`, `lib/employee-2fa.js`, `migrations/073`+`074`+`081` |
+| Sessão gestor / colaborador (sliding) | `lib/session.js`, `lib/manager-login-session.js`, `lib/manager-client-session.js`, `lib/employee-login-session.js`, `lib/employee-client-session.js`, `lib/session-cookie.js`, `lib/session-ttl.js`, `lib/session-revocation.js`, `lib/employee-session-revocation.js` |
+| Sign-up / trial / origem | `lib/user-signup-origin.js`, `lib/trial-limits.js`, `lib/referral-codes.js`, `app/signup`, `app/pricing`, `lib/pricing-plans.js` |
+| Landing / SEO produto | `lib/landing-analytics.js`, `lib/product-landing-seo.js`, `app/page.jsx`, `app/llms.txt`, `app/sitemap.js`, `app/robots.js` |
+| Vagas públicas (SEO / aggregadores / aplicação) | `lib/public-vacancy-apply.js`, `lib/public-vacancy-posting.js`, `lib/public-vacancy-lifecycle.js`, `lib/public-job-url.js`, `lib/public-job-aggregators.js`, `lib/job-attribution.js`, `lib/job-funnel.js`, `lib/job-alerts.js`, `lib/job-seo-score.js`, `lib/job-share-copy.js`, `app/jobs`, `app/api/public/jobs/*` |
+| Vagas — clonar / assist AI / rubric | `lib/vacancy-clone.js`, `lib/vacancy-assist-ai.js`, `lib/vacancy-description-template.js`, `lib/vacancy-report.js`, `lib/vacancy-report-note-templates.js`, `lib/vacancy-report-shared.js`, `lib/vacancy-details.js`, `lib/rubric-ai.js`, `lib/rubric-prompt.js` |
+| Shortlist / risco de composição | `lib/shortlist-composition-risks.js`, `lib/hire-readiness.js`, `lib/hr-predictions.js`, `lib/hr-score.js`, `lib/hr-score-cache.js` |
+| Cultura organizacional / playbook de persona | `lib/organizational-culture.js`, `lib/persona-playbooks.js`, `lib/persona-playbook-progress.js`, `lib/profile-synthesis.js`, `lib/enneagram-blend.js`, `lib/enneagram-cross.js` |
+| Analytics gestor (dashboards, alertas, trends, agendamento) | `lib/analytics-metrics.js`, `lib/analytics-trends.js`, `lib/analytics-comparisons.js`, `lib/analytics-alerts.js`, `lib/analytics-export.js`, `lib/analytics-rate-limit.js`, `lib/analytics-report-prefs.js`, `lib/analytics-scheduled-reports.js`, `lib/leadership-analytics.js`, `AnalyticsTab` / `LeadershipTab` |
+| Health / monitoring / segurança | `lib/health-status.js`, `lib/monitoring.js`, `lib/redact-secrets.js`, `lib/security-csp.js`, `lib/sentry-options.js`, `lib/crawler-guard.js`, `lib/turnstile.js`, `lib/jwt-secret.js`, `lib/file-magic.js`, `lib/sanitize-login-redirect.js` |
+| CV / perfil candidato | `lib/candidate-cv.js`, `lib/candidate-profile.js`, `lib/candidate-challenge-invite-mail.js`, `lib/person-name.js` |
+| E-mails transacionais | `lib/mail.js`, `lib/motivators-invite-mail.js`, `lib/user-access-mail.js`, `lib/user-password-invite.js` |
+| Chat / IA de produto | `lib/openai-chat.js`, `lib/help-assistant.js`, `lib/help-screen-context.js`, `lib/help-sections.js` |
 | Notif colaborador | `lib/employee-notifications.js`, `candidate_notifications`, LMS enroll/overdue, Motivadores invite, PDI create/update |
 | PDI ciclo / retenção ação | `lib/people/development-plans.js`, `retention-followups.js`, `migrations/044` |
 | Explicabilidade Fit | `lib/area-fit.js` (`withBreakdown`), ranking da vaga |

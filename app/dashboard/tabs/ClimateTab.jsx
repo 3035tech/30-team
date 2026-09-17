@@ -338,6 +338,16 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [benchmark, setBenchmark] = useState(null);
   const [inviteUrls, setInviteUrls] = useState([]);
   const [companyId, setCompanyId] = useState(companies[0]?.id || '');
+
+  // Se a lista de empresas mudar (admin trocando escopo) e o companyId
+  // atual não existir mais, ressincronizar com o primeiro disponível.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const ids = new Set((companies || []).map((c) => String(c?.id)));
+    if (companyId && !ids.has(String(companyId))) {
+      setCompanyId(companies[0]?.id || '');
+    }
+  }, [companies, companyId, isAdmin]);
   const [minResponses, setMinResponses] = useState(5);
   const [showCompare, setShowCompare] = useState(false);
   const [showQuestions, setShowQuestions] = useState(false);

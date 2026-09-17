@@ -30,6 +30,9 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const area = (searchParams.get('area') || 'all').toString();
+  // Filename vai em Content-Disposition; restringe a chars seguros de nome de arquivo
+  // (o `area` real segue como parâmetro para filtragem; isto é só o rótulo do CSV).
+  const safeAreaTag = area.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 60) || 'all';
   const rawExportCompany = (searchParams.get('company') || 'all').toString();
   const rawVacancy = String(searchParams.get('vacancy') || 'all').trim();
   const pipelineStage = parsePipelineFilter(searchParams);
@@ -71,7 +74,7 @@ export async function GET(request) {
 
   const headers = {
     'Content-Type': 'text/csv; charset=utf-8',
-    'Content-Disposition': `attachment; filename="candidatos_${area}.csv"`,
+    'Content-Disposition': `attachment; filename="candidatos_${safeAreaTag}.csv"`,
     'X-Export-Max-Rows': String(maxRows),
     'X-Export-Row-Count': String(rows.length),
     'X-Export-Truncated': truncated ? '1' : '0',

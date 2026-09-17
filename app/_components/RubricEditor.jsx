@@ -13,7 +13,7 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
   const types = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9'];
   
   const handleChange = (type, newValue) => {
-    const numValue = parseInt(newValue) || 0;
+    const numValue = parseInt(newValue, 10) || 0;
     const updated = { ...value, [type]: numValue };
     // Remove zero values
     if (numValue === 0) {
@@ -22,7 +22,7 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
     onChange?.(updated);
   };
 
-  const total = Object.values(value).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+  const total = Object.values(value).reduce((sum, v) => sum + (parseInt(v, 10) || 0), 0);
   const isOverweight = total > 100;
 
   if (compact) {
