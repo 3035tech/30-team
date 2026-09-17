@@ -15,6 +15,8 @@ import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { RichTextView } from '../../_components/RichTextView';
+import { SegmentedControl } from '../../_components/SegmentedControl';
+import { InlineCallout } from '../../_components/InlineCallout';
 
 function dateLocale(locale) {
   return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
@@ -69,13 +71,17 @@ const TONE_STROKE = {
 function climateSurveyStatusTone(status) {
   if (status === CLIMATE_SURVEY_STATUS.OPEN) return 'success';
   if (status === CLIMATE_SURVEY_STATUS.CLOSED) return 'info';
+  if (status === CLIMATE_SURVEY_STATUS.ARCHIVED) return 'neutral';
   return 'neutral';
 }
 
 function ClimateStatusChip({ status, locale }) {
-  const key = [CLIMATE_SURVEY_STATUS.DRAFT, CLIMATE_SURVEY_STATUS.OPEN, CLIMATE_SURVEY_STATUS.CLOSED].includes(
-    status
-  )
+  const key = [
+    CLIMATE_SURVEY_STATUS.DRAFT,
+    CLIMATE_SURVEY_STATUS.OPEN,
+    CLIMATE_SURVEY_STATUS.CLOSED,
+    CLIMATE_SURVEY_STATUS.ARCHIVED,
+  ].includes(status)
     ? status
     : CLIMATE_SURVEY_STATUS.DRAFT;
   return (
@@ -335,9 +341,19 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [minResponses, setMinResponses] = useState(5);
   const [showCompare, setShowCompare] = useState(false);
   const [showQuestions, setShowQuestions] = useState(false);
+  const [listFilter, setListFilter] = useState('active'); // active | archived | all
 
   const companyQs =
     isAdmin && companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
+
+  const listQs = useMemo(() => {
+    const params = new URLSearchParams();
+    if (isAdmin && companyId) params.set('companyId', String(companyId));
+    if (listFilter === 'archived') params.set('status', CLIMATE_SURVEY_STATUS.ARCHIVED);
+    if (listFilter === 'all') params.set('includeArchived', '1');
+    const s = params.toString();
+    return s ? `?${s}` : '';
+  }, [companyId, isAdmin, listFilter]);
 
   const meanBySurveyId = useMemo(() => {
     const map = new Map();
@@ -357,7 +373,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/climate-surveys${companyQs}`);
+      const res = await fetch(`/api/admin/climate-surveys${listQs}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || data?.errorCode || 'load');
       const next = Array.isArray(data.items) ? data.items : [];
@@ -375,7 +391,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     } finally {
       setLoading(false);
     }
-  }, [companyQs, locale, toast]);
+  }, [companyQs, listQs, locale, toast]);
 
   const loadDetail = useCallback(
     async (id) => {
@@ -714,29 +730,55 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     const ok = await confirm({
       message: t(locale, 'panel.climate.deleteConfirm'),
       danger: true,
+      confirmLabel: t(locale, 'panel.climate.deleteBtn'),
     });
     if (!ok) return;
+    const archivedId = selectedId;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(selectedId)}`, {
+      const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(archivedId)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'delete');
       }
-      setSelectedId(null);
-      setDetail(null);
-      setAggregate(null);
       toast(t(locale, 'panel.climate.deleted'), 'ok');
-      const next = await load();
-      if (next[0]) await loadDetail(next[0].id);
+      setListFilter('archived');
+      await loadDetail(archivedId);
     } catch {
       toast(t(locale, 'panel.climate.saveError'), 'error');
     } finally {
       setBusy(false);
     }
   };
+
+  const versionSurvey = async () => {
+    if (!selectedId) return;
+    const ok = await confirm({
+      message: t(locale, 'panel.climate.versionConfirm'),
+      confirmLabel: t(locale, 'panel.climate.versionConfirmBtn'),
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const data = await patch(selectedId, { version: true });
+      toast(t(locale, 'panel.climate.versionOk'), 'ok');
+      setListFilter('active');
+      if (data.survey?.id) await loadDetail(data.survey.id);
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.climate.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const questionsEditable = detail?.questionsEditable === true
+    || detail?.status === CLIMATE_SURVEY_STATUS.DRAFT;
+  const canVersion = detail
+    && (detail.status === CLIMATE_SURVEY_STATUS.OPEN
+      || detail.status === CLIMATE_SURVEY_STATUS.CLOSED
+      || detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED);
 
   const min = aggregate?.minResponses || minResponses || 5;
   const resp = aggregate?.responseCount ?? detail?.responseCount ?? 0;
@@ -779,14 +821,40 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
         </label>
       ) : null}
 
+      <div className="mb-3">
+        <SegmentedControl
+          aria-label={t(locale, 'panel.climate.listFilterAria')}
+          size="sm"
+          value={listFilter}
+          onChange={setListFilter}
+          options={[
+            { id: 'active', label: t(locale, 'panel.climate.listFilter.active') },
+            { id: 'archived', label: t(locale, 'panel.climate.listFilter.archived') },
+            { id: 'all', label: t(locale, 'panel.climate.listFilter.all') },
+          ]}
+        />
+      </div>
+
       {loading ? (
         <AppLoading variant="panel" />
       ) : items.length === 0 ? (
         <EmptyState
-          title={t(locale, 'panel.climate.emptyTitle')}
-          message={t(locale, 'panel.climate.emptyHint')}
-          actionLabel={t(locale, 'panel.climate.createBtn')}
-          onAction={createSurvey}
+          title={
+            listFilter === 'archived'
+              ? t(locale, 'panel.climate.emptyArchivedTitle')
+              : listFilter === 'all'
+                ? t(locale, 'panel.climate.emptyAllTitle')
+                : t(locale, 'panel.climate.emptyTitle')
+          }
+          message={
+            listFilter === 'archived'
+              ? t(locale, 'panel.climate.emptyArchivedHint')
+              : listFilter === 'all'
+                ? t(locale, 'panel.climate.emptyAllHint')
+                : t(locale, 'panel.climate.emptyHint')
+          }
+          actionLabel={listFilter === 'archived' ? undefined : t(locale, 'panel.climate.createBtn')}
+          onAction={listFilter === 'archived' ? undefined : createSurvey}
           actionDisabled={busy}
         />
       ) : (
@@ -881,6 +949,11 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                       <div className="min-w-0">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <ClimateStatusChip status={detail.status} locale={locale} />
+                          {detail.sourceSurveyId ? (
+                            <span className="font-mono text-2xs text-ink-faint">
+                              {t(locale, 'panel.climate.versionOf', { id: detail.sourceSurveyId })}
+                            </span>
+                          ) : null}
                           {formatClimateSurveyWhen(detail, locale) ? (
                             <span className="font-mono text-2xs text-ink-faint">
                               {formatClimateSurveyWhen(detail, locale)}
@@ -906,6 +979,16 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           onClick={() => setStatus(CLIMATE_SURVEY_STATUS.OPEN)}
                         >
                           {t(locale, 'panel.climate.openBtn')}
+                        </button>
+                      ) : null}
+                      {detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={S.btnPrimary}
+                          onClick={versionSurvey}
+                        >
+                          {t(locale, 'panel.climate.versionBtn')}
                         </button>
                       ) : null}
                       {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
@@ -938,21 +1021,53 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           </button>
                         </>
                       ) : null}
-                      {detail.status !== CLIMATE_SURVEY_STATUS.CLOSED ? (
+                      {questionsEditable ? (
                         <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
                           {t(locale, 'panel.climate.addQuestionBtn')}
                         </button>
                       ) : null}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className={cn(S.btnGhost, 'text-danger')}
-                        onClick={removeSurvey}
-                      >
-                        {t(locale, 'panel.climate.deleteBtn')}
-                      </button>
+                      {canVersion && detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={!questionsEditable ? S.btnBrandSoft : S.btnGhost}
+                          onClick={versionSurvey}
+                        >
+                          {t(locale, 'panel.climate.versionBtn')}
+                        </button>
+                      ) : null}
+                      {detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={cn(S.btnGhost, 'text-danger')}
+                          onClick={removeSurvey}
+                        >
+                          {t(locale, 'panel.climate.deleteBtn')}
+                        </button>
+                      ) : null}
                     </div>
                   </header>
+
+                  {detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                    <InlineCallout tone="neutral">
+                      {t(locale, 'panel.climate.archivedHint')}
+                    </InlineCallout>
+                  ) : !questionsEditable ? (
+                    <InlineCallout tone="info">
+                      {t(locale, 'panel.climate.questionsLocked')}
+                    </InlineCallout>
+                  ) : null}
+
+                  {detail.inviteStats && detail.inviteStats.total > 0 ? (
+                    <p className={cn(S.faint, 'm-0')}>
+                      {t(locale, 'panel.climate.inviteStats', {
+                        total: detail.inviteStats.total || 0,
+                        used: detail.inviteStats.used || 0,
+                        pending: detail.inviteStats.pending || 0,
+                      })}
+                    </p>
+                  ) : null}
 
                   {detail.status === CLIMATE_SURVEY_STATUS.OPEN && inviteUrls.length === 0 ? (
                     <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-4 py-3">
@@ -1173,7 +1288,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                               </span>
                               {q.prompt}
                             </span>
-                            {detail.status !== CLIMATE_SURVEY_STATUS.CLOSED ? (
+                            {questionsEditable ? (
                               <span className="flex gap-1">
                                 <button
                                   type="button"

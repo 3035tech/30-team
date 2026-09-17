@@ -23,6 +23,7 @@ import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
+import { BenefitAssignmentsBlock } from '../../_components/BenefitAssignmentsBlock';
 import { DpBlock } from '../../_components/DpBlock';
 import { OrgManagerBlock } from '../../_components/OrgManagerBlock';
 import { ContinuousFeedbackBlock } from '../../_components/ContinuousFeedbackBlock';
@@ -1322,12 +1323,19 @@ export function TeamTab({
                         />
                       ) : null}
                       {activePeopleSubTab === 'compensation' ? (
-                        <CompensationBlock
-                          locale={locale}
-                          candidateId={detail.candidate.id}
-                          employmentStatus={detail.candidate.employmentStatus}
-                          companyId={detail.candidate.companyId}
-                        />
+                        <>
+                          <CompensationBlock
+                            locale={locale}
+                            candidateId={detail.candidate.id}
+                            employmentStatus={detail.candidate.employmentStatus}
+                            companyId={detail.candidate.companyId}
+                          />
+                          <BenefitAssignmentsBlock
+                            locale={locale}
+                            candidateId={detail.candidate.id}
+                            employmentStatus={detail.candidate.employmentStatus}
+                          />
+                        </>
                       ) : null}
                       {activePeopleSubTab === 'dp' ? (
                         <DpBlock

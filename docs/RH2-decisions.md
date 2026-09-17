@@ -70,6 +70,8 @@ Já via `audit()` em ações sensíveis; Part 2 exige responsável + data em: in
 | B-RH2-08 | Dossiê: propósito do HR Score; clima explícito como sinal anônimo da empresa |
 | B-RH2-09 | `conversationActions` em `buildProfileSynthesis` (2–4 bullets + fonte) no brief / Estilo |
 | B-RH2-13 | Relatório cliente / aderência / indicação: mantidos; polish de copy já alinhado ao Guia (sem redesign estrutural nesta onda) |
+| B-RH2-16 | Clima: status `archived`; perguntas editáveis só em `draft`; arquivar + “Nova versão” (rascunho com mesmas perguntas + `source_survey_id`); filtro Ativas/Arquivadas/Todas; `inviteStats` anônimo |
+| B-RH2-14 | Benefícios por colaborador: `employee_benefit_assignments` (catálogo → pessoa, valor texto, início/fim, histórico); UI em Equipe → Remuneração |
 | B-RH2-17 | Mapa salarial: menos texto; Bônus/PLR permanece módulo separado (Remuneração), fora do mapa |
 | B-RH2-18 | Jornada: hint curto D1→D90→PDI |
 | B-RH2-19 | Abas Analysis nomeadas por pergunta: Encaixe em pares / Comparativo T1–T9 / Grupos / Liderança (sem merge destrutivo) |
@@ -79,9 +81,7 @@ Já via `audit()` em ações sensíveis; Part 2 exige responsável + data em: in
 | ID | Motivo |
 |----|--------|
 | B-RH2-12 | Pipeline configurável por empresa = schema + migração de estágio + relatórios/automações |
-| B-RH2-14 | Benefícios por colaborador = modelo catálogo↔vínculo↔histórico ainda não fechado |
 | B-RH2-15 | Avaliação 90/180/360 = ciclo formal multi-avaliador (escopo grande; 1:1/PDI cobrem o ad hoc) |
-| B-RH2-16 | Clima versionado (arquivar + nova versão; convite sem quebrar anonimato) = estados + UX de publicação |
 | B-RH2-20 | Banco Motivadores: copy/pesos exigem validação do dono do instrumento (sync sem DELETE) |
 
 ## Mapa das abas de análise (B-RH2-19)

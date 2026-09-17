@@ -28,7 +28,7 @@ _(Parte 1 concluída: B-RH1-01…20 removidos após implementação.)_
 
 IDs: `B-RH2-*`. Decisões em [`docs/RH2-decisions.md`](./RH2-decisions.md).
 
-_(Entregues e removidos: B-RH2-01…11, 13, 17–19. Diferidos documentados: 12, 14–16, 20.)_
+_(Entregues e removidos: B-RH2-01…11, 13–14, 16–19. Diferidos documentados: 12, 15, 20.)_
 
 ### B-RH2-12 — Pipeline configurável
 
@@ -38,14 +38,6 @@ _(Entregues e removidos: B-RH2-01…11, 13, 17–19. Diferidos documentados: 12,
 
 **Origem:** Duda/Gestor pp.8 e 11. **Diferido:** schema + migração (ver RH2-decisions).
 
-### B-RH2-14 — Benefícios por colaborador
-
-**Prompt:** Se o módulo permanecer, ligar ao perfil: quais benefícios cada pessoa recebe, valor, início/alteração, histórico ao longo do vínculo.
-
-**Aceite:** Catálogo da empresa; elegibilidade; histórico; permissões; mudança de vínculo.
-
-**Origem:** Duda/Gestor p.15. **Diferido:** modelo catálogo↔vínculo.
-
 ### B-RH2-15 — Avaliação de desempenho
 
 **Prompt:** Ciclos com foco em competências; autoavaliação e modelos 90°/180°/360° com papéis. Área geral: criação, status, prazos, histórico. Perfil: resultados e feedbacks.
@@ -53,14 +45,6 @@ _(Entregues e removidos: B-RH2-01…11, 13, 17–19. Diferidos documentados: 12,
 **Aceite:** Anonimato quando couber; permissões; escalas; consolidação multi-avaliador; reabertura; visualização.
 
 **Origem:** Duda/Gestor pp.15–16. **Diferido:** ciclo formal multi-avaliador.
-
-### B-RH2-16 — Clima: distribuição, edição e arquivamento
-
-**Prompt:** Publicação sem gestão confusa de links. Distribuir com segurança; acompanhar quem recebeu sem quebrar anonimato. Após publicar, bloquear edição/remoção de perguntas; mudanças = arquivar + nova versão. Área de arquivadas.
-
-**Aceite:** Anonimato; rastreio de convite sem associação indevida à resposta; estados rascunho/publicada/encerrada/arquivada; histórico.
-
-**Origem:** Duda/Gestor pp.16–19. **Diferido:** versionamento de pesquisa.
 
 ### B-RH2-20 — Motivadores: copy e instrumentação
 
@@ -80,4 +64,4 @@ Fechados em [`docs/RH2-decisions.md`](./RH2-decisions.md) (ciclo de vida, perfis
 
 ## Notas
 
-- Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/14/15/16/20). Anexos visuais ficam no `.docx`.
+- Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/15/20). Anexos visuais ficam no `.docx`.

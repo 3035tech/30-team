@@ -941,6 +941,15 @@ export async function runHttpSmoke(baseUrl) {
       });
       await expectStatus('climate', 'open', openRes.status, 200);
 
+      const { res: lockRes, data: lockData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { addQuestion: { prompt: 'should fail after open' } },
+      });
+      if (await expectStatus('climate', 'questions-locked', lockRes.status, [400, 409])) {
+        ok('climate', 'locked-code', String(lockData?.errorCode || lockRes.status));
+      }
+
       const { res: batchRes, data: batchData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
         method: 'PATCH',
         cookie: hrCookie,
@@ -992,6 +1001,25 @@ export async function runHttpSmoke(baseUrl) {
         cookie: hrCookie,
       });
       await expectStatus('climate', 'benchmark', benchRes.status, 200);
+
+      const { res: verRes, data: verData } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
+        method: 'PATCH',
+        cookie: hrCookie,
+        body: { version: true },
+      });
+      if (await expectStatus('climate', 'version', verRes.status, 200)) {
+        ok('climate', 'version-draft-id', String(verData?.survey?.id || ''));
+        ok(
+          'climate',
+          'version-status',
+          verData?.survey?.status === 'draft' ? 'draft' : String(verData?.survey?.status || '')
+        );
+      }
+
+      const { res: archivedList } = await req(base, '/api/admin/climate-surveys?status=archived', {
+        cookie: hrCookie,
+      });
+      await expectStatus('climate', 'list-archived', archivedList.status, 200);
 
       const { res: delRes } = await req(base, `/api/admin/climate-surveys/${surveyId}`, {
         method: 'DELETE',

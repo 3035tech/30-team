@@ -387,6 +387,9 @@ async function runOfflineLibs() {
       'getCompanyClimatePulse',
       'getCompanyEnpsPulse',
       'climateMinResponses',
+      'archiveClimateSurvey',
+      'versionClimateSurvey',
+      'climateQuestionsEditable',
     ]) {
       if (!clima.includes(`export async function ${name}`) && !clima.includes(`export function ${name}`)) {
         throw new Error(`missing ${name}`);

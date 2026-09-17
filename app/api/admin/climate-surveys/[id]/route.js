@@ -5,14 +5,15 @@ import { audit } from '../../../../../lib/audit';
 import { CAP, getManagerScope, getSessionPayload, requireCapability } from '../../../../../lib/ae/require-admin';
 import {
   addClimateSurveyQuestion,
+  archiveClimateSurvey,
   createClimateSurveyInvite,
   createClimateSurveyInviteBatch,
   emailClimateSurveyInvites,
   getClimateSurvey,
   getClimateSurveyAggregate,
-  softDeleteClimateSurvey,
   updateClimateSurvey,
   updateClimateSurveyQuestion,
+  versionClimateSurvey,
 } from '../../../../../lib/people/climate-surveys';
 
 async function loadScopedSurvey(surveyId, scope) {
@@ -81,6 +82,36 @@ export async function PATCH(request, { params }) {
     const companyId = loaded.survey.companyId;
 
     const body = await request.json().catch(() => ({}));
+
+    if (body.archive) {
+      const archived = await archiveClimateSurvey(query, { companyId, surveyId });
+      if (!archived.ok) return apiError(request, archived.errorCode || 'INVALID_DATA', 400);
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'climate_survey.archive',
+        targetType: 'climate_survey',
+        targetId: surveyId,
+      });
+      return NextResponse.json({ ok: true, survey: archived.survey });
+    }
+
+    if (body.version) {
+      const versioned = await versionClimateSurvey(query, {
+        companyId,
+        surveyId,
+        createdByUserId: payload.userId || null,
+        title: body.version?.title || body.title || null,
+      });
+      if (!versioned.ok) return apiError(request, versioned.errorCode || 'INVALID_DATA', 400);
+      await audit({
+        actorUserId: payload.userId || null,
+        action: 'climate_survey.version',
+        targetType: 'climate_survey',
+        targetId: surveyId,
+        metadata: { newSurveyId: versioned.survey?.id },
+      });
+      return NextResponse.json({ ok: true, survey: versioned.survey, sourceSurveyId: versioned.sourceSurveyId });
+    }
 
     if (body.createInvite) {
       const inv = await createClimateSurveyInvite(query, {
@@ -217,20 +248,20 @@ export async function DELETE(request, { params }) {
     const loaded = await loadScopedSurvey(surveyId, scope);
     if (loaded.error) return apiError(request, loaded.error, loaded.error === 'NOT_FOUND' ? 404 : 401);
 
-    const del = await softDeleteClimateSurvey(query, {
+    const archived = await archiveClimateSurvey(query, {
       companyId: loaded.survey.companyId,
       surveyId,
     });
-    if (!del.ok) return apiError(request, del.errorCode || 'NOT_FOUND', 404);
+    if (!archived.ok) return apiError(request, archived.errorCode || 'NOT_FOUND', 404);
 
     await audit({
       actorUserId: payload.userId || null,
-      action: 'climate_survey.delete',
+      action: 'climate_survey.archive',
       targetType: 'climate_survey',
       targetId: surveyId,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, survey: archived.survey });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
     console.error('DELETE climate-survey', err);

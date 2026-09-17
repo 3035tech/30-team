@@ -23,7 +23,9 @@ export async function GET(request) {
       return NextResponse.json(bench);
     }
 
-    const items = await listClimateSurveys(query, { companyId });
+    const includeArchived = url.searchParams.get('includeArchived') === '1';
+    const status = url.searchParams.get('status') || null;
+    const items = await listClimateSurveys(query, { companyId, includeArchived, status });
     return NextResponse.json({ items, minResponses: climateMinResponses() });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
