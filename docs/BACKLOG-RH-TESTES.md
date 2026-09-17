@@ -58,3 +58,4 @@ Fechados em [`docs/RH2-decisions.md`](./RH2-decisions.md) (ciclo de vida, perfis
 
 - Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/15). Anexos visuais ficam no `.docx`.
 - Motivadores (B-RH2-20): após deploy, republicar copy com `npm run db:seed-motivators-all` (desativa chaves antigas; não apaga tentativas).
+- Constantes de domínio (ondas 1–3): `lib/domain-status.js` + `ROLES` em `permissions.js`. Sem schema. B-RH2-12/15 continuam bloqueados sem aceite de produto.

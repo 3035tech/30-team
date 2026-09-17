@@ -7,6 +7,7 @@ import {
   getEmployeeOnboardingJourney,
   employeeAckOnboardingItem,
 } from '../../../../lib/people/employee-onboarding-journey.js';
+import { ONBOARDING_ACK_KIND } from '../../../../lib/domain-status.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,12 @@ export async function PATCH(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const kind = body.kind === 'checkin' ? 'checkin' : body.kind === 'pre' ? 'pre' : null;
+    const kind =
+      body.kind === ONBOARDING_ACK_KIND.CHECKIN
+        ? ONBOARDING_ACK_KIND.CHECKIN
+        : body.kind === ONBOARDING_ACK_KIND.PRE
+          ? ONBOARDING_ACK_KIND.PRE
+          : null;
     const itemId = Number(body.itemId || body.id);
     if (!kind || !Number.isFinite(itemId)) {
       return apiError(request, ERR.INVALID_DATA, 400);

@@ -23,6 +23,7 @@ import {
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
+import { LEARNING_RESOURCE_TYPE, LEARNING_RESOURCE_TYPES } from '../../../lib/domain-status';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [resources, setResources] = useState([]);
@@ -223,16 +224,11 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         label: t('formTypeLabel'),
         type: 'select',
         required: false,
-        value: resource?.resourceType || 'course',
-        options: [
-          { value: 'course', label: t('course') },
-          { value: 'article', label: t('article') },
-          { value: 'video', label: t('video') },
-          { value: 'book', label: t('book') },
-          { value: 'workshop', label: t('workshop') },
-          { value: 'mentoring', label: t('mentoring') },
-          { value: 'other', label: t('other') },
-        ],
+        value: resource?.resourceType || LEARNING_RESOURCE_TYPE.COURSE,
+        options: LEARNING_RESOURCE_TYPES.map((value) => ({
+          value,
+          label: t(value),
+        })),
       },
       { name: 'url', label: t('formUrlLabel'), type: 'text', required: false, value: resource?.url || '' },
       {
@@ -427,13 +423,11 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
           }}
         >
           <option value="">{t('allTypes')}</option>
-          <option value="course">{t('course')}</option>
-          <option value="article">{t('article')}</option>
-          <option value="video">{t('video')}</option>
-          <option value="book">{t('book')}</option>
-          <option value="workshop">{t('workshop')}</option>
-          <option value="mentoring">{t('mentoring')}</option>
-          <option value="other">{t('other')}</option>
+          {LEARNING_RESOURCE_TYPES.map((value) => (
+            <option key={value} value={value}>
+              {t(value)}
+            </option>
+          ))}
         </AdminListFilterSelect>
       </AdminListFilters>
 

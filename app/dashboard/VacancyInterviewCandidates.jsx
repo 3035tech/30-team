@@ -21,6 +21,7 @@ import { CandidateCvBlock } from '../_components/CandidateCvBlock';
 import { FormField, formFieldGrowClass, formFieldRowClass } from '../_components/FormField';
 import { VacancyInterviewSlotsBlock } from '../_components/VacancyInterviewSlotsBlock';
 import { DisclosureToggle, disclosureToggleButtonClass } from '../_components/CollapsibleBlock';
+import { OFFER_STATUS } from '../../lib/domain-status';
 
 const FIELD = cn(S.input, 'w-full bg-surface/80');
 const FIELD_SELECT = cn(S.select, 'w-full bg-surface/80');
@@ -459,7 +460,7 @@ function CandidateCard({
               initialOffer={{
                 offerSalary: row.offerSalary,
                 offerStartDate: row.offerStartDate,
-                offerStatus: row.offerStatus || 'none',
+                offerStatus: row.offerStatus || OFFER_STATUS.NONE,
                 offerNotes: row.offerNotes,
               }}
               onSaved={() => onChanged?.()}

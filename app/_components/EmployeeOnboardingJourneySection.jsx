@@ -10,16 +10,17 @@ import { ContentEnter } from './AppLoading';
 import { Icon } from './Icon';
 import { MeterBar } from './MeterBar';
 import { StatusToneChip } from './StatusToneChip';
+import { ONBOARDING_ACK_KIND } from '../../lib/domain-status';
 
 function itemTitle(locale, item) {
-  if (item.kind === 'checkin') {
+  if (item.kind === ONBOARDING_ACK_KIND.CHECKIN) {
     return t(locale, 'employeeHome.journeyCheckin', { days: item.milestoneDays });
   }
   return t(locale, `employeeHome.journeyItem.${item.itemKey}`);
 }
 
 function itemIcon(item) {
-  if (item.kind === 'checkin') return 'clipboard';
+  if (item.kind === ONBOARDING_ACK_KIND.CHECKIN) return 'clipboard';
   switch (item.itemKey) {
     case 'welcome_kit':
       return 'gift';

@@ -10,10 +10,14 @@ import {
   CLIMATE_QUESTION_KINDS,
   DEVELOPMENT_PLAN_ITEM_SOURCE,
   DEVELOPMENT_PLAN_ITEM_SOURCES,
+  LEARNING_RESOURCE_TYPE,
+  LEARNING_RESOURCE_TYPES,
   INTERVIEW_SLOT_STATUS,
   INTERVIEW_SLOT_STATUSES,
   OFFER_STATUS,
   OFFER_STATUSES,
+  ONBOARDING_ACK_KIND,
+  ONBOARDING_ACK_KINDS,
   PERFORMANCE_GOAL_OUTCOME,
   PERFORMANCE_GOAL_OUTCOMES,
   SUCCESSION_IMPACT,
@@ -22,11 +26,13 @@ import {
   SUCCESSION_READINESSES,
   TEAM_PULSE_STATUS,
 } from '../../lib/domain-status.js';
+import { ROLES } from '../../lib/permissions.js';
 import { normalizeOfferStatus } from '../../lib/people/candidate-offer.js';
 import { PERFORMANCE_REVIEW_CAPS } from '../../lib/performance-reviews.js';
 import { deriveOverallScoreFromOutcomes } from '../../lib/people/performance-calibration.js';
 import { shouldSuggestVariablePay } from '../../lib/people/variable-pay.js';
 import { computeHireReadiness } from '../../lib/hire-readiness.js';
+import { PIPELINE_STAGE } from '../../lib/pipeline.js';
 
 describe('domain-status wave1 closed sets', () => {
   it('exposes PDI item sources matching SQL CHECK final list', () => {
@@ -103,10 +109,20 @@ describe('domain-status wave2 closed sets', () => {
     const ready = computeHireReadiness({
       assessmentId: 1,
       motivatorsAttemptId: 2,
-      pipelineStage: 'approved',
+      pipelineStage: PIPELINE_STAGE.APPROVED,
       offerStatus: OFFER_STATUS.PROPOSED,
     });
     assert.equal(ready.checks.find((c) => c.id === 'OFFER_LOGGED')?.ok, true);
     assert.equal(ready.checks.find((c) => c.id === 'OFFER_ACCEPTED')?.ok, false);
+  });
+});
+
+describe('domain-status wave3 closed sets', () => {
+  it('exposes learning resource types + onboarding ack kinds + ROLES', () => {
+    assert.ok(LEARNING_RESOURCE_TYPES.includes(LEARNING_RESOURCE_TYPE.COURSE));
+    assert.equal(LEARNING_RESOURCE_TYPES.length, 7);
+    assert.deepEqual([...ONBOARDING_ACK_KINDS].sort(), ['checkin', 'pre'].sort());
+    assert.equal(ONBOARDING_ACK_KIND.PRE, 'pre');
+    assert.deepEqual([...ROLES].sort(), ['admin', 'direction', 'hr'].sort());
   });
 });
