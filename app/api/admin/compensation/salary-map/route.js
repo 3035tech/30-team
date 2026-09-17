@@ -24,7 +24,7 @@ const listQuerySchema = z.object({
 /** GET salary map (+ optional simulate=1) */
 export const GET = withAdminApi(
   {
-    cap: CAP.TEAM_VIEW,
+    cap: CAP.COMPENSATION_VIEW,
     query: listQuerySchema,
     companyFrom: 'query',
     logLabel: 'compensation salary-map GET',

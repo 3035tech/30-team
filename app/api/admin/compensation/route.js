@@ -29,7 +29,7 @@ const querySchema = z.object({
  */
 export const GET = withAdminApi(
   {
-    cap: CAP.TEAM_VIEW,
+    cap: CAP.COMPENSATION_VIEW,
     query: querySchema,
     companyFrom: 'query',
     logLabel: 'compensation roster GET',

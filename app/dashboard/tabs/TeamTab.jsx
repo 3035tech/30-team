@@ -233,6 +233,8 @@ export function TeamTab({
   navigateDashboard = null,
   roster = ROSTER_SCOPE.INTERNAL,
   pipelineFilter = null,
+  canViewCompensation = false,
+  canManageCompensation = false,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -1219,7 +1221,8 @@ export function TeamTab({
                     const allowedSubTabs = new Set([
                       'oneOnOne',
                       'journey',
-                      ...(isInternalPerson ? ['compensation', 'dp'] : []),
+                      ...(isInternalPerson && canViewCompensation ? ['compensation'] : []),
+                      ...(isInternalPerson ? ['dp'] : []),
                     ]);
                     const activePeopleSubTab = allowedSubTabs.has(peopleSubTab)
                       ? peopleSubTab
@@ -1277,17 +1280,16 @@ export function TeamTab({
                       tabs={[
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
-                        ...(isInternalPerson
+                        ...(isInternalPerson && canViewCompensation
                           ? [
                               {
                                 id: 'compensation',
                                 label: t(locale, 'panel.team.peopleSubTabCompensation'),
                               },
-                              {
-                                id: 'dp',
-                                label: t(locale, 'panel.team.peopleSubTabDp'),
-                              },
                             ]
+                          : []),
+                        ...(isInternalPerson
+                          ? [{ id: 'dp', label: t(locale, 'panel.team.peopleSubTabDp') }]
                           : []),
                       ]}
                     />
@@ -1329,6 +1331,7 @@ export function TeamTab({
                             candidateId={detail.candidate.id}
                             employmentStatus={detail.candidate.employmentStatus}
                             companyId={detail.candidate.companyId}
+                            canManage={canManageCompensation}
                           />
                           <BenefitAssignmentsBlock
                             locale={locale}

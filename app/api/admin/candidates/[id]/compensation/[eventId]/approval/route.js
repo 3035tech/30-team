@@ -25,7 +25,7 @@ function parsePositive(raw) {
 /** POST set approval_status on compensation event */
 export const POST = withAdminApi(
   {
-    cap: CAP.TEAM_VIEW,
+    cap: CAP.COMPENSATION_MANAGE,
     body: bodySchema,
     companyFrom: 'body',
     logLabel: 'compensation approval POST',

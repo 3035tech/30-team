@@ -380,22 +380,19 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 
       if (needListMetrics) {
         const needHistogram = needCompatPairs || needOverview;
-        const cntPromise = queryRead(
-          `SELECT COUNT(*)::int AS n ${BASE_JOIN_LIST} ${candidateWhere}`,
-          extParams
-        );
-        const histPromise = needHistogram
+        const aggregatePromise = needHistogram
           ? queryRead(
-              `SELECT ass.top_type AS "topType", COUNT(*)::int AS n
-               ${BASE_JOIN_LIST}
-               ${candidateWhere}
-               GROUP BY ass.top_type`,
+              `SELECT ass.top_type AS "topType", COUNT(*)::int AS n,
+                      SUM(COUNT(*)) OVER ()::int AS total
+                 ${BASE_JOIN_LIST}
+                 ${candidateWhere}
+                GROUP BY ass.top_type`,
               extParams
             )
-          : Promise.resolve({ rows: [] });
-        const [cntRes, histRes] = await Promise.all([cntPromise, histPromise]);
-        listTotal = cntRes.rows[0]?.n ?? 0;
-        for (const row of histRes.rows) {
+          : queryRead(`SELECT COUNT(*)::int AS total ${BASE_JOIN_LIST} ${candidateWhere}`, extParams);
+        const aggregateRes = await aggregatePromise;
+        listTotal = Number(aggregateRes.rows[0]?.total) || 0;
+        for (const row of needHistogram ? aggregateRes.rows : []) {
           const tt = row.topType;
           if (typeof tt === 'number' && tt >= 1 && tt <= 9) typeCountAgg[tt] = row.n;
         }

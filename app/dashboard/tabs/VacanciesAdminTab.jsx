@@ -53,6 +53,7 @@ import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalytics
 import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
 import { PipelineStagesEditor } from '../vacancies/PipelineStagesEditor';
+import { PipelineTemplatesManager } from '../vacancies/PipelineTemplatesManager';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
@@ -105,6 +106,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   // Auto-limpa msg após 3s; cancela timer anterior a cada nova msg e ao desmontar
   // (evita setState em componente desmontado quando o gestor troca de aba/vaga).
   const msgTimerRef = useRef(null);
+  const createFromNavigationHandledRef = useRef(false);
+  useEffect(() => {
+    if (urlParams.get('create') !== '1' || createFromNavigationHandledRef.current) return;
+    createFromNavigationHandledRef.current = true;
+    setEditingVacancy(null);
+    setShowCreate(true);
+  }, [urlParams]);
   useEffect(() => () => {
     if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
   }, []);
@@ -145,6 +153,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [pipelineTemplatesError, setPipelineTemplatesError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const pipelineTemplateLoadRef = useRef(0);
+
+  const closeCreate = useCallback(() => {
+    setShowCreate(false);
+    if (urlParams.get('create') === '1') {
+      navigateDashboard({ tab: 'vacancies', create: null, scroll: false });
+    }
+  }, [navigateDashboard, urlParams]);
 
   const appUrl =
     (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
@@ -366,7 +381,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setJobRoleId('');
       const defaultTemplate = pipelineTemplates.find((item) => item.isDefault) || pipelineTemplates[0];
       setPipelineTemplateId(defaultTemplate ? String(defaultTemplate.id) : '');
-      setShowCreate(false);
+      closeCreate();
       await loadVacancies();
       showMsg(t(locale, 'recruiting.vacancyCreated'));
     } catch (e) {
@@ -643,12 +658,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         open={showCreate}
         title={t(locale, 'recruiting.createVacancyDrawerTitle')}
         locale={locale}
-        onClose={() => setShowCreate(false)}
+        onClose={closeCreate}
         footer={(
           <>
             <button
               type="button"
-              onClick={() => setShowCreate(false)}
+              onClick={closeCreate}
               disabled={loading}
               className={dialogBtnGhostClass}
             >
@@ -1599,6 +1614,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             />
           </div>
         </div>
+
+        <CollapsibleBlock
+          locale={locale}
+          title={t(locale, 'panel.pipelineTemplates.manageTitle')}
+          defaultOpen={false}
+          className="mt-4"
+        >
+          <p className="mb-3 mt-0 max-w-[720px] text-xs leading-[1.55] text-ink-muted">
+            {t(locale, 'panel.pipelineTemplates.manageHint')}
+          </p>
+          <PipelineTemplatesManager
+            locale={locale}
+            companyId={companyId}
+            templates={pipelineTemplates}
+            loading={pipelineTemplatesLoading}
+            onChanged={loadPipelineTemplates}
+          />
+        </CollapsibleBlock>
 
         {vacFilterFromUrl !== 'all' ? (
           <div className="mt-2.5 rounded-control border border-ink/12 bg-ink/[0.03] px-3.5 py-2.5">

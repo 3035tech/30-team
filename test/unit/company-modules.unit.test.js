@@ -10,6 +10,7 @@ import { describe, it } from 'node:test';
 import {
   COMPANY_MODULE,
   COMPANY_MODULES,
+  COMPANY_MODULE_REGISTRY,
   capsForCompanyModules,
   employeeSectionAllowedByCompanyModules,
   intersectCapsWithCompanyModules,
@@ -25,9 +26,9 @@ import { validateHelpGuideCoverage } from '../../lib/help-sections.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 describe('company modules entitlements', () => {
-  it('normalize: null / empty → unrestricted; forces core', () => {
+  it('normalize: null stays legacy unrestricted; empty becomes core-only', () => {
     assert.equal(normalizeEnabledModules(null), null);
-    assert.equal(normalizeEnabledModules([]), null);
+    assert.deepEqual(normalizeEnabledModules([]), ['core']);
     assert.deepEqual(normalizeEnabledModules(['performance']), ['core', 'performance'].sort());
     assert.ok(COMPANY_MODULES.includes(COMPANY_MODULE.CORE));
   });
@@ -35,6 +36,7 @@ describe('company modules entitlements', () => {
   it('persist selection: all-on → null; subset keeps core', () => {
     assert.equal(modulesSelectionForPersist([...COMPANY_MODULES]), null);
     assert.deepEqual(modulesSelectionForPersist(['performance']).sort(), ['core', 'performance']);
+    assert.deepEqual(modulesSelectionForPersist([]), ['core']);
     assert.deepEqual(modulesSelectionForUi(null).sort(), [...COMPANY_MODULES].sort());
     assert.ok(modulesSelectionForUi(['climate']).includes('core'));
   });
@@ -70,6 +72,23 @@ describe('company modules entitlements', () => {
     assert.ok(set instanceof Set);
     assert.equal(set.has('vacancies.view'), true);
     assert.equal(set.has('performance.view'), false);
+  });
+
+  it('keeps compensation behind its own sensitive module', () => {
+    assert.equal(tabAllowedByCompanyModules(['core'], 'compensation'), false);
+    assert.equal(tabAllowedByCompanyModules(['core', 'compensation'], 'compensation'), true);
+    const set = capsForCompanyModules(['core', 'compensation']);
+    assert.equal(set.has('compensation.view'), true);
+    assert.equal(set.has('compensation.manage'), true);
+    assert.equal(set.has('team.view'), true);
+  });
+
+  it('publishes one module registry for navigation and entitlement consumers', () => {
+    const compensation = COMPANY_MODULE_REGISTRY.find((item) => item.id === 'compensation');
+    assert.equal(COMPANY_MODULE_REGISTRY.length, COMPANY_MODULES.length);
+    assert.equal(compensation.sensitive, true);
+    assert.ok(compensation.tabs.includes('compensation'));
+    assert.ok(compensation.caps.includes('compensation.view'));
   });
 
   it('ships migration 109 + onboarding i18n + help', () => {

@@ -28,7 +28,7 @@ function formatDate(value, locale) {
 /**
  * B-3003 — Company-wide proposed bonus / variable pay inbox.
  */
-export function VariablePayInboxBlock({ locale = 'pt-BR', companyId, onOpenPerson = null }) {
+export function VariablePayInboxBlock({ locale = 'pt-BR', companyId, onOpenPerson = null, canManage = true }) {
   const { toast, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -166,19 +166,23 @@ export function VariablePayInboxBlock({ locale = 'pt-BR', companyId, onOpenPerso
                         disabled={busyId === row.id}
                       />
                     ) : null}
-                    <AdminIconButton
-                      icon="check"
-                      label={t(locale, 'panel.variablePay.approve')}
-                      onClick={() => void setStatus(row, COMPENSATION_APPROVAL_STATUS.APPROVED)}
-                      disabled={busyId === row.id}
-                    />
-                    <AdminIconButton
-                      icon="x"
-                      label={t(locale, 'panel.variablePay.reject')}
-                      tint="danger"
-                      onClick={() => void setStatus(row, COMPENSATION_APPROVAL_STATUS.REJECTED)}
-                      disabled={busyId === row.id}
-                    />
+                    {canManage ? (
+                      <>
+                        <AdminIconButton
+                          icon="check"
+                          label={t(locale, 'panel.variablePay.approve')}
+                          onClick={() => void setStatus(row, COMPENSATION_APPROVAL_STATUS.APPROVED)}
+                          disabled={busyId === row.id}
+                        />
+                        <AdminIconButton
+                          icon="x"
+                          label={t(locale, 'panel.variablePay.reject')}
+                          tint="danger"
+                          onClick={() => void setStatus(row, COMPENSATION_APPROVAL_STATUS.REJECTED)}
+                          disabled={busyId === row.id}
+                        />
+                      </>
+                    ) : null}
                   </div>
                 </li>
                 );

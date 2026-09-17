@@ -1,120 +1,68 @@
-/**
- * GET  /api/admin/performance-reviews?cycleId=X&candidateId=Y — get or create review
- * POST /api/admin/performance-reviews — update review draft
- */
+/** GET/POST manager performance review, scoped and validated by withAdminApi. */
 
 import { NextResponse } from 'next/server';
-import { apiError, ERR } from '../../../../lib/api-error.js';
-import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../lib/ae/require-admin.js';
+import { withAdminApi } from '../../../../lib/admin-api.js';
+import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
+import { CAP } from '../../../../lib/permissions.js';
+import { query as dbQuery } from '../../../../lib/db.js';
+import { z, zPositiveInt } from '../../../../lib/validate.js';
 import { getPerformanceReview, updatePerformanceReview, listPerformanceGoals } from '../../../../lib/performance-reviews.js';
 import { listSideReviewsForCandidate } from '../../../../lib/performance-side-reviews.js';
 
-export async function GET(request) {
-  try {
-    const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.PERFORMANCE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
-    const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
+const querySchema = z.object({
+  companyId: zPositiveInt.optional(),
+  cycleId: zPositiveInt,
+  candidateId: zPositiveInt,
+});
 
-    const companyId = scope.isAdmin
-      ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, ERR.COMPANY_REQUIRED, 400);
-    }
+const bodySchema = z.object({
+  companyId: zPositiveInt.optional(),
+  cycleId: zPositiveInt,
+  candidateId: zPositiveInt,
+  outcomes: z.any().optional(),
+  overallNotes: z.string().max(20000).nullable().optional(),
+});
 
-    const url = new URL(request.url);
-    const cycleId = Number(url.searchParams.get('cycleId'));
-    const candidateId = Number(url.searchParams.get('candidateId'));
+async function candidateExists(companyId, candidateId) {
+  const result = await dbQuery(
+    `SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`,
+    [candidateId, companyId]
+  );
+  return result.rowCount > 0;
+}
 
-    if (!Number.isFinite(cycleId) || cycleId <= 0 || !Number.isFinite(candidateId) || candidateId <= 0) {
-      return apiError(request, ERR.INVALID_PARAMS, 400);
-    }
-
-    const { query } = await import('../../../../lib/db.js');
-    const cand = await query(
-      `SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`,
-      [candidateId, companyId]
-    );
-    if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
-
+export const GET = withAdminApi(
+  { cap: CAP.PERFORMANCE_VIEW, query: querySchema, companyFrom: 'query', logLabel: 'performance-reviews GET' },
+  async ({ request, payload, companyId, query }) => {
+    if (!(await candidateExists(companyId, query.candidateId))) return apiError(request, ERR.NOT_FOUND, 404);
     const result = await getPerformanceReview(null, {
       companyId,
-      cycleId,
-      candidateId,
+      cycleId: query.cycleId,
+      candidateId: query.candidateId,
       reviewerUserId: payload.userId,
     });
-
-    if (!result.ok) {
-      return apiError(request, result.errorCode, 400);
-    }
-
-    const goals = await listPerformanceGoals(null, {
-      companyId,
-      cycleId,
-      candidateId,
-    });
-
-    const sideReviews = await listSideReviewsForCandidate(null, {
-      companyId,
-      cycleId,
-      candidateId,
-    });
-
+    if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
+    const [goals, sideReviews] = await Promise.all([
+      listPerformanceGoals(null, { companyId, cycleId: query.cycleId, candidateId: query.candidateId }),
+      listSideReviewsForCandidate(null, { companyId, cycleId: query.cycleId, candidateId: query.candidateId }),
+    ]);
     return NextResponse.json({ review: result.review, goals, sideReviews });
-  } catch (err) {
-    console.error('GET /api/admin/performance-reviews error:', err);
-    return apiError(request, ERR.INTERNAL_ERROR, 500);
   }
-}
+);
 
-export async function POST(request) {
-  try {
-    const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.PERFORMANCE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
-    const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
-
-    const body = await request.json();
-    const companyId = scope.isAdmin
-      ? Number(body.companyId || scope.companyId)
-      : Number(scope.companyId);
-    if (!Number.isFinite(companyId) || companyId <= 0) {
-      return apiError(request, ERR.COMPANY_REQUIRED, 400);
-    }
-
-    const { cycleId, candidateId, outcomes, overallNotes } = body;
-
-    if (!Number.isFinite(cycleId) || cycleId <= 0 || !Number.isFinite(candidateId) || candidateId <= 0) {
-      return apiError(request, ERR.INVALID_PARAMS, 400);
-    }
-
-    const { query } = await import('../../../../lib/db.js');
-    const cand = await query(
-      `SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`,
-      [candidateId, companyId]
-    );
-    if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
-
+export const POST = withAdminApi(
+  { cap: CAP.PERFORMANCE_VIEW, body: bodySchema, companyFrom: 'body', logLabel: 'performance-reviews POST' },
+  async ({ request, payload, companyId, body }) => {
+    if (!(await candidateExists(companyId, body.candidateId))) return apiError(request, ERR.NOT_FOUND, 404);
     const result = await updatePerformanceReview(null, {
       companyId,
-      cycleId,
-      candidateId,
-      outcomes,
-      overallNotes,
+      cycleId: body.cycleId,
+      candidateId: body.candidateId,
+      outcomes: body.outcomes,
+      overallNotes: body.overallNotes,
       reviewerUserId: payload.userId,
     });
-
-    if (!result.ok) {
-      if (result.errorCode === 'NOT_FOUND') {
-        return apiError(request, ERR.NOT_FOUND, 404);
-      }
-      return apiError(request, result.errorCode, 400);
-    }
-
+    if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
     return NextResponse.json(result.review);
-  } catch (err) {
-    console.error('POST /api/admin/performance-reviews error:', err);
-    return apiError(request, ERR.INTERNAL_ERROR, 500);
   }
-}
+);

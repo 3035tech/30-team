@@ -49,7 +49,7 @@ function eventTypeLabel(locale, type) {
 /**
  * Internal RH compensation — current salary + timeline (not payroll).
  */
-export function CompensationBlock({ locale, candidateId, employmentStatus, companyId }) {
+export function CompensationBlock({ locale, candidateId, employmentStatus, companyId, canManage = true }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [current, setCurrent] = useState(null);
@@ -59,7 +59,7 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  const readOnly = employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
+  const readOnly = employmentStatus === EMPLOYMENT_STATUS.ALUMNI || !canManage;
   const visible =
     employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
     employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
@@ -548,7 +548,12 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
       ) : null}
 
       {readOnly ? (
-        <p className={cn(S.muted, 'mb-3 text-xs')}>{t(locale, 'panel.compensation.alumniReadOnly')}</p>
+        <p className={cn(S.muted, 'mb-3 text-xs')}>
+          {t(
+            locale,
+            canManage ? 'panel.compensation.alumniReadOnly' : 'panel.compensation.permissionReadOnly'
+          )}
+        </p>
       ) : null}
 
       {sortedItems.length === 0 ? (

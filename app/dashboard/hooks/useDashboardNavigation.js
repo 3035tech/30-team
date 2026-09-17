@@ -81,6 +81,8 @@ export function useDashboardNavigation({
 
     // Deep-link Equipe → pessoa: /dashboard?tab=team&candidate=<id>
     const nextTab = opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
+    const nextCreate = opts.create !== undefined ? opts.create : urlParams.get('create');
+    if (nextTab === 'vacancies' && nextCreate === '1') p.set('create', '1');
     if (opts.candidate !== undefined) {
       if (opts.candidate) p.set('candidate', String(opts.candidate));
     } else if (nextTab === 'team') {

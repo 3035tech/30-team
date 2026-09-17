@@ -336,7 +336,9 @@ npm run dev
 
 ### Modelos de funil de vagas
 
-O módulo de Recrutamento/Vagas mantém modelos de funil isolados por empresa (`company_id`). Ao criar uma vaga, o modelo padrão já vem selecionado e suas etapas são copiadas para `vacancy_pipeline_stages`; ajustes posteriores afetam apenas aquela vaga. No detalhe da vaga, “Salvar como modelo” permite reutilizar o funil e defini-lo como padrão. Vagas anteriores à migration `111_vacancy_pipeline_templates.sql` continuam compatíveis pelo fallback para `company_pipeline_stages`.
+O módulo de Recrutamento/Vagas mantém modelos de funil isolados por empresa (`company_id`). Ao criar uma vaga, o modelo padrão já vem selecionado e suas etapas são copiadas para `vacancy_pipeline_stages`; ajustes posteriores afetam apenas aquela vaga. Em Vagas cadastradas, “Modelos de funil” permite renomear, duplicar, definir o padrão e arquivar. No detalhe da vaga, “Salvar como modelo” captura as etapas atuais. Vagas anteriores à migration `111_vacancy_pipeline_templates.sql` continuam compatíveis pelo fallback para `company_pipeline_stages`.
+
+Remuneração é um módulo sensível separado (`compensation.view` / `compensation.manage`). A migration `112_compensation_module_entitlement.sql` mantém o acesso de empresas restritas existentes e separa novas configurações do núcleo geral. Seleção vazia de módulos passa a significar somente `core`; `NULL` permanece apenas como compatibilidade irrestrita legada.
 ```
 
 ---

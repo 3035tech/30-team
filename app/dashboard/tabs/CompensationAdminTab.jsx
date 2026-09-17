@@ -64,7 +64,7 @@ function eventTypeLabel(locale, type) {
 /**
  * Unified internal compensation roster — list salaries + history drawer.
  */
-export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
+export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, canManage = false }) {
   const { toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -157,6 +157,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
       <VariablePayInboxBlock
         locale={locale}
         companyId={companyId}
+        canManage={canManage}
         onOpenPerson={
           typeof navigateDashboard === 'function'
             ? (candidateId) =>
@@ -364,6 +365,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
             candidateId={historyPerson.candidateId}
             employmentStatus={historyPerson.employmentStatus}
             companyId={companyId}
+            canManage={canManage}
           />
         ) : null}
       </AdminRichFormDrawer>

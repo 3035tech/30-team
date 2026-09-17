@@ -3101,3 +3101,14 @@ ALTER TABLE vacancies
   ADD COLUMN IF NOT EXISTS pipeline_template_id BIGINT REFERENCES pipeline_templates(id) ON DELETE SET NULL;
 INSERT INTO schema_migrations (name) VALUES ('111_vacancy_pipeline_templates.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 112: remuneração como módulo sensível próprio; preserva acesso dos tenants já restritos.
+UPDATE companies
+SET enabled_modules = array_append(enabled_modules, 'compensation')
+WHERE enabled_modules IS NOT NULL
+  AND 'core' = ANY(enabled_modules)
+  AND NOT ('compensation' = ANY(enabled_modules));
+COMMENT ON COLUMN companies.enabled_modules IS
+  'Nullable legacy unrestricted marker. Non-null is an explicit module allow-list; empty input normalizes to core-only.';
+INSERT INTO schema_migrations (name) VALUES ('112_compensation_module_entitlement.sql')
+ON CONFLICT (name) DO NOTHING;
