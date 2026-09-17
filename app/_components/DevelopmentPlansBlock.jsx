@@ -10,6 +10,7 @@ import { AppLoading } from './AppLoading';
 import { DisclosureToggle } from './CollapsibleBlock';
 import { isItemDueOverdue, isPlanPeriodOverdue } from '../../lib/people/pdi-action-lines';
 import {
+  DEVELOPMENT_PLAN_ITEM_SOURCE,
   DEVELOPMENT_PLAN_ITEM_STATUS,
   DEVELOPMENT_PLAN_STATUS,
 } from '../../lib/domain-status.js';
@@ -804,7 +805,7 @@ export function DevelopmentPlansBlock({
                                   >
                                     {it.title}
                                   </div>
-                                  {it.ownerLabel || it.dueDate || (it.source && it.source !== 'manual') ? (
+                                  {it.ownerLabel || it.dueDate || (it.source && it.source !== DEVELOPMENT_PLAN_ITEM_SOURCE.MANUAL) ? (
                                     <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-mono text-2xs leading-tight text-ink-muted">
                                       {it.ownerLabel ? <span>{it.ownerLabel}</span> : null}
                                       {it.dueDate ? (
@@ -814,7 +815,7 @@ export function DevelopmentPlansBlock({
                                           {itemOver ? ` ${t(locale, 'panel.pdi.overdue')}` : ''}
                                         </span>
                                       ) : null}
-                                      {it.source && it.source !== 'manual' ? (
+                                      {it.source && it.source !== DEVELOPMENT_PLAN_ITEM_SOURCE.MANUAL ? (
                                         <span className="text-ink-faint">
                                           {(it.ownerLabel || it.dueDate) ? '· ' : ''}
                                           {t(locale, `panel.pdi.source.${it.source}`)}

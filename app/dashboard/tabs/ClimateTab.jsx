@@ -11,7 +11,7 @@ import { CopyableLink } from '../../_components/CopyableLink';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { climateMeanLevel, buildClimateTrendChart, climateSurveyAnchorDate } from '../../../lib/people/climate-viz';
 import { C } from '../../../lib/theme';
-import { CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
+import { CLIMATE_QUESTION_KIND, CLIMATE_SURVEY_STATUS } from '../../../lib/domain-status.js';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { RichTextView } from '../../_components/RichTextView';
@@ -641,12 +641,12 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
           key: 'kind',
           type: 'select',
           label: t(locale, 'panel.climate.questionKindLabel'),
-          defaultValue: 'likert',
+          defaultValue: CLIMATE_QUESTION_KIND.LIKERT,
           help: t(locale, 'panel.climate.questionKindHelp'),
           options: [
-            { value: 'likert', label: t(locale, 'panel.climate.questionKind.likert') },
-            { value: 'enps', label: t(locale, 'panel.climate.questionKind.enps') },
-            { value: 'text', label: t(locale, 'panel.climate.questionKind.text') },
+            { value: CLIMATE_QUESTION_KIND.LIKERT, label: t(locale, 'panel.climate.questionKind.likert') },
+            { value: CLIMATE_QUESTION_KIND.ENPS, label: t(locale, 'panel.climate.questionKind.enps') },
+            { value: CLIMATE_QUESTION_KIND.TEXT, label: t(locale, 'panel.climate.questionKind.text') },
           ],
         },
         {
@@ -661,7 +661,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     setBusy(true);
     try {
       const data = await patch(selectedId, {
-        addQuestion: { prompt: values.prompt, questionKind: values.kind || 'likert' },
+        addQuestion: { prompt: values.prompt, questionKind: values.kind || CLIMATE_QUESTION_KIND.LIKERT },
       });
       setDetail(data.survey);
       setShowQuestions(true);
@@ -1138,9 +1138,9 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           const scaleMax = Number(row.scaleMax) || 5;
                           const scaleMin = Number(row.scaleMin) || 1;
                           const isText =
-                            String(row.questionKind || '').toLowerCase() === 'text' ||
+                            String(row.questionKind || '').toLowerCase() === CLIMATE_QUESTION_KIND.TEXT ||
                             (row.mean == null && row.enpsScore == null);
-                          const isEnps = String(row.questionKind || '').toLowerCase() === 'enps';
+                          const isEnps = String(row.questionKind || '').toLowerCase() === CLIMATE_QUESTION_KIND.ENPS;
                           return (
                             <li
                               key={row.questionId}
@@ -1279,9 +1279,9 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                                   `panel.climate.questionKind.${
                                     (() => {
                                       const k = String(q.questionKind || '').toLowerCase();
-                                      if (k === 'text') return 'text';
-                                      if (k === 'enps') return 'enps';
-                                      return 'likert';
+                                      if (k === CLIMATE_QUESTION_KIND.TEXT) return CLIMATE_QUESTION_KIND.TEXT;
+                                      if (k === CLIMATE_QUESTION_KIND.ENPS) return CLIMATE_QUESTION_KIND.ENPS;
+                                      return CLIMATE_QUESTION_KIND.LIKERT;
                                     })()
                                   }`
                                 )}

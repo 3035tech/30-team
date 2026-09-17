@@ -8,6 +8,7 @@ import { useAppFeedback } from './AppFeedback';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { CopyableLink } from './CopyableLink';
 import { CollapsibleBlock } from './CollapsibleBlock';
+import { INTERVIEW_SLOT_STATUS } from '../../lib/domain-status';
 
 function startOfWeek(d) {
   const x = new Date(d);
@@ -183,7 +184,7 @@ export function VacancyInterviewSlotsBlock({
   };
 
   const weekLabel = `${weekStart.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')} – ${new Date(weekEnd.getTime() - 1).toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')}`;
-  const scheduledCount = items.filter((s) => s.status === 'scheduled').length;
+  const scheduledCount = items.filter((s) => s.status === INTERVIEW_SLOT_STATUS.SCHEDULED).length;
 
   return (
     <CollapsibleBlock
@@ -256,7 +257,7 @@ export function VacancyInterviewSlotsBlock({
                         {t(locale, `recruiting.interviewSlotStatus.${slot.status}`)}
                       </span>
                     </div>
-                    {slot.status === 'scheduled' ? (
+                    {slot.status === INTERVIEW_SLOT_STATUS.SCHEDULED ? (
                       <AdminDeleteButton
                         label={t(locale, 'recruiting.interviewSlotsCancel')}
                         onClick={() => cancelSlot(slot.id)}

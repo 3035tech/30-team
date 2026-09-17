@@ -6,12 +6,13 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { CopyableLink } from './CopyableLink';
+import { PERFORMANCE_GOAL_OUTCOME } from '../../lib/domain-status';
 
 const OUTCOME_I18N = {
-  met: 'outcomeMet',
-  exceeded: 'outcomeExceeded',
-  develop: 'outcomeDevelop',
-  not_met: 'outcomeNotMet',
+  [PERFORMANCE_GOAL_OUTCOME.MET]: 'outcomeMet',
+  [PERFORMANCE_GOAL_OUTCOME.EXCEEDED]: 'outcomeExceeded',
+  [PERFORMANCE_GOAL_OUTCOME.DEVELOP]: 'outcomeDevelop',
+  [PERFORMANCE_GOAL_OUTCOME.NOT_MET]: 'outcomeNotMet',
 };
 
 function outcomeLabel(locale, outcome) {

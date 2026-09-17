@@ -10,13 +10,14 @@ import {
 } from '../../../../../../../lib/api-error.js';
 import { cancelInterviewSlot, updateInterviewSlot } from '../../../../../../../lib/interview-slots.js';
 import { audit } from '../../../../../../../lib/audit.js';
+import { INTERVIEW_SLOT_STATUSES } from '../../../../../../../lib/domain-status.js';
 
 const patchBodySchema = z.object({
   startsAt: z.string().optional(),
   endsAt: z.string().optional().nullable(),
   meetUrl: z.string().optional(),
   notes: z.string().optional().nullable(),
-  status: z.enum(['scheduled', 'completed', 'cancelled', 'no_show']).optional(),
+  status: z.enum(/** @type {[string, ...string[]]} */ (INTERVIEW_SLOT_STATUSES)).optional(),
 });
 
 /** PATCH /api/admin/vacancies/[id]/interview-slots/[slotId] */

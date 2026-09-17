@@ -6,6 +6,7 @@ import {
   resolveClimateInviteByToken,
   submitClimateResponse,
 } from '../../../../../lib/people/climate-surveys';
+import { CLIMATE_QUESTION_KIND } from '../../../../../lib/domain-status';
 
 /** GET /api/public/climate/[token] — anonymous survey form (no PII). */
 export async function GET(request, { params }) {
@@ -38,7 +39,7 @@ export async function GET(request, { params }) {
         prompt: q.prompt,
         scaleMin: q.scaleMin,
         scaleMax: q.scaleMax,
-        questionKind: q.questionKind || 'likert',
+        questionKind: q.questionKind || CLIMATE_QUESTION_KIND.LIKERT,
       })),
     });
   } catch (err) {

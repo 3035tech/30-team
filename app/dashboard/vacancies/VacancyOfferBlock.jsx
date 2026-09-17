@@ -6,6 +6,7 @@ import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { StatusToneChip, statusToneClass } from '../../_components/StatusToneChip';
+import { OFFER_STATUS } from '../../../lib/domain-status';
 
 function formatOfferDate(raw) {
   if (!raw) return '';
@@ -14,9 +15,9 @@ function formatOfferDate(raw) {
 }
 
 function offerStatusTone(status) {
-  if (status === 'proposed') return 'warning';
-  if (status === 'accepted') return 'success';
-  if (status === 'declined') return 'danger';
+  if (status === OFFER_STATUS.PROPOSED) return 'warning';
+  if (status === OFFER_STATUS.ACCEPTED) return 'success';
+  if (status === OFFER_STATUS.DECLINED) return 'danger';
   return 'neutral';
 }
 
@@ -36,12 +37,12 @@ export function VacancyOfferBlock({
   const [offer, setOffer] = useState(() => ({
     offerSalary: initialOffer?.offerSalary || '',
     offerStartDate: formatOfferDate(initialOffer?.offerStartDate),
-    offerStatus: initialOffer?.offerStatus || 'none',
+    offerStatus: initialOffer?.offerStatus || OFFER_STATUS.NONE,
     offerNotes: initialOffer?.offerNotes || '',
   }));
   const [busy, setBusy] = useState(false);
 
-  const status = offer.offerStatus || 'none';
+  const status = offer.offerStatus || OFFER_STATUS.NONE;
 
   const openForm = async () => {
     if (!vacancyId || !candidateId) return;
@@ -54,12 +55,12 @@ export function VacancyOfferBlock({
           key: 'offerStatus',
           type: 'select',
           label: t(locale, 'recruiting.offerStatusLabel'),
-          defaultValue: status === 'none' ? 'proposed' : status,
+          defaultValue: status === OFFER_STATUS.NONE ? OFFER_STATUS.PROPOSED : status,
           required: true,
           options: [
-            { value: 'proposed', label: t(locale, 'recruiting.offerStatus.proposed') },
-            { value: 'accepted', label: t(locale, 'recruiting.offerStatus.accepted') },
-            { value: 'declined', label: t(locale, 'recruiting.offerStatus.declined') },
+            { value: OFFER_STATUS.PROPOSED, label: t(locale, 'recruiting.offerStatus.proposed') },
+            { value: OFFER_STATUS.ACCEPTED, label: t(locale, 'recruiting.offerStatus.accepted') },
+            { value: OFFER_STATUS.DECLINED, label: t(locale, 'recruiting.offerStatus.declined') },
           ],
         },
         {
@@ -137,10 +138,10 @@ export function VacancyOfferBlock({
         )}
         title={t(locale, 'recruiting.offerEdit')}
       >
-        {status === 'none'
+        {status === OFFER_STATUS.NONE
           ? t(locale, 'recruiting.offerAddShort')
           : t(locale, `recruiting.offerStatus.${status}`)}
-        {offer.offerSalary && status !== 'none' ? (
+        {offer.offerSalary && status !== OFFER_STATUS.NONE ? (
           <span className="truncate opacity-80">· {offer.offerSalary}</span>
         ) : null}
       </button>
@@ -156,7 +157,7 @@ export function VacancyOfferBlock({
         </StatusToneChip>
       </div>
       <p className={cn(S.faint, 'm-0 mb-2')}>{t(locale, 'recruiting.offerHint')}</p>
-      {status !== 'none' ? (
+      {status !== OFFER_STATUS.NONE ? (
         <div className="mb-2 space-y-0.5 font-mono text-xs text-ink-muted">
           {offer.offerSalary ? (
             <div>{t(locale, 'recruiting.offerSalaryLine', { n: offer.offerSalary })}</div>
@@ -170,7 +171,7 @@ export function VacancyOfferBlock({
         </div>
       ) : null}
       <button type="button" disabled={busy} className={S.btnBrandSoft} onClick={openForm}>
-        {status === 'none' ? t(locale, 'recruiting.offerAdd') : t(locale, 'recruiting.offerEdit')}
+        {status === OFFER_STATUS.NONE ? t(locale, 'recruiting.offerAdd') : t(locale, 'recruiting.offerEdit')}
       </button>
     </div>
   );

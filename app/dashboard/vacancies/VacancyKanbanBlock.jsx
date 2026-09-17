@@ -5,6 +5,7 @@ import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { titleCasePersonName } from '../../../lib/person-name';
 import { PIPELINE_STAGE } from '../../../lib/pipeline';
+import { OFFER_STATUS } from '../../../lib/domain-status';
 import { useDarkMode } from '../../_components/DarkModeProvider';
 import { getKanbanStages } from '../dashboard-shared';
 import { rejectionReasonLabel } from '../pipeline-prompts';
@@ -297,7 +298,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                               initialOffer={{
                                 offerSalary: r.offerSalary,
                                 offerStartDate: r.offerStartDate,
-                                offerStatus: r.offerStatus || 'none',
+                                offerStatus: r.offerStatus || OFFER_STATUS.NONE,
                                 offerNotes: r.offerNotes,
                               }}
                               onSaved={(next) => {

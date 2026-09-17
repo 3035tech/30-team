@@ -7,13 +7,14 @@ import { S } from '../../dashboard/dashboard-shared';
 import { FormField } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { PERFORMANCE_GOAL_OUTCOME, PERFORMANCE_GOAL_OUTCOMES } from '../../../lib/domain-status';
 
-const OUTCOMES = ['met', 'exceeded', 'develop', 'not_met'];
+const OUTCOMES = PERFORMANCE_GOAL_OUTCOMES;
 const OUTCOME_I18N = {
-  met: 'outcomeMet',
-  exceeded: 'outcomeExceeded',
-  develop: 'outcomeDevelop',
-  not_met: 'outcomeNotMet',
+  [PERFORMANCE_GOAL_OUTCOME.MET]: 'outcomeMet',
+  [PERFORMANCE_GOAL_OUTCOME.EXCEEDED]: 'outcomeExceeded',
+  [PERFORMANCE_GOAL_OUTCOME.DEVELOP]: 'outcomeDevelop',
+  [PERFORMANCE_GOAL_OUTCOME.NOT_MET]: 'outcomeNotMet',
 };
 
 /**

@@ -10,9 +10,10 @@ import { EmptyState } from './EmptyState';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
+import { CLIMATE_QUESTION_KIND } from '../../lib/domain-status';
 
 function isQuestionAnswered(q, value) {
-  if (q.questionKind === 'text') return String(value || '').trim().length > 0;
+  if (q.questionKind === CLIMATE_QUESTION_KIND.TEXT) return String(value || '').trim().length > 0;
   return value != null && value !== '';
 }
 
@@ -155,7 +156,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
           <div className="space-y-3">
             {(active.questions || []).map((q) => (
               <FormField key={q.id} label={q.prompt}>
-                {q.questionKind === 'text' ? (
+                {q.questionKind === CLIMATE_QUESTION_KIND.TEXT ? (
                   <textarea
                     className={cn(S.input, 'min-h-[72px] w-full text-xs')}
                     maxLength={1500}

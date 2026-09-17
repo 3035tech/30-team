@@ -6,15 +6,16 @@ import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
+import { CLIMATE_QUESTION_KIND } from '../../../lib/domain-status';
 import { ScaleRatingButtons } from '../../_components/ScaleRatingButtons';
 import { RichTextView } from '../../_components/RichTextView';
 
 function isTextQuestion(q) {
-  return String(q?.questionKind || '').toLowerCase() === 'text';
+  return String(q?.questionKind || '').toLowerCase() === CLIMATE_QUESTION_KIND.TEXT;
 }
 
 function isEnpsQuestion(q) {
-  return String(q?.questionKind || '').toLowerCase() === 'enps';
+  return String(q?.questionKind || '').toLowerCase() === CLIMATE_QUESTION_KIND.ENPS;
 }
 
 function isAnswerComplete(q, value) {

@@ -80,7 +80,7 @@ O projeto é **JavaScript puro**. Não introduzir `enum` TS. Valores fechados (e
 |-------------|-----|---------|
 | Código de erro de API (`errorCode`) | `ERR.UNAUTHORIZED`, `ERR.NOT_FOUND`, … | `lib/api-error-codes.js` (reexport em `lib/api-error.js`) |
 | Status HTTP a partir do código | `httpStatusForError(code)` ou `apiErrorFromResult(request, result)` | idem |
-| Employment / vaga / clima / roster / ciclo review / PDI / pulso | `EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `CLIMATE_SURVEY_STATUS`, `ROSTER_SCOPE`, `PERFORMANCE_*`, `DEVELOPMENT_PLAN_*`, `TEAM_PULSE_STATUS` | `lib/domain-status.js` |
+| Employment / vaga / clima / roster / ciclo review / PDI / pulso | `EMPLOYMENT_STATUS`, `VACANCY_STATUS`, `OFFER_STATUS`, `INTERVIEW_SLOT_STATUS`, `CHECKLIST_ITEM_STATUS`, `CLIMATE_SURVEY_STATUS`, `CLIMATE_QUESTION_KIND`, `ROSTER_SCOPE`, `PERFORMANCE_*` (incl. `PERFORMANCE_GOAL_OUTCOME`), `DEVELOPMENT_PLAN_*` (incl. `DEVELOPMENT_PLAN_ITEM_SOURCE`), `TEAM_PULSE_STATUS`, `SUCCESSION_*` | `lib/domain-status.js` |
 | Estágios do funil / motivos de rejeição | `PIPELINE_STAGE.HIRED`, `PIPELINE_STAGES`, `REJECTION_REASONS` | `lib/pipeline.js` |
 | Capabilities / roles | `CAP`, `ROLES`, `can`, `requireCapability` | `lib/permissions.js` |
 | Notificações in-app | `NOTIF` | `lib/manager-notification-catalog.js` |

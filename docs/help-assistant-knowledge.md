@@ -39,6 +39,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | HR Score / sinais de retenção / Preparar conversa / DP→cadastrais | Guia `b1000HrScore` + `b1000TurnoverRadar` + `b1900Packaging` + FAQ `faqHrScore` / `faqTurnoverRadar` + `docs/RH2-decisions.md` |
 | Clima versionado (arquivar / nova versão / perguntas travadas) | Guia `climate` + `docs/RH2-decisions.md` (B-RH2-16) |
 | Benefícios por colaborador | Guia `b1000Benefits` + Equipe → Remuneração + `docs/RH2-decisions.md` (B-RH2-14) |
+| Motivadores: copy situacional + templates hedged + sync sem DELETE | Guia `motivators` + `npm run db:seed-motivators-all` + `docs/RH2-decisions.md` (B-RH2-20) |
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / assinatura interna / férias / saldo / template D1) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |

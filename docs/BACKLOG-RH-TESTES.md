@@ -28,7 +28,7 @@ _(Parte 1 concluída: B-RH1-01…20 removidos após implementação.)_
 
 IDs: `B-RH2-*`. Decisões em [`docs/RH2-decisions.md`](./RH2-decisions.md).
 
-_(Entregues e removidos: B-RH2-01…11, 13–14, 16–19. Diferidos documentados: 12, 15, 20.)_
+_(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. Diferidos documentados: 12, 15.)_
 
 ### B-RH2-12 — Pipeline configurável
 
@@ -46,14 +46,6 @@ _(Entregues e removidos: B-RH2-01…11, 13–14, 16–19. Diferidos documentados
 
 **Origem:** Duda/Gestor pp.15–16. **Diferido:** ciclo formal multi-avaliador.
 
-### B-RH2-20 — Motivadores: copy e instrumentação
-
-**Prompt:** Revisar linguagem situacional do banco e labels exibidos ao respondente/gestor. Dono do instrumento deve validar pesos e redação.
-
-**Aceite:** Banco sincronizado sem DELETE destrutivo; copy pt-BR+en; hedged; sem jargão de dimensão no respondente.
-
-**Origem:** Duda/Gestor / Maria (assessment). **Diferido:** validação do dono do instrumento.
-
 ---
 
 ## Pontos cruzados
@@ -64,4 +56,5 @@ Fechados em [`docs/RH2-decisions.md`](./RH2-decisions.md) (ciclo de vida, perfis
 
 ## Notas
 
-- Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/15/20). Anexos visuais ficam no `.docx`.
+- Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/15). Anexos visuais ficam no `.docx`.
+- Motivadores (B-RH2-20): após deploy, republicar copy com `npm run db:seed-motivators-all` (desativa chaves antigas; não apaga tentativas).

@@ -566,7 +566,9 @@ CREATE TABLE IF NOT EXISTS development_plan_items (
   CONSTRAINT development_plan_items_title_len CHECK (char_length(btrim(title)) >= 1 AND char_length(title) <= 300),
   CONSTRAINT development_plan_items_notes_len CHECK (char_length(notes) <= 4000),
   CONSTRAINT development_plan_items_status_chk CHECK (status IN ('todo', 'doing', 'done')),
-  CONSTRAINT development_plan_items_source_chk CHECK (source IN ('manual', 'synthesis'))
+  CONSTRAINT development_plan_items_source_chk CHECK (source IN (
+    'manual', 'synthesis', 'one_on_one', 'retention', 'onboarding', 'performance_review'
+  ))
 );
 
 CREATE INDEX IF NOT EXISTS idx_development_plan_items_plan
@@ -587,7 +589,7 @@ CREATE TABLE IF NOT EXISTS climate_surveys (
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT climate_surveys_title_len CHECK (char_length(btrim(title)) >= 1 AND char_length(title) <= 200),
   CONSTRAINT climate_surveys_description_len CHECK (char_length(description) <= 4000),
-  CONSTRAINT climate_surveys_status_chk CHECK (status IN ('draft', 'open', 'closed'))
+  CONSTRAINT climate_surveys_status_chk CHECK (status IN ('draft', 'open', 'closed', 'archived'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_climate_surveys_company
@@ -681,17 +683,21 @@ ALTER TABLE development_plan_items
   ADD CONSTRAINT development_plan_items_owner_label_len
   CHECK (char_length(owner_label) <= 120);
 
+-- Always apply the *final* source set (056). Intermediate lists break prod rows
+-- that already use onboarding / performance_review when re-running this bundle.
 ALTER TABLE development_plan_items
   DROP CONSTRAINT IF EXISTS development_plan_items_source_chk;
 
 ALTER TABLE development_plan_items
   ADD CONSTRAINT development_plan_items_source_chk
-  CHECK (source IN ('manual', 'synthesis', 'one_on_one', 'retention'));
+  CHECK (source IN (
+    'manual', 'synthesis', 'one_on_one', 'retention', 'onboarding', 'performance_review'
+  ));
 
 COMMENT ON COLUMN development_plan_items.owner_label IS
   'Free-text owner / responsible for the item (B-601).';
 COMMENT ON COLUMN development_plan_items.source IS
-  'manual | synthesis | one_on_one | retention (B-601/B-602).';
+  'manual | synthesis | one_on_one | retention | onboarding | performance_review.';
 
 CREATE TABLE IF NOT EXISTS retention_followups (
   id                   BIGSERIAL PRIMARY KEY,
@@ -910,7 +916,9 @@ ALTER TABLE development_plan_items
 
 ALTER TABLE development_plan_items
   ADD CONSTRAINT development_plan_items_source_chk
-  CHECK (source IN ('manual', 'synthesis', 'one_on_one', 'retention', 'onboarding'));
+  CHECK (source IN (
+    'manual', 'synthesis', 'one_on_one', 'retention', 'onboarding', 'performance_review'
+  ));
 
 INSERT INTO schema_migrations (name) VALUES ('049_onboarding_checkins.sql')
 ON CONFLICT (name) DO NOTHING;
@@ -919,6 +927,8 @@ ON CONFLICT (name) DO NOTHING;
 ALTER TABLE climate_survey_questions
   ADD COLUMN IF NOT EXISTS question_kind TEXT NOT NULL DEFAULT 'likert';
 
+-- Always apply the *final* kind set (080 includes enps). Narrower lists break
+-- prod rows when re-running this bundle.
 DO $$
 BEGIN
   IF EXISTS (
@@ -930,7 +940,7 @@ END $$;
 
 ALTER TABLE climate_survey_questions
   ADD CONSTRAINT climate_survey_questions_kind_chk
-  CHECK (question_kind IN ('likert', 'text'));
+  CHECK (question_kind IN ('likert', 'text', 'enps'));
 
 INSERT INTO schema_migrations (name) VALUES ('050_climate_text_questions.sql')
 ON CONFLICT (name) DO NOTHING;
@@ -1027,16 +1037,15 @@ WHERE d.definition_id = (SELECT id FROM ae_definitions WHERE LOWER(slug) = 'moti
 INSERT INTO schema_migrations (name) VALUES ('052_motivators_dimension_colors.sql')
 ON CONFLICT (name) DO NOTHING;
 
--- 054 — Align pre-onboarding item_key CHECK (welcome_kit…) when prod still has old keys
+-- 054 — Align pre-onboarding item_key CHECK.
+-- Final form is a slug regex (company templates). Do NOT re-apply the old
+-- three-key list or DELETE legacy rows when re-running this bundle.
 ALTER TABLE employee_pre_onboarding_items
   DROP CONSTRAINT IF EXISTS employee_pre_onboarding_item_key_chk;
 
-DELETE FROM employee_pre_onboarding_items
-WHERE item_key IN ('email_access', 'tools_access', 'equipment', 'd1_welcome');
-
 ALTER TABLE employee_pre_onboarding_items
   ADD CONSTRAINT employee_pre_onboarding_item_key_chk
-  CHECK (item_key IN ('welcome_kit', 'rh_onboarding_call', 'manager_onboarding'));
+  CHECK (item_key ~ '^[a-z][a-z0-9_]{1,40}$');
 
 INSERT INTO schema_migrations (name) VALUES ('054_pre_onboarding_item_keys_align.sql')
 ON CONFLICT (name) DO NOTHING;
@@ -1547,7 +1556,9 @@ CREATE INDEX IF NOT EXISTS idx_performance_side_reviews_cycle_candidate ON perfo
 ALTER TABLE employee_onboarding_checkins DROP CONSTRAINT IF EXISTS employee_onboarding_checkins_outcome_chk;
 ALTER TABLE employee_onboarding_checkins
   ADD CONSTRAINT employee_onboarding_checkins_outcome_chk
-  CHECK (outcome IN ('', 'continue', 'develop', 'concern', 'pass', 'fail', 'extend'));
+  CHECK (outcome IN (
+    '', 'continue', 'develop', 'concern', 'pass', 'fail', 'extend', 'terminate'
+  ));
 
 ALTER TABLE candidates
   ADD COLUMN IF NOT EXISTS cv_url TEXT,
