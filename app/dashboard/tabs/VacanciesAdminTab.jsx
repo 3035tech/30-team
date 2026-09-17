@@ -1566,7 +1566,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               const link = token ? `${appUrl}/v/${token}` : '';
               const exp = v.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
               return (
-                <div key={v.id} className="rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5">
+                <div
+                  key={v.id}
+                  className="grid gap-3 rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+                >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
                       <span className="font-mono text-xs text-ink-faint">#{v.id}</span>
@@ -1633,8 +1636,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     )}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
-                    <AdminActionsCell>
+                  <div className="flex items-center border-t border-ink/8 pt-3 md:border-t-0 md:pt-0">
+                    <AdminActionsCell className="justify-start md:justify-end">
                       <AdminViewButton
                         label={t(locale, 'recruiting.viewCandidates')}
                         onClick={() => openVacancyDetail(v.id)}
