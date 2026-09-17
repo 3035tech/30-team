@@ -8,10 +8,10 @@ import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
 import {
   PIPELINE_STAGE,
-  PIPELINE_STAGE_SET,
   normalizeRejectionReason,
   normalizeStartDate,
 } from '../../../../../../../lib/pipeline';
+import { resolveCompanyPipelineStage } from '../../../../../../../lib/company-pipeline-stages';
 import { markCandidateHired, maybeCloseVacancyIfFilled, notifyHireOnboardingKit } from '../../../../../../../lib/hire';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../../../lib/job-funnel';
 
@@ -70,41 +70,48 @@ export async function PATCH(request, { params }) {
     }
 
     let stage = undefined;
+    let stageCanonical = null;
     let rejectionReason = null;
     let startDate = null;
     if (body.pipelineStage !== undefined) {
       const s = body.pipelineStage == null ? null : String(body.pipelineStage).trim();
-      if (s != null && !PIPELINE_STAGE_SET.has(s)) {
-        return apiError(request, ERR.INVALID_PIPELINE_STAGE, 400);
+      if (s != null) {
+        const resolved = await resolveCompanyPipelineStage(loaded.link.companyId, s);
+        if (!resolved) {
+          return apiError(request, ERR.INVALID_PIPELINE_STAGE, 400);
+        }
+        stageCanonical = resolved.canonicalKey;
       }
       stage = s;
       rejectionReason = normalizeRejectionReason(body.rejectionReason ?? body.reason);
       startDate = normalizeStartDate(body.startDate);
-      if (stage === PIPELINE_STAGE.REJECTED && !rejectionReason) {
+      if (stageCanonical === PIPELINE_STAGE.REJECTED && !rejectionReason) {
         return apiError(request, ERR.REJECTION_REASON_REQUIRED, 400);
       }
-      if (stage === PIPELINE_STAGE.HIRED && !startDate) {
+      if (stageCanonical === PIPELINE_STAGE.HIRED && !startDate) {
         return apiError(request, ERR.START_DATE_REQUIRED, 400);
       }
     }
 
     const currentStage = loaded.link.pipelineStage || null;
+    const isRejectedCanonical = stageCanonical === PIPELINE_STAGE.REJECTED;
+    const isHiredCanonical = stageCanonical === PIPELINE_STAGE.HIRED;
 
     const upd = await query(
       `UPDATE vacancy_candidates
        SET interview_notes = CASE WHEN $3::boolean THEN $4 ELSE interview_notes END,
            pipeline_stage = CASE WHEN $5::boolean THEN $6 ELSE pipeline_stage END,
            rejection_reason = CASE
-             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.REJECTED}' THEN $7
-             WHEN $5::boolean AND $6 IS DISTINCT FROM '${PIPELINE_STAGE.REJECTED}' THEN NULL
+             WHEN $5::boolean AND $9::boolean THEN $7
+             WHEN $5::boolean AND NOT $9::boolean THEN NULL
              ELSE rejection_reason
            END,
            start_date = CASE
-             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.HIRED}' THEN $8::date
+             WHEN $5::boolean AND $10::boolean THEN $8::date
              ELSE start_date
            END,
            hired_at = CASE
-             WHEN $5::boolean AND $6 = '${PIPELINE_STAGE.HIRED}' THEN COALESCE(hired_at, NOW())
+             WHEN $5::boolean AND $10::boolean THEN COALESCE(hired_at, NOW())
              ELSE hired_at
            END,
            updated_at = NOW()
@@ -122,6 +129,8 @@ export async function PATCH(request, { params }) {
         stage ?? null,
         rejectionReason,
         startDate,
+        isRejectedCanonical,
+        isHiredCanonical,
       ]
     );
 
@@ -134,13 +143,13 @@ export async function PATCH(request, { params }) {
           loaded.link.id,
           currentStage,
           stage,
-          stage === PIPELINE_STAGE.REJECTED ? rejectionReason : null,
-          stage === PIPELINE_STAGE.HIRED ? startDate : null,
+          isRejectedCanonical ? rejectionReason : null,
+          isHiredCanonical ? startDate : null,
           payload.userId || null,
         ]
       ).catch(() => {});
 
-      const funnelEvent = pipelineStageToFunnelEvent(stage);
+      const funnelEvent = pipelineStageToFunnelEvent(stageCanonical);
       if (funnelEvent && stage !== currentStage) {
         scheduleJobFunnelEvent({
           companyId: loaded.link.companyId,
@@ -151,7 +160,7 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    if (stage === PIPELINE_STAGE.HIRED) {
+    if (isHiredCanonical) {
       await markCandidateHired({ candidateId, vacancyId, startDate });
       await maybeCloseVacancyIfFilled(vacancyId);
       await notifyHireOnboardingKit(query, {

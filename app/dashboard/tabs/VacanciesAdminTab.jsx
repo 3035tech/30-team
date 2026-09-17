@@ -52,6 +52,7 @@ import { VacancyFitRankingBlock } from '../vacancies/VacancyFitRankingBlock';
 import { VacancyFunnelAnalyticsBlock } from '../vacancies/VacancyFunnelAnalyticsBlock';
 import { VacancyReferralBlock } from '../vacancies/VacancyReferralBlock';
 import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
+import { PipelineStagesEditor } from '../vacancies/PipelineStagesEditor';
 import { CopyableLink } from '../../_components/CopyableLink';
 import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
@@ -1325,19 +1326,35 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
               <ContentEnter animKey={detailSection}>
               {detailSection === 'pipeline' ? (
-                <VacancyKanbanBlock
-                  vacancyId={v.id}
-                  locale={locale}
-                  refreshKey={pipelineRefresh}
-                  onPersonClick={(candidateId) => {
-                    if (!candidateId) return;
-                    navigateDashboard({
-                      tab: 'team',
-                      candidate: String(candidateId),
-                      vacancy: String(v.id),
-                    });
-                  }}
-                />
+                <>
+                  <CollapsibleBlock
+                    locale={locale}
+                    title={t(locale, 'panel.pipelineEditor.title')}
+                    defaultOpen={false}
+                    className="mb-3"
+                  >
+                    <p className="mt-1 mb-3 max-w-[720px] font-ui text-xs leading-[1.55] text-ink-muted">
+                      {t(locale, 'panel.pipelineEditor.subtitle')}
+                    </p>
+                    <PipelineStagesEditor
+                      locale={locale}
+                      onChange={() => setPipelineRefresh((x) => x + 1)}
+                    />
+                  </CollapsibleBlock>
+                  <VacancyKanbanBlock
+                    vacancyId={v.id}
+                    locale={locale}
+                    refreshKey={pipelineRefresh}
+                    onPersonClick={(candidateId) => {
+                      if (!candidateId) return;
+                      navigateDashboard({
+                        tab: 'team',
+                        candidate: String(candidateId),
+                        vacancy: String(v.id),
+                      });
+                    }}
+                  />
+                </>
               ) : null}
 
               {detailSection === 'analytics' ? (

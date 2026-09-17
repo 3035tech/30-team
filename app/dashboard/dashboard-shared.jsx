@@ -348,9 +348,28 @@ const KANBAN_STAGE_DEFS = [
   { id: PIPELINE_STAGE.ARCHIVED, color: PIPELINE_STAGE_COLORS.archived, labelKey: 'recruiting.pipelineArchived' },
 ];
 
-function getKanbanStages(locale = 'pt-BR', { isDark = false } = {}) {
+function getKanbanStages(locale = 'pt-BR', { isDark = false, companyStages = null } = {}) {
+  // Company-configurable pipeline (B-RH2-12): when the server provides per-company
+  // stages, use them; otherwise fall back to the historical canonical set.
+  if (Array.isArray(companyStages) && companyStages.length > 0) {
+    return companyStages.map((s) => {
+      const paletteKey = s.canonicalKey || s.id || PIPELINE_STAGE.SCREENING;
+      const baseColor = PIPELINE_STAGE_COLORS[paletteKey] || PIPELINE_STAGE_COLORS.screening;
+      const darkColor = PIPELINE_STAGE_COLORS_DARK[paletteKey] || baseColor;
+      const label = locale === 'en'
+        ? (s.labelEn || s.labelPt || s.stageKey || s.id)
+        : (s.labelPt || s.labelEn || s.stageKey || s.id);
+      return {
+        id: s.stageKey || s.id,
+        canonicalKey: s.canonicalKey || s.id,
+        color: isDark ? darkColor : baseColor,
+        label,
+      };
+    });
+  }
   return KANBAN_STAGE_DEFS.map((s) => ({
     id: s.id,
+    canonicalKey: s.id,
     color: isDark
       ? (PIPELINE_STAGE_COLORS_DARK[s.id] || s.color)
       : s.color,

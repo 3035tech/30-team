@@ -143,13 +143,19 @@ export function PipelineExtrasProvider({ children }) {
     if (resolve) resolve(payload);
   }, []);
 
-  const requestPipelineExtras = useCallback((locale, stage) => {
-    if (stage !== 'rejected' && stage !== 'hired') {
+  // Accepts either a canonical key (preferred) or a resolved stage object with
+  // `canonicalKey`. Custom stages carry their canonical from the Kanban rows.
+  const requestPipelineExtras = useCallback((locale, stageOrCanonical) => {
+    const canonical =
+      stageOrCanonical && typeof stageOrCanonical === 'object'
+        ? (stageOrCanonical.canonicalKey || stageOrCanonical.id)
+        : stageOrCanonical;
+    if (canonical !== 'rejected' && canonical !== 'hired') {
       return Promise.resolve({});
     }
     return new Promise((resolve) => {
       resolveRef.current = resolve;
-      setState({ locale, mode: stage });
+      setState({ locale, mode: canonical });
     });
   }, []);
 

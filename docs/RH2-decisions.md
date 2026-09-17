@@ -80,9 +80,46 @@ Já via `audit()` em ações sensíveis; Part 2 exige responsável + data em: in
 
 ## Diferido (próximas ondas / dono)
 
-| ID | Motivo |
-|----|--------|
-| B-RH2-12 | Pipeline configurável por empresa = schema + migração de estágio + relatórios/automações |
+_(vazio: B-RH2-12 aceite fechado abaixo.)_
+
+## B-RH2-12 — Pipeline configurável (entregue)
+
+**Implementação:** `migrations/110_company_pipeline_stages.sql`, `lib/company-pipeline-stages.js` (lazy seed + CRUD + reorder + delete com guard), APIs `app/api/admin/pipeline-stages/*` (VACANCIES_MANAGE), editor DnD em `app/dashboard/vacancies/PipelineStagesEditor.jsx` acima do Kanban, canonicalização nos reports (overview-metrics, hire, manager-weekly-digest, vacancy-report, assessment-filters) via `LEFT JOIN company_pipeline_stages` + `COALESCE(canonical_key, pipeline_stage)`. Hire/reject/archive continuam ações especiais disparadas pelo `canonical_key` — custom pode reutilizar qualquer canonical (ex.: dois "Contratado" mapeados p/ canonical=hired).
+
+
+Pedido RH: etapa tipo “Encaminhado / Análise da gestão” **e** colunas Kanban configuráveis.
+
+### Decisões (respostas do produto)
+
+| # | Tema | Decisão |
+|---|------|---------|
+| 1 | Escopo MVP | **Configurável por empresa**: renomear, reordenar (DnD), **criar** etapas. |
+| 2 | Obrigatórios (chave semântica fixa) | `new`, `test_completed`, `hired`, `rejected`, `archived`. Não apagar; label pode renomear; ordem pode mudar. |
+| 3 | Escopo da config | **Por empresa** (todas as vagas compartilham o mesmo funil). |
+| 4 | Apagar / fundir | Se a coluna tiver **qualquer candidato** (na empresa), **bloquear** exclusão (e fundir fora do MVP). |
+| 5 | Relatórios / Overview | Custom e defaults não-obrigatórios agregam via `canonical_key` (estágio canônico). Custom novo → default `screening`. |
+| 6 | Permissão | **admin, direction e hr** da empresa (gestores com sessão de empresa). Super-admin edita a empresa alvo. |
+| 7 | Hired / rejected | Continuam **ações especiais** (fluxo de hire + motivo de rejeição); não viram só “coluna genérica”. |
+
+### Fronteiras
+
+| É | Não é |
+|---|--------|
+| Funil da empresa (labels + ordem + etapas extras) | Funil distinto por vaga (MVP) |
+| Bloquear delete com candidatos | Merge/fundir colunas com remapeamento |
+| Canonical key para métricas | Quebrar hire/reject/archive |
+
+### Defaults de seed (primeira carga)
+
+Ordem inicial = funil atual: `new` → `interview` → `test_completed` → `screening` → `approved` → `hired` → `rejected` → `archived`.  
+`interview` / `screening` / `approved` são seed **editáveis** (renomear/reordenar/apagar se vazias).
+
+### Impacto técnico (resumo)
+
+- Tabela `company_pipeline_stages` (`company_id`, `stage_key`, `label`, `sort_order`, `system`, `canonical_key`, soft delete).
+- Lazy seed na 1ª leitura; Kanban / APIs de estágio passam a resolver via empresa.
+- Validação: estágio desconhecido ou deletado → rejeitar move; delete só com count 0.
+- UI: editor no painel (vagas/empresa) + DnD; i18n pt-BR+en; CAP/tenant.
 
 ## B-RH2-15 — Avaliação formal (entregue)
 
@@ -118,7 +155,7 @@ Substitui o diferimento anterior. Ciclo **leve** (B-1004 metas → PDI) e side r
 ### Impacto técnico (resumo)
 
 - Schema novo (ou extensão forte): competências (empresa/cargo), ciclo formal, itens Likert, respostas por papel (gestor / liderado→gestor / self / terceiro), status draft→…→finalizado→enviado/arquivado.
-- Reusar padrões: token público (`/avaliacao` ou rota dedicada), `FormField`, CAP RH, `audit()`, i18n pt-BR+en, hedging na copy.
+- Reusar padrões: token público (`/avaliacao` ou rota dedicada), `FormField`, CAP RH, `audit()`, i18n pt-BR+en; hedging na copy.
 - Review leve B-1004 continua para metas → PDI; não misturar nas mesmas telas sem progressive disclosure.
 
 ### Aberto só se contradizer o produto

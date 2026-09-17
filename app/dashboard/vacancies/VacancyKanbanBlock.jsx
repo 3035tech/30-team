@@ -15,16 +15,36 @@ import { VacancyOfferBlock } from './VacancyOfferBlock';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 
-export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null }) {
+export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null, companyStages = null }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [moving, setMoving] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
+  const [fetchedStages, setFetchedStages] = useState(null);
   const { isDark } = useDarkMode();
-  const stages = getKanbanStages(locale, { isDark });
+  const effectiveCompanyStages = companyStages ?? fetchedStages;
+  const stages = getKanbanStages(locale, { isDark, companyStages: effectiveCompanyStages });
+  const stageById = Object.fromEntries(stages.map((s) => [s.id, s]));
   const { requestPipelineExtras } = usePipelineExtras();
+
+  useEffect(() => {
+    if (companyStages) return () => {};
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/pipeline-stages');
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok && Array.isArray(data.stages)) {
+          setFetchedStages(data.stages);
+        }
+      } catch (_e) {
+        // fallback: use hard-coded canonical stages
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [companyStages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +69,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
     r.assessmentId != null ? `a:${r.assessmentId}` : `vc:${r.vacancyCandidateId}`;
 
   const moveTo = async (row, stage) => {
-    const extras = await requestPipelineExtras(locale, stage);
+    const stageObj = stageById[stage] || { id: stage, canonicalKey: stage };
+    const extras = await requestPipelineExtras(locale, stageObj);
     if (extras == null) return;
     const key = cardKey(row);
     setMoving(key);
@@ -198,7 +219,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                       const inviteLabel = inviteStatusShort(locale, r.inviteStatus);
                       const ago = formatRelativeAgo(r.inviteSentAt, locale);
                       const days = daysInStage(r.stageEnteredAt || r.createdAt);
-                      const aging = stageAgingTone(days, r.pipelineStage || 'new');
+                      const rowStage = stageById[r.pipelineStage || 'new'];
+                      const aging = stageAgingTone(days, rowStage?.canonicalKey || r.pipelineStage || 'new');
                       return (
                         <div
                           key={rid}

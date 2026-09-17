@@ -28,15 +28,24 @@ _(Parte 1 concluída: B-RH1-01…20 removidos após implementação.)_
 
 IDs: `B-RH2-*`. Decisões em [`docs/RH2-decisions.md`](./RH2-decisions.md).
 
-_(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. Aberto: 12 (diferido). **15 decisões fechadas** em RH2-decisions — pronto para implementar.)_
+_(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. **12 e 15 entregues.**)_
 
-### B-RH2-12 — Pipeline configurável
+### B-RH2-12 — Pipeline configurável (entregue)
 
 **Prompt:** Incluir etapa “Encaminhado para gestão” / “Análise da gestão”. Avaliar colunas Kanban configuráveis por empresa (renomear, reordenar DnD, novas etapas).
 
-**Aceite:** Etapas obrigatórias vs custom; impacto em relatórios/automações/permissões; migração ao alterar/excluir coluna.
+**Implementação:**
+- `migrations/110_company_pipeline_stages.sql` — tabela `company_pipeline_stages` (stage_key, label_pt/en, sort_order, canonical_key, system, required, soft delete) + relaxa CHECK legada em `vacancy_candidates.pipeline_stage` / `assessments.pipeline_stage` (aceita slugs `c_*`).
+- `lib/company-pipeline-stages.js` — lazy seed (8 defaults na 1ª leitura), CRUD, reorder DnD, delete com guard `count > 0` + guard required, helpers `canonicalStageJoinSql` / `canonicalStageExprSql` p/ reports.
+- APIs `app/api/admin/pipeline-stages/*` (list/create/update/delete/reorder) — cap `VACANCIES_MANAGE` (admin/direction/hr).
+- Move de candidato (`app/api/admin/vacancies/[id]/candidates/[candidateId]/route.js`) resolve stage via `company_pipeline_stages`; hire/reject especiais disparam por `canonical_key`.
+- Reports canônicos: `overview-metrics.js`, `hire.js`, `manager-weekly-digest.js`, `vacancy-report.js`, `assessment-filters.js` agregam via `LEFT JOIN company_pipeline_stages` + `COALESCE(canonical_key, pipeline_stage)`.
+- UI: `PipelineStagesEditor.jsx` como `CollapsibleBlock` acima do Kanban dentro do detail da vaga (sub-tab pipeline). Kanban lê stages via `/api/admin/pipeline-stages` e usa cores por canonical.
+- i18n pt-BR+en em `panel.pipelineEditor.*` + `errors.PIPELINE_STAGE_*` + `panel.help.pipelineStep9`.
 
-**Origem:** Duda/Gestor pp.8 e 11. **Diferido:** schema + migração (ver RH2-decisions).
+**Aceite (fechado):** ver `docs/RH2-decisions.md` § B-RH2-12.
+
+**Origem:** Duda/Gestor pp.8 e 11.
 
 ---
 
@@ -48,7 +57,7 @@ Fechados em [`docs/RH2-decisions.md`](./RH2-decisions.md) (ciclo de vida, perfis
 
 ## Notas
 
-- Este markdown: Parte 1 concluída; Parte 2 entregue salvo item diferido B-RH2-12. Anexos visuais ficam no `.docx`.
+- Este markdown: Parte 1 concluída; Parte 2 entregue integralmente. Anexos visuais ficam no `.docx`.
 - Motivadores (B-RH2-20): após deploy, republicar copy com `npm run db:seed-motivators-all` (desativa chaves antigas; não apaga tentativas).
-- Constantes de domínio (ondas 1–3): `lib/domain-status.js` + `ROLES` em `permissions.js`. Sem schema. B-RH2-12 continua diferido sem aceite de produto.
+- Constantes de domínio (ondas 1–3): `lib/domain-status.js` + `ROLES` em `permissions.js`. Sem schema. **B-RH2-12** entregue (`migrations/110`, `lib/company-pipeline-stages.js`, editor no detail da vaga).
 - B-RH2-15 entregue: avaliação formal por competências (`migrations/108`, Avaliações → Competências, `/formal-review/[token]`).
