@@ -3,6 +3,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { describe, it } from 'node:test';
 import { ERR } from '../../lib/api-error-codes.js';
 import { t } from '../../lib/i18n.js';
@@ -89,12 +90,43 @@ describe('B-RH2-12 company pipeline stages', () => {
         'panel.pipelineEditor.subtitle',
         'panel.pipelineEditor.addCta',
         'panel.pipelineEditor.canonicalLabel',
+        'panel.pipelineEditor.dragHint',
         'panel.pipelineEditor.deleteBlockedInUse',
+        'panel.pipelineTemplates.fieldLabel',
+        'panel.pipelineTemplates.saveAction',
       ]) {
         const s = t(loc, key);
         assert.ok(s && s !== key, `missing ${key} for ${loc}`);
       }
     }
+  });
+
+  it('keeps pipeline templates inside the vacancies capability and tenant schema', async () => {
+    const migration = await readFile(
+      new URL('../../migrations/111_vacancy_pipeline_templates.sql', import.meta.url),
+      'utf8'
+    );
+    const route = await readFile(
+      new URL('../../app/api/admin/pipeline-templates/route.js', import.meta.url),
+      'utf8'
+    );
+
+    assert.match(migration, /pipeline_templates[\s\S]*company_id/);
+    assert.match(migration, /vacancy_pipeline_stages/);
+    assert.match(route, /CAP\.VACANCIES_MANAGE/);
+  });
+
+  it('renders stages as a horizontal draggable board with creation at the end', async () => {
+    const source = await readFile(
+      new URL('../../app/dashboard/vacancies/PipelineStagesEditor.jsx', import.meta.url),
+      'utf8'
+    );
+
+    assert.match(source, /kanban-scroll overflow-x-auto/);
+    assert.match(source, /draggable=\{!editing\}/);
+    assert.match(source, /commitReorder\(next\)/);
+    assert.match(source, /<span className="text-xl leading-none" aria-hidden>\+<\/span>/);
+    assert.doesNotMatch(source, /window\.confirm/);
   });
 
   it('error i18n messages exist in pt-BR + en', () => {

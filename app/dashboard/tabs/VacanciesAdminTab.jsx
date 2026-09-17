@@ -75,7 +75,7 @@ const GRID_AUTO_LG = 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.
 export { VacancyInviteByEmail };
 
 export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
-  const { confirm, notice, toast } = useAppFeedback();
+  const { confirm, notice, promptForm, toast } = useAppFeedback();
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
@@ -139,6 +139,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [companyId, setCompanyId] = useState('');
   const [jobRoleId, setJobRoleId] = useState('');
   const [jobRoles, setJobRoles] = useState([]);
+  const [pipelineTemplates, setPipelineTemplates] = useState([]);
+  const [pipelineTemplateId, setPipelineTemplateId] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
   const appUrl =
@@ -227,6 +229,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     }
   };
 
+  const loadPipelineTemplates = async (cid = companyId) => {
+    try {
+      const qs = isAdmin && cid ? `?companyId=${encodeURIComponent(cid)}` : '';
+      const res = await fetch(`/api/admin/pipeline-templates${qs}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      const items = Array.isArray(data.templates) ? data.templates : [];
+      setPipelineTemplates(items);
+      setPipelineTemplateId((current) => {
+        if (items.some((item) => String(item.id) === String(current))) return current;
+        const preferred = items.find((item) => item.isDefault) || items[0];
+        return preferred ? String(preferred.id) : '';
+      });
+    } catch (e) {
+      console.error('[VacanciesTab] Load pipeline templates error:', e);
+    }
+  };
+
   useEffect(() => {
     if (isDetailView) return;
     loadVacancies();
@@ -243,6 +263,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     }
     loadJobRoles();
   }, [companyId, isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin && !companyId) return;
+    loadPipelineTemplates(companyId);
+  }, [companyId, isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -308,6 +333,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         publicShowCompanyInfo,
         publicShowSalary,
         jobRoleId: jobRoleId ? parseInt(jobRoleId, 10) : null,
+        pipelineTemplateId: pipelineTemplateId ? parseInt(pipelineTemplateId, 10) : null,
       };
       if (isAdmin) body.companyId = companyId ? parseInt(companyId, 10) : null;
       const res = await fetch('/api/admin/vacancies', {
@@ -323,11 +349,60 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setPublicPageEnabled(false); setPublicAllowIndex(true);
       setPublicShowCompanyInfo(false); setPublicShowSalary(false);
       setJobRoleId('');
+      const defaultTemplate = pipelineTemplates.find((item) => item.isDefault) || pipelineTemplates[0];
+      setPipelineTemplateId(defaultTemplate ? String(defaultTemplate.id) : '');
       setShowCreate(false);
       await loadVacancies();
       showMsg(t(locale, 'recruiting.vacancyCreated'));
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveCurrentPipelineAsTemplate = async () => {
+    if (!detailVacancy?.id) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.pipelineTemplates.saveTitle'),
+      message: t(locale, 'panel.pipelineTemplates.saveHint'),
+      confirmLabel: t(locale, 'panel.pipelineTemplates.saveAction'),
+      fields: [
+        {
+          key: 'name',
+          label: t(locale, 'panel.pipelineTemplates.nameLabel'),
+          placeholder: t(locale, 'panel.pipelineTemplates.namePlaceholder'),
+          required: true,
+          maxLength: 80,
+        },
+        {
+          key: 'isDefault',
+          type: 'boolean',
+          label: t(locale, 'panel.pipelineTemplates.defaultLabel'),
+          defaultValue: false,
+        },
+      ],
+    });
+    if (!values?.name?.trim()) return;
+    setLoading(true);
+    try {
+      const body = {
+        vacancyId: detailVacancy.id,
+        name: values.name.trim(),
+        isDefault: values.isDefault === true,
+      };
+      if (isAdmin && detailVacancy.companyId) body.companyId = detailVacancy.companyId;
+      const res = await fetch('/api/admin/pipeline-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.pipelineTemplates.saveFailed'));
+      await loadPipelineTemplates(detailVacancy.companyId);
+      toast(t(locale, 'panel.pipelineTemplates.saved'), 'ok');
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.common.error'), 'error');
     } finally {
       setLoading(false);
     }
@@ -632,6 +707,25 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 })()}
               </div>
             )}
+
+            <FormField
+              label={t(locale, 'panel.pipelineTemplates.fieldLabel')}
+              hint={t(locale, 'panel.pipelineTemplates.fieldHint')}
+              className="max-w-[420px]"
+            >
+              <select
+                value={pipelineTemplateId}
+                onChange={(e) => setPipelineTemplateId(e.target.value)}
+                className={FIELD_SELECT}
+                disabled={pipelineTemplates.length === 0}
+              >
+                {pipelineTemplates.map((template) => (
+                  <option key={template.id} value={String(template.id)}>
+                    {template.name}{template.isDefault ? ` (${t(locale, 'panel.pipelineTemplates.defaultBadge')})` : ''}
+                  </option>
+                ))}
+              </select>
+            </FormField>
 
             <div className={cn(GRID_AUTO_LG, 'items-start')}>
               <FormField label={t(locale, 'recruiting.vacancyTitlePh')}>
@@ -1319,16 +1413,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     defaultOpen={false}
                     className="mb-3"
                   >
-                    <p className="mt-1 mb-3 max-w-[720px] font-ui text-xs leading-[1.55] text-ink-muted">
-                      {t(locale, 'panel.pipelineEditor.subtitle')}
-                    </p>
+                    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                      <p className="m-0 max-w-[720px] font-ui text-xs leading-[1.55] text-ink-muted">
+                        {t(locale, 'panel.pipelineEditor.subtitle')}
+                      </p>
+                      <button type="button" className={BTN_GHOST} onClick={saveCurrentPipelineAsTemplate} disabled={loading}>
+                        {t(locale, 'panel.pipelineTemplates.saveAction')}
+                      </button>
+                    </div>
                     <PipelineStagesEditor
                       locale={locale}
+                      vacancyId={v.id}
+                      companyId={v.companyId}
                       onChange={handlePipelineStagesChange}
                     />
                   </CollapsibleBlock>
                   <VacancyKanbanBlock
                     vacancyId={v.id}
+                    companyId={v.companyId}
                     locale={locale}
                     refreshKey={pipelineRefresh}
                     onPersonClick={(candidateId) => {

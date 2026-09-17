@@ -6,6 +6,7 @@ import { t } from '../../../lib/i18n';
 import { PIPELINE_STAGE } from '../../../lib/pipeline';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
+import { useAppFeedback } from '../../_components/AppFeedback';
 
 const CANONICAL_OPTIONS_CUSTOM = [
   PIPELINE_STAGE.NEW,
@@ -34,7 +35,8 @@ function apiErrorLabel(locale, code) {
   return t(locale, 'panel.common.error');
 }
 
-export function PipelineStagesEditor({ locale, onChange }) {
+export function PipelineStagesEditor({ locale, onChange, vacancyId = null, companyId = null }) {
+  const { confirm } = useAppFeedback();
   const [stages, setStages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -54,7 +56,10 @@ export function PipelineStagesEditor({ locale, onChange }) {
     setLoading(true);
     setErr('');
     try {
-      const res = await fetch('/api/admin/pipeline-stages?includeCounts=1');
+      const params = new URLSearchParams({ includeCounts: '1' });
+      if (vacancyId) params.set('vacancyId', String(vacancyId));
+      if (companyId) params.set('companyId', String(companyId));
+      const res = await fetch(`/api/admin/pipeline-stages?${params.toString()}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error ? apiErrorLabel(locale, data.error) : t(locale, 'panel.common.error'));
       const list = Array.isArray(data.stages) ? data.stages : [];
@@ -65,7 +70,7 @@ export function PipelineStagesEditor({ locale, onChange }) {
     } finally {
       setLoading(false);
     }
-  }, [locale, onChange]);
+  }, [locale, onChange, vacancyId, companyId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -86,6 +91,8 @@ export function PipelineStagesEditor({ locale, onChange }) {
     setErr('');
     try {
       const body = { labelPt: labelDraft.pt.trim(), labelEn: labelDraft.en.trim() || labelDraft.pt.trim() };
+      if (vacancyId) body.vacancyId = vacancyId;
+      if (companyId) body.companyId = companyId;
       if (!s.required) body.canonicalKey = canonicalDraft;
       const res = await fetch(`/api/admin/pipeline-stages/${s.id}`, {
         method: 'PATCH',
@@ -116,6 +123,8 @@ export function PipelineStagesEditor({ locale, onChange }) {
           labelPt: pt,
           labelEn: addingLabelEn.trim() || pt,
           canonicalKey: addingCanonical,
+          ...(vacancyId ? { vacancyId } : {}),
+          ...(companyId ? { companyId } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -138,11 +147,21 @@ export function PipelineStagesEditor({ locale, onChange }) {
       setErr(t(locale, 'panel.pipelineEditor.deleteBlockedInUse', { n: s.count }));
       return;
     }
-    if (!window.confirm(t(locale, 'panel.pipelineEditor.deleteConfirm', { name: s.labelPt }))) return;
+    const confirmed = await confirm({
+      title: t(locale, 'panel.pipelineEditor.delete'),
+      message: t(locale, 'panel.pipelineEditor.deleteConfirm', { name: s.labelPt }),
+      confirmLabel: t(locale, 'panel.pipelineEditor.delete'),
+      danger: true,
+    });
+    if (!confirmed) return;
     setSaving(true);
     setErr('');
     try {
-      const res = await fetch(`/api/admin/pipeline-stages/${s.id}`, { method: 'DELETE' });
+      const params = new URLSearchParams();
+      if (vacancyId) params.set('vacancyId', String(vacancyId));
+      if (companyId) params.set('companyId', String(companyId));
+      const qs = params.size ? `?${params.toString()}` : '';
+      const res = await fetch(`/api/admin/pipeline-stages/${s.id}${qs}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (data?.error === 'PIPELINE_STAGE_IN_USE') {
@@ -166,7 +185,11 @@ export function PipelineStagesEditor({ locale, onChange }) {
       const res = await fetch('/api/admin/pipeline-stages/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderedIds: nextOrder.map((s) => s.id) }),
+        body: JSON.stringify({
+          orderedIds: nextOrder.map((s) => s.id),
+          ...(vacancyId ? { vacancyId } : {}),
+          ...(companyId ? { companyId } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(apiErrorLabel(locale, data?.error));
@@ -212,14 +235,16 @@ export function PipelineStagesEditor({ locale, onChange }) {
 
   return (
     <ContentEnter animKey="pipeline-editor">
-      <div className="space-y-2">
+      <div className="space-y-3">
         {err ? (
           <p className="mb-1 mt-0 font-mono text-xs text-danger">{err}</p>
         ) : null}
         {stages.length === 0 ? (
           <EmptyState title={t(locale, 'panel.pipelineEditor.emptyTitle')} className="py-4" />
-        ) : (
-          <ul className="space-y-1.5 pl-0">
+        ) : null}
+
+        <div className="kanban-scroll overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
+          <ul className="flex min-w-max items-stretch gap-2.5 pl-0" aria-label={t(locale, 'panel.pipelineEditor.title')}>
             {stages.map((s) => {
               const editing = editingId === s.id;
               const dragOver = dragOverId === s.id;
@@ -227,13 +252,16 @@ export function PipelineStagesEditor({ locale, onChange }) {
                 <li
                   key={s.id}
                   className={cn(
-                    'flex flex-wrap items-center gap-2 rounded-control border border-ink/12 bg-surface/85 px-3 py-2',
-                    dragOver && 'border-brand-500/60 bg-brand-500/[0.06]'
+                    'flex w-[260px] shrink-0 flex-col rounded-xl border border-ink/12 bg-surface/90 p-3 transition-[border-color,background-color,transform] duration-150',
+                    draggingId === s.id && 'opacity-55',
+                    dragOver && 'translate-y-[-2px] border-brand-500/60 bg-brand-500/[0.06]'
                   )}
                   draggable={!editing}
+                  title={!editing ? t(locale, 'panel.pipelineEditor.dragHint') : undefined}
                   onDragStart={(e) => {
                     if (editing) return;
                     setDraggingId(s.id);
+                    e.dataTransfer.setData('text/plain', String(s.id));
                     e.dataTransfer.effectAllowed = 'move';
                   }}
                   onDragOver={(e) => { e.preventDefault(); if (draggingId && draggingId !== s.id) setDragOverId(s.id); }}
@@ -241,28 +269,28 @@ export function PipelineStagesEditor({ locale, onChange }) {
                   onDrop={(e) => { e.preventDefault(); onDrop(s.id); }}
                   onDragEnd={() => { setDraggingId(null); setDragOverId(null); }}
                 >
-                  <span className="cursor-grab select-none font-mono text-2xs text-ink-faint" aria-hidden>⋮⋮</span>
                   {editing ? (
-                    <>
+                    <div className="flex h-full flex-col gap-2">
                       <input
                         value={labelDraft.pt}
                         onChange={(e) => setLabelDraft((d) => ({ ...d, pt: e.target.value }))}
                         maxLength={60}
-                        className={cn(INPUT, 'flex-1 min-w-[140px]')}
+                        className={INPUT}
                         placeholder={t(locale, 'panel.pipelineEditor.labelPtPlaceholder')}
+                        autoFocus
                       />
                       <input
                         value={labelDraft.en}
                         onChange={(e) => setLabelDraft((d) => ({ ...d, en: e.target.value }))}
                         maxLength={60}
-                        className={cn(INPUT, 'flex-1 min-w-[140px]')}
+                        className={INPUT}
                         placeholder={t(locale, 'panel.pipelineEditor.labelEnPlaceholder')}
                       />
                       {!s.required ? (
                         <select
                           value={canonicalDraft}
                           onChange={(e) => setCanonicalDraft(e.target.value)}
-                          className={cn(INPUT, 'w-[160px]')}
+                          className={INPUT}
                           aria-label={t(locale, 'panel.pipelineEditor.canonicalLabel')}
                         >
                           {canonicalOptions.map((c) => (
@@ -270,31 +298,45 @@ export function PipelineStagesEditor({ locale, onChange }) {
                           ))}
                         </select>
                       ) : null}
-                      <button type="button" className={BTN_PRIMARY} onClick={() => saveEdit(s)} disabled={saving}>
-                        {t(locale, 'panel.pipelineEditor.save')}
-                      </button>
-                      <button type="button" className={BTN_GHOST} onClick={cancelEdit} disabled={saving}>
-                        {t(locale, 'panel.pipelineEditor.cancel')}
-                      </button>
-                    </>
+                      <div className="mt-auto flex gap-2 pt-1">
+                        <button type="button" className={cn(BTN_PRIMARY, 'flex-1')} onClick={() => saveEdit(s)} disabled={saving}>
+                          {t(locale, 'panel.pipelineEditor.save')}
+                        </button>
+                        <button type="button" className={BTN_GHOST} onClick={cancelEdit} disabled={saving}>
+                          {t(locale, 'panel.pipelineEditor.cancel')}
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <>
-                      <span className="flex-1 min-w-[140px] font-ui text-sm text-ink">
-                        {locale === 'en' ? (s.labelEn || s.labelPt) : (s.labelPt || s.labelEn)}
-                      </span>
-                      <span className="font-mono text-2xs uppercase tracking-[1px] text-ink-faint">
-                        {t(locale, `recruiting.pipeline${s.canonicalKey.replace(/(^|_)([a-z])/g, (_, __, ch) => ch.toUpperCase())}`)}
-                      </span>
-                      {s.required ? (
-                        <span className="rounded-full bg-ink/10 px-2 py-0.5 font-mono text-2xs uppercase tracking-[1px] text-ink-muted">
-                          {t(locale, 'panel.pipelineEditor.required')}
+                      <div className="flex cursor-grab items-start gap-2 active:cursor-grabbing">
+                        <span className="mt-0.5 select-none font-mono text-sm leading-none text-ink-faint" aria-hidden>⠿</span>
+                        <span className="min-w-0 flex-1 font-ui text-sm font-semibold text-ink">
+                          {locale === 'en' ? (s.labelEn || s.labelPt) : (s.labelPt || s.labelEn)}
                         </span>
-                      ) : null}
-                      <span className="font-mono text-2xs text-ink-faint">
-                        {t(locale, 'panel.pipelineEditor.usageCount', { n: s.count || 0 })}
-                      </span>
-                      <div className="ml-auto flex gap-1.5">
-                        <button type="button" className={BTN_GHOST} onClick={() => beginEdit(s)} disabled={saving}>
+                        <span className="rounded-full bg-ink/[0.07] px-2 py-0.5 font-mono text-2xs text-ink-muted">
+                          {s.count || 0}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 border-t border-ink/8 pt-2.5">
+                        <div className="font-mono text-2xs text-ink-faint">
+                          {t(locale, `recruiting.pipeline${s.canonicalKey.replace(/(^|_)([a-z])/g, (_, __, ch) => ch.toUpperCase())}`)}
+                        </div>
+                        <div className="flex min-h-[20px] flex-wrap items-center gap-1.5">
+                          {s.required ? (
+                            <span className="rounded-full bg-ink/[0.07] px-2 py-0.5 font-mono text-2xs text-ink-muted">
+                              {t(locale, 'panel.pipelineEditor.required')}
+                            </span>
+                          ) : null}
+                          <span className="font-mono text-2xs text-ink-faint">
+                            {t(locale, 'panel.pipelineEditor.usageCount', { n: s.count || 0 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto flex gap-1.5 pt-3">
+                        <button type="button" className={cn(BTN_GHOST, 'flex-1')} onClick={() => beginEdit(s)} disabled={saving}>
                           {t(locale, 'panel.pipelineEditor.edit')}
                         </button>
                         {!s.required ? (
@@ -314,48 +356,58 @@ export function PipelineStagesEditor({ locale, onChange }) {
                 </li>
               );
             })}
-          </ul>
-        )}
 
-        <div className="pt-2">
           {showAdd ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-control border border-brand-500/40 bg-brand-500/[0.05] px-3 py-2">
+            <li className="flex w-[280px] shrink-0 flex-col gap-2 rounded-xl border border-brand-500/40 bg-brand-500/[0.05] p-3">
+              <span className="font-ui text-sm font-semibold text-ink">{t(locale, 'panel.pipelineEditor.addCta')}</span>
               <input
                 value={addingLabelPt}
                 onChange={(e) => setAddingLabelPt(e.target.value)}
                 maxLength={60}
-                className={cn(INPUT, 'flex-1 min-w-[140px]')}
+                className={INPUT}
                 placeholder={t(locale, 'panel.pipelineEditor.labelPtPlaceholder')}
+                autoFocus
               />
               <input
                 value={addingLabelEn}
                 onChange={(e) => setAddingLabelEn(e.target.value)}
                 maxLength={60}
-                className={cn(INPUT, 'flex-1 min-w-[140px]')}
+                className={INPUT}
                 placeholder={t(locale, 'panel.pipelineEditor.labelEnPlaceholder')}
               />
               <select
                 value={addingCanonical}
                 onChange={(e) => setAddingCanonical(e.target.value)}
-                className={cn(INPUT, 'w-[160px]')}
+                className={INPUT}
                 aria-label={t(locale, 'panel.pipelineEditor.canonicalLabel')}
               >
                 {canonicalOptions.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
-              <button type="button" className={BTN_PRIMARY} onClick={addStage} disabled={saving || !addingLabelPt.trim()}>
-                {t(locale, 'panel.pipelineEditor.addSubmit')}
-              </button>
-              <button type="button" className={BTN_GHOST} onClick={() => { setShowAdd(false); setAddingLabelPt(''); setAddingLabelEn(''); }} disabled={saving}>
-                {t(locale, 'panel.pipelineEditor.cancel')}
-              </button>
-            </div>
+              <div className="mt-auto flex gap-2 pt-1">
+                <button type="button" className={cn(BTN_PRIMARY, 'flex-1')} onClick={addStage} disabled={saving || !addingLabelPt.trim()}>
+                  {t(locale, 'panel.pipelineEditor.addSubmit')}
+                </button>
+                <button type="button" className={BTN_GHOST} onClick={() => { setShowAdd(false); setAddingLabelPt(''); setAddingLabelEn(''); }} disabled={saving}>
+                  {t(locale, 'panel.pipelineEditor.cancel')}
+                </button>
+              </div>
+            </li>
           ) : (
-            <button type="button" className={BTN_PRIMARY} onClick={() => setShowAdd(true)} disabled={saving}>
-              {t(locale, 'panel.pipelineEditor.addCta')}
-            </button>
+            <li className="w-[220px] shrink-0">
+              <button
+                type="button"
+                className="flex min-h-[148px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-brand-500/40 bg-brand-500/[0.035] px-4 font-ui text-sm font-semibold text-brand-600 transition-colors hover:bg-brand-500/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-60"
+                onClick={() => setShowAdd(true)}
+                disabled={saving}
+              >
+                <span className="text-xl leading-none" aria-hidden>+</span>
+                {t(locale, 'panel.pipelineEditor.addCta')}
+              </button>
+            </li>
           )}
+          </ul>
         </div>
       </div>
     </ContentEnter>

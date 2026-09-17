@@ -15,7 +15,7 @@ import { VacancyOfferBlock } from './VacancyOfferBlock';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 
-export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null, companyStages = null }) {
+export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null, companyStages = null, companyId = null }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -34,7 +34,9 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/pipeline-stages');
+        const params = new URLSearchParams({ vacancyId: String(vacancyId) });
+        if (companyId) params.set('companyId', String(companyId));
+        const res = await fetch(`/api/admin/pipeline-stages?${params.toString()}`);
         const data = await res.json().catch(() => ({}));
         if (!cancelled && res.ok && Array.isArray(data.stages)) {
           setFetchedStages(data.stages);
@@ -44,7 +46,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
       }
     })();
     return () => { cancelled = true; };
-  }, [companyStages]);
+  }, [companyStages, vacancyId, companyId]);
 
   useEffect(() => {
     let cancelled = false;

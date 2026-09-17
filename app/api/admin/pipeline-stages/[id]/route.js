@@ -8,12 +8,14 @@ import {
   deleteCompanyPipelineStage,
   PIPELINE_CANONICAL_KEYS,
 } from '../../../../../lib/company-pipeline-stages.js';
+import { deleteVacancyPipelineStage, updateVacancyPipelineStage } from '../../../../../lib/pipeline-templates.js';
 
 const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   labelPt: z.string().trim().min(1).max(60).optional(),
   labelEn: z.string().trim().min(1).max(60).optional(),
   canonicalKey: z.enum(/** @type {[string, ...string[]]} */ (PIPELINE_CANONICAL_KEYS)).optional(),
+  vacancyId: zPositiveInt.optional(),
 });
 
 function parseStageId(params) {
@@ -38,13 +40,22 @@ export const PATCH = withAdminApi(
     if (!id) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = await updateCompanyPipelineStage({
+    const result = body.vacancyId
+      ? await updateVacancyPipelineStage({
+        companyId,
+        vacancyId: body.vacancyId,
+        id,
+        labelPt: body.labelPt,
+        labelEn: body.labelEn,
+        canonicalKey: body.canonicalKey,
+      })
+      : await updateCompanyPipelineStage({
       companyId,
       id,
       labelPt: body.labelPt,
       labelEn: body.labelEn,
       canonicalKey: body.canonicalKey,
-    });
+      });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.UPDATE_FAILED });
     }
@@ -55,16 +66,18 @@ export const PATCH = withAdminApi(
 export const DELETE = withAdminApi(
   {
     cap: CAP.VACANCIES_MANAGE,
-    query: z.object({ companyId: zPositiveInt.optional() }),
+    query: z.object({ companyId: zPositiveInt.optional(), vacancyId: zPositiveInt.optional() }),
     companyFrom: 'query',
     logLabel: 'pipeline-stages/[id] DELETE',
   },
-  async ({ request, companyId, params }) => {
+  async ({ request, companyId, params, query }) => {
     const id = parseStageId(params);
     if (!id) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = await deleteCompanyPipelineStage({ companyId, id });
+    const result = query.vacancyId
+      ? await deleteVacancyPipelineStage({ companyId, vacancyId: query.vacancyId, id })
+      : await deleteCompanyPipelineStage({ companyId, id });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.DELETE_FAILED });
     }

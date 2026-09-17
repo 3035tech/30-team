@@ -333,6 +333,10 @@ npm run dev
 5. /dashboard → auth leve pinta o shell (sidebar); queries da aba em Suspense (`load-dashboard-data.js`)
 6. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
 7. Em Vagas: link /v/… (teste) e, se habilitado, página /jobs/{slug}-{id} (divulgação/SEO)
+
+### Modelos de funil de vagas
+
+O módulo de Recrutamento/Vagas mantém modelos de funil isolados por empresa (`company_id`). Ao criar uma vaga, o modelo padrão já vem selecionado e suas etapas são copiadas para `vacancy_pipeline_stages`; ajustes posteriores afetam apenas aquela vaga. No detalhe da vaga, “Salvar como modelo” permite reutilizar o funil e defini-lo como padrão. Vagas anteriores à migration `111_vacancy_pipeline_templates.sql` continuam compatíveis pelo fallback para `company_pipeline_stages`.
 ```
 
 ---

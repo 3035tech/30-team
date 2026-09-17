@@ -9,10 +9,12 @@ import {
   readCompanyStageUsageMap,
   PIPELINE_CANONICAL_KEYS,
 } from '../../../../lib/company-pipeline-stages.js';
+import { createVacancyPipelineStage, listVacancyPipelineStages } from '../../../../lib/pipeline-templates.js';
 
 const listQuerySchema = z.object({
   companyId: zPositiveInt.optional(),
   includeCounts: z.enum(['1', 'true']).optional(),
+  vacancyId: zPositiveInt.optional(),
 });
 
 const createBodySchema = z.object({
@@ -20,6 +22,7 @@ const createBodySchema = z.object({
   labelPt: z.string().trim().min(1).max(60),
   labelEn: z.string().trim().min(1).max(60).optional(),
   canonicalKey: z.enum(/** @type {[string, ...string[]]} */ (PIPELINE_CANONICAL_KEYS)).optional(),
+  vacancyId: zPositiveInt.optional(),
 });
 
 /**
@@ -37,10 +40,18 @@ export const GET = withAdminApi(
     logLabel: 'pipeline-stages GET',
   },
   async ({ companyId, query }) => {
-    const stages = await listCompanyPipelineStages(companyId);
+    const vacancyStages = query.vacancyId
+      ? await listVacancyPipelineStages({ companyId, vacancyId: query.vacancyId })
+      : [];
+    const stages = vacancyStages.length
+      ? vacancyStages
+      : await listCompanyPipelineStages(companyId);
     const includeCounts = query.includeCounts === '1' || query.includeCounts === 'true';
     if (!includeCounts) {
       return NextResponse.json({ ok: true, stages }, { status: 200 });
+    }
+    if (vacancyStages.length) {
+      return NextResponse.json({ ok: true, stages: vacancyStages }, { status: 200 });
     }
     const usage = await readCompanyStageUsageMap(companyId);
     const decorated = stages.map((s) => ({ ...s, count: usage[s.stageKey] || 0 }));
@@ -56,12 +67,20 @@ export const POST = withAdminApi(
     logLabel: 'pipeline-stages POST',
   },
   async ({ request, companyId, body }) => {
-    const result = await createCompanyPipelineStage({
+    const result = body.vacancyId
+      ? await createVacancyPipelineStage({
+        companyId,
+        vacancyId: body.vacancyId,
+        labelPt: body.labelPt,
+        labelEn: body.labelEn ?? body.labelPt,
+        canonicalKey: body.canonicalKey,
+      })
+      : await createCompanyPipelineStage({
       companyId,
       labelPt: body.labelPt,
       labelEn: body.labelEn ?? body.labelPt,
       canonicalKey: body.canonicalKey,
-    });
+      });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.CREATE_FAILED });
     }
