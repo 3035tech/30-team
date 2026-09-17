@@ -3067,7 +3067,11 @@ CREATE TABLE IF NOT EXISTS pipeline_template_stages (
   canonical_key TEXT NOT NULL,
   sort_order INT NOT NULL,
   required BOOLEAN NOT NULL DEFAULT FALSE,
-  UNIQUE (template_id, stage_key)
+  UNIQUE (template_id, stage_key),
+  CONSTRAINT pipeline_template_stages_key_fmt CHECK (stage_key ~ '^[a-z][a-z0-9_]{0,63}$'),
+  CONSTRAINT pipeline_template_stages_canonical_check CHECK (canonical_key IN ('new','interview','test_completed','screening','approved','hired','rejected','archived')),
+  CONSTRAINT pipeline_template_stages_label_pt_len CHECK (char_length(btrim(label_pt)) BETWEEN 1 AND 60),
+  CONSTRAINT pipeline_template_stages_label_en_len CHECK (char_length(btrim(label_en)) BETWEEN 1 AND 60)
 );
 CREATE INDEX IF NOT EXISTS idx_pipeline_template_stages_order
   ON pipeline_template_stages (template_id, sort_order ASC, id ASC);
@@ -3083,7 +3087,11 @@ CREATE TABLE IF NOT EXISTS vacancy_pipeline_stages (
   required BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (vacancy_id, stage_key)
+  UNIQUE (vacancy_id, stage_key),
+  CONSTRAINT vacancy_pipeline_stages_key_fmt CHECK (stage_key ~ '^[a-z][a-z0-9_]{0,63}$'),
+  CONSTRAINT vacancy_pipeline_stages_canonical_check CHECK (canonical_key IN ('new','interview','test_completed','screening','approved','hired','rejected','archived')),
+  CONSTRAINT vacancy_pipeline_stages_label_pt_len CHECK (char_length(btrim(label_pt)) BETWEEN 1 AND 60),
+  CONSTRAINT vacancy_pipeline_stages_label_en_len CHECK (char_length(btrim(label_en)) BETWEEN 1 AND 60)
 );
 CREATE INDEX IF NOT EXISTS idx_vacancy_pipeline_stages_order
   ON vacancy_pipeline_stages (vacancy_id, sort_order ASC, id ASC);

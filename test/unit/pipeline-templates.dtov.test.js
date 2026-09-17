@@ -27,6 +27,10 @@ describe('vacancy pipeline templates (DTOV)', { skip: !dtov }, () => {
     assert.ok(templates.length >= 1);
     assert.equal(templates.filter((item) => item.isDefault).length, 1);
 
+    await query(`DELETE FROM vacancy_pipeline_stages WHERE vacancy_id = $1`, [vacancyId]);
+    const legacyFallbackStages = await listVacancyPipelineStages({ companyId, vacancyId });
+    assert.ok(legacyFallbackStages.length >= 5, 'legacy vacancy should receive a lazy snapshot');
+
     const applied = await applyPipelineTemplateToVacancy({
       companyId,
       vacancyId,
