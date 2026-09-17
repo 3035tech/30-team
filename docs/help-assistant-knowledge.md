@@ -35,6 +35,8 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 |---------|------|
 | Gestor precisa *saber fazer* | Guia + FAQ opcional |
 | Colaborador (`/employee`) | Seção `employeeHome` no Guia (RH convida/configura) |
+| Fronteiras PDI/OKR/1:1 + inclusão fora do funil + check-ins D30/60/90 | Guia `team` passo 8 + FAQ `faqEmployeeJourney` + `docs/RH2-decisions.md` |
+| HR Score / sinais de retenção / Preparar conversa / DP→cadastrais | Guia `b1000HrScore` + `b1000TurnoverRadar` + `b1900Packaging` + FAQ `faqHrScore` / `faqTurnoverRadar` + `docs/RH2-decisions.md` |
 | Super admin (auditoria, leads, sugestões) | Seção `access` (passos 10–11) + `productFeedback` |
 | DP leve (ficha / docs / assinatura interna / férias / saldo / template D1) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |

@@ -14,6 +14,7 @@ import { CopyableLink } from './CopyableLink';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { DateField } from './DateField';
 import { FormField } from './FormField';
+import { formatDisplayDateTime } from '../../lib/format-display-date';
 
 function todayIso() {
   const d = new Date();
@@ -423,7 +424,9 @@ export function PeopleManagementPanel({
               </span>
               {sessionPrep.preparedAt ? (
                 <span className="ml-2 font-mono text-2xs text-success">
-                  {t(locale, 'panel.employeePortal.managerPrepared')}
+                  {t(locale, 'panel.employeePortal.managerPreparedAt', {
+                    when: formatDisplayDateTime(sessionPrep.preparedAt, locale),
+                  })}
                 </span>
               ) : null}
               {sessionPrep.noteToManager ? <p className="mb-0 mt-1">{sessionPrep.noteToManager}</p> : null}
@@ -436,7 +439,9 @@ export function PeopleManagementPanel({
               <div key={tok.id} className="mt-1 text-xs text-ink-muted">
                 {tok.preparedAt ? (
                   <span className="font-mono text-2xs text-success">
-                    {t(locale, 'panel.employeePortal.managerPrepared')}
+                    {t(locale, 'panel.employeePortal.managerPreparedAt', {
+                      when: formatDisplayDateTime(tok.preparedAt, locale),
+                    })}
                   </span>
                 ) : null}
                 {tok.noteToManager ? <p className="mb-0 mt-1">{tok.noteToManager}</p> : null}
@@ -468,7 +473,7 @@ export function PeopleManagementPanel({
             ))}
           </div>
           <p className="mb-0 mt-2 font-mono text-2xs text-ink-faint">
-            {t(locale, 'panel.team.motivatorsRadarSeeTab')}
+            {t(locale, 'panel.team.motivatorsRadarSeeStyle')}
           </p>
         </CollapsibleBlock>
       ) : null}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { formatDisplayDate } from '../../lib/format-display-date';
+import { formatDisplayDate, formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../_components/AppLoading';
@@ -151,8 +151,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const [kudosTotal, setKudosTotal] = useState(0);
   const [openMap, setOpenMap] = useState(() => {
     const saved = loadCollapsed();
+    const hasSaved = Object.keys(saved).length > 0;
     const next = {};
-    for (const k of SECTION_KEYS) next[k] = saved[k] !== false;
+    for (const k of SECTION_KEYS) {
+      if (hasSaved) {
+        next[k] = saved[k] !== false;
+      } else {
+        // B-RH2-01: first visit keeps pendencies (tasks) open; rest collapsed.
+        next[k] = k === 'tasks';
+      }
+    }
     return next;
   });
   const [prepNote, setPrepNote] = useState('');
@@ -993,10 +1001,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               </button>
               {data?.oneOnOnePrep?.preparedAt ? (
                 <span className="font-mono text-2xs text-success">
-                  {t(locale, 'panel.employeePortal.prepDone')}
+                  {t(locale, 'panel.employeePortal.prepUpdatedAt', {
+                    when: formatDisplayDateTime(data.oneOnOnePrep.preparedAt, locale),
+                  })}
                 </span>
               ) : null}
             </div>
+            <p className={cn(S.faint, 'mb-0 mt-2 font-mono text-2xs')}>
+              {t(locale, 'panel.employeePortal.prepManagerSees')}
+            </p>
           </div>
         </CollapsibleSection>
 

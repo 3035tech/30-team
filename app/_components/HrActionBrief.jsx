@@ -44,6 +44,9 @@ export function HrActionBrief({
   const actionsAvoid = brief.actionsAvoid || [];
   const hypotheses = omitHypotheses ? [] : brief.hypotheses || [];
   const nucleusFit = nucleusFitProp || brief.nucleusFit || null;
+  const conversationActions = Array.isArray(syn.conversationActions)
+    ? syn.conversationActions
+    : [];
   const showNucleus =
     nucleusFit &&
     !nucleusFit.empty &&
@@ -68,6 +71,7 @@ export function HrActionBrief({
     actionsDo.length > 0 ||
     actionsAvoid.length > 0 ||
     synSections.length > 0 ||
+    conversationActions.length > 0 ||
     interview.length > 0 ||
     teamHasContent ||
     showNucleus ||
@@ -206,10 +210,31 @@ export function HrActionBrief({
         </section>
       ) : null}
 
+      {conversationActions.length > 0 ? (
+        <section className="rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5">
+          <div className="mb-0.5 font-mono text-2xs uppercase tracking-wider text-ink-label">
+            {t(locale, 'panel.team.briefPrepareTitle')}
+          </div>
+          <p className="mb-2 mt-0 font-mono text-2xs leading-snug text-ink-faint">
+            {t(locale, 'panel.team.briefPrepareHint')}
+          </p>
+          <ol className="m-0 list-decimal space-y-2 pl-4 text-xs leading-snug text-ink">
+            {conversationActions.map((a) => (
+              <li key={`ca-${a.source}-${a.text}`}>
+                {a.text}
+                {a.sourceLabel ? (
+                  <span className="ml-1.5 font-mono text-2xs text-ink-faint">· {a.sourceLabel}</span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
       {synSections.length > 0 ? (
         <CollapsibleBlock
           locale={locale}
-          title={t(locale, 'panel.team.briefPrepareTitle')}
+          title={t(locale, 'panel.team.synthesisTitle')}
           defaultOpen={false}
           count={synSections.length}
         >

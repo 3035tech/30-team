@@ -188,12 +188,29 @@ export function PersonDossierBlock({
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={S.label}>{t(locale, 'panel.dossier.hrTitle')}</span>
+          <p className="mt-1 mb-0 text-2xs leading-snug text-ink-faint">
+            {t(locale, 'panel.dossier.hrPurpose')}
+          </p>
           {d.hrScore ? (
             <p className="mt-2 mb-0 text-prose text-ink">
-              {t(locale, 'panel.dossier.hrScore', { score: d.hrScore.score })}{' '}
-              <span className={sev(d.hrScore.turnoverRisk)}>
-                {t(locale, 'panel.dossier.turnoverRisk', { risk: d.hrScore.turnoverRisk || '—' })}
-              </span>
+              {t(locale, 'panel.dossier.hrScore', { score: d.hrScore.score })}
+              {d.hrScore.turnoverRisk ? (
+                <>
+                  {' '}
+                  <span className={sev(d.hrScore.turnoverRisk)}>
+                    {t(locale, 'panel.dossier.turnoverRisk', {
+                      risk:
+                        d.hrScore.turnoverRisk === 'high'
+                          ? t(locale, 'turnoverRadar.riskHigh')
+                          : d.hrScore.turnoverRisk === 'medium'
+                            ? t(locale, 'turnoverRadar.riskMedium')
+                            : d.hrScore.turnoverRisk === 'low'
+                              ? t(locale, 'turnoverRadar.riskLow')
+                              : d.hrScore.turnoverRisk,
+                    })}
+                  </span>
+                </>
+              ) : null}
             </p>
           ) : (
             <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.dossier.hrEmpty')}</p>

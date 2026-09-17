@@ -65,7 +65,16 @@ function sourceLabel(locale, code) {
   return code ? t(locale, map[code] || 'recruiting.sourceOther') : null;
 }
 
-function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) {
+function CandidateCard({
+  row,
+  vacancyId,
+  locale,
+  onChanged,
+  onPipelineChange,
+  selected = false,
+  onToggleSelect = null,
+  selectDisabled = false,
+}) {
   const { notice, toast } = useAppFeedback();
   const [notes, setNotes] = useState(row.interviewNotes || '');
   const [phone, setPhone] = useState(stripPhone(row.phone) || '');
@@ -269,61 +278,77 @@ function CandidateCard({ row, vacancyId, locale, onChanged, onPipelineChange }) 
       className="rounded-xl border border-ink/12 bg-ink/[0.02] p-3.5"
     >
       <div className="flex flex-wrap items-start justify-between gap-2.5">
-        <div className="min-w-0">
-          <div className="text-sm text-ink">
-            <strong className="font-semibold">{titleCasePersonName(row.fullName)}</strong>
-          </div>
-          <div className="mt-1 text-xs font-mono text-ink-muted">
-            {row.email}
-            {row.phone ? ` · ${formatPhoneBr(row.phone)}` : ''}
-          </div>
-          {(locBits || row.linkedinUrl) ? (
-            <div className="mt-1 text-2xs font-mono text-ink-faint">
-              {locBits || null}
-              {locBits && row.linkedinUrl ? ' · ' : null}
-              {row.linkedinUrl ? (
-                <a href={row.linkedinUrl} target="_blank" rel="noreferrer" className="text-brand-500">
-                  LinkedIn
-                </a>
-              ) : null}
-            </div>
+        <div className="min-w-0 flex items-start gap-2.5">
+          {typeof onToggleSelect === 'function' ? (
+            <label className="mt-0.5 flex min-h-touch cursor-pointer items-center justify-center px-1">
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={() => onToggleSelect(row.candidateId)}
+                disabled={selectDisabled}
+                aria-label={t(locale, 'recruiting.batchSelectAria', {
+                  name: titleCasePersonName(row.fullName),
+                })}
+                className={S.checkbox}
+              />
+            </label>
           ) : null}
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            <span
-              className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-2xs text-ink-muted"
-              title={t(locale, 'recruiting.enneagramBadgeTitle')}
-            >
-              {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
-            </span>
-            <span
-              className={cn(
+          <div className="min-w-0">
+            <div className="text-sm text-ink">
+              <strong className="font-semibold">{titleCasePersonName(row.fullName)}</strong>
+            </div>
+            <div className="mt-1 text-xs font-mono text-ink-muted">
+              {row.email}
+              {row.phone ? ` · ${formatPhoneBr(row.phone)}` : ''}
+            </div>
+            {(locBits || row.linkedinUrl) ? (
+              <div className="mt-1 text-2xs font-mono text-ink-faint">
+                {locBits || null}
+                {locBits && row.linkedinUrl ? ' · ' : null}
+                {row.linkedinUrl ? (
+                  <a href={row.linkedinUrl} target="_blank" rel="noreferrer" className="text-brand-500">
+                    LinkedIn
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span
+                className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-2xs text-ink-muted"
+                title={t(locale, 'recruiting.enneagramBadgeTitle')}
+              >
+                {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
+              </span>
+              <span
+                className={cn(
                   'rounded-lg border px-2 py-0.5 font-mono text-2xs',
                   motivatorsDone ? 'border-success/35 text-success' : 'border-ink/12 text-ink-muted'
                 )}
-              title={t(locale, 'recruiting.motivatorsBadgeTitle')}
-            >
-              {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
-            </span>
-            {row.topType != null && (
-              <span className="text-2xs font-mono text-brand-500">
-                {t(locale, 'recruiting.typeShort', { type: row.topType })}
+                title={t(locale, 'recruiting.motivatorsBadgeTitle')}
+              >
+                {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
               </span>
-            )}
-            {availabilityLabel(locale, row.availability) ? (
-              <span className="text-2xs font-mono text-ink-faint">
-                {availabilityLabel(locale, row.availability)}
-              </span>
-            ) : null}
-            {sourceLabel(locale, row.source) ? (
-              <span className="text-2xs font-mono text-ink-faint">
-                {sourceLabel(locale, row.source)}
-              </span>
-            ) : null}
-            {row.salaryExpectation ? (
-              <span className="text-2xs font-mono text-ink-faint">
-                {formatSalaryBr(row.salaryExpectation)}
-              </span>
-            ) : null}
+              {row.topType != null && (
+                <span className="text-2xs font-mono text-brand-500">
+                  {t(locale, 'recruiting.typeShort', { type: row.topType })}
+                </span>
+              )}
+              {availabilityLabel(locale, row.availability) ? (
+                <span className="text-2xs font-mono text-ink-faint">
+                  {availabilityLabel(locale, row.availability)}
+                </span>
+              ) : null}
+              {sourceLabel(locale, row.source) ? (
+                <span className="text-2xs font-mono text-ink-faint">
+                  {sourceLabel(locale, row.source)}
+                </span>
+              ) : null}
+              {row.salaryExpectation ? (
+                <span className="text-2xs font-mono text-ink-faint">
+                  {formatSalaryBr(row.salaryExpectation)}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -615,6 +640,8 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
   const [sendMotivatorsInvite, setSendMotivatorsInvite] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createMsg, setCreateMsg] = useState('');
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -624,6 +651,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       setItems(Array.isArray(data.items) ? data.items : []);
+      setSelectedIds(new Set());
     } catch (e) {
       setErr(e?.message || t(locale, 'panel.common.error'));
       setItems([]);
@@ -635,6 +663,68 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
   useEffect(() => {
     load();
   }, [load]);
+
+  const toggleSelect = useCallback((candidateId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const key = String(candidateId);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const batchSend = async (kind) => {
+    const ids = [...selectedIds];
+    if (!ids.length || batchBusy) return;
+    setBatchBusy(true);
+    setErr('');
+    let ok = 0;
+    let fail = 0;
+    let skipped = 0;
+    try {
+      for (const candidateId of ids) {
+        const row = items.find((x) => String(x.candidateId) === String(candidateId));
+        if (!row) {
+          fail += 1;
+          continue;
+        }
+        if (kind === 'enneagram') {
+          const done = Boolean(row.assessmentId) || row.inviteStatus === 'completed';
+          if (done) {
+            skipped += 1;
+            continue;
+          }
+        } else {
+          const done =
+            Boolean(row.motivatorsAttemptId) || row.motivatorsInviteStatus === 'completed';
+          if (done) {
+            skipped += 1;
+            continue;
+          }
+        }
+        const path = kind === 'motivators' ? 'motivators-invite' : 'invite';
+        try {
+          const res = await fetch(
+            `/api/admin/vacancies/${encodeURIComponent(vacancyId)}/candidates/${encodeURIComponent(candidateId)}/${path}`,
+            { method: 'POST' }
+          );
+          if (res.ok) ok += 1;
+          else fail += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      toast(
+        t(locale, 'recruiting.batchSendResult', { ok, fail, skipped }),
+        fail > 0 ? 'warning' : 'ok'
+      );
+      await load();
+      if (kind === 'enneagram' && ok > 0) onPipelineChange?.();
+    } finally {
+      setBatchBusy(false);
+    }
+  };
 
   const create = async () => {
     setCreating(true);
@@ -902,15 +992,54 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
       </div>
 
       {loading ? (
-        <p className="font-mono text-xs text-ink-muted">
-          {t(locale, 'recruiting.loadingCandidates')}
-        </p>
+        <AppLoading locale={locale} variant="panel" />
       ) : items.length === 0 ? (
         <p className="font-mono text-xs text-ink-faint">
           {t(locale, 'recruiting.noCandidatesYet')}
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
+          {selectedIds.size > 0 ? (
+            <div
+              className={cn(
+                'flex flex-wrap items-center gap-2 rounded-xl border border-brand-500/25 bg-brand-500/[0.04] px-3.5 py-2.5',
+                batchBusy && 'opacity-70'
+              )}
+              aria-busy={batchBusy || undefined}
+            >
+              <span className="font-mono text-prose text-brand-500">
+                {t(locale, 'recruiting.batchSelected', { n: selectedIds.size })}
+              </span>
+              <button
+                type="button"
+                disabled={batchBusy}
+                onClick={() => batchSend('enneagram')}
+                className={cn(S.btnBrandSoft, 'min-h-touch')}
+              >
+                {batchBusy
+                  ? t(locale, 'recruiting.inviteSending')
+                  : t(locale, 'recruiting.batchSendEnneagram')}
+              </button>
+              <button
+                type="button"
+                disabled={batchBusy}
+                onClick={() => batchSend('motivators')}
+                className={cn(S.btnGhost, 'min-h-touch')}
+              >
+                {batchBusy
+                  ? t(locale, 'recruiting.inviteSending')
+                  : t(locale, 'recruiting.batchSendMotivators')}
+              </button>
+              <button
+                type="button"
+                disabled={batchBusy}
+                onClick={() => setSelectedIds(new Set())}
+                className={cn(S.btnGhost, 'min-h-touch')}
+              >
+                {t(locale, 'recruiting.batchClear')}
+              </button>
+            </div>
+          ) : null}
           {items.map((row) => (
             <CandidateCard
               key={row.candidateId}
@@ -919,6 +1048,9 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               locale={locale}
               onChanged={load}
               onPipelineChange={onPipelineChange}
+              selected={selectedIds.has(String(row.candidateId))}
+              onToggleSelect={toggleSelect}
+              selectDisabled={batchBusy}
             />
           ))}
         </div>

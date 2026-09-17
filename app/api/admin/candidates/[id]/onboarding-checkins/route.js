@@ -8,6 +8,7 @@ import {
   listOnboardingCheckins,
   updateOnboardingCheckin,
   setOnboardingCheckinMeetUrl,
+  reopenOnboardingCheckin,
 } from '../../../../../../lib/people/onboarding-checkins';
 
 async function loadCandidateScope(candidateId, scope) {
@@ -79,6 +80,28 @@ export async function PATCH(request, { params }) {
         const status = code === ERR.NOT_FOUND ? 404 : 400;
         return apiError(request, code, status);
       }
+      return NextResponse.json({ item: result.item });
+    }
+
+    if (body.action === 'reopen') {
+      const result = await reopenOnboardingCheckin(query, {
+        companyId: loaded.candidate.companyId,
+        candidateId,
+        checkinId,
+      });
+      if (!result.ok) {
+        const code = result.errorCode || ERR.INVALID_DATA;
+        const status = code === ERR.NOT_FOUND ? 404 : 400;
+        return apiError(request, code, status);
+      }
+      await audit({
+        actorUserId: payload.userId || null,
+        companyId: loaded.candidate.companyId,
+        action: 'onboarding_checkin.reopen',
+        targetType: 'candidate',
+        targetId: String(candidateId),
+        metadata: { checkinId, milestoneDays: result.item?.milestoneDays },
+      });
       return NextResponse.json({ item: result.item });
     }
 

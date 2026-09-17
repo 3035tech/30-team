@@ -127,7 +127,8 @@ export default function TurnoverRadarCard({ locale, companyId }) {
   if (!data || (dist.scanned === 0 && !hasList)) {
     return (
       <div className={S.card}>
-        <h3 className={cn(S.cardTitle, 'mb-2')}>{t(locale, 'turnoverRadar.title')}</h3>
+        <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'turnoverRadar.title')}</h3>
+        <p className={cn(S.cardSubtitle, 'mb-2')}>{t(locale, 'turnoverRadar.subtitle')}</p>
         <p className={cn(S.cardMuted, 'm-0 mb-3')}>{t(locale, 'turnoverRadar.noRisks')}</p>
         <Link href="/dashboard?tab=team" className={cn(S.cardLink, 'inline-flex min-h-touch items-center')}>
           {t(locale, 'turnoverRadar.openTeamCta')}
@@ -149,7 +150,8 @@ export default function TurnoverRadarCard({ locale, companyId }) {
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'turnoverRadar.title')}</h3>
-          <p className={S.cardSubtitle}>{atRiskLabel}</p>
+          <p className={S.cardSubtitle}>{t(locale, 'turnoverRadar.subtitle')}</p>
+          <p className={cn(S.cardMuted, 'mt-1')}>{atRiskLabel}</p>
           {data.truncated ? (
             <p className={cn(S.cardMuted, 'mt-1 text-xs')}>
               {t(locale, 'turnoverRadar.scanTruncated', {

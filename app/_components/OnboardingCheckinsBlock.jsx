@@ -32,7 +32,7 @@ export function OnboardingCheckinsBlock({
   employmentStatus,
   onPdiChanged,
 }) {
-  const { toast, promptForm } = useAppFeedback();
+  const { toast, promptForm, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -202,6 +202,34 @@ export function OnboardingCheckinsBlock({
     }
   };
 
+  const reopen = async (row) => {
+    const ok = await confirm({
+      title: t(locale, 'panel.onboarding.reopenTitle', { days: row.milestoneDays }),
+      message: t(locale, 'panel.onboarding.reopenConfirm'),
+      confirmLabel: t(locale, 'panel.onboarding.reopen'),
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/candidates/${encodeURIComponent(candidateId)}/onboarding-checkins`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reopen', checkinId: row.id }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.onboarding.saveError'));
+      toast(t(locale, 'panel.onboarding.reopened'), 'ok');
+      await load();
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.onboarding.saveError'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const doneCount = items.filter((i) => i.status === 'done' || i.status === 'skipped').length;
 
   return (
@@ -290,6 +318,12 @@ export function OnboardingCheckinsBlock({
                           {t(locale, 'panel.onboarding.employeeAcked')}
                         </span>
                       ) : null}
+                      {done && row.completedByName ? (
+                        <span>
+                          {' · '}
+                          {t(locale, 'panel.onboarding.completedBy', { name: row.completedByName })}
+                        </span>
+                      ) : null}
                     </div>
                     {row.meetUrl ? (
                       <a
@@ -337,7 +371,16 @@ export function OnboardingCheckinsBlock({
                         {t(locale, 'panel.onboarding.skip')}
                       </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className={cn(S.btnGhost, 'min-h-touch')}
+                      onClick={() => reopen(row)}
+                    >
+                      {t(locale, 'panel.onboarding.reopen')}
+                    </button>
+                  )}
                 </li>
               );
             })}

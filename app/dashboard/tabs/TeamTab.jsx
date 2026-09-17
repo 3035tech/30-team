@@ -6,7 +6,7 @@ import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { AdminListSearch, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
+import { AdminListSearch, AdminCreateButton, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { AdminListFilters } from '../../_components/AdminListFilters';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
@@ -35,6 +35,7 @@ import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_compone
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
+import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
@@ -59,6 +60,9 @@ function NearbyTypeBadges({ scores, topType, locale }) {
 
 function IntegratedProfileSynthesis({ synthesis, locale }) {
   if (!synthesis || synthesis.completeness === 'empty') return null;
+  const actions = Array.isArray(synthesis.conversationActions)
+    ? synthesis.conversationActions
+    : [];
   const sections = [
     ['convergences', 'panel.team.synthesisConvergences'],
     ['tensions', 'panel.team.synthesisTensions'],
@@ -68,22 +72,50 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
 
   return (
     <section className="mb-4 rounded-control border border-ink/12 bg-brand-500/[0.06] p-3.5">
-      <span className={cn(S.label, 'mb-2')}>{t(locale, 'panel.team.synthesisTitle')}</span>
+      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.team.briefPrepareTitle')}</span>
+      <p className="mb-2 mt-0 font-mono text-2xs leading-snug text-ink-faint">
+        {t(locale, 'panel.team.briefPrepareHint')}
+      </p>
       <p className="mb-3 mt-0 font-ui text-sm leading-snug text-ink">
         {synthesis.headline}
       </p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        {sections.map(([key, labelKey]) => (
-          <div key={key}>
-            <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
-              {t(locale, labelKey)}
-            </span>
-            <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-xs leading-snug text-ink-muted">
-              {synthesis[key].map((item) => <li key={item} className="mb-1">{item}</li>)}
-            </ul>
+      {actions.length > 0 ? (
+        <ol className="mb-3 mt-0 list-decimal space-y-2 pl-5 text-xs leading-snug text-ink">
+          {actions.map((a) => (
+            <li key={`${a.source}-${a.text}`}>
+              <span className="text-ink">{a.text}</span>
+              {a.sourceLabel ? (
+                <span className="ml-1.5 font-mono text-2xs text-ink-faint">
+                  · {a.sourceLabel}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {sections.length > 0 ? (
+        <CollapsibleBlock
+          locale={locale}
+          title={t(locale, 'panel.team.synthesisTitle')}
+          defaultOpen={false}
+          count={sections.length}
+          bordered={false}
+          className="border-t border-ink/10 pt-2"
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+            {sections.map(([key, labelKey]) => (
+              <div key={key}>
+                <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
+                  {t(locale, labelKey)}
+                </span>
+                <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-xs leading-snug text-ink-muted">
+                  {synthesis[key].map((item) => <li key={item} className="mb-1">{item}</li>)}
+                </ul>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </CollapsibleBlock>
+      ) : null}
     </section>
   );
 }
@@ -228,8 +260,87 @@ export function TeamTab({
   const [bulkMsgIsError, setBulkMsgIsError] = useState(false);
   const [stageOverrides, setStageOverrides] = useState({});
   const [diagnoseBusy, setDiagnoseBusy] = useState(false);
+  const [createEmployeeBusy, setCreateEmployeeBusy] = useState(false);
   const { requestPipelineExtras } = usePipelineExtras();
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+
+  const createEmployeeDirect = async () => {
+    if (!companyId || createEmployeeBusy) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.team.addEmployeeTitle'),
+      message: t(locale, 'panel.team.addEmployeeHint'),
+      confirmLabel: t(locale, 'panel.team.addEmployeeConfirm'),
+      fields: [
+        {
+          key: 'fullName',
+          label: t(locale, 'panel.team.addEmployeeName'),
+          required: true,
+          defaultValue: '',
+        },
+        {
+          key: 'email',
+          label: t(locale, 'panel.team.addEmployeeEmail'),
+          required: true,
+          defaultValue: '',
+        },
+        {
+          key: 'startDate',
+          type: 'date',
+          label: t(locale, 'panel.team.addEmployeeStartDate'),
+          defaultValue: new Date().toISOString().slice(0, 10),
+        },
+        {
+          key: 'sendAccessInvite',
+          type: 'boolean',
+          label: t(locale, 'panel.team.addEmployeeInvite'),
+          help: t(locale, 'panel.team.addEmployeeInviteHelp'),
+          defaultValue: true,
+        },
+      ],
+    });
+    if (!values) return;
+    setCreateEmployeeBusy(true);
+    try {
+      const res = await fetch('/api/admin/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: Number(companyId),
+          fullName: titleCasePersonName(values.fullName),
+          email: String(values.email || '').trim().toLowerCase(),
+          startDate: values.startDate || null,
+          sendAccessInvite: Boolean(values.sendAccessInvite),
+          locale,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.addEmployeeError'));
+      if (values.sendAccessInvite && !data.inviteSent) {
+        toast(t(locale, 'panel.team.addEmployeeOkInviteFailed'), 'warning');
+      } else {
+        toast(
+          data.inviteSent
+            ? t(locale, 'panel.team.addEmployeeOkInvite')
+            : t(locale, 'panel.team.addEmployeeOk'),
+          'ok'
+        );
+      }
+      if (typeof navigateDashboard === 'function' && data.candidateId) {
+        navigateDashboard({
+          tab: 'team',
+          roster: ROSTER_SCOPE.INTERNAL,
+          candidate: data.candidateId,
+          search: null,
+        });
+      } else {
+        router.refresh();
+      }
+    } catch (e) {
+      toast(e?.message || t(locale, 'panel.team.addEmployeeError'), 'error');
+    } finally {
+      setCreateEmployeeBusy(false);
+    }
+  };
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -696,6 +807,15 @@ export function TeamTab({
 
   return (
     <div className="flex flex-col gap-3">
+      {companyId ? (
+        <div className="flex justify-end">
+          <AdminCreateButton
+            label={t(locale, 'panel.team.addEmployeeBtn')}
+            onClick={createEmployeeDirect}
+            disabled={createEmployeeBusy}
+          />
+        </div>
+      ) : null}
       <AdminListFilters
         locale={locale}
         aria-label={t(locale, 'panel.team.searchAriaLabel')}
@@ -945,7 +1065,12 @@ export function TeamTab({
                     </StatusToneChip>
                   ) : null}
                   {(r.hrScore != null || r.turnoverRisk) && (
-                    <HrScoreBadge score={r.hrScore} risk={r.turnoverRisk} size="xs" />
+                    <HrScoreBadge
+                      score={r.hrScore}
+                      risk={r.turnoverRisk}
+                      size="xs"
+                      locale={locale}
+                    />
                   )}
                 </div>
               </div>
@@ -1043,6 +1168,40 @@ export function TeamTab({
                   ) : null}
                   <TypeScoreChart scores={openRow.scores} locale={locale} highlightTypes={openCluster} />
                 </div>
+
+                {detailLoading ? (
+                  <div className="mb-4">
+                    <AppLoading locale={locale} variant="inline" />
+                  </div>
+                ) : detailMatchesOpen && detail?.people?.management?.motivators?.dimensionScores ? (
+                  <div className="mb-4">
+                    <MotivatorsRadarChart
+                      locale={locale}
+                      dimensionScores={detail.people.management.motivators.dimensionScores}
+                      compact
+                    />
+                  </div>
+                ) : detailMatchesOpen && detail?.people?.management?.motivators?.top?.length ? (
+                  <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
+                    <span className={cn(S.label, 'mb-2')}>
+                      {t(locale, 'panel.team.motivatorsRadarTitle')}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {detail.people.management.motivators.top.map((d) => (
+                        <span
+                          key={d.key}
+                          className="inline-flex min-h-8 items-center rounded-control border border-ink/12 bg-surface px-2.5 text-xs text-ink"
+                        >
+                          {d.label} · {Math.round(d.score)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : detailMatchesOpen ? (
+                  <p className="mb-4 mt-0 font-mono text-2xs text-ink-faint">
+                    {t(locale, 'panel.team.motivatorsStyleEmpty')}
+                  </p>
+                ) : null}
               </ContentEnter>
             ) : null}
             {personTab === 'people' ? (
