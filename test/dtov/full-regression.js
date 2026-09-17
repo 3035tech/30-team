@@ -543,7 +543,7 @@ async function runOfflineLibs() {
     const { buildRobotsRules, AI_CRAWLER_USER_AGENTS } = await import('../../lib/crawler-guard.js');
     const rules = buildRobotsRules();
     const gpt = rules.find((r) => r.userAgent === 'GPTBot');
-    if (!gpt || gpt.disallow !== '/' || !gpt.allow?.includes('/llms.txt')) {
+    if (!gpt || !gpt.disallow?.includes('/dashboard') || !gpt.allow?.includes('/llms.txt')) {
       throw new Error('GPTBot rules wrong');
     }
     if (AI_CRAWLER_USER_AGENTS.length < 5) throw new Error('AI crawlers list too short');

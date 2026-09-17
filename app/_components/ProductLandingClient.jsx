@@ -6,10 +6,11 @@ import LanguageSelect from './LanguageSelect';
 import { PRODUCT_LANDING_CONTACT_EMAIL } from '../../lib/product-landing-seo';
 import { useLocale } from '../../lib/useLocale';
 import LandingAnalytics from './LandingAnalytics';
+import { ContentEnter } from './AppLoading';
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 font-mono text-2xs uppercase tracking-[0.14em] text-brand-500/70">{children}</p>
+    <p className="mb-3 text-sm font-medium text-brand-600">{children}</p>
   );
 }
 
@@ -44,12 +45,10 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
   const copy = copyByLocale[locale === 'en' ? 'en' : 'pt-BR'] || copyByLocale['pt-BR'];
 
   const toc = [
-    { href: '#dor', label: copy.problemLabel },
-    { href: '#gancho', label: copy.wedgeLabel },
+    { href: '#jornada', label: copy.journeyNav },
     { href: '#resultados', label: copy.outcomesLabel },
     { href: '#produto', label: copy.pillarsLabel },
-    { href: '#vs', label: copy.compareLabel },
-    { href: '#origem', label: copy.builderLabel },
+    { href: '#confianca', label: copy.trustLabel },
     { href: '#oferta', label: copy.earlyLabel },
   ];
 
@@ -100,34 +99,76 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
         </div>
       </header>
 
-      <main id="conteudo" className="relative z-[1]">
-        <section id="produto-hero" className="mx-auto max-w-5xl px-5 pb-12 pt-12 sm:px-8 sm:pb-16 sm:pt-16">
-          <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-success">
-            {copy.earlyBadge}
-          </p>
-          <h1 className="mb-4 max-w-[22ch] bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-[clamp(2rem,5.5vw,3.15rem)] font-normal leading-[1.12] text-transparent">
-            {copy.heroTitle}
-          </h1>
-          <p className="mb-3 max-w-2xl text-lg leading-relaxed text-ink">{copy.heroLead}</p>
-          <p className="mb-6 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.heroBody}</p>
-          <Ctas copy={copy} />
-          <p className="mt-4 text-sm text-ink-faint">
-            {copy.heroFoot}{' '}
-            <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
-              {copy.navPricing}
-            </Link>
-          </p>
-          <nav aria-label={copy.tocLabel} className="mt-8 flex flex-wrap gap-2">
+      <ContentEnter animKey={locale} className="relative z-[1]">
+        <main id="conteudo">
+          <section id="produto-hero" className="mx-auto grid max-w-6xl gap-10 px-5 pb-14 pt-12 sm:px-8 sm:pb-20 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,.85fr)] lg:items-center">
+            <div>
+              <p className="mb-5 inline-flex rounded-full border border-brand-500/20 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+                {copy.earlyBadge}
+              </p>
+              <h1 className="mb-5 max-w-[18ch] text-[clamp(2.5rem,6vw,4.6rem)] font-normal leading-[1.02] tracking-[-0.035em] text-ink">
+                {copy.heroTitle}
+              </h1>
+              <p className="mb-4 max-w-2xl font-ui text-lg leading-relaxed text-ink">{copy.heroLead}</p>
+              <p className="mb-7 max-w-2xl font-ui text-base leading-relaxed text-ink-muted">{copy.heroBody}</p>
+              <Ctas copy={copy} />
+              <p className="mt-4 font-ui text-sm text-ink-faint">
+                {copy.heroFoot}{' '}
+                <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
+                  {copy.navPricing}
+                </Link>
+              </p>
+            </div>
+            <aside className="relative overflow-hidden rounded-card border border-brand-500/15 bg-surface p-5 shadow-card sm:p-7" aria-label={copy.journeyNav}>
+            <div className="absolute inset-y-8 left-[2.15rem] w-px bg-brand-500/20" aria-hidden />
+            <ol className="relative m-0 list-none space-y-5 p-0">
+              {copy.journeyStages.map((stage, index) => (
+                <li key={stage.title} className="grid grid-cols-[2.25rem_1fr] gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-500/25 bg-canvas text-xs font-semibold text-brand-700">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="m-0 font-ui text-sm font-semibold text-ink">{stage.title}</p>
+                    <p className="mb-0 mt-1 font-ui text-xs leading-relaxed text-ink-muted">{stage.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            </aside>
+            <nav aria-label={copy.tocLabel} className="flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5 lg:col-span-2">
             {toc.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-control border border-ink/10 bg-white/60 px-2.5 py-1.5 text-xs text-ink-muted no-underline hover:border-brand-300 hover:text-ink"
+                className="min-h-touch py-2 font-ui text-sm text-ink-muted underline-offset-4 hover:text-brand-700 hover:underline"
               >
                 {item.label}
               </a>
             ))}
-          </nav>
+            </nav>
+          </section>
+
+        <section id="jornada" className="border-y border-ink/8 bg-surface py-16 sm:py-20" aria-labelledby="journey-title">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <SectionLabel>{copy.journeyLabel}</SectionLabel>
+            <div className="grid gap-5 lg:grid-cols-[.7fr_1.3fr] lg:gap-12">
+              <div>
+                <h2 id="journey-title" className="mb-4 mt-0 max-w-lg text-3xl font-normal leading-tight text-ink sm:text-4xl">
+                  {copy.journeyTitle}
+                </h2>
+                <p className="m-0 max-w-lg font-ui text-base leading-relaxed text-ink-muted">{copy.journeyLead}</p>
+              </div>
+              <ol className="m-0 grid list-none gap-px overflow-hidden rounded-card border border-ink/10 bg-ink/10 p-0 sm:grid-cols-2">
+                {copy.journeyStages.map((stage, index) => (
+                  <li key={stage.title} className="bg-canvas p-5 sm:p-6">
+                    <span className="mb-5 block font-ui text-xs font-semibold text-brand-600">0{index + 1}</span>
+                    <h3 className="mb-2 mt-0 text-lg font-normal text-ink">{stage.title}</h3>
+                    <p className="m-0 font-ui text-sm leading-relaxed text-ink-muted">{stage.body}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
         </section>
 
         <section className="border-y border-ink/8 bg-white/50 py-12" aria-labelledby="audience-title">
@@ -270,7 +311,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="trust-title">
+        <section id="confianca" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="trust-title">
           <SectionLabel>{copy.trustLabel}</SectionLabel>
           <h2 id="trust-title" className="mb-6 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
             {copy.trustTitle}
@@ -345,7 +386,8 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
             {copy.ctaEarly}
           </Link>
         </section>
-      </main>
+        </main>
+      </ContentEnter>
 
       <footer className="relative z-[1] border-t border-ink/8 py-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 text-xs text-ink-faint sm:px-8">

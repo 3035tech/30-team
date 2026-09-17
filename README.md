@@ -48,7 +48,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 │   ├── lms-media.js             ← Helpers LMS seguros no client (sem pg)
 │   ├── help-sections.js         ← Índice do Guia / assistente IA
 │   └── help-assistant.js        ← FAQ + retrieval do assistente
-├── migrations/                  ← Schema versionado (fonte canônica; hoje até ~097)
+├── migrations/                  ← Schema versionado (fonte canônica; hoje até 110)
 ├── test/                        ← Provas (DTOV + Playwright) — ver test/README.md
 ├── scripts/                     ← migrate, seeds, ops (não harness de teste)
 ├── docs/                        ← Rubrica, LGPD, help-assistant-knowledge, backlog
@@ -272,7 +272,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 docker compose up -d
 ```
 
-- App (landpage SEO/vendas): http://localhost:3000 — JSON-LD + `/llms.txt`; CTA principal **early access** (mailto); secundário login → `/login`
+- App (landpage SEO/vendas): http://localhost:3000 — HTML rastreável, JSON-LD + `/llms.txt`; CTA principal **early access** → `/signup`; acessos de gestor e colaborador ficam separados
 - Login: http://localhost:3000/login (link “Esqueceu a senha?” → e-mail `/a/set-password`, 72h; requer SMTP)
 - Teste público: criar empresa no dashboard → link `/t/<token>`
 
@@ -310,7 +310,7 @@ npm run dev
 ```
 1. Assessment: abre /t/<token> (empresa) ou /v/<token> (vaga) → responde o teste
 2. Página pública SEO (opcional): /jobs/<slug>-<id> → lê a vaga → CTA para o /v/…
-3. Índice: /j lista vagas públicas abertas 
+3. Índice: `/jobs` lista vagas públicas abertas
 4. POST /api/results → grava no Postgres; vê o resultado na tela
 5. Pós-hire (token): /e/<token> — PDI, combinados, prep 1:1, LMS (sem conta)
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /employee/set-password
@@ -348,7 +348,7 @@ npm run dev
 - Conteúdo exibido quando existir: título, empresa (logo se houver), tipo de contrato, modalidade/cidade, salário (flag), datas (publicação / `target_date`), descrição, CTA, share.
 - Sem campos no schema hoje (omitidos de propósito): senioridade, skills/benefícios separados.
 - Encerrada ou `target_date` passado: agradecimento + relacionadas + `/jobs`; sem JobPosting / noindex / sem CTA de apply.
-- SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok; inclui agregadores que passam o limiar).
+- SEO: `robots.txt` + `sitemap.xml` (só vagas `open`, indexáveis e prazo ok; inclui agregadores que passam o limiar). Crawlers de busca e IA podem descobrir apenas superfícies públicas; painel, APIs, autenticação e links por token continuam bloqueados. `/llms.txt` mantém o inventário verificável do produto.
 - Google Indexing API (opcional): `GOOGLE_INDEXING_ENABLED=true` + service account — push ao criar/atualizar/fechar página pública indexável (`lib/job-indexing.js`). Desligado por padrão; falha não bloqueia o save da vaga.
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
 - Referral (indicação): tabela `referral_codes`; APIs admin + **aba Indicação** no detalhe da vaga (criar, copiar `/jobs/…?ref=`, desativar, métricas). Analytics: `GET /api/admin/referral-codes/analytics`.

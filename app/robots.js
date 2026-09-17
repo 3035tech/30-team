@@ -8,7 +8,7 @@ function appBaseUrl() {
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots
  *
  * /jobs e /companies ficam de fora do Disallow — vagas públicas continuam indexáveis.
- * Bots de IA: Disallow /, Allow /llms.txt apenas.
+ * Busca e assistentes de IA descobrem superfícies públicas; áreas privadas ficam bloqueadas.
  */
 export default function robots() {
   const base = appBaseUrl();

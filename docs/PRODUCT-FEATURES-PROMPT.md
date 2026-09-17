@@ -1,6 +1,6 @@
 # Prompt — funcionalidades atuais do 30Team
 
-Copie o bloco abaixo para um chat / agente quando precisar de contexto de **produto já entregue** (não de backlog). Data de referência: **ago/2026**. Fonte: `AGENTS.md`, Guia (`HelpTab` / `panel.help.*`), `docs/BACKLOG.md` (epics fechados), código em `app/` + `lib/`.
+Copie o bloco abaixo para um chat / agente quando precisar de contexto de **produto já entregue** (não de backlog). Data de referência: **set/2026**. Fonte: `AGENTS.md`, Guia (`HelpTab` / `panel.help.*`), `docs/BACKLOG.md` (epics fechados), código em `app/` + `lib/`.
 
 ---
 
@@ -33,7 +33,7 @@ Não inventar merge por nome nem segundo hub paralelo.
 | /t/{token} | Assessment Eneagrama da empresa (time interno; noindex) |
 | /v/{token} | Assessment Eneagrama da vaga (candidato; noindex) |
 | /assessment/motivators/{token} | Motivadores |
-| /j , /jobs/{slug}-{id} | Anúncio SEO da vaga (marketing; distinto do teste) |
+| `/jobs`, `/jobs/{slug}-{id}` | Índice e anúncio SEO da vaga (marketing; distintos do teste) |
 | /jobs/remote , /jobs/city/{slug} | Agregadores públicos (massa mínima) |
 | /companies/{companySlug} | Carreiras da empresa (opt-in; hero logo+sobre) |
 | /r/{token} | Relatório shortlist para o cliente (+ print/PDF) |
@@ -44,7 +44,7 @@ Não inventar merge por nome nem segundo hub paralelo.
 | `/ouvidoria/{token}` | Canal de ouvidoria anônimo |
 | `/a/set-password` , `/a/unsubscribe` | Setup/reset de senha / cancelar job alert |
 
-Nunca misturar: /t = time; /v = teste candidato; /j = anúncio; /c = carreiras; /r = cliente.
+Nunca misturar: `/t` = time; `/v` = teste candidato; `/jobs` = anúncios; `/companies` = carreiras; `/r` = cliente.
 
 ## Painel — abas / módulos (CAP)
 Visão geral · Equipe · Compatibilidade · Comparativo · Grupos · Liderança · Vagas · Motivadores · Clima · Empresas (admin) · Usuários (admin) · **B-1000** (Cargos, Avaliações, Sucessão, Saídas, Academy, Benefícios — CAPs dedicadas assignáveis; defaults hr/direction) · Banco de talentos (`vacancies.view`) · Guia · Meu perfil.
@@ -115,7 +115,7 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - CRUD em drawer (lista primeiro): título, status, posições, data-alvo, contrato, modalidade/UF/cidade IBGE, faixa salarial, descrição rica.
 - Assistência de descrição: template de seções + “Criar/melhorar com IA” (OpenAI opcional).
 - Rubrica por vaga: pesos T1–T9 (não muda o teste); aderência 0–10; sugestão/geração com IA opcional.
-- Links: /v (teste) e /j (página pública: ativar, indexar, mostrar empresa, salário); score de completude SEO.
+- Links: `/v` (teste) e `/jobs/{slug}-{id}` (página pública: ativar, indexar, mostrar empresa, salário); score de completude SEO.
 - Cadastro de candidatos (e-mail = chave); convite eneagrama por e-mail; notes ricas; scorecard 1–5 (perguntas do briefing).
 - Pipeline kanban: new → interview → test_completed → screening → approved → hired | rejected | archived (drag-and-drop; rejeição com motivo; hire com data de início; auto-close ao preencher posições). Badge aging “N d” (≥7 / ≥14) no kanban da vaga e da Equipe.
 - Detalhe da vaga: Pipeline e Candidatos em evidência; Aderência, Funil, Indicação, Relatório e Config em “Mais…”.
@@ -126,7 +126,7 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Notificações: prazo da vaga, vaga fechada, teste concluído, kit pós-hire, digest semanal do gestor, etc.
 
 ### Página pública / SEO
-- Índice /j (busca, filtro contrato, paginação); JobPosting JSON-LD; sitemap/robots.
+- Índice `/jobs` (busca, filtro contrato, paginação); JobPosting JSON-LD; sitemap/robots.
 - Share WhatsApp/LinkedIn/copiar com UTM; cookie de atribuição sem PII.
 - Job alerts por e-mail + unsubscribe.
 - Agregadores /jobs/remote e /jobs/city/{slug}.
@@ -140,7 +140,7 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 - Sync/desativar perguntas; nunca DELETE de ae_questions com tentativas.
 
 ### Empresas e usuários (admin)
-- Empresas: drawer (site, logo S3, sobre, opt-in carreiras /c).
+- Empresas: drawer (site, logo S3, sobre, opt-in carreiras `/companies/{companySlug}`).
 - Usuários: criar em 2 passos (identidade → módulos); editar; reenviar convite; soft delete.
 
 ### Guia e ajuda
