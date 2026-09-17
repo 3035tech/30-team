@@ -28,7 +28,7 @@ _(Parte 1 concluída: B-RH1-01…20 removidos após implementação.)_
 
 IDs: `B-RH2-*`. Decisões em [`docs/RH2-decisions.md`](./RH2-decisions.md).
 
-_(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. Diferidos documentados: 12, 15.)_
+_(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. Aberto: 12 (diferido). **15 decisões fechadas** em RH2-decisions — pronto para implementar.)_
 
 ### B-RH2-12 — Pipeline configurável
 
@@ -37,14 +37,6 @@ _(Entregues e removidos: B-RH2-01…11, 13–14, 16–20. Diferidos documentados
 **Aceite:** Etapas obrigatórias vs custom; impacto em relatórios/automações/permissões; migração ao alterar/excluir coluna.
 
 **Origem:** Duda/Gestor pp.8 e 11. **Diferido:** schema + migração (ver RH2-decisions).
-
-### B-RH2-15 — Avaliação de desempenho
-
-**Prompt:** Ciclos com foco em competências; autoavaliação e modelos 90°/180°/360° com papéis. Área geral: criação, status, prazos, histórico. Perfil: resultados e feedbacks.
-
-**Aceite:** Anonimato quando couber; permissões; escalas; consolidação multi-avaliador; reabertura; visualização.
-
-**Origem:** Duda/Gestor pp.15–16. **Diferido:** ciclo formal multi-avaliador.
 
 ---
 
@@ -56,6 +48,7 @@ Fechados em [`docs/RH2-decisions.md`](./RH2-decisions.md) (ciclo de vida, perfis
 
 ## Notas
 
-- Este markdown: Parte 1 concluída; Parte 2 entregue salvo itens diferidos (12/15). Anexos visuais ficam no `.docx`.
+- Este markdown: Parte 1 concluída; Parte 2 entregue salvo item diferido B-RH2-12. Anexos visuais ficam no `.docx`.
 - Motivadores (B-RH2-20): após deploy, republicar copy com `npm run db:seed-motivators-all` (desativa chaves antigas; não apaga tentativas).
-- Constantes de domínio (ondas 1–3): `lib/domain-status.js` + `ROLES` em `permissions.js`. Sem schema. B-RH2-12/15 continuam bloqueados sem aceite de produto.
+- Constantes de domínio (ondas 1–3): `lib/domain-status.js` + `ROLES` em `permissions.js`. Sem schema. B-RH2-12 continua diferido sem aceite de produto.
+- B-RH2-15 entregue: avaliação formal por competências (`migrations/108`, Avaliações → Competências, `/formal-review/[token]`).

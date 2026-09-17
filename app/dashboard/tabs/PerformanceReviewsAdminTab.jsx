@@ -2,6 +2,7 @@
 
 /**
  * Performance Reviews Admin Tab — manage cycles, goals, and reviews → PDI (B-1004).
+ * Segment: formal competency reviews (B-RH2-15).
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -34,8 +35,11 @@ import { InlineCallout } from '../../_components/InlineCallout';
 import { CalibrationBlock } from '../../_components/CalibrationBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
+import { SegmentedControl } from '../../_components/SegmentedControl';
+import { FormalCompetencyReviewsBlock } from '../../_components/FormalCompetencyReviewsBlock';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
+  const [mode, setMode] = useState('goals');
   const [cycles, setCycles] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [page, setPage] = useState(1);
@@ -510,10 +514,24 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     return <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />;
   }
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading && mode === 'goals') return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-6">
+      <SegmentedControl
+        aria-label={t('title')}
+        value={mode}
+        onChange={setMode}
+        options={[
+          { id: 'goals', label: i18nT(locale, 'performanceReviews.formal.segmentGoals'), icon: 'clipboard' },
+          { id: 'formal', label: i18nT(locale, 'performanceReviews.formal.segmentFormal'), icon: 'users' },
+        ]}
+      />
+
+      {mode === 'formal' ? (
+        <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} />
+      ) : (
+      <>
       <AdminPageHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -679,6 +697,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           cycleTitle={selectedCycle.title || ''}
         />
       ) : null}
+      </>
+      )}
     </div>
   );
 }

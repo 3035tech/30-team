@@ -23,6 +23,7 @@ import { EmployeeVariablePaySection } from '../_components/EmployeeVariablePaySe
 import { EmployeeFeedbackSection } from '../_components/ContinuousFeedbackBlock';
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
 import { EmployeeModuleTeaser } from '../_components/EmployeeModuleTeaser';
+import { EmployeeFormalReviewsSection } from '../_components/EmployeeFormalReviewsSection';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
 /** Home “Hoje” scroll (dedicated LMS/DP/ponto use EmployeeModuleTeaser, not collapse). */
@@ -31,6 +32,7 @@ const SECTION_KEYS = [
   'journey',
   'surveys',
   'pdi',
+  'formalReviews',
   'okr',
   'oneOnOne',
   'feedback',
@@ -748,6 +750,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               })}
             </ul>
           )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="formalReviews"
+          title={t(locale, 'performanceReviews.formal.employeeSection')}
+          open={openMap.formalReviews !== false}
+          onToggle={() => toggleSection('formalReviews')}
+          locale={locale}
+        >
+          <EmployeeFormalReviewsSection locale={locale} />
         </CollapsibleSection>
 
         <CollapsibleSection

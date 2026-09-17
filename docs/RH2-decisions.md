@@ -74,6 +74,7 @@ Já via `audit()` em ações sensíveis; Part 2 exige responsável + data em: in
 | B-RH2-14 | Benefícios por colaborador: `employee_benefit_assignments` (catálogo → pessoa, valor texto, início/fim, histórico); UI em Equipe → Remuneração |
 | B-RH2-17 | Mapa salarial: menos texto; Bônus/PLR permanece módulo separado (Remuneração), fora do mapa |
 | B-RH2-18 | Jornada: hint curto D1→D90→PDI |
+| B-RH2-15 | Avaliação formal por competências (90/180/360 + self opcional; Likert; envio ao liderado) |
 | B-RH2-19 | Abas Analysis nomeadas por pergunta: Encaixe em pares / Comparativo T1–T9 / Grupos / Liderança (sem merge destrutivo) |
 | B-RH2-20 | Motivadores: copy situacional no banco v4; templates gestor hedged pt-BR+en; sync desativa (sem DELETE); validação de jargão no respondente. Pesos numéricos mantidos (revisão fina = dono do instrumento) |
 
@@ -82,7 +83,47 @@ Já via `audit()` em ações sensíveis; Part 2 exige responsável + data em: in
 | ID | Motivo |
 |----|--------|
 | B-RH2-12 | Pipeline configurável por empresa = schema + migração de estágio + relatórios/automações |
-| B-RH2-15 | Avaliação 90/180/360 = ciclo formal multi-avaliador (escopo grande; 1:1/PDI cobrem o ad hoc) |
+
+## B-RH2-15 — Avaliação formal (entregue)
+
+Substitui o diferimento anterior. Ciclo **leve** (B-1004 metas → PDI) e side review token (B-2704) **permanecem**; B-RH2-15 é módulo **novo** de competências (não só metas).
+
+**Implementação:** `migrations/108_formal_competency_reviews.sql`, `lib/people/formal-competency-reviews.js`, APIs admin/public/employee, UI em Avaliações → Competências, público `/formal-review/[token]`, colaborador vê só após envio.
+
+### Decisões (respostas do produto)
+
+| # | Tema | Decisão |
+|---|------|---------|
+| 1 | Escopo | **Novo módulo de competências** (banco + avaliação por competência). Não é só polish do review por metas. |
+| 2 | Modelos | Gestor/direção **escolhe** no ciclo: **90°** / **180°** / **360°** + checkbox opcional de **autoavaliação** do liderado (vale para qualquer modelo). |
+| 2a | 90° | Só o **gestor** avalia o liderado. |
+| 2b | 180° | Gestor avalia o liderado **e** o liderado avalia o gestor (via de mão dupla). |
+| 2c | 360° | Tudo do 90° **+** terceiro avaliador: gestor informa **nome, e-mail e cargo** (pode ser **cliente / externo**). |
+| 2d | Autoavaliação | Checklist/flag: incluir ou não self do liderado em 90, 180 ou 360. |
+| 3 | Anonimato | **Sempre nominais** (sem anonimato). |
+| 4 | Escala | Likert **1–5** por competência. |
+| 5 | Competências | Catálogo **por cargo** (principais do `job_roles`) **e** livre: em ambos os modos há ação para o gestor **adicionar** competências relevantes ao ciclo. |
+| 6 | Visibilidade durante o processo | **Só gestor e RH** (não o colaborador). |
+| 7 | Encerramento | Ao finalizar, gestor pode **enviar resultado** ao liderado. Depois disso a avaliação **não edita**: só **visualizar** ou **arquivar**. |
+| 8 | MVP | **Tudo** acima na primeira entrega (não fatiar fora). |
+
+### Fronteiras
+
+| É | Não é |
+|---|--------|
+| Avaliação formal por competências + papéis 90/180/360 | Substituição de 1:1 / PDI / review leve de metas |
+| Convite externo (nome/e-mail/cargo) no 360 | Folha / RHIS / assinatura ICP |
+| Envio explícito do resultado ao liderado | Colaborador edita respostas após envio |
+
+### Impacto técnico (resumo)
+
+- Schema novo (ou extensão forte): competências (empresa/cargo), ciclo formal, itens Likert, respostas por papel (gestor / liderado→gestor / self / terceiro), status draft→…→finalizado→enviado/arquivado.
+- Reusar padrões: token público (`/avaliacao` ou rota dedicada), `FormField`, CAP RH, `audit()`, i18n pt-BR+en, hedging na copy.
+- Review leve B-1004 continua para metas → PDI; não misturar nas mesmas telas sem progressive disclosure.
+
+### Aberto só se contradizer o produto
+
+Nada bloqueante se 2b (180° = liderado avalia gestor) estiver correto como escrito.
 
 ## Mapa das abas de análise (B-RH2-19)
 
