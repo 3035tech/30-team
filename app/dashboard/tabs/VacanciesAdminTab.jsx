@@ -67,7 +67,6 @@ const BTN_BRAND =
   'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND_SOFT =
   'min-h-touch cursor-pointer rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
-const LINK_ROW = 'mt-2.5 flex min-w-0 flex-col gap-1';
 const META = 'font-mono text-2xs text-ink-muted';
 const META_FAINT = 'font-mono text-2xs text-ink-faint';
 const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
@@ -113,6 +112,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     setMsg(text);
     if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     msgTimerRef.current = setTimeout(() => setMsg(''), 3000);
+  }, []);
+
+  const handlePipelineStagesChange = useCallback(() => {
+    setPipelineRefresh((current) => current + 1);
   }, []);
 
   const [title, setTitle] = useState('');
@@ -1020,8 +1023,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       <>
         {vacancyFormDrawers}
       <div className="flex flex-col gap-4">
-        <div className={cn(S.card, 'px-7 py-[22px]')}>
-          <div className="mb-2.5 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 px-1">
             <button
               type="button"
               onClick={backToVacanciesList}
@@ -1030,7 +1032,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               {t(locale, 'recruiting.backToVacancies')}
             </button>
             <span className={S.label}>{t(locale, 'recruiting.vacancyDetailTitle')}</span>
-          </div>
+        </div>
+        {!v || error || msg ? (
+        <div className={cn(S.card, 'px-7 py-[22px]')}>
           {error ? (
             <p className="mb-0 mt-2.5 font-mono text-xs text-danger">
               {error}
@@ -1058,79 +1062,33 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </button>
           ) : null}
         </div>
+        ) : null}
 
         {v ? (
           <>
             <div className={S.card}>
-              <span className={cn(S.label, 'mb-3.5 block')}>{t(locale, 'recruiting.vacancyInfoTitle')}</span>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-[1_1_280px]">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <span className={cn(S.label, 'mb-3 block')}>{t(locale, 'recruiting.vacancyInfoTitle')}</span>
                   <div className="flex flex-wrap items-baseline gap-2.5">
-                    <span className="text-lg font-bold text-ink">{v.title}</span>
+                    <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
                     <span
                       className={cn(
-                      'rounded-full border px-2 py-0.5 font-mono text-2xs',
-                      v.status === VACANCY_STATUS.OPEN
-                        ? 'border-success/35 text-success'
-                        : 'border-ink/12 text-ink-faint'
-                    )}
+                        'rounded-full border px-2 py-0.5 font-mono text-2xs',
+                        v.status === VACANCY_STATUS.OPEN
+                          ? 'border-success/35 text-success'
+                          : 'border-ink/12 text-ink-faint'
+                      )}
                     >
-                      {v.status === VACANCY_STATUS.OPEN ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
+                      {v.status === VACANCY_STATUS.OPEN
+                        ? t(locale, 'recruiting.openStatus')
+                        : t(locale, 'recruiting.closedStatus')}
                     </span>
-                    {isAdmin && (
-                      <span className="font-mono text-xs text-ink-faint">
-                        · {v.companyName}
-                      </span>
-                    )}
+                    {isAdmin ? (
+                      <span className="font-mono text-xs text-ink-faint">· {v.companyName}</span>
+                    ) : null}
                   </div>
-                  {token ? (
-                    <div className={LINK_ROW}>
-                      <CopyableLink
-                        url={link}
-                        locale={locale}
-                        label={t(locale, 'recruiting.enneagramLinkLabel')}
-                        iconOnly
-                        compact
-                        disabled={loading}
-                      />
-                      {exp ? (
-                        <span className={META_FAINT}>
-                          {t(locale, 'recruiting.expiresAt', {
-                            when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
-                          })}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="mt-2 font-mono text-xs text-ink-faint">
-                      {t(locale, 'recruiting.noActiveLink')}
-                    </div>
-                  )}
-                  {publicPageLink ? (
-                    <div className={LINK_ROW}>
-                      <CopyableLink
-                        url={publicPageLink}
-                        locale={locale}
-                        label={t(locale, 'recruiting.publicPageLinkLabel')}
-                        iconOnly
-                        compact
-                        disabled={loading}
-                      />
-                      <VacancyWhatsAppShareButton
-                        locale={locale}
-                        pageUrl={publicPageLink}
-                        title={v.title}
-                        companyName={v.companyName}
-                        disabled={loading || !v.publicPageEnabled}
-                      />
-                      {!v.publicPageEnabled ? (
-                        <span className={META_FAINT}>
-                          {t(locale, 'recruiting.publicPageLinkDisabledHint')}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <div className="mt-2 flex flex-wrap gap-3">
+                  <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
                     {v.positionsCount != null && v.positionsCount > 0 && (
                       <span className={META}>
                         {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
@@ -1176,132 +1134,160 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     ) : null}
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => editVacancy(v)}
-                  disabled={loading}
-                  className={cn(BTN_BRAND_SOFT, loading && 'opacity-60')}
-                >
-                  {t(locale, 'recruiting.editVacancy')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => cloneVacancyAction(v)}
-                  disabled={loading}
-                  className={cn(BTN_GHOST, loading && 'opacity-60')}
-                >
-                  {t(locale, 'recruiting.cloneVacancy')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setVacancyStatus(
-                      v.id,
-                      v.status === VACANCY_STATUS.OPEN
-                        ? VACANCY_STATUS.CLOSED
-                        : VACANCY_STATUS.OPEN
-                    )
-                  }
-                  disabled={loading}
-                  className={cn(BTN_GHOST, loading && 'opacity-60')}
-                >
-                  {v.status === VACANCY_STATUS.OPEN
-                    ? t(locale, 'recruiting.closeVacancy')
-                    : t(locale, 'recruiting.reopenVacancy')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => archiveVacancy(v.id, v.title)}
-                  disabled={loading}
-                  className={cn(
-                    'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger',
-                    loading && 'opacity-60'
-                  )}
-                >
-                  {t(locale, 'recruiting.archiveVacancy')}
-                </button>
-              </div>
-
-              <CollapsibleBlock
-                locale={locale}
-                title={t(locale, 'recruiting.linkActionsTitle')}
-                defaultOpen={false}
-                className="mt-3"
-                bordered={false}
-              >
-                <div className="flex flex-wrap items-center gap-2 pb-1">
+                <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                   <button
                     type="button"
-                    onClick={() => rotateLink(v.id)}
+                    onClick={() => editVacancy(v)}
                     disabled={loading}
-                    className={cn(BTN_GHOST, loading && 'opacity-60')}
+                    className={cn(BTN_BRAND_SOFT, loading && 'opacity-60')}
                   >
-                    {t(locale, 'recruiting.rotateLink')}
+                    {t(locale, 'recruiting.editVacancy')}
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!token) return;
-                      setLinkExpiryEdit((cur) =>
-                        cur?.vacancyId === v.id
-                          ? null
-                          : {
-                              vacancyId: v.id,
-                              value: v.activeTokenExpiresAt
-                                ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
-                                : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-                            }
-                      );
-                    }}
-                    disabled={loading || !token}
-                    className={cn(BTN_GHOST, (loading || !token) && 'opacity-60')}
-                  >
-                    {t(locale, 'recruiting.editLinkExpiry')}
-                  </button>
-                </div>
-              </CollapsibleBlock>
-
-              {linkExpiryEdit?.vacancyId === v.id && (
-                <div className="mt-3 flex flex-wrap items-center gap-2.5 rounded-control border border-ink/12 bg-ink/[0.04] p-3">
-                  <span className="font-mono text-xs text-ink-muted">
-                    {t(locale, 'panel.admin.expiringOn')}
-                  </span>
-                  <DateField
-                    mode="datetime-local"
-                    value={linkExpiryEdit.value}
-                    onChange={(e) =>
-                      setLinkExpiryEdit((cur) =>
-                        cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
+                    onClick={() =>
+                      setVacancyStatus(
+                        v.id,
+                        v.status === VACANCY_STATUS.OPEN
+                          ? VACANCY_STATUS.CLOSED
+                          : VACANCY_STATUS.OPEN
                       )
                     }
                     disabled={loading}
-                    aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
-                    className={cn(FIELD, 'min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-prose')}
-                  />
-                  <button
-                    type="button"
-                    onClick={saveLinkExpiry}
-                    disabled={loading}
-                    className={cn(
-                      'min-h-touch cursor-pointer rounded-control border border-success/35 bg-success/[0.09] px-3 py-2 font-mono text-xs text-success',
-                      loading && 'opacity-60'
-                    )}
+                    className={cn(BTN_GHOST, loading && 'opacity-60')}
                   >
-                    {t(locale, 'panel.admin.save')}
+                    {v.status === VACANCY_STATUS.OPEN
+                      ? t(locale, 'recruiting.closeVacancy')
+                      : t(locale, 'recruiting.reopenVacancy')}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setLinkExpiryEdit(null)}
+                    onClick={() => cloneVacancyAction(v)}
                     disabled={loading}
                     className={cn(BTN_GHOST, loading && 'opacity-60')}
                   >
-                    {t(locale, 'panel.admin.cancel')}
+                    {t(locale, 'recruiting.cloneVacancy')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => archiveVacancy(v.id, v.title)}
+                    disabled={loading}
+                    className={cn(
+                      'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger',
+                      loading && 'opacity-60'
+                    )}
+                  >
+                    {t(locale, 'recruiting.archiveVacancy')}
                   </button>
                 </div>
-              )}
+              </div>
+
+              <div className="mt-5 grid gap-3 border-t border-ink/8 pt-4 md:grid-cols-2">
+                <section className="rounded-control border border-ink/10 bg-ink/[0.025] p-3.5" aria-label={t(locale, 'recruiting.enneagramLinkLabel')}>
+                  <span className={cn(S.label, 'mb-2.5 block')}>{t(locale, 'recruiting.enneagramLinkLabel')}</span>
+                  {token ? (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <CopyableLink
+                          url={link}
+                          locale={locale}
+                          label={t(locale, 'recruiting.enneagramLinkLabel')}
+                          iconOnly
+                          compact
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => rotateLink(v.id)}
+                          disabled={loading}
+                          className={cn(BTN_GHOST, loading && 'opacity-60')}
+                        >
+                          {t(locale, 'recruiting.rotateLink')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLinkExpiryEdit((cur) =>
+                              cur?.vacancyId === v.id
+                                ? null
+                                : {
+                                    vacancyId: v.id,
+                                    value: v.activeTokenExpiresAt
+                                      ? toDatetimeLocalValue(new Date(v.activeTokenExpiresAt))
+                                      : toDatetimeLocalValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                                  }
+                            )
+                          }
+                          disabled={loading}
+                          className={cn(BTN_GHOST, loading && 'opacity-60')}
+                        >
+                          {t(locale, 'recruiting.editLinkExpiry')}
+                        </button>
+                      </div>
+                      {exp ? (
+                        <span className={cn(META_FAINT, 'mt-2 block')}>
+                          {t(locale, 'recruiting.expiresAt', {
+                            when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                          })}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className={META_FAINT}>{t(locale, 'recruiting.noActiveLink')}</span>
+                  )}
+
+                  {linkExpiryEdit?.vacancyId === v.id ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-ink/8 pt-3">
+                      <DateField
+                        mode="datetime-local"
+                        value={linkExpiryEdit.value}
+                        onChange={(e) =>
+                          setLinkExpiryEdit((cur) =>
+                            cur && cur.vacancyId === v.id ? { ...cur, value: e.target.value } : cur
+                          )
+                        }
+                        disabled={loading}
+                        aria-label={t(locale, 'panel.admin.ariaLinkExpiry')}
+                        className={cn(FIELD, 'min-w-[180px] flex-[1_1_200px] px-2.5 py-2 text-prose')}
+                      />
+                      <button type="button" onClick={saveLinkExpiry} disabled={loading} className={cn(BTN_BRAND, loading && 'opacity-60')}>
+                        {t(locale, 'panel.admin.save')}
+                      </button>
+                      <button type="button" onClick={() => setLinkExpiryEdit(null)} disabled={loading} className={cn(BTN_GHOST, loading && 'opacity-60')}>
+                        {t(locale, 'panel.admin.cancel')}
+                      </button>
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className="rounded-control border border-ink/10 bg-ink/[0.025] p-3.5" aria-label={t(locale, 'recruiting.publicPageLinkLabel')}>
+                  <span className={cn(S.label, 'mb-2.5 block')}>{t(locale, 'recruiting.publicPageLinkLabel')}</span>
+                  {publicPageLink ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CopyableLink
+                        url={publicPageLink}
+                        locale={locale}
+                        label={t(locale, 'recruiting.publicPageLinkLabel')}
+                        iconOnly
+                        compact
+                        disabled={loading}
+                      />
+                      <VacancyWhatsAppShareButton
+                        locale={locale}
+                        pageUrl={publicPageLink}
+                        title={v.title}
+                        companyName={v.companyName}
+                        disabled={loading || !v.publicPageEnabled}
+                      />
+                    </div>
+                  ) : null}
+                  {!v.publicPageEnabled ? (
+                    <span className={cn(META_FAINT, 'mt-2 block')}>
+                      {t(locale, 'recruiting.publicPageLinkDisabledHint')}
+                    </span>
+                  ) : null}
+                </section>
+              </div>
 
               <div className="mt-[18px]">
                 <PanelSubNav
@@ -1338,7 +1324,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </p>
                     <PipelineStagesEditor
                       locale={locale}
-                      onChange={() => setPipelineRefresh((x) => x + 1)}
+                      onChange={handlePipelineStagesChange}
                     />
                   </CollapsibleBlock>
                   <VacancyKanbanBlock
