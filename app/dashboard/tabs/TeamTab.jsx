@@ -6,7 +6,7 @@ import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { AdminListSearch, getKanbanStages, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
+import { AdminListSearch, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { AdminListFilters } from '../../_components/AdminListFilters';
 import { BrStateSelect } from '../../_components/BrStateSelect';
 import { BrCitySelect } from '../../_components/BrCitySelect';
@@ -17,9 +17,7 @@ import { formatPhoneBr, formatSalaryBr, stripPhone, salaryToCentsDigits, stripSa
 import { titleCasePersonName } from '../../../lib/person-name';
 import { rejectionReasonLabel } from '../pipeline-prompts';
 import { usePipelineExtras } from '../PipelineExtrasContext';
-import { daysInStage, stageAgingTone } from '../vacancies/vacancy-admin-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { useDarkMode } from '../../_components/DarkModeProvider';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
@@ -37,9 +35,9 @@ import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_compone
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
-import { SegmentedControl } from '../../_components/SegmentedControl';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
@@ -205,7 +203,7 @@ export function TeamTab({
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
-  const [peopleSubTab, setPeopleSubTab] = useState('briefing');
+  const [peopleSubTab, setPeopleSubTab] = useState('oneOnOne');
   const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -228,15 +226,10 @@ export function TeamTab({
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
   const [bulkMsgIsError, setBulkMsgIsError] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
   const [stageOverrides, setStageOverrides] = useState({});
-  const [draggingId, setDraggingId] = useState(null);
-  const [dragOverStage, setDragOverStage] = useState(null);
   const [diagnoseBusy, setDiagnoseBusy] = useState(false);
   const { requestPipelineExtras } = usePipelineExtras();
   const { confirm, notice, promptForm, toast } = useAppFeedback();
-  const { isDark } = useDarkMode();
-  const kanbanStages = getKanbanStages(locale, { isDark });
 
   useEffect(() => { setSelectedIds(new Set()); setStageOverrides({}); }, [results]);
 
@@ -250,14 +243,10 @@ export function TeamTab({
     const section =
       focusSection === 'journey' ||
       focusSection === 'oneOnOne' ||
-      focusSection === 'briefing' ||
-      focusSection === 'dossier' ||
       focusSection === 'compensation' ||
       focusSection === 'dp'
-        ? focusSection === 'dossier'
-          ? 'briefing'
-          : focusSection
-        : 'briefing';
+        ? focusSection
+        : 'oneOnOne';
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
@@ -275,14 +264,10 @@ export function TeamTab({
     const section =
       focusSection === 'journey' ||
       focusSection === 'oneOnOne' ||
-      focusSection === 'briefing' ||
-      focusSection === 'dossier' ||
       focusSection === 'compensation' ||
       focusSection === 'dp'
-        ? focusSection === 'dossier'
-          ? 'briefing'
-          : focusSection
-        : 'briefing';
+        ? focusSection
+        : 'oneOnOne';
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
@@ -767,7 +752,7 @@ export function TeamTab({
         <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
           {t(locale, 'panel.team.sortBy')}
         </span>
-        {viewMode === 'list' && sortColumns.map(({ k, labelKey }) => {
+        {sortColumns.map(({ k, labelKey }) => {
           const active = sortKey === k;
           return (
             <button
@@ -787,217 +772,9 @@ export function TeamTab({
             </button>
           );
         })}
-        <div className="ml-auto flex flex-col items-end gap-1.5">
-          <SegmentedControl
-            size="sm"
-            aria-label={t(locale, 'panel.team.viewList')}
-            value={viewMode}
-            onChange={setViewMode}
-            options={[
-              { id: 'list', icon: 'list', label: t(locale, 'panel.team.viewList') },
-              { id: 'kanban', icon: 'kanban', label: t(locale, 'panel.team.viewKanban') },
-            ]}
-          />
-          {viewMode === 'kanban' ? (
-            <p className="m-0 max-w-[320px] text-right text-2xs leading-snug text-ink-faint">
-              {t(locale, 'panel.team.teamKanbanHint')}
-            </p>
-          ) : null}
-        </div>
       </div>
 
-      {viewMode === 'kanban' && (
-        <div className="kanban-scroll -mx-6 overflow-x-auto px-6 pb-4 [-webkit-overflow-scrolling:touch]">
-          <div className="flex min-w-max items-start gap-3">
-            {kanbanStages.map((stage) => {
-              const items = filtered.filter((r) => getEffectiveStage(r) === stage.id);
-              const isDropTarget = dragOverStage === stage.id;
-              return (
-                <div
-                  key={stage.id}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.id); }}
-                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverStage(null); }}
-                  onDrop={async (e) => {
-                    e.preventDefault();
-                    const id = e.dataTransfer.getData('text/plain');
-                    setDragOverStage(null);
-                    setDraggingId(null);
-                    if (!id) return;
-                    const r = results.find((r) => String(r.assessmentId) === id);
-                    if (!r || getEffectiveStage(r) === stage.id) return;
-                    setStageOverrides((prev) => ({ ...prev, [id]: stage.id }));
-                    await patchPipeline(parseInt(id, 10), stage.id);
-                  }}
-                  className="w-[260px] shrink-0 rounded-xl transition-[outline-color] duration-100"
-                  style={{
-                    outline: isDropTarget ? `2px dashed ${stage.color}` : '2px dashed transparent',
-                    outlineOffset: '3px',
-                  }}
-                >
-                  <div
-                    className="mb-2 flex items-center justify-between rounded-t-[10px] border px-3.5 py-2.5 transition-colors duration-100"
-                    style={{
-                      background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
-                      borderTop: `3px solid ${stage.color}`,
-                      borderColor: `${stage.color}30`,
-                    }}
-                  >
-                    <span className="font-mono text-xs font-bold tracking-[0.5px]" style={{ color: stage.color }}>
-                      {stage.label}
-                    </span>
-                    <span
-                      className="rounded-control px-2 py-px font-mono text-xs font-bold"
-                      style={{ color: stage.color, background: `${stage.color}25` }}
-                    >
-                      {items.length}
-                    </span>
-                  </div>
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    className={cn(
-                      'flex flex-col gap-2 transition-[min-height] duration-100',
-                      isDropTarget ? 'min-h-20' : 'min-h-10'
-                    )}
-                  >
-                    {items.map((r) => {
-                      const rid = String(r.assessmentId);
-                      const d = TYPE_DATA[r.topType];
-                      const fitScore = r.vacancyFitScore010 ?? r.areaFitScore010;
-                      const isDragging = draggingId === rid;
-                      const days = daysInStage(r.stageEnteredAt || r.createdAt);
-                      const aging = stageAgingTone(days, r.pipelineStage || PIPELINE_STAGE.NEW);
-                      return (
-                        <div
-                          key={rid}
-                          draggable
-                          onDragStart={(e) => {
-                            setDraggingId(rid);
-                            e.dataTransfer.setData('text/plain', rid);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
-                          onClick={() => {
-                            if (draggingId) return;
-                            setOpen(rid);
-                            setPersonTab('people');
-                            setPeopleSubTab('briefing');
-                            if (r.candidateId) loadDetail(r.candidateId);
-                          }}
-                          className={cn(
-                            'cursor-grab select-none rounded-control bg-surface/90 px-3.5 py-[11px] shadow-sm transition-opacity duration-150',
-                            isDragging && 'opacity-40',
-                            draggingId && !isDragging && 'pointer-events-none'
-                          )}
-                          style={{
-                            border: `1px solid ${open === rid ? `${d.color}55` : C.border}`,
-                          }}
-                        >
-                          <div className="mb-2 flex items-center gap-2">
-                            <span className="shrink-0 text-xl leading-none">{d.emoji}</span>
-                            <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-prose leading-snug text-ink">
-                              {titleCasePersonName(r.name)}
-                            </span>
-                            {days != null && aging ? (
-                              <span
-                                className={cn(
-                                  'shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-2xs',
-                                  aging === 'danger'
-                                    ? 'border-danger/30 bg-danger/[0.09] text-danger'
-                                    : 'border-warning/30 bg-warning/[0.1] text-warning'
-                                )}
-                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
-                              >
-                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
-                              </span>
-                            ) : days != null && days > 0 ? (
-                              <span
-                                className="shrink-0 font-mono text-2xs text-ink-faint"
-                                title={t(locale, 'recruiting.stageAgingTitle', { n: days })}
-                              >
-                                {t(locale, 'recruiting.stageAgingDays', { n: days })}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="mb-1.5 flex flex-wrap gap-1">
-                            <TypeBadge type={r.topType} locale={locale} compact />
-                            <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
-                            {r.areaLabel && (
-                              <StatusToneChip tone="neutral">{r.areaLabel}</StatusToneChip>
-                            )}
-                            {fitScore != null && (
-                              <StatusToneChip
-                                tone={fitScore >= 7 ? 'success' : fitScore >= 4 ? 'warning' : 'danger'}
-                              >
-                                {fitScore}/10
-                              </StatusToneChip>
-                            )}
-                          </div>
-                          {r.vacancyTitle && (
-                            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs text-ink-faint">
-                              {r.vacancyTitle}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {items.length === 0 && (
-                      <div
-                        className="rounded-lg px-3 py-5 text-center font-mono text-xs italic transition-all duration-100"
-                        style={{
-                          color: isDropTarget ? stage.color : C.faint,
-                          border: isDropTarget ? `2px dashed ${stage.color}55` : '2px dashed transparent',
-                        }}
-                      >
-                        {isDropTarget ? t(locale, 'panel.team.dropHere') : '—'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {filtered.length === 0 && activeSearch ? (
-            <EmptyState
-              message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
-              actionLabel={t(locale, 'panel.team.diagnoseCta')}
-              actionDisabled={diagnoseBusy}
-              onAction={runAbsenceDiagnose}
-              secondaryActionLabel={t(locale, 'panel.common.clearFilters')}
-              onSecondaryAction={clearActiveSearch}
-            />
-          ) : null}
-          {filtered.length === 0 && !activeSearch ? (
-            <EmptyState
-              title={t(locale, 'panel.team.emptyFilteredTitle')}
-              message={t(locale, 'panel.team.emptyFilteredBody')}
-              actionLabel={
-                listFilter && typeof onClearListFilter === 'function'
-                  ? t(locale, 'panel.team.clearListFilter')
-                  : typeof navigateDashboard === 'function'
-                    ? t(locale, 'panel.common.clearFilters')
-                    : undefined
-              }
-              onAction={
-                listFilter && typeof onClearListFilter === 'function'
-                  ? onClearListFilter
-                  : typeof navigateDashboard === 'function'
-                    ? () =>
-                        navigateDashboard({
-                          tab: 'team',
-                          filter: null,
-                          pipeline: null,
-                          vacancy: null,
-                          roster: null,
-                          search: null,
-                        })
-                    : undefined
-              }
-            />
-          ) : null}
-        </div>
-      )}
-
-      {viewMode === 'list' && selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-brand-500/25 bg-brand-500/[0.04] px-4 py-3">
           <span className="font-mono text-prose text-brand-500">
             {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
@@ -1039,7 +816,7 @@ export function TeamTab({
           )}
         </div>
       )}
-      {viewMode === 'list' && filtered.length === 0 && activeSearch ? (
+      {filtered.length === 0 && activeSearch ? (
         <EmptyState
           message={t(locale, 'panel.team.noResultsFor', { query: activeSearch })}
           actionLabel={t(locale, 'panel.team.diagnoseCta')}
@@ -1049,7 +826,7 @@ export function TeamTab({
           onSecondaryAction={clearActiveSearch}
         />
       ) : null}
-      {viewMode === 'list' && filtered.length === 0 && !activeSearch ? (
+      {filtered.length === 0 && !activeSearch ? (
         <EmptyState
           title={t(locale, 'panel.team.emptyFilteredTitle')}
           message={t(locale, 'panel.team.emptyFilteredBody')}
@@ -1087,8 +864,7 @@ export function TeamTab({
           </p>
         </div>
       ) : null}
-      {viewMode === 'list' ? (
-        <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
           {filtered.map((r) => {
         const id = String(r.assessmentId);
         const d = TYPE_DATA[r.topType];
@@ -1109,7 +885,7 @@ export function TeamTab({
             onClick={() => {
               setOpen(id);
               setPersonTab('people');
-              setPeopleSubTab('briefing');
+              setPeopleSubTab('oneOnOne');
               if (r.candidateId) loadDetail(r.candidateId);
               else { setDetail(null); setDetailErr(''); }
             }}
@@ -1227,7 +1003,6 @@ export function TeamTab({
         );
       })}
         </div>
-      ) : null}
 
       <AdminRichFormDrawer
         open={Boolean(open && openRow)}
@@ -1238,7 +1013,7 @@ export function TeamTab({
           setDetail(null);
           setDetailErr('');
           setPersonTab('people');
-          setPeopleSubTab('briefing');
+          setPeopleSubTab('oneOnOne');
         }}
         maxWidth="920px"
       >
@@ -1275,26 +1050,74 @@ export function TeamTab({
                 {detailLoading ? (
                   <AppLoading locale={locale} variant="inline" />
                 ) : !detailLoading && detail?.candidate?.id === openRow.candidateId ? (
+                  (() => {
+                    const isHiringCandidate =
+                      detail.candidate.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE;
+                    const isInternalPerson =
+                      detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
+                      detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
+                    const allowedSubTabs = new Set([
+                      'oneOnOne',
+                      'journey',
+                      ...(isInternalPerson ? ['compensation', 'dp'] : []),
+                    ]);
+                    const activePeopleSubTab = allowedSubTabs.has(peopleSubTab)
+                      ? peopleSubTab
+                      : 'oneOnOne';
+                    return (
                   <>
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => addToVacancy(detail.candidate.id, openRow.name)}
-                        className={cn(S.btnBrandSoft)}
-                      >
-                        {t(locale, 'panel.team.addToVacancyBtn')}
-                      </button>
-                    </div>
+                    {isHiringCandidate ? (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addToVacancy(detail.candidate.id, openRow.name)}
+                          className={cn(S.btnBrandSoft)}
+                        >
+                          {t(locale, 'panel.team.addToVacancyBtn')}
+                        </button>
+                      </div>
+                    ) : null}
+                    <CollapsibleBlock
+                      locale={locale}
+                      title={t(locale, 'panel.team.peopleSubTabSummary')}
+                      defaultOpen
+                      className="mb-4"
+                      bordered={false}
+                    >
+                      <div className="space-y-4 pb-1">
+                        <PersonDossierBlock
+                          locale={locale}
+                          candidateId={detail.candidate.id}
+                          companyId={detail.candidate.companyId}
+                          onGoSubTab={(id) => {
+                            if (allowedSubTabs.has(id)) setPeopleSubTab(id);
+                          }}
+                          embedded
+                        />
+                        {isInternalPerson ? (
+                          <OrgManagerBlock
+                            locale={locale}
+                            companyId={detail.candidate.companyId}
+                            candidateId={detail.candidate.id}
+                          />
+                        ) : null}
+                        <HrActionBrief
+                          locale={locale}
+                          brief={detail.people?.decisionBrief}
+                          personName={openRow.name}
+                          omitHypotheses
+                          omitInterview={!isHiringCandidate}
+                        />
+                      </div>
+                    </CollapsibleBlock>
                     <PanelSubNav
                       ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}
-                      active={peopleSubTab === 'dossier' ? 'briefing' : peopleSubTab}
-                      onChange={(id) => setPeopleSubTab(id === 'dossier' ? 'briefing' : id)}
+                      active={activePeopleSubTab}
+                      onChange={setPeopleSubTab}
                       tabs={[
-                        { id: 'briefing', label: t(locale, 'panel.team.peopleSubTabSummary') },
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
-                        ...(detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
-                        detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI
+                        ...(isInternalPerson
                           ? [
                               {
                                 id: 'compensation',
@@ -1308,35 +1131,8 @@ export function TeamTab({
                           : []),
                       ]}
                     />
-                    <ContentEnter
-                      animKey={peopleSubTab === 'dossier' ? 'briefing' : peopleSubTab}
-                    >
-                      {peopleSubTab === 'briefing' || peopleSubTab === 'dossier' ? (
-                        <div className="space-y-4">
-                          <PersonDossierBlock
-                            locale={locale}
-                            candidateId={detail.candidate.id}
-                            companyId={detail.candidate.companyId}
-                            onGoSubTab={setPeopleSubTab}
-                            embedded
-                          />
-                          {(detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
-                            detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI) && (
-                            <OrgManagerBlock
-                              locale={locale}
-                              companyId={detail.candidate.companyId}
-                              candidateId={detail.candidate.id}
-                            />
-                          )}
-                          <HrActionBrief
-                            locale={locale}
-                            brief={detail.people?.decisionBrief}
-                            personName={openRow.name}
-                            omitHypotheses
-                          />
-                        </div>
-                      ) : null}
-                      {peopleSubTab === 'oneOnOne' ? (
+                    <ContentEnter animKey={activePeopleSubTab}>
+                      {activePeopleSubTab === 'oneOnOne' ? (
                         <div className="space-y-4">
                           {detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
                             <ContinuousFeedbackBlock
@@ -1356,7 +1152,7 @@ export function TeamTab({
                         />
                         </div>
                       ) : null}
-                      {peopleSubTab === 'journey' ? (
+                      {activePeopleSubTab === 'journey' ? (
                         <PeopleManagementPanel
                           locale={locale}
                           candidateId={detail.candidate.id}
@@ -1366,7 +1162,7 @@ export function TeamTab({
                           section="journey"
                         />
                       ) : null}
-                      {peopleSubTab === 'compensation' ? (
+                      {activePeopleSubTab === 'compensation' ? (
                         <CompensationBlock
                           locale={locale}
                           candidateId={detail.candidate.id}
@@ -1374,7 +1170,7 @@ export function TeamTab({
                           companyId={detail.candidate.companyId}
                         />
                       ) : null}
-                      {peopleSubTab === 'dp' ? (
+                      {activePeopleSubTab === 'dp' ? (
                         <DpBlock
                           locale={locale}
                           candidateId={detail.candidate.id}
@@ -1384,6 +1180,8 @@ export function TeamTab({
                       ) : null}
                     </ContentEnter>
                   </>
+                    );
+                  })()
                 ) : (
                   <p className="m-0 text-xs text-ink-muted">—</p>
                 )}
@@ -1496,7 +1294,8 @@ export function TeamTab({
             ) : null}
             {personTab === 'profile' ? (
               <ContentEnter animKey="profile">
-                {detail?.candidate?.id ? (
+                {detail?.candidate?.id &&
+                detail.candidate.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE ? (
                   <div className="mb-4">
                     <CandidateCvBlock
                       candidateId={detail.candidate.id}
@@ -1554,6 +1353,7 @@ export function TeamTab({
                         sourceLabel(locale, c?.source),
                         birthIso || null,
                         startIso || null,
+                        c?.createdAt || c?.createdByName || null,
                         detail?.lmsOverdue?.length ? 'lms-overdue' : null,
                       ].filter(Boolean);
                       if (!bits.length) {
@@ -1587,6 +1387,27 @@ export function TeamTab({
                           {startIso ? (
                             <div>
                               {t(locale, 'panel.team.workAnniversary')}: {fmtDate(startIso)}
+                            </div>
+                          ) : null}
+                          {c?.createdAt || c?.createdByName ? (
+                            <div className="mt-2 border-t border-ink/[0.06] pt-2 font-mono text-2xs text-ink-faint">
+                              {(() => {
+                                const d = c.createdAt != null ? new Date(c.createdAt) : null;
+                                const dateLabel =
+                                  d && !Number.isNaN(d.getTime())
+                                    ? d.toLocaleDateString(dateLocale, {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                      })
+                                    : '—';
+                                return c?.createdByName
+                                  ? t(locale, 'panel.team.registeredBy', {
+                                      name: c.createdByName,
+                                      date: dateLabel,
+                                    })
+                                  : t(locale, 'panel.team.registeredAt', { date: dateLabel });
+                              })()}
                             </div>
                           ) : null}
                           {detail?.lmsOverdue?.length ? (

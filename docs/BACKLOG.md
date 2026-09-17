@@ -2,6 +2,8 @@
 
 Ideias de funcionalidades **ainda não implementadas**.
 
+**Pedidos do RH (testes Maria/Duda):** ver [`docs/BACKLOG-RH-TESTES.md`](./BACKLOG-RH-TESTES.md) (`B-RH1-*` / `B-RH2-*`). Fonte Word: [`docs/30TEAM_Backlog_Consolidado_Observacoes.docx`](./30TEAM_Backlog_Consolidado_Observacoes.docx).
+
 ## Como usar (humano + agente)
 
 | Ação | O que fazer |

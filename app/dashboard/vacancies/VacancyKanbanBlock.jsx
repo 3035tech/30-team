@@ -14,7 +14,7 @@ import { VacancyOfferBlock } from './VacancyOfferBlock';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 
-export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
+export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -216,9 +216,28 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0 }) {
                           )}
                         >
                           <div className="mb-[3px] flex items-start justify-between gap-1">
-                            <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-prose text-ink">
-                              {titleCasePersonName(r.name)}
-                            </div>
+                            {r.candidateId && typeof onPersonClick === 'function' ? (
+                              <button
+                                type="button"
+                                className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent p-0 text-left font-ui text-prose text-ink underline-offset-2 hover:underline"
+                                title={t(locale, 'recruiting.openPersonProfile', {
+                                  name: titleCasePersonName(r.name),
+                                })}
+                                aria-label={t(locale, 'recruiting.openPersonProfile', {
+                                  name: titleCasePersonName(r.name),
+                                })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onPersonClick(r.candidateId);
+                                }}
+                              >
+                                {titleCasePersonName(r.name)}
+                              </button>
+                            ) : (
+                              <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-ui text-prose text-ink">
+                                {titleCasePersonName(r.name)}
+                              </div>
+                            )}
                             {days != null && aging ? (
                               <span
                                 className={cn(

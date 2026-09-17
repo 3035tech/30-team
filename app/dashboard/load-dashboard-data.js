@@ -9,6 +9,7 @@ import {
   parsePipelineFilter,
   parseDateFilter,
   parseNameSearch,
+  candidateNameSearchClause,
   parseRosterScope,
   parseTeamListFilter,
   sqlWhere,
@@ -366,7 +367,10 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
       const assessmentWhere = sqlWhere(whereParts);
 
       const extWhereParts = nameSearch
-        ? [...whereParts, `c.full_name ILIKE $${params.length + 1}`]
+        ? [
+            ...whereParts,
+            candidateNameSearchClause('c', params.length + 1),
+          ]
         : whereParts;
       const extParams = nameSearch ? [...params, `%${nameSearch}%`] : params;
       const candidateWhere = sqlWhere(extWhereParts);

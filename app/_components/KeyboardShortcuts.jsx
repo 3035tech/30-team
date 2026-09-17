@@ -50,8 +50,13 @@ export function useKeyboardShortcuts({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-      if (isInputActive && e.key !== 'Escape') return;
+      const el = document.activeElement;
+      const isTypingTarget =
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(el?.tagName) ||
+        el?.isContentEditable === true ||
+        el?.getAttribute?.('role') === 'textbox' ||
+        Boolean(el?.closest?.('[contenteditable="true"]'));
+      if (isTypingTarget && e.key !== 'Escape') return;
 
       if (e.key === 'Escape') {
         const closeButtons = document.querySelectorAll('[data-close-modal], [aria-label="Fechar"], [aria-label="Close"]');

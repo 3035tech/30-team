@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
-import { t } from '../../lib/i18n';
+import { t, errorMessage } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { brandMarkSrc } from '../../lib/brand';
 import { employmentTypeLabelKey } from '../../lib/vacancy-employment-type';
@@ -16,6 +16,7 @@ import { formatVacancySalaryRangeDisplay } from '../../lib/br-masks';
 import { PublicVacancyShareBar } from './PublicVacancyShareBar';
 import { FormField, formFieldRowClass } from './FormField';
 import { EmptyState } from './EmptyState';
+import { ContentEnter } from './AppLoading';
 import {
   fieldInputClass,
   fieldSelectBlockClass,
@@ -156,14 +157,78 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
   const targetLabel = formatPublicVacancyDate(posting?.targetDate, locale);
   const viewedRef = useRef(false);
 
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyName, setApplyName] = useState('');
+  const [applyEmail, setApplyEmail] = useState('');
+  const [applyPhone, setApplyPhone] = useState('');
+  const [applyConsent, setApplyConsent] = useState(false);
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [applyMsg, setApplyMsg] = useState('');
+  const [applyErr, setApplyErr] = useState('');
+  const [applyDone, setApplyDone] = useState(false);
+
   useEffect(() => {
     if (closed || viewedRef.current || !posting?.vacancyId) return;
     viewedRef.current = true;
     trackJobFunnel('job_view', posting.vacancyId);
   }, [closed, posting?.vacancyId]);
 
-  const onApplyClick = () => {
-    if (posting?.vacancyId) trackJobFunnel('apply_start', posting.vacancyId);
+  useEffect(() => {
+    setApplyOpen(false);
+    setApplyDone(false);
+    setApplyErr('');
+    setApplyMsg('');
+    setApplyName('');
+    setApplyEmail('');
+    setApplyPhone('');
+    setApplyConsent(false);
+  }, [posting?.vacancyId]);
+
+  const submitApply = async (e) => {
+    e?.preventDefault?.();
+    setApplyErr('');
+    setApplyMsg('');
+    if (!String(applyName || '').trim()) {
+      setApplyErr(errorMessage(locale, 'CANDIDATE_NAME_REQUIRED', t(locale, 'panel.common.error')));
+      return;
+    }
+    if (!applyConsent) {
+      setApplyErr(t(locale, 'publicVacancy.applyFormNeedConsent'));
+      return;
+    }
+    setApplyBusy(true);
+    trackJobFunnel('apply_start', posting.vacancyId);
+    try {
+      const res = await fetch('/api/public/vacancy-apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vacancyId: posting.vacancyId,
+          fullName: applyName,
+          email: applyEmail,
+          phone: applyPhone || undefined,
+          consent: applyConsent,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            errorMessage(locale, data?.errorCode, t(locale, 'panel.common.error'))
+        );
+      }
+      setApplyDone(true);
+      setApplyOpen(false);
+      setApplyMsg(
+        data.alreadyLinked
+          ? t(locale, 'publicVacancy.applyFormAlready')
+          : t(locale, 'publicVacancy.applyFormOk')
+      );
+    } catch (err) {
+      setApplyErr(err?.message || t(locale, 'panel.common.error'));
+    } finally {
+      setApplyBusy(false);
+    }
   };
 
   return (
@@ -370,13 +435,114 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
 
               <footer className="mt-8">
                 {canApply ? (
-                  <a
-                    href={posting.applyPath}
-                    onClick={onApplyClick}
-                    className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
-                  >
-                    {t(locale, 'publicVacancy.applyCta')}
-                  </a>
+                  <div className="space-y-4">
+                    {!applyOpen && !applyDone ? (
+                      <button
+                        type="button"
+                        onClick={() => setApplyOpen(true)}
+                        className="inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-mono text-sm text-white"
+                      >
+                        {t(locale, 'publicVacancy.applyCta')}
+                      </button>
+                    ) : null}
+                    {applyOpen && !applyDone ? (
+                      <form
+                        onSubmit={submitApply}
+                        className="space-y-3 rounded-card border border-ink/12 bg-canvas/40 p-4"
+                        aria-busy={applyBusy}
+                      >
+                        <p className="m-0 font-mono text-2xs text-ink-faint">
+                          {t(locale, 'publicVacancy.applyFormHint')}
+                        </p>
+                        <FormField label={t(locale, 'publicVacancy.applyFormName')}>
+                          <input
+                            className={SC.input}
+                            value={applyName}
+                            onChange={(e) => setApplyName(e.target.value)}
+                            required
+                            maxLength={200}
+                            autoComplete="name"
+                            disabled={applyBusy}
+                            autoFocus
+                          />
+                        </FormField>
+                        <FormField label={t(locale, 'publicVacancy.applyFormEmail')}>
+                          <input
+                            className={SC.input}
+                            type="email"
+                            value={applyEmail}
+                            onChange={(e) => setApplyEmail(e.target.value)}
+                            required
+                            maxLength={200}
+                            autoComplete="email"
+                            disabled={applyBusy}
+                          />
+                        </FormField>
+                        <FormField label={t(locale, 'publicVacancy.applyFormPhone')}>
+                          <input
+                            className={SC.input}
+                            type="tel"
+                            value={applyPhone}
+                            onChange={(e) => setApplyPhone(e.target.value)}
+                            maxLength={40}
+                            autoComplete="tel"
+                            disabled={applyBusy}
+                          />
+                        </FormField>
+                        <label className="flex items-start gap-2 font-ui text-prose text-ink">
+                          <input
+                            type="checkbox"
+                            className="mt-1 accent-brand-500"
+                            checked={applyConsent}
+                            onChange={(e) => setApplyConsent(e.target.checked)}
+                            disabled={applyBusy}
+                          />
+                          <span>{t(locale, 'publicVacancy.applyFormConsent')}</span>
+                        </label>
+                        {applyErr ? (
+                          <p className="m-0 font-mono text-xs text-danger" role="alert">
+                            {applyErr}
+                          </p>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="submit"
+                            disabled={applyBusy}
+                            className={SC.btnPrimary}
+                          >
+                            {applyBusy
+                              ? t(locale, 'publicVacancy.applyFormBusy')
+                              : t(locale, 'publicVacancy.applyFormSubmit')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={applyBusy}
+                            className="min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-2xs text-ink-muted"
+                            onClick={() => {
+                              setApplyOpen(false);
+                              setApplyErr('');
+                            }}
+                          >
+                            {t(locale, 'panel.common.cancel')}
+                          </button>
+                        </div>
+                      </form>
+                    ) : null}
+                    {applyDone ? (
+                      <ContentEnter animKey="apply-ok">
+                        <p className="m-0 rounded-control border border-success/30 bg-success/[0.08] px-3 py-2.5 text-prose text-success">
+                          {applyMsg}
+                        </p>
+                      </ContentEnter>
+                    ) : null}
+                    {posting.applyPath && !applyDone ? (
+                      <p className="mb-0 mt-1 font-mono text-2xs">
+                        <a href={posting.applyPath} className="text-ink-muted underline-offset-2 hover:underline">
+                          {t(locale, 'publicVacancy.applyAssessmentLink')}
+                        </a>
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="m-0 text-sm text-ink-muted">
                     {t(locale, 'publicVacancy.applyUnavailable')}

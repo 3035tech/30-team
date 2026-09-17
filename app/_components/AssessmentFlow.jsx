@@ -132,24 +132,21 @@ function HomeScreen({
     setAreaKey((k) => (k && areaOptions.some((a) => a.key === k) ? k : areaOptions[0].key));
   }, [areaOptions]);
 
-  const identityLocked = Boolean(
+  useEffect(() => {
+    if (!inviteIdentity) return;
+    if (inviteIdentity.candidateName) setName(String(inviteIdentity.candidateName));
+    if (inviteIdentity.candidateEmail) setEmail(String(inviteIdentity.candidateEmail).trim());
+  }, [inviteIdentity]);
+
+  const identityFromInvite = Boolean(
     inviteIdentity?.candidateName?.trim()?.length > 1 &&
       inviteIdentity?.candidateEmail &&
       EMAIL_RE.test(String(inviteIdentity.candidateEmail).trim())
   );
-  const effectiveName = identityLocked ? String(inviteIdentity.candidateName) : name;
-  const effectiveEmail = identityLocked ? String(inviteIdentity.candidateEmail).trim() : email.trim();
-  const phoneFromHr = Boolean(identityLocked && inviteIdentity?.phone);
-  const linkedinFromHr = Boolean(identityLocked && inviteIdentity?.linkedinUrl);
-  const locationFromHr = Boolean(identityLocked && inviteIdentity?.state && inviteIdentity?.city);
-  const hrProfileBits = [];
-  if (phoneFromHr) hrProfileBits.push(formatPhoneBr(inviteIdentity.phone));
-  if (linkedinFromHr) hrProfileBits.push(t(locale, 'candidate.linkedinShort'));
-  if (locationFromHr) {
-    hrProfileBits.push([inviteIdentity.city, inviteIdentity.state].filter(Boolean).join(' / '));
-  }
+  const effectiveName = name;
+  const effectiveEmail = email.trim();
 
-  const emailOk = !requireCandidateEmail || EMAIL_RE.test(effectiveEmail);
+  const emailOk = !(requireCandidateEmail || identityFromInvite) || EMAIL_RE.test(effectiveEmail);
   const ready = effectiveName.trim().length > 1 && !!areaKey && consent && emailOk;
   const canStart =
     ready &&
@@ -249,36 +246,31 @@ function HomeScreen({
         <div className={SC.fields}>
         {inviteIdentityLoading ? (
           <div className={cn(SC.input, 'mb-4 text-ink-muted')}>{t(locale, 'candidate.inviteIdentityLoading')}</div>
-        ) : identityLocked ? (
-          <div className="mb-[18px] rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-4 py-3.5">
-            <div className="mb-1.5 text-base text-ink">
-              {t(locale, 'candidate.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
-            </div>
-            <div className="mb-1.5 text-xs leading-relaxed text-ink-muted">
-              {hrProfileBits.length > 0
-                ? t(locale, 'candidate.inviteIdentityNoteWithProfile')
-                : t(locale, 'candidate.inviteIdentityNote')}
-            </div>
-            <div className="font-mono text-2xs text-ink-faint">
-              {t(locale, 'candidate.inviteIdentityEmail', { email: effectiveEmail })}
-            </div>
-            {hrProfileBits.length > 0 ? (
-              <div className="mt-2 font-mono text-2xs leading-[1.55] text-ink-muted">
-                {hrProfileBits.join(' · ')}
+        ) : (
+          <>
+            {identityFromInvite ? (
+              <div className="mb-[18px] rounded-xl border border-ink/10 bg-ink/[0.03] px-4 py-3">
+                <div className="mb-1 text-base text-ink">
+                  {t(locale, 'candidate.inviteHello', {
+                    name: titleCasePersonName(effectiveName).split(' ')[0] || '…',
+                  })}
+                </div>
+                <p className="m-0 text-xs leading-relaxed text-ink-muted">
+                  {t(locale, 'candidate.inviteIdentityNote')}
+                </p>
               </div>
             ) : null}
-          </div>
-        ) : (
-          <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
-            <input
-              className={SC.input}
-              placeholder={t(locale, 'candidate.namePlaceholder')}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setName(titleCasePersonName(name))}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
-            />
-          </FormField>
+            <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
+              <input
+                className={SC.input}
+                placeholder={t(locale, 'candidate.namePlaceholder')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => setName(titleCasePersonName(name))}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmitStart()}
+              />
+            </FormField>
+          </>
         )}
 
         <FormField as="div" label={t(locale, 'candidate.area')} labelClassName={formFieldCandLabelClass} className="w-full">
@@ -305,81 +297,84 @@ function HomeScreen({
           )}
         </FormField>
 
-        {!inviteIdentityLoading && !identityLocked ? (
+        {!inviteIdentityLoading ? (
           <FormField
-            label={requireCandidateEmail ? t(locale, 'candidate.emailRequired') : t(locale, 'candidate.emailOptional')}
+            label={
+              requireCandidateEmail || identityFromInvite
+                ? t(locale, 'candidate.emailRequired')
+                : t(locale, 'candidate.emailOptional')
+            }
             hint={
-              requireCandidateEmail
-                ? t(locale, 'candidate.emailHelpRequired')
-                : t(locale, 'candidate.emailHelpOptional')
+              identityFromInvite
+                ? undefined
+                : requireCandidateEmail
+                  ? t(locale, 'candidate.emailHelpRequired')
+                  : t(locale, 'candidate.emailHelpOptional')
             }
             labelClassName={formFieldCandLabelClass}
             className="w-full"
           >
             <input
-              className={cn(SC.input, requireCandidateEmail && !emailOk && email.length > 0 && 'border-danger/40')}
+              className={cn(
+                SC.input,
+                (requireCandidateEmail || identityFromInvite) && !emailOk && email.length > 0 && 'border-danger/40'
+              )}
               placeholder={t(locale, 'candidate.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              inputMode={requireCandidateEmail ? 'email' : undefined}
+              inputMode="email"
               autoComplete="email"
             />
           </FormField>
         ) : null}
 
-        {!phoneFromHr ? (
-          <FormField label={t(locale, 'candidate.phone')} labelClassName={formFieldCandLabelClass} className="w-full">
-            <input
+        <FormField label={t(locale, 'candidate.phone')} labelClassName={formFieldCandLabelClass} className="w-full">
+          <input
+            className={SC.input}
+            placeholder={t(locale, 'candidate.phonePlaceholder')}
+            value={formatPhoneBr(phone)}
+            onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
+            inputMode="tel"
+            autoComplete="tel"
+          />
+        </FormField>
+
+        <FormField label={t(locale, 'candidate.linkedin')} labelClassName={formFieldCandLabelClass} className="w-full">
+          <input
+            className={SC.input}
+            placeholder={t(locale, 'candidate.linkedinPlaceholder')}
+            value={linkedinUrl}
+            onChange={(e) => setLinkedinUrl(e.target.value)}
+            autoComplete="url"
+          />
+        </FormField>
+
+        <div className={cn(formFieldRowClass, 'w-full')}>
+          <FormField
+            as="div"
+            label={t(locale, 'candidate.state')}
+            labelClassName={formFieldCandLabelClass}
+            className="min-w-[120px] flex-[1_1_120px]"
+          >
+            <BrStateSelect
+              value={stateUf}
+              onChange={(uf) => {
+                setStateUf(uf);
+                setCity('');
+              }}
+              locale={locale}
               className={SC.input}
-              placeholder={t(locale, 'candidate.phonePlaceholder')}
-              value={formatPhoneBr(phone)}
-              onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
-              inputMode="tel"
-              autoComplete="tel"
             />
           </FormField>
-        ) : null}
-
-        {!linkedinFromHr ? (
-          <FormField label={t(locale, 'candidate.linkedin')} labelClassName={formFieldCandLabelClass} className="w-full">
-            <input
-              className={SC.input}
-              placeholder={t(locale, 'candidate.linkedinPlaceholder')}
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-              autoComplete="url"
-            />
+          <FormField
+            as="div"
+            label={t(locale, 'candidate.city')}
+            labelClassName={formFieldCandLabelClass}
+            className="min-w-[180px] flex-[2_1_180px]"
+          >
+            <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className={SC.input} />
           </FormField>
-        ) : null}
-
-        {!locationFromHr ? (
-          <div className={cn(formFieldRowClass, 'w-full')}>
-            <FormField
-              as="div"
-              label={t(locale, 'candidate.state')}
-              labelClassName={formFieldCandLabelClass}
-              className="min-w-[120px] flex-[1_1_120px]"
-            >
-              <BrStateSelect
-                value={stateUf}
-                onChange={(uf) => {
-                  setStateUf(uf);
-                  setCity('');
-                }}
-                locale={locale}
-                className={SC.input}
-              />
-            </FormField>
-            <FormField
-              as="div"
-              label={t(locale, 'candidate.city')}
-              labelClassName={formFieldCandLabelClass}
-              className="min-w-[180px] flex-[2_1_180px]"
-            >
-              <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className={SC.input} />
-            </FormField>
-          </div>
-        ) : null}
+        </div>
 
         <label className="mb-4 flex items-start gap-2.5 text-xs leading-normal text-ink-muted">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />

@@ -12,7 +12,7 @@ import { S } from '../dashboard/dashboard-shared';
  * Briefing acionável (Equipe / vaga): decisão acima; detalhe em disclosure.
  * Dados: people.decisionBrief (servidor). Print/PDF via one-pager (B-401).
  *
- * @param {{ omitHypotheses?: boolean }} props — hide hypotheses when 1:1 tab already shows them
+ * @param {{ omitHypotheses?: boolean, omitInterview?: boolean }} props — hide hypotheses / interview when not recruiting
  */
 export function HrActionBrief({
   locale = 'pt-BR',
@@ -21,6 +21,7 @@ export function HrActionBrief({
   personName = '',
   nucleusFit: nucleusFitProp = null,
   omitHypotheses = false,
+  omitInterview = false,
 }) {
   const feedback = useAppFeedbackOptional();
 
@@ -38,7 +39,7 @@ export function HrActionBrief({
   const syn = brief.synthesis || {};
   const team = brief.team || {};
   const alerts = brief.alerts || [];
-  const interview = brief.interviewQuestions || [];
+  const interview = omitInterview ? [] : brief.interviewQuestions || [];
   const actionsDo = brief.actionsDo || [];
   const actionsAvoid = brief.actionsAvoid || [];
   const hypotheses = omitHypotheses ? [] : brief.hypotheses || [];
@@ -60,6 +61,28 @@ export function HrActionBrief({
   const teamHasContent =
     !team.empty &&
     (team.roleHint || (team.synergies || []).length > 0 || (team.tensions || []).length > 0);
+
+  const visibleHasAny =
+    Boolean(syn.headline) ||
+    alerts.length > 0 ||
+    actionsDo.length > 0 ||
+    actionsAvoid.length > 0 ||
+    synSections.length > 0 ||
+    interview.length > 0 ||
+    teamHasContent ||
+    showNucleus ||
+    hypotheses.length > 0;
+
+  if (!visibleHasAny) {
+    return (
+      <div className={cn(dense ? 'mb-3' : 'mb-4')}>
+        <span className={cn(S.label, 'mb-1.5')}>{t(locale, 'panel.team.briefTitle')}</span>
+        <p className="m-0 text-xs leading-relaxed text-ink-muted">
+          {t(locale, 'panel.team.briefEmpty')}
+        </p>
+      </div>
+    );
+  }
 
   const onPrint = () => {
     const ok = printDecisionBrief({

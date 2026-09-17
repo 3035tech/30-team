@@ -770,7 +770,7 @@ export default function DashboardClient({
       onRemove: () => { setEnneagram('all'); pushFilters({ enneagram: 'all' }); },
     });
   }
-  if (pipeline !== 'all') {
+  if (pipeline !== 'all' && tab !== 'overview') {
     activeChips.push({ key: 'pipeline', label: _pipelineChipLabels[pipeline] || pipeline,
       onRemove: () => { setPipeline('all'); pushFilters({ pipeline: 'all' }); } });
   }
@@ -1122,13 +1122,21 @@ export default function DashboardClient({
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  pushFilters({ search: search.trim() || null });
+                  const trimmed = search.trim();
+                  // Overview has no person list: name search opens Equipe with the same filter.
+                  pushFilters({
+                    search: trimmed || null,
+                    ...(tab === 'overview' && trimmed ? { tab: 'team' } : {}),
+                  });
                 }
               }}
               onBlur={() => {
                 const trimmed = search.trim();
                 if (trimmed !== (selectedSearch || '').trim()) {
-                  pushFilters({ search: trimmed || null });
+                  pushFilters({
+                    search: trimmed || null,
+                    ...(tab === 'overview' && trimmed ? { tab: 'team' } : {}),
+                  });
                 }
               }}
               placeholder={t(locale, 'dashboard.searchPlaceholder')}
@@ -1314,7 +1322,8 @@ export default function DashboardClient({
                 </option>
               ))}
             </select>
-            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} className={S.select}>
+            {tab !== 'overview' ? (
+            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} className={S.select} aria-label={t(locale, 'recruiting.pipelineAll')}>
               <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
               <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
               <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
@@ -1324,6 +1333,7 @@ export default function DashboardClient({
               <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
             </select>
+            ) : null}
             <div className="inline-flex h-[38px] items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3">
               <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
               <DateField
@@ -1413,8 +1423,6 @@ export default function DashboardClient({
               {tab === 'overview' && (
                 <OverviewTab
                   overview={overviewMetrics}
-                  typeCount={typeCount}
-                  distributionTotal={listTotal}
                   locale={locale}
                   companyId={scopedCompanyId}
                   onboardingProgress={onboardingProgress}

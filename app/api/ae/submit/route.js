@@ -109,6 +109,7 @@ export async function POST(request) {
       type: NOTIF.MOTIVATORS_COMPLETED,
       entityType: 'candidate',
       entityId: attempt.candidateId,
+      dedupeKey: `motivators_completed:${attemptId}`,
       payload: {
         candidateId: attempt.candidateId,
         attemptId,

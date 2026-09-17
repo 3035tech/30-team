@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../dashboard-shared';
 import { InsightListItem } from '../../../_components/InsightListItem';
-import { InlineCallout } from '../../../_components/InlineCallout';
 import { StatusToneChip } from '../../../_components/StatusToneChip';
 import { AppLoading } from '../../../_components/AppLoading';
 
@@ -17,7 +16,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
     const messages = {
       'pt-BR': {
         title: 'Cultura Organizacional',
-        subtitle: 'Leitura hedged: clima + mix T1–T9 + pulso',
+        subtitle: 'Clima, mix T1–T9 e pulso',
         noData: 'Dados insuficientes para leitura cultural',
         noDataDesc: 'Execute pesquisas de clima, pulsos e tenha avaliações T1–T9',
         overallHealth: 'Saúde geral',
@@ -30,7 +29,6 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         viewFull: 'Ver insights completos',
         viewSummary: 'Ver resumo',
         insightsTitle: 'Insights',
-        hedgingNote: 'Leitura baseada em indicadores; não substitui observação direta.',
         climate: 'Clima',
         typeMix: 'Mix T1–T9',
         pulse: 'Pulso',
@@ -44,7 +42,7 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
       },
       en: {
         title: 'Organizational Culture',
-        subtitle: 'Hedged reading: climate + T1–T9 mix + pulse',
+        subtitle: 'Climate, T1–T9 mix, and pulse',
         noData: 'Insufficient data for culture reading',
         noDataDesc: 'Run climate surveys, pulses, and have T1–T9 assessments',
         overallHealth: 'Overall health',
@@ -57,7 +55,6 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
         viewFull: 'View full insights',
         viewSummary: 'View summary',
         insightsTitle: 'Insights',
-        hedgingNote: 'Reading based on indicators; does not replace direct observation.',
         climate: 'Climate',
         typeMix: 'T1–T9 Mix',
         pulse: 'Pulse',
@@ -222,10 +219,6 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
             </div>
           </div>
 
-          <InlineCallout tone="info" className="text-prose">
-            <p className={cn(S.cardMuted, 'm-0')}>{t('hedgingNote')}</p>
-          </InlineCallout>
-
           <button type="button" onClick={loadFullInsights} className={S.cardLink}>
             {t('viewFull')} →
           </button>
@@ -253,9 +246,6 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
                   title={`${getCategoryIcon(insight.category)} ${insight.description}`}
                   body={insight.details}
                 >
-                  {insight.hedging ? (
-                    <p className={cn(S.cardFaint, 'mt-1 italic')}>{insight.hedging}</p>
-                  ) : null}
                   {actionLink ? (
                     <Link href={actionLink} className={cn(S.cardLink, 'mt-1 inline-block')}>
                       {t('viewLink')}

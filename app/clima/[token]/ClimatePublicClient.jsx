@@ -140,10 +140,6 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
                   <span className="mt-1 block font-mono text-2xs text-ink-faint">
                     {t(locale, 'panel.climate.publicTextHint')}
                   </span>
-                ) : isEnpsQuestion(q) ? (
-                  <span className="mt-1 block font-mono text-2xs text-ink-faint">
-                    {t(locale, 'panel.climate.publicEnpsHint')}
-                  </span>
                 ) : null}
               </div>
               {textQ ? (
@@ -157,14 +153,28 @@ export default function ClimatePublicClient({ token, locale = 'pt-BR' }) {
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 />
               ) : (
-                <ScaleRatingButtons
-                  min={q.scaleMin}
-                  max={q.scaleMax}
-                  value={answers[q.id]}
-                  ariaLabel={q.prompt}
-                  className="justify-center"
-                  onChange={(n) => setAnswers((prev) => ({ ...prev, [q.id]: n }))}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <ScaleRatingButtons
+                    min={q.scaleMin}
+                    max={q.scaleMax}
+                    value={answers[q.id]}
+                    ariaLabel={q.prompt}
+                    className="justify-center"
+                    onChange={(n) => setAnswers((prev) => ({ ...prev, [q.id]: n }))}
+                  />
+                  <div className="flex justify-between gap-2 px-0.5 font-mono text-2xs leading-snug text-ink-faint">
+                    <span className="max-w-[45%] text-left">
+                      {isEnpsQuestion(q)
+                        ? t(locale, 'panel.climate.publicEnpsMin', { n: q.scaleMin })
+                        : t(locale, 'panel.climate.publicScaleMin', { n: q.scaleMin })}
+                    </span>
+                    <span className="max-w-[45%] text-right">
+                      {isEnpsQuestion(q)
+                        ? t(locale, 'panel.climate.publicEnpsMax', { n: q.scaleMax })
+                        : t(locale, 'panel.climate.publicScaleMax', { n: q.scaleMax })}
+                    </span>
+                  </div>
+                </div>
               )}
             </li>
           );

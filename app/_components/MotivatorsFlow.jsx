@@ -73,13 +73,13 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
     if (inviteInfo?.candidateEmail) setEmail(inviteInfo.candidateEmail);
   }, [inviteInfo?.candidateName, inviteInfo?.candidateEmail]);
 
-  const identityLocked = Boolean(
+  const identityFromInvite = Boolean(
     inviteInfo?.candidateName?.trim()?.length > 1 &&
       inviteInfo?.candidateEmail &&
       EMAIL_RE.test(String(inviteInfo.candidateEmail).trim())
   );
-  const effectiveName = identityLocked ? String(inviteInfo.candidateName) : name;
-  const effectiveEmail = identityLocked ? String(inviteInfo.candidateEmail).trim().toLowerCase() : email.trim().toLowerCase();
+  const effectiveName = name;
+  const effectiveEmail = email.trim().toLowerCase();
 
   const ready = effectiveName.trim().length > 1 && EMAIL_RE.test(effectiveEmail) && areaKey && consent && !startDisabled;
 
@@ -138,37 +138,31 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         </div>
 
         <div className={SC.fields}>
-        {identityLocked ? (
-          <div className="mb-[18px] rounded-xl border border-brand-500/20 bg-brand-500/[0.04] px-4 py-3.5">
-            <div className="mb-1.5 text-base text-ink">
-              {t(locale, 'motivators.inviteHello', { name: titleCasePersonName(effectiveName).split(' ')[0] })}
+        {identityFromInvite ? (
+          <div className="mb-[18px] rounded-xl border border-ink/10 bg-ink/[0.03] px-4 py-3">
+            <div className="mb-1 text-base text-ink">
+              {t(locale, 'motivators.inviteHello', {
+                name: titleCasePersonName(effectiveName).split(' ')[0] || '…',
+              })}
             </div>
-            <div className="mb-1.5 text-xs leading-relaxed text-ink-muted">
-              {inviteInfo?.hasHrProfile
-                ? t(locale, 'motivators.inviteIdentityNoteWithProfile')
-                : t(locale, 'motivators.inviteIdentityNote')}
-            </div>
-            <div className="font-mono text-2xs text-ink-faint">
-              {t(locale, 'motivators.inviteIdentityEmail', { email: effectiveEmail })}
-            </div>
+            <p className="m-0 text-xs leading-relaxed text-ink-muted">
+              {t(locale, 'motivators.inviteIdentityNote')}
+            </p>
           </div>
-        ) : (
-          <>
-            <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
-              <input
-                className={SC.input}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={() => setName(titleCasePersonName(name))}
-                placeholder={t(locale, 'candidate.namePlaceholder')}
-              />
-            </FormField>
+        ) : null}
+        <FormField label={t(locale, 'candidate.fullName')} labelClassName={formFieldCandLabelClass} className="w-full">
+          <input
+            className={SC.input}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setName(titleCasePersonName(name))}
+            placeholder={t(locale, 'candidate.namePlaceholder')}
+          />
+        </FormField>
 
-            <FormField label={t(locale, 'motivators.emailInvite')} labelClassName={formFieldCandLabelClass} className="w-full">
-              <input className={SC.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
-            </FormField>
-          </>
-        )}
+        <FormField label={t(locale, 'motivators.emailInvite')} labelClassName={formFieldCandLabelClass} className="w-full">
+          <input className={SC.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t(locale, 'candidate.emailPlaceholder')} />
+        </FormField>
 
         <FormField label={t(locale, 'motivators.areaLabel')} labelClassName={formFieldCandLabelClass} className="w-full">
           <select className={cn(SC.select, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>

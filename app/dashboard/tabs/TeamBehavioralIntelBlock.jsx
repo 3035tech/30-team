@@ -280,9 +280,6 @@ export function TeamBehavioralIntelBlock({
           <div className="flex flex-col gap-3">
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
-            <p className="mt-0.5 mb-1 text-xs text-ink-muted">
-              {t(locale, 'panel.overview.bci.profilesQuestion')}
-            </p>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.profilesBase', { n: profiles.nPeople })}
             </p>
@@ -290,9 +287,6 @@ export function TeamBehavioralIntelBlock({
               <p className="m-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.profilesEmpty')}</p>
             ) : (
               <>
-                <p className="mb-2 mt-0 text-2xs text-ink-faint">
-                  {t(locale, 'panel.overview.bci.profilesAxisHint')}
-                </p>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {profiles.bars.map((b) => (
                     <li key={b.type} className="flex items-center gap-3">
@@ -329,9 +323,6 @@ export function TeamBehavioralIntelBlock({
           {/* 2. Motivators */}
           <div className={S.cardTight}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.motivatorsTitle')}</span>
-            <p className="mt-0.5 mb-1 text-xs text-ink-muted">
-              {t(locale, 'panel.overview.bci.motivatorsQuestion')}
-            </p>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.motivatorsBase', { n: motivators.nPeople })}
             </p>

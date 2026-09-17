@@ -505,7 +505,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const prompts = data.oneOnOnePrompts || [];
   const company = data.company;
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
-  const hasCompany = company && (company.aboutHtml || (company.benefits || []).length > 0);
+  const hasCompany = company && (company.aboutHtml || company.website);
   const lmsOverdueCount = courses.filter((c) => c.overdue).length;
   const okrUrgentCount = okrActivities.filter(
     (a) => a.urgency === 'overdue' || a.urgency === 'critical'
@@ -691,9 +691,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     {items.map((it) => (
                       <li
                         key={it.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2"
+                        className="flex flex-col gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <div className={cn(S.cardMuted, 'min-w-0')}>
+                        <div className={cn(S.cardMuted, 'min-w-0 break-words')}>
                           {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
                           {it.title}
                           <div className="mt-0.5 font-mono text-2xs text-ink-faint">
@@ -701,7 +701,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             {it.dueDate ? ` · ${formatDisplayDate(it.dueDate, locale)}` : ''}
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1 sm:shrink-0">
                           {it.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? (
                             <button
                               type="button"
@@ -780,17 +780,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                               : 'border-ink/12'
                         )}
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className={S.cardBody}>{act.title}</span>
+                              <span className={cn(S.cardBody, 'break-words')}>{act.title}</span>
                               {act.urgency && act.urgency !== 'none' ? (
                                 <StatusToneChip tone={okrUrgencyTone(act.urgency)}>
                                   {t(locale, `panel.okr.urgency.${act.urgency}`)}
                                 </StatusToneChip>
                               ) : null}
                             </div>
-                            <p className={cn(S.faint, 'mb-0 mt-1')}>
+                            <p className={cn(S.faint, 'mb-0 mt-1 break-words')}>
                               {act.areaTitle || t(locale, 'panel.common.notApplicable')}
                               {act.deadline
                                 ? ` · ${t(locale, 'employeeHome.okrDeadline')}: ${formatDisplayDate(act.deadline, locale)}`
@@ -807,7 +807,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             <button
                               type="button"
                               disabled={busy}
-                              className={cn(S.btnBrandSoft, 'min-h-touch shrink-0')}
+                              className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 self-start')}
                               onClick={() => void submitOkrCheckin(act)}
                             >
                               {t(locale, 'employeeHome.okrCheckinBtn')}
@@ -944,7 +944,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       {formatDisplayDate(a.meetingDate, locale)}
                     </div>
                   ) : null}
-                  <div className={cn(S.cardMuted, 'whitespace-pre-wrap')}>{a.nextSteps}</div>
+                  <div className={cn(S.cardMuted, 'break-words whitespace-pre-wrap')}>{a.nextSteps}</div>
                 </li>
               ))}
             </ul>
@@ -1106,24 +1106,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 >
                   {company.website}
                 </a>
-              ) : null}
-              {(company.benefits || []).length > 0 ? (
-                <>
-                  <h3 className={cn(S.faint, 'mb-2 mt-3 text-2xs uppercase tracking-wide')}>
-                    {t(locale, 'employeeHome.benefitsTitle')}
-                  </h3>
-                  <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-                    {company.benefits.map((b) => (
-                      <li key={b.id} className="rounded-control border border-ink/8 px-2.5 py-2 text-xs text-ink">
-                        <span className="font-ui">{b.name}</span>
-                        {b.categoryName ? (
-                          <span className="ml-2 font-mono text-2xs text-ink-faint">{b.categoryName}</span>
-                        ) : null}
-                        {b.summary ? <p className={cn(S.muted, 'mb-0 mt-1 text-2xs')}>{b.summary}</p> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </>
               ) : null}
             </>
           )}

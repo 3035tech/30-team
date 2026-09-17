@@ -2751,3 +2751,14 @@ COMMENT ON COLUMN okr_activities.weight IS
 INSERT INTO schema_migrations (name) VALUES ('104_okr_weight_0_10.sql')
 ON CONFLICT (name) DO NOTHING;
 
+
+-- 105: candidates.created_by_user_id
+ALTER TABLE candidates
+  ADD COLUMN IF NOT EXISTS created_by_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_candidates_created_by
+  ON candidates (company_id, created_by_user_id)
+  WHERE created_by_user_id IS NOT NULL;
+
+INSERT INTO schema_migrations (name) VALUES ('105_candidates_created_by.sql')
+ON CONFLICT (name) DO NOTHING;

@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TYPE_DATA } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
-import { typeFullName, typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 import { rejectionReasonLabel } from '../pipeline-prompts';
-import { C, PIPELINE_STAGE_COLORS } from '../../../lib/theme';
+import { PIPELINE_STAGE_COLORS } from '../../../lib/theme';
 import { OVERVIEW_FUNNEL_STAGES } from '../../../lib/overview-constants';
 import { cn } from '../../../lib/cn';
 import { S, AdminIconButton } from '../dashboard-shared';
@@ -17,7 +15,6 @@ import CultureInsightsCard from './overview/CultureInsightsCard';
 import MultiSignalWorkbenchCard from './overview/MultiSignalWorkbenchCard';
 import BirthdaysCard from './overview/BirthdaysCard';
 import { OnboardingChecklist } from '../../_components/OnboardingChecklist';
-import { TeamTensionNarrativeBlock } from '../../_components/TeamTensionNarrativeBlock';
 import {
   DisclosureToggle,
   disclosureToggleButtonClass,
@@ -80,8 +77,6 @@ function filterChips(locale, filters = {}) {
 
 export function OverviewTab({
   overview = null,
-  typeCount = {},
-  distributionTotal = 0,
   locale = 'pt-BR',
   companyId = null,
   filters = {},
@@ -156,7 +151,6 @@ export function OverviewTab({
     rejectionReasons: [],
     attention: [],
     vacancies: { openCount: 0, positionsOpen: 0, staleCount: 0, items: [] },
-    typeMix: { typeCount, total: distributionTotal, dominantType: null },
   };
 
   const go = (opts) => {
@@ -180,83 +174,27 @@ export function OverviewTab({
 
   const funnelActive = OVERVIEW_FUNNEL_STAGES.filter((s) => (data.funnel[s] || 0) > 0);
   const funnelSum = Math.max(data.funnelTotal || 1, 1);
-  const mixCount = data.typeMix?.typeCount || typeCount || {};
-  const mixTotalRaw = Object.values(mixCount).reduce((a, b) => a + (Number(b) || 0), 0);
-  const mixTotal = Math.max(data.typeMix?.total || 0, mixTotalRaw, 1);
-  const mixEntries = Object.entries(mixCount)
-    .map(([k, v]) => ({ type: parseInt(k, 10), n: Number(v) || 0 }))
-    .filter((x) => x.n > 0 && x.type >= 1 && x.type <= 9)
-    .sort((a, b) => a.type - b.type);
-  const dominant =
-    data.typeMix?.dominantType ||
-    mixEntries.reduce((best, cur) => (!best || cur.n > best.n ? cur : best), null)?.type ||
-    null;
-  const advice = data.typeMix?.advice || null;
   const reasons = data.rejectionReasons || [];
   const maxReason = Math.max(...reasons.map((r) => r.n), 1);
   const rejectPatterns = data.rejectionPatterns || [];
-
-  const compositionLine = (() => {
-    if (!advice || advice.kind === 'empty' || mixTotalRaw === 0) return null;
-    if (advice.kind === 'concentrated' && advice.dominantType) {
-      return t(locale, 'panel.overview.compositionConcentrated', {
-        type: typeFullName(advice.dominantType, locale),
-        pct: advice.pct,
-      });
-    }
-    if (advice.kind === 'gap' && advice.missingTypes?.length) {
-      return t(locale, 'panel.overview.compositionGaps', {
-        types: advice.missingTypes.map((x) => `T${x}`).join(', '),
-      });
-    }
-    return t(locale, 'panel.overview.compositionBalanced');
-  })();
-
-  const rubricDeltaLine = (() => {
-    const rd = data.typeMix?.rubricDelta;
-    if (!rd || rd.kind === 'empty' || rd.kind === 'aligned') return null;
-    if (rd.kind === 'scarce_sought' && rd.scarceTypes?.length) {
-      return t(locale, 'panel.overview.rubricDeltaScarce', {
-        types: rd.scarceTypes.map((x) => `T${x}`).join(', '),
-      });
-    }
-    if (rd.kind === 'surplus_unweighted' && rd.surplusType) {
-      return t(locale, 'panel.overview.rubricDeltaSurplus', {
-        type: typeFullName(rd.surplusType, locale),
-      });
-    }
-    return null;
-  })();
 
   return (
     <div className="flex flex-col gap-4">
       {data.error ? (
         <p className="m-0 text-danger">{t(locale, 'panel.overview.loadError')}</p>
       ) : null}
-      <div className={cn(S.card, 'p-5 sm:px-6')}>
-        <span className={S.label}>
-          {t(locale, 'dashboard.overview')}
-        </span>
-        <p className="mt-2.5 mb-0 max-w-[62ch] text-prose leading-relaxed text-ink-muted">
-          {t(locale, 'panel.overview.intro')}
-        </p>
-        {chips.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {chips.map((c) => (
-              <span
-                key={c}
-                className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-2xs text-ink-muted"
-              >
-                {c}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-2.5 mb-0 font-mono text-xs text-ink-faint">
-            {t(locale, 'panel.overview.noFilterChip')}
-          </p>
-        )}
-      </div>
+      {chips.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {chips.map((c) => (
+            <span
+              key={c}
+              className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-2xs text-ink-muted"
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {/* Onboarding Checklist */}
       {onboardingProgress && onboardingProgress.progress < 100 && (
@@ -346,19 +284,6 @@ export function OverviewTab({
       />
 
       {companyId ? (
-        <TeamTensionNarrativeBlock
-          locale={locale}
-          intel={bciIntel ?? data.behavioralIntel}
-          companyId={companyId}
-          teamGroupId={
-            (bciIntel ?? data.behavioralIntel)?.selectedTeamGroupId ??
-            (bciIntel ?? data.behavioralIntel)?.meta?.teamGroupId
-          }
-          navigateDashboard={navigateDashboard}
-        />
-      ) : null}
-
-      {companyId ? (
         <BirthdaysCard
           locale={locale}
           companyId={companyId}
@@ -409,100 +334,6 @@ export function OverviewTab({
           ) : null}
         </div>
       ) : null}
-
-      <div className={S.cardTight}>
-        <div className="mb-2 flex items-baseline justify-between gap-3">
-          <span className={cn(S.label, 'mb-0')}>
-            {t(locale, 'panel.overview.typeMixTitle')}
-          </span>
-          <AdminIconButton
-            label={t(locale, 'panel.overview.openCompat')}
-            icon="compatibility"
-            onClick={() => go({ tab: 'compatibility' })}
-          />
-        </div>
-        {mixTotalRaw === 0 ? (
-          <div>
-            <p className="m-0 text-prose text-ink-faint">
-              {t(locale, 'panel.overview.typeMixEmpty')}
-            </p>
-            <button
-              type="button"
-              className={cn(S.btnBrandSoft, 'mt-3 min-h-touch')}
-              onClick={() => go({ tab: 'vacancies' })}
-            >
-              {t(locale, 'panel.overview.typeMixEmptyCta')}
-            </button>
-          </div>
-        ) : (
-          <>
-            <div role="img" aria-label={t(locale, 'panel.overview.typeHeatAria')}>
-              <div className="flex h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
-                {mixEntries.map((e) => (
-                  <div
-                    key={e.type}
-                    className="ui-type-heat-seg"
-                    style={{
-                      width: `${(e.n / mixTotal) * 100}%`,
-                      background: TYPE_DATA[e.type]?.color || C.purple,
-                    }}
-                    title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
-                  />
-                ))}
-              </div>
-              <div className="mt-1.5 flex">
-                {mixEntries.map((e) => (
-                  <div
-                    key={e.type}
-                    className="flex min-w-0 flex-col items-center gap-0 overflow-hidden font-mono text-2xs leading-tight tabular-nums"
-                    style={{ width: `${(e.n / mixTotal) * 100}%` }}
-                    title={`${typeHintTooltip(e.type, locale)} (${e.n})`}
-                  >
-                    <span
-                      className="ui-type-label cursor-help max-w-full truncate"
-                      style={{ color: TYPE_DATA[e.type]?.color || undefined }}
-                    >
-                      T{e.type}
-                    </span>
-                    <span className="max-w-full truncate text-ink-faint">{e.n}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {dominant ? (
-              <p className="mt-2 mb-0 text-2xs leading-snug text-ink-muted">
-                {t(locale, 'panel.overview.dominantHint', {
-                  type: typeFullName(dominant, locale),
-                  n: mixCount[dominant] || mixCount[String(dominant)] || 0,
-                  pct: Math.round(
-                    ((mixCount[dominant] || mixCount[String(dominant)] || 0) / mixTotal) * 100
-                  ),
-                })}
-              </p>
-            ) : null}
-            {compositionLine ? (
-              <p className="mt-1 mb-0 text-2xs leading-snug text-ink-faint">{compositionLine}</p>
-            ) : null}
-            {data.typeMix?.windowDelta?.available ? (
-              <p className="mt-1.5 mb-0 text-2xs leading-snug text-ink-muted">
-                {t(locale, 'panel.overview.typeMixWindowDelta', {
-                  recent: typeFullName(data.typeMix.windowDelta.recentDominant, locale),
-                  recentPct: data.typeMix.windowDelta.recentPct,
-                  prior: typeFullName(data.typeMix.windowDelta.priorDominant, locale),
-                  priorPct: data.typeMix.windowDelta.priorPct,
-                  delta:
-                    data.typeMix.windowDelta.pctDelta > 0
-                      ? `+${data.typeMix.windowDelta.pctDelta}`
-                      : String(data.typeMix.windowDelta.pctDelta),
-                })}
-              </p>
-            ) : null}
-            {rubricDeltaLine ? (
-              <p className="mt-1.5 mb-0 text-2xs leading-snug text-ink-muted">{rubricDeltaLine}</p>
-            ) : null}
-          </>
-        )}
-      </div>
 
       <div className={S.card}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

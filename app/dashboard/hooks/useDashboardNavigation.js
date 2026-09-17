@@ -240,6 +240,7 @@ export function useDashboardNavigation({
 
   const pushFilters = (nextFilter) => {
     navigateWithOpts({
+      ...(nextFilter?.tab != null ? { tab: nextFilter.tab } : {}),
       ...(nextFilter?.company != null ? { company: nextFilter.company } : {}),
       ...(nextFilter?.area != null ? { area: nextFilter.area } : {}),
       ...(nextFilter?.vacancy != null ? { vacancy: nextFilter.vacancy } : {}),

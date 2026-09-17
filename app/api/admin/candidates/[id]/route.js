@@ -24,17 +24,22 @@ export async function GET(request, { params }) {
 
   const id = params?.id;
   const c = await query(
-    `SELECT id, company_id AS "companyId", full_name AS "fullName", email, hr_notes AS "hrNotes",
-            phone, linkedin_url AS "linkedinUrl", city, state,
-            salary_expectation AS "salaryExpectation", availability, source,
-            employment_status AS "employmentStatus",
-            hired_at AS "hiredAt", start_date AS "startDate",
-            birth_date AS "birthDate",
-            hired_vacancy_id AS "hiredVacancyId",
-            consent_at AS "consentAt", created_at AS "createdAt",
-            cv_url AS "cvUrl", cv_updated_at AS "cvUpdatedAt",
-            (cv_extracted_text IS NOT NULL AND cv_extracted_text <> '') AS "hasCvText"
-     FROM candidates WHERE id = $1 LIMIT 1`,
+    `SELECT c.id, c.company_id AS "companyId", c.full_name AS "fullName", c.email, c.hr_notes AS "hrNotes",
+            c.phone, c.linkedin_url AS "linkedinUrl", c.city, c.state,
+            c.salary_expectation AS "salaryExpectation", c.availability, c.source,
+            c.employment_status AS "employmentStatus",
+            c.hired_at AS "hiredAt", c.start_date AS "startDate",
+            c.birth_date AS "birthDate",
+            c.hired_vacancy_id AS "hiredVacancyId",
+            c.consent_at AS "consentAt", c.created_at AS "createdAt",
+            c.created_by_user_id AS "createdByUserId",
+            u.display_name AS "createdByName",
+            c.cv_url AS "cvUrl", c.cv_updated_at AS "cvUpdatedAt",
+            (c.cv_extracted_text IS NOT NULL AND c.cv_extracted_text <> '') AS "hasCvText"
+     FROM candidates c
+     LEFT JOIN users u ON u.id = c.created_by_user_id AND u.deleted = FALSE
+     WHERE c.id = $1
+     LIMIT 1`,
     [id]
   );
   if (c.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
