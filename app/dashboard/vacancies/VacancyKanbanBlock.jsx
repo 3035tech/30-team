@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { titleCasePersonName } from '../../../lib/person-name';
@@ -14,6 +14,9 @@ import { formatRelativeAgo, inviteStatusShort, daysInStage, stageAgingTone } fro
 import { VacancyOfferBlock } from './VacancyOfferBlock';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
+import { useAppFeedback } from '../../_components/AppFeedback';
+
+const EMPTY_FILTERS = Object.freeze({ q: '', owner: 'all', aging: 'all', fit: 'all', notes: false });
 
 export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPersonClick = null, companyStages = null, companyId = null }) {
   const [rows, setRows] = useState([]);
@@ -25,11 +28,38 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
   const [fetchedStages, setFetchedStages] = useState(null);
   const [compact, setCompact] = useState(false);
   const [hideEmpty, setHideEmpty] = useState(false);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [workspace, setWorkspace] = useState({ recruiters: [], views: [], currentUserId: null, vacancyOwnerUserId: null });
+  const [workspaceLoading, setWorkspaceLoading] = useState(true);
+  const [collapsedStages, setCollapsedStages] = useState([]);
+  const { promptForm, toast, confirm } = useAppFeedback();
   const { isDark } = useDarkMode();
   const effectiveCompanyStages = companyStages ?? fetchedStages;
   const stages = getKanbanStages(locale, { isDark, companyStages: effectiveCompanyStages });
   const stageById = Object.fromEntries(stages.map((s) => [s.id, s]));
   const { requestPipelineExtras } = usePipelineExtras();
+
+  const loadWorkspace = async () => {
+    setWorkspaceLoading(true);
+    try {
+      const params = new URLSearchParams({ vacancyId: String(vacancyId) });
+      if (companyId) params.set('companyId', String(companyId));
+      const response = await fetch(`/api/admin/recruiting-workspace?${params.toString()}`);
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        setWorkspace({
+          recruiters: Array.isArray(data.recruiters) ? data.recruiters : [],
+          views: Array.isArray(data.views) ? data.views : [],
+          currentUserId: data.currentUserId || null,
+          vacancyOwnerUserId: data.vacancyOwnerUserId || null,
+        });
+      }
+    } finally {
+      setWorkspaceLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadWorkspace(); }, [vacancyId, companyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (companyStages) return () => {};
@@ -122,18 +152,99 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
     }
   };
 
+  const filteredRows = useMemo(() => rows.filter((row) => {
+    const needle = filters.q.trim().toLocaleLowerCase(locale);
+    if (needle && !`${row.name || ''} ${row.email || ''}`.toLocaleLowerCase(locale).includes(needle)) return false;
+    if (filters.owner === 'mine' && Number(row.ownerUserId) !== Number(workspace.currentUserId)) return false;
+    if (filters.owner === 'unassigned' && row.ownerUserId) return false;
+    if (/^user:\d+$/.test(filters.owner) && Number(row.ownerUserId) !== Number(filters.owner.slice(5))) return false;
+    const days = daysInStage(row.stageEnteredAt || row.createdAt);
+    if (filters.aging === 'stalled' && !stageAgingTone(days, stageById[row.pipelineStage || 'new']?.canonicalKey || row.pipelineStage || 'new')) return false;
+    if (filters.fit === 'high' && !(Number(row.vacancyFitScore010) >= 7)) return false;
+    if (filters.notes && !row.hasNotes) return false;
+    return true;
+  }), [filters, locale, rows, stageById, workspace.currentUserId]);
+
   const grouped = Object.fromEntries(stages.map((s) => [s.id, []]));
-  rows.forEach((r) => {
+  filteredRows.forEach((r) => {
     const stage = r.pipelineStage || 'new';
     if (grouped[stage]) grouped[stage].push(r);
     else grouped['new'].push(r);
   });
 
   const hasAny = rows.length > 0;
+  const hasFiltered = filteredRows.length > 0;
   const visibleStages = hideEmpty && !draggingId
     ? stages.filter((stage) => (grouped[stage.id] || []).length > 0)
     : stages;
   const fitTone = (s) => (s >= 7 ? 'text-success' : s >= 4 ? 'text-warning' : 'text-danger');
+
+  const updateVacancyOwner = async (raw) => {
+    const ownerUserId = raw ? Number(raw) : null;
+    const response = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerUserId }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return toast(data?.error || t(locale, 'panel.common.error'), 'error');
+    setWorkspace((current) => ({ ...current, vacancyOwnerUserId: ownerUserId }));
+    toast(t(locale, 'recruiting.ownerUpdated'), 'ok');
+  };
+
+  const assignCandidate = async (row, raw) => {
+    const ownerUserId = raw ? Number(raw) : null;
+    const body = { action: 'assign_candidate', vacancyId: Number(vacancyId), candidateId: Number(row.candidateId), ownerUserId };
+    if (companyId) body.companyId = Number(companyId);
+    const response = await fetch('/api/admin/recruiting-workspace', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return toast(data?.error || t(locale, 'panel.common.error'), 'error');
+    const owner = workspace.recruiters.find((item) => Number(item.id) === Number(ownerUserId));
+    setRows((current) => current.map((item) => cardKey(item) === cardKey(row)
+      ? { ...item, ownerUserId, ownerName: owner?.name || null }
+      : item));
+    toast(t(locale, 'recruiting.candidateOwnerUpdated'), 'ok');
+  };
+
+  const saveView = async () => {
+    const values = await promptForm({
+      title: t(locale, 'recruiting.savedViewTitle'),
+      confirmLabel: t(locale, 'recruiting.savedViewSave'),
+      fields: [{ name: 'name', label: t(locale, 'recruiting.savedViewName'), required: true, maxLength: 60 }],
+    });
+    if (!values?.name?.trim()) return;
+    const body = { action: 'save_view', vacancyId: Number(vacancyId), name: values.name.trim(), filters: { ...filters, hideEmpty, compact } };
+    if (companyId) body.companyId = Number(companyId);
+    const response = await fetch('/api/admin/recruiting-workspace', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return toast(data?.error || t(locale, 'panel.common.error'), 'error');
+    toast(t(locale, 'recruiting.savedViewSaved'), 'ok');
+    await loadWorkspace();
+  };
+
+  const removeView = async (view) => {
+    const accepted = await confirm({
+      title: t(locale, 'recruiting.savedViewDelete'),
+      message: t(locale, 'recruiting.savedViewDeleteHint', { name: view.name }),
+      confirmLabel: t(locale, 'recruiting.savedViewDelete'), danger: true,
+    });
+    if (!accepted) return;
+    const params = new URLSearchParams({ vacancyId: String(vacancyId), viewId: String(view.id) });
+    if (companyId) params.set('companyId', String(companyId));
+    const response = await fetch(`/api/admin/recruiting-workspace?${params.toString()}`, { method: 'DELETE' });
+    if (!response.ok) return toast(t(locale, 'panel.common.error'), 'error');
+    await loadWorkspace();
+  };
+
+  const applyView = (view) => {
+    setFilters({ ...EMPTY_FILTERS, ...(view.filters || {}) });
+    setHideEmpty(view.filters?.hideEmpty === true);
+    setCompact(view.filters?.compact === true);
+  };
 
   return (
     <div>
@@ -169,6 +280,77 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
         ) : null}
       </div>
 
+      {hasAny ? (
+        <div className="mb-3 rounded-xl border border-ink/10 bg-canvas/70 p-3">
+          <div className="grid gap-2 md:grid-cols-[minmax(180px,1.2fr)_minmax(150px,0.8fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_auto]">
+            <input
+              value={filters.q}
+              onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
+              placeholder={t(locale, 'recruiting.pipelineSearch')}
+              aria-label={t(locale, 'recruiting.pipelineSearch')}
+              className="min-h-touch rounded-control border border-ink/12 bg-surface px-3 font-ui text-sm text-ink outline-none focus:border-brand-500"
+            />
+            <select
+              value={filters.owner}
+              onChange={(event) => setFilters((current) => ({ ...current, owner: event.target.value }))}
+              className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
+              aria-label={t(locale, 'recruiting.filterOwner')}
+            >
+              <option value="all">{t(locale, 'recruiting.filterAllOwners')}</option>
+              <option value="mine">{t(locale, 'recruiting.filterMine')}</option>
+              <option value="unassigned">{t(locale, 'recruiting.filterUnassigned')}</option>
+              {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={`user:${recruiter.id}`}>{recruiter.name}</option>)}
+            </select>
+            <select
+              value={filters.aging}
+              onChange={(event) => setFilters((current) => ({ ...current, aging: event.target.value }))}
+              className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
+              aria-label={t(locale, 'recruiting.filterAging')}
+            >
+              <option value="all">{t(locale, 'recruiting.filterAnyTime')}</option>
+              <option value="stalled">{t(locale, 'recruiting.filterStalled')}</option>
+            </select>
+            <select
+              value={filters.fit}
+              onChange={(event) => setFilters((current) => ({ ...current, fit: event.target.value }))}
+              className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
+              aria-label={t(locale, 'recruiting.filterFit')}
+            >
+              <option value="all">{t(locale, 'recruiting.filterAnyFit')}</option>
+              <option value="high">{t(locale, 'recruiting.filterHighFit')}</option>
+            </select>
+            <label className="flex min-h-touch items-center gap-2 rounded-control border border-ink/12 bg-surface px-2.5 font-ui text-xs text-ink-muted">
+              <input type="checkbox" checked={filters.notes} onChange={(event) => setFilters((current) => ({ ...current, notes: event.target.checked }))} className="accent-brand-500" />
+              {t(locale, 'recruiting.filterWithNotes')}
+            </label>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-2">
+            <label className="flex items-center gap-2 font-ui text-xs text-ink-muted">
+              {t(locale, 'recruiting.vacancyOwner')}
+              <select
+                value={workspace.vacancyOwnerUserId || ''}
+                onChange={(event) => void updateVacancyOwner(event.target.value)}
+                disabled={workspaceLoading}
+                className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 text-xs text-ink"
+              >
+                <option value="">{t(locale, 'recruiting.filterUnassigned')}</option>
+                {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
+              </select>
+            </label>
+            {!workspace.vacancyOwnerUserId ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-xs text-warning">{t(locale, 'recruiting.ownerMissing')}</span> : null}
+            <button type="button" className="ml-auto min-h-touch rounded-control border border-brand-500/30 bg-brand-500/[0.07] px-3 font-ui text-xs font-semibold text-brand-600" onClick={saveView}>
+              {t(locale, 'recruiting.savedViewSave')}
+            </button>
+            {(workspace.views || []).map((view) => (
+              <span key={view.id} className="inline-flex overflow-hidden rounded-control border border-ink/10 bg-surface">
+                <button type="button" className="min-h-touch px-2.5 font-ui text-xs text-ink-muted hover:text-ink" onClick={() => applyView(view)}>{view.name}</button>
+                <button type="button" className="min-h-touch border-l border-ink/10 px-2 text-danger" aria-label={t(locale, 'recruiting.savedViewDelete')} onClick={() => void removeView(view)}>×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {err ? <p className="mb-2.5 mt-0 font-mono text-xs text-danger">{err}</p> : null}
 
       {!loading && !hasAny ? (
@@ -178,9 +360,13 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
         />
       ) : null}
 
-      {hasAny && (
-        <div className="kanban-scroll overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
-          <div className="flex min-w-max items-start gap-2.5">
+      {!loading && hasAny && !hasFiltered ? (
+        <EmptyState title={t(locale, 'recruiting.pipelineNoFilterResults')} className="py-4" />
+      ) : null}
+
+      {hasAny && hasFiltered && (
+        <div className="kanban-scroll overflow-x-visible pb-2 md:overflow-x-auto md:[-webkit-overflow-scrolling:touch]">
+          <div className="flex w-full flex-col items-stretch gap-2.5 md:min-w-max md:flex-row md:items-start">
             {visibleStages.map((stage) => {
               const cards = grouped[stage.id] || [];
               const isDropTarget = dragOverStage === stage.id;
@@ -204,7 +390,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                   }}
                   className={cn(
                     'shrink-0 rounded-xl outline outline-2 outline-offset-[3px] transition-[width,outline-color] duration-100',
-                    compact ? 'w-[184px]' : 'w-[220px]'
+                    compact ? 'w-full md:w-[184px]' : 'w-full md:w-[220px]'
                   )}
                   style={{
                     outlineColor: isDropTarget ? stage.color : 'transparent',
@@ -221,6 +407,12 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                       borderTopColor: stage.color,
                     }}
                   >
+                    <button
+                      type="button"
+                      className="-m-1 flex min-h-touch w-full items-center gap-1.5 p-1 text-left md:pointer-events-none md:min-h-0"
+                      aria-expanded={!collapsedStages.includes(stage.id)}
+                      onClick={() => setCollapsedStages((current) => current.includes(stage.id) ? current.filter((id) => id !== stage.id) : [...current, stage.id])}
+                    >
                     <span
                       className="inline-block h-[7px] w-[7px] shrink-0 rounded-full"
                       style={{ background: stage.color }}
@@ -244,11 +436,16 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                         {stalled > 0 ? t(locale, 'recruiting.pipelineStalled', { n: stalled }) : null}
                       </span>
                     ) : null}
+                    <span className="ml-auto font-ui text-[11px] text-ink-muted md:hidden">
+                      {t(locale, collapsedStages.includes(stage.id) ? 'panel.common.expand' : 'panel.common.collapse')}
+                    </span>
+                    </button>
                   </div>
                   <div
                     onDragOver={(e) => e.preventDefault()}
                     className={cn(
                       'flex flex-col gap-[7px] transition-[min-height] duration-100',
+                      collapsedStages.includes(stage.id) && 'hidden md:flex',
                       isDropTarget ? 'min-h-[60px]' : 'min-h-[30px]'
                     )}
                   >
@@ -397,6 +594,19 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                               {t(locale, 'recruiting.withNotes')}
                             </div>
                           ) : null}
+                          <label className="mt-2 block">
+                            <span className="sr-only">{t(locale, 'recruiting.candidateOwner')}</span>
+                            <select
+                              value={r.ownerUserId || ''}
+                              onChange={(event) => void assignCandidate(r, event.target.value)}
+                              onClick={(event) => event.stopPropagation()}
+                              className="ui-select min-h-touch w-full rounded-control border border-ink/10 bg-canvas px-2 font-ui text-[11px] text-ink-muted"
+                              aria-label={t(locale, 'recruiting.candidateOwner')}
+                            >
+                              <option value="">{t(locale, 'recruiting.filterUnassigned')}</option>
+                              {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
+                            </select>
+                          </label>
                           <label className="mt-2 block md:hidden">
                             <span className="sr-only">{t(locale, 'recruiting.moveToStage')}</span>
                             <select

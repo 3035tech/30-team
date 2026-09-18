@@ -97,6 +97,7 @@ export async function POST(request) {
     details,
     jobRoleId,
     pipelineTemplateId: body.pipelineTemplateId,
+    ownerUserId: body.ownerUserId,
   });
   if (!created.ok) return apiError(request, created.errorCode || ERR.INVALID_DATA, 400);
 

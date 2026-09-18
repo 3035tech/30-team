@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error';
+import { auditFromRequest } from '../../../../../lib/audit';
 import {
   CAP,
   getSessionPayload,
@@ -50,6 +51,16 @@ export async function PATCH(request, { params }) {
   if (!result.ok) {
     const status = result.errorCode === 'NOT_FOUND' ? 404 : 400;
     return apiError(request, result.errorCode || 'INVALID_DATA', status);
+  }
+  if (body.ownerUserId !== undefined) {
+    await auditFromRequest(request, {
+      actorUserId: payload?.userId || payload?.id || null,
+      companyId: current.companyId,
+      action: 'recruiting.vacancy.owner_updated',
+      targetType: 'vacancy',
+      targetId: id,
+      metadata: { ownerUserId: result.vacancy.ownerUserId || null },
+    });
   }
 
   return NextResponse.json(result.vacancy);

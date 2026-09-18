@@ -1307,6 +1307,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
                       </span>
                     ) : null}
+                    <span className={cn(META, !v.ownerName && 'text-warning')}>
+                      {v.ownerName
+                        ? t(locale, 'recruiting.ownerNamed', { name: v.ownerName })
+                        : t(locale, 'recruiting.ownerMissing')}
+                    </span>
                     {employmentTypeLabelKey(v.employmentType) ? (
                       <span className={META}>
                         {t(locale, employmentTypeLabelKey(v.employmentType))}
@@ -1837,6 +1842,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
                         </span>
                       ) : null}
+                      <span className={cn(META, !v.ownerName && 'text-warning')}>
+                        {v.ownerName
+                          ? t(locale, 'recruiting.ownerNamed', { name: v.ownerName })
+                          : t(locale, 'recruiting.ownerMissing')}
+                      </span>
                     </div>
 
                     {token ? (

@@ -37,6 +37,7 @@ export const GET = withAdminApi(
     sources: stats.sources,
     byType: stats.byType,
     stagePerformance: stats.stagePerformance,
+    bottlenecks: stats.bottlenecks,
   });
   }
 );

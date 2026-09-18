@@ -39,4 +39,14 @@ describe('module hardening', () => {
     assert.match(route, /companyFrom: 'body'/);
     assert.doesNotMatch(route, /description|salary|candidate/i);
   });
+
+  it('ships tenant-scoped recruiting ownership and saved views', () => {
+    const migration = source('migrations/113_recruiting_workspace.sql');
+    assert.match(migration, /owner_user_id/);
+    assert.match(migration, /recruiting_candidate_assignments/);
+    assert.match(migration, /recruiting_saved_views/);
+    const route = source('app/api/admin/recruiting-workspace/route.js');
+    assert.match(route, /withAdminApi/);
+    assert.match(route, /CAP\.VACANCIES_MANAGE/);
+  });
 });

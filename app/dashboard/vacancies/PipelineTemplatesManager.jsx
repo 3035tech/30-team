@@ -154,6 +154,16 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
 
   if (loading) return <AppLoading variant="panel" />;
 
+  const templateWarnings = (template) => {
+    const warnings = [];
+    if (!template.isDefault && Number(template.vacancyCount || 0) === 0) warnings.push(t(locale, 'panel.pipelineTemplates.warningUnused'));
+    const updatedAt = template.updatedAt ? new Date(template.updatedAt).getTime() : null;
+    if (!template.isDefault && updatedAt && Date.now() - updatedAt > 180 * 86400000) warnings.push(t(locale, 'panel.pipelineTemplates.warningStale'));
+    const labels = (template.stages || []).map((stage) => String(locale === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)).trim().toLocaleLowerCase(locale));
+    if (new Set(labels).size !== labels.length) warnings.push(t(locale, 'panel.pipelineTemplates.warningDuplicateStages'));
+    return warnings;
+  };
+
   return (
     <ContentEnter animKey={(templates || []).map((item) => item.id).join('-')}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -198,6 +208,7 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
       <div className="overflow-hidden rounded-control border border-ink/10 bg-surface">
         {templates.map((template) => {
           const busy = busyId === template.id;
+          const warnings = templateWarnings(template);
           return (
             <article
               key={template.id}
@@ -225,6 +236,11 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
                       vacancies: template.vacancyCount,
                     })}
                   </p>
+                  {warnings.length ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {warnings.map((warning) => <span key={warning} className="rounded-full bg-warning/10 px-2 py-0.5 font-ui text-[11px] text-warning">{warning}</span>)}
+                    </div>
+                  ) : null}
               </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5 sm:flex-none sm:justify-end">

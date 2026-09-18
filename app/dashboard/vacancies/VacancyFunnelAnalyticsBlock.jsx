@@ -134,6 +134,24 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
         </div>
       ) : null}
 
+      {Array.isArray(data?.bottlenecks) && data.bottlenecks.length > 0 ? (
+        <div className={cn(S.card, 'border-warning/25 px-[18px] py-4')}>
+          <div className="mb-1 text-prose font-semibold text-ink">{t(locale, 'recruiting.analyticsBottlenecksTitle')}</div>
+          <p className="mb-3 mt-0 text-xs leading-relaxed text-ink-muted">{t(locale, 'recruiting.analyticsBottlenecksHint')}</p>
+          <ul className="m-0 space-y-2 pl-0">
+            {data.bottlenecks.map((signal) => (
+              <li key={`${signal.stageKey}-${signal.signal}`} className="list-none rounded-control border border-warning/20 bg-warning/[0.06] px-3 py-2 text-xs text-ink-muted">
+                <span className="font-ui font-semibold text-ink">{locale === 'en' ? (signal.labelEn || signal.labelPt) : (signal.labelPt || signal.labelEn)}</span>
+                {': '}
+                {signal.signal === 'slow_stage'
+                  ? t(locale, 'recruiting.analyticsSlowStage', { days: signal.avgDays, n: signal.entered })
+                  : t(locale, 'recruiting.analyticsLowConversion', { rate: Math.round(Number(signal.conversionToNext) * 100), n: signal.entered })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {!empty && Array.isArray(data?.sources) && data.sources.length > 0 ? (
         <div className={cn(S.card, 'px-[18px] py-4')}>
           <div className="mb-2.5 text-prose font-semibold text-ink">
