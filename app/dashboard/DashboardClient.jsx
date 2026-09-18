@@ -902,7 +902,7 @@ export default function DashboardClient({
         onClick={() => setSidebarOpen(false)}
         aria-hidden={!sidebarOpen}
       />
-      <div className="relative z-[1] flex min-h-screen">
+      <div className="relative flex min-h-screen">
         <aside
           id="dashboard-sidebar"
           className={cn(
@@ -1106,7 +1106,7 @@ export default function DashboardClient({
           </div>
         </aside>
 
-        <div className="db-main relative max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
+        <main className="db-main relative max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
           <NavLoadBar active={panelLoading} />
 
           <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
@@ -1666,7 +1666,7 @@ export default function DashboardClient({
           </>
           </ContentEnter>
           )}
-        </div>
+        </main>
       </div>
     </div>
     {can(sessionAuth, CAP.HELP_VIEW) ? (

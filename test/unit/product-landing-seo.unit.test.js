@@ -10,11 +10,18 @@ assert.equal(pt.journeyStages.length, 4);
 assert.equal(en.journeyStages.length, 4);
 assert.match(pt.metaTitle, /recrutamento/i);
 assert.match(en.metaTitle, /recruiting/i);
+assert.match(pt.metaDescription, /RH|recrut|pessoas/i);
+assert.match(en.metaDescription, /HR|recruit|people/i);
+assert.match(pt.footerLegal, /não diagnóstico/i);
+assert.match(en.footerLegal, /not diagnosis/i);
 
 const llms = seo.buildProductLlmsTxt();
 assert.match(llms, /\/jobs\/{slug\}-\{id\}/);
 assert.match(llms, /\/companies\/\{companySlug\}/);
 assert.doesNotMatch(llms, /Public jobs: .*\/j\n/);
+assert.match(llms, /T1–T9/);
+assert.match(llms, /Motivadores|Motivators/);
+assert.match(llms, /não é diagnóstico clínico|not a clinical diagnosis/i);
 
 const jsonLd = JSON.parse(seo.buildProductLandingJsonLd('pt-BR'));
 const types = jsonLd['@graph'].map((entry) => entry['@type']);

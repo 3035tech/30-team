@@ -29,6 +29,22 @@ export async function fillLogin(page, { email, password } = HR) {
 }
 
 /**
+ * DTOV users may legitimately receive the first-access wizard. Complete its
+ * explicit skip action before exercising dashboard navigation behind it.
+ */
+export async function dismissManagerOnboarding(page) {
+  const skip = page.getByRole('button', { name: /pular|skip/i }).first();
+  try {
+    await skip.waitFor({ state: 'visible', timeout: 2_000 });
+  } catch {
+    // Existing demo users can already have completed onboarding.
+    return;
+  }
+  await skip.click();
+  await skip.waitFor({ state: 'hidden', timeout: 10_000 });
+}
+
+/**
  * HTML5 DnD for React handlers that use dataTransfer.setData/getData.
  * Playwright mouse dragTo often skips DataTransfer; this exercises the real onDrop path.
  */

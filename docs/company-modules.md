@@ -14,7 +14,7 @@ Commercial packs above per-user CAP. Early-adopter onboarding can pick modules; 
 | Who | Where |
 |---|---|
 | Any company-bound manager (`hr`, `direction`, tenant `admin`) | **Meu perfil** (`GET/PUT /api/me/company-modules`) |
-| Self-service manager | Also chooses the initial set in the onboarding wizard |
+| Any new company-bound manager | Also chooses the initial set in the onboarding wizard |
 | Super-admin | Empresas → editar/criar → Módulos comerciais (`GET/PUT /api/admin/company-modules`) and Usuários → módulos individuais |
 
 ## Rules
@@ -25,7 +25,7 @@ Commercial packs above per-user CAP. Early-adopter onboarding can pick modules; 
 - Public assessment tokens stay valid regardless of module.
 - Admin-only tabs (`users`, `companies`, …) stay available.
 - Compensation uses its own sensitive module/capabilities.
-- Checkboxes grouped visually (core / people / hire / ops); storage keys stay flat.
+- The onboarding objective suggests a narrow starting set; the manager reviews checkboxes grouped visually (core / people / hire / ops). Storage keys stay flat.
 
 ## Keys
 

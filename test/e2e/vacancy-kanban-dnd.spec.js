@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { HR, fillLogin, html5DragAndDrop } from './fixtures.js';
+import { HR, dismissManagerOnboarding, fillLogin, html5DragAndDrop } from './fixtures.js';
 
 const CANDIDATE = /Nina Barbosa/i;
 
@@ -31,6 +31,7 @@ test.describe('vacancy kanban drag-and-drop', () => {
     await page.goto('/login');
     await fillLogin(page, HR);
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await dismissManagerOnboarding(page);
 
     const sidebar = page.locator('#dashboard-sidebar');
     await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();

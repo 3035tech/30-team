@@ -4,7 +4,7 @@
  * specs separados para que uma falha continue localizável.
  */
 import { test, expect } from '@playwright/test';
-import { HR, PUBLIC, fillLogin } from './fixtures.js';
+import { HR, PUBLIC, dismissManagerOnboarding, fillLogin } from './fixtures.js';
 
 test('pilot journey: public job → manager pipeline → team', async ({ page }) => {
   await page.goto(PUBLIC.jobsIndex);
@@ -17,6 +17,7 @@ test('pilot journey: public job → manager pipeline → team', async ({ page })
   await page.goto('/login');
   await fillLogin(page, HR);
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+  await dismissManagerOnboarding(page);
 
   const sidebar = page.locator('#dashboard-sidebar');
   await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();

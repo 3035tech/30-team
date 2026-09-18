@@ -25,6 +25,8 @@ Objetos usam `companies/{companyId}/...` e nome opaco. Tokens são credenciais e
 
 ## Gate humano antes do cliente
 
+Registre responsável, data e resultado em [`pilot-go-live-signoff.md`](./pilot-go-live-signoff.md). A engenharia não substitui a aprovação jurídica dos textos públicos.
+
 - [ ] Responsável/canal de privacidade definidos.
 - [ ] Bases, finalidades, prazos e subprocessadores aprovados.
 - [ ] Termos e Política públicos aprovados e coerentes com módulos.
@@ -32,4 +34,3 @@ Objetos usam `companies/{companyId}/...` e nome opaco. Tokens são credenciais e
 - [ ] Logs pesquisados por token, senha, documento, respostas e SQL params.
 - [ ] Remuneração, DP e ouvidoria validados na matriz tenant.
 - [ ] Retenção de backup/S3 documentada com o provedor.
-

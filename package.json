@@ -10,6 +10,7 @@
     "db:validate-schema": "node scripts/validate-release-schema.js",
     "db:validate-schema:static": "node scripts/validate-release-schema.js --static",
     "ops:pilot-preflight": "node scripts/validate-pilot-integrations.js",
+    "release:pilot-check": "node scripts/validate-pilot-readiness.js",
     "db:test-motivators": "node test/unit/motivators-invite-flow.js",
     "test:ae-scoring": "node test/unit/ae-scoring.js",
     "db:seed": "node scripts/seed-data.js",

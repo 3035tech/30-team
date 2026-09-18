@@ -2,6 +2,9 @@
 
 Runbook enxuto para o primeiro cliente. Não depende de Sentry; use o provedor de logs e alertas disponível no ambiente. Sentry permanece fora desta versão.
 
+Feedback funcional e solicitações do cliente seguem [`pilot-support-runbook.md`](./pilot-support-runbook.md).
+O aceite consolidado fica em [`pilot-go-live-signoff.md`](./pilot-go-live-signoff.md).
+
 ## Resposta e alertas
 
 | Evento | Nível | Resposta | Evidência mínima |
@@ -17,10 +20,14 @@ Nunca copiar token, cookie, senha, documento, resposta de avaliação ou texto d
 ## Preflight de homologação
 
 ```bash
+npm run release:pilot-check
+npm run release:pilot-check -- --full
 npm run db:validate-schema
 npm run ops:pilot-preflight -- --write-storage
 PILOT_SMOKE_EMAIL=qa@empresa.com npm run ops:pilot-preflight -- --send-email
 ```
+
+`npm run release:pilot-check -- --integrations` inclui a verificação não destrutiva da configuração S3/SMTP. Escrita real e entrega de e-mail continuam opt-in pelos comandos acima.
 
 `--write-storage` cria e remove objetos opacos nos prefixos reais de logo, LMS e DP. Use `PILOT_PREFLIGHT_COMPANY_ID` com um tenant de homologação. O envio é opt-in. Conferir recebimento, spam, remetente e links; bounce é conferido no provedor SMTP.
 
@@ -44,4 +51,3 @@ Registre data, duração, tamanho, migration máxima e resultado, sem credenciai
 2. Revogar sessões (`session_version`) antes do novo acesso.
 3. Usar redefinição; nunca comunicar senha em texto.
 4. Auditar ator, empresa, horário e motivo, sem token/senha.
-

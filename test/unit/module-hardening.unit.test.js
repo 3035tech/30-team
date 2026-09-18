@@ -184,6 +184,16 @@ describe('module hardening', () => {
     assert.match(dashboard, /container\.scrollTop \+=/);
   });
 
+  it('onboards every new company manager except the unrestricted super admin', () => {
+    const auth = source('app/dashboard/resolve-dashboard-auth.js');
+    const wizard = source('app/_components/OnboardingWizard.jsx');
+    assert.match(auth, /!isSuperAdminPayload\(payload\) && !onboardingCompleted/);
+    assert.doesNotMatch(auth, /isSelfServiceOrigin/);
+    assert.match(wizard, /OBJECTIVE_MODULES/);
+    assert.match(wizard, /id: 'objective'/);
+    assert.match(wizard, /body\.modules = selectedModules/);
+  });
+
   it('retains focused employee and public SEO surfaces', () => {
     const employeeNav = source('app/_components/EmployeeSidebar.jsx');
     const landing = source('app/page.jsx');

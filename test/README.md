@@ -77,6 +77,8 @@ Só Playwright (app + DTOV já no ar em `:3010`):
 
 ```bash
 npm run test:browser
+# gate completo do piloto (DTOV + HTTP + browser + matriz tenant)
+npm run release:pilot-check -- --full
 # ou um spec:
 npx playwright test test/e2e/assessment-submit.spec.js
 npx playwright test test/e2e/vacancy-kanban-dnd.spec.js

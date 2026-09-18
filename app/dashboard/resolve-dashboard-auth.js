@@ -3,9 +3,8 @@ import { redirect } from 'next/navigation';
 import { verifyToken, COOKIE_NAME } from '../../lib/auth';
 import { queryRead } from '../../lib/db';
 import { normalizeLocale } from '../../lib/i18n';
-import { isAdminRole, isManagerRole } from '../../lib/permissions';
+import { isAdminRole, isManagerRole, isSuperAdminPayload } from '../../lib/permissions';
 import { attachCapabilityOverrides } from '../../lib/user-capabilities';
-import { isSelfServiceOrigin, resolveUserOrigin } from '../../lib/user-signup-origin';
 
 /**
  * Light auth for dashboard chrome (JWT + optional display name).
@@ -30,7 +29,7 @@ export async function resolveDashboardAuth() {
     email: null,
     displayName: null,
     onboardingCompleted: true, // default true (coluna pode não existir ainda)
-    /** Wizard “Primeiros passos” — só cohort /signup; admin/painel antigo não. */
+    /** Wizard “Primeiros passos” — todo gestor novo, exceto super admin. */
     showOnboardingWizard: false,
     capabilitiesCustomized: Boolean(payload?.capabilitiesCustomized),
     capabilityOverrides: Array.isArray(payload?.capabilityOverrides)
@@ -51,16 +50,9 @@ export async function resolveDashboardAuth() {
       if (u.rowCount) {
         const row = u.rows[0];
         const onboardingCompleted = row.onboardingCompleted !== false;
-        const origin = resolveUserOrigin({
-          signupSource: row.signupSource,
-          signupPending: row.signupPending,
-          signupMetadata: row.signupMetadata,
-        });
-        // Early-access wizard only — never for admin master or panel-created users.
+        // Todo gestor novo configura a empresa; super admin mantém acesso integral.
         const showOnboardingWizard =
-          !isAdmin &&
-          !onboardingCompleted &&
-          isSelfServiceOrigin(origin);
+          !isSuperAdminPayload(payload) && !onboardingCompleted;
         authUser = {
           ...authUser,
           email: row.email,

@@ -88,7 +88,7 @@ A partir da versão com migrations `051`, `052` e `053`:
 - **Bônus / remuneração variável** (proposta RH → aprovação; status no hub). Migration `090`.
 - **Auditoria** (`/dashboard?tab=audit`) — trilha append-only (super admin). Filtro **Empresa** por nome (alinha ao filtro do painel). Ver [`docs/audit-log.md`](docs/audit-log.md).
 - **Super admin sem empresa fixa:** use o filtro **Empresa** no topo (lembrado entre abas). Ops: `npm run db:create-super-admin`.
-- **Wizard “Primeiros passos”** só para cohort `/signup`. Usuários do painel/legado (migration `055`) não veem o modal de early access.
+- **Wizard “Primeiros passos”** para todo gestor novo vinculado a uma empresa (`onboarding_completed = FALSE`); começa pelo objetivo, sugere módulos e permite revisão. Super admin não recebe o wizard e mantém acesso integral.
 - **Inteligência comportamental** na Visão geral (`behavioralIntel`): no topo (funil recolhido); filtro ou **grupo salvo** (`teamGroup`); perfis, motivadores, forças/atenções (até 5), Top 5 e ações — agregado, hedged, sem nomes.
 - **Wizard de onboarding** (primeiro acesso):
   - 4 steps guiados: boas-vindas, criar vaga, convidar pessoas, recursos
@@ -212,6 +212,7 @@ A partir da migration `054`, `055` e `056`:
 | Arquivo / comando | Quando usar |
 |-------------------|-------------|
 | `npm run db:migrate` | Ambiente já existente — aplica `migrations/*.sql` pendentes |
+| `npm run release:pilot-check` | Gate local do piloto: schema estático, regressão offline, permissões/UI e contrato SEO |
 | `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — bootstrap base; depois rode `npm run db:migrate` |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
 | `npm run db:validate-schema` | Gate somente leitura: migrations aplicadas + contrato mínimo do schema |

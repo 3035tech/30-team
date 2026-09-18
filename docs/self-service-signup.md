@@ -158,7 +158,7 @@ CREATE INDEX idx_users_onboarding_pending
 
 ## Onboarding Wizard (Implementado)
 
-Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard quando `users.onboarding_completed = FALSE`.
+Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard de qualquer gestor vinculado a uma empresa quando `users.onboarding_completed = FALSE`. O super admin não recebe o wizard.
 
 ### Steps
 
@@ -167,17 +167,21 @@ Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard quando
    - Explicação dos limites do trial
    - CTA: "Começar"
 
-2. **Vacancy** (📋)
+2. **Objective + Modules**
+   - Escolha inicial: contratar melhor, desenvolver pessoas ou plataforma completa
+   - Sugestão de módulos revisável antes de salvar
+
+3. **Vacancy** (📋)
    - Convite para criar primeira vaga
    - Explicação dos 3 passos (nome, rubrica, link)
    - CTAs: "Criar vaga agora" ou "Criar depois"
 
-3. **Invite** (✉️)
+4. **Invite** (✉️)
    - Opção A: Convidar time (outros gestores)
    - Opção B: Usar link público (candidatos/employeees)
    - CTA: "Fazer depois"
 
-4. **Done** (🎉)
+5. **Done** (🎉)
    - Links para Overview e Guia (Help)
    - CTA: "Começar a usar o 30Team"
    - Marca `onboarding_completed = TRUE`

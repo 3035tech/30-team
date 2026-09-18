@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { TOK, HR, PUBLIC, fillLogin } from './fixtures.js';
+import { TOK, HR, PUBLIC, dismissManagerOnboarding, fillLogin } from './fixtures.js';
 
 test.describe('public pages', () => {
   for (const viewport of [
@@ -68,6 +68,7 @@ test.describe('dashboard navigation (HR)', () => {
     await page.goto('/login');
     await fillLogin(page, HR);
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await dismissManagerOnboarding(page);
 
     const sidebar = page.locator('#dashboard-sidebar');
     await expect(sidebar).toBeVisible();
@@ -89,6 +90,7 @@ test.describe('dashboard navigation (HR)', () => {
     await page.goto('/login');
     await fillLogin(page, HR);
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await dismissManagerOnboarding(page);
 
     const hamburger = page.getByRole('button', { name: /abrir menu|open menu/i });
     await expect(hamburger).toBeVisible();
