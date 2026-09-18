@@ -619,6 +619,28 @@ export function OverviewTab({
           enps.score != null &&
           Number.isFinite(Number(enps.score));
         const hasRet = ret && ret.count > 0;
+        const onboardingRows = [...(onb?.overdue || []), ...(onb?.dueSoon || [])].slice(0, 8);
+        const onboardingPeople = [];
+        const onboardingByPerson = new Map();
+        for (const row of onboardingRows) {
+          const personKey = String(row.candidateId || row.candidateName);
+          let person = onboardingByPerson.get(personKey);
+          if (!person) {
+            person = {
+              key: personKey,
+              candidateName: row.candidateName,
+              nav: row.nav,
+              milestones: [],
+            };
+            onboardingByPerson.set(personKey, person);
+            onboardingPeople.push(person);
+          }
+          person.milestones.push({
+            checkinId: row.checkinId,
+            milestoneDays: row.milestoneDays,
+            dueDate: row.dueDate,
+          });
+        }
         const signalN =
           overdueN +
           overduePlansN +
@@ -631,6 +653,12 @@ export function OverviewTab({
           plans: pdi?.activePlans || 0,
           climate: clima?.openSurveys || 0,
         });
+        const peopleOpsStats = [
+          { value: pdi?.activePlans || 0, label: t(locale, 'panel.overview.peopleOpsKpiActivePlans') },
+          { value: overdueN + overduePlansN, label: t(locale, 'panel.overview.peopleOpsKpiOverdue') },
+          { value: noPlanN, label: t(locale, 'panel.overview.peopleOpsKpiNoPlan') },
+          { value: clima?.openSurveys || 0, label: t(locale, 'panel.overview.peopleOpsKpiClimate') },
+        ];
 
         return (
           <div className={S.cardTight}>
@@ -674,88 +702,19 @@ export function OverviewTab({
                   </p>
                 ) : (
                   <>
-                    <div className="mb-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
-                    <StatMetricTile
-                      value={pdi?.activePlans || 0}
-                      label={t(locale, 'panel.overview.peopleOpsKpiActivePlans')}
-                      className="px-3 py-2.5"
-                    />
-                    <StatMetricTile
-                      value={overdueN + overduePlansN}
-                      label={t(locale, 'panel.overview.peopleOpsKpiOverdue')}
-                      className="px-3 py-2.5"
-                    />
-                    <StatMetricTile
-                      value={noPlanN}
-                      label={t(locale, 'panel.overview.peopleOpsKpiNoPlan')}
-                      className="px-3 py-2.5"
-                    />
-                    <StatMetricTile
-                      value={clima?.openSurveys || 0}
-                      label={t(locale, 'panel.overview.peopleOpsKpiClimate')}
-                      className="px-3 py-2.5"
-                    />
-                    </div>
-                    <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 xl:grid-cols-12 xl:items-start">
-                    {hasRet ? (
-                      <li className={cn(
-                        'rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-prose text-ink',
-                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-1' : 'xl:col-span-12'
-                      )}>
-                        {t(locale, 'panel.overview.peopleOpsRetention', {
-                          n: ret.count,
-                          days: ret.lookbackDays || 14,
-                          min: ret.minScore ?? 55,
-                        })}
-                      </li>
-                    ) : null}
-                    {hasOnb ? (
-                      <li className={cn(
-                        'rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-prose text-ink',
-                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-2' : 'xl:col-span-12'
-                      )}>
-                        <div className={cn(S.label, 'mb-1.5 text-2xs')}>
-                          {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
+                    <dl className="mb-3 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink/10 bg-ink/10 lg:grid-cols-4">
+                      {peopleOpsStats.map((stat) => (
+                        <div key={stat.label} className="bg-surface px-3.5 py-2.5">
+                          <dd className="m-0 text-lg font-medium leading-none text-ink">{stat.value}</dd>
+                          <dt className="mt-1.5 font-mono text-2xs uppercase tracking-wide text-ink-faint">
+                            {stat.label}
+                          </dt>
                         </div>
-                        {(onb.overdueCount || 0) > 0 ? (
-                          <div className="mb-1 font-mono text-2xs text-warning">
-                            {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
-                              n: onb.overdueCount,
-                            })}
-                          </div>
-                        ) : null}
-                        {(onb.dueSoonCount || 0) > 0 ? (
-                          <div className="mb-1.5 font-mono text-2xs text-ink-muted">
-                            {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
-                              n: onb.dueSoonCount,
-                            })}
-                          </div>
-                        ) : null}
-                        <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                          {[...(onb.overdue || []), ...(onb.dueSoon || [])]
-                            .slice(0, 8)
-                            .map((row) => (
-                              <li key={`onb-${row.checkinId}`}>
-                                <button
-                                  type="button"
-                                  className="w-full cursor-pointer rounded-control border border-transparent px-2 py-1.5 text-left hover:border-ink/12 hover:bg-ink/[0.03]"
-                                  onClick={() => go(row.nav)}
-                                >
-                                  <span className="block text-xs text-ink">{row.candidateName}</span>
-                                  <span className="block font-mono text-2xs text-ink-muted">
-                                    {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
-                                      days: row.milestoneDays,
-                                      date: row.dueDate || '—',
-                                    })}
-                                  </span>
-                                </button>
-                              </li>
-                            ))}
-                        </ul>
-                      </li>
-                    ) : null}
+                      ))}
+                    </dl>
+                    <ul className="m-0 list-none gap-3 p-0 xl:columns-2">
                     {hasPdi ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink xl:col-span-7 xl:col-start-1 xl:row-span-4 xl:row-start-1">
+                      <li className="mb-3 break-inside-avoid rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink xl:break-after-column">
                         {pdi.donePct != null
                           ? t(locale, 'panel.overview.peopleOpsPdi', {
                               plans: pdi.activePlans,
@@ -972,8 +931,61 @@ export function OverviewTab({
                         ) : null}
                       </li>
                     ) : null}
+                    {hasRet ? (
+                      <li className="mb-3 break-inside-avoid rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-prose text-ink">
+                        {t(locale, 'panel.overview.peopleOpsRetention', {
+                          n: ret.count,
+                          days: ret.lookbackDays || 14,
+                          min: ret.minScore ?? 55,
+                        })}
+                      </li>
+                    ) : null}
+                    {hasOnb ? (
+                      <li className="mb-3 break-inside-avoid rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-prose text-ink">
+                        <div className={cn(S.label, 'mb-1.5 text-2xs')}>
+                          {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
+                        </div>
+                        {(onb.overdueCount || 0) > 0 ? (
+                          <div className="mb-1 font-mono text-2xs text-warning">
+                            {t(locale, 'panel.overview.peopleOpsOnboardingOverdue', {
+                              n: onb.overdueCount,
+                            })}
+                          </div>
+                        ) : null}
+                        {(onb.dueSoonCount || 0) > 0 ? (
+                          <div className="mb-1.5 font-mono text-2xs text-ink-muted">
+                            {t(locale, 'panel.overview.peopleOpsOnboardingSoon', {
+                              n: onb.dueSoonCount,
+                            })}
+                          </div>
+                        ) : null}
+                        <ul className="m-0 flex list-none flex-col divide-y divide-info/10 p-0">
+                          {onboardingPeople.map((person) => (
+                              <li key={`onb-person-${person.key}`}>
+                                <button
+                                  type="button"
+                                  className="w-full cursor-pointer rounded-control border border-transparent px-2 py-2 text-left hover:border-ink/12 hover:bg-ink/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                                  onClick={() => go(person.nav)}
+                                >
+                                  <span className="block text-xs font-medium text-ink">{person.candidateName}</span>
+                                  <span className="mt-1 flex flex-wrap gap-x-2 gap-y-1 font-mono text-2xs text-ink-muted">
+                                    {person.milestones.map((milestone) => (
+                                      <span key={milestone.checkinId}>
+                                        {t(locale, 'panel.overview.peopleOpsOnboardingRow', {
+                                          days: milestone.milestoneDays,
+                                          date: milestone.dueDate || '—',
+                                        })}
+                                      </span>
+                                    ))}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                        </ul>
+                      </li>
+                    ) : null}
                     {hasEnps ? (
-                      <li className={hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-3' : 'xl:col-span-12'}>
+                      <li className="mb-3 break-inside-avoid">
                         <button
                           type="button"
                           className="w-full cursor-pointer rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-left text-prose text-ink hover:border-ink/20 hover:bg-ink/[0.03]"
@@ -994,10 +1006,7 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasClima ? (
-                      <li className={cn(
-                        'rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink',
-                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-4' : 'xl:col-span-12'
-                      )}>
+                      <li className="mb-3 break-inside-avoid rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink">
                         {clima.openSurveys > 0 || clima.draftSurveys > 0
                           ? t(locale, 'panel.overview.peopleOpsClimate', {
                               open: clima.openSurveys,
