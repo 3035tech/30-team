@@ -30,6 +30,7 @@ const REQUIRED_SCHEMA = Object.freeze({
   pipeline_templates: ['id', 'company_id', 'name', 'is_default'],
   lms_courses: ['id', 'company_id', 'title', 'description'],
   lms_lessons: ['id', 'course_id', 'title', 'description', 'content_url'],
+  mobile_refresh_sessions: ['id', 'family_id', 'user_id', 'membership_id', 'token_hash', 'expires_at', 'revoked_at'],
 });
 
 async function canonicalMigrationNames() {

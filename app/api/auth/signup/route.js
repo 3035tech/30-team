@@ -9,6 +9,10 @@ import { generateUniqueCompanySlug } from '../../../../lib/slugify.js';
 import { trackLandingEvent } from '../../../../lib/landing-analytics.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
 import { verifyTurnstileToken } from '../../../../lib/turnstile.js';
+import {
+  createSelfServiceSignupIdentity,
+  SELF_SERVICE_COMPANY_ACTION,
+} from '../../../../lib/self-service-signup.js';
 
 /**
  * Self-service signup: cria user pendente + company (ou associa a existente).
@@ -153,7 +157,7 @@ export async function POST(request) {
     // Criar company ou associar a existente por domain match
     const domain = emailClean.split('@')[1];
     let companyId;
-    let companyAction = 'created';
+    let companyAction = SELF_SERVICE_COMPANY_ACTION.CREATE;
 
     // Opção: buscar company existente por domain (opt-in via env — manter false em prod salvo intenção explícita)
     if (process.env.SIGNUP_DOMAIN_MATCH === 'true') {
@@ -171,26 +175,14 @@ export async function POST(request) {
 
       if (domainMatch.rowCount > 0) {
         companyId = domainMatch.rows[0].id;
-        companyAction = 'joined';
+        companyAction = SELF_SERVICE_COMPANY_ACTION.JOIN;
       }
     }
 
-    if (!companyId) {
-      // Criar nova company
-      const slug = await generateUniqueCompanySlug(companyName);
-      const companyRes = await query(
-        `INSERT INTO companies (name, slug, active, signup_auto_created)
-         VALUES ($1, $2, TRUE, TRUE)
-         RETURNING id`,
-        [String(companyName).trim(), slug]
-      );
-      companyId = companyRes.rows[0].id;
-    }
-
-    // Criar user pendente (active=FALSE até definir senha no link).
+    // Criar company + user + membership no mesmo commit.
     // Company nova → direction (dona do trial). Domain-match join → hr (menos privilégio).
+    const companySlug = companyId ? null : await generateUniqueCompanySlug(companyName);
     const passwordHash = await hashUnusablePassword();
-    const role = companyAction === 'joined' ? 'hr' : 'direction';
     const signupMetadata = {
       companyName: String(companyName).trim(),
       fullName: String(fullName).trim(),
@@ -199,20 +191,19 @@ export async function POST(request) {
       painPoints: String(painPoints).trim(),
     };
 
-    const userRes = await query(
-      `INSERT INTO users (
-        company_id, email, password_hash, role, locale,
-        active, signup_pending, signup_source, signup_metadata, deleted
-      ) VALUES ($1, $2, $3, $4, $5, FALSE, TRUE, 'early_access', $6, FALSE)
-      RETURNING id`,
-      [companyId, emailClean, passwordHash, role, locale || 'pt-BR', JSON.stringify(signupMetadata)]
-    );
-    const userId = userRes.rows[0].id;
-
-    // Atualizar company.signup_creator_user_id se for nova
-    if (companyAction === 'created') {
-      await query(`UPDATE companies SET signup_creator_user_id = $1 WHERE id = $2`, [userId, companyId]);
-    }
+    const created = await createSelfServiceSignupIdentity({
+      companyId,
+      companyAction,
+      companyName,
+      companySlug,
+      email: emailClean,
+      passwordHash,
+      locale,
+      signupMetadata,
+    });
+    const { userId } = created;
+    companyId = created.companyId;
+    const { role } = created;
 
     const issued = await issuePasswordSetupInvite(userId, {
       appUrl,
