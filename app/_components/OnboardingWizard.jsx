@@ -29,6 +29,7 @@ const STEPS = [
 export default function OnboardingWizard({ locale, userName, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState('');
   const [modulesTouched, setModulesTouched] = useState(false);
   const [selectedModules, setSelectedModules] = useState(() => [...SELECTABLE_COMPANY_MODULE_IDS]);
 
@@ -49,24 +50,36 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
   };
 
   const markComplete = async ({ skipModules = false } = {}) => {
+    if (completing) return false;
     setCompleting(true);
+    setCompleteError('');
     try {
       const body = {};
       if (!skipModules && modulesTouched) {
         const toStore = modulesSelectionForPersist(selectedModules);
         if (toStore != null) body.modules = toStore;
       }
-      await fetch('/api/admin/onboarding/complete', {
+      const res = await fetch('/api/admin/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (!res.ok) throw new Error(t(locale, 'onboarding.completeError'));
       if (onComplete) onComplete();
+      return true;
     } catch (err) {
       console.error('[onboarding] Complete error:', err);
+      setCompleteError(err?.message || t(locale, 'onboarding.completeError'));
+      return false;
     } finally {
       setCompleting(false);
     }
+  };
+
+  const completeAndNavigate = async (event, href) => {
+    event.preventDefault();
+    const completed = await markComplete();
+    if (completed && typeof window !== 'undefined') window.location.assign(href);
   };
 
   return (
@@ -106,6 +119,11 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
         {/* Content */}
         <div className="p-8">
+          {completeError ? (
+            <InlineCallout tone="danger" emphasis role="alert" className="mb-5 text-left">
+              {completeError}
+            </InlineCallout>
+          ) : null}
           {step.id === 'welcome' && (
             <div className="text-center">
               <div className="mb-4 flex justify-center text-brand-500">
@@ -228,7 +246,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <div className="flex gap-3">
                 <Link
                   href="/dashboard?tab=vacancies"
-                  onClick={() => markComplete()}
+                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=vacancies')}
+                  aria-disabled={completing}
                   className="flex-1 rounded-control border border-brand-500 bg-brand-500 px-4 py-3 text-center text-base text-white no-underline hover:bg-brand-600"
                 >
                   {t(locale, 'onboarding.vacancy.createCta')}
@@ -268,7 +287,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   </p>
                   <Link
                     href="/dashboard?tab=users"
-                    onClick={() => markComplete()}
+                    onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=users')}
+                    aria-disabled={completing}
                     className="inline-block rounded-control border border-brand-400 bg-brand-50 px-3 py-1.5 text-xs text-brand-700 no-underline hover:bg-brand-100"
                   >
                     {t(locale, 'onboarding.invite.teamCta')}
@@ -318,6 +338,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <div className="mb-6 grid gap-3 text-left sm:grid-cols-2">
                 <Link
                   href="/dashboard?tab=overview"
+                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=overview')}
+                  aria-disabled={completing}
                   className="rounded-card border border-ink/8 bg-ink/[0.02] p-4 no-underline hover:border-brand-300"
                 >
                   <div className="mb-2 text-brand-500">
@@ -333,6 +355,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
                 <Link
                   href="/dashboard?tab=help"
+                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=help')}
+                  aria-disabled={completing}
                   className="rounded-card border border-ink/8 bg-ink/[0.02] p-4 no-underline hover:border-brand-300"
                 >
                   <div className="mb-2 text-brand-500">

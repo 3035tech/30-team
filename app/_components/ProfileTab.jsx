@@ -102,6 +102,17 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       toast?.(t(locale, 'dashboard.profileModulesNoChange'), 'info');
       return;
     }
+    const removedAny = companyModulesBaseline.some(
+      (moduleId) => !companyModuleIds.includes(moduleId)
+    );
+    if (removedAny && feedback?.confirm) {
+      const confirmed = await feedback.confirm({
+        title: t(locale, 'dashboard.profileModulesConfirmTitle'),
+        message: t(locale, 'dashboard.profileModulesConfirmRemove'),
+        confirmLabel: t(locale, 'dashboard.profileModulesSave'),
+      });
+      if (!confirmed) return;
+    }
     setModulesSaving(true);
     setError('');
     setMsg('');
@@ -295,6 +306,9 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 <InlineCallout tone="info" className="text-xs text-ink-muted">
                   {t(locale, 'dashboard.profileModulesHint')}
                 </InlineCallout>
+                <p className="m-0 font-ui text-xs leading-relaxed text-ink-muted">
+                  {t(locale, 'dashboard.profileModulesScope')}
+                </p>
                 <CompanyModulesField
                   locale={locale}
                   selectedIds={companyModuleIds}

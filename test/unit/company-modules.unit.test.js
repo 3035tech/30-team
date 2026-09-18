@@ -107,8 +107,12 @@ describe('company modules entitlements', () => {
       'onboarding.modules.body',
       'onboarding.modules.hint',
       'onboarding.modules.allOn',
+      'onboarding.modules.selectionImpact',
       'onboarding.modules.selectAll',
       'dashboard.profileModulesHint',
+      'dashboard.profileModulesScope',
+      'dashboard.profileModulesConfirmRemove',
+      'onboarding.completeError',
       'panel.help.companyModulesBody',
     ];
     for (const locale of ['pt-BR', 'en']) {

@@ -14,6 +14,7 @@ import { cn } from '../../lib/cn';
 import { managerLoginUrl } from '../../lib/manager-client-session';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
+import { IconActionTip } from '../_components/IconActionTip';
 import { DateField } from '../_components/DateField';
 import { RosterEmptyHint } from '../_components/RosterEmptyHint';
 
@@ -963,42 +964,47 @@ export default function DashboardClient({
             </button>
           </div>
           {!navCollapsed ? (
-            <div className="mb-2 rounded-control border border-ink/10 bg-ink/[0.025] p-2.5">
-              <p className="mb-2 mt-0 px-0.5 font-ui text-xs font-medium text-ink-muted">
-                {t(locale, 'dashboard.workShortcuts')}
-              </p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {showVacancies ? (
+            <div
+              className="mb-2 flex items-center gap-1.5 border-b border-ink/[0.08] pb-3"
+              role="group"
+              aria-label={t(locale, 'dashboard.workShortcuts')}
+            >
+              {showVacancies ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-touch min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/25 bg-brand-500/[0.09] px-2.5 py-2 font-ui text-xs font-medium text-brand-700 hover:bg-brand-500/[0.14] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  onClick={() => { navigateWithOpts({ tab: 'vacancies', create: '1' }); setSidebarOpen(false); }}
+                >
+                  <Icon name="plus" className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{t(locale, 'dashboard.workNewVacancy')}</span>
+                </button>
+              ) : null}
+              {can(sessionAuth, CAP.TEAM_VIEW) ? (
+                <IconActionTip label={t(locale, 'dashboard.workFindPerson')}>
                   <button
                     type="button"
-                    className="col-span-2 inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/25 bg-brand-500/[0.09] px-2.5 py-2 font-ui text-xs font-medium text-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                    onClick={() => { navigateWithOpts({ tab: 'vacancies', create: '1' }); setSidebarOpen(false); }}
-                  >
-                    <Icon name="plus" />
-                    {t(locale, 'dashboard.workNewVacancy')}
-                  </button>
-                ) : null}
-                {can(sessionAuth, CAP.TEAM_VIEW) ? (
-                  <button
-                    type="button"
-                    className="inline-flex min-h-touch cursor-pointer items-center justify-center gap-1.5 rounded-control border border-ink/10 bg-surface px-2 py-2 font-ui text-[11px] leading-tight text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                    title={t(locale, 'dashboard.workFindPerson')}
+                    aria-label={t(locale, 'dashboard.workFindPerson')}
+                    className="inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/10 bg-transparent text-ink-muted hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                     onClick={() => { navigateWithOpts({ tab: 'team' }); setSidebarOpen(false); }}
                   >
-                    <Icon name="search" />
-                    {t(locale, 'dashboard.workFindPerson')}
+                    <Icon name="search" className="h-4 w-4" />
                   </button>
-                ) : null}
-                {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+                </IconActionTip>
+              ) : null}
+              {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+                <IconActionTip label={t(locale, 'dashboard.workPending')}>
                   <button
                     type="button"
-                    className="inline-flex min-h-touch cursor-pointer items-center justify-center gap-1.5 rounded-control border border-ink/10 bg-surface px-2 py-2 font-ui text-[11px] leading-tight text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                    title={t(locale, 'dashboard.workPending')}
+                    aria-label={t(locale, 'dashboard.workPending')}
+                    className="inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/10 bg-transparent text-ink-muted hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                     onClick={() => { navigateWithOpts({ tab: 'overview' }); setSidebarOpen(false); }}
                   >
-                    <Icon name="overview" />
-                    {t(locale, 'dashboard.workPending')}
+                    <Icon name="clipboard" className="h-4 w-4" />
                   </button>
-                ) : null}
-              </div>
+                </IconActionTip>
+              ) : null}
             </div>
           ) : null}
           <nav className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">

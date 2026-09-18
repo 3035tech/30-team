@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
@@ -22,6 +24,7 @@ export function CompanyModulesField({
   maxHeightClass = 'max-h-[280px]',
   showQuickActions = true,
 }) {
+  const fieldId = useId();
   const selected = new Set(selectedIds || []);
   const total = SELECTABLE_COMPANY_MODULE_IDS.length;
   const count = SELECTABLE_COMPANY_MODULE_IDS.filter((id) => selected.has(id)).length;
@@ -48,12 +51,17 @@ export function CompanyModulesField({
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className={cn(S.faint, 'mb-0')}>
-          {allOn
-            ? t(locale, 'onboarding.modules.allOn')
-            : t(locale, 'onboarding.modules.selectedCount', { n: count, total })}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2.5">
+        <div className="min-w-0" aria-live="polite">
+          <p className="mb-0 font-ui text-sm font-medium text-ink">
+            {allOn
+              ? t(locale, 'onboarding.modules.allOn')
+              : t(locale, 'onboarding.modules.selectedCount', { n: count, total })}
+          </p>
+          <p className={cn(S.faint, 'mb-0 mt-0.5')}>
+            {t(locale, 'onboarding.modules.selectionImpact')}
+          </p>
+        </div>
         {showQuickActions ? (
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -79,28 +87,30 @@ export function CompanyModulesField({
       <div
         className={cn(
           maxHeightClass,
-          'space-y-3 overflow-y-auto rounded-card border border-ink/8 bg-ink/[0.02] p-3'
+          'grid gap-3 overflow-y-auto rounded-card border border-ink/8 bg-ink/[0.02] p-3 sm:grid-cols-2'
         )}
         role="group"
         aria-label={t(locale, 'onboarding.modules.title')}
       >
         {COMPANY_MODULE_UI_GROUPS.map((group) => (
-          <div key={group.id}>
+          <section key={group.id} className="min-w-0">
             <p className={cn(S.label, 'mb-1.5 px-0.5')}>
               {t(locale, `onboarding.modules.group.${group.id}`)}
             </p>
-            <div className="space-y-1.5">
+            <div className="overflow-hidden rounded-control border border-ink/10 bg-white divide-y divide-ink/8">
               {group.moduleIds.map((id) => {
                 const locked = id === COMPANY_MODULE_CORE;
                 const on = selected.has(id);
-                const inputId = `company-mod-${id}`;
+                const inputId = `${fieldId}-company-mod-${id}`;
                 return (
                   <label
                     key={id}
                     htmlFor={inputId}
                     className={cn(
-                      'flex min-h-touch items-start gap-3 rounded-control border px-3 py-2',
-                      on ? 'border-brand-500/35 bg-brand-500/5' : 'border-ink/10 bg-white',
+                      'flex min-h-touch items-start gap-3 border-l-2 px-3 py-2.5 transition-colors',
+                      on
+                        ? 'border-l-brand-500 bg-brand-500/[0.045]'
+                        : 'border-l-transparent bg-white hover:bg-ink/[0.02]',
                       locked || disabled ? 'cursor-default opacity-90' : 'cursor-pointer'
                     )}
                   >
@@ -129,7 +139,7 @@ export function CompanyModulesField({
                 );
               })}
             </div>
-          </div>
+          </section>
         ))}
       </div>
     </div>
