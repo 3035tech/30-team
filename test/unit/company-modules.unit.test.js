@@ -113,6 +113,18 @@ describe('company modules entitlements', () => {
     assert.equal(tenantManagerCaps.has(CAP.VACANCIES_VIEW), false);
   });
 
+  it('derives compensation management from the selected compensation module', () => {
+    const caps = resolveCapabilities({
+      role: 'hr',
+      companyId: 10,
+      companyModules: ['core', 'compensation'],
+      capabilitiesCustomized: true,
+      capabilityOverrides: [{ capability: CAP.COMPENSATION_VIEW, granted: true }],
+    });
+    assert.equal(caps.has(CAP.COMPENSATION_VIEW), true);
+    assert.equal(caps.has(CAP.COMPENSATION_MANAGE), true);
+  });
+
   it('allows every company-bound manager to use profile module settings', () => {
     const route = readFileSync(join(root, 'app/api/me/company-modules/route.js'), 'utf8');
     assert.match(route, /isManagerRole\(payload\)/);

@@ -19,16 +19,18 @@ import {
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
 async function loadCandidateScope(candidateId, scope) {
+  const params = [candidateId];
+  const tenantFilter = scope.isAdmin ? '' : 'AND company_id = $2';
+  if (!scope.isAdmin) params.push(scope.companyId);
   const c = await query(
     `SELECT id, company_id AS "companyId",
             employment_status AS "employmentStatus"
-     FROM candidates WHERE id = $1 LIMIT 1`,
-    [candidateId]
+     FROM candidates
+     WHERE id = $1 ${tenantFilter}
+     LIMIT 1`,
+    params
   );
   if (c.rowCount === 0) return { error: ERR.NOT_FOUND };
-  if (!scope.isAdmin && String(c.rows[0].companyId) !== String(scope.companyId)) {
-    return { error: ERR.UNAUTHORIZED };
-  }
   return { candidate: c.rows[0] };
 }
 

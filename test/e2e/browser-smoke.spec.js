@@ -41,7 +41,7 @@ test.describe('public pages', () => {
     await expect(page).toHaveURL(/\/jobs\/engenheiro-fullstack-plataforma-\d+/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: /descrição da vaga|job description/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /candidatar|apply|iniciar teste/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /candidatar|apply|iniciar teste/i })).toBeVisible();
   });
 
   test('jobs index lists openings', async ({ page }) => {
@@ -72,9 +72,11 @@ test.describe('dashboard navigation (HR)', () => {
     const sidebar = page.locator('#dashboard-sidebar');
     await expect(sidebar).toBeVisible();
 
+    await sidebar.getByRole('button', { name: /pessoas|people/i }).click();
     await sidebar.getByRole('button', { name: /equipe|team/i }).click();
     await expect(page).toHaveURL(/tab=team/);
 
+    await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();
     await sidebar.getByRole('button', { name: /vagas|vacancies/i }).click();
     await expect(page).toHaveURL(/tab=vacancies/);
     await expect(page.getByText(/engenheiro|vaga|vacancy|criar|new/i).first()).toBeVisible({

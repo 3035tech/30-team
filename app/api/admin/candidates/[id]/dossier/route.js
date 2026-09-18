@@ -20,19 +20,20 @@ export const GET = withAdminApi(
     if (!Number.isFinite(candidateId) || candidateId <= 0) {
       return apiError(request, ERR.INVALID_PARAMS, 400);
     }
-
-    const cand = await queryRead(
-      `SELECT id, company_id AS "companyId" FROM candidates WHERE id = $1 LIMIT 1`,
-      [candidateId]
-    );
-    if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
-    const tenantCompanyId = Number(cand.rows[0].companyId);
-    if (!scope.isAdmin && String(tenantCompanyId) !== String(scope.companyId)) {
-      return apiError(request, ERR.UNAUTHORIZED, 401);
-    }
     if (!scope.isAdmin && !scope.companyId) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
     }
+
+    const cand = await queryRead(
+      `SELECT id, company_id AS "companyId"
+       FROM candidates
+       WHERE id = $1
+         ${scope.isAdmin ? '' : 'AND company_id = $2'}
+       LIMIT 1`,
+      scope.isAdmin ? [candidateId] : [candidateId, scope.companyId]
+    );
+    if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
+    const tenantCompanyId = Number(cand.rows[0].companyId);
 
     const locale = normalizeLocale(q?.locale || payload?.locale || 'pt-BR');
     const result = await buildPersonDossier(queryRead, {

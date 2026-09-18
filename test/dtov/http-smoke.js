@@ -23,6 +23,11 @@ const HR = {
   password: process.env.DEMO_TODOS_PASSWORD || 'DemoTodosDados!2026',
 };
 
+const DIRECTION = {
+  email: 'direction@todos-os-dados.demo',
+  password: process.env.DEMO_TODOS_PASSWORD || 'DemoTodosDados!2026',
+};
+
 /** Demo employee (seed Todos os Dados) — used for People/1:1 HTTP coverage. */
 const FIXTURE_PEOPLE = {
   searchName: 'Elena Ferreira',
@@ -116,6 +121,46 @@ async function login(base, creds) {
     throw new Error('login missing team30_session cookie');
   }
   return cookie;
+}
+
+async function seedForeignTenantFixture() {
+  const { Client } = await import('pg');
+  const client = new Client({
+    host: process.env.POSTGRES_HOST || '127.0.0.1',
+    port: Number(process.env.POSTGRES_PORT || 55432),
+    database: process.env.POSTGRES_DB || 'enneagram_dtov',
+    user: process.env.POSTGRES_USER || 'dtov',
+    password: process.env.POSTGRES_PASSWORD || 'dtov_local_only',
+    ssl: false,
+  });
+  await client.connect();
+  try {
+    const company = await client.query(
+      `INSERT INTO companies (name, slug, active, deleted)
+       VALUES ('Tenant Isolado DTOV', 'tenant-isolado-dtov', TRUE, FALSE)
+       RETURNING id`
+    );
+    const companyId = Number(company.rows[0].id);
+    const vacancy = await client.query(
+      `INSERT INTO vacancies (company_id, title, slug, status, deleted)
+       VALUES ($1, 'Vaga privada de outro tenant', 'vaga-privada-outro-tenant', 'open', FALSE)
+       RETURNING id`,
+      [companyId]
+    );
+    const candidate = await client.query(
+      `INSERT INTO candidates (company_id, full_name, email, employment_status)
+       VALUES ($1, 'Pessoa de outro tenant', 'pessoa@tenant-isolado.dtov', 'employee')
+       RETURNING id`,
+      [companyId]
+    );
+    return {
+      companyId,
+      vacancyId: Number(vacancy.rows[0].id),
+      candidateId: Number(candidate.rows[0].id),
+    };
+  } finally {
+    await client.end();
+  }
 }
 
 export async function runHttpSmoke(baseUrl) {
@@ -307,8 +352,7 @@ export async function runHttpSmoke(baseUrl) {
     ok('auth', 'login-hr', HR.email);
   } catch (e) {
     fail('auth', 'login-hr', e.message);
-    printSummary();
-    return results;
+    return printSummary();
   }
 
   let hrCompanyId = null;
@@ -318,6 +362,13 @@ export async function runHttpSmoke(baseUrl) {
     if (res.status === 200) {
       hrCompanyId = data?.companyId || data?.user?.companyId || null;
     }
+  }
+  let foreignTenant = null;
+  try {
+    foreignTenant = await seedForeignTenantFixture();
+    ok('tenant', 'foreign-fixture', `company=${foreignTenant.companyId}`);
+  } catch (e) {
+    fail('tenant', 'foreign-fixture', e?.message || e);
   }
   {
     const { res } = await req(base, '/api/me/notifications', { cookie: hrCookie });
@@ -412,6 +463,59 @@ export async function runHttpSmoke(baseUrl) {
       const open = vacancyList.find((v) => String(v?.status || '').toLowerCase() === 'open');
       vacancyId = open?.id || vacancyList[0]?.id || null;
       ok('vacancies', 'has-rows', `n=${vacancyList.length}`);
+    }
+  }
+  if (foreignTenant) {
+    const { res: vacancyRes } = await req(
+      base,
+      `/api/admin/vacancies/${foreignTenant.vacancyId}`,
+      { cookie: hrCookie }
+    );
+    await expectStatus('tenant', 'foreign-vacancy-hidden', vacancyRes.status, 404);
+
+    const { res: dossierRes } = await req(
+      base,
+      `/api/admin/candidates/${foreignTenant.candidateId}/dossier`,
+      { cookie: hrCookie }
+    );
+    await expectStatus('tenant', 'foreign-candidate-hidden', dossierRes.status, 404);
+
+    for (const [surface, path] of [
+      ['compensation', `/api/admin/candidates/${foreignTenant.candidateId}/compensation`],
+      ['dp', `/api/admin/candidates/${foreignTenant.candidateId}/dp`],
+    ]) {
+      const { res } = await req(base, path, { cookie: hrCookie });
+      await expectStatus('tenant', `foreign-${surface}-hidden`, res.status, 404);
+    }
+
+    const { res: overrideRes, data: overrideData } = await req(
+      base,
+      `/api/admin/vacancies?page=1&pageSize=20&companyId=${foreignTenant.companyId}`,
+      { cookie: hrCookie }
+    );
+    if (await expectStatus('tenant', 'company-override-ignored', overrideRes.status, 200)) {
+      const rows = Array.isArray(overrideData?.items) ? overrideData.items : [];
+      if (rows.some((row) => Number(row?.id) === foreignTenant.vacancyId)) {
+        fail('tenant', 'company-override-no-leak', 'foreign vacancy returned');
+      } else {
+        ok('tenant', 'company-override-no-leak', 'foreign vacancy absent');
+      }
+    }
+
+    try {
+      const directionCookie = await login(base, DIRECTION);
+      ok('auth', 'login-direction', DIRECTION.email);
+      for (const [surface, path] of [
+        ['vacancy', `/api/admin/vacancies/${foreignTenant.vacancyId}`],
+        ['dossier', `/api/admin/candidates/${foreignTenant.candidateId}/dossier`],
+        ['compensation', `/api/admin/candidates/${foreignTenant.candidateId}/compensation`],
+        ['dp', `/api/admin/candidates/${foreignTenant.candidateId}/dp`],
+      ]) {
+        const { res } = await req(base, path, { cookie: directionCookie });
+        await expectStatus('tenant', `direction-foreign-${surface}-hidden`, res.status, 404);
+      }
+    } catch (e) {
+      fail('auth', 'login-direction', e?.message || e);
     }
   }
   {
@@ -1032,7 +1136,7 @@ export async function runHttpSmoke(baseUrl) {
   // Companies/users — usually admin-only; HR should get 401/403
   {
     const { res } = await req(base, '/api/admin/companies?page=1&pageSize=10', { cookie: hrCookie });
-    await expectStatus('acl', 'hr-companies-denied-or-ok', res.status, [200, 401, 403]);
+    await expectStatus('acl', 'hr-companies-denied', res.status, [401, 403]);
   }
   {
     const { res } = await req(base, '/api/admin/users?page=1&pageSize=10', { cookie: hrCookie });
@@ -1049,6 +1153,17 @@ export async function runHttpSmoke(baseUrl) {
   }
 
   if (adminCookie) {
+    if (foreignTenant) {
+      for (const [surface, path] of [
+        ['vacancy', `/api/admin/vacancies/${foreignTenant.vacancyId}`],
+        ['dossier', `/api/admin/candidates/${foreignTenant.candidateId}/dossier`],
+        ['compensation', `/api/admin/candidates/${foreignTenant.candidateId}/compensation`],
+        ['dp', `/api/admin/candidates/${foreignTenant.candidateId}/dp`],
+      ]) {
+        const { res } = await req(base, path, { cookie: adminCookie });
+        await expectStatus('tenant', `admin-cross-tenant-${surface}`, res.status, 200);
+      }
+    }
     const { res, data: companiesBody } = await req(base, '/api/admin/companies?page=1&pageSize=10', {
       cookie: adminCookie,
     });
@@ -1338,7 +1453,7 @@ export async function runHttpSmoke(baseUrl) {
         } else ok('signup', 'login-after', 'session cookie');
       }
 
-      // E-mail já ativo → 409
+      // E-mail já ativo mantém resposta indistinguível do sucesso (anti-enumeração).
       {
         const { res, data } = await req(base, '/api/auth/signup', {
           method: 'POST',
@@ -1349,7 +1464,7 @@ export async function runHttpSmoke(baseUrl) {
             locale: 'pt-BR',
           },
         });
-        await expectStatus('signup', 'duplicate-active', res.status, [409], data?.errorCode || '');
+        await expectStatus('signup', 'duplicate-active', res.status, [200], data?.ok ? 'anti-enum' : '');
       }
     } catch (e) {
       fail('signup', 'flow-exception', e?.message || e);

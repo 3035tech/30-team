@@ -25,9 +25,9 @@ export async function GET(request, { params }) {
   const id = params?.id;
   if (!id) return apiError(request, ERR.INVALID_VACANCY, 400);
 
-  const v = await getVacancyById(id);
+  const v = await getVacancyById(id, scope.isAdmin ? {} : { companyId: scope.companyId });
   if (!v) return apiError(request, ERR.NOT_FOUND, 404);
-  if (!assertVacancyAccess(v, scope)) return apiError(request, ERR.UNAUTHORIZED, 401);
+  if (!assertVacancyAccess(v, scope)) return apiError(request, ERR.NOT_FOUND, 404);
 
   const rubric = await getVacancyRubric(id);
   return NextResponse.json({ ...(await attachVacancyActiveToken(v)), ...rubric });
@@ -42,15 +42,15 @@ export async function PATCH(request, { params }) {
   const id = params?.id;
   if (!id) return apiError(request, ERR.INVALID_VACANCY, 400);
 
-  const current = await getVacancyById(id);
+  const current = await getVacancyById(id, scope.isAdmin ? {} : { companyId: scope.companyId });
   if (!current) return apiError(request, ERR.NOT_FOUND, 404);
-  if (!assertVacancyAccess(current, scope)) return apiError(request, ERR.UNAUTHORIZED, 401);
+  if (!assertVacancyAccess(current, scope)) return apiError(request, ERR.NOT_FOUND, 404);
 
   const body = await request.json().catch(() => ({}));
   const result = await updateVacancy({ vacancyId: id, current, body });
   if (!result.ok) {
-    const status = result.errorCode === 'NOT_FOUND' ? 404 : 400;
-    return apiError(request, result.errorCode || 'INVALID_DATA', status);
+    const status = result.errorCode === ERR.NOT_FOUND ? 404 : 400;
+    return apiError(request, result.errorCode || ERR.INVALID_DATA, status);
   }
   if (body.ownerUserId !== undefined) {
     await auditFromRequest(request, {
@@ -75,12 +75,12 @@ export async function DELETE(request, { params }) {
   const id = params?.id;
   if (!id) return apiError(request, ERR.INVALID_VACANCY, 400);
 
-  const beforeDelete = await getVacancyById(id);
+  const beforeDelete = await getVacancyById(id, scope.isAdmin ? {} : { companyId: scope.companyId });
   if (!beforeDelete) return apiError(request, ERR.NOT_FOUND, 404);
-  if (!assertVacancyAccess(beforeDelete, scope)) return apiError(request, ERR.UNAUTHORIZED, 401);
+  if (!assertVacancyAccess(beforeDelete, scope)) return apiError(request, ERR.NOT_FOUND, 404);
 
   const result = await softDeleteVacancy({ vacancyId: id, beforeDelete });
-  if (!result.ok) return apiError(request, result.errorCode || 'NOT_FOUND', 404);
+  if (!result.ok) return apiError(request, result.errorCode || ERR.NOT_FOUND, 404);
 
   return NextResponse.json({ ok: true });
 }

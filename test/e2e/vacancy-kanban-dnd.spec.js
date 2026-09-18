@@ -33,6 +33,7 @@ test.describe('vacancy kanban drag-and-drop', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 
     const sidebar = page.locator('#dashboard-sidebar');
+    await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();
     await sidebar.getByRole('button', { name: /vagas|vacancies/i }).click();
     await expect(page).toHaveURL(/tab=vacancies/);
 

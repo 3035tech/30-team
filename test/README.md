@@ -13,6 +13,7 @@ test/
     run-full-app.js     # orquestra SQL → Next :3010 → HTTP → Playwright
   e2e/                  # Playwright (Chromium) — layout e navegação
     browser-smoke.spec.js
+    pilot-primary-journey.spec.js # aceite: vaga pública → pipeline → Equipe
     assessment-submit.spec.js   # B-001: /t assessment completo → resultado
     vacancy-kanban-dnd.spec.js  # B-002: DnD kanban da vaga (HR)
     fixtures.js         # tokens/creds + helpers (login, e-mail único, HTML5 DnD)
@@ -79,7 +80,11 @@ npm run test:browser
 # ou um spec:
 npx playwright test test/e2e/assessment-submit.spec.js
 npx playwright test test/e2e/vacancy-kanban-dnd.spec.js
+npx playwright test test/e2e/pilot-primary-journey.spec.js
 ```
+
+O aceite visual do piloto conecta a vaga pública ao pipeline autenticado e à
+Equipe. Submissão da avaliação e drag-and-drop ficam em specs mutáveis separados.
 
 **Flakes:** assessment depende do fade ~280ms entre questões (timeout do spec 180s). Kanban usa `DataTransfer` sintético (HTML5) porque o `dragTo` do Playwright nem sempre preenche `dataTransfer` nos handlers React; o spec é idempotente (move Nina a partir da coluna atual).
 

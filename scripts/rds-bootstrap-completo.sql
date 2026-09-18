@@ -1,5 +1,5 @@
 -- =============================================================================
--- 30Team — bootstrap completo no PostgreSQL (RDS ou outro)
+-- 30Team — bootstrap base no PostgreSQL (RDS ou outro)
 -- =============================================================================
 -- Execute conectado ao DATABASE que você criou (não na instância “postgres”
 -- template, a menos que esse seja o alvo).
@@ -13,7 +13,8 @@
 --      normalmente permitido). Se falhar, comente o bloco do admin e crie o
 --      usuário depois com outra ferramenta.
 --
--- Este arquivo equivale às migrations 001–005 + registro em schema_migrations.
+-- Este arquivo cria a base histórica. Sempre execute `npm run db:migrate`
+-- depois dele; migrations/ é a fonte canônica do schema atual.
 -- =============================================================================
 
 -- Extensão para gerar hash bcrypt compatível com bcryptjs (login da app)

@@ -8,6 +8,8 @@ Ideias de funcionalidades **ainda não implementadas**.
 
 **Auditoria UI/UX de todas as telas:** ver [`docs/BACKLOG-UI-AUDIT-ALL-SCREENS.md`](./BACKLOG-UI-AUDIT-ALL-SCREENS.md). O inventário `B-UIA-*` mapeia hierarquia, uso de espaço, densidade, navegação, ações, estados e responsividade em todas as superfícies do dashboard, colaborador e fluxos públicos.
 
+**Prioridade de lançamento do MVP:** ver [`docs/BACKLOG-MVP-LAUNCH.md`](./BACKLOG-MVP-LAUNCH.md). A lista aberta `MVP-02`–`MVP-16` separa bloqueadores do primeiro cliente, melhorias para os pilotos e escala condicionada a métricas reais. O gate `MVP-01` foi entregue.
+
 ## Como usar (humano + agente)
 
 | Ação | O que fazer |

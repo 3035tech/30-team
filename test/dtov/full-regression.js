@@ -418,7 +418,7 @@ async function runOfflineLibs() {
     if (!clima.includes('DEFAULT_CLIMATE_TEXT_PROMPTS_PT') || !clima.includes('textByQuestion')) {
       throw new Error('climate text questions missing');
     }
-    if (!clima.includes("'enps'") || !clima.includes('computeEnpsScore')) {
+    if (!clima.includes('CLIMATE_QUESTION_KIND.ENPS') || !clima.includes('enpsScoreFromCounts')) {
       throw new Error('climate enps missing');
     }
     const nine = await readFile(join(root, 'lib', 'people', 'nine-box.js'), 'utf8');

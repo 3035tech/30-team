@@ -212,8 +212,9 @@ A partir da migration `054`, `055` e `056`:
 | Arquivo / comando | Quando usar |
 |-------------------|-------------|
 | `npm run db:migrate` | Ambiente já existente — aplica `migrations/*.sql` pendentes |
-| `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — schema completo de uma vez |
+| `scripts/rds-bootstrap-completo.sql` | Postgres novo (RDS / local) — bootstrap base; depois rode `npm run db:migrate` |
 | `scripts/scripts-banco-pendentes.sql` | pgAdmin — bundle das migrações recentes (idempotente) |
+| `npm run db:validate-schema` | Gate somente leitura: migrations aplicadas + contrato mínimo do schema |
 | `scripts/seed-eval-20-employees.sql` | Massa de avaliação: 20 emp + **10 time interno** (PDI/clima/pulso/portal/…) + categorias/benefícios + Academy (tags) + 2 exits + 1 admin (`eval-20-demo`) |
 | `scripts/seed-demo-todos-os-dados.sql` | **Seed de apresentação** (base ≤080): empresa Todos os Dados, pipeline, People/GP, LMS, clima+eNPS, pulso, `/e` + `/employee`. **Módulos novos:** rode em seguida `scripts/seed-demo-todos-os-dados-modules.sql` (DP, mural/kudos, OKR ciclos, ouvidoria, banco de horas). Inbox HR: ~12 tipos `NOTIF`; colab: tipos `EMPLOYEE_NOTIF` |
 | `npm run db:seed-demo-todos-os-dados:confirm` | **Mesmo tenant via JS (canônico, até 103)** — todos os colaboradores com dados em todos os módulos; DTOV / local. Exige `CONFIRM_DEMO_PURGE=1` (já no script `:confirm`) |
@@ -539,6 +540,8 @@ Hot paths / EXPLAIN: [`docs/performance-hotpaths.md`](docs/performance-hotpaths.
 ---
 
 ## Deploy (VPS / EC2)
+
+Antes do piloto, use `docs/release-runbook.md`, `docs/pilot-operations-runbook.md` e `docs/pilot-privacy-checklist.md`. O preflight externo é `npm run ops:pilot-preflight`; escrita S3 e envio SMTP exigem flags explícitas.
 
 1. Docker + Compose na máquina  
 2. Clone + `.env`  

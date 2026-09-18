@@ -87,6 +87,7 @@ const ASSIGNABLE_CAPS = [
   'exit_analysis.view',
   'learning.view',
   'benefits.view',
+  'compensation.view',
   'whistleblowing.view',
   'dp.view',
   'company_feed.view',
