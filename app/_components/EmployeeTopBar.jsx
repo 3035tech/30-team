@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { t } from '../../lib/i18n';
+import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
@@ -12,6 +12,8 @@ import { DarkModeToggle } from './DarkModeProvider';
 import LanguageSelect from './LanguageSelect';
 import { EmptyState } from './EmptyState';
 import { Icon } from './Icon';
+import { AppLoading } from './AppLoading';
+import { useAppFeedback } from './AppFeedback';
 import { useEmployeeNav } from './EmployeeNavContext';
 import { employeeLoginUrl, redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 
@@ -26,11 +28,16 @@ export function EmployeeTopBar({
   companyName,
 }) {
   const router = useRouter();
+  const { promptForm, toast } = useAppFeedback();
   const { focusSection } = useEmployeeNav();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [companyChoices, setCompanyChoices] = useState([]);
+  const [companyChoicesLoaded, setCompanyChoicesLoaded] = useState(false);
+  const [companyChoicesLoading, setCompanyChoicesLoading] = useState(false);
+  const [switchingCompany, setSwitchingCompany] = useState(false);
   const wrapRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -46,6 +53,23 @@ export function EmployeeTopBar({
       /* ignore */
     }
   }, [router]);
+
+  const loadCompanyChoices = useCallback(async () => {
+    if (companyChoicesLoaded || companyChoicesLoading) return;
+    setCompanyChoicesLoading(true);
+    try {
+      const res = await fetch('/api/employee/companies', { cache: 'no-store' });
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
+      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      setCompanyChoices(Array.isArray(data.items) ? data.items : []);
+      setCompanyChoicesLoaded(true);
+    } catch {
+      /* Keep the profile menu usable when company discovery is unavailable. */
+    } finally {
+      setCompanyChoicesLoading(false);
+    }
+  }, [companyChoicesLoaded, companyChoicesLoading, router]);
 
   useEffect(() => {
     const clearPoll = () => {
@@ -157,6 +181,98 @@ export function EmployeeTopBar({
     router.replace(employeeLoginUrl({ reason: 'logout' }));
   };
 
+  const postCompanySwitch = async (payload) => {
+    const res = await fetch('/api/employee/companies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, locale }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(
+        data.errorCode
+          ? errorMessage(locale, data.errorCode, data.error)
+          : data.error || t(locale, 'employeeHome.switchCompanyError')
+      );
+    }
+    return data;
+  };
+
+  const switchCompany = async () => {
+    const targets = companyChoices.filter((item) => !item.current);
+    if (!targets.length || switchingCompany) return;
+    setProfileOpen(false);
+    const values = await promptForm({
+      title: t(locale, 'employeeHome.switchCompanyTitle'),
+      message: t(locale, 'employeeHome.switchCompanyHint'),
+      confirmLabel: t(locale, 'employeeHome.switchCompanyConfirm'),
+      fields: [
+        {
+          key: 'companyId',
+          type: 'select',
+          label: t(locale, 'employeeHome.switchCompanyLabel'),
+          defaultValue: String(targets[0].companyId),
+          options: targets.map((item) => ({
+            value: String(item.companyId),
+            label: item.companyName || t(locale, 'employeeHome.pickCompanyFallback'),
+          })),
+        },
+        {
+          key: 'password',
+          type: 'password',
+          label: t(locale, 'employeeHome.switchCompanyPassword'),
+          autoComplete: 'current-password',
+          required: true,
+          maxLength: 200,
+        },
+      ],
+    });
+    if (!values) return;
+    if (!values.password) {
+      toast(t(locale, 'employeeHome.switchCompanyPasswordRequired'), 'warning');
+      return;
+    }
+
+    setSwitchingCompany(true);
+    try {
+      let result = await postCompanySwitch({
+        companyId: Number(values.companyId),
+        password: values.password,
+      });
+      if (result.requires2fa && result.challengeToken) {
+        const codeValues = await promptForm({
+          title: t(locale, 'login.twoFaTitle'),
+          message: t(locale, 'login.twoFaIntro'),
+          confirmLabel: t(locale, 'login.twoFaSubmit'),
+          fields: [
+            {
+              key: 'code',
+              label: t(locale, 'login.twoFaCode'),
+              placeholder: '000000',
+              maxLength: 6,
+              inputMode: 'numeric',
+              autoComplete: 'one-time-code',
+              required: true,
+            },
+          ],
+        });
+        if (!codeValues) return;
+        result = await postCompanySwitch({
+          challengeToken: result.challengeToken,
+          code: codeValues.code,
+        });
+      }
+      if (result.ok && typeof window !== 'undefined') {
+        window.location.assign('/employee');
+      }
+    } catch (err) {
+      toast(err?.message || t(locale, 'employeeHome.switchCompanyError'), 'error');
+      setProfileOpen(true);
+    } finally {
+      setSwitchingCompany(false);
+    }
+  };
+
   return (
     <header className="emp-topbar sticky top-0 z-30 border-b border-ink/10 bg-canvas/90 backdrop-blur">
       <div
@@ -260,24 +376,71 @@ export function EmployeeTopBar({
           <div className="relative">
             <button
               type="button"
-              className={cn(S.btnGhost, 'min-h-touch max-w-[140px] truncate px-2 text-xs')}
+              className={cn(
+                S.btnGhost,
+                'flex min-h-touch max-w-[168px] items-center gap-1.5 px-2 text-xs'
+              )}
               aria-label={t(locale, 'employeeHome.profileMenuAria')}
               aria-expanded={profileOpen}
               aria-haspopup="true"
               aria-controls="employee-profile-menu"
               onClick={() => {
-                setProfileOpen((v) => !v);
+                const nextOpen = !profileOpen;
+                setProfileOpen(nextOpen);
                 setNotifOpen(false);
+                if (nextOpen) void loadCompanyChoices();
               }}
             >
-              {displayName || t(locale, 'employeeHome.profile')}
+              <Icon name="user" className="h-4 w-4 shrink-0 opacity-75" />
+              <span className="truncate">{displayName || t(locale, 'employeeHome.profile')}</span>
+              <Icon
+                name="chevronDown"
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0 opacity-55 transition-transform',
+                  profileOpen && 'rotate-180'
+                )}
+              />
             </button>
             {profileOpen ? (
               <div
                 id="employee-profile-menu"
-                className="absolute right-0 z-50 mt-1 w-44 rounded-control border border-ink/12 bg-surface p-1 shadow-card"
+                className="absolute right-0 z-50 mt-1 w-60 rounded-control border border-ink/12 bg-surface p-1 shadow-card"
                 role="menu"
               >
+                {companyName ? (
+                  <div className="mb-1 border-b border-ink/8 px-2.5 py-2">
+                    <span className="block text-2xs text-ink-faint">
+                      {t(locale, 'employeeHome.currentCompany')}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-medium text-ink">
+                      {companyName}
+                    </span>
+                  </div>
+                ) : null}
+                {companyChoicesLoading ? (
+                  <div className="px-2.5 py-2">
+                    <AppLoading
+                      locale={locale}
+                      variant="inline"
+                      label={t(locale, 'employeeHome.checkingCompanies')}
+                    />
+                  </div>
+                ) : null}
+                {companyChoices.length > 1 ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={switchingCompany}
+                    className={cn(
+                      S.btnGhost,
+                      'flex min-h-touch w-full items-center justify-start gap-2.5 disabled:cursor-default disabled:opacity-60'
+                    )}
+                    onClick={() => void switchCompany()}
+                  >
+                    <Icon name="building" className="h-4 w-4 shrink-0 opacity-80" />
+                    <span>{t(locale, 'employeeHome.switchCompany')}</span>
+                  </button>
+                ) : null}
                 <Link
                   href="/employee/profile"
                   role="menuitem"

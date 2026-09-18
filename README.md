@@ -323,7 +323,10 @@ npm run dev
    escolha vídeo/link ou PDF, retoma vídeo YouTube/Vimeo, PDF in-app, quiz,
    certificado print; hub resume prazos;
    jornada **Minha chegada**, **Meus OKRs**, mural/kudos/feedback,
-   notifs Motivadores/PDI/LMS/OKR; não acessa /dashboard).
+   notifs Motivadores/PDI/LMS/OKR; não acessa /dashboard). Quando o mesmo e-mail possui
+   vínculos em mais de uma empresa, o login permite escolher a empresa e o menu do perfil
+   permite trocar o contexto mediante senha do vínculo e 2FA, quando ativo. A troca substitui
+   a sessão inteira para preservar o isolamento por `company_id`.
    Magic link opcional. Ver `docs/employee-onboarding-journey.md`. /e/<token> continua sem conta.
 ```
 

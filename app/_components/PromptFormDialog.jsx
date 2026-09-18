@@ -38,6 +38,7 @@ import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneB
  *   whenTrue?: object, whenFalse?: object, // boolean: merge into values on toggle
  *   placeholder?: string,
  *   help?: string,
+ *   required?: boolean,
  *   rows?: number,
  *   maxLength?: number, // textarea
  *   minHeight?: number, // richText
@@ -71,6 +72,15 @@ function fieldIsDisabled(f, values) {
     }
   }
   return Boolean(f?.disabled);
+}
+
+function fieldHasValue(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'boolean') return value;
+  if (value && typeof value === 'object') {
+    return Boolean(value.file || String(value.url || '').trim());
+  }
+  return String(value ?? '').trim().length > 0;
 }
 
 /** Consecutive fields sharing `row` render in a 2-col grid. */
@@ -247,6 +257,10 @@ export function PromptFormDialog({
     }
   });
   const fieldGroups = groupFieldsByRow(visibleFields);
+  const missingRequired = visibleFields.some((f) => {
+    if (!f.required || fieldIsDisabled(f, values)) return false;
+    return !fieldHasValue(values[fieldKeyOf(f)]);
+  });
 
   const renderFieldBlock = (f) => {
     if (f.type === 'boolean') {
@@ -446,6 +460,8 @@ export function PromptFormDialog({
           value={values[fk] ?? ''}
           onChange={(e) => setField(fk, e.target.value)}
           disabled={Boolean(f.disabled)}
+          required={Boolean(f.required)}
+          aria-required={Boolean(f.required)}
           className={cn(dialogSelectClass, f.disabled && 'cursor-default opacity-60')}
         >
           {(f.options || []).map((opt) => (
@@ -540,6 +556,8 @@ export function PromptFormDialog({
           placeholder={f.placeholder || ''}
           rows={f.rows || 4}
           maxLength={f.maxLength || undefined}
+          required={Boolean(f.required)}
+          aria-required={Boolean(f.required)}
           className={dialogTextareaClass}
         />
       );
@@ -683,7 +701,12 @@ export function PromptFormDialog({
         onChange={(e) => setField(fk, e.target.value)}
         placeholder={f.placeholder || ''}
         className={dialogFieldClass}
-        autoComplete={f.type === 'password' ? 'new-password' : 'off'}
+        autoComplete={f.autoComplete || (f.type === 'password' ? 'new-password' : 'off')}
+        inputMode={f.inputMode}
+        maxLength={f.maxLength}
+        disabled={disabled}
+        required={Boolean(f.required)}
+        aria-required={Boolean(f.required)}
       />
     );
   };
@@ -742,8 +765,11 @@ export function PromptFormDialog({
             <button
               type="button"
               onClick={() => onSubmit?.(values)}
-              disabled={Boolean(uploadBusyKey)}
-              className={cn(dialogBtnPrimaryClass, uploadBusyKey && 'opacity-60')}
+              disabled={Boolean(uploadBusyKey) || missingRequired}
+              className={cn(
+                dialogBtnPrimaryClass,
+                (uploadBusyKey || missingRequired) && 'cursor-not-allowed opacity-55'
+              )}
             >
               {confirmLabel || t(locale, 'panel.common.save')}
             </button>

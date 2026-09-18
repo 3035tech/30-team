@@ -21,6 +21,10 @@ Migration `103_pre_onboarding_require_meet.sql`: `require_meet` na instância do
 - `GET /api/employee/home` inclui `journey` + tarefas próximas (14 dias).
 - `GET/PATCH /api/employee/onboarding` — leitura e confirmação (`employee_ack_at`).
 - UI: seção **Minha chegada** em `EmployeeHomeClient` (`EmployeeOnboardingJourneySection`).
+- Multiempresa: se o mesmo e-mail e a senha conferirem em mais de um vínculo, a entrada pede
+  a empresa. Dentro do portal, **Menu do perfil → Trocar empresa** autentica novamente o
+  vínculo de destino, respeita o 2FA dele e substitui o cookie da sessão. `GET/POST
+  /api/employee/companies` nunca mistura payloads: a página recarrega no novo `company_id`.
 
 Confirmações do colaborador **não** alteram status do RH — só registram ack para visibilidade.
 

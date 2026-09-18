@@ -8,6 +8,7 @@ import { EMPLOYMENT_STATUS, DEVELOPMENT_PLAN_ITEM_STATUS, DEVELOPMENT_PLAN_STATU
 import {
   completeEmployeePasswordSetup,
   consumeEmployeeMagicToken,
+  findEmployeesByEmail,
   generateEmployeeMagicToken,
   issueEmployeePasswordInvite,
   loginEmployeeWithPassword,
@@ -141,6 +142,19 @@ async function main() {
     }
 
     if (cloneId) {
+      const choices = await findEmployeesByEmail(query, { email: person.email });
+      assert.ok(choices.some((item) => Number(item.companyId) === Number(person.companyId)));
+      assert.ok(choices.some((item) => Number(item.companyId) === otherCompanyId));
+
+      const switched = await loginEmployeeWithPassword(query, {
+        email: person.email,
+        password: 'ColabTest!2026',
+        companyId: otherCompanyId,
+      });
+      assert.equal(switched.ok, true, switched.errorCode);
+      assert.equal(Number(switched.candidateId), Number(cloneId));
+      assert.equal(Number(switched.companyId), otherCompanyId);
+
       const multi = await loginEmployeeWithPassword(query, {
         email: person.email,
         password: 'ColabTest!2026',
