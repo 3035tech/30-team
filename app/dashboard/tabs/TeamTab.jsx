@@ -1332,6 +1332,7 @@ export function TeamTab({
                             employmentStatus={detail.candidate.employmentStatus}
                             companyId={detail.candidate.companyId}
                             canManage={canManageCompensation}
+                            navigateDashboard={navigateDashboard}
                           />
                           <BenefitAssignmentsBlock
                             locale={locale}

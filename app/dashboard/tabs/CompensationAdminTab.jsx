@@ -366,6 +366,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
             employmentStatus={historyPerson.employmentStatus}
             companyId={companyId}
             canManage={canManage}
+            navigateDashboard={navigateDashboard}
           />
         ) : null}
       </AdminRichFormDrawer>

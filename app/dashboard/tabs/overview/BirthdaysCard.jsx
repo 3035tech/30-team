@@ -48,7 +48,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
 
   if (loading) {
     return (
-      <div className={S.card}>
+      <div className={cn(S.card, 'h-full')}>
         <AppLoading locale={locale} variant="inline" label={t(locale, 'panel.birthdays.loading')} />
       </div>
     );
@@ -56,7 +56,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
 
   if (error || !data) {
     return (
-      <div className={S.card}>
+      <div className={cn(S.card, 'h-full')}>
         <p className={S.cardFaint}>{t(locale, 'panel.birthdays.loadError')}</p>
       </div>
     );
@@ -67,7 +67,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
   const empty = items.length === 0 && !company;
 
   return (
-    <div className={S.card}>
+    <div className={cn(S.card, 'h-full')}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className={cn(S.cardTitle, 'mb-1')}>{t(locale, 'panel.birthdays.title')}</h3>
@@ -91,7 +91,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
       </div>
 
       {company ? (
-        <div className="mb-3 rounded-control border border-brand-500/20 bg-brand-500/[0.06] px-3 py-2.5">
+        <div className="mb-2.5 rounded-control border border-brand-500/20 bg-brand-500/[0.06] px-3 py-2.5">
           <p className="m-0 font-mono text-2xs uppercase tracking-wide text-brand-600">
             {t(locale, 'panel.birthdays.kindCompany')}
           </p>
@@ -110,17 +110,17 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
       {empty ? (
         <p className="m-0 text-prose italic text-ink-faint">{t(locale, 'panel.birthdays.empty')}</p>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+        <ul className="m-0 list-none divide-y divide-ink/8 p-0">
           {items.map((row) => (
             <li
               key={`${row.kind}-${row.candidateId}-${row.nextOn}`}
-              className="flex flex-wrap items-baseline justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2"
+              className="flex flex-wrap items-baseline justify-between gap-2 px-1 py-2.5 first:pt-1 last:pb-0"
             >
               <div className="min-w-0">
                 {typeof navigateDashboard === 'function' ? (
                   <button
                     type="button"
-                    className="cursor-pointer truncate border-none bg-transparent p-0 text-left text-sm font-medium text-ink hover:text-brand-600"
+                    className="cursor-pointer truncate rounded-sm border-none bg-transparent p-0 text-left text-sm font-medium text-ink hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
                     onClick={() =>
                       navigateDashboard({
                         tab: 'team',

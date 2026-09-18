@@ -276,9 +276,9 @@ export function TeamBehavioralIntelBlock({
         <ContentEnter
           animKey={`bci|${selectedTeamGroupId || 'all'}|${meta.nEneagram}|${meta.nMotivators}`}
         >
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-12 xl:items-start">
           {/* 1. Profiles */}
-          <div className="flex flex-col gap-3">
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-7')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.profilesBase', { n: profiles.nPeople })}
@@ -289,8 +289,8 @@ export function TeamBehavioralIntelBlock({
               <>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {profiles.bars.map((b) => (
-                    <li key={b.type} className="flex items-center gap-3">
-                      <div className="w-[11rem] shrink-0 text-prose text-ink">
+                    <li key={b.type} className="flex items-center gap-2.5 sm:gap-3">
+                      <div className="w-28 shrink-0 truncate text-xs text-ink sm:w-44 sm:text-prose">
                         <span className="font-medium" style={{ color: b.color }}>
                           {b.name}
                         </span>
@@ -321,7 +321,7 @@ export function TeamBehavioralIntelBlock({
           </div>
 
           {/* 2. Motivators */}
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-5')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.motivatorsTitle')}</span>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.motivatorsBase', { n: motivators.nPeople })}
@@ -330,14 +330,27 @@ export function TeamBehavioralIntelBlock({
               <p className="m-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.motivatorsEmpty')}</p>
             ) : (
               <>
-                <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                <ul className="m-0 list-none p-0">
                   {(motivatorsOpen ? motivators.items : motivators.top).map((m) => (
                     <li
                       key={m.key}
-                      className="rounded-control border border-ink/8 bg-ink/[0.02] px-3 py-2.5"
+                      className="border-b border-ink/8 py-2.5 first:pt-0 last:border-b-0 last:pb-0"
                     >
-                      <div className="font-medium text-ink text-sm">{m.label}</div>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-2xs text-ink-muted">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-sm font-medium text-ink">{m.label}</span>
+                        <span className="shrink-0 font-mono text-2xs text-ink-muted">
+                          {m.recurrencePct}%
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
+                        <div
+                          className="h-full rounded-full bg-info"
+                          style={{
+                            width: `${Math.max(4, Math.min(100, Number(m.recurrencePct) || 0))}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-2xs text-ink-muted">
                         <span>
                           {t(locale, 'panel.overview.bci.intensity')}: {m.intensity}
                         </span>
@@ -363,7 +376,7 @@ export function TeamBehavioralIntelBlock({
           </div>
 
           {/* 3. Forces */}
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-6')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.forcesTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.forcesQuestion')}
@@ -371,7 +384,7 @@ export function TeamBehavioralIntelBlock({
             {forces.length === 0 ? (
               <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.forcesEmpty')}</p>
             ) : (
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {forces.map((f) => (
                   <article
                     key={f.id}
@@ -390,7 +403,7 @@ export function TeamBehavioralIntelBlock({
           </div>
 
           {/* 4. Attention */}
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-6')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.attentionTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.attentionQuestion')}
@@ -401,7 +414,7 @@ export function TeamBehavioralIntelBlock({
                 {t(locale, 'panel.overview.bci.attentionEmpty')}
               </p>
             ) : (
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {attentions.map((a) => (
                   <article
                     key={a.id}
@@ -420,7 +433,7 @@ export function TeamBehavioralIntelBlock({
           </div>
 
           {/* 5. Top 5 movers */}
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-4')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.top5Title')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.top5Question')}
@@ -429,11 +442,11 @@ export function TeamBehavioralIntelBlock({
               <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.overview.bci.top5Empty')}</p>
             ) : (
               <>
-                <ol className="mt-3 mb-0 flex list-none flex-wrap gap-2 p-0">
+                <ol className="mt-3 mb-0 list-none divide-y divide-ink/8 p-0">
                   {topMovers.map((m) => (
                     <li
                       key={m.key}
-                      className="flex min-w-[7.5rem] flex-1 items-baseline gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
+                      className="flex items-baseline gap-2 px-1 py-2 first:pt-0 last:pb-0"
                     >
                       <span className="font-mono text-2xs text-ink-faint">#{m.rank}</span>
                       <span className="text-sm font-medium text-ink">{m.label}</span>
@@ -450,7 +463,7 @@ export function TeamBehavioralIntelBlock({
           </div>
 
           {/* 6. Actions */}
-          <div className={S.cardTight}>
+          <div className={cn(S.cardTight, 'xl:col-span-8')}>
             <span className={S.label}>{t(locale, 'panel.overview.bci.actionsTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.actionsQuestion')}

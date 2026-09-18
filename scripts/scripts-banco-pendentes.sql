@@ -3146,3 +3146,11 @@ CREATE INDEX IF NOT EXISTS idx_recruiting_saved_views_user
   ON recruiting_saved_views (company_id, user_id, updated_at DESC);
 INSERT INTO schema_migrations (name) VALUES ('113_recruiting_workspace.sql')
 ON CONFLICT (name) DO NOTHING;
+
+-- 114: descrição opcional unificada para aulas LMS por vídeo/link ou PDF.
+ALTER TABLE lms_lessons
+  ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+COMMENT ON COLUMN lms_lessons.description IS
+  'Optional sanitized lesson description shown with the lesson content.';
+INSERT INTO schema_migrations (name) VALUES ('114_lms_lesson_description.sql')
+ON CONFLICT (name) DO NOTHING;

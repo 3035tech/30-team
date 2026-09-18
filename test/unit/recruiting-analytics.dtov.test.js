@@ -4,7 +4,7 @@ import { pool, query } from '../../lib/db.js';
 import { getRecruitingUxMetrics } from '../../lib/recruiting-ux-metrics.js';
 import { getVacancyFunnelAnalytics } from '../../lib/job-funnel.js';
 import { getVacancyRanking } from '../../lib/vacancy-ranking.js';
-import { listVacancies } from '../../lib/vacancies-admin.js';
+import { getVacancyById, listVacancies } from '../../lib/vacancies-admin.js';
 import {
   assignRecruitingCandidate,
   getRecruitingWorkspace,
@@ -72,6 +72,9 @@ describe('recruiting analytics (DTOV)', { skip: !dtov }, () => {
     const ownedVacancy = vacancyList.items.find((item) => Number(item.id) === vacancyId);
     assert.equal(Number(ownedVacancy.ownerUserId), userId);
     assert.ok(ownedVacancy.ownerName);
+    const vacancyDetail = await getVacancyById(vacancyId);
+    assert.equal(Number(vacancyDetail.ownerUserId), userId);
+    assert.ok(vacancyDetail.ownerName);
 
     const ranking = await getVacancyRanking({ vacancyId, companyId, isAdmin: false });
     assert.equal(ranking.ok, true);

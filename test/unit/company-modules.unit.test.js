@@ -22,6 +22,7 @@ import {
 } from '../../lib/company-modules.js';
 import { t } from '../../lib/i18n.js';
 import { validateHelpGuideCoverage } from '../../lib/help-sections.js';
+import { CAP, resolveCapabilities } from '../../lib/permissions.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -89,6 +90,34 @@ describe('company modules entitlements', () => {
     assert.equal(compensation.sensitive, true);
     assert.ok(compensation.tabs.includes('compensation'));
     assert.ok(compensation.caps.includes('compensation.view'));
+  });
+
+  it('keeps platform super-admin unrestricted while tenant managers respect modules', () => {
+    const superAdminCaps = resolveCapabilities({
+      role: 'admin',
+      companyId: null,
+      companyModules: ['core'],
+      capabilitiesCustomized: true,
+      capabilityOverrides: [],
+    });
+    assert.equal(superAdminCaps.has(CAP.COMPANIES_MANAGE), true);
+    assert.equal(superAdminCaps.has(CAP.VACANCIES_VIEW), true);
+    assert.equal(superAdminCaps.has(CAP.COMPENSATION_VIEW), true);
+
+    const tenantManagerCaps = resolveCapabilities({
+      role: 'hr',
+      companyId: 10,
+      companyModules: ['core'],
+    });
+    assert.equal(tenantManagerCaps.has(CAP.TEAM_VIEW), true);
+    assert.equal(tenantManagerCaps.has(CAP.VACANCIES_VIEW), false);
+  });
+
+  it('allows every company-bound manager to use profile module settings', () => {
+    const route = readFileSync(join(root, 'app/api/me/company-modules/route.js'), 'utf8');
+    assert.match(route, /isManagerRole\(payload\)/);
+    assert.match(route, /payload\.companyId/);
+    assert.doesNotMatch(route, /isSelfServiceOrigin|resolveUserOrigin|signup_source/);
   });
 
   it('ships migration 109 + onboarding i18n + help', () => {

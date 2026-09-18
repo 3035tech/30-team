@@ -28,7 +28,7 @@ import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneB
  * Multi-field form dialog (replaces window.prompt chains).
  * fields: [{
  *   key (or legacy name), label, defaultValue? (or legacy value?),
- *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'date'|'datetime-local'|'number'|'range'|'salary'|'cep'|'cpf'|'phone',
+ *   type?: 'text'|'password'|'textarea'|'richText'|'tags'|'entitySearch'|'select'|'boolean'|'checkboxGroup'|'imageUpload'|'file'|'date'|'datetime-local'|'number'|'range'|'salary'|'cep'|'cpf'|'phone',
  *   options?: [{value,label}],
  *   suggestions?: string[], // tags
  *   maxTags?: number, tagMax?: number, // tags
@@ -135,6 +135,8 @@ export function PromptFormDialog({
           file: null,
           removed: false,
         };
+      } else if (f.type === 'file') {
+        init[fieldKey] = null;
       } else if (f.type === 'cep') {
         init[fieldKey] = formatCepBr(initial || '');
       } else if (f.type === 'cpf') {
@@ -260,7 +262,7 @@ export function PromptFormDialog({
     return (
       <FormField
         key={fieldKeyOf(f)}
-        as={f.type === 'imageUpload' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' || f.type === 'range' ? 'div' : 'label'}
+        as={f.type === 'imageUpload' || f.type === 'file' || f.type === 'richText' || f.type === 'date' || f.type === 'datetime-local' || f.type === 'tags' || f.type === 'entitySearch' || f.type === 'checkboxGroup' || f.type === 'range' ? 'div' : 'label'}
         label={f.label}
         hint={
           f.type === 'cep' && cepBusyKey === fieldKeyOf(f)
@@ -385,6 +387,28 @@ export function PromptFormDialog({
             </p>
           ) : null}
         </div>
+      );
+    }
+
+    if (f.type === 'file') {
+      const file = typeof File !== 'undefined' && values[fk] instanceof File ? values[fk] : null;
+      return (
+        <label
+          className={cn(
+            dialogBtnGhostClass,
+            'm-0 inline-flex min-h-touch w-full cursor-pointer items-center justify-center px-3 py-2',
+            disabled && 'cursor-not-allowed opacity-55'
+          )}
+        >
+          <input
+            type="file"
+            accept={f.accept}
+            disabled={disabled}
+            className="hidden"
+            onChange={(event) => setField(fk, event.target.files?.[0] || null)}
+          />
+          {file?.name || f.uploadLabel || t(locale, 'panel.common.chooseFile')}
+        </label>
       );
     }
 

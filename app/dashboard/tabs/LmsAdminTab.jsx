@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
@@ -57,7 +57,6 @@ function lmsText(locale, key, fallback) {
  */
 export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDashboard }) {
   const { confirm, promptForm, toast } = useAppFeedback();
-  const pdfInputRef = useRef(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [courses, setCourses] = useState([]);
   const [courseQ, setCourseQ] = useState('');
@@ -324,34 +323,95 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
     const values = await promptForm({
       title: t(locale, 'panel.lms.addLesson'),
       fields: [
+        {
+          name: 'lessonType',
+          label: t(locale, 'panel.lms.fieldLessonType'),
+          type: 'select',
+          defaultValue: 'link',
+          options: [
+            { value: 'link', label: t(locale, 'panel.lms.lessonTypeVideo') },
+            { value: 'pdf', label: t(locale, 'panel.lms.lessonTypePdf') },
+          ],
+        },
         { name: 'title', label: t(locale, 'panel.lms.fieldTitle'), type: 'text', required: true },
         {
+          name: 'description',
+          label: t(locale, 'panel.lms.fieldLessonDescription'),
+          type: 'textarea',
+          rows: 4,
+          maxLength: 8000,
+          placeholder: t(locale, 'panel.lms.fieldLessonDescriptionPlaceholder'),
+        },
+        {
           name: 'contentUrl',
-          label: t(locale, 'panel.lms.fieldUrl'),
+          label: t(locale, 'panel.lms.fieldVideoUrl'),
           type: 'text',
           required: true,
           placeholder: 'https://…',
+          showWhen: (formValues) => formValues.lessonType === 'link',
+        },
+        {
+          name: 'pdfFile',
+          label: t(locale, 'panel.lms.fieldPdf'),
+          type: 'file',
+          accept: 'application/pdf,.pdf',
+          uploadLabel: t(locale, 'panel.lms.choosePdf'),
+          help: t(locale, 'panel.lms.pdfHelp'),
+          showWhen: (formValues) => formValues.lessonType === 'pdf',
         },
       ],
     });
     if (!values) return;
+    const isPdf = values.lessonType === 'pdf';
+    const file = values.pdfFile;
+    if (isPdf && !file) {
+      toast(t(locale, 'panel.lms.pdfRequired'), 'error');
+      return;
+    }
+    if (isPdf && Number(file.size) > 5 * 1024 * 1024) {
+      toast(t(locale, 'errors.INVALID_LMS_FILE_SIZE'), 'error');
+      return;
+    }
     try {
-      const res = await fetch(`/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyId,
-          title: values.title,
-          contentUrl: values.contentUrl,
-        }),
-      });
+      setLessonBusy(true);
+      let res;
+      if (isPdf) {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('title', values.title);
+        form.append('description', values.description || '');
+        form.append('companyId', String(companyId));
+        res = await fetch(
+          `/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons/upload`,
+          { method: 'POST', body: form }
+        );
+      } else {
+        res = await fetch(`/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyId,
+            title: values.title,
+            description: values.description || '',
+            contentUrl: values.contentUrl,
+          }),
+        });
+      }
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || 'lesson');
+      if (!res.ok) {
+        const code = json?.errorCode;
+        const localized = code ? t(locale, `errors.${code}`) : '';
+        throw new Error(
+          (localized && localized !== `errors.${code}` && localized) || json?.error || 'lesson'
+        );
+      }
       toast(t(locale, 'panel.lms.lessonCreated'), 'ok');
       await loadDetail(selectedId);
       await loadCourses();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
+    } finally {
+      setLessonBusy(false);
     }
   };
 
@@ -365,6 +425,14 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
           type: 'text',
           required: true,
           defaultValue: lesson.title,
+        },
+        {
+          name: 'description',
+          label: t(locale, 'panel.lms.fieldLessonDescription'),
+          type: 'textarea',
+          rows: 4,
+          maxLength: 8000,
+          defaultValue: lesson.description || '',
         },
         {
           name: 'contentUrl',
@@ -384,6 +452,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
         body: JSON.stringify({
           companyId,
           title: values.title,
+          description: values.description || '',
           contentUrl: values.contentUrl,
           contentKind: lesson.contentKind,
         }),
@@ -420,64 +489,6 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'lesson reorder');
       setDetail((current) => (current ? { ...current, lessons } : current));
-    } catch (e) {
-      toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
-    } finally {
-      setLessonBusy(false);
-    }
-  };
-
-  const uploadPdf = async (file) => {
-    if (!selectedId || !file) return;
-    if (!companyId) {
-      toast(t(locale, 'errors.COMPANY_REQUIRED'), 'error');
-      return;
-    }
-    const name = String(file.name || '');
-    if (!/\.pdf$/i.test(name) && file.type && !String(file.type).includes('pdf')) {
-      toast(t(locale, 'errors.INVALID_LMS_FILE_TYPE'), 'error');
-      return;
-    }
-    if (Number(file.size) > 5 * 1024 * 1024) {
-      toast(t(locale, 'errors.INVALID_LMS_FILE_SIZE'), 'error');
-      return;
-    }
-    const values = await promptForm({
-      title: lmsText(locale, 'uploadPdf', 'Enviar PDF'),
-      fields: [
-        {
-          key: 'title',
-          label: t(locale, 'panel.lms.fieldTitle'),
-          type: 'text',
-          required: true,
-          defaultValue: name.replace(/\.pdf$/i, ''),
-        },
-      ],
-    });
-    if (!values) return;
-    setLessonBusy(true);
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('title', values.title);
-      form.append('companyId', String(companyId));
-      const res = await fetch(
-        `/api/admin/lms/courses/${encodeURIComponent(selectedId)}/lessons/upload`,
-        { method: 'POST', body: form }
-      );
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const code = json?.errorCode;
-        const localized = code ? t(locale, `errors.${code}`) : '';
-        const msg =
-          (localized && localized !== `errors.${code}` && localized) ||
-          json?.error ||
-          lmsText(locale, 'storageNotConfigured', 'Armazenamento não configurado');
-        throw new Error(msg);
-      }
-      toast(t(locale, 'panel.lms.lessonCreated'), 'ok');
-      await loadDetail(selectedId);
-      await loadCourses();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     } finally {
@@ -949,25 +960,6 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
               defaultOpen
             >
               <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-                <button
-                  type="button"
-                  className={cn(S.btnBrandSoft, 'min-h-touch')}
-                  disabled={lessonBusy}
-                  onClick={() => pdfInputRef.current?.click()}
-                >
-                  {lmsText(locale, 'uploadPdf', 'Enviar PDF')}
-                </button>
-                <input
-                  ref={pdfInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = '';
-                    if (file) void uploadPdf(file);
-                  }}
-                />
                 <AdminCreateButton
                   onClick={addLesson}
                   disabled={lessonBusy}
@@ -999,6 +991,12 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                             </StatusToneChip>
                           ) : null}
                         </div>
+                        {l.description ? (
+                          <RichTextView
+                            html={l.description}
+                            className="mb-0 mt-1.5 max-w-3xl text-xs leading-relaxed text-ink-muted"
+                          />
+                        ) : null}
                         <div className="mt-1.5">
                           <CopyableLink
                             url={l.contentUrl}

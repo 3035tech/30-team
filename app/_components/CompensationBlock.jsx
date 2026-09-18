@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatSalaryDisplay, formatVacancySalaryRangeDisplay, salaryToCentsDigits, stripSalary } from '../../lib/br-masks';
@@ -49,13 +49,22 @@ function eventTypeLabel(locale, type) {
 /**
  * Internal RH compensation — current salary + timeline (not payroll).
  */
-export function CompensationBlock({ locale, candidateId, employmentStatus, companyId, canManage = true }) {
+export function CompensationBlock({
+  locale,
+  candidateId,
+  employmentStatus,
+  companyId,
+  canManage = true,
+  navigateDashboard = null,
+}) {
   const { toast, promptForm, confirm } = useAppFeedback();
+  const jobRoleSelectRef = useRef(null);
   const [items, setItems] = useState([]);
   const [current, setCurrent] = useState(null);
   const [offerHint, setOfferHint] = useState(null);
   const [market, setMarket] = useState(null);
   const [roles, setRoles] = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -122,9 +131,11 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
   useEffect(() => {
     if (!companyId || !visible) {
       setRoles([]);
+      setRolesLoading(false);
       return;
     }
     let cancelled = false;
+    setRolesLoading(true);
     (async () => {
       try {
         const res = await fetch(
@@ -135,6 +146,8 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
         setRoles(Array.isArray(data.roles) ? data.roles.filter((r) => r.active !== false) : []);
       } catch {
         if (!cancelled) setRoles([]);
+      } finally {
+        if (!cancelled) setRolesLoading(false);
       }
     })();
     return () => {
@@ -165,6 +178,17 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
       toast(e?.message || t(locale, 'panel.compensation.jobRoleError'), 'error');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const openJobRolePicker = () => {
+    const select = jobRoleSelectRef.current;
+    if (!select) return;
+    select.focus();
+    try {
+      select.showPicker?.();
+    } catch {
+      // Focus is the accessible fallback when the browser blocks showPicker.
     }
   };
 
@@ -496,29 +520,62 @@ export function CompensationBlock({ locale, candidateId, employmentStatus, compa
 
       <div className="mb-4 rounded-control border border-ink/10 bg-surface px-3 py-2.5">
         <FormField label={t(locale, 'panel.compensation.jobRoleLabel')}>
-          <select
-            className={cn(fieldSelectClass, 'w-full max-w-md')}
-            value={market?.jobRoleId != null ? String(market.jobRoleId) : ''}
-            disabled={readOnly || busy || !companyId}
-            onChange={(e) => void setJobRole(e.target.value)}
-            aria-label={t(locale, 'panel.compensation.jobRoleLabel')}
-          >
-            <option value="">{t(locale, 'panel.compensation.jobRoleNone')}</option>
-            {roles.map((role) => {
-              const band = formatVacancySalaryRangeDisplay(
-                role.marketSalaryMin,
-                role.marketSalaryMax
-              );
-              return (
-                <option key={role.id} value={String(role.id)}>
-                  {band ? `${role.name} (${band})` : role.name}
-                </option>
-              );
-            })}
-          </select>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <select
+              ref={jobRoleSelectRef}
+              className={cn(fieldSelectClass, 'min-w-0 flex-1')}
+              value={market?.jobRoleId != null ? String(market.jobRoleId) : ''}
+              disabled={readOnly || busy || !companyId || (!rolesLoading && roles.length === 0)}
+              onChange={(e) => void setJobRole(e.target.value)}
+              aria-label={t(locale, 'panel.compensation.jobRoleLabel')}
+            >
+              <option value="">{t(locale, 'panel.compensation.jobRoleNone')}</option>
+              {roles.map((role) => {
+                const band = formatVacancySalaryRangeDisplay(
+                  role.marketSalaryMin,
+                  role.marketSalaryMax
+                );
+                return (
+                  <option key={role.id} value={String(role.id)}>
+                    {band ? `${role.name} (${band})` : role.name}
+                  </option>
+                );
+              })}
+            </select>
+            {!readOnly && !market?.jobRoleId && !rolesLoading ? (
+              roles.length > 0 ? (
+                <button
+                  type="button"
+                  className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-xs')}
+                  disabled={busy}
+                  onClick={openJobRolePicker}
+                >
+                  {t(locale, 'panel.compensation.linkJobRole')}
+                </button>
+              ) : typeof navigateDashboard === 'function' ? (
+                <button
+                  type="button"
+                  className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 text-xs')}
+                  onClick={() => navigateDashboard({ tab: 'job-roles' })}
+                >
+                  {t(locale, 'panel.compensation.createJobRole')}
+                </button>
+              ) : null
+            ) : null}
+          </div>
         </FormField>
-        <p className={cn(S.muted, 'mb-0 mt-1.5 text-xs')}>
-          {t(locale, 'panel.compensation.jobRoleHint')}
+        <p
+          className={cn(
+            'mb-0 mt-1.5 text-xs',
+            !rolesLoading && roles.length === 0 ? 'text-info' : S.muted
+          )}
+        >
+          {t(
+            locale,
+            !rolesLoading && roles.length === 0
+              ? 'panel.compensation.jobRoleCatalogEmpty'
+              : 'panel.compensation.jobRoleHint'
+          )}
         </p>
         {(market?.marketSalaryMin || market?.marketSalaryMax) ? (
           <div className="mt-2 font-mono text-2xs text-ink-muted">

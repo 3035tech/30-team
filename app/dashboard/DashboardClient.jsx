@@ -327,6 +327,7 @@ export default function DashboardClient({
   const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
@@ -338,8 +339,13 @@ export default function DashboardClient({
   }, [auth]);
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push(managerLoginUrl({ reason: 'logout' }));
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      router.push(managerLoginUrl({ reason: 'logout' }));
+    }
   };
 
   const isAdmin = isAdminRole(sessionAuth);
@@ -1154,6 +1160,27 @@ export default function DashboardClient({
               ) : null
             ))}
           </nav>
+          <div className="flex-shrink-0 border-t border-ink/[0.08] pt-2.5">
+            <IconActionTip
+              label={t(locale, 'dashboard.logout')}
+              className="w-full"
+            >
+              <button
+                type="button"
+                onClick={() => void logout()}
+                disabled={loggingOut}
+                title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
+                aria-label={t(locale, 'dashboard.logout')}
+                className={cn(
+                  'flex min-h-touch w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent font-mono text-prose text-ink-muted hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55',
+                  navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start px-[11px] py-[11px]'
+                )}
+              >
+                <Icon name="logout" className="h-[18px] w-[18px] shrink-0" />
+                {!navCollapsed ? <span>{t(locale, 'dashboard.logout')}</span> : null}
+              </button>
+            </IconActionTip>
+          </div>
         </aside>
 
         <div className="db-main relative max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">

@@ -316,8 +316,9 @@ npm run dev
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /employee/set-password
    → login e-mail/senha em /employee/login (cookie team30_employee_session; PDI self-serve,
    hub “Hoje” + páginas dedicadas **/employee/lms**, **/employee/dp**, **/employee/time-clock**;
-   LMS: layout curso (lista + player), retoma vídeo YouTube/Vimeo,
-   PDF in-app, quiz, certificado print; hub resume prazos;
+   LMS: layout curso (lista + player), cadastro único de aula com descrição e
+   escolha vídeo/link ou PDF, retoma vídeo YouTube/Vimeo, PDF in-app, quiz,
+   certificado print; hub resume prazos;
    jornada **Minha chegada**, **Meus OKRs**, mural/kudos/feedback,
    notifs Motivadores/PDI/LMS/OKR; não acessa /dashboard).
    Magic link opcional. Ver `docs/employee-onboarding-journey.md`. /e/<token> continua sem conta.
@@ -359,6 +360,27 @@ Remuneração é um módulo sensível separado (`compensation.view` / `compensat
 - Atribuição / funil: query `utm_*` e `?ref=` → cookie httpOnly `team30_job_attr` (7 dias, sem PII). Persistido em `assessments.attr_*` no submit da vaga; eventos em `job_funnel_events`. Analytics: `GET /api/admin/vacancies/[id]/analytics`.
 - Referral (indicação): tabela `referral_codes`; APIs admin + **aba Indicação** no detalhe da vaga (criar, copiar `/jobs/…?ref=`, desativar, métricas). Analytics: `GET /api/admin/referral-codes/analytics`.
 - Logo empresa: `S3_BUCKET` + chaves AWS (ver `.env.example`). Sem S3 o upload fica desligado; páginas públicas usam `logo_url` quando existir (incl. `hiringOrganization.logo` no JSON-LD).
+
+Para upload de logos e PDFs do LMS, a identidade configurada nas credenciais AWS precisa gravar nos dois prefixos usados pelo produto. Exemplo mínimo para o bucket `30team` (inclua `s3:DeleteObject` para permitir substituição e remoção dos arquivos):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Team30ObjectFiles",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::30team/companies/*",
+        "arn:aws:s3:::30team/image/logo/companies/*"
+      ]
+    }
+  ]
+}
+```
+
+Se o nome do bucket ou `S3_KEY_PREFIX` forem diferentes, ajuste os ARNs. Leitura pública ou por CDN é uma configuração separada; não conceda listagem geral do bucket à aplicação.
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`; `037` workplace; `039` logo).
 

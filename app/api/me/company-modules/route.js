@@ -5,10 +5,6 @@ import { query } from '../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
 import { verifySessionWithCapabilities } from '../../../../lib/session.js';
 import { isManagerRole } from '../../../../lib/permissions.js';
-import {
-  isSelfServiceOrigin,
-  resolveUserOrigin,
-} from '../../../../lib/user-signup-origin.js';
 import { listCompanyModuleCatalog, modulesSelectionForPersist } from '../../../../lib/company-modules.js';
 import {
   getCompanyEnabledModules,
@@ -18,7 +14,7 @@ import { audit } from '../../../../lib/audit.js';
 import { z } from '../../../../lib/validate.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
 
-async function requireEarlyAccessCompanyManager(request) {
+async function requireCompanyManager(request) {
   const token = cookies().get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId || !isManagerRole(payload)) {
@@ -29,30 +25,13 @@ async function requireEarlyAccessCompanyManager(request) {
     return { error: apiError(request, ERR.ADMIN_ONLY, 403) };
   }
 
-  const userRes = await query(
-    `SELECT signup_source AS "signupSource",
-            signup_pending AS "signupPending",
-            signup_metadata AS "signupMetadata"
-     FROM users
-     WHERE id = $1 AND deleted = FALSE AND active = TRUE
-     LIMIT 1`,
-    [payload.userId]
-  );
-  if (userRes.rowCount === 0) {
-    return { error: apiError(request, ERR.USER_NOT_FOUND, 404) };
-  }
-  const origin = resolveUserOrigin(userRes.rows[0]);
-  if (!isSelfServiceOrigin(origin)) {
-    return { error: apiError(request, ERR.ADMIN_ONLY, 403) };
-  }
-
-  return { payload, companyId, origin };
+  return { payload, companyId };
 }
 
-/** GET /api/me/company-modules — early-access manager: own company entitlements */
+/** GET /api/me/company-modules — tenant manager: own company entitlements */
 export async function GET(request) {
   try {
-    const ctx = await requireEarlyAccessCompanyManager(request);
+    const ctx = await requireCompanyManager(request);
     if (ctx.error) return ctx.error;
 
     const enabledModules = await getCompanyEnabledModules(query, ctx.companyId);
@@ -75,10 +54,10 @@ const putBodySchema = z.object({
   modules: z.array(z.string().trim().min(1).max(64)).max(32).nullable(),
 });
 
-/** PUT /api/me/company-modules — early-access manager updates own company allow-list */
+/** PUT /api/me/company-modules — tenant manager updates own company allow-list */
 export async function PUT(request) {
   try {
-    const ctx = await requireEarlyAccessCompanyManager(request);
+    const ctx = await requireCompanyManager(request);
     if (ctx.error) return ctx.error;
 
     const ip = clientIpFromRequest(request);
@@ -114,7 +93,6 @@ export async function PUT(request) {
       metadata: {
         unrestricted: result.enabledModules == null,
         modules: result.enabledModules,
-        origin: ctx.origin,
       },
     });
 

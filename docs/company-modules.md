@@ -13,16 +13,18 @@ Commercial packs above per-user CAP. Early-adopter onboarding can pick modules; 
 
 | Who | Where |
 |---|---|
-| Early access / self-service manager | Onboarding wizard · **Meu perfil** (`GET/PUT /api/me/company-modules`) |
-| Super-admin | Empresas → editar/criar → Módulos comerciais (`GET/PUT /api/admin/company-modules`) |
+| Any company-bound manager (`hr`, `direction`, tenant `admin`) | **Meu perfil** (`GET/PUT /api/me/company-modules`) |
+| Self-service manager | Also chooses the initial set in the onboarding wizard |
+| Super-admin | Empresas → editar/criar → Módulos comerciais (`GET/PUT /api/admin/company-modules`) and Usuários → módulos individuais |
 
 ## Rules
 
 - Manager CAP ∩ company modules (session + `can` / tab gate).
+- Platform super-admin (admin without `company_id`) is unrestricted by company modules and per-user overrides.
 - Module off → hide UI surfaces; employee home/nav hide sections. No upsell chips in menus. Dedicated employee APIs stay reachable by URL if known.
 - Public assessment tokens stay valid regardless of module.
 - Admin-only tabs (`users`, `companies`, …) stay available.
-- Compensation stays under **core**.
+- Compensation uses its own sensitive module/capabilities.
 - Checkboxes grouped visually (core / people / hire / ops); storage keys stay flat.
 
 ## Keys

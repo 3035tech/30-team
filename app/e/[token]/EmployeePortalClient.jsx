@@ -134,6 +134,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       lessonId: lesson.id,
       embedUrl: lesson.embedUrl,
       title: lesson.title,
+      description: lesson.description || '',
       contentKind: lesson.contentKind || 'link',
       completed: Boolean(lesson.completed),
     });
@@ -198,6 +199,12 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
               </button>
             </div>
           </div>
+          {watching.description ? (
+            <RichTextView
+              html={watching.description}
+              className="m-0 border-b border-ink/10 bg-surface px-3 py-2.5 text-sm leading-relaxed text-ink-muted"
+            />
+          ) : null}
           {isPdf ? (
             <div className="h-[min(60vh,480px)] w-full bg-canvas">
               <iframe title={watching.title} src={watching.embedUrl} className="h-full w-full border-0" />

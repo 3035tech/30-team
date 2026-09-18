@@ -49,4 +49,12 @@ describe('module hardening', () => {
     assert.match(route, /withAdminApi/);
     assert.match(route, /CAP\.VACANCIES_MANAGE/);
   });
+
+  it('keeps logout available in the fixed sidebar footer', () => {
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    assert.match(dashboard, /border-t border-ink\/\[0\.08\] pt-2\.5/);
+    assert.match(dashboard, /Icon name="logout"/);
+    assert.match(dashboard, /onClick=\{\(\) => void logout\(\)\}/);
+    assert.match(dashboard, /!navCollapsed \? <span>\{t\(locale, 'dashboard\.logout'\)\}/);
+  });
 });

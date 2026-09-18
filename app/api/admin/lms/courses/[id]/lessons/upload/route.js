@@ -20,7 +20,7 @@ export const runtime = 'nodejs';
 
 /**
  * POST /api/admin/lms/courses/[id]/lessons/upload
- * multipart: file (PDF) + title + companyId
+ * multipart: file (PDF) + title + description + companyId
  */
 export const POST = withAdminApi(
   {
@@ -53,6 +53,7 @@ export const POST = withAdminApi(
 
     const file = form.get('file');
     const title = String(form.get('title') || '').trim();
+    const description = String(form.get('description') || '');
     const companyId = resolveScopedCompanyId(scope, form.get('companyId'));
 
     if (!companyId) {
@@ -96,6 +97,7 @@ export const POST = withAdminApi(
       companyId,
       courseId,
       title,
+      description,
       contentUrl: uploaded.contentUrl,
       contentKind: 'pdf',
     });

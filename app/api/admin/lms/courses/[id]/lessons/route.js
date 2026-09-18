@@ -9,6 +9,7 @@ import { audit } from '../../../../../../../lib/audit.js';
 const createBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   title: z.string().trim().min(1).max(300),
+  description: z.string().max(8000).optional().nullable(),
   contentUrl: z.string().trim().min(1).max(2000),
   contentKind: z.enum(['link', 'youtube', 'vimeo', 'pdf']).optional().nullable(),
   sortOrder: z.coerce.number().int().min(0).max(10000).optional().nullable(),
@@ -31,6 +32,7 @@ export const POST = withAdminApi(
       companyId,
       courseId,
       title: body.title,
+      description: body.description,
       contentUrl: body.contentUrl,
       contentKind: body.contentKind,
       sortOrder: body.sortOrder,

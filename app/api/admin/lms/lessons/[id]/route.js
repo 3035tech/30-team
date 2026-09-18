@@ -9,6 +9,7 @@ import { audit } from '../../../../../../lib/audit.js';
 const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   title: z.string().trim().min(1).max(300).optional(),
+  description: z.string().max(8000).optional().nullable(),
   contentUrl: z.string().trim().min(1).max(2000).optional(),
   contentKind: z.enum(['link', 'youtube', 'vimeo', 'pdf']).optional().nullable(),
   sortOrder: z.coerce.number().int().min(0).max(10000).optional(),
@@ -32,6 +33,7 @@ export const PATCH = withAdminApi(
       companyId,
       lessonId,
       title: body.title,
+      description: body.description,
       contentUrl: body.contentUrl,
       contentKind: body.contentKind,
       sortOrder: body.sortOrder,

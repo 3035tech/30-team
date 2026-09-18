@@ -201,78 +201,88 @@ export function OverviewTab({
         <OnboardingChecklist locale={locale} initialProgress={onboardingProgress} />
       )}
 
-      <div className={S.card}>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <span className={cn(S.label, 'mb-0')}>
-            {t(locale, 'panel.overview.attentionTitle')}
-          </span>
-          <span className="font-mono text-2xs text-ink-muted">
-            {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
-          </span>
-        </div>
-        {(data.attention || []).length === 0 ? (
-          <ContentEnter animKey="overview-attention-empty">
-            <EmptyState
-              message={t(locale, 'panel.overview.attentionEmpty')}
-              actionLabel={
-                typeof navigateDashboard === 'function'
-                  ? t(locale, 'panel.overview.attentionEmptyCtaVacancies')
-                  : undefined
-              }
-              onAction={
-                typeof navigateDashboard === 'function'
-                  ? () => go({ tab: 'vacancies' })
-                  : undefined
-              }
-              secondaryActionLabel={
-                typeof navigateDashboard === 'function'
-                  ? t(locale, 'panel.overview.attentionEmptyCtaTeam')
-                  : undefined
-              }
-              onSecondaryAction={
-                typeof navigateDashboard === 'function'
-                  ? () => go({ tab: 'team' })
-                  : undefined
-              }
-            />
-          </ContentEnter>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {(data.attention || []).map((item) => {
-              const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => item.nav && go(item.nav)}
-                  className={cn(
-                    'flex flex-wrap items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left',
-                    pr.card,
-                    item.nav ? 'cursor-pointer' : 'cursor-default'
-                  )}
-                >
-                  <span
+      <div className={cn('grid grid-cols-1 gap-4', companyId && 'xl:grid-cols-12 xl:items-start')}>
+        <div className={cn(S.card, 'h-full', companyId && 'xl:col-span-8')}>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className={cn(S.label, 'mb-0')}>
+              {t(locale, 'panel.overview.attentionTitle')}
+            </span>
+            <span className="font-mono text-2xs text-ink-muted">
+              {t(locale, 'panel.overview.attentionCount', { n: (data.attention || []).length })}
+            </span>
+          </div>
+          {(data.attention || []).length === 0 ? (
+            <ContentEnter animKey="overview-attention-empty">
+              <EmptyState
+                message={t(locale, 'panel.overview.attentionEmpty')}
+                actionLabel={
+                  typeof navigateDashboard === 'function'
+                    ? t(locale, 'panel.overview.attentionEmptyCtaVacancies')
+                    : undefined
+                }
+                onAction={
+                  typeof navigateDashboard === 'function'
+                    ? () => go({ tab: 'vacancies' })
+                    : undefined
+                }
+                secondaryActionLabel={
+                  typeof navigateDashboard === 'function'
+                    ? t(locale, 'panel.overview.attentionEmptyCtaTeam')
+                    : undefined
+                }
+                onSecondaryAction={
+                  typeof navigateDashboard === 'function'
+                    ? () => go({ tab: 'team' })
+                    : undefined
+                }
+              />
+            </ContentEnter>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {(data.attention || []).map((item) => {
+                const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => item.nav && go(item.nav)}
                     className={cn(
-                      'min-w-[52px] font-mono text-2xs uppercase tracking-wide',
-                      pr.label
+                      'grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl border px-3.5 py-2.5 text-left transition-colors sm:grid-cols-[56px_minmax(160px,0.9fr)_minmax(180px,1.1fr)_auto]',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
+                      pr.card,
+                      item.nav ? 'cursor-pointer hover:border-ink/20' : 'cursor-default'
                     )}
                   >
-                    {t(locale, `panel.overview.priority.${item.priority}`)}
-                  </span>
-                  <span className="min-w-0 flex-[1_1_180px] text-prose text-ink">
-                    {t(locale, item.titleKey)}
-                  </span>
-                  <span className="min-w-0 flex-[1_1_160px] text-xs text-ink-muted">{item.context}</span>
-                  {item.days != null ? (
-                    <span className="font-mono text-2xs text-ink-faint">
-                      {t(locale, 'panel.overview.daysAgo', { n: item.days })}
+                    <span className={cn('font-mono text-2xs uppercase tracking-wide', pr.label)}>
+                      {t(locale, `panel.overview.priority.${item.priority}`)}
                     </span>
-                  ) : null}
-                </button>
-              );
-            })}
+                    <span className="min-w-0 text-prose text-ink">
+                      {t(locale, item.titleKey)}
+                    </span>
+                    <span className="col-span-2 min-w-0 text-xs text-ink-muted sm:col-span-1">
+                      {item.context}
+                    </span>
+                    {item.days != null ? (
+                      <span className="shrink-0 font-mono text-2xs text-ink-faint">
+                        {t(locale, 'panel.overview.daysAgo', { n: item.days })}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {companyId ? (
+          <div className="xl:col-span-4">
+            <BirthdaysCard
+              locale={locale}
+              companyId={companyId}
+              navigateDashboard={navigateDashboard}
+            />
           </div>
-        )}
+        ) : null}
       </div>
 
       <TeamBehavioralIntelBlock
@@ -282,14 +292,6 @@ export function OverviewTab({
         navigateDashboard={navigateDashboard}
         onIntelChange={setBciIntel}
       />
-
-      {companyId ? (
-        <BirthdaysCard
-          locale={locale}
-          companyId={companyId}
-          navigateDashboard={navigateDashboard}
-        />
-      ) : null}
 
       {companyId ? (
         <div className={S.cardTight}>
@@ -369,14 +371,17 @@ export function OverviewTab({
         <span className={cn(S.label, 'mb-2.5')}>
           {t(locale, 'panel.overview.funnelTitle')}
         </span>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(112px,1fr))] gap-2">
           {OVERVIEW_FUNNEL_STAGES.filter((s) => s !== 'archived' || (data.funnel.archived || 0) > 0).map((stage) => (
             <StatMetricTile
               key={stage}
               value={data.funnel[stage] || 0}
               label={t(locale, FUNNEL_LABEL_KEYS[stage])}
               color={FUNNEL_COLORS[stage]}
-              className="min-w-0 rounded-[14px] border-ink/12 bg-surface px-[18px] py-4"
+              hint={t(locale, 'panel.overview.funnelStageShare', {
+                pct: Math.round(((data.funnel[stage] || 0) / funnelSum) * 100),
+              })}
+              className="min-w-0 rounded-[14px] border-ink/12 bg-surface px-3 py-2.5"
               onClick={() => go({ tab: 'team', pipeline: stage })}
             />
           ))}
@@ -443,13 +448,16 @@ export function OverviewTab({
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              {(data.vacancies.items || []).map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => go({ tab: 'vacancies', vacancyDetail: String(v.id) })}
-                  className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5 text-left"
-                >
+              {(data.vacancies.items || []).map((v) => {
+                const positionsCount = Math.max(Number(v.positionsCount) || 0, 1);
+                const hiredPct = Math.min(100, ((Number(v.hired) || 0) / positionsCount) * 100);
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => go({ tab: 'vacancies', vacancyDetail: String(v.id) })}
+                    className="cursor-pointer rounded-control border border-ink/12 bg-ink/[0.03] px-3 py-2.5 text-left transition-colors hover:border-ink/20 hover:bg-ink/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                  >
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-prose text-ink">{v.title}</span>
                     <span className="font-mono text-2xs text-ink-muted">
@@ -470,8 +478,20 @@ export function OverviewTab({
                       : t(locale, 'panel.overview.noTarget')}
                     {v.stale ? ` · ${t(locale, 'panel.overview.staleTag')}` : ''}
                   </div>
-                </button>
-              ))}
+                  <MeterBar
+                    percent={hiredPct}
+                    height={4}
+                    className="mt-2"
+                    trackClassName="bg-ink/10"
+                    toneClass="bg-success"
+                    aria-label={t(locale, 'panel.overview.vacancyProgressAria', {
+                      hired: v.hired || 0,
+                      total: v.positionsCount || 0,
+                    })}
+                  />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -653,9 +673,35 @@ export function OverviewTab({
                     {t(locale, 'panel.overview.peopleOpsEmpty')}
                   </p>
                 ) : (
-                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                  <>
+                    <div className="mb-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+                    <StatMetricTile
+                      value={pdi?.activePlans || 0}
+                      label={t(locale, 'panel.overview.peopleOpsKpiActivePlans')}
+                      className="px-3 py-2.5"
+                    />
+                    <StatMetricTile
+                      value={overdueN + overduePlansN}
+                      label={t(locale, 'panel.overview.peopleOpsKpiOverdue')}
+                      className="px-3 py-2.5"
+                    />
+                    <StatMetricTile
+                      value={noPlanN}
+                      label={t(locale, 'panel.overview.peopleOpsKpiNoPlan')}
+                      className="px-3 py-2.5"
+                    />
+                    <StatMetricTile
+                      value={clima?.openSurveys || 0}
+                      label={t(locale, 'panel.overview.peopleOpsKpiClimate')}
+                      className="px-3 py-2.5"
+                    />
+                    </div>
+                    <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 xl:grid-cols-12 xl:items-start">
                     {hasRet ? (
-                      <li className="rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-prose text-ink">
+                      <li className={cn(
+                        'rounded-xl border border-warning/25 bg-warning/[0.06] px-3 py-2.5 text-prose text-ink',
+                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-1' : 'xl:col-span-12'
+                      )}>
                         {t(locale, 'panel.overview.peopleOpsRetention', {
                           n: ret.count,
                           days: ret.lookbackDays || 14,
@@ -664,7 +710,10 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasOnb ? (
-                      <li className="rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-prose text-ink">
+                      <li className={cn(
+                        'rounded-xl border border-info/20 bg-info/[0.05] px-3 py-2.5 text-prose text-ink',
+                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-2' : 'xl:col-span-12'
+                      )}>
                         <div className={cn(S.label, 'mb-1.5 text-2xs')}>
                           {t(locale, 'panel.overview.peopleOpsOnboardingTitle')}
                         </div>
@@ -706,7 +755,7 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasPdi ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink">
+                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink xl:col-span-7 xl:col-start-1 xl:row-span-4 xl:row-start-1">
                         {pdi.donePct != null
                           ? t(locale, 'panel.overview.peopleOpsPdi', {
                               plans: pdi.activePlans,
@@ -924,7 +973,7 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasEnps ? (
-                      <li>
+                      <li className={hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-3' : 'xl:col-span-12'}>
                         <button
                           type="button"
                           className="w-full cursor-pointer rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-left text-prose text-ink hover:border-ink/20 hover:bg-ink/[0.03]"
@@ -945,7 +994,10 @@ export function OverviewTab({
                       </li>
                     ) : null}
                     {hasClima ? (
-                      <li className="rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink">
+                      <li className={cn(
+                        'rounded-xl border border-ink/10 px-3 py-2.5 text-prose text-ink',
+                        hasPdi ? 'xl:col-span-5 xl:col-start-8 xl:row-start-4' : 'xl:col-span-12'
+                      )}>
                         {clima.openSurveys > 0 || clima.draftSurveys > 0
                           ? t(locale, 'panel.overview.peopleOpsClimate', {
                               open: clima.openSurveys,
@@ -978,7 +1030,8 @@ export function OverviewTab({
                         ) : null}
                       </li>
                     ) : null}
-                  </ul>
+                    </ul>
+                  </>
                 )}
               </div>
               </ContentEnter>

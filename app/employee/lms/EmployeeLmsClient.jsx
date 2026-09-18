@@ -15,6 +15,7 @@ import { InlineCallout } from '../../_components/InlineCallout';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { FormField } from '../../_components/FormField';
 import { LmsMediaPlayer } from '../../_components/LmsMediaPlayer';
+import { RichTextView } from '../../_components/RichTextView';
 import { redirectEmployeeIfUnauthorized } from '../../../lib/employee-client-session';
 
 function dueLabel(locale, course) {
@@ -515,6 +516,13 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   {t(locale, 'employeeHome.lmsPickLesson')}
                 </InlineCallout>
               )}
+
+              {watching?.description ? (
+                <RichTextView
+                  html={watching.description}
+                  className="mb-4 rounded-control border border-ink/10 bg-surface px-3 py-2.5 text-sm leading-relaxed text-ink-muted"
+                />
+              ) : null}
 
               {quiz ? (
                 <div

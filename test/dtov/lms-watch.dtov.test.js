@@ -9,6 +9,7 @@ import {
   createLmsLesson,
   enrollLmsCandidates,
   listCandidateLmsCourses,
+  updateLmsCourse,
   upsertLmsWatchProgress,
 } from '../../lib/lms.js';
 import { ERR } from '../../lib/api-error-codes.js';
@@ -33,14 +34,25 @@ async function main() {
   });
   assert.equal(course.ok, true, course.errorCode);
 
+  const updatedWithoutDescription = await updateLmsCourse(query, {
+    companyId: person.companyId,
+    courseId: course.course.id,
+    title: course.course.title,
+    description: null,
+  });
+  assert.equal(updatedWithoutDescription.ok, true, updatedWithoutDescription.errorCode);
+  assert.equal(updatedWithoutDescription.course.description, '');
+
   const lesson = await createLmsLesson(query, {
     companyId: person.companyId,
     courseId: course.course.id,
     title: 'YT lesson',
+    description: 'Watch the introduction before answering the quiz.',
     contentUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     contentKind: 'youtube',
   });
   assert.equal(lesson.ok, true, lesson.errorCode);
+  assert.equal(lesson.lesson.description, 'Watch the introduction before answering the quiz.');
 
   const pdf = await createLmsLesson(query, {
     companyId: person.companyId,
@@ -95,6 +107,7 @@ async function main() {
   const row = listed.find((c) => c.courseId === course.course.id);
   assert.ok(row);
   const yt = row.lessons.find((l) => l.id === lesson.lesson.id);
+  assert.equal(yt.description, 'Watch the introduction before answering the quiz.');
   assert.equal(yt.watchPositionSec, 120);
   assert.equal(yt.watchDurationSec, 212);
   assert.ok(yt.videoId);

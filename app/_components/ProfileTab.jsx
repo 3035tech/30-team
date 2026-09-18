@@ -21,7 +21,7 @@ const inputClass =
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
- * Early-access: também edita módulos comerciais da empresa.
+ * Gestor vinculado a uma empresa também edita os módulos comerciais do tenant.
  */
 export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [loading, setLoading] = useState(true);
