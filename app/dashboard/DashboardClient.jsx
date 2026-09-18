@@ -287,6 +287,7 @@ export default function DashboardClient({
   const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const sidebarNavRef = useRef(null);
   const [navSectionsOpen, setNavSectionsOpen] = useState(() =>
     getDefaultDashboardSections(initialTabRef.current)
   );
@@ -496,6 +497,25 @@ export default function DashboardClient({
       return next;
     });
   }, [tab]);
+
+  // Keep the active destination visible inside the sidebar without moving the page content.
+  useEffect(() => {
+    const container = sidebarNavRef.current;
+    if (!container || navCollapsed) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const item = document.getElementById(`${tab}-tab`);
+      if (!item || !container.contains(item)) return;
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      const safeGap = 12;
+      if (itemRect.top < containerRect.top + safeGap) {
+        container.scrollTop += itemRect.top - containerRect.top - safeGap;
+      } else if (itemRect.bottom > containerRect.bottom - safeGap) {
+        container.scrollTop += itemRect.bottom - containerRect.bottom + safeGap;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [tab, navCollapsed, navSectionsOpen]);
 
   useEffect(() => {
     try {
@@ -931,7 +951,7 @@ export default function DashboardClient({
               <Icon name="close" />
             </button>
           </div>
-          <nav className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
+          <nav ref={sidebarNavRef} className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
             {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
               <>
                 {sectionLabel(DASHBOARD_NAV_SECTION.HOME, t(locale, 'dashboard.sectionHome'))}
@@ -1570,7 +1590,7 @@ export default function DashboardClient({
                   navigateDashboard={navigateWithOpts}
                 />
               )}
-              {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'learning-resources' && showLearning && <LearningResourcesAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'lms' && showLearning && (
                 <LmsAdminTab
                   locale={locale}
@@ -1580,7 +1600,7 @@ export default function DashboardClient({
                   navigateDashboard={navigateWithOpts}
                 />
               )}
-              {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'company-benefits' && showBenefits && <CompanyBenefitsAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'company-feed' && showCompanyFeed && (
                 <CompanyFeedAdminTab locale={locale} companyId={scopedCompanyId} />
               )}

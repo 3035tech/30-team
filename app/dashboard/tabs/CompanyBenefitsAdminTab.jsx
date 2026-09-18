@@ -24,7 +24,7 @@ import {
   clientSortNextDir,
 } from '../dashboard-shared';
 
-export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
+export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId }) {
   const [benefits, setBenefits] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -505,18 +505,14 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
       <AdminPageHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        actions={
-          isAdmin ? <AdminCreateButton label={t('create')} onClick={handleCreate} /> : null
-        }
+        actions={<AdminCreateButton label={t('create')} onClick={handleCreate} />}
       />
 
       {/* Categories first — list before linking to benefits */}
       <section className={S.cardTight}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-ink">{t('manageCategories')}</h3>
-          {isAdmin && (
-            <AdminCreateButton label={t('newCategory')} onClick={handleCreateCategory} />
-          )}
+          <AdminCreateButton label={t('newCategory')} onClick={handleCreateCategory} />
         </div>
         {categories.length === 0 ? (
           <p className="text-sm text-ink-muted">{t('noCategories')}</p>
@@ -528,19 +524,17 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
                 className="inline-flex items-center gap-1 rounded-control border border-ink/10 bg-canvas px-2 py-1 text-sm text-ink"
               >
                 <span className="px-1">{cat.name}</span>
-                {isAdmin && (
-                  <AdminActionsCell>
-                    <AdminViewButton
-                      label={t('view')}
-                      onClick={() => notice({ title: cat.name, message: cat.name })}
-                    />
-                    <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
-                    <AdminDeleteButton
-                      label={t('deactivate')}
-                      onClick={() => handleDeactivateCategory(cat)}
-                    />
-                  </AdminActionsCell>
-                )}
+                <AdminActionsCell>
+                  <AdminViewButton
+                    label={t('view')}
+                    onClick={() => notice({ title: cat.name, message: cat.name })}
+                  />
+                  <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
+                  <AdminDeleteButton
+                    label={t('deactivate')}
+                    onClick={() => handleDeactivateCategory(cat)}
+                  />
+                </AdminActionsCell>
               </li>
             ))}
           </ul>
@@ -608,8 +602,8 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId, isAdmin }
           <EmptyState
             title={t('noBenefits')}
             message={t('noBenefitsDesc')}
-            actionLabel={isAdmin ? t('create') : undefined}
-            onAction={isAdmin ? handleCreate : undefined}
+            actionLabel={t('create')}
+            onAction={handleCreate}
           />
           <div className="flex flex-wrap gap-3 px-1">
             <Link href="/dashboard?tab=exit-analysis" className="font-mono text-xs text-brand-600 hover:underline">

@@ -280,6 +280,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
               active={profileSection}
               onChange={setProfileSection}
+              variant="pill"
               tabs={[
                 { id: 'account', label: t(locale, 'dashboard.profileSectionAccount') },
                 ...(canEditCompanyModules ? [{ id: 'modules', label: t(locale, 'dashboard.profileSectionModules') }] : []),

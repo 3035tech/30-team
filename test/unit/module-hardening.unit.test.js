@@ -151,6 +151,39 @@ describe('module hardening', () => {
     assert.match(profile, /profileSection === 'account' \|\| profileSection === 'security'/);
   });
 
+  it('keeps benefit management available to every manager with the module capability', () => {
+    const benefits = source('app/dashboard/tabs/CompanyBenefitsAdminTab.jsx');
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    assert.match(benefits, /actions=\{<AdminCreateButton label=\{t\('create'\)\}/);
+    assert.match(benefits, /actionLabel=\{t\('create'\)\}/);
+    assert.doesNotMatch(benefits, /\bisAdmin\b/);
+    assert.doesNotMatch(dashboard, /<CompanyBenefitsAdminTab[^>]*isAdmin=/);
+  });
+
+  it('keeps Academy creation capability-based and distinguishes review from OKR cycles', () => {
+    const academy = source('app/dashboard/tabs/LearningResourcesAdminTab.jsx');
+    const reviews = source('app/dashboard/tabs/PerformanceReviewsAdminTab.jsx');
+    const messages = source('lib/i18n.js');
+    assert.match(academy, /actions=\{<AdminCreateButton label=\{t\('create'\)\}/);
+    assert.match(academy, /actionLabel=\{hasActiveFilters \? undefined : t\('create'\)\}/);
+    assert.doesNotMatch(academy, /\bisAdmin\b/);
+    assert.match(academy, /loading && resources\.length === 0/);
+    assert.match(academy, /sortedResources\.length === 0/);
+    assert.match(academy, /const hasActiveFilters = Boolean/);
+    assert.match(reviews, /Novo ciclo de avaliação/);
+    assert.match(reviews, /New review cycle/);
+    assert.match(messages, /Novo ciclo de OKRs/);
+    assert.match(messages, /New OKR cycle/);
+  });
+
+  it('keeps the active dashboard destination visible inside the sidebar scroll area', () => {
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    assert.match(dashboard, /ref=\{sidebarNavRef\}/);
+    assert.match(dashboard, /document\.getElementById\(`\$\{tab\}-tab`\)/);
+    assert.match(dashboard, /container\.contains\(item\)/);
+    assert.match(dashboard, /container\.scrollTop \+=/);
+  });
+
   it('retains focused employee and public SEO surfaces', () => {
     const employeeNav = source('app/_components/EmployeeSidebar.jsx');
     const landing = source('app/page.jsx');

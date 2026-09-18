@@ -426,7 +426,15 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
  * so recruiters keep primary jobs (e.g. pipeline + candidates) visible.
  * Styled with Tailwind tokens (brand / ink / canvas).
  */
-function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreLabel = 'More' }) {
+function PanelSubNav({
+  tabs,
+  active,
+  onChange,
+  ariaLabel,
+  moreTabs = null,
+  moreLabel = 'More',
+  variant = 'line',
+}) {
   const tabRefs = useRef(new Map());
   const more = Array.isArray(moreTabs) ? moreTabs : [];
   const moreActive = more.some((tab) => tab.id === active);
@@ -437,20 +445,35 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
     tabRefs.current.get(active)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   }, [active]);
 
-  const tabClass = (on) =>
-    cn(
-      'relative -mb-px inline-flex min-h-touch shrink-0 cursor-pointer items-center border-x-0 border-t-0 border-b-2 bg-transparent px-3 py-2.5 font-ui text-sm font-medium focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-500',
-      on
-        ? 'border-brand-500 text-brand-700'
-        : 'border-transparent text-ink-muted hover:border-ink/20 hover:text-ink'
-    );
+  const pill = variant === 'pill';
+  const tabClass = (on) => cn(
+    'relative inline-flex min-h-touch shrink-0 cursor-pointer items-center font-ui text-sm font-medium focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500',
+    pill
+      ? cn(
+          'min-w-[8.5rem] justify-center rounded-control border px-4 py-2.5 sm:min-w-0 sm:flex-1',
+          on
+            ? 'border-brand-500/35 bg-surface text-brand-700 shadow-sm'
+            : 'border-transparent bg-transparent text-ink-muted hover:bg-surface/75 hover:text-ink'
+        )
+      : cn(
+          '-mb-px border-x-0 border-t-0 border-b-2 bg-transparent px-3 py-2.5',
+          on
+            ? 'border-brand-500 text-brand-700'
+            : 'border-transparent text-ink-muted hover:border-ink/20 hover:text-ink'
+        )
+  );
 
   return (
     <div
       role="tablist"
       aria-orientation="horizontal"
       aria-label={ariaLabel || undefined}
-      className="mb-4 flex max-w-full items-end gap-1 overflow-x-auto border-b border-ink/12 [scrollbar-width:thin]"
+      className={cn(
+        'mb-4 flex max-w-full overflow-x-auto [scrollbar-width:thin]',
+        pill
+          ? 'items-stretch gap-2 rounded-control border border-ink/12 bg-ink/[0.025] p-1.5'
+          : 'items-end gap-1 border-b border-ink/12'
+      )}
     >
       {tabs.map((tab) => {
         const on = active === tab.id;

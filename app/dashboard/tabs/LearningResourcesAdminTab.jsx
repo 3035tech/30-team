@@ -25,7 +25,7 @@ import {
 } from '../dashboard-shared';
 import { LEARNING_RESOURCE_TYPE, LEARNING_RESOURCE_TYPES } from '../../../lib/domain-status';
 
-export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
+export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
   const [resources, setResources] = useState([]);
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -50,12 +50,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   function t(key) {
     const messages = {
       'pt-BR': {
-        title: 'Academy (Recursos de Aprendizagem)',
-        subtitle: 'Catálogo leve de ações/trilhas para desenvolvimento',
-        create: 'Novo Recurso',
+        title: 'Academy',
+        subtitle: 'Recursos de aprendizagem para vincular aos planos de desenvolvimento (PDI)',
+        create: 'Novo recurso',
         noResources: 'Nenhum recurso cadastrado',
+        noResults: 'Nenhum recurso encontrado',
+        noResultsDesc: 'Ajuste a busca ou os filtros para encontrar outro recurso.',
         searchNamePh: 'Buscar por título…',
-        noResourcesDesc: 'Crie ações, cursos, trilhas que o PDI pode apontar',
+        noResourcesDesc: 'Cadastre cursos, artigos, vídeos ou outras ações para usar nos PDIs.',
         needCompanyTitle: 'Selecione uma empresa',
         needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar a Academy.',
         ctaHelp: 'Ver Guia (PDI → Academy)',
@@ -97,12 +99,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         saveError: 'Erro ao salvar',
       },
       en: {
-        title: 'Academy (Learning Resources)',
-        subtitle: 'Lightweight catalog of actions/tracks for development',
-        create: 'New Resource',
+        title: 'Academy',
+        subtitle: 'Learning resources to link to individual development plans (IDPs)',
+        create: 'New resource',
         noResources: 'No resources registered',
+        noResults: 'No resources found',
+        noResultsDesc: 'Adjust the search or filters to find another resource.',
         searchNamePh: 'Search by title…',
-        noResourcesDesc: 'Create actions, courses, tracks that PDI can point to',
+        noResourcesDesc: 'Add courses, articles, videos, or other actions to use in IDPs.',
         needCompanyTitle: 'Select a company',
         needCompanyHint: 'Choose a company in the panel filter to manage Academy.',
         ctaHelp: 'Open Help (PDI → Academy)',
@@ -350,6 +354,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
   }, [resources, sort, sortDir, locale, nameQ]);
 
   const total = sortedResources.length;
+  const hasActiveFilters = Boolean(String(nameQ || '').trim() || filterTheme || filterType);
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
   const safePage = Math.min(page, totalPages);
   const pageRows = sortedResources.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -365,16 +370,14 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
     return <EmptyState title={t('needCompanyTitle')} message={t('needCompanyHint')} />;
   }
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading && resources.length === 0) return <AppLoading variant="panel" />;
 
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        actions={
-          isAdmin ? <AdminCreateButton label={t('create')} onClick={handleCreate} /> : null
-        }
+        actions={<AdminCreateButton label={t('create')} onClick={handleCreate} />}
       />
 
       <AdminListFilters
@@ -432,22 +435,22 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
       </AdminListFilters>
 
       <AdminListResults animKey={`${nameQ}|${filterTheme}|${filterType}|${safePage}|${pageSize}`}>
-      {resources.length === 0 ? (
+      {sortedResources.length === 0 ? (
         <div className="flex flex-col gap-3">
           <EmptyState
-            title={t('noResources')}
-            message={t('noResourcesDesc')}
-            actionLabel={isAdmin ? t('create') : undefined}
-            onAction={isAdmin ? handleCreate : undefined}
+            title={hasActiveFilters ? t('noResults') : t('noResources')}
+            message={hasActiveFilters ? t('noResultsDesc') : t('noResourcesDesc')}
+            actionLabel={hasActiveFilters ? undefined : t('create')}
+            onAction={hasActiveFilters ? undefined : handleCreate}
           />
-          <div className="flex flex-wrap gap-3 px-1">
+          {!hasActiveFilters ? <div className="flex flex-wrap gap-3 px-1">
             <Link href="/dashboard?tab=team" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaPdi')} →
             </Link>
             <Link href="/dashboard?tab=help" className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaHelp')} →
             </Link>
-          </div>
+          </div> : null}
         </div>
       ) : (
         <>
