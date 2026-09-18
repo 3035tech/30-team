@@ -4,6 +4,8 @@ Ideias de funcionalidades **ainda não implementadas**.
 
 **Pedidos do RH (testes Maria/Duda):** ver [`docs/BACKLOG-RH-TESTES.md`](./BACKLOG-RH-TESTES.md) (`B-RH1-*` / `B-RH2-*`). Fonte Word: [`docs/30TEAM_Backlog_Consolidado_Observacoes.docx`](./30TEAM_Backlog_Consolidado_Observacoes.docx).
 
+**Benchmark Sólides/RHGestor:** ver [`docs/BACKLOG-BENCHMARK-SOLIDES.md`](./BACKLOG-BENCHMARK-SOLIDES.md). O documento registra a análise crítica dos prints, o modelo organizacional recomendado e os itens `B-ORG-*` para evolução futura. Não implica paridade de funcionalidades com o concorrente.
+
 ## Como usar (humano + agente)
 
 | Ação | O que fazer |
