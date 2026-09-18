@@ -285,7 +285,7 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
         />
       ) : (
         <>
-          <AdminTableShell animKey={`posts-${page}-${postsTotal}-${q}`}>
+          <AdminTableShell locale={locale} animKey={`posts-${page}-${postsTotal}-${q}`}>
             <thead>
               <tr>
                 <AdminTh>{t(locale, 'panel.companyFeed.colTitle')}</AdminTh>
@@ -348,7 +348,7 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
             />
           ) : (
             <>
-              <AdminTableShell animKey={`kudos-${kudosPage}-${kudosTotal}`}>
+              <AdminTableShell locale={locale} animKey={`kudos-${kudosPage}-${kudosTotal}`}>
                 <thead>
                   <tr>
                     <AdminTh>{t(locale, 'panel.companyFeed.colFrom')}</AdminTh>

@@ -252,7 +252,7 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
             <p className={cn(S.muted, 'm-0 text-xs')}>
               {t(locale, 'panel.productFeedback.count', { n: total })}
             </p>
-            <AdminTableShell animKey={`fb-${reloadKey}-${items.map((r) => r.id).join(',')}`}>
+            <AdminTableShell locale={locale} animKey={`fb-${reloadKey}-${items.map((r) => r.id).join(',')}`}>
               <thead>
                 <tr>
                   <AdminTh>{t(locale, 'panel.productFeedback.colWhen')}</AdminTh>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRef } from 'react';
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
@@ -22,6 +23,7 @@ import { MeterBar } from '../_components/MeterBar';
 import { useDarkMode } from '../_components/DarkModeProvider';
 import { ContentEnter } from '../_components/AppLoading';
 import { FormField } from '../_components/FormField';
+import { getDashboardTabNav } from '../../lib/dashboard-navigation';
 
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
@@ -43,19 +45,19 @@ const S = {
     'inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-mono text-xs text-brand-600',
   /** Primary CTA — brand (use once per viewport when possible) */
   btnPrimary:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-mono text-prose text-white disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-ui text-sm font-medium text-white transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-55',
   /** Secondary soft brand */
   btnBrandSoft:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/35 bg-brand-500/10 px-3.5 py-2.5 font-mono text-xs text-brand-600 disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/35 bg-brand-500/10 px-3.5 py-2.5 font-ui text-sm font-medium text-brand-600 transition-colors hover:bg-brand-500/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-55',
   /** Neutral / ghost actions (pagination, refresh, cancel) */
   btnGhost:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-ui text-sm text-ink-muted transition-colors hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-55',
   /**
    * Icon-only row action (edit / delete) — pair with AdminEditButton / AdminDeleteButton.
    * ~40px hit target; border + tint by variant.
    */
   btnRowIcon:
-    'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 disabled:cursor-default disabled:opacity-50',
+    'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-50',
   muted: 'font-ui text-prose leading-relaxed text-ink-muted',
   faint: 'font-ui text-xs leading-snug text-ink-faint',
   stack: 'flex flex-col gap-4',
@@ -161,7 +163,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
         }
       }}
       className={cn(
-        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-mono text-2xs font-semibold uppercase tracking-[0.06em]',
+        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-mono text-2xs font-semibold uppercase tracking-[0.06em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
         active ? 'text-brand-600' : 'text-ink-muted',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
       )}
@@ -182,7 +184,7 @@ function clientSortNextDir(column, previousKey, previousDir) {
 }
 
 const PAGER_BTN =
-  'min-h-touch min-w-touch rounded-control border px-2.5 py-1.5 font-mono text-2xs disabled:cursor-default';
+  'min-h-touch min-w-touch rounded-control border px-2.5 py-1.5 font-ui text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default';
 const PAGER_BTN_IDLE =
   'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500 hover:bg-brand-500/[0.14]';
 const PAGER_BTN_DISABLED =
@@ -380,44 +382,11 @@ function getKanbanStages(locale = 'pt-BR', { isDark = false, companyStages = nul
 /** @deprecated use getKanbanStages(locale) */
 const KANBAN_STAGES = getKanbanStages('pt-BR');
 
-/** Sidebar section + label key for dashboard breadcrumb / page chrome. */
-const DASHBOARD_TAB_NAV = {
-  overview: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.overview' },
-  team: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.team' },
-  compensation: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compensation' },
-  compatibility: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compatibility' },
-  compare: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.compare' },
-  group: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.group' },
-  leadership: { sectionKey: 'dashboard.sectionAnalysis', labelKey: 'dashboard.leadership' },
-  vacancies: { sectionKey: 'dashboard.sectionRecruiting', labelKey: 'dashboard.vacancies' },
-  'talent-bank': { sectionKey: 'dashboard.sectionRecruiting', labelKey: 'dashboard.talentBank' },
-  motivators: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.motivators' },
-  climate: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.climate' },
-  'job-roles': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.jobRoles' },
-  'performance-reviews': { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.performanceReviews' },
-  okr: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.okr' },
-  succession: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.succession' },
-  'exit-analysis': { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.exitAnalysis' },
-  dp: { sectionKey: 'dashboard.sectionPeople', labelKey: 'dashboard.dp' },
-  'learning-resources': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.learningResources' },
-  lms: { sectionKey: 'dashboard.sectionLms', labelKey: 'dashboard.lms' },
-  'company-benefits': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.companyBenefits' },
-  'company-feed': { sectionKey: 'dashboard.sectionCatalogs', labelKey: 'dashboard.companyFeed' },
-  companies: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.companies' },
-  users: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.users' },
-  leads: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.leads' },
-  audit: { sectionKey: 'dashboard.sectionAccount', labelKey: 'dashboard.audit' },
-  help: { sectionKey: 'dashboard.sectionHelp', labelKey: 'dashboard.help' },
-  profile: { sectionKey: null, labelKey: 'dashboard.profile' },
-};
-
-function getDashboardTabNav(tab) {
-  return DASHBOARD_TAB_NAV[tab] || DASHBOARD_TAB_NAV.overview;
-}
-
 function DashboardBreadcrumb({ locale, tab, onHome }) {
   const nav = getDashboardTabNav(tab);
-  const sectionLabel = nav.sectionKey ? t(locale, nav.sectionKey) : null;
+  const sectionLabel = nav.section
+    ? t(locale, `dashboard.section${nav.section.charAt(0).toUpperCase()}${nav.section.slice(1)}`)
+    : null;
   const screenLabel = t(locale, nav.labelKey);
   const sep = (
     <span aria-hidden className="mx-1.5 font-normal text-ink-faint">
@@ -458,41 +427,74 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
  * Styled with Tailwind tokens (brand / ink / canvas).
  */
 function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreLabel = 'More' }) {
+  const tabRefs = useRef(new Map());
   const more = Array.isArray(moreTabs) ? moreTabs : [];
   const moreActive = more.some((tab) => tab.id === active);
   const moreValue = moreActive ? active : '';
+  const hasPrimaryActive = tabs.some((tab) => tab.id === active);
 
   const tabClass = (on) =>
     cn(
-      'min-h-touch cursor-pointer rounded-full border px-3.5 py-2 font-mono text-xs',
+      'relative -mb-px inline-flex min-h-touch shrink-0 cursor-pointer items-center border-x-0 border-t-0 border-b-2 bg-transparent px-3 py-2.5 font-ui text-sm font-medium focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-500',
       on
-        ? 'border-brand-500/40 bg-brand-500/[0.08] text-brand-600'
-        : 'border-ink/12 bg-transparent text-ink-muted'
+        ? 'border-brand-500 text-brand-700'
+        : 'border-transparent text-ink-muted hover:border-ink/20 hover:text-ink'
     );
 
   return (
     <div
       role="tablist"
       aria-label={ariaLabel || undefined}
-      className="mb-3.5 flex flex-wrap items-center gap-1.5 border-b border-ink/12 pb-3"
+      className="mb-4 flex max-w-full items-end gap-1 overflow-x-auto border-b border-ink/12 [scrollbar-width:thin]"
     >
       {tabs.map((tab) => {
         const on = active === tab.id;
         return (
           <button
             key={tab.id}
+            ref={(node) => {
+              if (node) tabRefs.current.set(tab.id, node);
+              else tabRefs.current.delete(tab.id);
+            }}
             type="button"
             role="tab"
             aria-selected={on}
+            aria-controls={tab.panelId || undefined}
+            id={tab.tabId || undefined}
+            tabIndex={on || (!hasPrimaryActive && tabs[0]?.id === tab.id) ? 0 : -1}
             onClick={() => onChange(tab.id)}
+            onKeyDown={(event) => {
+              const index = tabs.findIndex((item) => item.id === tab.id);
+              let nextIndex = null;
+              if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+              if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+              if (event.key === 'Home') nextIndex = 0;
+              if (event.key === 'End') nextIndex = tabs.length - 1;
+              if (nextIndex == null) return;
+              event.preventDefault();
+              const nextTab = tabs[nextIndex];
+              onChange(nextTab.id);
+              requestAnimationFrame(() => tabRefs.current.get(nextTab.id)?.focus());
+            }}
             className={tabClass(on)}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tab.badge != null ? (
+              <span
+                className={cn(
+                  'ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-2xs tabular-nums',
+                  on ? 'bg-brand-500/15 text-brand-700' : 'bg-ink/[0.07] text-ink-muted'
+                )}
+                aria-label={tab.badgeLabel || undefined}
+              >
+                {tab.badge}
+              </span>
+            ) : null}
           </button>
         );
       })}
       {more.length > 0 ? (
-        <label className="relative m-0 inline-flex min-h-touch items-center gap-2">
+        <label className="relative mb-1 ml-1 inline-flex min-h-touch shrink-0 items-center gap-2">
           <span className="sr-only">{moreLabel}</span>
           <select
             aria-label={moreLabel}
@@ -502,7 +504,7 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
               if (next) onChange(next);
             }}
             className={cn(
-              'ui-select max-w-[220px] min-h-touch cursor-pointer rounded-full border px-3.5 py-2 font-mono text-xs',
+              'ui-select max-w-[220px] min-h-touch cursor-pointer rounded-control border px-3.5 py-2 font-ui text-sm',
               moreActive
                 ? 'border-brand-500/40 bg-brand-500/[0.08] text-brand-600'
                 : 'border-ink/12 bg-ink/[0.05] text-ink-muted'
@@ -638,12 +640,12 @@ function AdminViewButton({
 }
 
 const ADMIN_ICON_TINT = {
-  brand: 'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
-  info: 'border-info/35 bg-info/[0.08] text-info',
-  muted: 'border-ink/15 bg-ink/[0.04] text-ink-muted',
-  warning: 'border-warning/40 bg-warning/[0.1] text-warning',
-  danger: 'border-danger/35 bg-danger/[0.08] text-danger',
-  success: 'border-success/35 bg-success/[0.08] text-success',
+  brand: 'border-brand-500/35 bg-brand-500/[0.09] text-brand-600 hover:bg-brand-500/[0.15]',
+  info: 'border-info/35 bg-info/[0.08] text-info hover:bg-info/[0.14]',
+  muted: 'border-ink/15 bg-ink/[0.04] text-ink-muted hover:bg-ink/[0.08] hover:text-ink',
+  warning: 'border-warning/40 bg-warning/[0.1] text-warning hover:bg-warning/[0.16]',
+  danger: 'border-danger/35 bg-danger/[0.08] text-danger hover:bg-danger/[0.14]',
+  success: 'border-success/35 bg-success/[0.08] text-success hover:bg-success/[0.14]',
 };
 
 /**
@@ -734,9 +736,24 @@ function AdminTh({ children, align = 'left', className }) {
 /** Scroll + border chrome around admin list tables.
  * Pass `animKey` (filter/search/page signature) to fade/slide results after filter changes.
  */
-function AdminTableShell({ children, minWidth = '640px', className, animKey }) {
+function AdminTableShell({
+  children,
+  minWidth = '640px',
+  className,
+  animKey,
+  locale = 'pt-BR',
+  ariaLabel,
+}) {
   const shell = (
-    <div className={cn('overflow-x-auto rounded-card border border-ink/10', className)}>
+    <div
+      role="region"
+      tabIndex={0}
+      aria-label={ariaLabel || t(locale, 'panel.common.dataTable')}
+      className={cn(
+        'overflow-x-auto overscroll-x-contain rounded-card border border-ink/10 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
+        className
+      )}
+    >
       <table
         className="w-full border-collapse text-left text-prose"
         style={minWidth ? { minWidth } : undefined}
@@ -761,7 +778,7 @@ function AdminPageHeader({ title, subtitle = null, description = null, actions =
   return (
     <header
       className={cn(
-        'mb-4 flex items-start justify-between gap-4',
+        'mb-4 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start sm:gap-4',
         className
       )}
     >
@@ -772,7 +789,7 @@ function AdminPageHeader({ title, subtitle = null, description = null, actions =
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 pt-0.5">
+        <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 pt-0.5 sm:justify-end">
           {actions}
         </div>
       ) : null}

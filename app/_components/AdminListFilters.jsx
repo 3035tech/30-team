@@ -7,7 +7,7 @@ import { FormField } from './FormField';
 import { ContentEnter } from './AppLoading';
 
 const clearBtnClass =
-  'inline-flex min-h-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-45';
+  'inline-flex min-h-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3.5 py-2.5 font-ui text-sm text-ink-muted transition-colors hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-45';
 
 /**
  * Single-row filter bar for admin listagens.

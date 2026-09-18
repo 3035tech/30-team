@@ -451,7 +451,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId, isAdmin
         </div>
       ) : (
         <>
-        <AdminTableShell minWidth="640px">
+        <AdminTableShell locale={locale} minWidth="640px">
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>

@@ -79,6 +79,14 @@ export function useDashboardNavigation({
       if (curDetail) p.set('vacancyDetail', curDetail);
     }
 
+    // Vacancy workspace section: keeps deep links and browser back/forward useful.
+    if (opts.vacancySection !== undefined) {
+      if (opts.vacancySection) p.set('vacancySection', String(opts.vacancySection));
+    } else if ((opts.tab !== undefined ? opts.tab : urlParams.get('tab')) === 'vacancies') {
+      const curSection = urlParams.get('vacancySection');
+      if (curSection) p.set('vacancySection', curSection);
+    }
+
     // Deep-link Equipe → pessoa: /dashboard?tab=team&candidate=<id>
     const nextTab = opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
     const nextCreate = opts.create !== undefined ? opts.create : urlParams.get('create');

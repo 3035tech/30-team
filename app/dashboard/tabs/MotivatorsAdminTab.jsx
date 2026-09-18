@@ -417,7 +417,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter, onCreateInvit
         </ContentEnter>
       ) : (
         <>
-          <AdminTableShell minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
+          <AdminTableShell locale={locale} minWidth="640px" animKey={`${status}|${page}|${pageSize}`}>
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -630,7 +630,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
         {loading ? <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} /> : null}
-        <AdminTableShell minWidth="480px">
+        <AdminTableShell locale={locale} minWidth="480px">
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>

@@ -248,7 +248,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
           message={t(locale, 'panel.compensationRoster.emptyHint')}
         />
       ) : (
-        <AdminTableShell
+        <AdminTableShell locale={locale}
           minWidth="640px"
           animKey={`${q}|${statusFilter}|${hasSalary}|${marketBand}|${page}|${pageSize}`}
         >

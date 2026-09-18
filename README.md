@@ -333,11 +333,18 @@ npm run dev
 4. APIs admin e SSR do painel revalidam usuário live (active, role, company) a cada request
 5. /dashboard → auth leve pinta o shell (sidebar); queries da aba em Suspense (`load-dashboard-data.js`)
 6. Abas: visão geral, equipe, compatibilidade, vagas, motivadores, Guia (Ajuda), etc.
+   O menu usa seis grupos orientados ao trabalho, mantém apenas o grupo atual aberto no primeiro acesso e preserva a preferência depois disso. Tabs locais são reservadas para tarefas equivalentes sobre o mesmo objeto. Ver [`docs/dashboard-navigation-pattern.md`](docs/dashboard-navigation-pattern.md).
 7. Em Vagas: link /v/… (teste) e, se habilitado, página /jobs/{slug}-{id} (divulgação/SEO)
 
 ### Modelos de funil de vagas
 
 O módulo de Recrutamento/Vagas mantém modelos de funil isolados por empresa (`company_id`). Ao criar uma vaga, o modelo padrão já vem selecionado, mostra a prévia das etapas e copia seu snapshot para `vacancy_pipeline_stages`; ajustes posteriores afetam apenas aquela vaga. Em “Configurar funis”, o gestor cria modelos, edita e reordena etapas por arraste ou controles acessíveis, duplica, define o padrão e arquiva com restauração imediata. No detalhe da vaga, “Salvar como modelo” captura as etapas atuais. O Kanban oferece responsáveis por vaga/candidato, busca, filtros, visões pessoais salvas, densidade compacta, ocultação de colunas vazias, indicadores de permanência e navegação mobile em lista recolhível. Analytics mostra entradas, tempo médio, conversão histórica e sinais explicáveis de gargalo com amostra mínima. A migration `113_recruiting_workspace.sql` adiciona ownership e visões sem alterar registros existentes. Eventos de abertura, cancelamento, seleção de modelo e conclusão da criação são agregados no `audit_log`, sem conteúdo da vaga ou dados de candidato. Vagas anteriores à migration `111_vacancy_pipeline_templates.sql` continuam compatíveis pelo fallback para `company_pipeline_stages`.
+
+O workspace da vaga é organizado pelas tarefas do recrutador: **Pipeline**, **Candidatos**, **Informações**, **Divulgação** e **Configurações**. A seção ativa fica em `vacancySection` na URL; links antigos de Fit, Funil, Indicação e Relatório são direcionados para a nova seção equivalente. Analytics permanece recolhível abaixo do Kanban e a configuração das etapas fica fora da operação diária.
+
+Na **Equipe**, a lista prioriza identificação e sinais acionáveis; atributos secundários aparecem apenas em telas largas. Recalcular HR Score e excluir ficam em `Mais ações`. A ficha mantém a seção ativa em `section` na URL (`oneOnOne`, `journey`, `compensation`, `dp`, `style`, `history` ou `profile`) e limpa `candidate`/`section` ao fechar, preservando deep links e o retorno ao contexto de trabalho.
+
+O chrome administrativo compartilhado usa `AdminPageHeader`, `AdminListFilters`, `AdminTableShell`, `AdminListPager` e botões `Admin*`. Cabeçalhos reorganizam ações em telas estreitas; tabelas largas preservam comparação por rolagem horizontal; ações usam fonte de interface, foco visível e tooltip nos controles somente por ícone. Não envolva `AdminTableShell` em outra `<table>`: o componente já cria a tabela canônica.
 
 Remuneração é um módulo sensível separado (`compensation.view` / `compensation.manage`). A migration `112_compensation_module_entitlement.sql` mantém o acesso de empresas restritas existentes e separa novas configurações do núcleo geral. Seleção vazia de módulos passa a significar somente `core`; `NULL` permanece apenas como compatibilidade irrestrita legada.
 ```

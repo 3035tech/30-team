@@ -666,7 +666,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
           </div>
         ) : (
           <>
-          <AdminTableShell
+          <AdminTableShell locale={locale}
             minWidth="960px"
             className="mt-2.5"
             animKey={`${companiesQ}|${companiesActive}|${companiesPage}|${companiesPageSize}`}

@@ -567,7 +567,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
           </div>
         ) : (
           <>
-          <AdminTableShell
+          <AdminTableShell locale={locale}
             minWidth="640px"
             className="mt-2.5"
             animKey={`${usersQ}|${usersRole}|${usersActive}|${usersCompany}|${usersPage}|${usersPageSize}`}

@@ -57,4 +57,47 @@ describe('module hardening', () => {
     assert.match(dashboard, /onClick=\{\(\) => void logout\(\)\}/);
     assert.match(dashboard, /!navCollapsed \? <span>\{t\(locale, 'dashboard\.logout'\)\}/);
   });
+
+  it('keeps the sidebar focused on destinations and utility actions', () => {
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    assert.doesNotMatch(dashboard, /dashboard\.workShortcuts/);
+    assert.match(dashboard, /<NavLink id="help" icon="help"/);
+    assert.match(dashboard, /DASHBOARD_NAV_SECTION\.DEVELOPMENT/);
+    assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
+  });
+
+  it('organizes the vacancy workspace around recruiter tasks', () => {
+    const vacancies = source('app/dashboard/tabs/VacanciesAdminTab.jsx');
+    const navigation = source('app/dashboard/hooks/useDashboardNavigation.js');
+    for (const section of ['pipeline', 'candidates', 'information', 'distribution', 'settings']) {
+      assert.match(vacancies, new RegExp(`id: '${section}'`));
+    }
+    assert.doesNotMatch(vacancies, /detailSection === '(fit|analytics|referral|report)'/);
+    assert.match(vacancies, /normalizeVacancyDetailSection/);
+    assert.match(navigation, /vacancySection/);
+  });
+
+  it('keeps the team person workspace deep-linkable and destructive actions secondary', () => {
+    const team = source('app/dashboard/tabs/TeamTab.jsx');
+    assert.match(team, /personNavigationFromSection/);
+    assert.match(team, /candidate: null, section: null/);
+    assert.match(team, /section,\s*scroll: false/);
+    assert.match(team, /panel\.team\.moreActions/);
+    assert.match(team, /StatusToneChip tone="info"/);
+    assert.match(team, /aria-label=\{`\$\{t\(locale, 'panel\.team\.openDetail'\)\}/);
+    assert.match(team, /<IconActionTip label=\{t\(locale, 'panel\.team\.moreActions'\)\}>/);
+  });
+
+  it('keeps canonical admin chrome responsive and avoids nested DP tables', () => {
+    const shared = source('app/dashboard/dashboard-shared.jsx');
+    const filters = source('app/_components/AdminListFilters.jsx');
+    const dp = source('app/dashboard/tabs/DpAdminTab.jsx');
+    assert.match(shared, /sm:flex-row sm:items-start/);
+    assert.match(shared, /overscroll-x-contain/);
+    assert.match(shared, /role="region"/);
+    assert.match(shared, /panel\.common\.dataTable/);
+    assert.match(shared, /focus-visible:ring-2/);
+    assert.match(filters, /font-ui text-sm/);
+    assert.doesNotMatch(dp, /<AdminTableShell[^>]*>\s*<table/);
+  });
 });

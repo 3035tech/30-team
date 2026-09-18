@@ -21,6 +21,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
 import { Icon } from '../../_components/Icon';
+import { IconActionTip } from '../../_components/IconActionTip';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { BenefitAssignmentsBlock } from '../../_components/BenefitAssignmentsBlock';
@@ -122,6 +123,18 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
 }
 
 const PIPELINE_OPTIONS = PIPELINE_STAGES;
+const PERSON_TOP_SECTIONS = new Set(['people', 'style', 'history', 'profile']);
+const PERSON_MANAGEMENT_SECTIONS = new Set(['oneOnOne', 'journey', 'compensation', 'dp']);
+
+function personNavigationFromSection(section) {
+  if (PERSON_TOP_SECTIONS.has(section)) {
+    return { personTab: section, peopleSubTab: 'oneOnOne' };
+  }
+  if (PERSON_MANAGEMENT_SECTIONS.has(section)) {
+    return { personTab: 'people', peopleSubTab: section };
+  }
+  return { personTab: 'people', peopleSubTab: 'oneOnOne' };
+}
 
 
 function fitBandLabel(locale, code) {
@@ -354,18 +367,12 @@ export function TeamTab({
   useEffect(() => {
     if (!focusCandidateId) return;
     const cid = String(focusCandidateId);
-    const section =
-      focusSection === 'journey' ||
-      focusSection === 'oneOnOne' ||
-      focusSection === 'compensation' ||
-      focusSection === 'dp'
-        ? focusSection
-        : 'oneOnOne';
+    const nextNavigation = personNavigationFromSection(focusSection);
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab('people');
-      setPeopleSubTab(section);
+      setPersonTab(nextNavigation.personTab);
+      setPeopleSubTab(nextNavigation.peopleSubTab);
       loadDetail(cid);
       return;
     }
@@ -375,25 +382,19 @@ export function TeamTab({
   useEffect(() => {
     if (!focusCandidateId || !detail?.candidate) return;
     if (String(detail.candidate.id) !== String(focusCandidateId)) return;
-    const section =
-      focusSection === 'journey' ||
-      focusSection === 'oneOnOne' ||
-      focusSection === 'compensation' ||
-      focusSection === 'dp'
-        ? focusSection
-        : 'oneOnOne';
+    const nextNavigation = personNavigationFromSection(focusSection);
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab('people');
-      setPeopleSubTab(section);
+      setPersonTab(nextNavigation.personTab);
+      setPeopleSubTab(nextNavigation.peopleSubTab);
       return;
     }
     const aid = detail.assessments?.[0]?.id;
     if (aid) {
       setOpen(String(aid));
-      setPersonTab('people');
-      setPeopleSubTab(section);
+      setPersonTab(nextNavigation.personTab);
+      setPeopleSubTab(nextNavigation.peopleSubTab);
     }
   }, [detail, focusCandidateId, focusSection, results]);
 
@@ -808,6 +809,53 @@ export function TeamTab({
       })
     : null;
 
+  const openPersonDetail = (row, section = 'oneOnOne') => {
+    const id = String(row.assessmentId);
+    const nextNavigation = personNavigationFromSection(section);
+    setOpen(id);
+    setPersonTab(nextNavigation.personTab);
+    setPeopleSubTab(nextNavigation.peopleSubTab);
+    if (row.candidateId) {
+      loadDetail(row.candidateId);
+      if (typeof navigateDashboard === 'function') {
+        navigateDashboard({
+          tab: 'team',
+          candidate: String(row.candidateId),
+          section,
+          scroll: false,
+        });
+      }
+    } else {
+      setDetail(null);
+      setDetailErr('');
+    }
+  };
+
+  const closePersonDetail = () => {
+    setOpen(null);
+    setDetail(null);
+    setDetailErr('');
+    setPersonTab('people');
+    setPeopleSubTab('oneOnOne');
+    if (typeof navigateDashboard === 'function') {
+      navigateDashboard({ tab: 'team', candidate: null, section: null, scroll: false });
+    }
+  };
+
+  const navigatePersonSection = (section) => {
+    const nextNavigation = personNavigationFromSection(section);
+    setPersonTab(nextNavigation.personTab);
+    setPeopleSubTab(nextNavigation.peopleSubTab);
+    if (openRow?.candidateId && typeof navigateDashboard === 'function') {
+      navigateDashboard({
+        tab: 'team',
+        candidate: String(openRow.candidateId),
+        section,
+        scroll: false,
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {companyId ? (
@@ -860,7 +908,7 @@ export function TeamTab({
       <div
         role="group"
         aria-label={t(locale, 'panel.team.sortAria')}
-        className="flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] px-4 py-3"
+        className="flex flex-wrap items-center gap-2 rounded-control border border-ink/10 bg-ink/[0.02] px-3.5 py-2.5"
       >
         <label className="flex cursor-pointer items-center gap-1.5 font-mono text-2xs text-ink-muted">
           <input
@@ -872,7 +920,7 @@ export function TeamTab({
           />
           {t(locale, 'panel.team.all')}
         </label>
-        <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
+        <span className="font-ui text-xs text-ink-faint">
           {t(locale, 'panel.team.sortBy')}
         </span>
         {sortColumns.map(({ k, labelKey }) => {
@@ -884,7 +932,7 @@ export function TeamTab({
               onClick={() => onSort(k)}
               aria-pressed={active}
               className={cn(
-                'cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-xs',
+                'min-h-9 cursor-pointer rounded-control border px-3 py-1.5 font-ui text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
                 active
                   ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                   : 'border-ink/12 bg-transparent text-ink-muted'
@@ -1001,16 +1049,9 @@ export function TeamTab({
         return (
           <div
             key={id}
-            className={cn(S.cardTight, 'cursor-pointer overflow-hidden p-0')}
+            className={cn(S.cardTight, 'overflow-visible p-0')}
             style={{
               border: isSelected ? `1px solid ${d.color}44` : undefined,
-            }}
-            onClick={() => {
-              setOpen(id);
-              setPersonTab('people');
-              setPeopleSubTab('oneOnOne');
-              if (r.candidateId) loadDetail(r.candidateId);
-              else { setDetail(null); setDetailErr(''); }
             }}
           >
             <div className="flex items-center gap-3 px-3.5 py-2.5">
@@ -1022,8 +1063,14 @@ export function TeamTab({
                 aria-label={t(locale, 'panel.team.selectPersonAria', { name: titleCasePersonName(r.name) })}
                 className="h-4 w-4 shrink-0 cursor-pointer accent-brand-500"
               />
-              <div className="shrink-0 text-lg leading-none">{d.emoji}</div>
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => openPersonDetail(r)}
+                aria-label={`${t(locale, 'panel.team.openDetail')}: ${titleCasePersonName(r.name)}`}
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-control border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+              >
+                <span className="shrink-0 text-lg leading-none" aria-hidden="true">{d.emoji}</span>
+                <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                   <span className="text-base leading-snug text-ink">
                     {titleCasePersonName(r.name)}
@@ -1044,29 +1091,31 @@ export function TeamTab({
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <TypeBadge type={r.topType} locale={locale} compact />
-                  <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
-                  {r.areaLabel && (
-                    <StatusToneChip tone="neutral">{r.areaLabel}</StatusToneChip>
-                  )}
+                  <span className="hidden 2xl:contents">
+                    <NearbyTypeBadges scores={r.scores} topType={r.topType} locale={locale} />
+                    {r.areaLabel ? <StatusToneChip tone="neutral">{r.areaLabel}</StatusToneChip> : null}
+                  </span>
                   {r.pipelineStage ? (
-                    <StatusToneChip tone="brand">
+                    <StatusToneChip tone="info">
                       {t(locale, 'recruiting.pipelineShort')}: {pipelineLabel(locale, r.pipelineStage)}
                     </StatusToneChip>
                   ) : null}
-                  {r.fitLabel && (
-                    <StatusToneChip tone="brand">
-                      {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
-                    </StatusToneChip>
-                  )}
-                  {showVacancyFit ? (
-                    <StatusToneChip tone="success">
-                      {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
-                    </StatusToneChip>
-                  ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
-                    <StatusToneChip tone="success">
-                      {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
-                    </StatusToneChip>
-                  ) : null}
+                  <span className="hidden 2xl:contents">
+                    {r.fitLabel ? (
+                      <StatusToneChip tone="neutral">
+                        {t(locale, 'recruiting.fitLabel')}: {fitBandLabel(locale, r.fitLabel)}
+                      </StatusToneChip>
+                    ) : null}
+                    {showVacancyFit ? (
+                      <StatusToneChip tone="success">
+                        {t(locale, 'recruiting.vacancyFitShort')}: {r.vacancyFitScore010}/10
+                      </StatusToneChip>
+                    ) : r.areaFitScore010 !== null && r.areaFitScore010 !== undefined ? (
+                      <StatusToneChip tone="success">
+                        {t(locale, 'recruiting.areaFitShort')}: {r.areaFitScore010}/10
+                      </StatusToneChip>
+                    ) : null}
+                  </span>
                   {(r.hrScore != null || r.turnoverRisk) && (
                     <HrScoreBadge
                       score={r.hrScore}
@@ -1076,55 +1125,55 @@ export function TeamTab({
                     />
                   )}
                 </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                {r.candidateId && isAdmin ? (
-                  <button
-                    type="button"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        const res = await fetch(`/api/admin/hr-score/recalculate`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ candidateId: r.candidateId }),
-                        });
-                        if (res.ok) {
-                          toast(t(locale, 'hrScore.recalculated'), 'ok');
-                          if (typeof onRefresh === 'function') onRefresh();
-                        } else {
-                          throw new Error('recalc_failed');
-                        }
-                      } catch (err) {
-                        toast(t(locale, 'hrScore.recalculateFailed'), 'error');
-                      }
-                    }}
-                    title={t(locale, 'hrScore.recalculateOne')}
-                    aria-label={t(locale, 'hrScore.recalculateOne')}
-                    className="inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-info/35 bg-info/[0.08] p-0 text-info"
-                  >
-                    <Icon name="refresh" />
-                  </button>
-                ) : null}
+                </div>
+                <span className="hidden shrink-0 font-ui text-xs font-medium text-brand-500 sm:inline">{t(locale, 'panel.team.openDetail')}</span>
+              </button>
+              <div className="flex shrink-0 items-center gap-2">
                 {r.candidateId ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteCandidate(r.candidateId, r.name);
-                    }}
-                    disabled={deleting}
-                    title={t(locale, 'panel.team.ariaDeletePerson')}
-                    aria-label={t(locale, 'panel.team.ariaDeletePerson')}
-                    className={cn(
-                      'inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-control border border-danger/35 bg-danger/[0.08] p-0 text-danger',
-                      deleting && 'opacity-60'
-                    )}
-                  >
-                    <Icon name="trash" />
-                  </button>
+                  <IconActionTip label={t(locale, 'panel.team.moreActions')}>
+                  <details className="group relative group-open:z-40">
+                    <summary
+                      className="inline-flex min-h-touch min-w-touch cursor-pointer list-none items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 [&::-webkit-details-marker]:hidden"
+                      aria-label={t(locale, 'panel.team.moreActions')}
+                      title={t(locale, 'panel.team.moreActions')}
+                    >
+                      <Icon name="moreHorizontal" />
+                    </summary>
+                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/admin/hr-score/recalculate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ candidateId: r.candidateId }),
+                              });
+                              if (!res.ok) throw new Error('recalc_failed');
+                              toast(t(locale, 'hrScore.recalculated'), 'ok');
+                              router.refresh();
+                            } catch (err) {
+                              toast(t(locale, 'hrScore.recalculateFailed'), 'error');
+                            }
+                          }}
+                          className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-ink-muted hover:bg-ink/[0.04] hover:text-ink"
+                        >
+                          {t(locale, 'hrScore.recalculateOne')}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => deleteCandidate(r.candidateId, r.name)}
+                        disabled={deleting}
+                        className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:opacity-60"
+                      >
+                        {t(locale, 'panel.team.ariaDeletePerson')}
+                      </button>
+                    </div>
+                  </details>
+                  </IconActionTip>
                 ) : null}
-                <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.team.openDetail')} →</span>
               </div>
             </div>
           </div>
@@ -1136,13 +1185,7 @@ export function TeamTab({
         open={Boolean(open && openRow)}
         title={openRow ? titleCasePersonName(openRow.name) : t(locale, 'panel.team.personDetailTitle')}
         locale={locale}
-        onClose={() => {
-          setOpen(null);
-          setDetail(null);
-          setDetailErr('');
-          setPersonTab('people');
-          setPeopleSubTab('oneOnOne');
-        }}
+        onClose={closePersonDetail}
         maxWidth="920px"
       >
         {openRow ? (
@@ -1150,7 +1193,7 @@ export function TeamTab({
             <PanelSubNav
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
-              onChange={setPersonTab}
+              onChange={navigatePersonSection}
               tabs={[
                 { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
@@ -1253,7 +1296,7 @@ export function TeamTab({
                           candidateId={detail.candidate.id}
                           companyId={detail.candidate.companyId}
                           onGoSubTab={(id) => {
-                            if (allowedSubTabs.has(id)) setPeopleSubTab(id);
+                            if (allowedSubTabs.has(id)) navigatePersonSection(id);
                           }}
                           embedded
                         />
@@ -1276,7 +1319,7 @@ export function TeamTab({
                     <PanelSubNav
                       ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}
                       active={activePeopleSubTab}
-                      onChange={setPeopleSubTab}
+                      onChange={navigatePersonSection}
                       tabs={[
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },

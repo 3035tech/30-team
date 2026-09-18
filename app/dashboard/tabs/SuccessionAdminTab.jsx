@@ -829,7 +829,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         </div>
       ) : (
         <>
-        <AdminTableShell minWidth="640px" animKey={`${nameQ}|${impactFilter}|${safePage}|${pageSize}`}>
+        <AdminTableShell locale={locale} minWidth="640px" animKey={`${nameQ}|${impactFilter}|${safePage}|${pageSize}`}>
             <thead className="border-b border-ink/10 bg-canvas-alt">
               <tr>
                 <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>

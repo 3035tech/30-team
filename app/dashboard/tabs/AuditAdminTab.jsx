@@ -224,7 +224,7 @@ export function AuditAdminTab({
         <ContentEnter animKey={`${total}-${items.length}`}>
         <>
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.audit.count', { n: total })}</p>
-          <AdminTableShell
+          <AdminTableShell locale={locale}
             minWidth="880px"
             animKey={`${filters.actorKind}|${filters.companyId}|${filters.action}|${filters.q}|${filters.page}|${filters.pageSize}`}
           >

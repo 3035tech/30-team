@@ -589,8 +589,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         </ContentEnter>
       ) : (
         <ContentEnter animKey={`dp|${statusFilter}|${leaveTypeFilter}|${q}|${page}|${pageSize}`}>
-          <AdminTableShell animKey={`${statusFilter}|${leaveTypeFilter}|${q}|${page}|${pageSize}`}>
-            <table className="w-full min-w-[640px] border-collapse text-left">
+          <AdminTableShell locale={locale} minWidth="640px">
               <thead>
                 <tr className="border-b border-ink/10">
                   <AdminTh>{t(locale, 'panel.dp.colName')}</AdminTh>
@@ -664,7 +663,6 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
           </AdminTableShell>
           <AdminListPager
             locale={locale}

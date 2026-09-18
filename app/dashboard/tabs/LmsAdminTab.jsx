@@ -1205,7 +1205,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 />
               ) : (
                 <>
-                  <AdminTableShell
+                  <AdminTableShell locale={locale}
                     minWidth="560px"
                     className="mt-3"
                     animKey={`${selectedId}|${safeEnrollPage}|${enrollPageSize}`}
@@ -1358,7 +1358,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
               <EmptyState title={t(locale, 'panel.lms.listEmptyFilter')} />
             ) : (
               <>
-                <AdminTableShell minWidth="640px">
+                <AdminTableShell locale={locale} minWidth="640px">
                   <thead className="border-b border-ink/10 bg-canvas-alt">
                     <tr>
                       <SortableTh columnKey="title" sortKey={sort} dir={sortDir} onSort={toggleSort}>

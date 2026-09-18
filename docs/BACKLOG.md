@@ -6,6 +6,8 @@ Ideias de funcionalidades **ainda não implementadas**.
 
 **Benchmark Sólides/RHGestor:** ver [`docs/BACKLOG-BENCHMARK-SOLIDES.md`](./BACKLOG-BENCHMARK-SOLIDES.md). O documento registra a análise crítica dos prints, o modelo organizacional recomendado e os itens `B-ORG-*` para evolução futura. Não implica paridade de funcionalidades com o concorrente.
 
+**Auditoria UI/UX de todas as telas:** ver [`docs/BACKLOG-UI-AUDIT-ALL-SCREENS.md`](./BACKLOG-UI-AUDIT-ALL-SCREENS.md). O inventário `B-UIA-*` mapeia hierarquia, uso de espaço, densidade, navegação, ações, estados e responsividade em todas as superfícies do dashboard, colaborador e fluxos públicos.
+
 ## Como usar (humano + agente)
 
 | Ação | O que fazer |

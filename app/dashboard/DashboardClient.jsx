@@ -44,6 +44,11 @@ import {
   resolveStickyCompanyPreference,
   writeStickyCompanyId,
 } from '../../lib/dashboard-company-scope.js';
+import {
+  DASHBOARD_NAV_SECTION,
+  getDashboardSection,
+  getDefaultDashboardSections,
+} from '../../lib/dashboard-navigation.js';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -224,49 +229,7 @@ const ProfileTab = dynamic(
 );
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
-const NAV_SECTIONS_KEY = '30team_nav_sections_open';
-
-const DEFAULT_NAV_SECTIONS = {
-  analysis: true,
-  recruiting: true,
-  people: true,
-  catalogs: true,
-  lms: true,
-  account: true,
-  help: true,
-};
-
-const TAB_TO_SECTION = {
-  overview: 'analysis',
-  team: 'analysis',
-  compensation: 'analysis',
-  compatibility: 'analysis',
-  compare: 'analysis',
-  group: 'analysis',
-  leadership: 'analysis',
-  vacancies: 'recruiting',
-  'talent-bank': 'recruiting',
-  'performance-reviews': 'people',
-  okr: 'people',
-  succession: 'people',
-  'exit-analysis': 'people',
-  motivators: 'people',
-  climate: 'people',
-  whistleblowing: 'people',
-  'job-roles': 'catalogs',
-  'learning-resources': 'catalogs',
-  lms: 'lms',
-  'company-benefits': 'catalogs',
-  'company-feed': 'catalogs',
-  dp: 'people',
-  users: 'account',
-  companies: 'account',
-  leads: 'account',
-  'product-feedback': 'account',
-  audit: 'account',
-  help: 'help',
-  profile: 'account',
-};
+const NAV_SECTIONS_KEY = '30team_nav_sections_open_v2';
 
 export default function DashboardClient({
   results,
@@ -304,6 +267,7 @@ export default function DashboardClient({
   const router = useRouter();
   const urlParams = useSearchParams();
   const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
+  const initialTabRef = useRef(parseDashboardTab(urlParams, auth));
 
   // Keyboard shortcuts
   const { showHelp, setShowHelp, gPressed } = useKeyboardShortcuts({
@@ -323,7 +287,9 @@ export default function DashboardClient({
   const [search, setSearch] = useState(selectedSearch || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [navSectionsOpen, setNavSectionsOpen] = useState(DEFAULT_NAV_SECTIONS);
+  const [navSectionsOpen, setNavSectionsOpen] = useState(() =>
+    getDefaultDashboardSections(initialTabRef.current)
+  );
   const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
@@ -382,9 +348,6 @@ export default function DashboardClient({
   const showDp = can(sessionAuth, CAP.DP_VIEW);
   const showCompensation = can(sessionAuth, CAP.COMPENSATION_VIEW);
   const manageCompensation = can(sessionAuth, CAP.COMPENSATION_MANAGE);
-  const showPeopleGp = showPerformance || showSuccession || showExitAnalysis || showDp;
-  const showCatalogs = showJobRoles || showLearning || showBenefits || showCompanyFeed;
-  const showLmsSection = showLearning;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -522,7 +485,7 @@ export default function DashboardClient({
 
   // Keep the section that owns the active tab expanded.
   useEffect(() => {
-    const sec = TAB_TO_SECTION[tab];
+    const sec = getDashboardSection(tab);
     if (!sec) return;
     setNavSectionsOpen((prev) => {
       if (prev[sec]) return prev;
@@ -833,11 +796,11 @@ export default function DashboardClient({
       aria-label={label}
       aria-current={tab === id ? 'page' : undefined}
       className={cn(
-        'relative mb-1 flex w-full items-center gap-2.5 rounded-control border-none font-mono text-prose tracking-[0.5px]',
-        navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start py-[11px]',
+        'relative mb-0.5 flex w-full items-center gap-2.5 rounded-control border-none font-ui text-[0.875rem] font-medium',
+        navCollapsed ? 'justify-center px-0 py-2.5' : 'justify-start py-2.5',
         !navCollapsed && (tab === id ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
-        tab === id ? 'bg-brand-500/10 text-brand-800' : 'bg-transparent text-ink-muted',
-        'cursor-pointer text-left'
+        tab === id ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
+        'cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
       )}
     >
       <Icon name={icon} />
@@ -862,8 +825,7 @@ export default function DashboardClient({
       <button
         type="button"
         className={cn(
-          S.sidebarSection,
-          'mb-1 flex w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-0 text-left hover:text-ink'
+          'mb-1 flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-3 font-ui text-xs font-semibold text-ink-faint hover:text-ink'
         )}
         onClick={() => {
           toggleNavSection(sectionKey);
@@ -924,7 +886,7 @@ export default function DashboardClient({
             'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface/88 backdrop-blur-[14px]',
             sidebarOpen && 'db-sidebar-open',
             navCollapsed && 'db-sidebar-collapsed',
-            navCollapsed ? 'w-[72px] px-2.5 pb-6 pt-5' : 'w-[226px] pb-8 pl-[18px] pr-3.5 pt-6'
+            navCollapsed ? 'w-[72px] px-2.5 pb-6 pt-5' : 'w-[240px] px-3.5 pb-6 pt-5'
           )}
         >
           <div
@@ -944,9 +906,6 @@ export default function DashboardClient({
                 title={t(locale, 'dashboard.homeAria')}
                 aria-label={t(locale, 'dashboard.homeAria')}
               />
-              {!navCollapsed ? (
-                <span className={cn(S.label, 'mt-2.5 block')}>{t(locale, 'dashboard.panel')}</span>
-              ) : null}
             </div>
             <button
               type="button"
@@ -969,96 +928,60 @@ export default function DashboardClient({
               <Icon name="close" />
             </button>
           </div>
-          {!navCollapsed ? (
-            <div
-              className="mb-2 flex items-center gap-1.5 border-b border-ink/[0.08] pb-3"
-              role="group"
-              aria-label={t(locale, 'dashboard.workShortcuts')}
-            >
-              {showVacancies ? (
-                <button
-                  type="button"
-                  className="inline-flex min-h-touch min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/25 bg-brand-500/[0.09] px-2.5 py-2 font-ui text-xs font-medium text-brand-700 hover:bg-brand-500/[0.14] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                  onClick={() => { navigateWithOpts({ tab: 'vacancies', create: '1' }); setSidebarOpen(false); }}
-                >
-                  <Icon name="plus" className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{t(locale, 'dashboard.workNewVacancy')}</span>
-                </button>
-              ) : null}
-              {can(sessionAuth, CAP.TEAM_VIEW) ? (
-                <IconActionTip label={t(locale, 'dashboard.workFindPerson')}>
-                  <button
-                    type="button"
-                    title={t(locale, 'dashboard.workFindPerson')}
-                    aria-label={t(locale, 'dashboard.workFindPerson')}
-                    className="inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/10 bg-transparent text-ink-muted hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                    onClick={() => { navigateWithOpts({ tab: 'team' }); setSidebarOpen(false); }}
-                  >
-                    <Icon name="search" className="h-4 w-4" />
-                  </button>
-                </IconActionTip>
-              ) : null}
-              {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
-                <IconActionTip label={t(locale, 'dashboard.workPending')}>
-                  <button
-                    type="button"
-                    title={t(locale, 'dashboard.workPending')}
-                    aria-label={t(locale, 'dashboard.workPending')}
-                    className="inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/10 bg-transparent text-ink-muted hover:border-ink/20 hover:bg-ink/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                    onClick={() => { navigateWithOpts({ tab: 'overview' }); setSidebarOpen(false); }}
-                  >
-                    <Icon name="clipboard" className="h-4 w-4" />
-                  </button>
-                </IconActionTip>
-              ) : null}
-            </div>
-          ) : null}
           <nav className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
-            {sectionLabel('analysis', t(locale, 'dashboard.sectionAnalysis'))}
-            {sectionBody('analysis', (
+            {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
               <>
-                {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+                {sectionLabel(DASHBOARD_NAV_SECTION.HOME, t(locale, 'dashboard.sectionHome'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.HOME, (
                   <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
-                ) : null}
-                {can(sessionAuth, CAP.TEAM_VIEW) ? (
-                  <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
-                ) : null}
-                {showCompensation ? (
-                  <NavLink id="compensation" icon="salary" label={t(locale, 'dashboard.compensation')} />
-                ) : null}
-                {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
-                  <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
-                ) : null}
-                {can(sessionAuth, CAP.COMPARE_VIEW) ? (
-                  <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
-                ) : null}
-                {can(sessionAuth, CAP.GROUP_VIEW) ? (
-                  <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
-                ) : null}
-                {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
-                  <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
-                ) : null}
+                ))}
               </>
-            ))}
+            ) : null}
 
-            {showVacancies ? (
+            {can(sessionAuth, CAP.TEAM_VIEW) || showCompensation || showDp || showBenefits ? (
               <>
-                <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('recruiting', t(locale, 'dashboard.sectionRecruiting'))}
-                {sectionBody('recruiting', (
+                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                {sectionLabel(DASHBOARD_NAV_SECTION.PEOPLE, t(locale, 'dashboard.sectionPeople'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.PEOPLE, (
                   <>
-                    <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
-                    <NavLink id="talent-bank" icon="team" label={t(locale, 'dashboard.talentBank')} />
+                    {can(sessionAuth, CAP.TEAM_VIEW) ? (
+                      <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+                    ) : null}
+                    {showCompensation ? (
+                      <NavLink id="compensation" icon="salary" label={t(locale, 'dashboard.compensation')} />
+                    ) : null}
+                    {showDp ? <NavLink id="dp" icon="dp" label={t(locale, 'dashboard.dp')} /> : null}
+                    {showBenefits ? <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} /> : null}
                   </>
                 ))}
               </>
             ) : null}
 
-            {showMotivators || showClimate || showWhistleblowing || showPeopleGp ? (
+            {showVacancies || showJobRoles ? (
               <>
-                <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('people', t(locale, 'dashboard.sectionPeople'))}
-                {sectionBody('people', (
+                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                {sectionLabel(DASHBOARD_NAV_SECTION.RECRUITING, t(locale, 'dashboard.sectionRecruiting'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.RECRUITING, (
+                  <>
+                    {showVacancies ? (
+                      <>
+                        <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
+                        <NavLink id="talent-bank" icon="team" label={t(locale, 'dashboard.talentBank')} />
+                      </>
+                    ) : null}
+                    {showJobRoles ? (
+                      <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
+                    ) : null}
+                  </>
+                ))}
+              </>
+            ) : null}
+
+            {showPerformance || showSuccession || showLearning ? (
+              <>
+                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                {sectionLabel(DASHBOARD_NAV_SECTION.DEVELOPMENT, t(locale, 'dashboard.sectionDevelopment'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.DEVELOPMENT, (
                   <>
                     {showPerformance ? (
                       <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
@@ -1069,68 +992,50 @@ export default function DashboardClient({
                     {showSuccession ? (
                       <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
                     ) : null}
-                    {showExitAnalysis ? (
-                      <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} />
-                    ) : null}
-                    {showDp ? (
-                      <NavLink id="dp" icon="dp" label={t(locale, 'dashboard.dp')} />
-                    ) : null}
-                    {showMotivators ? (
-                      <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} />
-                    ) : null}
-                    {showClimate ? (
-                      <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} />
-                    ) : null}
-                    {showWhistleblowing ? (
-                      <NavLink
-                        id="whistleblowing"
-                        icon="feedbackInfo"
-                        label={t(locale, 'dashboard.whistleblowing')}
-                      />
-                    ) : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-
-            {showCatalogs ? (
-              <>
-                <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('catalogs', t(locale, 'dashboard.sectionCatalogs'))}
-                {sectionBody('catalogs', (
-                  <>
-                    {showJobRoles ? (
-                      <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
-                    ) : null}
                     {showLearning ? (
-                      <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
-                    ) : null}
-                    {showBenefits ? (
-                      <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} />
-                    ) : null}
-                    {showCompanyFeed ? (
-                      <NavLink id="company-feed" icon="list" label={t(locale, 'dashboard.companyFeed')} />
+                      <>
+                        <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
+                        <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
+                      </>
                     ) : null}
                   </>
                 ))}
               </>
             ) : null}
 
-            {showLmsSection ? (
+            {can(sessionAuth, CAP.COMPATIBILITY_VIEW) || can(sessionAuth, CAP.COMPARE_VIEW) || can(sessionAuth, CAP.GROUP_VIEW) || can(sessionAuth, CAP.LEADERSHIP_VIEW) || showMotivators || showClimate || showWhistleblowing || showExitAnalysis || showCompanyFeed ? (
               <>
-                <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('lms', t(locale, 'dashboard.sectionLms'), { navigateTab: 'lms' })}
-                {sectionBody('lms', (
-                  <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
+                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                {sectionLabel(DASHBOARD_NAV_SECTION.CULTURE_HR, t(locale, 'dashboard.sectionCultureHr'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.CULTURE_HR, (
+                  <>
+                    {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
+                      <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
+                    ) : null}
+                    {can(sessionAuth, CAP.COMPARE_VIEW) ? (
+                      <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
+                    ) : null}
+                    {can(sessionAuth, CAP.GROUP_VIEW) ? (
+                      <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
+                    ) : null}
+                    {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
+                      <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
+                    ) : null}
+                    {showMotivators ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
+                    {showClimate ? <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} /> : null}
+                    {showCompanyFeed ? <NavLink id="company-feed" icon="list" label={t(locale, 'dashboard.companyFeed')} /> : null}
+                    {showExitAnalysis ? <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
+                    {showWhistleblowing ? <NavLink id="whistleblowing" icon="feedbackInfo" label={t(locale, 'dashboard.whistleblowing')} /> : null}
+                  </>
                 ))}
               </>
             ) : null}
 
             {showCompanies || showUsers || showLeads || showProductFeedback || showAudit ? (
               <>
-                <div className="my-2 h-px bg-ink/[0.08]" />
-                {sectionLabel('account', t(locale, 'dashboard.sectionAccount'))}
-                {sectionBody('account', (
+                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                {sectionLabel(DASHBOARD_NAV_SECTION.ADMINISTRATION, t(locale, 'dashboard.sectionAdministration'))}
+                {sectionBody(DASHBOARD_NAV_SECTION.ADMINISTRATION, (
                   <>
                     {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
                     {showCompanies ? (
@@ -1151,16 +1056,11 @@ export default function DashboardClient({
                 ))}
               </>
             ) : null}
-
-            <div className="my-2 h-px bg-ink/[0.08]" />
-            {sectionLabel('help', t(locale, 'dashboard.sectionHelp'))}
-            {sectionBody('help', (
-              can(sessionAuth, CAP.HELP_VIEW) ? (
-                <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
-              ) : null
-            ))}
           </nav>
           <div className="flex-shrink-0 border-t border-ink/[0.08] pt-2.5">
+            {can(sessionAuth, CAP.HELP_VIEW) ? (
+              <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
+            ) : null}
             <IconActionTip
               label={t(locale, 'dashboard.logout')}
               className="w-full"
@@ -1172,7 +1072,7 @@ export default function DashboardClient({
                 title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
                 aria-label={t(locale, 'dashboard.logout')}
                 className={cn(
-                  'flex min-h-touch w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent font-mono text-prose text-ink-muted hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55',
+                  'flex min-h-touch w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent font-ui text-sm font-medium text-ink-muted hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55',
                   navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start px-[11px] py-[11px]'
                 )}
               >

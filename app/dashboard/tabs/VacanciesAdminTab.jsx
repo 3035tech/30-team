@@ -18,6 +18,7 @@ import {
   AdminDeleteButton,
   AdminActionsCell,
   AdminIconButton,
+  AdminPageHeader,
   AdminViewButton,
 } from '../dashboard-shared';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
@@ -59,20 +60,41 @@ import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
 import { RECRUITING_UX_EVENT } from '../../../lib/recruiting-ux-events';
+import { VacancyDescriptionHtml } from '../vacancies/VacancyDescriptionHtml';
+import { Icon } from '../../_components/Icon';
 
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-xs`;
 const BTN_GHOST =
-  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-2 font-mono text-xs text-ink-muted disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3 py-2 font-ui text-sm text-ink-muted transition-colors hover:border-ink/20 hover:bg-ink/[0.035] hover:text-ink disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND =
-  'min-h-touch cursor-pointer rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-mono text-xs text-brand-500 disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-ui text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/[0.14] disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND_SOFT =
-  'min-h-touch cursor-pointer rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-ui text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/[0.12] disabled:cursor-default disabled:opacity-60';
 const META = 'font-mono text-2xs text-ink-muted';
 const META_FAINT = 'font-mono text-2xs text-ink-faint';
 const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
 const GRID_AUTO_LG = 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5';
+const VACANCY_DETAIL_SECTIONS = Object.freeze([
+  'pipeline',
+  'candidates',
+  'information',
+  'distribution',
+  'settings',
+]);
+
+function normalizeVacancyDetailSection(value) {
+  const legacy = {
+    fit: 'candidates',
+    analytics: 'pipeline',
+    referral: 'distribution',
+    report: 'distribution',
+    config: 'settings',
+  };
+  if (legacy[value]) return legacy[value];
+  return VACANCY_DETAIL_SECTIONS.includes(value) ? value : 'pipeline';
+}
 
 export { VacancyInviteByEmail };
 
@@ -90,7 +112,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [editingVacancy, setEditingVacancy] = useState(null);
   const [detailVacancy, setDetailVacancy] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailSection, setDetailSection] = useState('pipeline');
+  const [detailSection, setDetailSection] = useState(() =>
+    normalizeVacancyDetailSection(urlParams.get('vacancySection'))
+  );
 
   const vacancyDetailId = String(urlParams.get('vacancyDetail') || '').trim();
   const isDetailView = Boolean(vacancyDetailId);
@@ -368,19 +392,22 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setDetailVacancy(null);
       return;
     }
-    setDetailSection('pipeline');
     loadVacancyDetail(vacancyDetailId);
   }, [vacancyDetailId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    setDetailSection(normalizeVacancyDetailSection(urlParams.get('vacancySection')));
+  }, [urlParams]);
+
   const openVacancyDetail = (id) => {
-    navigateDashboard({ tab: 'vacancies', vacancyDetail: String(id) });
+    navigateDashboard({ tab: 'vacancies', vacancyDetail: String(id), vacancySection: 'pipeline' });
   };
 
   const backToVacanciesList = () => {
     setDetailVacancy(null);
     setLinkExpiryEdit(null);
     setEditingVacancy(null);
-    navigateDashboard({ tab: 'vacancies', vacancyDetail: '' });
+    navigateDashboard({ tab: 'vacancies', vacancyDetail: '', vacancySection: null });
   };
 
   const createVacancy = async () => {
@@ -1232,7 +1259,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             >
               {t(locale, 'recruiting.backToVacancies')}
             </button>
-            <span className={S.label}>{t(locale, 'recruiting.vacancyDetailTitle')}</span>
         </div>
         {!v || error || msg ? (
         <div className={cn(S.card, 'px-7 py-[22px]')}>
@@ -1270,7 +1296,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <div className={S.card}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                  <span className={cn(S.label, 'mb-3 block')}>{t(locale, 'recruiting.vacancyInfoTitle')}</span>
                   <div className="flex flex-wrap items-baseline gap-2.5">
                     <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
                     <span
@@ -1349,46 +1374,80 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   >
                     {t(locale, 'recruiting.editVacancy')}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVacancyStatus(
-                        v.id,
-                        v.status === VACANCY_STATUS.OPEN
-                          ? VACANCY_STATUS.CLOSED
-                          : VACANCY_STATUS.OPEN
-                      )
-                    }
-                    disabled={loading}
-                    className={cn(BTN_GHOST, loading && 'opacity-60')}
-                  >
-                    {v.status === VACANCY_STATUS.OPEN
-                      ? t(locale, 'recruiting.closeVacancy')
-                      : t(locale, 'recruiting.reopenVacancy')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => cloneVacancyAction(v)}
-                    disabled={loading}
-                    className={cn(BTN_GHOST, loading && 'opacity-60')}
-                  >
-                    {t(locale, 'recruiting.cloneVacancy')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => archiveVacancy(v.id, v.title)}
-                    disabled={loading}
-                    className={cn(
-                      'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-2.5 py-2 font-mono text-xs text-danger',
-                      loading && 'opacity-60'
-                    )}
-                  >
-                    {t(locale, 'recruiting.archiveVacancy')}
-                  </button>
+                  <details className="group relative">
+                    <summary className={cn(BTN_GHOST, 'gap-2 list-none select-none [&::-webkit-details-marker]:hidden')}>
+                      {t(locale, 'recruiting.moreActions')}
+                      <Icon
+                        name="chevronDown"
+                        className="h-3.5 w-3.5 transition-transform duration-150 group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[190px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVacancyStatus(
+                            v.id,
+                            v.status === VACANCY_STATUS.OPEN
+                              ? VACANCY_STATUS.CLOSED
+                              : VACANCY_STATUS.OPEN
+                          )
+                        }
+                        disabled={loading}
+                        className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left', loading && 'opacity-60')}
+                      >
+                        {v.status === VACANCY_STATUS.OPEN
+                          ? t(locale, 'recruiting.closeVacancy')
+                          : t(locale, 'recruiting.reopenVacancy')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cloneVacancyAction(v)}
+                        disabled={loading}
+                        className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left', loading && 'opacity-60')}
+                      >
+                        {t(locale, 'recruiting.cloneVacancy')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => archiveVacancy(v.id, v.title)}
+                        disabled={loading}
+                        className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
+                      >
+                        {t(locale, 'recruiting.archiveVacancy')}
+                      </button>
+                    </div>
+                  </details>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 border-t border-ink/8 pt-4 md:grid-cols-2">
+              <div className="mt-5">
+                <PanelSubNav
+                  ariaLabel={t(locale, 'recruiting.detailTabsAria')}
+                  active={detailSection}
+                  onChange={(id) => {
+                    const next = normalizeVacancyDetailSection(id);
+                    setDetailSection(next);
+                    navigateDashboard({
+                      tab: 'vacancies',
+                      vacancyDetail: String(v.id),
+                      vacancySection: next,
+                      scroll: false,
+                    });
+                  }}
+                  tabs={[
+                    { id: 'pipeline', label: t(locale, 'recruiting.detailTabPipeline') },
+                    { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
+                    { id: 'information', label: t(locale, 'recruiting.detailTabInformation') },
+                    { id: 'distribution', label: t(locale, 'recruiting.detailTabDistribution') },
+                    { id: 'settings', label: t(locale, 'recruiting.detailTabSettings') },
+                  ]}
+                />
+              </div>
+
+              <ContentEnter animKey={detailSection}>
+              {detailSection === 'distribution' ? (
+              <div className="grid gap-3 md:grid-cols-2">
                 <section className="rounded-control border border-ink/10 bg-ink/[0.025] p-3.5" aria-label={t(locale, 'recruiting.enneagramLinkLabel')}>
                   <span className={cn(S.label, 'mb-2.5 block')}>{t(locale, 'recruiting.enneagramLinkLabel')}</span>
                   {token ? (
@@ -1494,52 +1553,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   ) : null}
                 </section>
               </div>
+              ) : null}
 
-              <div className="mt-[18px]">
-                <PanelSubNav
-                  ariaLabel={t(locale, 'recruiting.detailTabsAria')}
-                  active={detailSection}
-                  onChange={(id) =>
-                    setDetailSection(id === 'config' ? 'pipeline' : id)
-                  }
-                  moreLabel={t(locale, 'recruiting.detailTabMore')}
-                  tabs={[
-                    { id: 'pipeline', label: t(locale, 'recruiting.detailTabPipeline') },
-                    { id: 'candidates', label: t(locale, 'recruiting.detailTabCandidates') },
-                  ]}
-                  moreTabs={[
-                    { id: 'fit', label: t(locale, 'recruiting.detailTabFit') },
-                    { id: 'analytics', label: t(locale, 'recruiting.detailTabAnalytics') },
-                    { id: 'referral', label: t(locale, 'recruiting.detailTabReferral') },
-                    { id: 'report', label: t(locale, 'recruiting.detailTabReport') },
-                  ]}
-                />
-              </div>
-
-              <ContentEnter animKey={detailSection}>
               {detailSection === 'pipeline' ? (
                 <>
-                  <CollapsibleBlock
-                    locale={locale}
-                    title={t(locale, 'panel.pipelineEditor.title')}
-                    defaultOpen={false}
-                    className="mb-3"
-                  >
-                    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                      <p className="m-0 max-w-[720px] font-ui text-xs leading-[1.55] text-ink-muted">
-                        {t(locale, 'panel.pipelineEditor.subtitle')}
-                      </p>
-                      <button type="button" className={BTN_GHOST} onClick={saveCurrentPipelineAsTemplate} disabled={loading}>
-                        {t(locale, 'panel.pipelineTemplates.saveAction')}
-                      </button>
-                    </div>
-                    <PipelineStagesEditor
-                      locale={locale}
-                      vacancyId={v.id}
-                      companyId={v.companyId}
-                      onChange={handlePipelineStagesChange}
-                    />
-                  </CollapsibleBlock>
                   <VacancyKanbanBlock
                     vacancyId={v.id}
                     companyId={v.companyId}
@@ -1554,33 +1571,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       });
                     }}
                   />
+                  <CollapsibleBlock
+                    locale={locale}
+                    title={t(locale, 'recruiting.detailTabAnalytics')}
+                    defaultOpen={false}
+                    className="mt-4"
+                  >
+                    <VacancyFunnelAnalyticsBlock
+                      vacancyId={v.id}
+                      locale={locale}
+                      appUrl={appUrl}
+                      publicPagePath={
+                        v.publicPageEnabled && v.slug
+                          ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
+                          : ''
+                      }
+                    />
+                  </CollapsibleBlock>
                 </>
-              ) : null}
-
-              {detailSection === 'analytics' ? (
-                <VacancyFunnelAnalyticsBlock
-                  vacancyId={v.id}
-                  locale={locale}
-                  appUrl={appUrl}
-                  publicPagePath={
-                    v.publicPageEnabled && v.slug
-                      ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
-                      : ''
-                  }
-                />
-              ) : null}
-
-              {detailSection === 'referral' ? (
-                <VacancyReferralBlock
-                  vacancyId={v.id}
-                  locale={locale}
-                  appUrl={appUrl}
-                  publicPagePath={
-                    v.publicPageEnabled && v.slug
-                      ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
-                      : ''
-                  }
-                />
               ) : null}
 
               {detailSection === 'candidates' ? (
@@ -1602,40 +1610,103 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     }}
                   />
                   <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                  <CollapsibleBlock
+                    locale={locale}
+                    title={t(locale, 'recruiting.detailTabFit')}
+                    defaultOpen={false}
+                    className="mt-4"
+                  >
+                    <VacancyRubricEditor
+                      vacancyId={v.id}
+                      locale={locale}
+                      vacancyTitle={v.title || ''}
+                      vacancyDescription={v.description || ''}
+                      onSaved={() => setPipelineRefresh((x) => x + 1)}
+                    />
+                    <div className="mt-4">
+                      <VacancyFitRankingBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
+                    </div>
+                  </CollapsibleBlock>
                 </div>
               ) : null}
 
-              {detailSection === 'fit' ? (
-                <div>
-                  <VacancyRubricEditor
+              {detailSection === 'information' ? (
+                <div className="rounded-card border border-ink/10 bg-ink/[0.02] p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="m-0 font-ui text-base font-semibold text-ink">
+                        {t(locale, 'recruiting.vacancyDescriptionLabel')}
+                      </h3>
+                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-xs text-ink-muted">
+                        {t(locale, 'recruiting.detailInformationHint')}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => editVacancy(v)} disabled={loading} className={BTN_BRAND_SOFT}>
+                      {t(locale, 'recruiting.editVacancy')}
+                    </button>
+                  </div>
+                  {v.description ? (
+                    <VacancyDescriptionHtml html={v.description} />
+                  ) : (
+                    <p className="mb-0 mt-4 font-ui text-sm text-ink-muted">
+                      {t(locale, 'recruiting.detailInformationEmpty')}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {detailSection === 'distribution' ? (
+                <div className="mt-4 grid gap-4 xl:grid-cols-2 xl:items-start">
+                  <VacancyReferralBlock
                     vacancyId={v.id}
                     locale={locale}
-                    vacancyTitle={v.title || ''}
-                    vacancyDescription={v.description || ''}
-                    onSaved={() => setPipelineRefresh((x) => x + 1)}
+                    appUrl={appUrl}
+                    publicPagePath={
+                      v.publicPageEnabled && v.slug
+                        ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
+                        : ''
+                    }
                   />
-                  <div className="mt-4">
-                    <VacancyFitRankingBlock vacancyId={v.id} locale={locale} refreshKey={pipelineRefresh} />
-                  </div>
+                  <VacancyClientReportBlock
+                    vacancyId={v.id}
+                    locale={locale}
+                    appUrl={appUrl}
+                    clientReportShowSalary={Boolean(v.clientReportShowSalary)}
+                    onClientReportShowSalaryChange={(next) => {
+                      setVacancies((list) =>
+                        list.map((row) =>
+                          Number(row.id) === Number(v.id)
+                            ? { ...row, clientReportShowSalary: next }
+                            : row
+                        )
+                      );
+                    }}
+                  />
                 </div>
               ) : null}
 
-              {detailSection === 'report' ? (
-                <VacancyClientReportBlock
-                  vacancyId={v.id}
-                  locale={locale}
-                  appUrl={appUrl}
-                  clientReportShowSalary={Boolean(v.clientReportShowSalary)}
-                  onClientReportShowSalaryChange={(next) => {
-                    setVacancies((list) =>
-                      list.map((row) =>
-                        Number(row.id) === Number(v.id)
-                          ? { ...row, clientReportShowSalary: next }
-                          : row
-                      )
-                    );
-                  }}
-                />
+              {detailSection === 'settings' ? (
+                <div className="rounded-card border border-ink/10 bg-ink/[0.02] p-5">
+                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="m-0 font-ui text-base font-semibold text-ink">
+                        {t(locale, 'panel.pipelineEditor.title')}
+                      </h3>
+                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-xs leading-[1.55] text-ink-muted">
+                        {t(locale, 'panel.pipelineEditor.subtitle')}
+                      </p>
+                    </div>
+                    <button type="button" className={BTN_GHOST} onClick={saveCurrentPipelineAsTemplate} disabled={loading}>
+                      {t(locale, 'panel.pipelineTemplates.saveAction')}
+                    </button>
+                  </div>
+                  <PipelineStagesEditor
+                    locale={locale}
+                    vacancyId={v.id}
+                    companyId={v.companyId}
+                    onChange={handlePipelineStagesChange}
+                  />
+                </div>
               ) : null}
               </ContentEnter>
             </div>
@@ -1677,27 +1748,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     <>
       {vacancyFormDrawers}
     <div className="flex flex-col gap-4">
-      <div className={cn(S.card, 'px-7 py-[22px]')}>
-        <span className={S.label}>{t(locale, 'recruiting.vacanciesTitle')}</span>
-        <p className="mb-0 mt-2.5 text-prose leading-[1.65] text-ink-muted">
-          {t(locale, 'recruiting.vacanciesIntro')}
-        </p>
-        {error ? (
-          <p className="mb-0 mt-2.5 font-mono text-xs text-danger">
-            {error}
-          </p>
-        ) : null}
-        {msg ? (
-          <p className="mb-0 mt-2.5 font-mono text-xs text-success">
-            {msg}
-          </p>
-        ) : null}
-      </div>
-
       <div className={S.card}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className={S.label}>{t(locale, 'recruiting.registeredVacancies')}</span>
-          <div className="flex flex-wrap gap-2">
+        <AdminPageHeader
+          title={t(locale, 'recruiting.registeredVacancies')}
+          description={t(locale, 'recruiting.vacanciesIntro')}
+          actions={(
+            <>
             <button
               type="button"
               onClick={() => setShowPipelineSettings(true)}
@@ -1718,8 +1774,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               label={t(locale, 'recruiting.createVacancyOpen')}
               onClick={openCreate}
             />
-          </div>
-        </div>
+            </>
+          )}
+        />
+        {error ? <p className="mb-0 mt-2 font-ui text-sm text-danger">{error}</p> : null}
+        {msg ? <p className="mb-0 mt-2 font-ui text-sm text-success">{msg}</p> : null}
 
         {vacFilterFromUrl !== 'all' ? (
           <div className="mt-2.5 rounded-control border border-ink/12 bg-ink/[0.03] px-3.5 py-2.5">
