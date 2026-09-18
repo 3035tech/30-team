@@ -23,6 +23,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
   const [fetchedStages, setFetchedStages] = useState(null);
+  const [compact, setCompact] = useState(false);
+  const [hideEmpty, setHideEmpty] = useState(false);
   const { isDark } = useDarkMode();
   const effectiveCompanyStages = companyStages ?? fetchedStages;
   const stages = getKanbanStages(locale, { isDark, companyStages: effectiveCompanyStages });
@@ -128,11 +130,14 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
   });
 
   const hasAny = rows.length > 0;
+  const visibleStages = hideEmpty && !draggingId
+    ? stages.filter((stage) => (grouped[stage.id] || []).length > 0)
+    : stages;
   const fitTone = (s) => (s >= 7 ? 'text-success' : s >= 4 ? 'text-warning' : 'text-danger');
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
         <span className="font-mono text-xs uppercase tracking-[1.5px] text-ink-muted">
           {t(locale, 'recruiting.pipelineTitle')}
         </span>
@@ -142,6 +147,26 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
             {t(locale, 'recruiting.candidatesCount', { n: rows.length })}
           </span>
         )}
+        {hasAny ? (
+          <div className="ml-auto flex flex-wrap items-center gap-1.5" aria-label={t(locale, 'recruiting.pipelineViewOptions')}>
+            <button
+              type="button"
+              className={cn('min-h-touch rounded-control border px-2.5 font-ui text-xs', compact ? 'border-brand-500/35 bg-brand-500/[0.08] text-brand-600' : 'border-ink/12 text-ink-muted')}
+              aria-pressed={compact}
+              onClick={() => setCompact((value) => !value)}
+            >
+              {t(locale, 'recruiting.pipelineCompact')}
+            </button>
+            <button
+              type="button"
+              className={cn('min-h-touch rounded-control border px-2.5 font-ui text-xs', hideEmpty ? 'border-brand-500/35 bg-brand-500/[0.08] text-brand-600' : 'border-ink/12 text-ink-muted')}
+              aria-pressed={hideEmpty}
+              onClick={() => setHideEmpty((value) => !value)}
+            >
+              {hideEmpty ? t(locale, 'recruiting.pipelineShowEmpty') : t(locale, 'recruiting.pipelineHideEmpty')}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {err ? <p className="mb-2.5 mt-0 font-mono text-xs text-danger">{err}</p> : null}
@@ -156,9 +181,12 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
       {hasAny && (
         <div className="kanban-scroll overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
           <div className="flex min-w-max items-start gap-2.5">
-            {stages.map((stage) => {
+            {visibleStages.map((stage) => {
               const cards = grouped[stage.id] || [];
               const isDropTarget = dragOverStage === stage.id;
+              const ages = cards.map((card) => daysInStage(card.stageEnteredAt || card.createdAt)).filter((value) => value != null);
+              const avgDays = ages.length ? Math.round(ages.reduce((sum, value) => sum + value, 0) / ages.length) : null;
+              const stalled = cards.filter((card) => stageAgingTone(daysInStage(card.stageEnteredAt || card.createdAt), stage.canonicalKey || stage.id)).length;
               return (
                 <div
                   key={stage.id}
@@ -174,13 +202,16 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                     if (!r || (r.pipelineStage || 'new') === stage.id) return;
                     await moveTo(r, stage.id);
                   }}
-                  className="w-[210px] shrink-0 rounded-xl outline outline-2 outline-offset-[3px] transition-[outline-color] duration-100"
+                  className={cn(
+                    'shrink-0 rounded-xl outline outline-2 outline-offset-[3px] transition-[width,outline-color] duration-100',
+                    compact ? 'w-[184px]' : 'w-[220px]'
+                  )}
                   style={{
                     outlineColor: isDropTarget ? stage.color : 'transparent',
                   }}
                 >
                   <div
-                    className="mb-2 flex items-center gap-1.5 rounded-t-[10px] px-2.5 py-2 transition-colors duration-100"
+                    className="sticky top-0 z-[1] mb-2 flex flex-wrap items-center gap-1.5 rounded-t-[10px] px-2.5 py-2 backdrop-blur-sm transition-colors duration-100"
                     style={{
                       background: isDropTarget ? `${stage.color}22` : `${stage.color}12`,
                       borderTop: `3px solid ${stage.color}`,
@@ -206,6 +237,13 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                     >
                       {cards.length}
                     </span>
+                    {(avgDays != null || stalled > 0) ? (
+                      <span className="basis-full pl-[13px] font-mono text-[10px] text-ink-muted">
+                        {avgDays != null ? t(locale, 'recruiting.pipelineAvgDays', { n: avgDays }) : null}
+                        {avgDays != null && stalled > 0 ? ' · ' : null}
+                        {stalled > 0 ? t(locale, 'recruiting.pipelineStalled', { n: stalled }) : null}
+                      </span>
+                    ) : null}
                   </div>
                   <div
                     onDragOver={(e) => e.preventDefault()}
@@ -234,7 +272,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                           }}
                           onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
                           className={cn(
-                            'cursor-grab select-none rounded-lg border border-ink/12 bg-surface/[0.88] px-2.5 py-[9px] transition-opacity duration-150',
+                            'cursor-grab select-none rounded-lg border border-ink/12 bg-surface/[0.88] transition-opacity duration-150',
+                            compact ? 'px-2 py-1.5' : 'px-2.5 py-[9px]',
                             isDragging && 'opacity-40',
                             isBusy && !isDragging && 'opacity-65',
                             draggingId && !isDragging && 'pointer-events-none'

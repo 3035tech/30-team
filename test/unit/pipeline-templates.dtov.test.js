@@ -4,10 +4,15 @@ import { pool, query } from '../../lib/db.js';
 import {
   applyPipelineTemplateToVacancy,
   archivePipelineTemplate,
+  createPipelineTemplate,
+  createPipelineTemplateStage,
   createPipelineTemplateFromVacancy,
   duplicatePipelineTemplate,
   listPipelineTemplates,
+  listPipelineTemplateStages,
   listVacancyPipelineStages,
+  reorderPipelineTemplateStages,
+  restorePipelineTemplate,
   updatePipelineTemplate,
 } from '../../lib/pipeline-templates.js';
 
@@ -69,6 +74,30 @@ describe('vacancy pipeline templates (DTOV)', { skip: !dtov }, () => {
     assert.equal(duplicated.ok, true);
     const afterDuplicate = await listPipelineTemplates(companyId);
     assert.ok(afterDuplicate.some((item) => item.id === duplicated.templateId));
+    assert.ok(afterDuplicate.find((item) => item.id === duplicated.templateId)?.stages?.length >= 5);
+
+    const blank = await createPipelineTemplate({
+      companyId,
+      name: `Funil editável DTOV ${vacancyId}-${Date.now()}`,
+    });
+    assert.equal(blank.ok, true);
+    const baseStages = await listPipelineTemplateStages({ companyId, templateId: blank.templateId });
+    assert.ok(baseStages.length >= 5);
+    const addedStage = await createPipelineTemplateStage({
+      companyId,
+      templateId: blank.templateId,
+      labelPt: `Painel DTOV ${Date.now()}`,
+      labelEn: 'DTOV panel',
+      canonicalKey: 'screening',
+    });
+    assert.equal(addedStage.ok, true);
+    const reordered = await reorderPipelineTemplateStages({
+      companyId,
+      templateId: blank.templateId,
+      orderedIds: [...baseStages.map((stage) => stage.id), addedStage.stage.id].reverse(),
+    });
+    assert.equal(reordered.ok, true);
+    assert.equal(reordered.stages[0].id, addedStage.stage.id);
 
     const crossTenantArchive = await archivePipelineTemplate({
       companyId: companyId + 99999,
@@ -77,6 +106,8 @@ describe('vacancy pipeline templates (DTOV)', { skip: !dtov }, () => {
     assert.equal(crossTenantArchive.ok, false);
     const archived = await archivePipelineTemplate({ companyId, templateId: duplicated.templateId });
     assert.equal(archived.ok, true);
+    const restored = await restorePipelineTemplate({ companyId, templateId: duplicated.templateId });
+    assert.equal(restored.ok, true);
 
     const otherTenantStages = await listVacancyPipelineStages({ companyId: companyId + 99999, vacancyId });
     assert.deepEqual(otherTenantStages, []);

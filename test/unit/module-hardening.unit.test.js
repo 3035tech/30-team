@@ -32,4 +32,11 @@ describe('module hardening', () => {
     assert.doesNotMatch(manager, /if \(!companyId \|\| !template\?\.id\)/);
     assert.match(manager, /companyId \? \{ companyId: Number\(companyId\) \} : \{\}/);
   });
+
+  it('keeps recruiting UX telemetry tenant-scoped and free of vacancy copy', () => {
+    const route = source('app/api/admin/recruiting-ux-event/route.js');
+    assert.match(route, /CAP\.VACANCIES_MANAGE/);
+    assert.match(route, /companyFrom: 'body'/);
+    assert.doesNotMatch(route, /description|salary|candidate/i);
+  });
 });

@@ -4,12 +4,13 @@ import { CAP } from '../../../../../lib/ae/require-admin.js';
 import { apiErrorFromResult, ERR } from '../../../../../lib/api-error.js';
 import { z, zPositiveInt } from '../../../../../lib/validate.js';
 import { reorderCompanyPipelineStages } from '../../../../../lib/company-pipeline-stages.js';
-import { reorderVacancyPipelineStages } from '../../../../../lib/pipeline-templates.js';
+import { reorderPipelineTemplateStages, reorderVacancyPipelineStages } from '../../../../../lib/pipeline-templates.js';
 
 const reorderBodySchema = z.object({
   companyId: zPositiveInt.optional(),
   orderedIds: z.array(zPositiveInt).min(1).max(50),
   vacancyId: zPositiveInt.optional(),
+  templateId: zPositiveInt.optional(),
 });
 
 /** POST /api/admin/pipeline-stages/reorder — bulk apply DnD order. */
@@ -21,7 +22,13 @@ export const POST = withAdminApi(
     logLabel: 'pipeline-stages/reorder POST',
   },
   async ({ request, companyId, body }) => {
-    const result = body.vacancyId
+    const result = body.templateId
+      ? await reorderPipelineTemplateStages({
+        companyId,
+        templateId: body.templateId,
+        orderedIds: body.orderedIds,
+      })
+      : body.vacancyId
       ? await reorderVacancyPipelineStages({
         companyId,
         vacancyId: body.vacancyId,

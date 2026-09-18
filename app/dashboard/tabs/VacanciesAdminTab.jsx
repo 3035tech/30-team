@@ -58,6 +58,7 @@ import { CopyableLink } from '../../_components/CopyableLink';
 import { RubricEditor } from '../../_components/RubricEditor';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
+import { RECRUITING_UX_EVENT } from '../../../lib/recruiting-ux-events';
 
 
 const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
@@ -152,14 +153,56 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [pipelineTemplatesLoading, setPipelineTemplatesLoading] = useState(false);
   const [pipelineTemplatesError, setPipelineTemplatesError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [showPipelineSettings, setShowPipelineSettings] = useState(false);
+  const createOpenedAtRef = useRef(null);
   const pipelineTemplateLoadRef = useRef(0);
 
-  const closeCreate = useCallback(() => {
+  const trackRecruitingUx = useCallback((event, extra = {}) => {
+    const body = { event, ...extra };
+    if (isAdmin && companyId) body.companyId = Number(companyId);
+    void fetch('/api/admin/recruiting-ux-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      keepalive: true,
+    }).catch(() => {});
+  }, [companyId, isAdmin]);
+
+  const openCreate = useCallback(() => {
+    setEditingVacancy(null);
+    setShowCreate(true);
+    createOpenedAtRef.current = Date.now();
+    trackRecruitingUx(RECRUITING_UX_EVENT.VACANCY_CREATE_OPENED);
+  }, [trackRecruitingUx]);
+
+  const closeCreate = useCallback((trackCancel = true) => {
+    if (trackCancel && showCreate && createOpenedAtRef.current) {
+      trackRecruitingUx(RECRUITING_UX_EVENT.VACANCY_CREATE_CANCELLED, {
+        elapsedMs: Date.now() - createOpenedAtRef.current,
+      });
+    }
+    createOpenedAtRef.current = null;
     setShowCreate(false);
     if (urlParams.get('create') === '1') {
       navigateDashboard({ tab: 'vacancies', create: null, scroll: false });
     }
-  }, [navigateDashboard, urlParams]);
+  }, [navigateDashboard, showCreate, trackRecruitingUx, urlParams]);
+
+  useEffect(() => {
+    if (!showCreate || createOpenedAtRef.current) return;
+    createOpenedAtRef.current = Date.now();
+    trackRecruitingUx(RECRUITING_UX_EVENT.VACANCY_CREATE_OPENED);
+  }, [showCreate, trackRecruitingUx]);
+
+  useEffect(() => {
+    if (!showCreate || (!title.trim() && !description.trim())) return () => {};
+    const preventAccidentalLeave = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', preventAccidentalLeave);
+    return () => window.removeEventListener('beforeunload', preventAccidentalLeave);
+  }, [description, showCreate, title]);
 
   const appUrl =
     (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
@@ -381,7 +424,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setJobRoleId('');
       const defaultTemplate = pipelineTemplates.find((item) => item.isDefault) || pipelineTemplates[0];
       setPipelineTemplateId(defaultTemplate ? String(defaultTemplate.id) : '');
-      closeCreate();
+      trackRecruitingUx(RECRUITING_UX_EVENT.VACANCY_CREATE_COMPLETED, {
+        vacancyId: data?.id || data?.vacancy?.id,
+        templateId: pipelineTemplateId ? Number(pipelineTemplateId) : undefined,
+        elapsedMs: createOpenedAtRef.current ? Date.now() - createOpenedAtRef.current : undefined,
+      });
+      closeCreate(false);
       await loadVacancies();
       showMsg(t(locale, 'recruiting.vacancyCreated'));
     } catch (e) {
@@ -745,7 +793,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             >
               <select
                 value={pipelineTemplateId}
-                onChange={(e) => setPipelineTemplateId(e.target.value)}
+                onChange={(e) => {
+                  setPipelineTemplateId(e.target.value);
+                  if (e.target.value) {
+                    trackRecruitingUx(RECRUITING_UX_EVENT.PIPELINE_TEMPLATE_SELECTED, { templateId: Number(e.target.value) });
+                  }
+                }}
                 className={FIELD_SELECT}
                 disabled={pipelineTemplatesLoading || pipelineTemplates.length === 0}
               >
@@ -766,6 +819,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 ))}
               </select>
             </FormField>
+            {(() => {
+              const selectedTemplate = pipelineTemplates.find((template) => String(template.id) === String(pipelineTemplateId));
+              if (!selectedTemplate?.stages?.length) return null;
+              return (
+                <div className="-mt-1 flex max-w-[760px] flex-wrap gap-1.5" aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
+                  {selectedTemplate.stages.map((stage, index) => (
+                    <span key={stage.id || stage.stageKey} className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-canvas px-2 py-1 font-ui text-xs text-ink-muted">
+                      <span className="font-mono text-2xs text-ink-faint">{index + 1}</span>
+                      {locale === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)}
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
 
             <div className={cn(GRID_AUTO_LG, 'items-start')}>
               <FormField label={t(locale, 'recruiting.vacancyTitlePh')}>
@@ -1574,6 +1641,33 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     );
   }
 
+  if (showPipelineSettings) {
+    return (
+      <ContentEnter animKey="pipeline-template-settings">
+        <div className="flex flex-col gap-4">
+          <div className={cn(S.card, 'px-7 py-[22px]')}>
+            <button type="button" className={cn(BTN_GHOST, 'mb-4')} onClick={() => setShowPipelineSettings(false)}>
+              {t(locale, 'panel.pipelineTemplates.backToVacancies')}
+            </button>
+            <span className={S.label}>{t(locale, 'panel.pipelineTemplates.manageTitle')}</span>
+            <p className="mb-0 mt-2.5 max-w-[720px] text-prose leading-[1.65] text-ink-muted">
+              {t(locale, 'panel.pipelineTemplates.manageHint')}
+            </p>
+          </div>
+          <div className={S.card}>
+            <PipelineTemplatesManager
+              locale={locale}
+              companyId={companyId}
+              templates={pipelineTemplates}
+              loading={pipelineTemplatesLoading}
+              onChanged={loadPipelineTemplates}
+            />
+          </div>
+        </div>
+      </ContentEnter>
+    );
+  }
+
   return (
     <>
       {vacancyFormDrawers}
@@ -1601,6 +1695,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={() => setShowPipelineSettings(true)}
+              className={cn(BTN_GHOST, 'px-3.5 py-2.5')}
+            >
+              {t(locale, 'panel.pipelineTemplates.manageAction')}
+            </button>
+            <button
+              type="button"
               onClick={loadVacancies}
               disabled={loading}
               className={cn(BTN_GHOST, "inline-flex items-center gap-2 px-3.5 py-2.5", loading && "opacity-60")}
@@ -1610,28 +1711,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </button>
             <AdminCreateButton
               label={t(locale, 'recruiting.createVacancyOpen')}
-              onClick={() => { setEditingVacancy(null); setShowCreate(true); }}
+              onClick={openCreate}
             />
           </div>
         </div>
-
-        <CollapsibleBlock
-          locale={locale}
-          title={t(locale, 'panel.pipelineTemplates.manageTitle')}
-          defaultOpen={false}
-          className="mt-4"
-        >
-          <p className="mb-3 mt-0 max-w-[720px] text-xs leading-[1.55] text-ink-muted">
-            {t(locale, 'panel.pipelineTemplates.manageHint')}
-          </p>
-          <PipelineTemplatesManager
-            locale={locale}
-            companyId={companyId}
-            templates={pipelineTemplates}
-            loading={pipelineTemplatesLoading}
-            onChanged={loadPipelineTemplates}
-          />
-        </CollapsibleBlock>
 
         {vacFilterFromUrl !== 'all' ? (
           <div className="mt-2.5 rounded-control border border-ink/12 bg-ink/[0.03] px-3.5 py-2.5">
@@ -1661,8 +1744,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               onAction={
                 vacFilterFromUrl === 'all'
                   ? () => {
-                      setEditingVacancy(null);
-                      setShowCreate(true);
+                      openCreate();
                     }
                   : undefined
               }

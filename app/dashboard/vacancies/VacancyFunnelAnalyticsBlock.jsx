@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
-import { Spinner } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
 
 export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath, appUrl = '' }) {
@@ -45,12 +45,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
   ];
 
   if (loading) {
-    return (
-      <div className={cn(S.card, 'flex items-center gap-2.5 p-5')}>
-        <Spinner size={18} />
-        <span className="text-prose text-ink-muted">{t(locale, 'common.loading')}</span>
-      </div>
-    );
+    return <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />;
   }
   if (err) {
     return <div className={cn(S.card, 'p-4 text-prose text-danger')}>{err}</div>;
@@ -64,7 +59,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
       : '';
 
   return (
-    <div className="flex flex-col gap-3.5">
+    <ContentEnter animKey={`vacancy-analytics-${vacancyId}`} className="flex flex-col gap-3.5">
       <div className={cn(S.card, 'px-[18px] py-4')}>
         <div className="mb-3 text-prose font-semibold text-ink">
           {t(locale, 'recruiting.analyticsFunnelTitle')}
@@ -106,6 +101,39 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
         ) : null}
       </div>
 
+      {Array.isArray(data?.stagePerformance) && data.stagePerformance.length > 0 ? (
+        <div className={cn(S.card, 'px-[18px] py-4')}>
+          <div className="mb-1 text-prose font-semibold text-ink">
+            {t(locale, 'recruiting.analyticsStageTitle')}
+          </div>
+          <p className="mb-3 mt-0 text-xs leading-relaxed text-ink-muted">
+            {t(locale, 'recruiting.analyticsStageHint')}
+          </p>
+          <div className="overflow-x-auto rounded-control border border-ink/10">
+            <table className="w-full min-w-[560px] border-collapse font-mono text-xs">
+              <thead className="bg-ink/[0.035] text-left text-ink-muted">
+                <tr>
+                  <th className="px-3 py-2 font-medium">{t(locale, 'recruiting.analyticsStage')}</th>
+                  <th className="px-3 py-2 font-medium">{t(locale, 'recruiting.analyticsEntered')}</th>
+                  <th className="px-3 py-2 font-medium">{t(locale, 'recruiting.analyticsAvgTime')}</th>
+                  <th className="px-3 py-2 font-medium">{t(locale, 'recruiting.analyticsNextConversion')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.stagePerformance.map((row) => (
+                  <tr key={row.stageKey} className="border-t border-ink/10">
+                    <td className="px-3 py-2.5 font-ui text-ink">{locale === 'en' ? (row.labelEn || row.labelPt) : (row.labelPt || row.labelEn)}</td>
+                    <td className="px-3 py-2.5 text-ink-muted">{row.entered}</td>
+                    <td className="px-3 py-2.5 text-ink-muted">{row.avgDays == null ? '–' : t(locale, 'recruiting.analyticsDays', { n: row.avgDays })}</td>
+                    <td className="px-3 py-2.5 text-ink-muted">{row.conversionToNext == null ? '–' : `${Math.round(Number(row.conversionToNext) * 100)}%`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
       {!empty && Array.isArray(data?.sources) && data.sources.length > 0 ? (
         <div className={cn(S.card, 'px-[18px] py-4')}>
           <div className="mb-2.5 text-prose font-semibold text-ink">
@@ -135,6 +163,6 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
           </div>
         </div>
       ) : null}
-    </div>
+    </ContentEnter>
   );
 }

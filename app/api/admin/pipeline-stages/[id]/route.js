@@ -8,7 +8,12 @@ import {
   deleteCompanyPipelineStage,
   PIPELINE_CANONICAL_KEYS,
 } from '../../../../../lib/company-pipeline-stages.js';
-import { deleteVacancyPipelineStage, updateVacancyPipelineStage } from '../../../../../lib/pipeline-templates.js';
+import {
+  deletePipelineTemplateStage,
+  deleteVacancyPipelineStage,
+  updatePipelineTemplateStage,
+  updateVacancyPipelineStage,
+} from '../../../../../lib/pipeline-templates.js';
 
 const patchBodySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -16,6 +21,7 @@ const patchBodySchema = z.object({
   labelEn: z.string().trim().min(1).max(60).optional(),
   canonicalKey: z.enum(/** @type {[string, ...string[]]} */ (PIPELINE_CANONICAL_KEYS)).optional(),
   vacancyId: zPositiveInt.optional(),
+  templateId: zPositiveInt.optional(),
 });
 
 function parseStageId(params) {
@@ -40,7 +46,16 @@ export const PATCH = withAdminApi(
     if (!id) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = body.vacancyId
+    const result = body.templateId
+      ? await updatePipelineTemplateStage({
+        companyId,
+        templateId: body.templateId,
+        id,
+        labelPt: body.labelPt,
+        labelEn: body.labelEn,
+        canonicalKey: body.canonicalKey,
+      })
+      : body.vacancyId
       ? await updateVacancyPipelineStage({
         companyId,
         vacancyId: body.vacancyId,
@@ -66,7 +81,7 @@ export const PATCH = withAdminApi(
 export const DELETE = withAdminApi(
   {
     cap: CAP.VACANCIES_MANAGE,
-    query: z.object({ companyId: zPositiveInt.optional(), vacancyId: zPositiveInt.optional() }),
+    query: z.object({ companyId: zPositiveInt.optional(), vacancyId: zPositiveInt.optional(), templateId: zPositiveInt.optional() }),
     companyFrom: 'query',
     logLabel: 'pipeline-stages/[id] DELETE',
   },
@@ -75,7 +90,9 @@ export const DELETE = withAdminApi(
     if (!id) {
       return apiError(request, ERR.INVALID_ID, httpStatusForError(ERR.INVALID_ID));
     }
-    const result = query.vacancyId
+    const result = query.templateId
+      ? await deletePipelineTemplateStage({ companyId, templateId: query.templateId, id })
+      : query.vacancyId
       ? await deleteVacancyPipelineStage({ companyId, vacancyId: query.vacancyId, id })
       : await deleteCompanyPipelineStage({ companyId, id });
     if (!result.ok) {

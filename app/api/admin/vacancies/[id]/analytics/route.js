@@ -1,38 +1,28 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { COOKIE_NAME } from '../../../../../../lib/auth';
-import { verifySessionWithCapabilities } from '../../../../../../lib/user-capabilities';
-import { apiError, ERR } from '../../../../../../lib/api-error';
-import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permissions';
+import { withAdminApi } from '../../../../../../lib/admin-api';
+import { apiError, ERR, httpStatusForError } from '../../../../../../lib/api-error';
+import { CAP } from '../../../../../../lib/permissions';
 import { getVacancyFunnelAnalytics } from '../../../../../../lib/job-funnel';
 
 /**
  * GET /api/admin/vacancies/[id]/analytics
  */
-export async function GET(request, { params }) {
-  const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  const payload = await verifySessionWithCapabilities(token);
-  if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
-    return apiError(request, ERR.UNAUTHORIZED, 401);
-  }
-
-  const isAdmin = isAdminRole(payload);
-  const companyId = payload?.companyId ?? null;
-  if (!isAdmin && !companyId) return apiError(request, ERR.UNAUTHORIZED, 401);
-
+export const GET = withAdminApi(
+  { cap: CAP.VACANCIES_VIEW, requireCompany: false, companyFrom: 'none', logLabel: 'vacancy analytics GET' },
+  async ({ request, params, scope }) => {
   const vacancyId = Number(params?.id);
   if (!Number.isFinite(vacancyId) || vacancyId <= 0) {
-    return apiError(request, ERR.INVALID_VACANCY, 400);
+    return apiError(request, ERR.INVALID_VACANCY, httpStatusForError(ERR.INVALID_VACANCY));
   }
 
   const stats = await getVacancyFunnelAnalytics({
     vacancyId,
-    companyId,
-    isAdmin,
+    companyId: scope.companyId,
+    isAdmin: scope.isAdmin,
   });
   if (!stats.ok) {
-    return apiError(request, stats.errorCode || 'NOT_FOUND', stats.errorCode === 'UNAUTHORIZED' ? 401 : 404);
+    const code = stats.errorCode || ERR.NOT_FOUND;
+    return apiError(request, code, httpStatusForError(code));
   }
 
   return NextResponse.json({
@@ -46,5 +36,7 @@ export async function GET(request, { params }) {
     conversionRate: stats.conversionRate,
     sources: stats.sources,
     byType: stats.byType,
+    stagePerformance: stats.stagePerformance,
   });
-}
+  }
+);

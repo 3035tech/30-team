@@ -35,7 +35,7 @@ function apiErrorLabel(locale, code) {
   return t(locale, 'panel.common.error');
 }
 
-export function PipelineStagesEditor({ locale, onChange, vacancyId = null, companyId = null }) {
+export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templateId = null, companyId = null }) {
   const { confirm } = useAppFeedback();
   const [stages, setStages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +58,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
     try {
       const params = new URLSearchParams({ includeCounts: '1' });
       if (vacancyId) params.set('vacancyId', String(vacancyId));
+      if (templateId) params.set('templateId', String(templateId));
       if (companyId) params.set('companyId', String(companyId));
       const res = await fetch(`/api/admin/pipeline-stages?${params.toString()}`);
       const data = await res.json().catch(() => ({}));
@@ -70,9 +71,19 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
     } finally {
       setLoading(false);
     }
-  }, [locale, onChange, vacancyId, companyId]);
+  }, [locale, onChange, vacancyId, templateId, companyId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!editingId && !showAdd) return () => {};
+    const preventAccidentalLeave = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', preventAccidentalLeave);
+    return () => window.removeEventListener('beforeunload', preventAccidentalLeave);
+  }, [editingId, showAdd]);
 
   const beginEdit = (s) => {
     setEditingId(s.id);
@@ -92,6 +103,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
     try {
       const body = { labelPt: labelDraft.pt.trim(), labelEn: labelDraft.en.trim() || labelDraft.pt.trim() };
       if (vacancyId) body.vacancyId = vacancyId;
+      if (templateId) body.templateId = templateId;
       if (companyId) body.companyId = companyId;
       if (!s.required) body.canonicalKey = canonicalDraft;
       const res = await fetch(`/api/admin/pipeline-stages/${s.id}`, {
@@ -124,6 +136,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
           labelEn: addingLabelEn.trim() || pt,
           canonicalKey: addingCanonical,
           ...(vacancyId ? { vacancyId } : {}),
+          ...(templateId ? { templateId } : {}),
           ...(companyId ? { companyId } : {}),
         }),
       });
@@ -159,6 +172,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
     try {
       const params = new URLSearchParams();
       if (vacancyId) params.set('vacancyId', String(vacancyId));
+      if (templateId) params.set('templateId', String(templateId));
       if (companyId) params.set('companyId', String(companyId));
       const qs = params.size ? `?${params.toString()}` : '';
       const res = await fetch(`/api/admin/pipeline-stages/${s.id}${qs}`, { method: 'DELETE' });
@@ -188,6 +202,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
         body: JSON.stringify({
           orderedIds: nextOrder.map((s) => s.id),
           ...(vacancyId ? { vacancyId } : {}),
+          ...(templateId ? { templateId } : {}),
           ...(companyId ? { companyId } : {}),
         }),
       });
@@ -220,6 +235,16 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
     next.splice(to, 0, moved);
     setDraggingId(null); setDragOverId(null);
     commitReorder(next);
+  };
+
+  const moveStageBy = (stageId, delta) => {
+    const from = stages.findIndex((stage) => stage.id === stageId);
+    const to = from + delta;
+    if (from < 0 || to < 0 || to >= stages.length || saving || orderPending.current) return;
+    const next = [...stages];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    void commitReorder(next);
   };
 
   const canonicalOptions = useMemo(() =>
@@ -335,7 +360,27 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, compa
                         </div>
                       </div>
 
-                      <div className="mt-auto flex gap-1.5 pt-3">
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                        <button
+                          type="button"
+                          className={cn(BTN_GHOST, 'px-2')}
+                          onClick={() => moveStageBy(s.id, -1)}
+                          disabled={saving || stages[0]?.id === s.id}
+                          aria-label={t(locale, 'panel.pipelineEditor.moveLeft', { name: s.labelPt })}
+                          title={t(locale, 'panel.pipelineEditor.moveLeft', { name: s.labelPt })}
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          className={cn(BTN_GHOST, 'px-2')}
+                          onClick={() => moveStageBy(s.id, 1)}
+                          disabled={saving || stages[stages.length - 1]?.id === s.id}
+                          aria-label={t(locale, 'panel.pipelineEditor.moveRight', { name: s.labelPt })}
+                          title={t(locale, 'panel.pipelineEditor.moveRight', { name: s.labelPt })}
+                        >
+                          →
+                        </button>
                         <button type="button" className={cn(BTN_GHOST, 'flex-1')} onClick={() => beginEdit(s)} disabled={saving}>
                           {t(locale, 'panel.pipelineEditor.edit')}
                         </button>
