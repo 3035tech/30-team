@@ -64,6 +64,8 @@ describe('module hardening', () => {
     assert.match(dashboard, /<NavLink id="help" icon="help"/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.DEVELOPMENT/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
+    assert.match(dashboard, /text-left font-mono text-\[0\.6875rem\].*uppercase tracking-\[0\.12em\]/);
+    assert.match(dashboard, /mx-2 my-1 h-px bg-ink\/\[0\.07\]/);
   });
 
   it('organizes the vacancy workspace around recruiter tasks', () => {
@@ -99,5 +101,65 @@ describe('module hardening', () => {
     assert.match(shared, /focus-visible:ring-2/);
     assert.match(filters, /font-ui text-sm/);
     assert.doesNotMatch(dp, /<AdminTableShell[^>]*>\s*<table/);
+  });
+
+  it('keeps the LMS course workspace task-focused and deep-linkable', () => {
+    const lms = source('app/dashboard/tabs/LmsAdminTab.jsx');
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    const navigation = source('app/dashboard/hooks/useDashboardNavigation.js');
+    for (const section of ['content', 'enrollments', 'tracking']) {
+      assert.match(lms, new RegExp(`'${section}'`));
+    }
+    assert.match(lms, /normalizeLmsDetailSection/);
+    assert.match(lms, /lessonType/);
+    assert.match(lms, /pdfFile/);
+    assert.match(dashboard, /courseSection=\{urlParams\.get\('lmsSection'\)/);
+    assert.match(navigation, /lmsSection/);
+  });
+
+  it('separates climate campaign work and keeps motivators navigation contextual', () => {
+    const climate = source('app/dashboard/tabs/ClimateTab.jsx');
+    const motivators = source('app/dashboard/tabs/MotivatorsAdminTab.jsx');
+    for (const section of ['overview', 'distribution', 'questionnaire']) {
+      assert.match(climate, new RegExp(`'${section}'`));
+    }
+    assert.match(climate, /<PanelSubNav/);
+    assert.match(climate, /normalizeClimateDetailSection/);
+    assert.match(climate, /detailSection === 'distribution'.*createInvite/s);
+    assert.match(climate, /detailSection === 'questionnaire'.*addQuestion/s);
+    assert.match(source('app/dashboard/hooks/useDashboardNavigation.js'), /climateSection/);
+    assert.match(motivators, /motivatorsView/);
+    assert.match(motivators, /view === 'invites'/);
+  });
+
+  it('separates HR operations, compensation, and profile settings by task', () => {
+    const dp = source('app/dashboard/tabs/DpAdminTab.jsx');
+    const compensation = source('app/dashboard/tabs/CompensationAdminTab.jsx');
+    const profile = source('app/_components/ProfileTab.jsx');
+    for (const section of ['pending', 'leaves', 'documents', 'time', 'onboarding']) {
+      assert.match(dp, new RegExp(`'${section}'`));
+    }
+    assert.match(dp, /<PanelSubNav/);
+    assert.match(dp, /<StatMetricTile/);
+    assert.doesNotMatch(dp, /firstPendingDocCandidateId/);
+    assert.match(compensation, /workspaceSection === 'people'/);
+    assert.match(compensation, /workspaceSection === 'insights'/);
+    assert.match(compensation, /ContentEnter animKey=\{workspaceSection\}/);
+    for (const section of ['account', 'modules', 'security']) {
+      assert.match(profile, new RegExp(`'${section}'`));
+    }
+    assert.match(profile, /profileSection === 'account' \|\| profileSection === 'security'/);
+  });
+
+  it('retains focused employee and public SEO surfaces', () => {
+    const employeeNav = source('app/_components/EmployeeSidebar.jsx');
+    const landing = source('app/page.jsx');
+    const job = source('app/jobs/[jobKey]/page.jsx');
+    assert.match(employeeNav, /navGroupToday/);
+    assert.match(employeeNav, /navGroupGrow/);
+    assert.match(employeeNav, /isDedicatedRoute/);
+    assert.match(landing, /application\/ld\+json/);
+    assert.match(job, /generateMetadata/);
+    assert.match(job, /alternates: url \? \{ canonical: url \}/);
   });
 });

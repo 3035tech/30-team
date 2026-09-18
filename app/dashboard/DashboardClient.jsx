@@ -825,7 +825,7 @@ export default function DashboardClient({
       <button
         type="button"
         className={cn(
-          'mb-1 flex min-h-8 w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-3 font-ui text-xs font-semibold text-ink-faint hover:text-ink'
+          'group mb-0.5 flex min-h-touch w-full cursor-pointer items-center justify-between gap-2 rounded-control border-0 bg-transparent px-2.5 text-left font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-ink-faint hover:bg-ink/[0.025] hover:text-ink-muted'
         )}
         onClick={() => {
           toggleNavSection(sectionKey);
@@ -837,8 +837,11 @@ export default function DashboardClient({
         aria-expanded={open}
         aria-controls={`nav-section-${sectionKey}`}
       >
-        <span className="min-w-0 flex-1">{text}</span>
-        <Icon name={open ? 'chevronDown' : 'chevronRight'} className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
+        <span className="min-w-0 flex-1 truncate">{text}</span>
+        <Icon
+          name={open ? 'chevronDown' : 'chevronRight'}
+          className="h-3 w-3 flex-shrink-0 text-ink-faint transition-colors group-hover:text-ink-muted"
+        />
       </button>
     );
   };
@@ -940,7 +943,7 @@ export default function DashboardClient({
 
             {can(sessionAuth, CAP.TEAM_VIEW) || showCompensation || showDp || showBenefits ? (
               <>
-                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.PEOPLE, t(locale, 'dashboard.sectionPeople'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.PEOPLE, (
                   <>
@@ -959,7 +962,7 @@ export default function DashboardClient({
 
             {showVacancies || showJobRoles ? (
               <>
-                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.RECRUITING, t(locale, 'dashboard.sectionRecruiting'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.RECRUITING, (
                   <>
@@ -979,7 +982,7 @@ export default function DashboardClient({
 
             {showPerformance || showSuccession || showLearning ? (
               <>
-                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.DEVELOPMENT, t(locale, 'dashboard.sectionDevelopment'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.DEVELOPMENT, (
                   <>
@@ -1005,7 +1008,7 @@ export default function DashboardClient({
 
             {can(sessionAuth, CAP.COMPATIBILITY_VIEW) || can(sessionAuth, CAP.COMPARE_VIEW) || can(sessionAuth, CAP.GROUP_VIEW) || can(sessionAuth, CAP.LEADERSHIP_VIEW) || showMotivators || showClimate || showWhistleblowing || showExitAnalysis || showCompanyFeed ? (
               <>
-                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.CULTURE_HR, t(locale, 'dashboard.sectionCultureHr'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.CULTURE_HR, (
                   <>
@@ -1033,7 +1036,7 @@ export default function DashboardClient({
 
             {showCompanies || showUsers || showLeads || showProductFeedback || showAudit ? (
               <>
-                <div className="my-1.5 h-px bg-ink/[0.08]" />
+                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.ADMINISTRATION, t(locale, 'dashboard.sectionAdministration'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.ADMINISTRATION, (
                   <>
@@ -1540,7 +1543,13 @@ export default function DashboardClient({
                 <MotivatorsAdminTab isAdmin={isAdmin} companies={companies} locale={locale} />
               )}
               {tab === 'climate' && showClimate && (
-                <ClimateTab isAdmin={isAdmin} companies={companies} locale={locale} />
+                <ClimateTab
+                  isAdmin={isAdmin}
+                  companies={companies}
+                  locale={locale}
+                  section={urlParams.get('climateSection') || null}
+                  navigateDashboard={navigateWithOpts}
+                />
               )}
               {tab === 'whistleblowing' && showWhistleblowing && (
                 <WhistleblowingAdminTab locale={locale} companyId={scopedCompanyId} />
@@ -1567,6 +1576,7 @@ export default function DashboardClient({
                   locale={locale}
                   companyId={scopedCompanyId}
                   courseId={urlParams.get('course') || null}
+                  courseSection={urlParams.get('lmsSection') || null}
                   navigateDashboard={navigateWithOpts}
                 />
               )}

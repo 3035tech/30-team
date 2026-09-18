@@ -21,6 +21,7 @@ import {
   AdminListPager,
   AdminListSearch,
   AdminPageHeader,
+  PanelSubNav,
   AdminTableShell,
   AdminTh,
   S,
@@ -35,6 +36,7 @@ import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
 import { HourBankAdminBlock } from '../../_components/HourBankAdminBlock';
 import { VacationPoolBlock } from '../../_components/VacationPoolBlock';
 import { PreOnboardingTemplateBlock } from '../../_components/PreOnboardingTemplateBlock';
+import { StatMetricTile } from '../../_components/StatMetricTile';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -97,10 +99,10 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
   const [requestedCount, setRequestedCount] = useState(0);
   const [pendingDocsPeople, setPendingDocsPeople] = useState(0);
   const [pendingDocsList, setPendingDocsList] = useState([]);
-  const [firstPendingDocCandidateId, setFirstPendingDocCandidateId] = useState(null);
   const [absenteeismPeople, setAbsenteeismPeople] = useState(0);
   const [firstAbsenteeismCandidateId, setFirstAbsenteeismCandidateId] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [workspaceSection, setWorkspaceSection] = useState('pending');
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -143,7 +145,6 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       setRequestedCount(0);
       setPendingDocsPeople(0);
       setPendingDocsList([]);
-      setFirstPendingDocCandidateId(null);
       setAbsenteeismPeople(0);
       setFirstAbsenteeismCandidateId(null);
       return;
@@ -157,8 +158,6 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
       setPendingDocsPeople(Number(data.pendingDocsPeople) || 0);
       const docs = Array.isArray(data.pendingDocs) ? data.pendingDocs : [];
       setPendingDocsList(docs);
-      const first = docs[0] || null;
-      setFirstPendingDocCandidateId(first?.candidateId != null ? Number(first.candidateId) : null);
       setAbsenteeismPeople(Number(data.absenteeismPeople) || 0);
       const firstAbs = Array.isArray(data.absenteeism) ? data.absenteeism[0] : null;
       setFirstAbsenteeismCandidateId(
@@ -422,50 +421,62 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         title={t(locale, 'panel.dp.inboxTitle')}
         subtitle={t(locale, 'panel.dp.inboxSubtitle')}
         actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {requestedCount > 0 || pendingDocsPeople > 0 || absenteeismPeople > 0 ? (
-              <>
-            {requestedCount > 0 ? (
+          workspaceSection === 'leaves' ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <AdminCreateButton
+              label={t(locale, 'panel.dp.leaveAdd')}
+              onClick={() => void createLeave()}
+              />
               <button
                 type="button"
-                className="min-h-touch"
+                disabled={exporting}
+                className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                onClick={() => void exportCsv()}
+              >
+                {exporting ? t(locale, 'panel.common.loading') : t(locale, 'panel.dp.exportCsv')}
+              </button>
+            </div>
+          ) : null
+        }
+      />
+
+      <PanelSubNav
+        ariaLabel={t(locale, 'panel.dp.workspaceTabsAria')}
+        active={workspaceSection}
+        onChange={setWorkspaceSection}
+        tabs={[
+          { id: 'pending', label: t(locale, 'panel.dp.workspacePending'), badge: requestedCount + pendingDocsPeople + absenteeismPeople || undefined },
+          { id: 'leaves', label: t(locale, 'panel.dp.workspaceLeaves') },
+          { id: 'documents', label: t(locale, 'panel.dp.workspaceDocuments'), badge: pendingDocsPeople || undefined },
+          { id: 'time', label: t(locale, 'panel.dp.workspaceTime') },
+          { id: 'onboarding', label: t(locale, 'panel.dp.workspaceOnboarding') },
+        ]}
+      />
+
+      {workspaceSection === 'pending' ? (
+        requestedCount + pendingDocsPeople + absenteeismPeople > 0 ? (
+          <ContentEnter animKey={`dp-pending|${requestedCount}|${pendingDocsPeople}|${absenteeismPeople}`}>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <StatMetricTile
+                value={requestedCount}
+                label={t(locale, 'panel.dp.pendingLeaveTitle')}
+                hint={t(locale, 'panel.dp.pendingLeaveHint')}
                 onClick={() => {
+                  setWorkspaceSection('leaves');
                   setStatusFilter(DP_LEAVE_STATUS.REQUESTED);
                   setPage(1);
                 }}
-                aria-label={t(locale, 'panel.dp.requestedChipAria', { n: requestedCount })}
-              >
-                <StatusToneChip tone="warning">
-                  {t(locale, 'panel.dp.requestedChip', { n: requestedCount })}
-                </StatusToneChip>
-              </button>
-            ) : null}
-            {pendingDocsPeople > 0 && typeof navigateDashboard === 'function' ? (
-              <button
-                type="button"
-                className="min-h-touch"
-                onClick={() =>
-                  navigateDashboard(
-                    firstPendingDocCandidateId
-                      ? {
-                          tab: 'team',
-                          candidate: String(firstPendingDocCandidateId),
-                          section: 'dp',
-                        }
-                      : { tab: 'team' }
-                  )
-                }
-                aria-label={t(locale, 'panel.dp.docsPendingChipAria', { n: pendingDocsPeople })}
-              >
-                <StatusToneChip tone="info">
-                  {t(locale, 'panel.dp.docsPendingChip', { n: pendingDocsPeople })}
-                </StatusToneChip>
-              </button>
-            ) : null}
-            {absenteeismPeople > 0 ? (
-              <button
-                type="button"
-                className="min-h-touch"
+              />
+              <StatMetricTile
+                value={pendingDocsPeople}
+                label={t(locale, 'panel.dp.pendingDocsTitle')}
+                hint={t(locale, 'panel.dp.pendingDocsHint')}
+                onClick={() => setWorkspaceSection('documents')}
+              />
+              <StatMetricTile
+                value={absenteeismPeople}
+                label={t(locale, 'panel.dp.pendingAbsenceTitle')}
+                hint={t(locale, 'panel.dp.pendingAbsenceHint')}
                 onClick={() => {
                   if (firstAbsenteeismCandidateId && typeof navigateDashboard === 'function') {
                     navigateDashboard({
@@ -475,52 +486,39 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
                     });
                     return;
                   }
+                  setWorkspaceSection('leaves');
                   setLeaveTypeFilter(DP_LEAVE_TYPE.SICK);
                   setStatusFilter('all');
                   setPage(1);
                 }}
-                aria-label={t(locale, 'panel.dp.absenteeismChipAria', { n: absenteeismPeople })}
-              >
-                <StatusToneChip tone="warning">
-                  {t(locale, 'panel.dp.absenteeismChip', { n: absenteeismPeople })}
-                </StatusToneChip>
-              </button>
-            ) : null}
-              </>
-            ) : null}
-            <AdminCreateButton
-              label={t(locale, 'panel.dp.leaveAdd')}
-              onClick={() => void createLeave()}
-            />
-            <button
-              type="button"
-              disabled={exporting}
-              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
-              onClick={() => void exportCsv()}
-            >
-              {exporting ? t(locale, 'panel.common.loading') : t(locale, 'panel.dp.exportCsv')}
-            </button>
-          </div>
-        }
-      />
+              />
+            </div>
+          </ContentEnter>
+        ) : (
+          <EmptyState
+            title={t(locale, 'panel.dp.pendingEmptyTitle')}
+            message={t(locale, 'panel.dp.pendingEmptyHint')}
+          />
+        )
+      ) : null}
 
-      <TimeClockAdminBlock
+      {workspaceSection === 'time' ? <TimeClockAdminBlock
         locale={locale}
         companyId={companyId}
         navigateDashboard={navigateDashboard}
-      />
+      /> : null}
 
-      <HourBankAdminBlock
+      {workspaceSection === 'time' ? <HourBankAdminBlock
         locale={locale}
         companyId={companyId}
         navigateDashboard={navigateDashboard}
-      />
+      /> : null}
 
-      <VacationPoolBlock locale={locale} companyId={companyId} reloadKey={reloadKey} />
+      {workspaceSection === 'leaves' ? <VacationPoolBlock locale={locale} companyId={companyId} reloadKey={reloadKey} /> : null}
 
-      <PreOnboardingTemplateBlock locale={locale} companyId={companyId} />
+      {workspaceSection === 'onboarding' ? <PreOnboardingTemplateBlock locale={locale} companyId={companyId} /> : null}
 
-      <AdminListFilters
+      {workspaceSection === 'leaves' ? <><AdminListFilters
         aria-label={t(locale, 'panel.dp.inboxTitle')}
         locale={locale}
         onClear={() => {
@@ -677,13 +675,13 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
             }}
           />
         </ContentEnter>
-      )}
+      )}</> : null}
 
-      <CollapsibleBlock
+      {workspaceSection === 'documents' ? <CollapsibleBlock
         locale={locale}
         variant="card"
         title={t(locale, 'panel.dp.docsQueueTitle')}
-        defaultOpen={pendingDocsList.length > 0}
+        defaultOpen
         count={pendingDocsList.length || null}
       >
         {pendingDocsList.length === 0 ? (
@@ -720,9 +718,9 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
             </ul>
           </ContentEnter>
         )}
-      </CollapsibleBlock>
+      </CollapsibleBlock> : null}
 
-      <CollapsibleBlock
+      {workspaceSection === 'leaves' ? <CollapsibleBlock
         locale={locale}
         variant="card"
         title={t(locale, 'panel.dp.calendarTitle')}
@@ -768,7 +766,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
           </ul>
           </ContentEnter>
         )}
-      </CollapsibleBlock>
+      </CollapsibleBlock> : null}
     </div>
   );
 }

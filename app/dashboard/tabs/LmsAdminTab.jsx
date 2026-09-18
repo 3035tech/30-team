@@ -30,6 +30,7 @@ import {
   AdminTableShell,
   AdminTh,
   AdminViewButton,
+  PanelSubNav,
   S,
   SortableTh,
   clientSortNextDir,
@@ -40,6 +41,11 @@ import { MeterBar } from '../../_components/MeterBar';
 import { InlineCallout } from '../../_components/InlineCallout';
 
 const ENROLL_PAGE_THRESHOLD = 10;
+const LMS_DETAIL_SECTIONS = Object.freeze(['content', 'enrollments', 'tracking']);
+
+function normalizeLmsDetailSection(value) {
+  return LMS_DETAIL_SECTIONS.includes(value) ? value : 'content';
+}
 
 function companyQs(companyId) {
   return companyId ? `companyId=${encodeURIComponent(companyId)}` : '';
@@ -55,7 +61,7 @@ function lmsText(locale, key, fallback) {
  * LMS admin — courses, ordered URL/PDF lessons, cohort enrollment + progress.
  * List-first grid; detail opens via Ver or URL `course=`.
  */
-export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDashboard }) {
+export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSection, navigateDashboard }) {
   const { confirm, promptForm, toast } = useAppFeedback();
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [courses, setCourses] = useState([]);
@@ -80,13 +86,15 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
   const [enrollPageSize, setEnrollPageSize] = useState(ENROLL_PAGE_THRESHOLD);
   const [cohortReport, setCohortReport] = useState(null);
   const [cohortReportLoading, setCohortReportLoading] = useState(false);
+  const [detailSection, setDetailSection] = useState('content');
 
   const openCourse = useCallback(
     (id) => {
       const nextId = Number(id);
       if (!Number.isFinite(nextId) || nextId <= 0) return;
       setSelectedId(nextId);
-      navigateDashboard?.({ tab: 'lms', course: nextId });
+      setDetailSection('content');
+      navigateDashboard?.({ tab: 'lms', course: nextId, lmsSection: 'content' });
     },
     [navigateDashboard]
   );
@@ -97,7 +105,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
     setEnrollments([]);
     setOps(null);
     setCohortReport(null);
-    navigateDashboard?.({ tab: 'lms', course: null });
+    setDetailSection('content');
+    navigateDashboard?.({ tab: 'lms', course: null, lmsSection: null });
   }, [navigateDashboard]);
 
   const loadCourses = useCallback(async () => {
@@ -157,20 +166,24 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
   }, [loadCourses]);
 
   useEffect(() => {
+    const queryParams = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search)
+      : null;
+    setDetailSection(normalizeLmsDetailSection(courseSection || queryParams?.get('lmsSection')));
     const passedId = Number(courseId);
     if (Number.isFinite(passedId) && passedId > 0) {
       setSelectedId(passedId);
       return;
     }
-    if (typeof window !== 'undefined') {
-      const queryId = Number(new URLSearchParams(window.location.search).get('course'));
+    if (queryParams) {
+      const queryId = Number(queryParams.get('course'));
       if (Number.isFinite(queryId) && queryId > 0) {
         setSelectedId(queryId);
         return;
       }
     }
     setSelectedId(null);
-  }, [courseId]);
+  }, [courseId, courseSection]);
 
   useEffect(() => {
     if (selectedId) void loadDetail(selectedId);
@@ -952,14 +965,31 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
 
             {detailLoading ? <AppLoading variant="inline" /> : null}
 
-            <CollapsibleBlock
-              locale={locale}
-              variant="card"
-              title={t(locale, 'panel.lms.lessonsTitle')}
-              count={(detail.lessons || []).length}
-              defaultOpen
-            >
-              <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+            <PanelSubNav
+              ariaLabel={t(locale, 'panel.lms.detailTabsAria')}
+              active={detailSection}
+              onChange={(section) => {
+                const next = normalizeLmsDetailSection(section);
+                setDetailSection(next);
+                navigateDashboard?.({ tab: 'lms', course: selectedId, lmsSection: next, scroll: false });
+              }}
+              tabs={[
+                { id: 'content', label: t(locale, 'panel.lms.detailTabContent'), badge: (detail.lessons || []).length },
+                { id: 'enrollments', label: t(locale, 'panel.lms.detailTabEnrollments'), badge: enrollments.length },
+                { id: 'tracking', label: t(locale, 'panel.lms.detailTabTracking') },
+              ]}
+            />
+
+            <ContentEnter animKey={detailSection}>
+            {detailSection === 'content' ? (
+            <section className={cn(S.card, 'p-4 sm:p-5')}>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="m-0 font-ui text-base font-semibold text-ink">
+                  {t(locale, 'panel.lms.lessonsTitle')}
+                  <span className="ml-2 font-mono text-2xs font-normal text-ink-faint">
+                    {(detail.lessons || []).length}
+                  </span>
+                </h3>
                 <AdminCreateButton
                   onClick={addLesson}
                   disabled={lessonBusy}
@@ -1044,8 +1074,10 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                   ))}
                 </ul>
               )}
-            </CollapsibleBlock>
+            </section>
+            ) : null}
 
+            {detailSection === 'tracking' ? (
             <CollapsibleBlock
               locale={locale}
               variant="card"
@@ -1115,7 +1147,10 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 </InlineCallout>
               )}
             </CollapsibleBlock>
+            ) : null}
 
+            {detailSection === 'enrollments' ? (
+            <>
             <CollapsibleBlock
               locale={locale}
               variant="card"
@@ -1296,6 +1331,9 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, navigateDas
                 </>
               )}
             </CollapsibleBlock>
+            </>
+            ) : null}
+            </ContentEnter>
           </>
         )}
       </ContentEnter>

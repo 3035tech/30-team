@@ -259,6 +259,8 @@ Auditar:
 
 ### B-UIA-010: validação visual automatizada
 
+**Onda 12:** o smoke Playwright passou a cobrir as superfícies públicas em 375×812, 768×1024, 1280×720 e 1440×900, verificando renderização e overflow horizontal. Os contratos estruturais de navegação local, SEO e chrome canônico também estão cobertos em teste unitário; estados autenticados com dados continuam no smoke DTOV existente.
+
 Criar matriz Playwright visual para:
 
 - 375×812;
@@ -281,6 +283,8 @@ Cenários mínimos:
 ### B-UIA-101: Visão geral
 
 **Estado:** melhorada, mas ainda com risco de excesso abaixo da dobra.
+
+**Validado na Onda 9:** Atenção permanece como tarefa primária, contextos secundários usam progressive disclosure e os blocos de dados utilizam `ContentEnter`, métricas semânticas e gráficos leves. Não foi criado um segundo dashboard de BI.
 
 Pontos positivos:
 
@@ -419,6 +423,8 @@ Proposta:
 
 **Prioridade:** P1.
 
+**Validado na Onda 9:** Métricas, Tendências e Comparação já são views exclusivas com transição canônica e filtros contextuais. Alertas continuam na Visão geral e exportação permanece ação secundária, evitando duplicar superfícies.
+
 Gaps:
 
 - três colunas iguais podem dar o mesmo peso a métricas de importância diferente;
@@ -527,6 +533,8 @@ Proposta:
 
 ### B-UIA-301: Avaliações de desempenho
 
+**Validado na Onda 7:** a tela já separa Metas e Avaliação formal, mantém criação no cabeçalho e usa loading canônico. O workspace interno do ciclo permanece como evolução incremental.
+
 Gaps:
 
 - ciclos e metas podem parecer cadastros separados;
@@ -542,6 +550,8 @@ Proposta:
 
 ### B-UIA-302: OKRs
 
+**Validado na Onda 7:** ciclo selecionável, progresso agregado antes das áreas, criação por ação e check-in curto no contexto do item já atendem o fluxo principal. A hierarquia permanece responsiva em blocos, sem tabela multinível.
+
 `OkrAdminTab` delega a outro componente. Auditoria visual específica ainda é necessária.
 
 Critérios:
@@ -556,6 +566,8 @@ Critérios:
 ### B-UIA-303: Sucessão
 
 **Prioridade:** P1.
+
+**Validado na Onda 7:** resumo de cobertura precede a lista, cargos críticos são a entidade principal, criação fica no cabeçalho e sucessores são geridos no contexto do cargo.
 
 Gaps:
 
@@ -596,6 +608,10 @@ Proposta:
 
 **Prioridade:** P1.
 
+**Entregue na Onda 6:** subnav `Pendências`, `Férias e afastamentos`, `Documentos`, `Ponto e banco de horas` e `Admissão`. Cada domínio monta apenas sua superfície; os indicadores do cabeçalho continuam atalhos para a pendência correspondente.
+
+**Polish:** o cabeçalho voltou a ter somente ações da área ativa. Pendências virou uma fila visual com três entradas acionáveis; documentos não são mais repetidos abaixo do resumo.
+
 Gaps:
 
 - inbox de licenças, fila de documentos e calendário estão na mesma tela;
@@ -614,6 +630,8 @@ Proposta:
 ### B-UIA-306: Motivadores
 
 **Prioridade:** P0/P1.
+
+**Entregue:** subnav por Analytics, Convites, Resultados e Configuração; configuração restrita a admin; CTA de convite aparece somente em Convites; troca persistida em `motivatorsView`.
 
 Gaps:
 
@@ -634,6 +652,10 @@ Proposta:
 ### B-UIA-307: Clima
 
 **Prioridade:** P0/P1.
+
+**Entrega parcial (Onda 5):** lista continua como entrada e o detalhe separa Resultados, Distribuição e Questionário. Convites e disparos aparecem no contexto de Distribuição; edição de perguntas, no Questionário; médias e textos, em Resultados.
+
+**Polish:** ações passaram a acompanhar a seção ativa e a seção de campanha agora persiste em `climateSection`, preservando contexto em atualização e histórico do navegador.
 
 Gaps:
 
@@ -740,6 +762,8 @@ Proposta:
 ### B-UIA-405: LMS admin
 
 **Prioridade:** P0.
+
+**Entrega parcial (Onda 4):** detalhe do curso organizado em `Conteúdo`, `Matrículas` e `Acompanhamento`, com estado persistido na URL e retorno ao catálogo. O cadastro único de aula mantém descrição e escolha entre vídeo/link ou PDF. Turmas, avaliação, certificado, preview e drag-and-drop continuam como evolução incremental.
 
 Gaps:
 
@@ -863,6 +887,8 @@ Proposta:
 
 ### B-UIA-507: Perfil e módulos
 
+**Entregue na Onda 8:** Perfil separado em Conta, Módulos e Segurança. A aba Módulos só aparece quando a API autoriza a gestão do tenant; remoções continuam exigindo confirmação e o super admin mantém controle pelas telas administrativas.
+
 Gaps a validar visualmente:
 
 - seleção de módulos, idioma, segurança e perfil podem competir;
@@ -882,6 +908,8 @@ Proposta:
 ### B-UIA-601: hub `/employee`
 
 **Prioridade:** P0/P1.
+
+**Validado na Onda 10:** sidebar já está agrupada por Hoje, Desenvolvimento e Conta; LMS, DP e Ponto possuem rotas dedicadas; o hub possui bloco inicial de tarefas urgentes e badges. Permanecem limites de três itens por seção e validação visual mobile como evolução.
 
 Gaps confirmados:
 
@@ -966,6 +994,8 @@ Proposta:
 - evitar replicar todas as features do hub autenticado.
 
 ## 11. Fluxos públicos
+
+**Validado na Onda 11:** os fluxos por token permanecem focados e sem chrome do dashboard. Landpage, índice/detalhe de vagas e empresa pública mantêm metadata, canonical, regras de indexação, JSON-LD, sitemap, robots e `llms.txt`; a matriz responsiva da Onda 12 cobre home, vagas e login.
 
 ### B-UIA-701: assessment T1–T9
 

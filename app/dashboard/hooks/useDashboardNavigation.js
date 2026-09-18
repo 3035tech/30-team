@@ -106,6 +106,20 @@ export function useDashboardNavigation({
       if (curCourse) p.set('course', curCourse);
     }
 
+    if (opts.lmsSection !== undefined) {
+      if (opts.lmsSection) p.set('lmsSection', String(opts.lmsSection));
+    } else if (nextTab === 'lms') {
+      const curLmsSection = urlParams.get('lmsSection');
+      if (curLmsSection) p.set('lmsSection', curLmsSection);
+    }
+
+    if (opts.climateSection !== undefined) {
+      if (opts.climateSection) p.set('climateSection', String(opts.climateSection));
+    } else if (nextTab === 'climate') {
+      const curClimateSection = urlParams.get('climateSection');
+      if (curClimateSection) p.set('climateSection', curClimateSection);
+    }
+
     if (opts.section !== undefined) {
       if (opts.section) p.set('section', String(opts.section));
     } else if (nextTab === 'team') {

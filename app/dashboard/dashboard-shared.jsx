@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
@@ -433,6 +433,10 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
   const moreValue = moreActive ? active : '';
   const hasPrimaryActive = tabs.some((tab) => tab.id === active);
 
+  useEffect(() => {
+    tabRefs.current.get(active)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [active]);
+
   const tabClass = (on) =>
     cn(
       'relative -mb-px inline-flex min-h-touch shrink-0 cursor-pointer items-center border-x-0 border-t-0 border-b-2 bg-transparent px-3 py-2.5 font-ui text-sm font-medium focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-500',
@@ -444,6 +448,7 @@ function PanelSubNav({ tabs, active, onChange, ariaLabel, moreTabs = null, moreL
   return (
     <div
       role="tablist"
+      aria-orientation="horizontal"
       aria-label={ariaLabel || undefined}
       className="mb-4 flex max-w-full items-end gap-1 overflow-x-auto border-b border-ink/12 [scrollbar-width:thin]"
     >

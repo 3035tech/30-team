@@ -7,6 +7,25 @@ import { test, expect } from '@playwright/test';
 import { TOK, HR, PUBLIC, fillLogin } from './fixtures.js';
 
 test.describe('public pages', () => {
+  for (const viewport of [
+    { width: 375, height: 812 },
+    { width: 768, height: 1024 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 900 },
+  ]) {
+    test(`responsive public chrome ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      for (const path of ['/', '/jobs', '/login']) {
+        await page.goto(path);
+        await expect(page.locator('body')).toBeVisible();
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
+        );
+        expect(overflow, `${path} must not overflow horizontally`).toBe(false);
+      }
+    });
+  }
+
   test('home and login render', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('body')).toBeVisible();

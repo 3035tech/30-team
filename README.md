@@ -316,7 +316,8 @@ npm run dev
 6. Sessão colaborador: Equipe → Convidar acesso (e-mail set-password) → /employee/set-password
    → login e-mail/senha em /employee/login (cookie team30_employee_session; PDI self-serve,
    hub “Hoje” + páginas dedicadas **/employee/lms**, **/employee/dp**, **/employee/time-clock**;
-   LMS: layout curso (lista + player), cadastro único de aula com descrição e
+   LMS: detalhe do curso em abas persistentes (Conteúdo, Matrículas, Acompanhamento),
+   layout do colaborador (lista + player), cadastro único de aula com descrição e
    escolha vídeo/link ou PDF, retoma vídeo YouTube/Vimeo, PDF in-app, quiz,
    certificado print; hub resume prazos;
    jornada **Minha chegada**, **Meus OKRs**, mural/kudos/feedback,
@@ -325,6 +326,8 @@ npm run dev
 ```
 
 ### Gestor no dashboard
+
+As áreas densas usam navegação local orientada à tarefa: curso LMS (Conteúdo, Matrículas, Acompanhamento), campanha de Clima (Resultados, Distribuição, Questionário), DP (Pendências, Férias/Afastamentos, Documentos, Ponto/Banco de horas, Admissão), Remuneração (Pessoas/Salários, Mapa/Aprovações) e Perfil (Conta, Módulos, Segurança).
 
 ```
 1. /login → JWT em cookie httpOnly (TTL **8h**; claim `sv` = `users.session_version`)

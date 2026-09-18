@@ -12,6 +12,7 @@ import {
   AdminListPager,
   AdminListSearch,
   AdminPageHeader,
+  PanelSubNav,
   AdminTableShell,
   AdminTh,
   AdminViewButton,
@@ -20,7 +21,7 @@ import {
   clientSortNextDir,
 } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { CompensationBlock } from '../../_components/CompensationBlock';
@@ -79,6 +80,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
   const [hasSalary, setHasSalary] = useState('all');
   const [marketBand, setMarketBand] = useState('all');
   const [historyPerson, setHistoryPerson] = useState(null);
+  const [workspaceSection, setWorkspaceSection] = useState('people');
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -152,9 +154,20 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
         subtitle={t(locale, 'panel.compensationRoster.subtitle')}
       />
 
-      <SalaryMapBlock locale={locale} companyId={companyId} />
+      <PanelSubNav
+        ariaLabel={t(locale, 'panel.compensationRoster.workspaceTabsAria')}
+        active={workspaceSection}
+        onChange={setWorkspaceSection}
+        tabs={[
+          { id: 'people', label: t(locale, 'panel.compensationRoster.workspacePeople'), badge: total || undefined },
+          { id: 'insights', label: t(locale, 'panel.compensationRoster.workspaceInsights') },
+        ]}
+      />
 
-      <VariablePayInboxBlock
+      <ContentEnter animKey={workspaceSection} className="flex flex-col gap-4">
+      {workspaceSection === 'insights' ? <SalaryMapBlock locale={locale} companyId={companyId} /> : null}
+
+      {workspaceSection === 'insights' ? <VariablePayInboxBlock
         locale={locale}
         companyId={companyId}
         canManage={canManage}
@@ -168,9 +181,9 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
                 })
             : null
         }
-      />
+      /> : null}
 
-      <AdminListFilters
+      {workspaceSection === 'people' ? <><AdminListFilters
         aria-label={t(locale, 'panel.compensationRoster.title')}
         locale={locale}
         onClear={() => {
@@ -341,7 +354,8 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
         }}
         pageSizeOptions={PAGE_SIZE_OPTIONS}
         locale={locale}
-      />
+      /></> : null}
+      </ContentEnter>
 
       <AdminRichFormDrawer
         open={Boolean(historyPerson)}

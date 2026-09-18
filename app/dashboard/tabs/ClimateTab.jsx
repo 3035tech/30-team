@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
-import { AdminCreateButton, AdminPageHeader, S } from '../dashboard-shared';
+import { AdminCreateButton, AdminPageHeader, PanelSubNav, S } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
@@ -38,6 +38,13 @@ function formatClimateSurveyWhen(survey, locale) {
   }
   if (open) return t(locale, 'panel.climate.dateOpened', { d: open });
   return '';
+}
+
+const CLIMATE_DETAIL_SECTIONS = Object.freeze(['overview', 'distribution', 'questionnaire']);
+
+function normalizeClimateDetailSection(value, status) {
+  if (CLIMATE_DETAIL_SECTIONS.includes(value)) return value;
+  return status === CLIMATE_SURVEY_STATUS.DRAFT ? 'questionnaire' : 'overview';
 }
 
 const TONE_BAR = {
@@ -327,7 +334,7 @@ function OverallScoreHero({ mean, locale, responseCount, minResponses }) {
 /**
  * Climate surveys — list first, detail second; comparison only with 2+ unlocked means.
  */
-export function ClimateTab({ locale, isAdmin, companies = [] }) {
+export function ClimateTab({ locale, isAdmin, companies = [], section, navigateDashboard }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -351,6 +358,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
   const [minResponses, setMinResponses] = useState(5);
   const [showCompare, setShowCompare] = useState(false);
   const [showQuestions, setShowQuestions] = useState(false);
+  const [detailSection, setDetailSection] = useState('overview');
   const [listFilter, setListFilter] = useState('active'); // active | archived | all
 
   const companyQs =
@@ -428,6 +436,11 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
     },
     [locale, toast]
   );
+
+  useEffect(() => {
+    if (!detail) return;
+    setDetailSection(normalizeClimateDetailSection(section, detail.status));
+  }, [detail?.id, detail?.status, section]);
 
   useEffect(() => {
     let cancelled = false;
@@ -981,7 +994,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {detail.status === CLIMATE_SURVEY_STATUS.DRAFT ? (
+                      {detailSection === 'questionnaire' && detail.status === CLIMATE_SURVEY_STATUS.DRAFT ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -991,7 +1004,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.openBtn')}
                         </button>
                       ) : null}
-                      {detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                      {detailSection === 'overview' && detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -1001,7 +1014,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.versionBtn')}
                         </button>
                       ) : null}
-                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
+                      {detailSection === 'distribution' && detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -1011,7 +1024,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.inviteBtn')}
                         </button>
                       ) : null}
-                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
+                      {detailSection === 'overview' && detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -1021,7 +1034,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.closeBtn')}
                         </button>
                       ) : null}
-                      {detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
+                      {detailSection === 'distribution' && detail.status === CLIMATE_SURVEY_STATUS.OPEN ? (
                         <>
                           <button type="button" disabled={busy} className={S.btnGhost} onClick={createInviteBatch}>
                             {t(locale, 'panel.climate.batchBtn')}
@@ -1031,12 +1044,12 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           </button>
                         </>
                       ) : null}
-                      {questionsEditable ? (
+                      {detailSection === 'questionnaire' && questionsEditable ? (
                         <button type="button" disabled={busy} className={S.btnGhost} onClick={addQuestion}>
                           {t(locale, 'panel.climate.addQuestionBtn')}
                         </button>
                       ) : null}
-                      {canVersion && detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                      {detailSection === 'overview' && canVersion && detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -1046,7 +1059,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                           {t(locale, 'panel.climate.versionBtn')}
                         </button>
                       ) : null}
-                      {detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
+                      {detailSection === 'overview' && detail.status !== CLIMATE_SURVEY_STATUS.ARCHIVED ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -1059,17 +1072,32 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </div>
                   </header>
 
+                  <PanelSubNav
+                    ariaLabel={t(locale, 'panel.climate.detailTabsAria')}
+                    active={detailSection}
+                    onChange={(nextSection) => {
+                      const next = normalizeClimateDetailSection(nextSection, detail.status);
+                      setDetailSection(next);
+                      navigateDashboard?.({ tab: 'climate', climateSection: next, scroll: false });
+                    }}
+                    tabs={[
+                      { id: 'overview', label: t(locale, 'panel.climate.detailTabOverview') },
+                      { id: 'distribution', label: t(locale, 'panel.climate.detailTabDistribution'), badge: detail.inviteStats?.pending || undefined },
+                      { id: 'questionnaire', label: t(locale, 'panel.climate.detailTabQuestionnaire'), badge: detail.questions?.length || undefined },
+                    ]}
+                  />
+
                   {detail.status === CLIMATE_SURVEY_STATUS.ARCHIVED ? (
                     <InlineCallout tone="neutral">
                       {t(locale, 'panel.climate.archivedHint')}
                     </InlineCallout>
-                  ) : !questionsEditable ? (
+                  ) : detailSection === 'questionnaire' && !questionsEditable ? (
                     <InlineCallout tone="info">
                       {t(locale, 'panel.climate.questionsLocked')}
                     </InlineCallout>
                   ) : null}
 
-                  {detail.inviteStats && detail.inviteStats.total > 0 ? (
+                  {detailSection === 'distribution' && detail.inviteStats && detail.inviteStats.total > 0 ? (
                     <p className={cn(S.faint, 'm-0')}>
                       {t(locale, 'panel.climate.inviteStats', {
                         total: detail.inviteStats.total || 0,
@@ -1079,13 +1107,13 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </p>
                   ) : null}
 
-                  {detail.status === CLIMATE_SURVEY_STATUS.OPEN && inviteUrls.length === 0 ? (
+                  {detailSection === 'distribution' && detail.status === CLIMATE_SURVEY_STATUS.OPEN && inviteUrls.length === 0 ? (
                     <div className="rounded-card border border-brand-500/25 bg-brand-500/[0.06] px-4 py-3">
                       <p className={cn(S.muted, 'm-0 text-sm')}>{t(locale, 'panel.climate.invitePrimaryHint')}</p>
                     </div>
                   ) : null}
 
-                  {inviteUrls.length > 0 ? (
+                  {detailSection === 'distribution' && inviteUrls.length > 0 ? (
                     <section>
                       <h4 className="m-0 mb-2 font-ui text-sm font-medium text-ink">
                         {t(locale, 'panel.climate.inviteLink')}
@@ -1103,7 +1131,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </section>
                   ) : null}
 
-                  {detail.status === CLIMATE_SURVEY_STATUS.OPEN || detail.status === CLIMATE_SURVEY_STATUS.CLOSED ? (
+                  {detailSection === 'overview' && (detail.status === CLIMATE_SURVEY_STATUS.OPEN || detail.status === CLIMATE_SURVEY_STATUS.CLOSED) ? (
                     aggregate?.overallMean != null ? (
                       <OverallScoreHero
                         mean={aggregate.overallMean}
@@ -1138,7 +1166,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     )
                   ) : null}
 
-                  {aggregate?.byQuestion?.length && !aggregate.suppressed ? (
+                  {detailSection === 'overview' && aggregate?.byQuestion?.length && !aggregate.suppressed ? (
                     <section>
                       <h4 className="m-0 mb-3 font-ui text-sm font-medium text-ink">
                         {t(locale, 'panel.climate.aggregate')}
@@ -1201,7 +1229,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </section>
                   ) : null}
 
-                  {aggregate?.textByQuestion?.length && !aggregate.suppressed ? (
+                  {detailSection === 'overview' && aggregate?.textByQuestion?.length && !aggregate.suppressed ? (
                     <section>
                       <h4 className="m-0 mb-1 font-ui text-sm font-medium text-ink">
                         {t(locale, 'panel.climate.textAnswersTitle')}
@@ -1259,7 +1287,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                     </section>
                   ) : null}
 
-                  <section className="border-t border-ink/10 pt-4">
+                  {detailSection === 'questionnaire' ? <section className="border-t border-ink/10 pt-4">
                     <button
                       type="button"
                       className={cn(S.btnGhost, 'w-full justify-between sm:w-auto')}
@@ -1322,7 +1350,7 @@ export function ClimateTab({ locale, isAdmin, companies = [] }) {
                         ))}
                       </ul>
                     ) : null}
-                  </section>
+                  </section> : null}
                 </ContentEnter>
               )}
             </div>

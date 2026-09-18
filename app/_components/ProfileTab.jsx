@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { S as dashS } from '../dashboard/dashboard-shared';
+import { PanelSubNav, S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
 import { FormField } from './FormField';
 import { CompanyModulesField } from './CompanyModulesField';
@@ -45,6 +45,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [companyModuleIds, setCompanyModuleIds] = useState([]);
   const [companyModulesBaseline, setCompanyModulesBaseline] = useState([]);
   const [modulesSaving, setModulesSaving] = useState(false);
+  const [profileSection, setProfileSection] = useState('account');
   const feedback = useAppFeedbackOptional();
   const toast = feedback?.toast;
 
@@ -262,7 +263,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
 
   return (
     <div className="flex w-full items-start justify-center">
-      <div className={cn(dashS.card, 'box-border w-full max-w-[560px]')}>
+      <div className={cn(dashS.card, 'box-border w-full max-w-3xl')}>
         <span className={dashS.label}>{t(locale, 'dashboard.profileTitle')}</span>
         <p className="mt-2 text-prose leading-[1.55] text-ink-muted">
           {t(locale, 'dashboard.profileIntro')}
@@ -275,6 +276,19 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
         ) : (
           <ContentEnter animKey="profile-ready">
           <div className="mt-[18px] flex flex-col gap-3">
+            <PanelSubNav
+              ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
+              active={profileSection}
+              onChange={setProfileSection}
+              tabs={[
+                { id: 'account', label: t(locale, 'dashboard.profileSectionAccount') },
+                ...(canEditCompanyModules ? [{ id: 'modules', label: t(locale, 'dashboard.profileSectionModules') }] : []),
+                { id: 'security', label: t(locale, 'dashboard.profileSectionSecurity') },
+              ]}
+            />
+            <ContentEnter animKey={profileSection}>
+            {profileSection === 'account' ? <>
+            <div className="grid gap-3 sm:grid-cols-2">
             <FormField label={t(locale, 'dashboard.profileDisplayName')}>
               <input
                 value={displayName}
@@ -291,6 +305,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                 className={inputClass}
               />
             </FormField>
+            </div>
             <div className="font-mono text-xs text-ink-muted">
               {t(locale, 'dashboard.profileRole')}: {role}
               {companyName ? ` · ${companyName}` : ''}
@@ -299,8 +314,9 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
             <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
               <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
             </FormField>
+            </> : null}
 
-            {canEditCompanyModules ? (
+            {canEditCompanyModules && profileSection === 'modules' ? (
               <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
                 <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profileModulesTitle')}</span>
                 <InlineCallout tone="info" className="text-xs text-ink-muted">
@@ -345,7 +361,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               </div>
             ) : null}
 
-            <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
+            {profileSection === 'security' ? <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
               <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
               <FormField label={t(locale, 'dashboard.profileCurrentPassword')}>
                 <input
@@ -374,9 +390,9 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                   className={inputClass}
                 />
               </FormField>
-            </div>
+            </div> : null}
 
-            {twoFaCanUse ? (
+            {profileSection === 'security' && twoFaCanUse ? (
               <div className="mt-1 border-t border-ink/12 pt-3.5">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profile2faSection')}</span>
@@ -475,17 +491,32 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
               <p className="m-0 font-mono text-xs text-success">{msg}</p>
             ) : null}
 
-            <button
+            {profileSection === 'account' || profileSection === 'security' ? <button
               type="button"
               onClick={save}
-              disabled={saving || !email.trim()}
+              disabled={
+                saving ||
+                !email.trim() ||
+                (profileSection === 'security' && (!currentPassword || !newPassword || !newPassword2))
+              }
               className={cn(
                 'min-h-touch cursor-pointer self-start rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-500',
-                (saving || !email.trim()) && 'cursor-default opacity-60'
+                (saving ||
+                  !email.trim() ||
+                  (profileSection === 'security' && (!currentPassword || !newPassword || !newPassword2))) &&
+                  'cursor-default opacity-60'
               )}
             >
-              {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileSave')}
-            </button>
+              {saving
+                ? t(locale, 'panel.common.loading')
+                : t(
+                    locale,
+                    profileSection === 'security'
+                      ? 'dashboard.profilePasswordSave'
+                      : 'dashboard.profileSave'
+                  )}
+            </button> : null}
+            </ContentEnter>
           </div>
           </ContentEnter>
         )}
