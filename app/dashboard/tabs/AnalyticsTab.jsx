@@ -472,7 +472,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
               />
             ) : (
               <>
-                <div className={cn(formFieldRowClass, 'gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
+                <div className="grid grid-cols-1 items-end gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                   <FormField label={t(locale, 'panel.analytics.compareAreaA')}>
                     <select className={S.select} value={compareParams.areaA} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaA: event.target.value })); }}>
                       <option value="">{t(locale, 'panel.analytics.compareSelectArea')}</option>
