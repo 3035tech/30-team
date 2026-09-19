@@ -116,6 +116,7 @@ export async function POST(request, props) {
       }
       await audit({
         actorUserId: payload.userId || null,
+        companyId,
         action: 'compensation.set_job_role',
         targetType: 'candidate',
         targetId: candidateId,
@@ -152,6 +153,7 @@ export async function POST(request, props) {
 
     await audit({
       actorUserId: payload.userId || null,
+      companyId,
       action: body.action === 'importFromOffer' ? 'compensation.import_offer' : 'compensation.create',
       targetType: 'candidate',
       targetId: candidateId,

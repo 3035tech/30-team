@@ -13,6 +13,7 @@ import {
   createSelfServiceSignupIdentity,
   SELF_SERVICE_COMPANY_ACTION,
 } from '../../../../lib/self-service-signup.js';
+import { normalizeSignupJobTitle } from '../../../../lib/signup-job-titles.js';
 
 /**
  * Self-service signup: cria user pendente + company (ou associa a existente).
@@ -56,6 +57,7 @@ export async function POST(request) {
       companyName,
       fullName,
       jobTitle = '',
+      jobTitleOther = '',
       teamSize = '',
       painPoints = '',
       locale = 'pt-BR',
@@ -183,10 +185,12 @@ export async function POST(request) {
     // Company nova → direction (dona do trial). Domain-match join → hr (menos privilégio).
     const companySlug = companyId ? null : await generateUniqueCompanySlug(companyName);
     const passwordHash = await hashUnusablePassword();
+    const normalizedJobTitle = normalizeSignupJobTitle(jobTitle, jobTitleOther);
     const signupMetadata = {
       companyName: String(companyName).trim(),
       fullName: String(fullName).trim(),
-      jobTitle: String(jobTitle).trim(),
+      jobTitle: normalizedJobTitle.jobTitle,
+      jobTitleOther: normalizedJobTitle.jobTitleOther,
       teamSize: String(teamSize).trim(),
       painPoints: String(painPoints).trim(),
     };

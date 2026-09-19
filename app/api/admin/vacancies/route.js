@@ -10,6 +10,7 @@ import { parseVacanciesSort } from '../../../../lib/assessment-filters';
 import { parseVacancyDetailsFromBody } from '../../../../lib/vacancy-details';
 import { slugify } from '../../../../lib/slugify';
 import { createVacancy, listVacancies } from '../../../../lib/vacancies-admin';
+import { auditFromRequest } from '../../../../lib/audit';
 
 export async function GET(request) {
   const payload = await getSessionPayload();
@@ -100,6 +101,14 @@ export async function POST(request) {
     ownerUserId: body.ownerUserId,
   });
   if (!created.ok) return apiError(request, created.errorCode || ERR.INVALID_DATA, 400);
+
+  await auditFromRequest(request, {
+    actorUserId: payload?.userId || payload?.id || null,
+    companyId,
+    action: 'recruiting.vacancy.created',
+    targetType: 'vacancy',
+    targetId: created.vacancy.id,
+  });
 
   return NextResponse.json(
     { ...created.vacancy, companyName: created.companyName, activeToken: created.activeToken },

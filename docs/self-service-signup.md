@@ -4,6 +4,13 @@ Implementado nas migrations `051_self_service_signup.sql` e `052_analytics_track
 
 ## Fluxo
 
+O campo de cargo usa uma taxonomia comercial canônica (`owner_founder`, `executive`,
+`hr_director`, `hr_manager`, `hr_analyst`, `people_ops_dp`, `talent_acquisition`,
+`recruitment_consultant`, `people_leader`, `other`). A opção `other` guarda o texto
+complementar em `signup_metadata.jobTitleOther`. Clientes antigos que enviarem cargo
+livre são classificados como `other` sem perder o valor original, permitindo filtros
+consistentes na aba Leads.
+
 1. **Landpage** (`/`) → CTA "Quero early access gratuito" → `/signup`
 2. **Signup** (`/signup`) → formulário:
    - Nome completo

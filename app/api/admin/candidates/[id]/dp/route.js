@@ -15,6 +15,7 @@ import {
   upsertDpProfile,
   ensureDpDocuments,
 } from '../../../../../../lib/people/employee-dp.js';
+import { auditFromRequest } from '../../../../../../lib/audit.js';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
@@ -115,6 +116,13 @@ export async function PATCH(request, props) {
       internalNotes: body.internalNotes,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: loaded.candidate.companyId,
+      action: 'dp.profile.updated',
+      targetType: 'candidate',
+      targetId: candidateId,
+    });
     return NextResponse.json({ ok: true, profile: result.profile });
   } catch (err) {
     console.error('PATCH /api/admin/candidates/[id]/dp', err);

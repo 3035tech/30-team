@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError, apiErrorFromResult, ERR } from '../../../../../../lib/api-error.js';
+import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { getSentFormalReviewForEmployee, listSentFormalReviewsForEmployee } from '../../../../../../lib/people/formal-competency-reviews.js';
 
@@ -9,7 +9,7 @@ const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store, private' });
 export async function GET(request) {
   try {
     const session = await authenticateMobileEmployee(mobileEmployeeBearerToken(request));
-    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
     const reviewId = new URL(request.url).searchParams.get('id');
     if (reviewId) {
       const result = await getSentFormalReviewForEmployee(null, { companyId: session.companyId, candidateId: session.candidateId, reviewId });
@@ -20,6 +20,6 @@ export async function GET(request) {
     return NextResponse.json({ reviews }, { headers: NO_STORE });
   } catch (error) {
     console.error('GET mobile employee reviews', error);
-    return apiError(request, ERR.INTERNAL, 500);
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }

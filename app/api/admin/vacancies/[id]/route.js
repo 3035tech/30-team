@@ -54,6 +54,14 @@ export async function PATCH(request, props) {
     const status = result.errorCode === ERR.NOT_FOUND ? 404 : 400;
     return apiError(request, result.errorCode || ERR.INVALID_DATA, status);
   }
+  await auditFromRequest(request, {
+    actorUserId: payload?.userId || payload?.id || null,
+    companyId: current.companyId,
+    action: 'recruiting.vacancy.updated',
+    targetType: 'vacancy',
+    targetId: id,
+    metadata: { ownerUpdated: body.ownerUserId !== undefined },
+  });
   if (body.ownerUserId !== undefined) {
     await auditFromRequest(request, {
       actorUserId: payload?.userId || payload?.id || null,
@@ -84,6 +92,14 @@ export async function DELETE(request, props) {
 
   const result = await softDeleteVacancy({ vacancyId: id, beforeDelete });
   if (!result.ok) return apiError(request, result.errorCode || ERR.NOT_FOUND, 404);
+
+  await auditFromRequest(request, {
+    actorUserId: payload?.userId || payload?.id || null,
+    companyId: beforeDelete.companyId,
+    action: 'recruiting.vacancy.soft_deleted',
+    targetType: 'vacancy',
+    targetId: id,
+  });
 
   return NextResponse.json({ ok: true });
 }

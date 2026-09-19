@@ -16,9 +16,9 @@ Cada item só está concluído quando há prova do fluxo, estado de erro compree
 
 ## P0 · Agora: pronto para o primeiro cliente
 
-### MVP-02 — Segurança multi-tenant e permissões
+### MVP-02 — Segurança multi-tenant e permissões ✅ ENTREGUE
 
-**Evidência atual:** matriz HTTP cobre RH/direção ocultando vaga, dossiê, remuneração e DP de outro tenant; super admin cruza esses recursos explicitamente.
+**Evidência de aceite (19/09/2026):** `npm run release:pilot-check -- --full` passou com 76 provas SQL/lib, 182 HTTP, 16 Playwright e 21 verificações de hardening. A matriz cobre RH/direção ocultando vaga, dossiê, remuneração e DP de outro tenant; o super admin cruza esses recursos explicitamente. Alterações de módulos, usuários, remuneração, DP, vagas, contratação e exclusões lógicas geram auditoria com `company_id`. Empresas, usuários e vagas preservam soft delete.
 
 **Objetivo:** garantir que RH/direção nunca acessem dados de outra empresa.
 
@@ -199,7 +199,7 @@ CDN dedicado, autoscaling, PgBouncer/RDS Proxy, réplicas, Redis separado, parti
 
 ## Ordem executiva sugerida
 
-1. **Semana 1:** MVP-02 e inventário de MVP-06.
+1. **Semana 1:** inventário e aceite humano de MVP-06; MVP-02 concluído.
 2. **Semana 2:** MVP-03 e correções encontradas no fluxo.
 3. **Semana 3:** MVP-04 e MVP-05.
 4. **Piloto:** MVP-07, MVP-08, MVP-09 e MVP-10 conforme atrito observado.

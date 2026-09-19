@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { apiError, ERR } from '../../../../../../lib/api-error.js';
+import { apiError, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { loginEmployeeWithPassword } from '../../../../../../lib/employee-auth.js';
 import {
   completeMobileEmployeeAuthentication,
@@ -17,11 +17,12 @@ const loginSchema = z.object({
   password: z.string().min(1).max(1024),
 });
 
+const INVALID_CREDENTIAL_DELAY_MS = 500;
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
 
 async function invalidCredentials(request) {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return apiError(request, ERR.INVALID_CREDENTIALS, 401, {}, { headers: NO_STORE });
+  await new Promise((resolve) => setTimeout(resolve, INVALID_CREDENTIAL_DELAY_MS));
+  return apiError(request, ERR.INVALID_CREDENTIALS, HTTP_STATUS.UNAUTHORIZED, {}, { headers: NO_STORE });
 }
 
 export async function POST(request) {
@@ -29,7 +30,7 @@ export async function POST(request) {
     const ip = clientIpFromRequest(request);
     const rate = await checkRateLimit(`mobile-employee-login:${ip}`, 20, 15 * 60 * 1000);
     if (!rate.ok) {
-      return apiError(request, ERR.RATE_LIMIT, 429, {}, {
+      return apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS, {}, {
         headers: { ...NO_STORE, 'Retry-After': String(rate.retryAfterSec) },
       });
     }
@@ -51,10 +52,10 @@ export async function POST(request) {
       }, { headers: NO_STORE });
     }
     const completed = await completeMobileEmployeeAuthentication(result, contexts);
-    if (!completed.ok) return apiError(request, ERR.UNAUTHORIZED, 401, {}, { headers: NO_STORE });
+    if (!completed.ok) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED, {}, { headers: NO_STORE });
     return NextResponse.json(completed, { headers: NO_STORE });
   } catch (error) {
     console.error('[mobile-employee-login]', error);
-    return apiError(request, ERR.INTERNAL, 500, {}, { headers: NO_STORE });
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR, {}, { headers: NO_STORE });
   }
 }

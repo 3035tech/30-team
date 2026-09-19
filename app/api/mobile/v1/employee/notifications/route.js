@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiError, apiErrorFromResult, ERR } from '../../../../../../lib/api-error.js';
+import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { listCandidateNotifications, markCandidateNotificationRead } from '../../../../../../lib/employee-notifications.js';
 import { t } from '../../../../../../lib/i18n.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
@@ -21,24 +21,24 @@ async function responseFor(session) {
 export async function GET(request) {
   try {
     const session = await authenticate(request);
-    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
     return responseFor(session);
   } catch (error) {
     console.error('GET mobile employee notifications', error);
-    return apiError(request, ERR.INTERNAL, 500);
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }
 
 export async function PATCH(request) {
   try {
     const session = await authenticate(request);
-    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
     const body = await request.json().catch(() => ({}));
     const result = await markCandidateNotificationRead(null, { companyId: session.companyId, candidateId: session.candidateId, id: body.id, markAll: body.markAll === true });
     if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
     return responseFor(session);
   } catch (error) {
     console.error('PATCH mobile employee notifications', error);
-    return apiError(request, ERR.INTERNAL, 500);
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }

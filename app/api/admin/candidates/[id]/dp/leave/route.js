@@ -9,6 +9,7 @@ import {
 } from '../../../../../../../lib/ae/require-admin.js';
 import { createLeaveRequest } from '../../../../../../../lib/people/employee-dp.js';
 import { notifyCandidate, EMPLOYEE_NOTIF } from '../../../../../../../lib/employee-notifications.js';
+import { auditFromRequest } from '../../../../../../../lib/audit.js';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
@@ -57,6 +58,15 @@ export async function POST(request, props) {
       userId: payload.userId,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: loaded.candidate.companyId,
+      action: 'dp.leave.created',
+      targetType: 'dp_leave_request',
+      targetId: result.item.id,
+      metadata: { candidateId: Number(candidateId), status: result.item.status },
+    });
 
     try {
       await notifyCandidate({

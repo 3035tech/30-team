@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { apiError, ERR } from '../../../../../../../lib/api-error.js';
+import { apiError, HTTP_STATUS, ERR } from '../../../../../../../lib/api-error.js';
 import {
   mobileEmployeeBearerToken,
   switchMobileEmployeeCompany,
@@ -22,10 +22,10 @@ export async function POST(request) {
       parsed.data.refreshToken,
       parsed.data.candidateId
     );
-    if (!result.ok) return apiError(request, ERR.UNAUTHORIZED, 401, {}, { headers: NO_STORE });
+    if (!result.ok) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED, {}, { headers: NO_STORE });
     return NextResponse.json(result, { headers: NO_STORE });
   } catch (error) {
     console.error('[mobile-employee-company-switch]', error);
-    return apiError(request, ERR.INTERNAL, 500, {}, { headers: NO_STORE });
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR, {}, { headers: NO_STORE });
   }
 }

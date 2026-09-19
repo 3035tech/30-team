@@ -10,6 +10,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { isSignupJobTitle, SIGNUP_JOB_TITLE } from '../../../lib/signup-job-titles';
 
 function leadStatusTone(status) {
   if (status === 'pending') return 'warning';
@@ -221,7 +222,12 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
                       {row.jobTitle ? (
                         <div>
                           <span className="text-ink-faint">{t(locale, 'panel.leads.metaJob')}: </span>
-                          {row.jobTitle}
+                          {isSignupJobTitle(row.jobTitle)
+                            ? t(locale, `signup.jobTitleOptions.${row.jobTitle}`)
+                            : row.jobTitle}
+                          {row.jobTitle === SIGNUP_JOB_TITLE.OTHER && row.jobTitleOther
+                            ? `: ${row.jobTitleOther}`
+                            : ''}
                         </div>
                       ) : null}
                       {row.teamSize ? (

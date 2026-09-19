@@ -19,7 +19,7 @@ test.describe('early-access signup', () => {
     await page.locator('#signup-fullname').fill('Thomas E2E');
     await page.locator('#signup-email').fill(email);
     await page.locator('#signup-company').fill(companyName);
-    await page.locator('#signup-jobtitle').fill('Gerente');
+    await page.locator('#signup-jobtitle').selectOption('hr_manager');
     await page.locator('#signup-teamsize').selectOption('11-50');
     await page.locator('#signup-pain').fill('Gestao 360');
 

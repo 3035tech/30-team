@@ -16,6 +16,11 @@ assert.match(pt.footerLegal, /não diagnóstico/i);
 assert.match(en.footerLegal, /not diagnosis/i);
 assert.equal(pt.ui.types.length, 9);
 assert.equal(en.ui.types.length, 9);
+assert.match(pt.employeeApp.title, /bolso/i);
+assert.match(en.employeeApp.title, /pocket/i);
+assert.match(pt.employeeApp.status, /validação em dispositivo/i);
+assert.match(en.employeeApp.status, /device validation/i);
+assert.ok(pt.employeeApp.features.some((item) => /2FA/.test(item)));
 assert.doesNotMatch(JSON.stringify({ pt, en }), /\bDISC\b/i);
 
 const llms = seo.buildProductLlmsTxt();
@@ -24,6 +29,8 @@ assert.match(llms, /\/companies\/\{companySlug\}/);
 assert.doesNotMatch(llms, /Public jobs: .*\/j\n/);
 assert.match(llms, /T1–T9/);
 assert.match(llms, /Motivadores|Motivators/);
+assert.match(llms, /App do colaborador/);
+assert.match(llms, /iOS e Android/);
 assert.match(llms, /não é diagnóstico clínico|not a clinical diagnosis/i);
 assert.doesNotMatch(llms, /\bDISC\b/i);
 
@@ -34,6 +41,9 @@ assert.ok(types.includes('WebSite'));
 assert.ok(types.includes('SoftwareApplication'));
 assert.ok(types.includes('WebPage'));
 assert.ok(types.includes('FAQPage'));
+const software = jsonLd['@graph'].find((entry) => entry['@type'] === 'SoftwareApplication');
+assert.match(software.operatingSystem, /iOS/);
+assert.ok(software.featureList.some((item) => /2FA/.test(item)));
 
 const gptRule = crawler.buildRobotsRules().find((rule) => rule.userAgent === 'GPTBot');
 assert.ok(gptRule.allow.includes('/'));

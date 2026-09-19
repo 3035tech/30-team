@@ -12,6 +12,7 @@ import {
   clearDpDocumentFile,
   uploadDpDocumentFile,
 } from '../../../../../../../../../lib/people/employee-dp.js';
+import { auditFromRequest } from '../../../../../../../../../lib/audit.js';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
@@ -68,6 +69,14 @@ export async function POST(request, props) {
       },
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: loaded.candidate.companyId,
+      action: 'dp.document.file_uploaded',
+      targetType: 'employee_dp_document',
+      targetId: result.item.id,
+      metadata: { candidateId: Number(candidateId), docKey },
+    });
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('POST dp document file', err);
@@ -105,6 +114,14 @@ export async function DELETE(request, props) {
       userId: payload.userId,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: loaded.candidate.companyId,
+      action: 'dp.document.file_removed',
+      targetType: 'employee_dp_document',
+      targetId: result.item.id,
+      metadata: { candidateId: Number(candidateId), docKey },
+    });
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('DELETE dp document file', err);

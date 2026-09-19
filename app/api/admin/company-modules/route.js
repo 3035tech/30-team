@@ -8,7 +8,7 @@ import {
   getCompanyEnabledModules,
   setCompanyEnabledModules,
 } from '../../../../lib/company-module-entitlements.js';
-import { audit } from '../../../../lib/audit.js';
+import { auditFromRequest } from '../../../../lib/audit.js';
 
 const querySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -58,9 +58,10 @@ export const PUT = withAdminApi(
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
     }
-    await audit({
+    await auditFromRequest(request, {
       action: 'company_modules_set',
       actorUserId: payload.userId,
+      companyId,
       targetType: 'company',
       targetId: companyId,
       metadata: {

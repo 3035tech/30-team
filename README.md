@@ -332,6 +332,8 @@ npm run dev
    Magic link opcional. Ver `docs/employee-onboarding-journey.md`. /e/<token> continua sem conta.
 ```
 
+O produto também possui um aplicativo nativo do colaborador em `../30-team-app`, desenvolvido com Expo para iOS e Android. Ele usa `/api/mobile/v1` e preserva o isolamento por empresa, sessão revogável, refresh rotativo, 2FA e troca de empresa. A experiência mobile cobre Hoje, notificações, onboarding, perfil, pesquisas, PDI, OKRs, avaliações recebidas, feedback e LMS. O app está em validação em dispositivo; o portal web `/employee` continua sendo a referência funcional e o canal disponível até a distribuição nativa.
+
 ### Gestor no dashboard
 
 As áreas densas usam navegação local orientada à tarefa: curso LMS (Conteúdo, Matrículas, Acompanhamento), campanha de Clima (Resultados, Distribuição, Questionário), DP (Pendências, Férias/Afastamentos, Documentos, Ponto/Banco de horas, Admissão), Remuneração (Pessoas/Salários, Mapa/Aprovações) e Perfil (Conta, Módulos, Segurança).

@@ -7,6 +7,37 @@ function source(path) {
 }
 
 describe('module hardening', () => {
+  it('audits tenant-sensitive mutations and keeps canonical entities on soft delete', () => {
+    const companyModules = source('app/api/admin/company-modules/route.js');
+    assert.match(companyModules, /auditFromRequest\(request/);
+    assert.match(companyModules, /companyId,/);
+    assert.match(companyModules, /company_modules_set/);
+
+    const users = source('lib/users-admin.js');
+    for (const action of ['user.create', 'user.update', 'user.deactivate']) {
+      assert.match(users, new RegExp(action.replace('.', '\\.')));
+    }
+    assert.match(users, /UPDATE users SET deleted = TRUE, active = FALSE/);
+
+    const vacancies = source('app/api/admin/vacancies/[id]/route.js');
+    assert.match(vacancies, /recruiting\.vacancy\.updated/);
+    assert.match(vacancies, /recruiting\.vacancy\.soft_deleted/);
+    assert.match(source('lib/vacancies-admin.js'), /UPDATE vacancies SET deleted = TRUE/);
+
+    const pipeline = source('app/api/admin/vacancies/[id]/candidates/[candidateId]/route.js');
+    assert.match(pipeline, /recruiting\.candidate\.hired/);
+
+    const dpProfile = source('app/api/admin/candidates/[id]/dp/route.js');
+    const dpFile = source('app/api/admin/candidates/[id]/dp/documents/[docKey]/file/route.js');
+    assert.match(dpProfile, /dp\.profile\.updated/);
+    assert.match(dpFile, /dp\.document\.file_uploaded/);
+    assert.match(dpFile, /dp\.document\.file_removed/);
+
+    const companies = source('app/api/admin/companies/[id]/route.js');
+    assert.match(companies, /UPDATE companies SET deleted = TRUE, active = FALSE/);
+    assert.match(companies, /company\.soft_delete/);
+  });
+
   it('gates compensation surfaces with dedicated capabilities', () => {
     assert.match(source('app/api/admin/compensation/route.js'), /CAP\.COMPENSATION_VIEW/);
     assert.match(source('app/api/admin/candidates/[id]/compensation/route.js'), /CAP\.COMPENSATION_MANAGE/);

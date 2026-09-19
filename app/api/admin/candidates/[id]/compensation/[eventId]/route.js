@@ -58,6 +58,7 @@ export async function PATCH(request, props) {
 
     await audit({
       actorUserId: payload.userId || null,
+      companyId,
       action: 'compensation.update',
       targetType: 'candidate',
       targetId: candidateId,
@@ -116,6 +117,7 @@ export async function DELETE(request, props) {
 
     await audit({
       actorUserId: payload.userId || null,
+      companyId,
       action: 'compensation.delete',
       targetType: 'candidate',
       targetId: candidateId,

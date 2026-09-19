@@ -14,6 +14,7 @@ import {
 import { resolveCompanyPipelineStage } from '../../../../../../../lib/company-pipeline-stages';
 import { markCandidateHired, maybeCloseVacancyIfFilled, notifyHireOnboardingKit } from '../../../../../../../lib/hire';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../../../lib/job-funnel';
+import { auditFromRequest } from '../../../../../../../lib/audit';
 
 
 async function loadLink(request, vacancyId, candidateId, payload) {
@@ -174,6 +175,22 @@ export async function PATCH(request, props) {
         dedupeKey: `hire_kit:vacancy:${vacancyId}:candidate:${candidateId}`,
       });
     }
+
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: loaded.link.companyId,
+      action: isHiredCanonical
+        ? 'recruiting.candidate.hired'
+        : 'recruiting.candidate.updated',
+      targetType: 'vacancy_candidate',
+      targetId: loaded.link.id,
+      metadata: {
+        vacancyId: Number(vacancyId),
+        candidateId: Number(candidateId),
+        pipelineStage: stage ?? currentStage,
+        notesUpdated: body.interviewNotes !== undefined || body.notes !== undefined,
+      },
+    });
 
     return NextResponse.json({
       ...upd.rows[0],

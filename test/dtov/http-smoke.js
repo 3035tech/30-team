@@ -1340,7 +1340,7 @@ export async function runHttpSmoke(baseUrl) {
             fullName: 'Thomas Early',
             email: signupEmail,
             companyName,
-            jobTitle: 'Gerente',
+            jobTitle: 'hr_manager',
             teamSize: '11-50',
             painPoints: 'Gestao 360',
             locale: 'pt-BR',

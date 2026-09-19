@@ -112,6 +112,16 @@ export async function PATCH(request, props) {
       userId: payload.userId,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await audit({
+      actorUserId: payload.userId || null,
+      actorKind: AUDIT_ACTOR_KIND.MANAGER,
+      companyId,
+      action: 'dp_doc.updated',
+      targetType: 'employee_dp_document',
+      targetId: result.item.id,
+      metadata: { candidateId: Number(candidateId), docKey, status: result.item.status },
+      ...auditRequestContext(request),
+    });
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('PATCH dp documents', err);

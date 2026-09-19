@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { apiError, ERR } from '../../../../../../lib/api-error.js';
+import { apiError, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { revokeMobileEmployeeSession } from '../../../../../../lib/mobile-employee-session.js';
 import { parseJsonBody } from '../../../../../../lib/validate.js';
 
@@ -15,6 +15,6 @@ export async function POST(request) {
     return NextResponse.json({ ok: true }, { headers: NO_STORE });
   } catch (error) {
     console.error('[mobile-employee-logout]', error);
-    return apiError(request, ERR.INTERNAL, 500, {}, { headers: NO_STORE });
+    return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR, {}, { headers: NO_STORE });
   }
 }

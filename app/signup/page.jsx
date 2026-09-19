@@ -13,6 +13,8 @@ import { fieldInputClass, fieldSelectClass } from '../_components/form-control-s
 import TurnstileField from '../_components/TurnstileField';
 import { InlineCallout } from '../_components/InlineCallout';
 import { S } from '../dashboard/dashboard-shared';
+import { ContentEnter } from '../_components/AppLoading';
+import { SIGNUP_JOB_TITLE, SIGNUP_JOB_TITLES } from '../../lib/signup-job-titles';
 
 const TURNSTILE_SITE_KEY = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
 
@@ -27,6 +29,7 @@ export default function SignupPage() {
     email: '',
     companyName: '',
     jobTitle: '',
+    jobTitleOther: '',
     teamSize: '',
     painPoints: '',
   });
@@ -194,15 +197,48 @@ export default function SignupPage() {
           </FormField>
 
           <FormField htmlFor="signup-jobtitle" label={t(locale, 'signup.jobTitle')}>
-            <input
+            <select
               id="signup-jobtitle"
-              type="text"
               value={formData.jobTitle}
-              onChange={handleChange('jobTitle')}
-              className={inputClass}
-              placeholder={t(locale, 'signup.jobTitlePlaceholder')}
-            />
+              onChange={(event) => {
+                const jobTitle = event.target.value;
+                setFormData((current) => ({
+                  ...current,
+                  jobTitle,
+                  jobTitleOther:
+                    jobTitle === SIGNUP_JOB_TITLE.OTHER ? current.jobTitleOther : '',
+                }));
+              }}
+              className={selectClass}
+            >
+              <option value="">{t(locale, 'signup.jobTitlePlaceholder')}</option>
+              {SIGNUP_JOB_TITLES.map((jobTitle) => (
+                <option key={jobTitle} value={jobTitle}>
+                  {t(locale, `signup.jobTitleOptions.${jobTitle}`)}
+                </option>
+              ))}
+            </select>
           </FormField>
+
+          {formData.jobTitle === SIGNUP_JOB_TITLE.OTHER ? (
+            <ContentEnter animKey="signup-job-title-other">
+              <FormField
+                htmlFor="signup-jobtitle-other"
+                label={t(locale, 'signup.jobTitleOther')}
+              >
+                <input
+                  id="signup-jobtitle-other"
+                  type="text"
+                  required
+                  maxLength={120}
+                  value={formData.jobTitleOther}
+                  onChange={handleChange('jobTitleOther')}
+                  className={inputClass}
+                  placeholder={t(locale, 'signup.jobTitleOtherPlaceholder')}
+                />
+              </FormField>
+            </ContentEnter>
+          ) : null}
 
           <FormField htmlFor="signup-teamsize" label={t(locale, 'signup.teamSize')}>
             <select
