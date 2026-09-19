@@ -18,6 +18,7 @@ export async function GET(request) {
       : 0;
     return NextResponse.json({
       person: { fullName: home.person.fullName },
+      company: { name: home.company.name, aboutHtml: home.company.aboutHtml, website: home.company.website },
       tasks: home.tasks.slice(0, 20).map((task) => ({
         id: String(task.id),
         kind: String(task.kind),

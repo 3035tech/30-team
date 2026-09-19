@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { apiError, apiErrorFromResult, ERR, HTTP_STATUS } from '../../../../../../lib/api-error.js';
 import { listCompanyPosts } from '../../../../../../lib/company-posts.js';
 import { createCompanyKudo, listCompanyKudos, searchEmployeeColleagues } from '../../../../../../lib/company-kudos.js';
@@ -12,26 +13,38 @@ const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
 const FEED_PAGE_SIZE = 10;
 const KUDOS_PAGE_SIZE = 15;
 const COLLEAGUE_LIMIT = 40;
+const MAX_PAGE = 10000;
+const pageSchema = z.string().regex(/^[1-9]\d*$/).transform(Number).pipe(z.number().int().max(MAX_PAGE));
+const pagesSchema = z.object({ postsPage: pageSchema.default(1), kudosPage: pageSchema.default(1) }).strict();
 const KUDOS_RATE_LIMIT = 20;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 async function auth(request) { return authenticateMobileEmployee(mobileEmployeeBearerToken(request)); }
-async function load(session) {
+async function load(session, { postsPage = 1, kudosPage = 1 } = {}) {
   const [feed, kudos, colleagues] = await Promise.all([
-    listCompanyPosts(null, { companyId: session.companyId, page: 1, pageSize: FEED_PAGE_SIZE }),
-    listCompanyKudos(null, { companyId: session.companyId, page: 1, pageSize: KUDOS_PAGE_SIZE }),
+    listCompanyPosts(null, { companyId: session.companyId, page: postsPage, pageSize: FEED_PAGE_SIZE }),
+    listCompanyKudos(null, { companyId: session.companyId, page: kudosPage, pageSize: KUDOS_PAGE_SIZE }),
     searchEmployeeColleagues(null, { companyId: session.companyId, excludeCandidateId: session.candidateId, limit: COLLEAGUE_LIMIT }),
   ]);
   if (!feed.ok) return feed;
   if (!kudos.ok) return kudos;
   if (!colleagues.ok) return colleagues;
-  return { ok: true, posts: feed.posts, postTotal: feed.total, kudos: kudos.kudos, kudosTotal: kudos.total, colleagues: colleagues.people.map((person) => ({ id: Number(person.id), fullName: person.fullName })) };
+  return { ok: true, posts: feed.posts, postTotal: feed.total, kudos: kudos.kudos, kudosTotal: kudos.total, colleagues: colleagues.people.map((person) => ({ id: Number(person.id), fullName: person.fullName })),
+    pagination: {
+      posts: { page: postsPage, totalPages: Math.min(MAX_PAGE, Math.max(1, Math.ceil(feed.total / FEED_PAGE_SIZE))) },
+      kudos: { page: kudosPage, totalPages: Math.min(MAX_PAGE, Math.max(1, Math.ceil(kudos.total / KUDOS_PAGE_SIZE))) },
+    },
+  };
 }
 
 export async function GET(request) {
   try {
     const session = await auth(request);
     if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
-    const result = await load(session);
+    const params = new URL(request.url).searchParams;
+    if ([...params.keys()].some((key) => params.getAll(key).length > 1)) return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
+    const pages = pagesSchema.safeParse(Object.fromEntries(params));
+    if (!pages.success) return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
+    const result = await load(session, pages.data);
     if (!result.ok) return apiErrorFromResult(request, result);
     return NextResponse.json(result, { headers: NO_STORE });
   } catch (error) {
