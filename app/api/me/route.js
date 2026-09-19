@@ -8,7 +8,7 @@ import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../lib/
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
 
 async function requireSession(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };

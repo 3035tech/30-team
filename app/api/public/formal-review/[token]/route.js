@@ -12,7 +12,8 @@ import {
 } from '../../../../../lib/people/formal-competency-reviews.js';
 
 /** GET /api/public/formal-review/[token] */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-formal-review-get:${ip}`, 90, 10 * 60 * 1000);
@@ -52,7 +53,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/formal-review/[token] */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-formal-review:${ip}`, 40, 10 * 60 * 1000);

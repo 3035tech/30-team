@@ -60,7 +60,7 @@ export async function PATCH(request) {
       locale,
       sv: session.sv,
     });
-    const jar = cookies();
+    const jar = await cookies();
     jar.set(EMPLOYEE_COOKIE_NAME, jwt, employeeSessionCookieOptions());
     jar.set(LOCALE_COOKIE, locale, {
       httpOnly: false,

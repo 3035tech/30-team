@@ -25,7 +25,8 @@ async function loadInvite(id, { isAdmin, companyId }) {
 }
 
 /** POST /api/admin/ae/invites/[id]/remind */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {

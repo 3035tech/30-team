@@ -24,7 +24,8 @@ async function loadInvite(id, { isAdmin, companyId }) {
 }
 
 /** DELETE /api/admin/ae/invites/[id] */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {

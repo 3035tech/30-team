@@ -25,7 +25,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** PUT /api/admin/candidates/[id]/dp/leave-balance — set entitlement + adjustment */
-export async function PUT(request, { params }) {
+export async function PUT(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {

@@ -231,7 +231,14 @@ export default function SignupPage() {
           </FormField>
 
           <div className="rounded-control border border-ink/8 bg-ink/[0.02] px-4 py-3 text-xs leading-relaxed text-ink-muted">
-            {t(locale, 'signup.terms')}
+            {t(locale, 'signup.termsPrefix')}{' '}
+            <Link href="/terms" target="_blank" className="font-semibold text-brand-700 underline-offset-2 hover:underline">
+              {t(locale, 'signup.termsLink')}
+            </Link>{' '}
+            {t(locale, 'signup.privacyJoin')}{' '}
+            <Link href="/privacy" target="_blank" className="font-semibold text-brand-700 underline-offset-2 hover:underline">
+              {t(locale, 'signup.privacyLink')}
+            </Link>.
           </div>
 
           {error ? (

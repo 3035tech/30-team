@@ -19,7 +19,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** GET /api/admin/candidates/[id]/one-on-ones */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -46,7 +47,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/admin/candidates/[id]/one-on-ones */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

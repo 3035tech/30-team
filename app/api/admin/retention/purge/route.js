@@ -8,7 +8,7 @@ import { CAP, requireCapability } from '../../../../../lib/permissions';
 import { purgeExpiredAssessmentsAndOrphans } from '../../../../../lib/retention';
 
 export async function POST(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

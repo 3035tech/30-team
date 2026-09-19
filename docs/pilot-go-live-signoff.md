@@ -9,8 +9,8 @@ Registro único para fechar o primeiro cliente. Não marque uma evidência exter
 | S3: logo, PDF LMS e documento DP | `npm run ops:pilot-preflight -- --write-storage` | Infra |  |  |
 | SMTP e entrega real | `PILOT_SMOKE_EMAIL=... npm run ops:pilot-preflight -- --send-email` | Infra |  |  |
 | Backup e restore isolado | procedimento em `pilot-operations-runbook.md` | Infra |  |  |
-| Termos e Política de Privacidade | URL e versão aprovadas | Jurídico/DPO |  |  |
-| Retenção, subprocessadores e canal do titular | checklist de privacidade aprovado | Jurídico/DPO |  |  |
+| Termos e Política de Privacidade | `/terms` e `/privacy`, versão 2026.09, aprovadas | Jurídico/DPO |  |  |
+| Retenção, subprocessadores e canal do titular | `pilot-privacy-checklist.md`, política e runbook aprovados | Jurídico/DPO |  |  |
 | Canal e SLA do piloto | `pilot-support-runbook.md` comunicado ao cliente | Produto/Suporte |  |  |
 
 ## Critérios de parada

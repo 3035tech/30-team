@@ -14,6 +14,9 @@ assert.match(pt.metaDescription, /RH|recrut|pessoas/i);
 assert.match(en.metaDescription, /HR|recruit|people/i);
 assert.match(pt.footerLegal, /não diagnóstico/i);
 assert.match(en.footerLegal, /not diagnosis/i);
+assert.equal(pt.ui.types.length, 9);
+assert.equal(en.ui.types.length, 9);
+assert.doesNotMatch(JSON.stringify({ pt, en }), /\bDISC\b/i);
 
 const llms = seo.buildProductLlmsTxt();
 assert.match(llms, /\/jobs\/{slug\}-\{id\}/);
@@ -22,6 +25,7 @@ assert.doesNotMatch(llms, /Public jobs: .*\/j\n/);
 assert.match(llms, /T1–T9/);
 assert.match(llms, /Motivadores|Motivators/);
 assert.match(llms, /não é diagnóstico clínico|not a clinical diagnosis/i);
+assert.doesNotMatch(llms, /\bDISC\b/i);
 
 const jsonLd = JSON.parse(seo.buildProductLandingJsonLd('pt-BR'));
 const types = jsonLd['@graph'].map((entry) => entry['@type']);

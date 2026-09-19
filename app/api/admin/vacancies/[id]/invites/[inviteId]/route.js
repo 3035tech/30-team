@@ -8,9 +8,10 @@ import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
 
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

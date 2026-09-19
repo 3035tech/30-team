@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "db:migrate": "node scripts/migrate.js",
     "db:validate-schema": "node scripts/validate-release-schema.js",
@@ -49,12 +49,13 @@
     "ioredis": "^6.0.0",
     "jose": "^6.2.9",
     "jsonwebtoken": "^9.0.2",
-    "next": "14.2.35",
+    "next": "16.3.3",
     "nodemailer": "10.0.10",
     "pdf-parse": "^1.1.1",
     "pg": "^8.23.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "qrcode": "^1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "recharts": "^2.15.0",
     "signature_pad": "^5.1.4",
     "zod": "^4.4.3"
@@ -62,9 +63,14 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "autoprefixer": "^10.5.4",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.3",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.28"
+    }
   }
 }

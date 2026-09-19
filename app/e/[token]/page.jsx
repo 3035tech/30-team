@@ -3,7 +3,8 @@ import EmployeePortalClient from './EmployeePortalClient';
 import { AppFeedbackProvider } from '../../_components/AppFeedback';
 import { BrandPulseLoading } from '../../_components/PublicStatusScreens';
 
-export default function EmployeePortalPage({ params }) {
+export default async function EmployeePortalPage(props) {
+  const params = await props.params;
   const token = params?.token || '';
   return (
     <AppFeedbackProvider>

@@ -35,7 +35,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** GET /api/admin/candidates/[id]/dp — profile + docs + leaves */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {
@@ -80,7 +81,8 @@ export async function GET(request, { params }) {
 }
 
 /** PATCH — upsert DP profile */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {

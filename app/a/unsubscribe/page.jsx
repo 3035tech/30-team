@@ -11,7 +11,8 @@ export const metadata = {
  * Cancelamento de alerta de vagas — path neutro `/a/unsubscribe?token=…`
  * (não usar URL em português).
  */
-export default async function JobAlertUnsubscribePage({ searchParams }) {
+export default async function JobAlertUnsubscribePage(props) {
+  const searchParams = await props.searchParams;
   const locale = 'pt-BR';
   const token = String(searchParams?.token || '').trim();
   let kind = 'invalid';

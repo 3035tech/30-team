@@ -19,7 +19,8 @@ import {
  * Retorna HR Score de um candidato (calcula se não existir).
  * Tenant-scoped: admin vê todos, direction/hr só da própria empresa.
  */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, [CAP.OVERVIEW_VIEW, CAP.TEAM_VIEW])) {

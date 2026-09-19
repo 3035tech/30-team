@@ -6,8 +6,9 @@ import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/empl
 
 export const dynamic = 'force-dynamic';
 
-export default function EmployeeProfilePage({ searchParams }) {
-  const jar = cookies();
+export default async function EmployeeProfilePage(props) {
+  const searchParams = await props.searchParams;
+  const jar = await cookies();
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   if (!isEmployeeSessionPayload(payload)) {

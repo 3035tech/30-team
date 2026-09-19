@@ -7,8 +7,8 @@ import { verifyEmployeeToken, isEmployeeSessionPayload } from '../../lib/employe
 
 export const dynamic = 'force-dynamic';
 
-export default function EmployeeLayout({ children }) {
-  const jar = cookies();
+export default async function EmployeeLayout({ children }) {
+  const jar = await cookies();
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   const locale =

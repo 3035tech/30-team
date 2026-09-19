@@ -23,8 +23,9 @@ async function requireCompany(companyId) {
 }
 
 /** Status do storage (UI desabilita upload se não configurado). */
-export async function GET(request, { params }) {
-  const cookieStore = cookies();
+export async function GET(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -42,8 +43,9 @@ export async function GET(request, { params }) {
 }
 
 /** Upload multipart field `file` → S3 + grava logo_url/logo_key. */
-export async function POST(request, { params }) {
-  const cookieStore = cookies();
+export async function POST(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -114,8 +116,9 @@ export async function POST(request, { params }) {
 }
 
 /** Remove logo do DB e best-effort do S3. */
-export async function DELETE(request, { params }) {
-  const cookieStore = cookies();
+export async function DELETE(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

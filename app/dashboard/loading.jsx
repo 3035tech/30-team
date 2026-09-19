@@ -1,10 +1,16 @@
-import DashboardClient from './DashboardClient';
-import { resolveDashboardAuth } from './resolve-dashboard-auth';
+import { AppLoading } from '../_components/AppLoading';
 
 /**
- * Soft-nav: same shell chrome as Suspense fallback (B-201) while tab RSC re-fetches.
+ * Soft-nav placeholder. It intentionally does not mount a second DashboardClient:
+ * during streamed navigation Next can retain the current screen alongside this
+ * fallback, and duplicating the shell would duplicate landmarks, dialogs and menus.
  */
-export default async function DashboardLoading() {
-  const { authUser, locale } = await resolveDashboardAuth();
-  return <DashboardClient auth={authUser} initialLocale={locale} panelLoading />;
+export default function DashboardLoading() {
+  return (
+    <div className="min-h-screen bg-canvas px-4 py-8 font-ui text-ink sm:px-8">
+      <div className="mx-auto w-full max-w-[1600px]">
+        <AppLoading variant="panel" />
+      </div>
+    </div>
+  );
 }

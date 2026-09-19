@@ -5,13 +5,13 @@ import PricingPageClient from '../_components/PricingPageClient';
 
 export const dynamic = 'force-dynamic';
 
-export function generateMetadata() {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export async function generateMetadata() {
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   return buildPricingMetadata(locale);
 }
 
-export default function PricingPage() {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function PricingPage() {
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const jsonLd = buildPricingJsonLd(locale);
 
   return (

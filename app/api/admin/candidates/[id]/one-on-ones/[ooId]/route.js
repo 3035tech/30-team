@@ -19,7 +19,8 @@ async function assertOwned(oneOnOneId, scope) {
 }
 
 /** PATCH /api/admin/candidates/[id]/one-on-ones/[ooId] */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -66,7 +67,8 @@ export async function PATCH(request, { params }) {
 }
 
 /** DELETE /api/admin/candidates/[id]/one-on-ones/[ooId] */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

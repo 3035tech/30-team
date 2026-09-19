@@ -13,9 +13,10 @@ import { publicAppUrl } from '../../../../../../../../lib/ae/require-admin';
  * POST — envia convite de Motivadores para candidato já pré-cadastrado na vaga.
  * Auth: VACANCIES_MANAGE (mesmo fluxo da listagem de candidatos da vaga).
  */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

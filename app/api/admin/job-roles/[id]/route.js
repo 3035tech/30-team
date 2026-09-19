@@ -11,7 +11,8 @@ import { getJobRole, updateJobRole, deactivateJobRole } from '../../../../../lib
  * GET /api/admin/job-roles/[id]
  * Retorna detalhes de um cargo
  */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {
@@ -48,7 +49,8 @@ export async function GET(request, { params }) {
  * Atualiza cargo existente
  * Body: { name?, description?, rubric?, active? }
  */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {
@@ -119,7 +121,8 @@ export async function PATCH(request, { params }) {
  * DELETE /api/admin/job-roles/[id]
  * Desativa cargo (soft delete: active = false)
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.JOB_ROLES_VIEW)) {

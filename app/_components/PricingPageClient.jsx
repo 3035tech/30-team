@@ -116,7 +116,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="addons-title">
+        {addons.length ? <section className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="addons-title">
           <SectionLabel>{t(locale, 'pricing.addonsLabel')}</SectionLabel>
           <h2 id="addons-title" className="mb-3 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
             {t(locale, 'pricing.addonsTitle')}
@@ -139,7 +139,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
               </article>
             ))}
           </div>
-        </section>
+        </section> : null}
 
         <section className="border-y border-ink/8 bg-brand-50/70 py-14" aria-labelledby="enterprise-title">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
@@ -206,6 +206,12 @@ export default function PricingPageClient({ locale: initialLocale }) {
             </Link>
             <Link href="/login" className="text-ink-muted no-underline hover:text-ink">
               {t(locale, 'pricing.navLogin')}
+            </Link>
+            <Link href="/privacy" className="text-ink-muted no-underline hover:text-ink">
+              {t(locale, 'pricing.footerPrivacy')}
+            </Link>
+            <Link href="/terms" className="text-ink-muted no-underline hover:text-ink">
+              {t(locale, 'pricing.footerTerms')}
             </Link>
           </div>
         </div>

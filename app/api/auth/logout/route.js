@@ -4,7 +4,7 @@ import { COOKIE_NAME, sessionCookieOptions, verifyToken } from '../../../../lib/
 import { bumpSessionVersion } from '../../../../lib/session';
 
 export async function POST() {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(COOKIE_NAME)?.value;
   const payload = token ? verifyToken(token) : null;
   if (payload?.userId) {
     try {

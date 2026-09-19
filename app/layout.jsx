@@ -5,8 +5,8 @@ import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
 import { DarkModeProvider } from './_components/DarkModeProvider';
 
-export function generateMetadata() {
-  const cookieStore = cookies();
+export async function generateMetadata() {
+  const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   return {
     title: '30Team',
@@ -23,8 +23,8 @@ export function generateMetadata() {
   };
 }
 
-export default function RootLayout({ children }) {
-  const cookieStore = cookies();
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   return (
     <html lang={localeHtmlLang(locale)}>

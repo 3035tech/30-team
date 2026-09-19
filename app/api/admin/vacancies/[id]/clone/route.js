@@ -10,9 +10,10 @@ import { cloneVacancy } from '../../../../../../lib/vacancy-clone';
 import { ensureActiveVacancyLinkToken } from '../../../../../../lib/vacancy-link';
 
 /** POST /api/admin/vacancies/[id]/clone */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

@@ -18,7 +18,7 @@ import { suggestVacancyDescriptionAi } from '../../../../../lib/vacancy-assist-a
  * body: { action: 'vacancyDescription', title, employmentType, salaryMin, salaryMax, description?, mode?, locale? }
  */
 export async function POST(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

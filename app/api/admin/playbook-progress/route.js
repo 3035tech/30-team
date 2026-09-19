@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 /** GET /api/admin/playbook-progress?tab=vagas */
 export async function GET(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) {

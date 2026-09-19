@@ -15,7 +15,8 @@ import {
 } from '../../../../../lib/people/team-groups';
 
 /** GET /api/admin/team-groups/[id] */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -40,7 +41,8 @@ export async function GET(request, { params }) {
 }
 
 /** PATCH /api/admin/team-groups/[id] */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -84,7 +86,8 @@ export async function PATCH(request, { params }) {
 }
 
 /** DELETE /api/admin/team-groups/[id] — soft delete */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.GROUP_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

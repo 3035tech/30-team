@@ -9,8 +9,9 @@ import { updateReferralCode } from '../../../../../lib/referral-codes';
 /**
  * PATCH /api/admin/referral-codes/[id] { active?, label? }
  */
-export async function PATCH(request, { params }) {
-  const cookieStore = cookies();
+export async function PATCH(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

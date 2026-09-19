@@ -7,11 +7,9 @@ import { errorMessage, t } from '../../../lib/i18n';
 import { useLocale } from '../../../lib/useLocale';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
-import { BrandMark } from '../../_components/BrandMark';
+import { AuthShell } from '../../_components/AuthShell';
 import { FormField } from '../../_components/FormField';
 import { InlineCallout } from '../../_components/InlineCallout';
-import LanguageSelect from '../../_components/LanguageSelect';
-import { PublicNarrowShell } from '../../_components/PublicNarrowShell';
 import { SegmentedControl } from '../../_components/SegmentedControl';
 import TurnstileField from '../../_components/TurnstileField';
 import { EMPLOYEE_PATH } from '../../../lib/employee-paths';
@@ -277,25 +275,15 @@ export function EmployeeLoginClient({ locale: localeProp = 'pt-BR', reason: reas
           : t(locale, 'employeeHome.loginHint');
 
   return (
-    <PublicNarrowShell
-      variant="form"
+    <AuthShell
       locale={locale}
-      maxWidthClass="max-w-md"
-      className="flex min-h-screen flex-col justify-center py-12"
+      onLocaleChange={setLocale}
+      context={t(locale, 'employeeHome.loginContext')}
+      title={pickingCompany
+        ? t(locale, 'employeeHome.pickCompanyTitle')
+        : t(locale, 'employeeHome.loginTitle')}
+      intro={modeHint}
     >
-      <div className="mb-6 text-center">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <BrandMark size={36} withWordmark />
-          <LanguageSelect locale={locale} onChange={setLocale} compact />
-        </div>
-        <h1 className={cn(S.pageTitle, 'mt-2')}>
-          {pickingCompany
-            ? t(locale, 'employeeHome.pickCompanyTitle')
-            : t(locale, 'employeeHome.loginTitle')}
-        </h1>
-        <p className={cn(S.muted, 'mt-2')}>{modeHint}</p>
-      </div>
-
       {sessionReason === 'expired' && !pickingCompany ? (
         <InlineCallout tone="warning" emphasis className="mb-4">
           {t(locale, 'employeeHome.sessionExpired')}
@@ -505,6 +493,6 @@ export function EmployeeLoginClient({ locale: localeProp = 'pt-BR', reason: reas
           </Link>
         </p>
       ) : null}
-    </PublicNarrowShell>
+    </AuthShell>
   );
 }

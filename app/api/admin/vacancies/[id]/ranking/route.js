@@ -9,7 +9,8 @@ import {
 import { getVacancyRanking } from '../../../../../../lib/vacancy-ranking.js';
 
 /** GET /api/admin/vacancies/[id]/ranking — fit ranking for vacancy pipeline. */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

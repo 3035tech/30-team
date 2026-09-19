@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  * Query: page, pageSize, actorKind, companyId, action, q
  */
 export async function GET(request) {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!isSuperAdminPayload(payload) || !requireCapability(payload, CAP.USERS_MANAGE)) {
     return apiError(request, ERR.UNAUTHORIZED, 401);

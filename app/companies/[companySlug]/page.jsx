@@ -9,8 +9,9 @@ import {
 import { publicCompanyPath } from '../../../lib/public-job-url';
 import { PublicCompanyPageView } from '../../_components/PublicVacancyPosting';
 
-export async function generateMetadata({ params }) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export async function generateMetadata(props) {
+  const params = await props.params;
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolvePublicCompanyBySlug(params?.companySlug);
   if (!resolved.ok) {
     return { title: t(locale, 'publicVacancy.companyNotFoundTitle'), robots: { index: false, follow: false } };
@@ -41,8 +42,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function PublicCompanyPage({ params }) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function PublicCompanyPage(props) {
+  const params = await props.params;
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolvePublicCompanyBySlug(params?.companySlug);
   if (!resolved.ok) notFound();
 

@@ -26,7 +26,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** POST /api/admin/candidates/[id]/dp/leave */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {

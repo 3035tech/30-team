@@ -7,8 +7,9 @@ import crypto from 'node:crypto';
 import { apiError, ERR } from '../../../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../../../lib/permissions';
 
-export async function POST(request, { params }) {
-  const cookieStore = cookies();
+export async function POST(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

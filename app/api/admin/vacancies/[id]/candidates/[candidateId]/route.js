@@ -45,9 +45,10 @@ async function loadLink(request, vacancyId, candidateId, payload) {
 }
 
 /** Atualiza anotações da entrevista (HTML) e/ou estágio do funil. */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

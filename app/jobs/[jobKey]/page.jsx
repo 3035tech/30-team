@@ -19,9 +19,10 @@ import { PublicVacancyPostingView } from '../../_components/PublicVacancyPosting
 /** Dedupa generateMetadata + page no mesmo request RSC. */
 const resolveById = cache(resolveByIdRaw);
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata(props) {
+  const params = await props.params;
   const jobKey = typeof params?.jobKey === 'string' ? params.jobKey : '';
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const parsed = parsePublicJobKey(jobKey);
   if (!parsed) {
     return {
@@ -87,9 +88,10 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function PublicJobPage({ params }) {
+export default async function PublicJobPage(props) {
+  const params = await props.params;
   const jobKey = typeof params?.jobKey === 'string' ? params.jobKey : '';
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const parsed = parsePublicJobKey(jobKey);
   if (!parsed) notFound();
 

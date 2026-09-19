@@ -15,7 +15,7 @@ Você está trabalhando no 30Team (30team) — produto de RH da 3035Tech para pe
 - Candidatos NÃO têm conta. Gestores: landpage `/` → CTA “Acessar o sistema” → `/login` → `/dashboard` (roles admin | direction | hr).
 
 ## Stack (resumo)
-Next.js 14 App Router + React 18 JSX (sem TypeScript) + PostgreSQL 16 + JWT cookie team30_session + Tailwind (tokens brand/pipeline) + i18n pt-BR e en. Multi-tenant por company_id. Scoring autoritativo no servidor. Soft delete em companies/vacancies/users.
+Next.js 16.3.3 App Router + React 19.3 JSX (sem TypeScript) + PostgreSQL 16 + JWT cookie team30_session + Tailwind (tokens brand/pipeline) + i18n pt-BR e en. Multi-tenant por company_id. Scoring autoritativo no servidor. Soft delete em companies/vacancies/users.
 
 ## Identidade da pessoa
 Hub = tabela candidates (company_id + e-mail). O mesmo candidate_id une:

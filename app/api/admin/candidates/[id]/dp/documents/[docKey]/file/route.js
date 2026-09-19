@@ -28,7 +28,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** POST multipart file upload for a DP document. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {
@@ -79,7 +80,8 @@ export async function POST(request, { params }) {
 }
 
 /** DELETE attachment */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {

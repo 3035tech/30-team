@@ -19,7 +19,7 @@ import {
 } from '../../../../lib/export-assessments-csv';
 
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   const allowed = canAccessAnalysisData(payload);

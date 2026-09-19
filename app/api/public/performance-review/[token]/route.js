@@ -8,7 +8,8 @@ import {
 } from '../../../../../lib/performance-side-reviews.js';
 
 /** GET /api/public/performance-review/[token] — side review form (goals + meta). */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-side-review-get:${ip}`, 90, 10 * 60 * 1000);
@@ -51,7 +52,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/performance-review/[token] — submit side review. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-side-review:${ip}`, 40, 10 * 60 * 1000);

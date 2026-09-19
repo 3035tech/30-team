@@ -28,10 +28,10 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 | Item | Mudança |
 |------|---------|
 | Turnstile no signup | `lib/turnstile.js` + widget em `/signup`; opcional se `TURNSTILE_SECRET_KEY` unset |
-| Revogação no middleware | `session_version` via Redis + `GET /api/auth/session-edge`; dashboard/API admin revalidam. Fallback: se o self-fetch do middleware falhar, confia no JWT assinado; se Edge não validar JWT mas session-edge OK, deixa passar. |
+| Revogação no Proxy | `session_version` via Redis + `GET /api/auth/session-edge`; dashboard/API admin revalidam. Fallback: se o self-fetch do Proxy falhar, confia no JWT assinado; se Edge não validar JWT mas session-edge OK, deixa passar. |
 | Health status token | `/api/health/status` — só header/Bearer; `?token=` rejeitado |
 | Sanitizer HTML | Allowlist de tags em notas ricas (`allowlistInterviewNotesHtml`) |
-| HTTP smoke | employee login/home, compensation CRUD, middleware revoke, health query rejected |
+| HTTP smoke | employee login/home, compensation CRUD, revogação no Proxy, health query rejected |
 | Pentest local | `scripts/security-zap-baseline.sh` + `test/security/README.md` |
 
 ## Correções aplicadas (fase 4)
@@ -48,7 +48,7 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 |------|---------|
 | Set-password sem bypass 2FA | Se `totp_enabled_at` ativo → `{ requires2fa, challengeToken }` sem cookie; senão auto-login com JWT `sv` |
 | Turnstile no login colaborador | `POST` login / magic / forgot / set-password / 2fa/verify + `TurnstileField` em `/employee/login` e set-password |
-| `candidates.session_version` | Migration `081`; JWT claim `sv`; `GET /api/auth/employee/session-edge` + middleware; bump em troca/reset de senha e desativar 2FA |
+| `candidates.session_version` | Migration `081`; JWT claim `sv`; `GET /api/auth/employee/session-edge` + Proxy; bump em troca/reset de senha e desativar 2FA |
 | Magic consume atômico | `UPDATE … WHERE used_at IS NULL … RETURNING` (sem TOCTOU) |
 | Anti-enumeração | magic/forgot públicos respondem `{ ok: true }` (sem `sent`); delay ~500 ms em falha de login; RL por e-mail + peek set-password |
 
@@ -67,11 +67,11 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 
 | Item | Mudança |
 |------|---------|
-| Extensão no uso (gestor) | Middleware `/dashboard`, `/api/admin`, `/api/me`: JWT válido e `exp` ≤ **2h** → reassinatura Edge + cookie **8h** |
-| Extensão no uso (colaborador) | Middleware `/employee` + `/api/employee`: mesma janela de 2h → cookie **12h** |
+| Extensão no uso (gestor) | Proxy `/dashboard`, `/api/admin`, `/api/me`: JWT válido e `exp` ≤ **2h** → reassinatura Edge + cookie **8h** |
+| Extensão no uso (colaborador) | Proxy `/employee` + `/api/employee`: mesma janela de 2h → cookie **12h** |
 | Sem refresh token | Mesmos cookies (`team30_session` / `team30_employee_session`); claims/`sv` preservados; JWT expirado **não** renova |
 | Idle implícito | Sem request autenticado pelo TTL respectivo → cai; revoke por `session_version` inalterado |
-| Edge-safe TTL/cookie | `lib/session-ttl.js`, `lib/session-cookie.js`, `EMPLOYEE_SESSION_MAX_AGE` em constants (middleware sem bcrypt) |
+| Edge-safe TTL/cookie | `lib/session-ttl.js`, `lib/session-cookie.js`, `EMPLOYEE_SESSION_MAX_AGE` em constants (Proxy sem bcrypt) |
 
 ### Ops / tokens
 
@@ -91,7 +91,7 @@ Não há política global que force 2FA — cada gestor/colaborador escolhe.
 
 ## Fluxos públicos (sem login)
 
-O middleware **só** exige sessão de gestor em `/dashboard` e `/api/admin/*`, e sessão de colaborador em `/employee` + `/api/employee/*` (exceto login/set-password).
+O Proxy **só** exige sessão de gestor em `/dashboard` e `/api/admin/*`, e sessão de colaborador em `/employee` + `/api/employee/*` (exceto login/set-password).
 
 **Permanecem públicos** (token de link ou anônimo):
 
@@ -130,7 +130,7 @@ Upgrade massivo de deps (`npm audit` high em devDeps Playwright) — revisar sep
 
 ## Anti-crawler (camada 1 — app)
 
-Regras em `lib/crawler-guard.js` (fonte única para `app/robots.js` + middleware):
+Regras em `lib/crawler-guard.js` (fonte única para `app/robots.js` + Proxy):
 
 | Protegido (Disallow + `X-Robots-Tag: noindex`) | Permanece indexável |
 |------------------------------------------------|---------------------|

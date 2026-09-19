@@ -10,7 +10,7 @@ import { publicCityAggregatorPath } from '../../../../lib/public-job-url';
 import { PublicVacanciesIndexView } from '../../../_components/PublicVacancyPosting';
 
 export async function generateMetadata({ params, searchParams } = {}) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolveCityAggregator(params?.citySlug);
   if (!resolved.ok) {
     return {
@@ -56,8 +56,10 @@ export async function generateMetadata({ params, searchParams } = {}) {
   };
 }
 
-export default async function PublicCityJobsPage({ params, searchParams }) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function PublicCityJobsPage(props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolveCityAggregator(params?.citySlug);
   if (!resolved.ok) notFound();
 

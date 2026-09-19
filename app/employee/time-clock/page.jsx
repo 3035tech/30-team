@@ -8,8 +8,9 @@ import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/empl
 
 export const dynamic = 'force-dynamic';
 
-export default function EmployeeTimeClockPage({ searchParams }) {
-  const jar = cookies();
+export default async function EmployeeTimeClockPage(props) {
+  const searchParams = await props.searchParams;
+  const jar = await cookies();
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   if (!isEmployeeSessionPayload(payload)) {

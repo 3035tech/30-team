@@ -3,410 +3,78 @@
 import Link from 'next/link';
 import { BrandMark } from './BrandMark';
 import LanguageSelect from './LanguageSelect';
+import { Icon } from './Icon';
 import { PRODUCT_LANDING_CONTACT_EMAIL } from '../../lib/product-landing-seo';
 import { useLocale } from '../../lib/useLocale';
 import LandingAnalytics from './LandingAnalytics';
 import { ContentEnter } from './AppLoading';
 
-function SectionLabel({ children }) {
+const PILLAR_ICONS = ['vacancies', 'compatibility', 'team', 'academy', 'dp'];
+const TYPE_BARS = [54, 72, 45, 61, 84, 57, 68, 42, 76];
+
+function SectionHeading({ label, title, body, id }) {
+  return <div className="max-w-2xl"><p className="mb-3 font-mono text-2xs uppercase tracking-[0.22em] text-brand-600">{label}</p><h2 id={id} className="m-0 font-display text-3xl font-normal leading-[1.08] tracking-[-0.025em] text-ink sm:text-4xl lg:text-5xl">{title}</h2>{body ? <p className="mb-0 mt-5 font-ui text-base leading-7 text-ink-muted sm:text-lg">{body}</p> : null}</div>;
+}
+
+function PrimaryCta({ copy, compact = false }) {
+  return <Link href="/signup" className={`inline-flex min-h-touch items-center justify-center rounded-control bg-brand-700 font-ui font-semibold text-white no-underline transition-colors hover:bg-brand-800 ${compact ? 'px-3 py-2 text-xs sm:px-4 sm:py-2.5 sm:text-sm' : 'px-6 py-3.5 text-base'}`}>{compact ? copy.navEarly : copy.ctaEarly}</Link>;
+}
+
+function ProductPreview({ copy }) {
+  const u = copy.ui;
   return (
-    <p className="mb-3 text-sm font-medium text-brand-600">{children}</p>
+    <figure className="relative m-0 lg:translate-x-8" aria-label={u.previewAria}>
+      <div className="absolute -left-5 top-14 hidden h-24 w-24 rounded-full border border-brand-300/50 lg:block" aria-hidden />
+      <div className="relative overflow-hidden rounded-[22px] border border-ink/10 bg-surface shadow-dialog">
+        <div className="flex items-center justify-between border-b border-ink/8 px-4 py-3"><div className="flex gap-2"><span className="h-2.5 w-2.5 rounded-full bg-danger/50" /><span className="h-2.5 w-2.5 rounded-full bg-warning/50" /><span className="h-2.5 w-2.5 rounded-full bg-success/50" /></div><span className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-faint">30Team · {u.liveWorkspace}</span></div>
+        <div className="grid min-h-[420px] grid-cols-[64px_1fr] sm:grid-cols-[92px_1fr]">
+          <div className="border-r border-ink/8 bg-canvas-alt/55 px-2 py-5">
+            <div className="mx-auto mb-6 flex h-8 w-8 items-center justify-center rounded-control bg-brand-100"><BrandMark size={20} /></div>
+            {['overview', 'team', 'vacancies', 'compatibility', 'academy'].map((name, index) => <div key={name} className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-control ${index === 1 ? 'bg-brand-100 text-brand-700' : 'text-ink-faint'}`}><Icon name={name} className="h-4 w-4" /></div>)}
+          </div>
+          <div className="min-w-0 p-4 sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-3"><div><p className="m-0 font-mono text-[9px] uppercase tracking-[0.18em] text-ink-faint">{u.teamReading}</p><h3 className="mb-0 mt-1.5 font-ui text-base font-semibold text-ink">{u.previewTitle}</h3></div><span className="rounded-full bg-success/10 px-2 py-1 font-ui text-[10px] text-success">{u.updated}</span></div>
+            <div className="grid gap-3 sm:grid-cols-[1.15fr_.85fr]">
+              <div className="rounded-card border border-ink/8 bg-canvas/70 p-4"><div className="mb-4 flex items-center justify-between"><span className="font-ui text-xs font-semibold text-ink">{u.typeMap}</span><span className="font-mono text-[9px] text-ink-faint">T1–T9</span></div><div className="flex h-28 items-end gap-1.5" aria-hidden>{TYPE_BARS.map((height, index) => <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1.5"><span className="w-full rounded-t-sm bg-brand-500/75" style={{ height: `${height}%` }} /><span className="font-mono text-[8px] text-ink-faint">{index + 1}</span></div>)}</div></div>
+              <div className="rounded-card border border-ink/8 bg-brand-50/70 p-4"><span className="font-ui text-xs font-semibold text-ink">{u.nextConversation}</span><p className="mb-3 mt-3 font-display text-lg leading-snug text-ink">{u.hypothesis}</p><div className="h-1.5 overflow-hidden rounded-full bg-brand-100"><div className="h-full w-3/4 rounded-full bg-brand-500" /></div><p className="mb-0 mt-2 font-ui text-[10px] leading-relaxed text-ink-muted">{u.hedging}</p></div>
+            </div>
+            <div className="mt-3 rounded-card border border-ink/8 bg-white p-3.5"><div className="mb-3 flex items-center justify-between gap-2"><span className="font-ui text-xs font-semibold text-ink">{u.pipeline}</span><span className="font-ui text-[10px] text-ink-faint">{u.candidates}</span></div><div className="grid grid-cols-3 gap-2">{u.pipelineStages.map((stage, index) => <div key={stage} className="rounded-control border border-ink/8 bg-canvas/70 px-2 py-2"><div className={`mb-2 h-1 rounded-full ${index === 0 ? 'bg-warning' : index === 1 ? 'bg-info' : 'bg-success'}`} /><p className="m-0 truncate font-mono text-[8px] uppercase text-ink-muted">{stage}</p><p className="mb-0 mt-1 font-ui text-sm font-semibold text-ink">{[4, 2, 1][index]}</p></div>)}</div></div>
+          </div>
+        </div>
+      </div>
+      <figcaption className="mt-3 text-center font-ui text-xs text-ink-faint">{u.previewCaption}</figcaption>
+    </figure>
   );
 }
 
-/** CTA primário = signup. Depois: gestão/RH e colaborador. */
-function Ctas({ copy }) {
-  return (
-    <div className="flex flex-wrap gap-3">
-      <Link
-        href="/signup"
-        className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
-      >
-        {copy.ctaEarly}
-      </Link>
-      <Link
-        href="/login"
-        className="inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
-      >
-        {copy.ctaLogin}
-      </Link>
-      <Link
-        href="/employee/login"
-        className="inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
-      >
-        {copy.ctaEmployee}
-      </Link>
-    </div>
-  );
+function JourneyVisual({ copy }) {
+  return <div className="relative mt-12"><div className="absolute left-6 right-6 top-6 hidden h-px bg-ink/10 lg:block" aria-hidden /><ol className="relative m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">{copy.journeyStages.map((stage, index) => <li key={stage.title} className="rounded-card border border-ink/10 bg-surface p-5 shadow-[0_8px_30px_rgba(26,22,37,.04)]"><span className="mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-brand-300 bg-brand-50 font-mono text-xs font-semibold text-brand-700">0{index + 1}</span><h3 className="m-0 font-ui text-base font-semibold text-ink">{stage.title}</h3><p className="mb-0 mt-2 font-ui text-sm leading-6 text-ink-muted">{stage.body}</p><p className="mb-0 mt-4 border-t border-ink/8 pt-3 font-mono text-[9px] uppercase leading-4 tracking-[0.08em] text-brand-600">{stage.detail}</p></li>)}</ol></div>;
 }
 
 export default function ProductLandingClient({ copyByLocale, locale: initialLocale }) {
   const [locale, setLocale] = useLocale(initialLocale);
   const copy = copyByLocale[locale === 'en' ? 'en' : 'pt-BR'] || copyByLocale['pt-BR'];
-
-  const toc = [
-    { href: '#jornada', label: copy.journeyNav },
-    { href: '#resultados', label: copy.outcomesLabel },
-    { href: '#produto', label: copy.pillarsLabel },
-    { href: '#confianca', label: copy.trustLabel },
-    { href: '#oferta', label: copy.earlyLabel },
-  ];
+  const u = copy.ui;
 
   return (
-    <div className="min-h-screen bg-canvas font-display text-ink" lang={locale === 'en' ? 'en' : 'pt-BR'}>
+    <div className="min-h-screen bg-canvas font-ui text-ink" lang={locale === 'en' ? 'en' : 'pt-BR'}>
       <LandingAnalytics />
-      <div className="pointer-events-none fixed inset-0 bg-radial-glow opacity-80" aria-hidden />
-
-      <a
-        href="#conteudo"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow-card"
-      >
-        {copy.skipToContent}
-      </a>
-
-      <header className="sticky top-0 z-20 border-b border-ink/8 bg-canvas/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3 sm:px-8">
-          <div className="inline-flex items-center gap-2" aria-label="30Team">
-            <BrandMark size={28} withWordmark />
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-            <LanguageSelect locale={locale} onChange={setLocale} compact />
-            <Link
-              href="/pricing"
-              className="hidden min-h-touch items-center rounded-control border border-transparent px-3 py-2 text-sm text-ink-muted no-underline hover:text-ink sm:inline-flex"
-            >
-              {copy.navPricing}
-            </Link>
-            <Link
-              href="/login"
-              className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
-            >
-              {copy.navLogin}
-            </Link>
-            <Link
-              href="/employee/login"
-              className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
-            >
-              {copy.navEmployee}
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-3.5 py-2 text-sm text-white no-underline"
-            >
-              {copy.navEarly}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <ContentEnter animKey={locale} className="relative z-[1]">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-white focus:px-3 focus:py-2">{copy.skipToContent}</a>
+      <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas/95 backdrop-blur-md"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8"><BrandMark size={30} withWordmark /><nav className="hidden items-center gap-6 lg:flex" aria-label={u.mainNavigation}><a href="#como-funciona" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navJourney}</a><a href="#modulos" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navModules}</a><a href="#eneagrama" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navEnneagram}</a><a href="#faq" className="text-sm text-ink-muted no-underline hover:text-ink">FAQ</a></nav><div className="flex items-center gap-2"><LanguageSelect locale={locale} onChange={setLocale} compact /><Link href="/login" className="hidden min-h-touch items-center px-3 text-sm text-ink-muted no-underline hover:text-ink sm:inline-flex">{copy.navLogin}</Link><PrimaryCta copy={copy} compact /></div></div></header>
+      <ContentEnter animKey={locale}>
         <main id="conteudo">
-          <section id="produto-hero" className="mx-auto grid max-w-6xl gap-10 px-5 pb-14 pt-12 sm:px-8 sm:pb-20 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,.85fr)] lg:items-center">
-            <div>
-              <p className="mb-5 inline-flex rounded-full border border-brand-500/20 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
-                {copy.earlyBadge}
-              </p>
-              <h1 className="mb-5 max-w-[18ch] text-[clamp(2.5rem,6vw,4.6rem)] font-normal leading-[1.02] tracking-[-0.035em] text-ink">
-                {copy.heroTitle}
-              </h1>
-              <p className="mb-4 max-w-2xl font-ui text-lg leading-relaxed text-ink">{copy.heroLead}</p>
-              <p className="mb-7 max-w-2xl font-ui text-base leading-relaxed text-ink-muted">{copy.heroBody}</p>
-              <Ctas copy={copy} />
-              <p className="mt-4 font-ui text-sm text-ink-faint">
-                {copy.heroFoot}{' '}
-                <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
-                  {copy.navPricing}
-                </Link>
-              </p>
-            </div>
-            <aside className="relative overflow-hidden rounded-card border border-brand-500/15 bg-surface p-5 shadow-card sm:p-7" aria-label={copy.journeyNav}>
-            <div className="absolute inset-y-8 left-[2.15rem] w-px bg-brand-500/20" aria-hidden />
-            <ol className="relative m-0 list-none space-y-5 p-0">
-              {copy.journeyStages.map((stage, index) => (
-                <li key={stage.title} className="grid grid-cols-[2.25rem_1fr] gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-500/25 bg-canvas text-xs font-semibold text-brand-700">
-                    {index + 1}
-                  </span>
-                  <div>
-                    <p className="m-0 font-ui text-sm font-semibold text-ink">{stage.title}</p>
-                    <p className="mb-0 mt-1 font-ui text-xs leading-relaxed text-ink-muted">{stage.detail}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            </aside>
-            <nav aria-label={copy.tocLabel} className="flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5 lg:col-span-2">
-            {toc.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="min-h-touch py-2 font-ui text-sm text-ink-muted underline-offset-4 hover:text-brand-700 hover:underline"
-              >
-                {item.label}
-              </a>
-            ))}
-            </nav>
-          </section>
-
-        <section id="jornada" className="border-y border-ink/8 bg-surface py-16 sm:py-20" aria-labelledby="journey-title">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
-            <SectionLabel>{copy.journeyLabel}</SectionLabel>
-            <div className="grid gap-5 lg:grid-cols-[.7fr_1.3fr] lg:gap-12">
-              <div>
-                <h2 id="journey-title" className="mb-4 mt-0 max-w-lg text-3xl font-normal leading-tight text-ink sm:text-4xl">
-                  {copy.journeyTitle}
-                </h2>
-                <p className="m-0 max-w-lg font-ui text-base leading-relaxed text-ink-muted">{copy.journeyLead}</p>
-              </div>
-              <ol className="m-0 grid list-none gap-px overflow-hidden rounded-card border border-ink/10 bg-ink/10 p-0 sm:grid-cols-2">
-                {copy.journeyStages.map((stage, index) => (
-                  <li key={stage.title} className="bg-canvas p-5 sm:p-6">
-                    <span className="mb-5 block font-ui text-xs font-semibold text-brand-600">0{index + 1}</span>
-                    <h3 className="mb-2 mt-0 text-lg font-normal text-ink">{stage.title}</h3>
-                    <p className="m-0 font-ui text-sm leading-relaxed text-ink-muted">{stage.body}</p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-ink/8 bg-white/50 py-12" aria-labelledby="audience-title">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.audienceLabel}</SectionLabel>
-            <h2 id="audience-title" className="mb-6 mt-0 text-2xl font-normal text-ink sm:text-[1.65rem]">
-              {copy.audienceTitle}
-            </h2>
-            <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-3">
-              {copy.audienceItems.map((item) => (
-                <li
-                  key={item}
-                  className="rounded-card border border-ink/8 bg-canvas/80 p-4 text-sm leading-relaxed text-ink-muted"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section id="dor" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="problem-title">
-          <SectionLabel>{copy.problemLabel}</SectionLabel>
-          <h2 id="problem-title" className="mb-8 mt-0 max-w-xl text-2xl font-normal text-ink sm:text-[1.75rem]">
-            {copy.problemTitle}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {copy.problems.map((p) => (
-              <article key={p.title} className="rounded-card border border-ink/10 bg-white/80 p-5">
-                <h3 className="mb-2 mt-0 text-base font-normal text-ink">{p.title}</h3>
-                <p className="m-0 text-sm leading-relaxed text-ink-muted">{p.body}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="gancho" className="border-y border-ink/8 bg-brand-50/70 py-14" aria-labelledby="wedge-title">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.wedgeLabel}</SectionLabel>
-            <h2 id="wedge-title" className="mb-4 mt-0 max-w-2xl text-2xl font-normal text-ink sm:text-[1.75rem]">
-              {copy.wedgeTitle}
-            </h2>
-            <p className="m-0 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.wedgeBody}</p>
-          </div>
-        </section>
-
-        <section id="resultados" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="outcomes-title">
-          <SectionLabel>{copy.outcomesLabel}</SectionLabel>
-          <h2 id="outcomes-title" className="mb-8 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-            {copy.outcomesTitle}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {copy.outcomes.map((o) => (
-              <article key={o.title} className="rounded-card border border-ink/10 bg-white/80 p-5">
-                <h3 className="mb-2 mt-0 text-base font-normal text-ink">{o.title}</h3>
-                <p className="m-0 text-sm leading-relaxed text-ink-muted">{o.body}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="produto" className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="pillars-title">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.pillarsLabel}</SectionLabel>
-            <h2 id="pillars-title" className="mb-3 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-              {copy.pillarsTitle}
-            </h2>
-            <p className="mb-8 max-w-2xl text-sm leading-relaxed text-ink-muted">{copy.pillarsLead}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {copy.pillars.map((p) => (
-                <article key={p.id} id={p.id} className="rounded-card border border-ink/10 bg-canvas/80 p-5">
-                  <h3 className="mb-3 mt-0 text-lg font-normal text-ink">{p.title}</h3>
-                  <ul className="m-0 list-none space-y-2 p-0">
-                    {p.items.map((line) => (
-                      <li
-                        key={line}
-                        className="relative pl-4 text-sm leading-relaxed text-ink-muted before:absolute before:left-0 before:text-brand-400 before:content-['·']"
-                      >
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="vs" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="compare-title">
-          <SectionLabel>{copy.compareLabel}</SectionLabel>
-          <h2 id="compare-title" className="mb-3 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-            {copy.compareTitle}
-          </h2>
-          <p className="mb-8 max-w-2xl text-sm leading-relaxed text-ink-muted">{copy.compareLead}</p>
-          <div className="space-y-3">
-            {copy.compareRows.map((row) => (
-              <article key={row.them} className="rounded-card border border-ink/10 bg-white/80 p-4 sm:p-5">
-                <h3 className="mb-2 mt-0 text-sm font-normal text-ink">{row.them}</h3>
-                <p className="mb-1 mt-0 text-sm text-ink-faint">{row.gap}</p>
-                <p className="m-0 text-sm leading-relaxed text-ink-muted">
-                  <span className="text-brand-600">30Team: </span>
-                  {row.us}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="origem" className="border-y border-ink/8 bg-canvas/80 py-14" aria-labelledby="builder-title">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.builderLabel}</SectionLabel>
-            <h2 id="builder-title" className="mb-6 mt-0 max-w-2xl text-2xl font-normal text-ink sm:text-[1.75rem]">
-              {copy.builderTitle}
-            </h2>
-            <div className="flex max-w-2xl flex-col gap-4">
-              {(copy.builderParagraphs || []).map((p) => (
-                <p key={p.slice(0, 48)} className="m-0 text-base leading-relaxed text-ink-muted">
-                  {p}
-                </p>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="how-title">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.howLabel}</SectionLabel>
-            <h2 id="how-title" className="mb-10 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-              {copy.howTitle}
-            </h2>
-            <ol className="m-0 grid list-none gap-6 p-0 sm:grid-cols-3">
-              {copy.steps.map((s) => (
-                <li key={s.n}>
-                  <span className="mb-2 block font-mono text-xs text-brand-400">{s.n}</span>
-                  <h3 className="mb-2 mt-0 text-base font-normal text-ink">{s.title}</h3>
-                  <p className="m-0 text-sm leading-relaxed text-ink-muted">{s.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section id="confianca" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="trust-title">
-          <SectionLabel>{copy.trustLabel}</SectionLabel>
-          <h2 id="trust-title" className="mb-6 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-            {copy.trustTitle}
-          </h2>
-          <ul className="m-0 max-w-2xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-muted">
-            {copy.trustItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section id="oferta" className="border-y border-ink/8 bg-brand-50/80 py-14">
-          <div className="mx-auto max-w-5xl px-5 sm:px-8">
-            <SectionLabel>{copy.earlyLabel}</SectionLabel>
-            <h2 className="mb-3 mt-0 max-w-lg text-2xl font-normal text-ink sm:text-[1.75rem]">{copy.earlyTitle}</h2>
-            <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-muted">{copy.earlyBody}</p>
-            <ul className="mb-6 flex list-none flex-wrap gap-2 p-0">
-              {copy.earlyProof.map((p) => (
-                <li
-                  key={p}
-                  className="rounded-control border border-success/20 bg-success/10 px-3 py-1.5 text-xs text-success"
-                >
-              {p}
-            </li>
-          ))}
-        </ul>
-        <Ctas copy={copy} />
-        <p className="mt-3 text-sm text-ink-muted">
-          <Link href="/pricing" className="text-brand-600 underline-offset-2 hover:underline">
-            {copy.navPricing} →
-          </Link>
-        </p>
-        <p className="mt-3 text-xs text-ink-faint">
-          {copy.earlyContact}{' '}
-          <a
-            href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}`}
-            className="text-brand-600 underline-offset-2 hover:underline"
-          >
-            {PRODUCT_LANDING_CONTACT_EMAIL}
-          </a>
-        </p>
-          </div>
-        </section>
-
-        <section id="faq" className="mx-auto max-w-5xl px-5 py-14 sm:px-8" aria-labelledby="faq-title">
-          <SectionLabel>{copy.faqLabel}</SectionLabel>
-          <h2 id="faq-title" className="mb-8 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
-            {copy.faqTitle}
-          </h2>
-          <div className="space-y-3">
-            {copy.faqs.map((f) => (
-              <details
-                key={f.q}
-                className="group rounded-card border border-ink/10 bg-white/80 px-4 py-3 open:shadow-sm"
-              >
-                <summary className="cursor-pointer list-none text-base text-ink marker:content-none [&::-webkit-details-marker]:hidden">
-                  {f.q}
-                </summary>
-                <p className="mb-1 mt-3 text-sm leading-relaxed text-ink-muted">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-5xl px-5 pb-16 pt-4 sm:px-8">
-          <h2 className="mb-3 mt-0 text-2xl font-normal text-ink">{copy.closeTitle}</h2>
-          <p className="mb-8 max-w-xl text-sm leading-relaxed text-ink-muted">{copy.closeBody}</p>
-          <Link
-            href="/signup"
-            className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
-          >
-            {copy.ctaEarly}
-          </Link>
-        </section>
+          <section id="produto-hero" className="relative overflow-hidden border-b border-ink/8 bg-surface"><div className="absolute inset-y-0 right-0 hidden w-[36%] bg-brand-50/75 lg:block" aria-hidden /><div className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:py-24"><div className="max-w-2xl"><p className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300/70 bg-brand-50 px-3 py-1.5 font-mono text-2xs uppercase tracking-[0.12em] text-brand-700"><span className="h-1.5 w-1.5 rounded-full bg-brand-500" />{copy.earlyBadge}</p><h1 className="m-0 font-display text-[clamp(2.75rem,6vw,5.6rem)] font-normal leading-[.96] tracking-[-0.045em] text-ink">{copy.heroTitle}</h1><p className="mb-0 mt-7 max-w-xl text-lg leading-8 text-ink-muted sm:text-xl">{copy.heroLead}</p><p className="mb-0 mt-4 max-w-xl text-sm leading-6 text-ink-muted">{copy.heroBody}</p><div className="mt-8 flex flex-wrap items-center gap-4"><PrimaryCta copy={copy} /><a href="#modulos" className="inline-flex min-h-touch items-center gap-2 px-2 text-sm font-semibold text-brand-700 no-underline hover:text-brand-800">{u.exploreProduct}<Icon name="chevronRight" className="h-4 w-4" /></a></div><div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5">{u.heroProof.map((item) => <span key={item} className="inline-flex items-center gap-2 text-xs text-ink-muted"><Icon name="check" className="h-4 w-4 text-success" />{item}</span>)}</div></div><ProductPreview copy={copy} /></div></section>
+          <section className="border-b border-ink/8 bg-canvas-alt/45" aria-label={u.coverageLabel}><div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-7 gap-y-3 px-5 py-5 sm:px-8"><span className="mr-2 font-mono text-2xs uppercase tracking-[0.18em] text-ink-faint">{u.coverageLabel}</span>{u.coverageItems.map((item) => <span key={item} className="text-sm font-medium text-ink-muted">{item}</span>)}</div></section>
+          <section id="como-funciona" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="journey-title"><SectionHeading label={copy.journeyLabel} title={copy.journeyTitle} body={copy.journeyLead} id="journey-title" /><JourneyVisual copy={copy} /></section>
+          <section id="eneagrama" className="border-y border-ink/8 bg-ink py-20 text-white sm:py-28" aria-labelledby="enneagram-title"><div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="mb-3 font-mono text-2xs uppercase tracking-[0.22em] text-brand-300">{u.enneagramLabel}</p><h2 id="enneagram-title" className="m-0 font-display text-4xl font-normal leading-[1.04] tracking-[-0.03em] text-white sm:text-5xl">{u.enneagramTitle}</h2><p className="mb-0 mt-5 max-w-xl text-base leading-7 text-white/65 sm:text-lg">{u.enneagramBody}</p><ul className="mb-0 mt-8 grid list-none gap-3 p-0 sm:grid-cols-2">{u.enneagramPoints.map((item) => <li key={item} className="flex gap-3 text-sm leading-6 text-white/80"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-300" />{item}</li>)}</ul></div><div className="grid grid-cols-3 gap-2 sm:gap-3" aria-label={u.typesAria}>{u.types.map((type, index) => <article key={type.name} className={`min-h-28 rounded-card border p-3 sm:min-h-32 sm:p-4 ${index === 4 ? 'border-brand-300 bg-brand-500/20' : 'border-white/10 bg-white/[.04]'}`}><span className="font-mono text-xs text-brand-300">T{index + 1}</span><h3 className="mb-0 mt-5 text-sm font-semibold text-white sm:text-base">{type.name}</h3><p className="mb-0 mt-1 text-[10px] leading-4 text-white/50 sm:text-xs">{type.signal}</p></article>)}</div></div></section>
+          <section id="modulos" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28" aria-labelledby="modules-title"><div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"><SectionHeading label={copy.pillarsLabel} title={copy.pillarsTitle} body={copy.pillarsLead} id="modules-title" /><p className="m-0 max-w-sm text-sm leading-6 text-ink-muted">{u.modulesNote}</p></div><div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-6">{copy.pillars.map((pillar, index) => <article key={pillar.id} id={pillar.id} className={`rounded-card border border-ink/10 bg-surface p-6 ${index < 2 ? 'xl:col-span-3' : 'xl:col-span-2'}`}><div className="mb-7 flex h-11 w-11 items-center justify-center rounded-control bg-brand-50 text-brand-700"><Icon name={PILLAR_ICONS[index]} className="h-5 w-5" /></div><h3 className="m-0 font-display text-2xl font-normal text-ink">{pillar.title}</h3><ul className="mb-0 mt-5 list-none space-y-3 p-0">{pillar.items.slice(0, 6).map((item) => <li key={item} className="flex gap-3 text-sm leading-6 text-ink-muted"><Icon name="check" className="mt-1 h-4 w-4 shrink-0 text-success" /><span>{item}</span></li>)}</ul></article>)}</div></section>
+          <section className="border-y border-ink/8 bg-surface py-20 sm:py-24" aria-labelledby="outcomes-title"><div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[.7fr_1.3fr]"><SectionHeading label={copy.outcomesLabel} title={copy.outcomesTitle} id="outcomes-title" /><div className="grid gap-px overflow-hidden rounded-card border border-ink/10 bg-ink/10 sm:grid-cols-2">{copy.outcomes.map((outcome, index) => <article key={outcome.title} className="bg-canvas p-6 sm:p-7"><span className="font-mono text-xs text-brand-600">0{index + 1}</span><h3 className="mb-0 mt-5 text-base font-semibold text-ink">{outcome.title}</h3><p className="mb-0 mt-2 text-sm leading-6 text-ink-muted">{outcome.body}</p></article>)}</div></div></section>
+          <section id="confianca" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24" aria-labelledby="trust-title"><div className="rounded-[24px] border border-brand-300/50 bg-brand-50 p-7 sm:p-10 lg:flex lg:items-center lg:justify-between lg:gap-12"><SectionHeading label={copy.trustLabel} title={copy.trustTitle} id="trust-title" /><ul className="mb-0 mt-8 grid max-w-2xl list-none gap-3 p-0 lg:mt-0">{copy.trustItems.map((item) => <li key={item} className="flex gap-3 text-sm leading-6 text-ink-muted"><Icon name="check" className="mt-1 h-4 w-4 shrink-0 text-brand-600" />{item}</li>)}</ul></div></section>
+          <section id="faq" className="mx-auto max-w-4xl px-5 pb-20 sm:px-8 sm:pb-28" aria-labelledby="faq-title"><SectionHeading label={copy.faqLabel} title={copy.faqTitle} id="faq-title" /><div className="mt-9 divide-y divide-ink/10 border-y border-ink/10">{copy.faqs.map((faq) => <details key={faq.q} className="group py-1"><summary className="flex min-h-touch cursor-pointer list-none items-center justify-between gap-4 py-5 text-base font-semibold text-ink marker:content-none [&::-webkit-details-marker]:hidden">{faq.q}<Icon name="chevronDown" className="h-4 w-4 shrink-0 text-ink-faint transition-transform group-open:rotate-180" /></summary><p className="mb-5 mt-0 max-w-2xl text-sm leading-6 text-ink-muted">{faq.a}</p></details>)}</div></section>
+          <section id="oferta" className="bg-brand-800 py-16 text-white sm:py-20"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between"><div className="max-w-2xl"><p className="mb-3 font-mono text-2xs uppercase tracking-[0.2em] text-brand-300">{copy.earlyLabel}</p><h2 className="m-0 font-display text-4xl font-normal leading-tight text-white">{copy.earlyTitle}</h2><p className="mb-0 mt-4 text-base leading-7 text-white/65">{copy.earlyBody}</p></div><div className="shrink-0"><Link href="/signup" className="inline-flex min-h-touch items-center justify-center rounded-control bg-white px-6 py-3.5 font-semibold text-brand-800 no-underline hover:bg-brand-50">{copy.ctaEarly}</Link><p className="mb-0 mt-3 text-xs text-white/55">{copy.earlyContact} <a className="text-white underline-offset-2 hover:underline" href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}`}>{PRODUCT_LANDING_CONTACT_EMAIL}</a></p></div></div></section>
         </main>
       </ContentEnter>
-
-      <footer className="relative z-[1] border-t border-ink/8 py-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 text-xs text-ink-faint sm:px-8">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <div className="min-w-0 max-w-xl">
-              <span className="font-ui text-sm text-ink-muted">{copy.footerBrand}</span>
-              {copy.footerCred ? (
-                <p className="mb-0 mt-1.5 text-xs leading-relaxed text-ink-faint">{copy.footerCred}</p>
-              ) : null}
-            </div>
-            <div className="flex flex-wrap items-center gap-4 sm:justify-end">
-              <Link href="/pricing" className="text-ink-muted no-underline hover:text-ink">
-                {copy.footerPricing}
-              </Link>
-              <span>{copy.footerLegal}</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <footer className="border-t border-ink/8 bg-surface py-8"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 sm:flex-row sm:items-center sm:justify-between sm:px-8"><div><BrandMark size={26} withWordmark /><p className="mb-0 mt-2 max-w-xl text-xs leading-5 text-ink-faint">{copy.footerLegal}</p></div><div className="flex flex-wrap gap-5 text-sm"><Link href="/pricing" className="text-ink-muted no-underline hover:text-ink">{copy.footerPricing}</Link><Link href="/privacy" className="text-ink-muted no-underline hover:text-ink">{copy.footerPrivacy}</Link><Link href="/terms" className="text-ink-muted no-underline hover:text-ink">{copy.footerTerms}</Link><Link href="/login" className="text-ink-muted no-underline hover:text-ink">{copy.navLogin}</Link><Link href="/employee/login" className="text-ink-muted no-underline hover:text-ink">{copy.navEmployee}</Link></div></div></footer>
     </div>
   );
 }

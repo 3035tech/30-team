@@ -39,8 +39,9 @@ async function authorizeVacancyLink(payload, vacancyId) {
   return { ok: true };
 }
 
-export async function POST(request, { params }) {
-  const cookieStore = cookies();
+export async function POST(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -66,8 +67,9 @@ export async function POST(request, { params }) {
   return NextResponse.json({ ok: true, token: newToken });
 }
 
-export async function PATCH(request, { params }) {
-  const cookieStore = cookies();
+export async function PATCH(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

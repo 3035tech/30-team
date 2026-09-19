@@ -175,7 +175,7 @@ async function isEmployeeSessionLive(request, payload) {
   return Number.isFinite(sv) && sv >= 1;
 }
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   if (pathname === SESSION_EDGE_PATH || pathname === EMPLOYEE_SESSION_EDGE_PATH) {

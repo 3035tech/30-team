@@ -1,12 +1,24 @@
 # Revisão de dependências: 2026-09
 
-Snapshot de 18/09/2026: o audit completo começou com **8 achados** (7 high, 1 critical). Nodemailer foi atualizado para `10.0.10`; restam 7 no audit completo. No runtime restam **2 achados** (1 high, 1 critical), ambos presos à árvore do Next. Não foi usado `npm audit fix --force`: a correção proposta troca Next.js 14 por 16 e viola a stack suportada sem migração.
+Snapshot de 18/09/2026: o runtime começou com **2 achados conhecidos** (1 high e 1 critical) na árvore do Next.js 14. A correção foi aplicada por migração controlada para Next.js 16, sem usar `npm audit fix --force`.
 
-| Dependência | Exposição | Decisão MVP |
+| Dependência | Decisão aplicada | Evidência |
 |---|---|---|
-| `next@14.2.35` | DoS/SSRF/cache/image optimizer e RCE em Windows | manter temporariamente; runtime é Node 22 Alpine e não há import de `next/image`, Server Actions ou rewrites; limitar origem/rate no edge |
-| `nodemailer@10.0.10` | advisories da versão 6 removidos | atualizado e mantido uso estruturado, com anexo só por `content` |
-| `eslint-config-next`/transitivas | glob/brace-expansion/js-yaml no toolchain | atualizar com migração controlada de Next/ESLint |
-| `postcss` transitivo | parser antigo | confirmar árvore após atualização do lockfile |
+| `next@16.3.3` | atualização de `14.2.35` para a linha Active LTS corrigida | versão exata no manifesto e lockfile; build e regressão do piloto obrigatórios |
+| `react@19.3.0` / `react-dom@19.3.0` | atualização alinhada à geração do App Router usada pelo Next 16 | testes de UI, fluxos públicos e renderização SSR obrigatórios |
+| `eslint@9.39.5` / `eslint-config-next@16.3.3` | atualização conjunta exigida pelo framework | sem instalação forçada nem `legacy-peer-deps` |
+| `postcss@8.5.28` | override restrito à árvore do Next para remover o parser transitivo vulnerável | `npm audit --omit=dev` sem achados |
+| `nodemailer@10.0.10` | atualização preservada, com anexo somente por `content` | advisories da versão anterior removidos |
 
-Mitigação não equivale a correção. Antes de tráfego público relevante: branch de atualização, build, DTOV completo e Playwright. Rodar `npm audit --omit=dev` em toda release e registrar exceção com prazo/responsável.
+## Resultado e operação
+
+- `npm audit --omit=dev`: **0 vulnerabilidades de runtime** após a atualização do lockfile.
+- O build de produção usa `next build --webpack`. No ambiente de validação, o Turbopack não pôde criar o subprocesso/porta interna exigido pelo loader de instrumentação; o fallback oficial mantém o build determinístico sem reduzir a correção de segurança do runtime.
+- A convenção depreciada `middleware.js` foi migrada para `proxy.js`, preservando matcher, autenticação, sliding session, atribuição e cabeçalhos de segurança.
+- As versões de Next, React, React DOM e ESLint estão fixadas, sem `^`, para que produção e CI instalem exatamente a combinação validada.
+- O aceite temporário das vulnerabilidades do Next.js 14 deixou de ser necessário. Uma eventual regressão deve ser corrigida na linha segura; não se deve reimplantar a versão vulnerável em produção.
+- Continuar executando `npm audit --omit=dev`, build, gates de release e DTOV completo antes de releases públicas.
+
+## Rollback
+
+O rollback operacional é para a imagem anterior já construída enquanto a correção é investigada. O código não deve voltar ao Next.js 14 vulnerável para novo deploy. Mudanças futuras de major devem repetir este processo: manifesto e lockfile juntos, build, teste focado, DTOV completo e validação visual dos fluxos públicos e autenticados.

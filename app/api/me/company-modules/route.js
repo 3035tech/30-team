@@ -15,7 +15,7 @@ import { z } from '../../../../lib/validate.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
 
 async function requireCompanyManager(request) {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId || !isManagerRole(payload)) {
     return { error: apiError(request, ERR.UNAUTHORIZED, 401) };

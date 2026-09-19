@@ -10,7 +10,8 @@ import {
 } from '../../../../../lib/people/employee-portal';
 
 /** GET /api/public/employee-portal/[token] */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-employee-portal-get:${ip}`, 60, 10 * 60 * 1000);
@@ -54,7 +55,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/employee-portal/[token] — prep 1:1 or complete LMS lesson */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-employee-portal:${ip}`, 40, 10 * 60 * 1000);

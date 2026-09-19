@@ -14,7 +14,8 @@ import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js'
 export const dynamic = 'force-dynamic';
 
 /** POST /api/employee/dp/documents/[docKey]/file — collaborator upload. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -78,7 +79,8 @@ export async function POST(request, { params }) {
 }
 
 /** DELETE attachment uploaded by collaborator. */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);

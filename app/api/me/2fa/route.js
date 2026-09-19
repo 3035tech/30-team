@@ -14,7 +14,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 async function requireUserId(request) {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };
   return { userId: payload.userId };

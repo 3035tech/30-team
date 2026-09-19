@@ -26,9 +26,10 @@ function anniversaryToSql(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) {
@@ -146,9 +147,10 @@ export async function PATCH(request, { params }) {
 }
 
 /** Exclusão lógica: empresa some das listagens; vagas somem; candidatos/avaliações permanecem. */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) {

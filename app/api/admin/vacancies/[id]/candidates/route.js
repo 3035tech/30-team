@@ -18,7 +18,8 @@ function actorErrorStatus(errorCode) {
 }
 
 /** Lista candidatos pré-cadastrados na vaga + status eneagrama e Motivadores. */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -49,7 +50,8 @@ export async function GET(request, { params }) {
 }
 
 /** Cadastra candidato (nome+email) na vaga após a entrevista. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

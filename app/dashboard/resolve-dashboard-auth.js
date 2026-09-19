@@ -11,7 +11,7 @@ import { attachCapabilityOverrides } from '../../lib/user-capabilities';
  * Heavy tab queries stay in loadDashboardTabData / Suspense.
  */
 export async function resolveDashboardAuth() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const rawPayload = token ? verifyToken(token) : null;
   const payload = await attachCapabilityOverrides(rawPayload);

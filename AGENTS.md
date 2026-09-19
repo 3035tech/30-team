@@ -15,11 +15,11 @@ No Cursor, as regras em `.cursor/rules/` apontam para cá e especializam por glo
 
 ## Stack (obrigatória)
 
-- **Next.js 14** App Router + **React 18** — JavaScript/JSX (**sem TypeScript**)
+- **Next.js 16.3.3** App Router + **React 19.3** — JavaScript/JSX (**sem TypeScript**)
 - **UI:** **Tailwind CSS** (`tailwind.config.js` + `app/globals.css`) — padrão para UI nova e para blocos que o agente estiver editando. Tokens de marca/semântica alinhados a `lib/theme.js` / `lib/brand.js` (`brand-*`, `canvas`, `ink`, `pipeline-*`, etc.). Ver `.cursor/rules/tailwind-ui.mdc`.
 - Backend: API Routes + Server Components (não Express separado)
 - **PostgreSQL 16** via `pg` — `query` (primário) / `queryRead` (réplica opcional)
-- Auth: tabela `users`, bcrypt, JWT em cookie httpOnly `team30_session` (8h; sliding ≤2h restantes no middleware). Colaborador: `team30_employee_session` (12h, mesmo sliding).
+- Auth: tabela `users`, bcrypt, JWT em cookie httpOnly `team30_session` (8h; sliding ≤2h restantes no Proxy). Colaborador: `team30_employee_session` (12h, mesmo sliding).
 - E-mail: Nodemailer/SMTP
 - i18n: `pt-BR` e `en` em `lib/i18n.js`
 - Deploy: Docker standalone (`output: 'standalone'`), Compose, GHCR
@@ -53,7 +53,7 @@ scripts/                                           → migrate, seeds, ops (não
 
 | Superfície | Proteção |
 |------------|----------|
-| `/dashboard`, `/api/admin/*` | `middleware.js` + JWT; roles admin/direction/hr |
+| `/dashboard`, `/api/admin/*` | `proxy.js` + JWT; roles admin/direction/hr |
 | `/api/results`, `/api/public/*`, `/api/ae/*` | token de link/convite — sem sessão de gestor |
 | `/api/cron/*` | `CRON_SECRET` |
 | Erros de API | `apiError` / `apiErrorFromResult` / `ERR` / `httpStatusForError` em `lib/api-error.js` + `lib/api-error-codes.js` (constantes string — sem enums TS; **proibido** `'CODE'` solto) |
@@ -422,3 +422,13 @@ Ao mudar schema: criar a migration numerada **e** o SQL para pgAdmin (idempotent
 - `.cursor/rules/`: atalhos Cursor por área (`ui-ux.mdc`, `dba-performance.mdc` alwaysApply)
 - `.cursor/skills/dev-test-validate/` + `.cursor/rules/dev-test-validate.mdc`: **obrigatório** após implementação (Dev → Test → Validate, DTOV, `max_rounds`)
 - `docs/rubrica-por-vaga.md`, `docs/privacidade-lgpd-interno.md`, `docs/job-seo-and-distribution.md`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -105,9 +105,11 @@ async function main() {
   try {
     await waitHttp(`${BASE_URL}/login`, 180000);
     process.stdout.write('[full-app] server ready — HTTP smoke…\n');
-    process.env.BASE_URL = BASE_URL;
-    process.env.HEALTH_STATUS_TOKEN = env.HEALTH_STATUS_TOKEN;
-    process.env.CRON_SECRET = env.CRON_SECRET;
+    // runHttpSmoke executes in this parent process and imports helpers that read
+    // process.env (DB/Redis/session cache). Keep it on the same asserted DTOV
+    // target as the spawned Next server; never let those helpers fall back to .env.
+    Object.assign(process.env, env, { BASE_URL });
+    assertDtovTarget(process.env);
     const summary = await runHttpSmoke(BASE_URL);
     if (summary.failed) {
       process.exitCode = 1;

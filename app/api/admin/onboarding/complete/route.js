@@ -14,7 +14,7 @@ import { audit } from '../../../../../lib/audit.js';
  */
 export async function POST(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('team30_session')?.value;
     if (!token) {
       return apiError(request, ERR.REQUIRED_LOGIN, 401);

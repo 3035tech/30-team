@@ -73,8 +73,9 @@ async function enrichCandidatesWithNotes(vacancyId, candidates, { isAdmin, compa
  * POST /api/admin/vacancies/[id]/assist-ai
  * actions: executiveNote | suggestShortlist | candidateFields | summarizeNotes | vacancyDescription
  */
-export async function POST(request, { params }) {
-  const cookieStore = cookies();
+export async function POST(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

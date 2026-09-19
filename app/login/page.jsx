@@ -8,8 +8,7 @@ import { errorMessage, t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
-import LanguageSelect from '../_components/LanguageSelect';
-import { BrandMark } from '../_components/BrandMark';
+import { AuthShell } from '../_components/AuthShell';
 import { FormField } from '../_components/FormField';
 import { InlineCallout } from '../_components/InlineCallout';
 import TurnstileField from '../_components/TurnstileField';
@@ -227,29 +226,23 @@ function LoginForm() {
         : login;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-ui text-ink">
-      <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
-      <div className="relative z-[1] w-full max-w-[420px] rounded-[20px] border border-ink/12 bg-surface px-8 py-10 shadow-card sm:px-12 sm:py-11">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <BrandMark size={36} withWordmark />
-          <LanguageSelect locale={locale} onChange={setLocale} compact />
-        </div>
-        <p className="mb-3 mt-0 block font-mono text-2xs uppercase tracking-[3px] text-ink-label">
-          {t(locale, 'login.restricted')}
-        </p>
-        <h2 className="mb-3 font-display text-3xl font-normal leading-tight text-brand-600 sm:text-4xl">
+    <AuthShell
+      locale={locale}
+      onLocaleChange={setLocale}
+      context={t(locale, 'login.restricted')}
+      title={(
+        <>
           {t(locale, titleKey).split('\n').map((line, i) => (
             <span key={line}>{i > 0 ? <br /> : null}{line}</span>
           ))}
-        </h2>
-        {!mustChangePassword && !requires2fa ? (
-          <p className={cn(S.muted, 'mb-7')}>
-            {t(locale, mode === 'forgot' ? 'login.forgotIntro' : 'login.intro')}
-          </p>
-        ) : null}
-        {requires2fa ? (
-          <p className={cn(S.muted, 'mb-7')}>{t(locale, 'login.twoFaIntro')}</p>
-        ) : null}
+        </>
+      )}
+      intro={requires2fa
+        ? t(locale, 'login.twoFaIntro')
+        : !mustChangePassword
+          ? t(locale, mode === 'forgot' ? 'login.forgotIntro' : 'login.intro')
+          : null}
+    >
 
         {sessionReason === 'expired' ? (
           <InlineCallout tone="warning" emphasis className="mb-5">
@@ -451,8 +444,7 @@ function LoginForm() {
             {t(locale, 'login.backToTest')}
           </button>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 

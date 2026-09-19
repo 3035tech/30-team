@@ -32,7 +32,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 | Família de produto | O que costumam ter | 30Team hoje | Gap / oportunidade |
 |--------------------|--------------------|-------------|--------------------|
 | **ATS** (Gupy, Greenhouse, Lever) | Pipeline custom, CV/LinkedIn, scorecards, calendário, oferta | Pipeline + kanban + notes + scorecard leve + pool + /j SEO + /r | Fechado no escopo B-400 (sem virar ATS genérico) |
-| **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Empacotar — **não** DISC como fio (add-on **B-2720**) |
+| **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Aprofundar Eneagrama e Motivadores sem adicionar outro instrumento |
 | **People / engajamento** | Ciclos de review, engajamento | 1:1 + hipóteses + retention + digest + kit hire + 360 + 9Box | Calibração / OKR / ouvidoria → **B-3000** |
 | **Team analytics** | Heatmaps, org chart | Compat / Grupos / Overview heat T1–T9 | Organograma visual → **B-3006** |
 | **Carreiras / employer brand** | Portal rico | `/j` + `/c` + funil | OK |
@@ -42,7 +42,7 @@ Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature d
 
 **Princípio de prioridade:** empacotar o que já medimos > fechar fricção no funil RH > novos scores ou instrumentos.
 
-**Explicitamente fora:** conta de candidato; merge por nome; segundo hub paralelo a `candidates`; projetos/Gantt/chat/TV/lojinha (amplitude InCicle); DISC como instrumento principal. **DISC add-on / DP** → **B-2700**. Gaps vs 7 players (ago/2026) → **B-3000**.
+**Explicitamente fora:** conta de candidato; merge por nome; segundo hub paralelo a `candidates`; projetos/Gantt/chat/TV/lojinha (amplitude InCicle); segundo instrumento comportamental. DP → **B-2700**. Gaps vs 7 players (ago/2026) → **B-3000**.
 
 ---
 
@@ -127,7 +127,7 @@ _(epic fechado — itens A/B/C entregues.)_
 
 Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma → inteligência volta como decisão**, **sem** o Módulo 2 (DP). Hub continua `candidates`. Reusar o que já existe; não reconstruir ATS, PDI, clima, Motivadores nem Overview.
 
-**Fora do epic B-1000 na época (DP):** admissão documental, GED, ponto, férias, holerite, app folha/ponto. Absenteísmo no radar ficou de fora até haver fonte DP. **Agora rastreados em B-2700** (DISC **B-2720**, DP **B-2721–B-2727**, benefícios clube **B-2731**) — um produto/login, não segundo app tipo Tangerino.
+**Fora do epic B-1000 na época (DP):** admissão documental, GED, ponto, férias, holerite, app folha/ponto. Absenteísmo no radar ficou de fora até haver fonte DP. **Agora rastreados em B-2700** (DP **B-2721–B-2727**, benefícios clube **B-2731**) — um produto/login, não segundo app tipo Tangerino.
 
 **Já coberto (não reimplementar):**
 
@@ -464,7 +464,7 @@ _(migration `072`; `employee_compensation_events`; Equipe → aba Remuneração;
 ~~Ideias ainda abertas pela sessão (não `/e` token):~~
 ~~1. **Prep 1:1 na sessão** — nota ao gestor sem depender do `/e`.~~
 ~~2. **Clima / pulso autenticado** — responder pesquisas logado + histórico.~~
-3. **Fora ainda neste epic:** DP completo e DISC — ver **B-2720+** / **B-2721+** no epic B-2700; remuneração interna leve entregue em B-2510; não misturar com `users` role.
+3. **Fora ainda neste epic:** DP completo — ver **B-2721+** no epic B-2700; remuneração interna leve entregue em B-2510; não misturar com `users` role.
 
 _(Itens 1–2 entregues no corte 2 B-2501 + playbooks + `/r` consultoria.)_
 
@@ -482,20 +482,19 @@ Fonte: varredura pública [solides.com.br](https://solides.com.br) (home, soluç
 | Match vaga × pessoa | Rubrica T1–T9 + Fit + ranking (sem “triagem de CV por IA”) |
 | Engenharia de cargos | `job_roles` + rubrica herdada na vaga |
 | Matcher / comparar pessoas | Compat + Comparativo + intel comportamental |
-| Gestão comportamental (fio condutor) | **T1–T9 + Motivadores** hoje; DISC/Profiler-like → **B-2720** |
+| Gestão comportamental (fio condutor) | **T1–T9 + Motivadores** como instrumentos canônicos |
 | App colaborador leve | `/employee` + `/e` hoje; folha/ponto no app → ondas DP **B-2721+** |
 | Benefícios (catálogo) | Company benefits hoje; cartão/marketplace → **B-2731** |
 | People analytics | Analytics B-1100 + Overview + digests |
 | IA assistida | Help + interpretativa hedged + workbench (não “40+ agentes” nem Folh.AI ainda) |
 
-**Cunha estratégica:** Sólides vende “all-in-one” com **dois logins** (RH × Tangerino/DP). Se formos a DP + DISC, preferir **um produto / um `candidates` / um login** — não repetir a dívida de aquisição.
+**Cunha estratégica:** Sólides vende “all-in-one” com **dois logins** (RH × Tangerino/DP). Ao aprofundar DP, preferir **um produto / um `candidates` / um login** — não repetir a dívida de aquisição.
 
 ### Ordem sugerida (ondas)
 
 1. GTM + fricção ATS/engajamento (**B-2701–B-2716**)
-2. Instrumento adicional DISC-like (**B-2720**) — opcional ao T1–T9, não substituto
-3. DP em fatias (**B-2721–B-2730**) — ponto → férias/banco → docs/admissão → folha/eSocial por último
-4. Benefícios “clube” / cartão (**B-2731**) e NR-1 (**B-2714**) conforme demanda regulatória/parceiro
+2. DP em fatias (**B-2721–B-2730**) — ponto → férias/banco → docs/admissão → folha/eSocial por último
+3. Benefícios “clube” / cartão (**B-2731**) e NR-1 (**B-2714**) conforme demanda regulatória/parceiro
 
 ### Gaps — itens abaixo
 
@@ -568,17 +567,6 @@ Sólides fraco em enterprise; oportunidade se atacarmos o gap inverso (PME → g
 
 ### B-2716 — Feedback contínuo (reconhecimento / feed) ✅ ENTREGUE
 Kudos peer-to-peer (`company_kudos`, ≤280) em `/employee#kudos`; notif destinatário; digest semanal com contagem; moderação no admin Mural.
-
----
-
-### Onda instrumento — DISC / Profiler-like
-
-### B-2720 — Instrumento comportamental tipo DISC (além de T1–T9)
-Sólides: Profiler (DISC + teorias) como fio condutor. Hoje só T1–T9 + Motivadores.
-1. Banco de perguntas + scoring no servidor (`lib/` dedicado, espelhar padrão `lib/ae/`); tipos/dimensões DISC (ou subset) com linguagem **hedged** (“tende a”).
-2. Convite por token (como Motivadores); resultado na ficha `candidates`; opcional reaplicar ~6 meses.
-3. Plugar em Fit/Matcher/radar/9Box **como sinal adicional**, sem apagar T1–T9; i18n; Guia “não é diagnóstico clínico”.
-4. Decisão legal/IP: conteúdo próprio ou licença — não copiar Profiler.
 
 ---
 
@@ -661,7 +649,7 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 | Férias / docs DP leve + ponto MVP | B-2723 + B-2724 MVP + **B-2721** ✅ | bloco RH+DP | **todos os puros** |
 | Sucessão + exit + cultura síntese | B-1005–B-1007 | raro neste recorte | suítes largas raramente neste nível |
 
-**Já no B-2700 (não duplicar aqui):** DISC **B-2720**; ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713** ✅; LMS player/progresso **B-2717** ✅; NR-1 **B-2714**; multi-CNPJ **B-2715**.
+**Já no B-2700 (não duplicar aqui):** ponto **B-2721**; banco de horas **B-2722**; férias resto **B-2723**; admissão/GED/assinatura **B-2724**; campo/reembolso **B-2725**; folha/eSocial/holerite **B-2726**; WhatsApp DP **B-2727**; benefícios clube **B-2731**; WhatsApp R&S **B-2708**; antecedentes **B-2710**; LMS quiz **B-2713** ✅; LMS player/progresso **B-2717** ✅; NR-1 **B-2714**; multi-CNPJ **B-2715**.
 
 **Explicitamente fora deste epic (não copiar InCicle/Sólides):** gestão de projetos, Kanban/Gantt/5W2H, chat interno, TV corporativa, lojinha/gamificação, 40+ agentes de IA, segundo app de DP, DISC como fio condutor (T1–T9 fica).
 

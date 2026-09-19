@@ -8,7 +8,8 @@ import {
 } from '../../../../../lib/people/team-pulses';
 
 /** GET /api/public/team-pulse/[token] */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-team-pulse-get:${ip}`, 90, 10 * 60 * 1000);
@@ -43,7 +44,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/team-pulse/[token] */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-team-pulse:${ip}`, 40, 10 * 60 * 1000);

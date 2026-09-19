@@ -32,7 +32,7 @@ async function ensureActiveLink(companyId) {
 const COMPANY_SORT_KEYS = new Set(['id', 'name', 'slug', 'active', 'createdAt']);
 
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -135,7 +135,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.COMPANIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

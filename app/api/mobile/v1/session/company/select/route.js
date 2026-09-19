@@ -1,44 +1,44 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiError, ERR } from '../../../../../../../lib/api-error.js';
-import { auditFromRequest, AUDIT_ACTOR_KIND } from '../../../../../../../lib/audit.js';
+import { completeEmployeeCompanyPick } from '../../../../../../../lib/employee-auth.js';
 import {
-  MOBILE_SESSION_FAILURE,
-  selectMobileCompany,
-} from '../../../../../../../lib/mobile-manager-session.js';
+  completeMobileEmployeeAuthentication,
+  contextsFromSelectionToken,
+  MOBILE_EMPLOYEE_AUTH_OUTCOME,
+  signMobileEmployeeSecondFactor,
+} from '../../../../../../../lib/mobile-employee-session.js';
+import { query } from '../../../../../../../lib/db.js';
 import { parseJsonBody } from '../../../../../../../lib/validate.js';
 
 const selectSchema = z.object({
-  membershipId: z.number().int().positive(),
+  candidateId: z.number().int().positive(),
   selectionToken: z.string().min(1).max(4096),
 });
+const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
 
 export async function POST(request) {
   try {
     const parsed = await parseJsonBody(request, selectSchema);
     if (!parsed.ok) return parsed.response;
-    const result = await selectMobileCompany(
-      parsed.data.selectionToken,
-      parsed.data.membershipId
-    );
-    if (!result.ok) {
-      const code = result.reason === MOBILE_SESSION_FAILURE.INVALID_TOKEN ? ERR.INVALID_TOKEN : ERR.UNAUTHORIZED;
-      return apiError(request, code, 401, {}, { headers: { 'Cache-Control': 'no-store' } });
+    const contexts = contextsFromSelectionToken(parsed.data.selectionToken);
+    if (!contexts) return apiError(request, ERR.INVALID_TOKEN, 401, {}, { headers: NO_STORE });
+    const selected = await completeEmployeeCompanyPick(query, {
+      pickToken: parsed.data.selectionToken,
+      candidateId: parsed.data.candidateId,
+    });
+    if (!selected.ok) return apiError(request, ERR.UNAUTHORIZED, 401, {}, { headers: NO_STORE });
+    if (selected.requires2fa) {
+      return NextResponse.json({
+        outcome: MOBILE_EMPLOYEE_AUTH_OUTCOME.REQUIRES_SECOND_FACTOR,
+        challengeToken: signMobileEmployeeSecondFactor(selected, contexts),
+      }, { headers: NO_STORE });
     }
-    await auditFromRequest(request, {
-      actorUserId: result.session.identity.id,
-      actorKind: AUDIT_ACTOR_KIND.MANAGER,
-      companyId: result.session.activeMembership.company.id,
-      action: 'auth.mobile.company_select',
-      targetType: 'user_company_membership',
-      targetId: result.session.activeMembership.id,
-      metadata: {},
-    });
-    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
+    const completed = await completeMobileEmployeeAuthentication(selected, contexts);
+    if (!completed.ok) return apiError(request, ERR.UNAUTHORIZED, 401, {}, { headers: NO_STORE });
+    return NextResponse.json(completed, { headers: NO_STORE });
   } catch (error) {
-    console.error('[mobile-company-select]', error);
-    return apiError(request, ERR.INTERNAL, 500, {}, {
-      headers: { 'Cache-Control': 'no-store' },
-    });
+    console.error('[mobile-employee-company-select]', error);
+    return apiError(request, ERR.INTERNAL, 500, {}, { headers: NO_STORE });
   }
 }

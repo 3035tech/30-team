@@ -18,7 +18,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** PATCH /api/admin/candidates/[id]/retention-followups/[followUpId] */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.TEAM_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

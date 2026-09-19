@@ -12,7 +12,7 @@ import {
 import { notificationHref } from '../../../../lib/manager-notification-catalog';
 
 async function requireSession(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return { error: apiError(request, ERR.UNAUTHORIZED, 401) };

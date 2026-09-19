@@ -5,7 +5,8 @@ import { EmployeeLoginClient } from './EmployeeLoginClient';
 
 export const dynamic = 'force-dynamic';
 
-export default function EmployeeLoginPage({ searchParams }) {
+export default async function EmployeeLoginPage(props) {
+  const searchParams = await props.searchParams;
   const locale = searchParams?.locale === 'en' ? 'en' : 'pt-BR';
   const reason = String(searchParams?.reason || '').slice(0, 40);
   return (

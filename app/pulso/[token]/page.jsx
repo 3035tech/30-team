@@ -3,7 +3,8 @@ import TeamPulsePublicClient from './TeamPulsePublicClient';
 import { AppFeedbackProvider } from '../../_components/AppFeedback';
 import { BrandPulseLoading } from '../../_components/PublicStatusScreens';
 
-export default function TeamPulsePublicPage({ params }) {
+export default async function TeamPulsePublicPage(props) {
+  const params = await props.params;
   const token = params?.token || '';
   return (
     <AppFeedbackProvider>

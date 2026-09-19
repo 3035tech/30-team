@@ -377,6 +377,7 @@ export async function runHttpSmoke(baseUrl) {
   // Session revocation: bumped session_version must reject /api/me/notifications
   {
     const { Client } = await import('pg');
+    const { setSessionVersionCache } = await import('../../lib/session-revocation.js');
     const client = new Client({
       host: process.env.POSTGRES_HOST || '127.0.0.1',
       port: Number(process.env.POSTGRES_PORT || 55432),
@@ -387,10 +388,14 @@ export async function runHttpSmoke(baseUrl) {
     });
     try {
       await client.connect();
-      await client.query(
-        `UPDATE users SET session_version = session_version + 1 WHERE LOWER(email) = LOWER($1)`,
+      const firstBump = await client.query(
+        `UPDATE users
+         SET session_version = session_version + 1
+         WHERE LOWER(email) = LOWER($1)
+         RETURNING id, session_version AS "sessionVersion"`,
         [HR.email]
       );
+      await setSessionVersionCache(firstBump.rows[0]?.id, firstBump.rows[0]?.sessionVersion);
       const { res } = await req(base, '/api/me/notifications', { cookie: hrCookie });
       await expectStatus('auth', 'notifications-revoked', res.status, [401]);
       hrCookie = await login(base, HR);
@@ -401,10 +406,14 @@ export async function runHttpSmoke(baseUrl) {
       } else {
         ok('auth', 'dashboard-after-relogin', `HTTP ${dashRevoked.status}`);
       }
-      await client.query(
-        `UPDATE users SET session_version = session_version + 1 WHERE LOWER(email) = LOWER($1)`,
+      const secondBump = await client.query(
+        `UPDATE users
+         SET session_version = session_version + 1
+         WHERE LOWER(email) = LOWER($1)
+         RETURNING id, session_version AS "sessionVersion"`,
         [HR.email]
       );
+      await setSessionVersionCache(secondBump.rows[0]?.id, secondBump.rows[0]?.sessionVersion);
       const { res: dashDead } = await req(base, '/dashboard?tab=overview', { cookie: hrCookie });
       if (![302, 307, 401].includes(dashDead.status)) {
         fail('auth', 'dashboard-revoked-middleware', `status ${dashDead.status}`);

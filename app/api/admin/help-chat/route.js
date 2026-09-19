@@ -16,7 +16,7 @@ import { answerHelpQuestion } from '../../../../lib/help-assistant';
  * body: { question, locale?, history? }
  */
 export async function POST(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.HELP_VIEW)) {

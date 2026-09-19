@@ -7,7 +7,7 @@ import { apiError, ERR } from '../../../../lib/api-error';
 import { verifySessionWithCapabilities } from '../../../../lib/session';
 
 export async function PATCH(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!payload?.userId) return apiError(request, ERR.UNAUTHORIZED, 401);

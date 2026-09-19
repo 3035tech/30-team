@@ -9,7 +9,8 @@ import {
 export const dynamic = 'force-dynamic';
 
 /** GET /api/public/interview-prep/[token] */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const token = params?.token || '';
     const url = new URL(request.url);
@@ -33,7 +34,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/interview-prep/[token] — mark prepared */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const token = params?.token || '';
     const ip = clientIpFromRequest(request);

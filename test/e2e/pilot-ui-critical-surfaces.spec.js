@@ -26,7 +26,9 @@ for (const viewport of [
 
     for (const [tab, label] of CRITICAL_TABS) {
       await page.goto(`/dashboard?tab=${tab}`);
-      await expect(page.locator('main')).toBeVisible({ timeout: 30_000 });
+      // Next may briefly retain the previous streamed tree while the new route
+      // commits. The last landmark belongs to the current navigation tree.
+      await expect(page.getByRole('main').last()).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('body')).not.toHaveText(/application error|erro na aplicação/i);
 
       const hasBodyOverflow = await page.evaluate(
@@ -38,12 +40,12 @@ for (const viewport of [
       // in the destination sidebar.
       if (viewport.name === 'mobile' && tab !== 'profile') {
         await page.getByRole('button', { name: /abrir menu|open menu/i }).click();
-        const activeItem = page.locator(`#${tab}-tab`);
+        const activeItem = page.locator(`#${tab}-tab`).last();
         await expect(activeItem).toBeVisible();
         await expect(activeItem).toHaveAttribute('aria-current', 'page');
         const activeLabel = await activeItem.getAttribute('aria-label');
         expect(activeLabel || '').toMatch(label);
-        await page.getByRole('button', { name: /fechar menu|close menu/i }).click();
+        await page.getByRole('button', { name: /fechar menu|close menu/i }).last().click();
       }
     }
   });

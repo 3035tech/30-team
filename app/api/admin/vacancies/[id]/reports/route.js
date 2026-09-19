@@ -24,9 +24,10 @@ function appOrigin(request) {
   }
 }
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -119,9 +120,10 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);

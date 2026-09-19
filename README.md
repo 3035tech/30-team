@@ -4,7 +4,7 @@
 
 Avaliação baseada no **modelo do Eneagrama** (tipos **T1–T9**): mapa de perfil de trabalho para triagem, comparativos e conversas — **não** substitui entrevista técnica nem é diagnóstico clínico.
 
-Também há fluxo de **Motivadores** (Assessment Engine). Rubrica por vaga: [`docs/rubrica-por-vaga.md`](docs/rubrica-por-vaga.md). LGPD interno: [`docs/privacidade-lgpd-interno.md`](docs/privacidade-lgpd-interno.md).
+Também há fluxo de **Motivadores** (Assessment Engine). Rubrica por vaga: [`docs/rubrica-por-vaga.md`](docs/rubrica-por-vaga.md). LGPD interno: [`docs/privacidade-lgpd-interno.md`](docs/privacidade-lgpd-interno.md). Páginas públicas: `/privacy` e `/terms`. Operação: [`docs/privacy-retention-policy.md`](docs/privacy-retention-policy.md) e [`docs/data-subject-request-runbook.md`](docs/data-subject-request-runbook.md).
 
 ---
 
@@ -16,7 +16,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 
 | Camada | Detalhe |
 |--------|---------|
-| Frontend | React + Next.js App Router + **Tailwind CSS** (tokens em `tailwind.config.js` / `lib/theme.js`) |
+| Frontend | React 19.3 + Next.js 16.3.3 App Router + **Tailwind CSS** (tokens em `tailwind.config.js` / `lib/theme.js`) |
 | Backend | API Routes + Server Components |
 | Auth | Tabela `users` + JWT em cookie httpOnly (`session_version` revoga sessões) |
 | Roles | `admin`, `direction`, `hr` |
@@ -62,6 +62,8 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 **SQL:** na raiz só `init.sql` (montagem Docker). Schema e deltas ficam em `migrations/` e `scripts/`. Ver [`migrations/README.md`](migrations/README.md).
 
 **Provas / regressão:** [`test/README.md`](test/README.md) — `npm run dtov:full-app` (SQL + HTTP + browser).
+
+**Build:** `npm run build` usa o modo Webpack suportado pelo Next 16. O diretório pode ser isolado com `NEXT_DIST_DIR` em CI ou validações concorrentes; produção mantém `.next` por padrão.
 
 ---
 
@@ -274,7 +276,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 docker compose up -d
 ```
 
-- App (landpage SEO/vendas): http://localhost:3000 — HTML rastreável, JSON-LD + `/llms.txt`; CTA principal **early access** → `/signup`; acessos de gestor e colaborador ficam separados
+- App (landpage SEO/vendas): http://localhost:3000 — HTML rastreável, JSON-LD + `/llms.txt`; narrativa visual da jornada candidato → colaborador, Eneagrama no trabalho T1–T9 e inventário real dos módulos; CTA principal **early access** → `/signup`; acessos de gestor e colaborador ficam separados
 - Login: http://localhost:3000/login (link “Esqueceu a senha?” → e-mail `/a/set-password`, 72h; requer SMTP)
 - Teste público: criar empresa no dashboard → link `/t/<token>`
 
@@ -336,7 +338,7 @@ As áreas densas usam navegação local orientada à tarefa: curso LMS (Conteúd
 
 ```
 1. /login → JWT em cookie httpOnly (TTL **8h**; claim `sv` = `users.session_version`)
-2. Sliding no middleware: gestor (`/dashboard`, `/api/admin`, `/api/me`, TTL **8h**) e colaborador (`/employee`, `/api/employee`, TTL **12h**) — se a sessão ainda é válida e faltam ≤ **2h**, reemite o cookie. Sem uso pelo TTL respectivo a sessão cai; `session_version` continua revogando na hora
+2. Sliding no Proxy do Next.js: gestor (`/dashboard`, `/api/admin`, `/api/me`, TTL **8h**) e colaborador (`/employee`, `/api/employee`, TTL **12h**) — se a sessão ainda é válida e faltam ≤ **2h**, reemite o cookie. Sem uso pelo TTL respectivo a sessão cai; `session_version` continua revogando na hora
 3. Logout / troca de senha / desativação incrementam `session_version` e invalidam JWTs antigos
 4. APIs admin e SSR do painel revalidam usuário live (active, role, company) a cada request
 5. /dashboard → auth leve pinta o shell (sidebar); queries da aba em Suspense (`load-dashboard-data.js`)
@@ -499,7 +501,7 @@ Preferências por empresa: aba **Analytics** → Relatório agendado (frequênci
 |---------|---------------|
 | Credenciais do banco | Só no servidor |
 | Autenticação | JWT httpOnly |
-| Rotas do painel | Middleware + roles `admin` / `direction` / `hr` |
+| Rotas do painel | Proxy do Next.js + roles `admin` / `direction` / `hr` |
 | Senha | `users.password_hash` (bcrypt) |
 | Escrita do teste | Endpoints públicos de resultado / convite (com token de link) |
 | SEO / funil | Sem candidato em sitemap/JSON-LD; analytics só autenticado — ver checklist em `docs/job-seo-and-distribution.md` |

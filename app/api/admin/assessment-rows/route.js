@@ -24,7 +24,7 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
  * Lista completa de assessments (filtros iguais ao dashboard) para a aba Comparativo.
  */
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!canAccessAnalysisData(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);

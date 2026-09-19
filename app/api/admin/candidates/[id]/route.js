@@ -13,8 +13,9 @@ import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/saniti
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 
-export async function GET(request, { params }) {
-  const cookieStore = cookies();
+export async function GET(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -140,8 +141,9 @@ export async function GET(request, { params }) {
   });
 }
 
-export async function PATCH(request, { params }) {
-  const cookieStore = cookies();
+export async function PATCH(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -251,8 +253,9 @@ export async function PATCH(request, { params }) {
   return NextResponse.json(up.rows[0]);
 }
 
-export async function DELETE(request, { params }) {
-  const cookieStore = cookies();
+export async function DELETE(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);

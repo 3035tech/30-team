@@ -13,7 +13,8 @@ import {
   submitWhistleblowingReport,
 } from '../../../../../lib/people/whistleblowing';
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-wb-get:${ip}`, 90, 10 * 60 * 1000);
@@ -44,7 +45,8 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-wb-post:${ip}`, 20, 10 * 60 * 1000);

@@ -1,6 +1,6 @@
 # Privacidade e dados sensíveis no piloto
 
-Checklist interno. Não substitui revisão jurídica nem deve virar Termos/Política pública sem aprovação.
+Checklist interno. Não substitui revisão jurídica. As minutas técnicas públicas estão em `/terms` e `/privacy`; a aprovação jurídica continua sendo gate de go-live.
 
 | Classe | Exemplos | Persistência | Acesso / tratamento |
 |---|---|---|---|
@@ -16,6 +16,8 @@ Objetos usam `companies/{companyId}/...` e nome opaco. Tokens são credenciais e
 
 ## Pedido do titular
 
+Canal inicial definido: `contact@3035tech.com`, assunto **Privacidade 30Team**. Procedimento completo: [`data-subject-request-runbook.md`](./data-subject-request-runbook.md). Política operacional: [`privacy-retention-policy.md`](./privacy-retention-policy.md).
+
 1. Registrar identidade validada, empresa, escopo e prazo.
 2. Localizar por `company_id` + e-mail; nunca mesclar por nome.
 3. Exportar apenas dados do titular e explicar fontes/finalidades.
@@ -27,10 +29,10 @@ Objetos usam `companies/{companyId}/...` e nome opaco. Tokens são credenciais e
 
 Registre responsável, data e resultado em [`pilot-go-live-signoff.md`](./pilot-go-live-signoff.md). A engenharia não substitui a aprovação jurídica dos textos públicos.
 
-- [ ] Responsável/canal de privacidade definidos.
+- [x] Canal técnico de entrada definido e publicado; responsável nominal ainda deve constar no sign-off.
 - [ ] Bases, finalidades, prazos e subprocessadores aprovados.
-- [ ] Termos e Política públicos aprovados e coerentes com módulos.
+- [ ] Minutas de Termos e Política publicadas e coerentes com módulos; aprovação jurídica pendente.
 - [ ] Exportação/correção/exclusão ensaiadas em homologação.
 - [ ] Logs pesquisados por token, senha, documento, respostas e SQL params.
-- [ ] Remuneração, DP e ouvidoria validados na matriz tenant.
+- [x] Escopo tenant de remuneração e DP coberto no smoke HTTP; ouvidoria usa `company_id` em listagem, atualização e agregados e entra na validação automatizada desta entrega.
 - [ ] Retenção de backup/S3 documentada com o provedor.

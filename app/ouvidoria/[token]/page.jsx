@@ -3,7 +3,8 @@ import WhistleblowingPublicClient from './WhistleblowingPublicClient';
 import { AppFeedbackProvider } from '../../_components/AppFeedback';
 import { BrandPulseLoading } from '../../_components/PublicStatusScreens';
 
-export default function WhistleblowingPublicPage({ params }) {
+export default async function WhistleblowingPublicPage(props) {
+  const params = await props.params;
   const token = params?.token || '';
   return (
     <AppFeedbackProvider>

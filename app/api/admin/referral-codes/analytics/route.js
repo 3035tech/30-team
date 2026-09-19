@@ -10,7 +10,7 @@ import { getReferralAnalytics } from '../../../../../lib/referral-codes';
  * GET /api/admin/referral-codes/analytics?vacancyId=&companyId=
  */
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {

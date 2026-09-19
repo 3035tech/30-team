@@ -148,7 +148,10 @@ describe('module hardening', () => {
     for (const section of ['account', 'modules', 'security']) {
       assert.match(profile, new RegExp(`'${section}'`));
     }
-    assert.match(profile, /profileSection === 'account' \|\| profileSection === 'security'/);
+    assert.match(profile, /profileSection === 'account'/);
+    assert.match(profile, /profileSection === 'security'/);
+    assert.match(profile, /maxHeightClass="max-h-none"/);
+    assert.match(profile, /className=\{dashS\.btnPrimary\}/);
   });
 
   it('keeps benefit management available to every manager with the module capability', () => {
@@ -204,5 +207,16 @@ describe('module hardening', () => {
     assert.match(landing, /application\/ld\+json/);
     assert.match(job, /generateMetadata/);
     assert.match(job, /alternates: url \? \{ canonical: url \}/);
+  });
+
+  it('keeps manager and employee sign-in on the same authentication shell', () => {
+    const managerLogin = source('app/login/page.jsx');
+    const employeeLogin = source('app/employee/login/EmployeeLoginClient.jsx');
+    const authShell = source('app/_components/AuthShell.jsx');
+    assert.match(managerLogin, /<AuthShell/);
+    assert.match(employeeLogin, /<AuthShell/);
+    assert.match(authShell, /<PublicNarrowShell/);
+    assert.match(authShell, /<BrandMark/);
+    assert.match(authShell, /<LanguageSelect/);
   });
 });

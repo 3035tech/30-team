@@ -11,8 +11,9 @@ import { listPublicCityCounts } from '../../lib/public-job-aggregators';
 import { PublicVacanciesIndexView } from '../_components/PublicVacancyPosting';
 
 export async function generateMetadata({ searchParams } = {}) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
-  const q = String(searchParams?.q || '').trim();
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
+  const resolvedSearchParams = await searchParams;
+  const q = String(resolvedSearchParams?.q || '').trim();
   const title = q
     ? t(locale, 'publicVacancy.indexTitleFiltered', { q: q.slice(0, 40) })
     : t(locale, 'publicVacancy.indexTitle');
@@ -48,8 +49,9 @@ export async function generateMetadata({ searchParams } = {}) {
   };
 }
 
-export default async function PublicJobsIndexPage({ searchParams }) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function PublicJobsIndexPage(props) {
+  const searchParams = await props.searchParams;
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const q = String(searchParams?.q || '').trim().slice(0, 120);
   const employmentType = normalizeEmploymentType(searchParams?.employmentType);
   const workplaceModality = normalizeWorkplaceModality(searchParams?.workplaceModality);

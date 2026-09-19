@@ -15,7 +15,7 @@ import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../../l
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 
 export async function POST(request) {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(COOKIE_NAME)?.value;
   const session = await verifySessionWithCapabilities(token);
   if (!session?.userId) return apiError(request, ERR.UNAUTHORIZED, 401);
 

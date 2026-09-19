@@ -43,8 +43,9 @@ async function loadVacancyScoped(vacancyId, { isAdmin, companyId }) {
  * POST /api/admin/vacancies/[id]/rubric-ai
  * body: { action: 'suggestContext' | 'suggestWeights', context?: string, locale?: string }
  */
-export async function POST(request, { params }) {
-  const cookieStore = cookies();
+export async function POST(request, props) {
+  const params = await props.params;
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

@@ -7,7 +7,8 @@ import { apiError, ERR } from '../../../../../../lib/api-error.js';
 import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../../../lib/ae/require-admin.js';
 import { listCycleReviews } from '../../../../../../lib/performance-reviews.js';
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.PERFORMANCE_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);

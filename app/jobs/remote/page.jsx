@@ -10,7 +10,7 @@ import { publicRemoteAggregatorPath } from '../../../lib/public-job-url';
 import { PublicVacanciesIndexView } from '../../_components/PublicVacancyPosting';
 
 export async function generateMetadata({ searchParams } = {}) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolveRemoteAggregator();
   if (!resolved.ok) {
     return {
@@ -55,8 +55,9 @@ export async function generateMetadata({ searchParams } = {}) {
   };
 }
 
-export default async function PublicRemoteJobsPage({ searchParams }) {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function PublicRemoteJobsPage(props) {
+  const searchParams = await props.searchParams;
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const resolved = await resolveRemoteAggregator();
   if (!resolved.ok) notFound();
 

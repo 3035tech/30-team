@@ -12,7 +12,7 @@ import { listEarlyAccessLeads } from '../../../../lib/admin-leads.js';
  * Query: page, pageSize, status=all|pending|active|inactive, q=
  */
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!isSuperAdminPayload(payload) || !requireCapability(payload, CAP.USERS_MANAGE)) {

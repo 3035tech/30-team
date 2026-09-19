@@ -4,7 +4,8 @@ import { CAP, getSessionPayload, requireCapability } from '../../../../../../lib
 import { apiError, ERR } from '../../../../../../lib/api-error';
 
 /** DELETE /api/admin/ae/definitions/[id] — remove assessment e dados relacionados (CASCADE) */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_CONFIG)) {

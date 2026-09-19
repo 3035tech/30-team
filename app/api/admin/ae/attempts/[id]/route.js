@@ -6,7 +6,8 @@ import { buildDimensionRanking, maybeRescoreAndPersist } from '../../../../../..
 import { apiError, ERR } from '../../../../../../lib/api-error';
 
 /** GET /api/admin/ae/attempts/[id] — detalhe + histórico do colaborador */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
@@ -99,7 +100,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/admin/ae/attempts/[id] — recalcula pontuação a partir das respostas salvas */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {
@@ -143,7 +145,8 @@ export async function POST(request, { params }) {
 }
 
 /** DELETE /api/admin/ae/attempts/[id] — remove resultado e libera novo envio do convite */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.MOTIVATORS_VIEW)) {

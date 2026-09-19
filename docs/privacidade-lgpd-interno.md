@@ -5,7 +5,7 @@ Documento operacional para equipe de produto e engenharia. **Não substitui pare
 ## Superfície de dados
 
 - **Landing e formulário público** (`/`, links `/t/[token]`, `/v/[token]`): coleta nome, email opcional, consentimento explícito (`consent === true` na API), respostas do assessment e metadados técnicos habituais (IP limitado por rate limit na API).
-- **Dashboard e APIs admin**: dados de candidatos, assessments, empresas e usuários gestores — **atrás de autenticação** (middleware + papel).
+- **Dashboard e APIs admin**: dados de candidatos, assessments, empresas e usuários gestores ficam atrás de autenticação (Proxy do Next.js + papel).
 
 ## Retenção
 

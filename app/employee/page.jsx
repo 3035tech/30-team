@@ -11,8 +11,9 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export default function EmployeeHomePage({ searchParams }) {
-  const jar = cookies();
+export default async function EmployeeHomePage(props) {
+  const searchParams = await props.searchParams;
+  const jar = await cookies();
   const token = jar.get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   if (!isEmployeeSessionPayload(payload)) {

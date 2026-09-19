@@ -12,7 +12,8 @@ import { resendUserPasswordInvite } from '../../../../../../lib/users-admin';
 export const dynamic = 'force-dynamic';
 
 /** POST /api/admin/users/:userId/resend-invite — reenvia e-mail para definir senha. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   const payload = await getSessionPayload();
   if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);

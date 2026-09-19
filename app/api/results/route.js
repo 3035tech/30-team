@@ -21,7 +21,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const { name, email, areaKey, consent, answers, companyToken, vacancyToken, inviteToken } = body;
     const { fillDurationMs, copyEventCount } = normalizeAssessmentTelemetry(body);
-    const attributionCookieValue = cookies().get(JOB_ATTR_COOKIE)?.value;
+    const attributionCookieValue = await (await cookies()).get(JOB_ATTR_COOKIE)?.value;
 
     const result = await submitAssessmentResult({
       name,
@@ -60,7 +60,7 @@ export async function POST(request) {
 
 // GET /api/results — legado: tabela `results` (global por nome). Preferir dados do dashboard via assessments.
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
 

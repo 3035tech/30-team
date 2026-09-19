@@ -75,7 +75,7 @@ Fluxo mínimo:
 
 ### MVP-06 — Privacidade e dados sensíveis
 
-**Evidência atual:** inventário e procedimento estão em `docs/pilot-privacy-checklist.md`. Aprovação jurídica e publicação dos textos legais permanecem gates humanos.
+**Evidência atual:** inventário, política operacional e runbook estão em `docs/pilot-privacy-checklist.md`, `docs/privacy-retention-policy.md` e `docs/data-subject-request-runbook.md`. Minutas públicas versionadas estão em `/privacy` e `/terms`, vinculadas na landpage, preços e cadastro. Aprovação jurídica, prazos definitivos, subprocessadores e lifecycle do provedor permanecem gates humanos.
 
 **Objetivo:** lançar com tratamento mínimo responsável de dados pessoais e de RH.
 

@@ -11,7 +11,7 @@ import { createReferralCode, listReferralCodes } from '../../../../lib/referral-
  * POST /api/admin/referral-codes { code?, vacancyId?, label?, ownerUserId?, ownerCandidateId?, companyId? }
  */
 export async function GET(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
@@ -43,7 +43,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const payload = await verifySessionWithCapabilities(token);
   if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {

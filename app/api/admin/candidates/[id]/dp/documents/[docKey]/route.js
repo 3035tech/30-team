@@ -33,7 +33,8 @@ async function loadCandidateScope(candidateId, scope) {
 }
 
 /** PATCH /api/admin/candidates/[id]/dp/documents/[docKey] */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const payload = await getSessionPayload();
     if (!requireAnyCapability(payload, DP_OR_TEAM)) {

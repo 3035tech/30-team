@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
  * Usado pelo middleware Edge (sem Postgres direto).
  */
 export async function GET() {
-  const token = cookies().get(EMPLOYEE_COOKIE_NAME)?.value;
+  const token = await (await cookies()).get(EMPLOYEE_COOKIE_NAME)?.value;
   const payload = token ? verifyEmployeeToken(token) : null;
   if (!payload) {
     return NextResponse.json({ ok: false }, { status: 401 });

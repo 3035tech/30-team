@@ -65,9 +65,10 @@ async function loadScope(request, vacancyId, candidateId, payload) {
 }
 
 /** GET /api/admin/vacancies/[id]/candidates/[candidateId]/offer */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
-    const token = cookies().get(COOKIE_NAME)?.value;
+    const token = await (await cookies()).get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.VACANCIES_VIEW)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -90,9 +91,10 @@ export async function GET(request, { params }) {
 }
 
 /** PATCH /api/admin/vacancies/[id]/candidates/[candidateId]/offer */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
-    const token = cookies().get(COOKIE_NAME)?.value;
+    const token = await (await cookies()).get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(token);
     if (!requireCapability(payload, CAP.VACANCIES_MANAGE)) {
       return apiError(request, ERR.UNAUTHORIZED, 401);

@@ -8,7 +8,8 @@ import {
 } from '../../../../../lib/ae/require-admin';
 import { deactivateUser, updateUser } from '../../../../../lib/users-admin';
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   const payload = await getSessionPayload();
   if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);
@@ -34,7 +35,8 @@ export async function PATCH(request, { params }) {
   return NextResponse.json(result.user);
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   const payload = await getSessionPayload();
   if (!requireCapability(payload, CAP.USERS_MANAGE)) return apiError(request, ERR.UNAUTHORIZED, 401);
   const scope = getManagerScope(payload);

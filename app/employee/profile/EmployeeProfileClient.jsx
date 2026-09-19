@@ -14,6 +14,7 @@ import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { EmptyState } from '../../_components/EmptyState';
+import { TotpQrCode } from '../../_components/TotpQrCode';
 import { BR_STATES } from '../../../lib/candidate-profile';
 import { redirectEmployeeIfUnauthorized } from '../../../lib/employee-client-session';
 
@@ -34,6 +35,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   const [pwd, setPwd] = useState({ current: '', next: '', confirm: '' });
   const [twoFaEnabled, setTwoFaEnabled] = useState(false);
   const [twoFaSetupSecret, setTwoFaSetupSecret] = useState('');
+  const [twoFaSetupUrl, setTwoFaSetupUrl] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
   const [twoFaBusy, setTwoFaBusy] = useState(false);
@@ -99,6 +101,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || 'setup');
       }
       setTwoFaSetupSecret(data.secret || '');
+      setTwoFaSetupUrl(data.otpauthUrl || '');
       setTwoFaCode('');
     } catch (e) {
       toast(e?.message || t(locale, 'employeeHome.profileSaveError'), 'error');
@@ -120,6 +123,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || 'enable');
       }
       setTwoFaSetupSecret('');
+      setTwoFaSetupUrl('');
       setTwoFaCode('');
       setTwoFaEnabled(true);
       toast(t(locale, 'dashboard.profile2faEnabledOk'), 'ok');
@@ -409,10 +413,19 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
               </div>
             ) : twoFaSetupSecret ? (
               <div className="flex flex-col gap-3">
-                <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'dashboard.profile2faSecretHint')}</p>
-                <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
-                  {twoFaSetupSecret}
-                </code>
+                <TotpQrCode
+                  otpauthUrl={twoFaSetupUrl}
+                  secret={twoFaSetupSecret}
+                  alt={t(locale, 'dashboard.profile2faQrAlt')}
+                  scanHint={t(locale, 'dashboard.profile2faSecretHint')}
+                  scanStepLabel={t(locale, 'dashboard.profile2faScanStep')}
+                  manualLabel={t(locale, 'dashboard.profile2faManualKey')}
+                  copyLabel={t(locale, 'dashboard.profile2faCopyKey')}
+                  copiedLabel={t(locale, 'dashboard.profile2faKeyCopied')}
+                  privateHint={t(locale, 'dashboard.profile2faPrivateHint')}
+                  loadingLabel={t(locale, 'dashboard.profile2faQrLoading')}
+                />
+                <p className="mb-0 mt-1 font-ui text-sm font-semibold text-ink">{t(locale, 'dashboard.profile2faConfirmStep')}</p>
                 <FormField label={t(locale, 'dashboard.profile2faCode')}>
                   <input
                     inputMode="numeric"

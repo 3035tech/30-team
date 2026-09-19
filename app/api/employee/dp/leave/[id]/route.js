@@ -11,7 +11,8 @@ import { zPositiveInt } from '../../../../../../lib/validate.js';
 export const dynamic = 'force-dynamic';
 
 /** PATCH /api/employee/dp/leave/[id] — cancel own requested leave */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);

@@ -11,7 +11,8 @@ import { answerFeedbackRequest } from '../../../../../../lib/people/continuous-f
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);

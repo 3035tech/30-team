@@ -15,7 +15,8 @@ import { zPositiveInt } from '../../../../../../../lib/validate.js';
 export const dynamic = 'force-dynamic';
 
 /** POST multipart atestado on own sick leave */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -86,7 +87,8 @@ export async function POST(request, { params }) {
 }
 
 /** DELETE own leave attachment */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);

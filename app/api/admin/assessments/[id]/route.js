@@ -15,9 +15,10 @@ import { markCandidateHired, maybeCloseVacancyIfFilled, notifyHireOnboardingKit 
 import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 import { pipelineStageToFunnelEvent, scheduleJobFunnelEvent } from '../../../../../lib/job-funnel';
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);
@@ -172,9 +173,10 @@ export async function PATCH(request, { params }) {
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
+  const params = await props.params;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get(COOKIE_NAME)?.value;
     const payload = await verifySessionWithCapabilities(session);
     if (!canAccessCandidateRecord(payload)) return apiError(request, ERR.UNAUTHORIZED, 401);

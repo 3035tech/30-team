@@ -3,7 +3,8 @@ import FeedbackPublicClient from './FeedbackPublicClient';
 import { AppFeedbackProvider } from '../../_components/AppFeedback';
 import { BrandPulseLoading } from '../../_components/PublicStatusScreens';
 
-export default function FeedbackPublicPage({ params }) {
+export default async function FeedbackPublicPage(props) {
+  const params = await props.params;
   const token = params?.token || '';
   return (
     <AppFeedbackProvider>

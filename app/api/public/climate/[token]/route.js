@@ -9,7 +9,8 @@ import {
 import { CLIMATE_QUESTION_KIND } from '../../../../../lib/domain-status';
 
 /** GET /api/public/climate/[token] — anonymous survey form (no PII). */
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-climate-get:${ip}`, 90, 10 * 60 * 1000);
@@ -50,7 +51,8 @@ export async function GET(request, { params }) {
 }
 
 /** POST /api/public/climate/[token] — submit anonymous answers. */
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-climate:${ip}`, 40, 10 * 60 * 1000);

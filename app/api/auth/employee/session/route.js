@@ -93,7 +93,7 @@ export async function POST(request) {
 
 /** DELETE /api/auth/employee/session — logout */
 export async function DELETE() {
-  const jar = cookies();
+  const jar = await cookies();
   jar.set(EMPLOYEE_COOKIE_NAME, '', employeeSessionCookieOptions({ maxAge: 0 }));
   return NextResponse.json({ ok: true });
 }

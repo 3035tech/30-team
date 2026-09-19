@@ -9,6 +9,7 @@ import { FormField } from './FormField';
 import { CompanyModulesField } from './CompanyModulesField';
 import { InlineCallout } from './InlineCallout';
 import { AppLoading, ContentEnter } from './AppLoading';
+import { TotpQrCode } from './TotpQrCode';
 import { useAppFeedbackOptional } from './AppFeedback';
 import {
   modulesSelectionEqual,
@@ -16,8 +17,9 @@ import {
   modulesSelectionForUi,
 } from '../../lib/company-modules';
 
-const inputClass =
-  'box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2.5 font-mono text-prose text-ink';
+const inputClass = dashS.input;
+const panelClass = 'rounded-card border border-ink/10 bg-canvas/35 p-5 sm:p-6';
+const panelHeaderClass = 'mb-5 border-b border-ink/10 pb-4';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).
@@ -38,6 +40,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [twoFaCanUse, setTwoFaCanUse] = useState(false);
   const [twoFaEnabled, setTwoFaEnabled] = useState(false);
   const [twoFaSetupSecret, setTwoFaSetupSecret] = useState('');
+  const [twoFaSetupUrl, setTwoFaSetupUrl] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('');
   const [twoFaBusy, setTwoFaBusy] = useState(false);
@@ -156,6 +159,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
         throw new Error(data.errorCode ? errorMessage(locale, data.errorCode) : data.error || t(locale, 'panel.common.error'));
       }
       setTwoFaSetupSecret(data.secret || '');
+      setTwoFaSetupUrl(data.otpauthUrl || '');
       setTwoFaCode('');
       setMsg('');
     } catch (e) {
@@ -182,6 +186,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       }
       setTwoFaEnabled(true);
       setTwoFaSetupSecret('');
+      setTwoFaSetupUrl('');
       setTwoFaCode('');
       setMsg(t(locale, 'dashboard.profile2faEnabledOk'));
     } catch (e) {
@@ -208,6 +213,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       }
       setTwoFaEnabled(false);
       setTwoFaSetupSecret('');
+      setTwoFaSetupUrl('');
       setTwoFaCode('');
       setTwoFaDisablePassword('');
       setMsg(t(locale, 'dashboard.profile2faDisabledOk'));
@@ -261,264 +267,199 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
     }
   };
 
+  const saveAccountDisabled = saving || !email.trim();
+  const savePasswordDisabled = saving || !currentPassword || !newPassword || !newPassword2;
+
   return (
     <div className="flex w-full items-start justify-center">
-      <div className={cn(dashS.card, 'box-border w-full max-w-3xl')}>
-        <span className={dashS.label}>{t(locale, 'dashboard.profileTitle')}</span>
-        <p className="mt-2 text-prose leading-[1.55] text-ink-muted">
+      <div className={cn(dashS.card, 'box-border w-full max-w-4xl p-5 sm:p-7')}>
+        <p className="m-0 max-w-2xl text-prose leading-[1.55] text-ink-muted">
           {t(locale, 'dashboard.profileIntro')}
         </p>
 
         {loading ? (
-          <div className="mt-4">
-            <AppLoading variant="panel" />
-          </div>
+          <div className="mt-5"><AppLoading variant="panel" /></div>
         ) : (
           <ContentEnter animKey="profile-ready">
-          <div className="mt-[18px] flex flex-col gap-3">
-            <PanelSubNav
-              ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
-              active={profileSection}
-              onChange={setProfileSection}
-              variant="pill"
-              tabs={[
-                { id: 'account', label: t(locale, 'dashboard.profileSectionAccount') },
-                ...(canEditCompanyModules ? [{ id: 'modules', label: t(locale, 'dashboard.profileSectionModules') }] : []),
-                { id: 'security', label: t(locale, 'dashboard.profileSectionSecurity') },
-              ]}
-            />
-            <ContentEnter animKey={profileSection}>
-            {profileSection === 'account' ? <>
-            <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label={t(locale, 'dashboard.profileDisplayName')}>
-              <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className={inputClass}
-                maxLength={120}
+            <div className="mt-5">
+              <PanelSubNav
+                ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
+                active={profileSection}
+                onChange={setProfileSection}
+                tabs={[
+                  { id: 'account', label: t(locale, 'dashboard.profileSectionAccount') },
+                  ...(canEditCompanyModules
+                    ? [{ id: 'modules', label: t(locale, 'dashboard.profileSectionModules') }]
+                    : []),
+                  { id: 'security', label: t(locale, 'dashboard.profileSectionSecurity') },
+                ]}
               />
-            </FormField>
-            <FormField label={t(locale, 'dashboard.profileEmail')}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClass}
-              />
-            </FormField>
+
+              <ContentEnter animKey={profileSection}>
+                {profileSection === 'account' ? (
+                  <section className={panelClass} role="tabpanel">
+                    <div className={panelHeaderClass}>
+                      <h2 className="m-0 font-ui text-base font-semibold text-ink">
+                        {t(locale, 'dashboard.profileAccountTitle')}
+                      </h2>
+                      <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">
+                        {t(locale, 'dashboard.profileAccountHint')}
+                      </p>
+                    </div>
+                    <div className="grid items-start gap-4 sm:grid-cols-2">
+                      <FormField label={t(locale, 'dashboard.profileDisplayName')}>
+                        <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputClass} maxLength={120} />
+                      </FormField>
+                      <FormField label={t(locale, 'dashboard.profileEmail')}>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+                      </FormField>
+                      <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
+                        <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser />
+                      </FormField>
+                      <div className="self-end rounded-control border border-ink/10 bg-surface px-3.5 py-3">
+                        <p className="m-0 font-ui text-xs text-ink-muted">{t(locale, 'dashboard.profileRole')}</p>
+                        <p className="mb-0 mt-1 font-ui text-sm font-medium text-ink">
+                          {role}{companyName ? ` · ${companyName}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-6 flex justify-end border-t border-ink/10 pt-4">
+                      <button type="button" onClick={save} disabled={saveAccountDisabled} className={dashS.btnPrimary}>
+                        {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileSave')}
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+
+                {canEditCompanyModules && profileSection === 'modules' ? (
+                  <section className={panelClass} role="tabpanel">
+                    <div className={panelHeaderClass}>
+                      <h2 className="m-0 font-ui text-base font-semibold text-ink">
+                        {t(locale, 'dashboard.profileModulesTitle')}
+                      </h2>
+                      <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">
+                        {t(locale, 'dashboard.profileModulesScope')}
+                      </p>
+                    </div>
+                    <InlineCallout tone="info" className="text-xs text-ink-muted">
+                      {t(locale, 'dashboard.profileModulesHint')}
+                    </InlineCallout>
+                    <div className="mt-4">
+                      <CompanyModulesField
+                        locale={locale}
+                        selectedIds={companyModuleIds}
+                        onChange={setCompanyModuleIds}
+                        disabled={modulesSaving}
+                        maxHeightClass="max-h-none"
+                      />
+                    </div>
+                    <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-ink/10 pt-4">
+                      {modulesDirty ? (
+                        <button type="button" disabled={modulesSaving} onClick={() => setCompanyModuleIds([...companyModulesBaseline])} className={dashS.btnGhost}>
+                          {t(locale, 'panel.common.cancel')}
+                        </button>
+                      ) : null}
+                      <button type="button" onClick={() => void saveCompanyModules()} disabled={modulesSaving || !modulesDirty} className={dashS.btnPrimary}>
+                        {modulesSaving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profileModulesSave')}
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+
+                {profileSection === 'security' ? (
+                  <div className="flex flex-col gap-4" role="tabpanel">
+                    <section className={panelClass}>
+                      <div className={panelHeaderClass}>
+                        <h2 className="m-0 font-ui text-base font-semibold text-ink">
+                          {t(locale, 'dashboard.profilePasswordSection')}
+                        </h2>
+                        <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">
+                          {t(locale, 'dashboard.profilePasswordHint')}
+                        </p>
+                      </div>
+                      <div className="grid items-start gap-4 lg:grid-cols-3">
+                        <FormField label={t(locale, 'dashboard.profileCurrentPassword')}>
+                          <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" className={inputClass} />
+                        </FormField>
+                        <FormField label={t(locale, 'dashboard.profileNewPassword')}>
+                          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" className={inputClass} />
+                        </FormField>
+                        <FormField label={t(locale, 'dashboard.profileConfirmPassword')}>
+                          <input type="password" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} autoComplete="new-password" className={inputClass} />
+                        </FormField>
+                      </div>
+                      <div className="mt-6 flex justify-end border-t border-ink/10 pt-4">
+                        <button type="button" onClick={save} disabled={savePasswordDisabled} className={dashS.btnPrimary}>
+                          {saving ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profilePasswordSave')}
+                        </button>
+                      </div>
+                    </section>
+
+                    {twoFaCanUse ? (
+                      <section className={panelClass}>
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <h2 className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profile2faSection')}</h2>
+                          <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-ui text-xs text-ink-muted">
+                            {t(locale, 'dashboard.profile2faOptionalBadge')}
+                          </span>
+                        </div>
+                        <p className="mb-4 mt-0 text-sm leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faIntro')}</p>
+                        {twoFaEnabled ? (
+                          <div className="flex flex-col gap-4">
+                            <p className="m-0 font-ui text-sm font-medium text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
+                            <div className="grid items-start gap-4 sm:grid-cols-2">
+                              <FormField label={t(locale, 'dashboard.profile2faCode')}>
+                                <input inputMode="numeric" autoComplete="one-time-code" value={twoFaCode} onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className={inputClass} maxLength={6} />
+                              </FormField>
+                              <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
+                                <input type="password" autoComplete="current-password" value={twoFaDisablePassword} onChange={(e) => setTwoFaDisablePassword(e.target.value)} className={inputClass} />
+                              </FormField>
+                            </div>
+                            <button type="button" onClick={disable2fa} disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword} className={cn('min-h-touch self-start rounded-control border border-danger/30 bg-danger/10 px-4 py-2.5 font-ui text-sm font-medium text-danger', (twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword) && 'cursor-default opacity-60')}>
+                              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
+                            </button>
+                          </div>
+                        ) : twoFaSetupSecret ? (
+                          <div className="flex flex-col gap-4">
+                            <TotpQrCode
+                              otpauthUrl={twoFaSetupUrl}
+                              secret={twoFaSetupSecret}
+                              alt={t(locale, 'dashboard.profile2faQrAlt')}
+                              scanHint={t(locale, 'dashboard.profile2faSecretHint')}
+                              scanStepLabel={t(locale, 'dashboard.profile2faScanStep')}
+                              manualLabel={t(locale, 'dashboard.profile2faManualKey')}
+                              copyLabel={t(locale, 'dashboard.profile2faCopyKey')}
+                              copiedLabel={t(locale, 'dashboard.profile2faKeyCopied')}
+                              privateHint={t(locale, 'dashboard.profile2faPrivateHint')}
+                              loadingLabel={t(locale, 'dashboard.profile2faQrLoading')}
+                            />
+                            <div className="max-w-sm">
+                              <p className="mb-2 mt-0 font-ui text-sm font-semibold text-ink">{t(locale, 'dashboard.profile2faConfirmStep')}</p>
+                              <FormField label={t(locale, 'dashboard.profile2faCode')}>
+                                <input inputMode="numeric" autoComplete="one-time-code" value={twoFaCode} onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className={inputClass} maxLength={6} />
+                              </FormField>
+                            </div>
+                            <button type="button" onClick={confirmEnable2fa} disabled={twoFaBusy || twoFaCode.length !== 6} className={dashS.btnBrandSoft}>
+                              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-ink/10 bg-surface px-4 py-3">
+                            <p className="m-0 text-sm text-ink-muted">{t(locale, 'dashboard.profile2faDisabled')}</p>
+                            <button type="button" onClick={start2faSetup} disabled={twoFaBusy} className={dashS.btnBrandSoft}>
+                              {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
+                            </button>
+                          </div>
+                        )}
+                      </section>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {error ? <p className="mb-0 mt-4 font-ui text-sm text-danger">{error}</p> : null}
+                {msg ? <p className="mb-0 mt-4 font-ui text-sm text-success">{msg}</p> : null}
+              </ContentEnter>
             </div>
-            <div className="font-mono text-xs text-ink-muted">
-              {t(locale, 'dashboard.profileRole')}: {role}
-              {companyName ? ` · ${companyName}` : ''}
-            </div>
-
-            <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
-              <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser compact />
-            </FormField>
-            </> : null}
-
-            {canEditCompanyModules && profileSection === 'modules' ? (
-              <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
-                <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profileModulesTitle')}</span>
-                <InlineCallout tone="info" className="text-xs text-ink-muted">
-                  {t(locale, 'dashboard.profileModulesHint')}
-                </InlineCallout>
-                <p className="m-0 font-ui text-xs leading-relaxed text-ink-muted">
-                  {t(locale, 'dashboard.profileModulesScope')}
-                </p>
-                <CompanyModulesField
-                  locale={locale}
-                  selectedIds={companyModuleIds}
-                  onChange={setCompanyModuleIds}
-                  disabled={modulesSaving}
-                  maxHeightClass="max-h-[320px]"
-                />
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void saveCompanyModules()}
-                    disabled={modulesSaving || !modulesDirty}
-                    className={cn(
-                      dashS.btnPrimary,
-                      'min-h-touch',
-                      (modulesSaving || !modulesDirty) && 'cursor-default opacity-60'
-                    )}
-                  >
-                    {modulesSaving
-                      ? t(locale, 'panel.common.loading')
-                      : t(locale, 'dashboard.profileModulesSave')}
-                  </button>
-                  {modulesDirty ? (
-                    <button
-                      type="button"
-                      disabled={modulesSaving}
-                      onClick={() => setCompanyModuleIds([...companyModulesBaseline])}
-                      className={cn(dashS.btnGhost, 'min-h-touch')}
-                    >
-                      {t(locale, 'panel.common.cancel')}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {profileSection === 'security' ? <div className="mt-1 flex flex-col gap-3 border-t border-ink/12 pt-3.5">
-              <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profilePasswordSection')}</span>
-              <FormField label={t(locale, 'dashboard.profileCurrentPassword')}>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className={inputClass}
-                />
-              </FormField>
-              <FormField label={t(locale, 'dashboard.profileNewPassword')}>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  autoComplete="new-password"
-                  className={inputClass}
-                />
-              </FormField>
-              <FormField label={t(locale, 'dashboard.profileConfirmPassword')}>
-                <input
-                  type="password"
-                  value={newPassword2}
-                  onChange={(e) => setNewPassword2(e.target.value)}
-                  autoComplete="new-password"
-                  className={inputClass}
-                />
-              </FormField>
-            </div> : null}
-
-            {profileSection === 'security' && twoFaCanUse ? (
-              <div className="mt-1 border-t border-ink/12 pt-3.5">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className={cn(dashS.label, 'mb-0')}>{t(locale, 'dashboard.profile2faSection')}</span>
-                  <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
-                    {t(locale, 'dashboard.profile2faOptionalBadge')}
-                  </span>
-                </div>
-                <p className="mb-3 text-prose leading-relaxed text-ink-muted">
-                  {t(locale, 'dashboard.profile2faIntro')}
-                </p>
-                {twoFaEnabled ? (
-                  <div className="flex flex-col gap-3">
-                    <p className="font-mono text-xs text-success">{t(locale, 'dashboard.profile2faEnabled')}</p>
-                    <FormField label={t(locale, 'dashboard.profile2faCode')}>
-                      <input
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        value={twoFaCode}
-                        onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className={inputClass}
-                        maxLength={6}
-                      />
-                    </FormField>
-                    <FormField label={t(locale, 'dashboard.profile2faDisablePassword')}>
-                      <input
-                        type="password"
-                        autoComplete="current-password"
-                        value={twoFaDisablePassword}
-                        onChange={(e) => setTwoFaDisablePassword(e.target.value)}
-                        className={inputClass}
-                      />
-                    </FormField>
-                    <button
-                      type="button"
-                      onClick={disable2fa}
-                      disabled={twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword}
-                      className={cn(
-                        'min-h-touch cursor-pointer rounded-control border border-danger/30 bg-danger/10 px-4 py-2.5 font-mono text-xs text-danger',
-                        (twoFaBusy || twoFaCode.length !== 6 || !twoFaDisablePassword) && 'cursor-default opacity-60'
-                      )}
-                    >
-                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faDisable')}
-                    </button>
-                  </div>
-                ) : twoFaSetupSecret ? (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs leading-relaxed text-ink-muted">{t(locale, 'dashboard.profile2faSecretHint')}</p>
-                    <code className="block break-all rounded-control border border-ink/12 bg-ink/[0.04] px-3 py-2 font-mono text-2xs">
-                      {twoFaSetupSecret}
-                    </code>
-                    <FormField label={t(locale, 'dashboard.profile2faCode')}>
-                      <input
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        value={twoFaCode}
-                        onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className={inputClass}
-                        maxLength={6}
-                      />
-                    </FormField>
-                    <button
-                      type="button"
-                      onClick={confirmEnable2fa}
-                      disabled={twoFaBusy || twoFaCode.length !== 6}
-                      className={cn(
-                        'min-h-touch cursor-pointer rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-600',
-                        (twoFaBusy || twoFaCode.length !== 6) && 'cursor-default opacity-60'
-                      )}
-                    >
-                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faConfirmEnable')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-xs text-ink-muted">{t(locale, 'dashboard.profile2faDisabled')}</p>
-                    <button
-                      type="button"
-                      onClick={start2faSetup}
-                      disabled={twoFaBusy}
-                      className={cn(
-                        'min-h-touch cursor-pointer rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-600',
-                        twoFaBusy && 'cursor-default opacity-60'
-                      )}
-                    >
-                      {twoFaBusy ? t(locale, 'panel.common.loading') : t(locale, 'dashboard.profile2faSetupStart')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {error ? (
-              <p className="m-0 font-mono text-xs text-danger">{error}</p>
-            ) : null}
-            {msg ? (
-              <p className="m-0 font-mono text-xs text-success">{msg}</p>
-            ) : null}
-
-            {profileSection === 'account' || profileSection === 'security' ? <button
-              type="button"
-              onClick={save}
-              disabled={
-                saving ||
-                !email.trim() ||
-                (profileSection === 'security' && (!currentPassword || !newPassword || !newPassword2))
-              }
-              className={cn(
-                'min-h-touch cursor-pointer self-start rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2.5 font-mono text-xs text-brand-500',
-                (saving ||
-                  !email.trim() ||
-                  (profileSection === 'security' && (!currentPassword || !newPassword || !newPassword2))) &&
-                  'cursor-default opacity-60'
-              )}
-            >
-              {saving
-                ? t(locale, 'panel.common.loading')
-                : t(
-                    locale,
-                    profileSection === 'security'
-                      ? 'dashboard.profilePasswordSave'
-                      : 'dashboard.profileSave'
-                  )}
-            </button> : null}
-            </ContentEnter>
-          </div>
           </ContentEnter>
         )}
       </div>

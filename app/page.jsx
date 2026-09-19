@@ -9,13 +9,13 @@ import ProductLandingClient from './_components/ProductLandingClient';
 
 export const dynamic = 'force-dynamic';
 
-export function generateMetadata() {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export async function generateMetadata() {
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   return buildProductLandingMetadata(locale);
 }
 
-export default function HomePage() {
-  const locale = normalizeLocale(cookies().get(LOCALE_COOKIE)?.value);
+export default async function HomePage() {
+  const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const copyByLocale = {
     'pt-BR': getProductLandingCopy('pt-BR'),
     en: getProductLandingCopy('en'),

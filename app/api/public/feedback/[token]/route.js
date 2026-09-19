@@ -12,7 +12,8 @@ import {
   resolveFeedbackByToken,
 } from '../../../../../lib/people/continuous-feedback';
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-fb-get:${ip}`, 90, 10 * 60 * 1000);
@@ -48,7 +49,8 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`public-fb-post:${ip}`, 30, 10 * 60 * 1000);
