@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../lib/db';
+import { withTransaction } from '../../../../lib/db';
 import { loadQuestionsForScoring } from '../../../../lib/ae/load-questions-for-scoring';
 import { computeMotivatorScores } from '../../../../lib/ae/scoring';
 import { resolveResultTextsFromDb } from '../../../../lib/ae/templates';
@@ -33,6 +33,19 @@ export async function POST(request) {
       return apiError(request, ERR.INVALID_DATA, 400);
     }
 
+    return await withTransaction(async (client) => {
+    const query = (text, values) => client.query(text, values);
+    const invitation = await query(
+      `SELECT i.status, (i.expires_at IS NOT NULL AND i.expires_at <= NOW()) AS expired
+       FROM ae_invites i JOIN companies co ON co.id = i.company_id AND co.deleted = FALSE
+       JOIN ae_definitions d ON d.id = i.definition_id AND d.active = TRUE
+       WHERE i.token = $1 FOR UPDATE OF i`, [inviteToken]
+    );
+    const liveInvite = invitation.rows[0];
+    if (!liveInvite) return apiError(request, ERR.SESSION_NOT_FOUND, 404);
+    if (liveInvite.expired) return apiError(request, ERR.INVITE_EXPIRED, 403);
+    if (liveInvite.status === 'cancelled') return apiError(request, ERR.INVITE_NOT_AVAILABLE, 403);
+    if (liveInvite.status === 'completed') return apiError(request, ERR.SESSION_DONE, 409);
     const att = await query(
       `SELECT a.id, a.status, a.definition_id AS "definitionId", a.invite_id AS "inviteId",
               a.question_ids AS "questionIds", a.company_id AS "companyId",
@@ -149,6 +162,7 @@ export async function POST(request) {
     return NextResponse.json({
       ok: true,
       attemptId,
+    });
     });
   } catch (err) {
     console.error('POST /api/ae/submit', err);

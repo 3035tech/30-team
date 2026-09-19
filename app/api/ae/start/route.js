@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../lib/db';
+import { withTransaction } from '../../../../lib/db';
 import { drawMotivatorsQuestions } from '../../../../lib/ae/draw-questions';
 import { upsertCandidate, normalizeEmail } from '../../../../lib/ae/candidate-upsert';
 import { titleCasePersonName } from '../../../../lib/person-name';
@@ -36,6 +36,8 @@ export async function POST(request) {
       return apiError(request, ERR.VALID_EMAIL_REQUIRED, 400);
     }
 
+    return await withTransaction(async (client) => {
+    const query = (text, values) => client.query(text, values);
     const inv = await query(
       `SELECT i.id, i.company_id AS "companyId", i.definition_id AS "definitionId",
               i.candidate_name AS "inviteName", LOWER(TRIM(i.candidate_email)) AS "inviteEmail",
@@ -44,7 +46,7 @@ export async function POST(request) {
        JOIN ae_definitions d ON d.id = i.definition_id
        JOIN companies c ON c.id = i.company_id
        WHERE i.token = $1 AND c.deleted = FALSE AND d.active = TRUE
-       LIMIT 1`,
+       LIMIT 1 FOR UPDATE OF i`,
       [inviteToken]
     );
     if (inv.rowCount === 0) {
@@ -116,6 +118,7 @@ export async function POST(request) {
       definition: drawn.definition,
       questions: toPublicQuestions(drawn.questions, locale),
       meta: drawn.meta,
+    });
     });
   } catch (err) {
     console.error('POST /api/ae/start', err);
