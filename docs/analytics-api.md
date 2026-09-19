@@ -35,6 +35,8 @@ Todas as rotas requerem **JWT de gestor** via cookie `team30_session`.
 
 Retorna métricas de impacto do processo seletivo.
 
+Fontes canônicas: contratação em `candidates.hired_at` / `hired_vacancy_id`, desligamentos em `exit_records`, HR Score em `hr_scores.score` / `calculated_at` e fit calculado no servidor com `assessments.scores` + rubrica T1–T9. A amostra de fit é limitada às 5.000 avaliações mais recentes e informa `fitComparison.truncated` quando atinge o teto.
+
 **Query Parameters:**
 | Parâmetro | Tipo | Obrigatório | Descrição |
 |-----------|------|-------------|-----------|
