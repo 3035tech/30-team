@@ -20,9 +20,10 @@ async function context(request, props) {
   const params = await props.params;
   const docKey = String(params?.docKey || '');
   if (!DP_DOCUMENT_KEYS.includes(docKey)) return { error: apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST) };
-  const limit = await checkRateLimit(`mobile-employee-dp-doc:${session.candidateId}:${clientIpFromRequest(request)}`, DOCUMENT_RATE_LIMIT, RATE_LIMIT_WINDOW_MS);
-  if (!limit.ok) return { error: apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS) };
   return { docKey, session };
+}
+async function writeLimit(request, session) {
+  return checkRateLimit(`mobile-employee-dp-doc:${session.candidateId}:${clientIpFromRequest(request)}`, DOCUMENT_RATE_LIMIT, RATE_LIMIT_WINDOW_MS);
 }
 
 export async function GET(request, props) {
@@ -43,6 +44,8 @@ export async function POST(request, props) {
   try {
     const ctx = await context(request, props);
     if (ctx.error) return ctx.error;
+    const limit = await writeLimit(request, ctx.session);
+    if (!limit.ok) return apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS);
     const form = await request.formData();
     const file = form.get('file');
     if (!file || typeof file.arrayBuffer !== 'function') return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
@@ -68,6 +71,8 @@ export async function DELETE(request, props) {
   try {
     const ctx = await context(request, props);
     if (ctx.error) return ctx.error;
+    const limit = await writeLimit(request, ctx.session);
+    if (!limit.ok) return apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS);
     const result = await clearDpDocumentFile({ query }, { companyId: ctx.session.companyId, candidateId: ctx.session.candidateId, docKey: ctx.docKey });
     if (!result.ok) return apiErrorFromResult(request, result);
     const home = await load(ctx.session);

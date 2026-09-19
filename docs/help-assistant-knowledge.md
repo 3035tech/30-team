@@ -6,7 +6,7 @@ O botão flutuante **“Pergunte à IA”** / **“Ask AI”** (canto inferior d
 
 | Camada | O quê |
 |--------|--------|
-| **Guia** | `HelpTab` + chaves `panel.help.{section}Title/Body/StepN` (pt-BR **e** en) |
+| **Guia** | `HelpTab` apresenta busca, atalhos, categorias (`HELP_GUIDE_GROUPS`) e um artigo por vez; conteúdo em `panel.help.{section}Title/Body/StepN` (pt-BR **e** en) |
 | **Seções canônicas** | `lib/help-sections.js` → `HELP_GUIDE_SECTIONS` (ordem do índice) |
 | **Retrieval** | `buildHelpChunks()` lê todas as seções canônicas no locale |
 | **FAQ** | `FAQ` em `lib/help-assistant.js` + `panel.helpAssist.faq*` (resposta instantânea, sem LLM) |

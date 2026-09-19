@@ -240,6 +240,14 @@ export function Icon({ name, className }) {
           <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
         </svg>
       );
+    case 'download':
+      return (
+        <svg {...props}>
+          <path d="M12 3v12" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M5 21h14" />
+        </svg>
+      );
     case 'plus':
     case 'add':
       return (

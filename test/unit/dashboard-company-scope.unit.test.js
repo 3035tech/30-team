@@ -17,6 +17,7 @@ test('COHORT_TABS and COMPANY_SCOPE_TABS stay disjoint where expected', () => {
   }
   assert.ok(COMPANY_SCOPE_TABS.has('succession'));
   assert.ok(COMPANY_SCOPE_TABS.has('lms'));
+  assert.ok(COMPANY_SCOPE_TABS.has('analytics'));
   assert.ok(needsAdminCompaniesList('audit'));
   assert.ok(needsAdminCompaniesList('succession'));
   assert.ok(needsAdminCompaniesList('overview'));

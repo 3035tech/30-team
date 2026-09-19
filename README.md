@@ -403,23 +403,23 @@ Se o nome do bucket ou `S3_KEY_PREFIX` forem diferentes, ajuste os ARNs. Leitura
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`; `037` workplace; `039` logo).
 
-Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**. Assistente flutuante de Ajuda (IA): indexa o Guia — ver [`docs/help-assistant-knowledge.md`](./docs/help-assistant-knowledge.md).
+Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**, com busca, atalhos por tarefa, categorias e um artigo por vez. Assistente flutuante de Ajuda (IA): indexa a mesma base do Guia; ver [`docs/help-assistant-knowledge.md`](./docs/help-assistant-knowledge.md).
 
 ---
 
-## Analytics — Métricas de Efetividade (Epic B-1100)
+## Relatórios para gestão de RH (Epic B-1100)
 
-A aba **Analytics** consolida **inteligência acionável** sobre recrutamento e gestão de pessoas, reutilizando dados já coletados (T1–T9, Motivadores, PDI, clima, turnover).
+A tela **Início → Relatórios** (`/dashboard?tab=analytics`) consolida indicadores acionáveis sobre recrutamento e gestão de pessoas, reutilizando dados já coletados (T1–T9, Motivadores, PDI, clima e turnover). Ela exige `overview.view`, respeita a empresa ativa e não faz leitura cross-tenant.
 
 ### Funcionalidades Principais
 
 | Módulo | O que mede | Onde |
 |--------|------------|------|
 | **Métricas de Efetividade** (B-1101) | Time-to-hire, retenção 6m/12m/24m, time-to-productivity, fit contratados vs pool, aderência rubrica | `/dashboard?tab=analytics` → Métricas |
-| **Tendências Temporais** (B-1102) | HR Score médio, turnover risk, clima, PDI completion, hires vs exits (últimos 6/12/24 meses) | Analytics → Tendências |
-| **Comparativos** (B-1103) | Área A vs B, período antes/depois, rubrica X vs Y | Analytics → Comparar |
-| **Alertas** (B-1104) | Clima -15%, turnover +20%, vagas >90 dias, HR Score <50, PDI <30% | Analytics → Alertas (proativo) |
-| **Export** (B-1105) | JSON estruturado, CSV | Botão "Export" em cada visão |
+| **Tendências Temporais** (B-1102) | HR Score médio, risco de saída, clima, PDI e contratações vs desligamentos (últimos 6/12/24 meses) | Relatórios → Tendências |
+| **Comparativos** (B-1103) | Duas áreas, com tamanho da amostra e leitura agregada | Relatórios → Comparar |
+| **Alertas** (B-1104) | Clima -15%, turnover +20%, vagas >90 dias, HR Score <50, PDI <30% | Digest proativo |
+| **Exportação** (B-1105) | CSV para métricas e JSON para tendências | Botão "Exportar dados" |
 
 ### API para Integrações Externas (B-1106)
 
@@ -483,7 +483,7 @@ Digest semanal ou mensal automatizado por email:
   -H "Authorization: Bearer ${CRON_SECRET}"
 ```
 
-Preferências por empresa: aba **Analytics** → Relatório agendado (frequência, PDF). Destinatários custom via `PATCH /api/admin/analytics/report-prefs` (`recipientUserIds`). Sem prefs = direction + admin.
+Preferências por empresa: **Relatórios** → Relatório agendado (frequência, PDF). Destinatários custom via `PATCH /api/admin/analytics/report-prefs` (`recipientUserIds`). Sem prefs = direction + admin.
 
 **Conteúdo do email:**
 - Métricas de efetividade (time-to-hire, retenção, fit)

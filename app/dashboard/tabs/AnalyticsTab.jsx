@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { t } from '../../../lib/i18n.js';
 import { useLocale } from '../../../lib/useLocale.js';
-import { S } from '../dashboard-shared.jsx';
+import { PanelSubNav, S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
@@ -15,7 +15,8 @@ import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
 import { EmptyState } from '../../_components/EmptyState';
 import { cn } from '../../../lib/cn.js';
 import { StatMetricTile } from '../../_components/StatMetricTile';
-import { SegmentedControl } from '../../_components/SegmentedControl';
+import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import { Icon } from '../../_components/Icon';
 
 const TREND_TONE = {
   brand: { bar: 'bg-brand-500', value: 'text-brand-600' },
@@ -34,13 +35,23 @@ function isMetricsEmpty(metrics) {
   return hireCount + prodCount + ret6 + ret12 + fitHired + rubricCount === 0;
 }
 
-export function AnalyticsTab({ session: _session, navigateDashboard }) {
-  const [locale] = useLocale();
+function isTrendsEmpty(trends) {
+  if (!trends) return true;
+  return ['hrScore', 'turnoverRisk', 'climate', 'hiresVsExits'].every(
+    (key) => !Array.isArray(trends[key]) || trends[key].every((item) =>
+      Object.entries(item).every(([field, value]) => field === 'month' || Number(value || 0) === 0)
+    )
+  );
+}
+
+export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navigateDashboard }) {
+  const [locale] = useLocale(initialLocale);
   const { toast } = useAppFeedback();
   const [activeView, setActiveView] = useState('metrics'); // 'metrics' | 'trends' | 'compare'
   const [metrics, setMetrics] = useState(null);
   const [trends, setTrends] = useState(null);
   const [comparison, setComparison] = useState(null);
+  const [areaOptions, setAreaOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -68,13 +79,15 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
     }
     // Compare loads on-demand via button
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: reload when filters change
-  }, [activeView, filters.startDate, filters.endDate, trendMonths]);
+  }, [activeView, filters.startDate, filters.endDate, trendMonths, companyId]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/analytics/report-prefs');
+        if (!companyId) return;
+        const params = new URLSearchParams({ companyId: String(companyId) });
+        const res = await fetch(`/api/admin/analytics/report-prefs?${params}`);
         const data = await res.json().catch(() => ({}));
         if (!cancelled && res.ok && data.prefs) {
           setReportPrefs({
@@ -89,7 +102,23 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [companyId]);
+
+  useEffect(() => {
+    if (activeView !== 'compare' || !companyId) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ type: 'list-areas', companyId: String(companyId) });
+        const res = await fetch(`/api/admin/analytics/compare?${params}`);
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) setAreaOptions(Array.isArray(data.areas) ? data.areas : []);
+      } catch {
+        if (!cancelled) setAreaOptions([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeView, companyId]);
 
   async function saveReportPrefs() {
     setPrefsBusy(true);
@@ -98,6 +127,7 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          companyId: Number(companyId),
           frequency: reportPrefs.frequency,
           attachPdf: reportPrefs.attachPdf,
         }),
@@ -113,10 +143,15 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
   }
 
   async function loadMetrics() {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
+      params.append('companyId', String(companyId));
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (filters.vacancyId) params.append('vacancyId', filters.vacancyId);
@@ -131,17 +166,22 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
       setMetrics(data.metrics);
     } catch (err) {
       console.error('Error loading metrics:', err);
-      setError(err.message);
+      setError(t(locale, 'panel.analytics.loadErrorBody'));
     } finally {
       setLoading(false);
     }
   }
 
   async function loadTrends() {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
+      params.append('companyId', String(companyId));
       params.append('months', trendMonths);
 
       const res = await fetch(`/api/admin/analytics/trends?${params}`);
@@ -154,22 +194,24 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
       setTrends(data.trends);
     } catch (err) {
       console.error('Error loading trends:', err);
-      setError(err.message);
+      setError(t(locale, 'panel.analytics.loadErrorBody'));
     } finally {
       setLoading(false);
     }
   }
 
   async function loadComparison() {
+    if (!companyId) return;
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
+      params.append('companyId', String(companyId));
       params.append('type', compareType);
 
       if (compareType === 'areas') {
         if (!compareParams.areaA || !compareParams.areaB) {
-          throw new Error('Select both areas');
+          throw new Error(t(locale, 'panel.analytics.comparePickBoth'));
         }
         params.append('areaA', compareParams.areaA);
         params.append('areaB', compareParams.areaB);
@@ -186,10 +228,21 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
       setComparison(data.comparison);
     } catch (err) {
       console.error('Error loading comparison:', err);
-      setError(err.message);
+      setError(err.message === t(locale, 'panel.analytics.comparePickBoth')
+        ? err.message
+        : t(locale, 'panel.analytics.loadErrorBody'));
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!companyId) {
+    return (
+      <EmptyState
+        title={t(locale, 'panel.analytics.companyRequiredTitle')}
+        message={t(locale, 'panel.analytics.companyRequiredBody')}
+      />
+    );
   }
 
   if (loading) {
@@ -198,9 +251,12 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
 
   if (error) {
     return (
-      <div className={S.card}>
-        <p className="text-danger">{error}</p>
-      </div>
+      <EmptyState
+        title={t(locale, 'panel.analytics.loadErrorTitle')}
+        message={error}
+        actionLabel={t(locale, 'panel.common.retry')}
+        onAction={activeView === 'trends' ? loadTrends : activeView === 'compare' ? loadComparison : loadMetrics}
+      />
     );
   }
 
@@ -210,20 +266,34 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
       : activeView === 'trends'
         ? t(locale, 'panel.analytics.titleTrends')
         : t(locale, 'panel.analytics.titleCompare');
+  const viewDescription = t(locale, `panel.analytics.${activeView}Description`);
 
   const metricsEmpty = activeView === 'metrics' && isMetricsEmpty(metrics);
+  const trendsEmpty = activeView === 'trends' && isTrendsEmpty(trends);
   const canNav = typeof navigateDashboard === 'function';
+  const exportParams = new URLSearchParams({
+    companyId: String(companyId),
+    format: activeView === 'metrics' ? 'csv' : 'json',
+    type: activeView === 'trends' ? 'trends' : 'metrics',
+  });
+  if (filters.startDate) exportParams.set('startDate', filters.startDate);
+  if (filters.endDate) exportParams.set('endDate', filters.endDate);
+  if (activeView === 'trends') exportParams.set('months', String(trendMonths));
 
   return (
     <ContentEnter animKey={activeView}>
     <div className="space-y-6">
-      <div className={S.card}>
-        <div className="mb-6">
-          <SegmentedControl
-            aria-label={t(locale, 'panel.analytics.titleMetrics')}
-            value={activeView}
-            onChange={setActiveView}
-            options={[
+      <div className={cn(S.card, 'overflow-hidden p-0')}>
+        <div className="border-b border-ink/10 px-5 pb-0 pt-6 sm:px-7 sm:pt-7">
+          <p className="m-0 max-w-3xl font-ui text-sm leading-6 text-ink-muted">{t(locale, 'panel.analytics.intro')}</p>
+          <PanelSubNav
+            ariaLabel={t(locale, 'panel.analytics.viewsAria')}
+            active={activeView}
+            onChange={(nextView) => {
+              setActiveView(nextView);
+              setError(null);
+            }}
+            tabs={[
               { id: 'metrics', label: t(locale, 'panel.analytics.viewMetrics') },
               { id: 'trends', label: t(locale, 'panel.analytics.viewTrends') },
               { id: 'compare', label: t(locale, 'panel.analytics.viewCompare') },
@@ -231,11 +301,23 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
           />
         </div>
 
-        <h2 className="font-display text-xl mb-4">{viewTitle}</h2>
+        <div className="px-5 py-6 sm:px-7 sm:py-7">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="m-0 font-display text-2xl font-normal text-ink">{viewTitle}</h2>
+            <p className="mb-0 mt-1.5 font-ui text-sm leading-6 text-ink-muted">{viewDescription}</p>
+          </div>
+          {activeView !== 'compare' ? (
+            <a className={cn(S.btnGhost, 'shrink-0')} href={`/api/admin/analytics/export?${exportParams}`} download>
+              <Icon name="download" className="h-4 w-4" />
+              {t(locale, 'panel.analytics.export')}
+            </a>
+          ) : null}
+        </div>
 
         {/* Filtros */}
         {activeView === 'metrics' && (
-        <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
+        <div className={cn(formFieldRowClass, 'mb-6 gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
           <FormField
             as="div"
             label={t(locale, 'panel.analytics.startDate')}
@@ -262,7 +344,7 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
         )}
 
         {activeView === 'trends' && (
-        <div className={cn(formFieldRowClass, 'mb-6 gap-4')}>
+        <div className={cn(formFieldRowClass, 'mb-6 gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
           <FormField label={t(locale, 'panel.analytics.periodMonths')}>
             <select
               className={S.select}
@@ -275,6 +357,38 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
             </select>
           </FormField>
         </div>
+        )}
+
+        {activeView === 'compare' && (
+          <div className="space-y-5">
+            {areaOptions.length < 2 ? (
+              <EmptyState
+                title={t(locale, 'panel.analytics.compareEmptyTitle')}
+                message={t(locale, 'panel.analytics.compareEmptyBody')}
+              />
+            ) : (
+              <>
+                <div className={cn(formFieldRowClass, 'gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
+                  <FormField label={t(locale, 'panel.analytics.compareAreaA')}>
+                    <select className={S.select} value={compareParams.areaA} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaA: event.target.value })); }}>
+                      <option value="">{t(locale, 'panel.analytics.compareSelectArea')}</option>
+                      {areaOptions.map((area) => <option key={area} value={area}>{area}</option>)}
+                    </select>
+                  </FormField>
+                  <FormField label={t(locale, 'panel.analytics.compareAreaB')}>
+                    <select className={S.select} value={compareParams.areaB} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaB: event.target.value })); }}>
+                      <option value="">{t(locale, 'panel.analytics.compareSelectArea')}</option>
+                      {areaOptions.map((area) => <option key={area} value={area}>{area}</option>)}
+                    </select>
+                  </FormField>
+                  <button type="button" className={cn(S.btnPrimary, 'self-end')} disabled={!compareParams.areaA || !compareParams.areaB || compareParams.areaA === compareParams.areaB} onClick={loadComparison}>
+                    {t(locale, 'panel.analytics.compareAction')}
+                  </button>
+                </div>
+                {comparison ? <AreaComparison comparison={comparison} locale={locale} /> : null}
+              </>
+            )}
+          </div>
         )}
 
         {/* Cards de métricas */}
@@ -301,7 +415,7 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
         ) : null}
 
         {activeView === 'metrics' && metrics && !metricsEmpty ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-px overflow-hidden rounded-card border border-ink/12 bg-ink/10 sm:grid-cols-2 xl:grid-cols-3">
           <MetricCard
             title={t(locale, 'panel.analytics.timeToHire')}
             value={t(locale, 'panel.analytics.daysValue', { n: metrics.timeToHire.avgDays })}
@@ -351,8 +465,15 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
         ) : null}
 
         {/* Tendências */}
-        {activeView === 'trends' && trends && (
-        <div className="space-y-6">
+        {activeView === 'trends' && trends && trendsEmpty ? (
+          <EmptyState
+            title={t(locale, 'panel.analytics.trendsEmptyTitle')}
+            message={t(locale, 'panel.analytics.trendsEmptyBody')}
+          />
+        ) : null}
+
+        {activeView === 'trends' && trends && !trendsEmpty && (
+        <div className="grid gap-4 xl:grid-cols-2">
           <TrendChart
             title={t(locale, 'panel.analytics.hrScoreAvg')}
             data={trends.hrScore}
@@ -374,53 +495,20 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
             tone="success"
           />
 
-          <div className={S.cardTight}>
-            <div className="font-bold mb-3">
-              {t(locale, 'panel.analytics.hiresVsExits')}
-            </div>
-            <div className="h-48 flex items-end gap-1">
-              {trends.hiresVsExits.map((item, idx) => {
-                const maxValue = Math.max(...trends.hiresVsExits.map(i => Math.max(i.hires, i.exits)));
-                const hiresHeight = (item.hires / maxValue) * 100;
-                const exitsHeight = (item.exits / maxValue) * 100;
-
-                return (
-                  <div key={idx} className="flex-1 flex flex-col gap-1" title={item.month}>
-                    <div
-                      className="ui-analytics-bar bg-success/70"
-                      style={{ height: `${hiresHeight}%` }}
-                    />
-                    <div
-                      className="ui-analytics-bar bg-danger/70"
-                      style={{ height: `${exitsHeight}%` }}
-                    />
-                    <div className="text-xs text-center text-ink-faint">
-                      {item.month.slice(5)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-4 mt-3 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-success/70" />
-                <span>{t(locale, 'panel.analytics.hires')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-danger/70" />
-                <span>{t(locale, 'panel.analytics.exits')}</span>
-              </div>
-            </div>
-          </div>
+          <HiringFlowChart data={trends.hiresVsExits} locale={locale} />
         </div>
         )}
+        </div>
       </div>
 
-      <div className={S.card}>
-        <h3 className="font-display text-lg mb-2">
-          {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsTitle')}
-        </h3>
-        <p className={cn(S.muted, 'mb-4')}>
+      <div className={cn(S.card, 'py-4')}>
+        <CollapsibleBlock
+          locale={locale}
+          title={t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsTitle')}
+          collapsedHint={t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsHelp')}
+          titleClassName="font-ui text-sm normal-case tracking-normal text-ink"
+        >
+        <p className={cn(S.muted, 'mb-4 mt-0')}>
           {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsHelp')}
         </p>
         <div className={cn(formFieldRowClass, 'gap-4')}>
@@ -453,9 +541,33 @@ export function AnalyticsTab({ session: _session, navigateDashboard }) {
             {t(locale, 'panel.motivatorsAdmin.analytics.reportPrefsSave')}
           </button>
         </div>
+        </CollapsibleBlock>
       </div>
     </div>
     </ContentEnter>
+  );
+}
+
+function AreaComparison({ comparison, locale }) {
+  const rows = [comparison.areaA, comparison.areaB].filter(Boolean);
+  return (
+    <div className="overflow-x-auto rounded-card border border-ink/12">
+      <div className="min-w-[34rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-3 border-b border-ink/10 bg-ink/[0.03] px-4 py-3 font-mono text-2xs uppercase tracking-wide text-ink-muted">
+        <span>{t(locale, 'panel.analytics.compareArea')}</span>
+        <span>{t(locale, 'panel.analytics.hrScoreAvg')}</span>
+        <span>{t(locale, 'panel.analytics.highRisk')}</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-ink/8 px-4 py-4 last:border-b-0">
+          <div><p className="m-0 font-ui text-sm font-semibold text-ink">{row.name}</p><p className="mb-0 mt-1 font-ui text-xs text-ink-faint">{t(locale, 'panel.analytics.peopleCount', { n: row.count })}</p></div>
+          <span className="font-mono text-sm font-semibold tabular-nums text-ink">{row.avgHrScore.toFixed(1)}</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-danger">{row.highRiskPct.toFixed(1)}%</span>
+        </div>
+      ))}
+      </div>
+      <p className="m-0 border-t border-ink/10 bg-info/5 px-4 py-3 font-ui text-xs leading-5 text-ink-muted">{t(locale, 'panel.analytics.compareGuardrail')}</p>
+    </div>
   );
 }
 
@@ -464,9 +576,9 @@ function TrendChart({ title, data, dataKey, tone = 'brand' }) {
   const tones = TREND_TONE[tone] || TREND_TONE.brand;
 
   return (
-    <div className={S.cardTight}>
-      <div className="font-bold mb-3">{title}</div>
-      <div className="h-32 flex items-end gap-1">
+    <div className={cn(S.cardTight, 'min-w-0')}>
+      <div className="mb-5 font-ui text-sm font-semibold text-ink">{title}</div>
+      <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10">
         {data.map((item, idx) => {
           const value = item[dataKey] || 0;
           const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
@@ -496,7 +608,7 @@ function MetricCard({ title, value, subtitle, trend, locale }) {
   const trendText = trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : '';
 
   return (
-    <div className={S.cardTight}>
+    <div className="min-w-0 bg-surface p-5">
       <StatMetricTile
         value={value}
         label={title}
@@ -508,6 +620,36 @@ function MetricCard({ title, value, subtitle, trend, locale }) {
           {trendText} {t(locale, 'panel.analytics.vsPrevious')}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function HiringFlowChart({ data = [], locale }) {
+  const maxValue = Math.max(0, ...data.map((item) => Math.max(item.hires || 0, item.exits || 0)));
+  return (
+    <div className={cn(S.cardTight, 'min-w-0')}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="font-ui text-sm font-semibold text-ink">{t(locale, 'panel.analytics.hiresVsExits')}</div>
+        <div className="flex gap-4 font-ui text-xs text-ink-muted">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success/70" />{t(locale, 'panel.analytics.hires')}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-danger/70" />{t(locale, 'panel.analytics.exits')}</span>
+        </div>
+      </div>
+      <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10 pt-5">
+        {data.map((item) => {
+          const hiresHeight = maxValue > 0 ? ((item.hires || 0) / maxValue) * 100 : 0;
+          const exitsHeight = maxValue > 0 ? ((item.exits || 0) / maxValue) * 100 : 0;
+          return (
+            <div key={item.month} className="flex h-full min-w-0 flex-1 flex-col justify-end" title={`${item.month}: ${item.hires || 0} / ${item.exits || 0}`}>
+              <div className="flex min-h-0 flex-1 items-end justify-center gap-0.5">
+                <span className="ui-analytics-bar w-[38%] bg-success/70" style={{ height: `${hiresHeight}%` }} />
+                <span className="ui-analytics-bar w-[38%] bg-danger/70" style={{ height: `${exitsHeight}%` }} />
+              </div>
+              <span className="mt-1.5 text-center font-mono text-2xs text-ink-faint">{item.month.slice(5)}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

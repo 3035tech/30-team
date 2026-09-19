@@ -134,6 +134,10 @@ const OverviewTab = dynamic(
   () => import('./tabs/OverviewTab').then((m) => ({ default: m.OverviewTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const AnalyticsTab = dynamic(
+  () => import('./tabs/AnalyticsTab').then((m) => ({ default: m.AnalyticsTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const UsersAdminTab = dynamic(
   () => import('./tabs/UsersAdminTab').then((m) => ({ default: m.UsersAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -956,7 +960,10 @@ export default function DashboardClient({
               <>
                 {sectionLabel(DASHBOARD_NAV_SECTION.HOME, t(locale, 'dashboard.sectionHome'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.HOME, (
-                  <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
+                  <>
+                    <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
+                    <NavLink id="analytics" icon="chart" label={t(locale, 'dashboard.analytics')} />
+                  </>
                 ))}
               </>
             ) : null}
@@ -1444,6 +1451,13 @@ export default function DashboardClient({
                       ...(opts.search !== undefined ? { search: opts.search } : {}),
                     });
                   }}
+                />
+              )}
+              {tab === 'analytics' && (
+                <AnalyticsTab
+                  companyId={scopedCompanyId}
+                  locale={locale}
+                  navigateDashboard={navigateWithOpts}
                 />
               )}
               {tab === 'team' && (
