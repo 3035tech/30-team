@@ -15,7 +15,52 @@ permissions:
   packages: write
 
 jobs:
+  analytics-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Reset DTOV
+        run: npm run dtov:reset
+
+      - name: Validate Analytics schema and tenant scope
+        env:
+          DTOV: '1'
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: '55432'
+          POSTGRES_DB: enneagram_dtov
+          POSTGRES_USER: dtov
+          POSTGRES_PASSWORD: dtov_local_only
+          POSTGRES_SSL: 'false'
+        run: node --test test/unit/analytics-schema.dtov.test.js
+
+      - name: Explain Analytics hot paths
+        env:
+          DTOV: '1'
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: '55432'
+          POSTGRES_DB: enneagram_dtov
+          POSTGRES_USER: dtov
+          POSTGRES_PASSWORD: dtov_local_only
+          POSTGRES_SSL: 'false'
+        run: npm run dtov:explain
+
+      - name: Stop DTOV
+        if: always()
+        run: npm run dtov:down
+
   build-and-push-image:
+    needs: analytics-contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

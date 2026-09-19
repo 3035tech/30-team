@@ -446,7 +446,11 @@ GET /api/admin/analytics/export?format=csv&type=metrics
 **Autenticação:** Cookie `team30_session` (JWT)  
 **Roles:** `admin`, `direction`, `hr`
 
+As respostas de métricas e tendências incluem `meta.generatedAt`, período e tamanho da amostra. Valores sem amostra são apresentados como indisponíveis no painel. Filtros ficam na URL para sobreviver ao refresh e os cards levam à lista operacional de Vagas ou Equipe. O CI executa o contrato DTOV do Analytics, isolamento multi-tenant e `EXPLAIN` dos hot paths antes de publicar a imagem.
+
 Documentação completa: [`docs/analytics-api.md`](./docs/analytics-api.md)
+
+Aceite do piloto: [`docs/pilot-acceptance-checklist.md`](./docs/pilot-acceptance-checklist.md). Após implantar, rode `PILOT_SMOKE_BASE_URL=https://host npm run release:post-deploy-smoke`; `HEALTH_STATUS_TOKEN` e `PILOT_SMOKE_COOKIE` habilitam as verificações protegidas sem colocar credenciais no comando ou no repositório.
 
 ### Performance & Cache
 

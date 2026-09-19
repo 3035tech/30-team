@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { listCandidateNotifications, markCandidateNotificationRead } from '../../../../../../lib/employee-notifications.js';
+import { mobilePushDestinationFor } from '../../../../../../lib/mobile-employee-push.js';
 import { t } from '../../../../../../lib/i18n.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 
@@ -13,7 +14,7 @@ async function authenticate(request) {
 async function responseFor(session) {
   const result = await listCandidateNotifications(null, { companyId: session.companyId, candidateId: session.candidateId, limit: 40 });
   return NextResponse.json({
-    items: result.items.map((item) => ({ id: Number(item.id), title: t('pt-BR', item.copy.titleKey, item.copy.values), body: t('pt-BR', item.copy.bodyKey, item.copy.values), createdAt: new Date(item.createdAt).toISOString(), readAt: item.readAt ? new Date(item.readAt).toISOString() : null })),
+    items: result.items.map((item) => ({ id: Number(item.id), title: t('pt-BR', item.copy.titleKey, item.copy.values), body: t('pt-BR', item.copy.bodyKey, item.copy.values), createdAt: new Date(item.createdAt).toISOString(), readAt: item.readAt ? new Date(item.readAt).toISOString() : null, destination: mobilePushDestinationFor(item.type) })),
     unreadCount: Number(result.unreadCount) || 0,
   });
 }

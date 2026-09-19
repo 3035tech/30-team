@@ -92,6 +92,29 @@ WHERE v.company_id = $1
 ORDER BY v.target_date ASC NULLS LAST, v.created_at DESC
 LIMIT 8`,
   },
+  {
+    id: 'analytics_hires_period',
+    note: 'Analytics: contratações por empresa e período',
+    sql: `
+EXPLAIN (FORMAT TEXT)
+SELECT id, hired_at
+FROM candidates
+WHERE company_id = $1
+  AND hired_at IS NOT NULL
+ORDER BY hired_at DESC
+LIMIT 100`,
+  },
+  {
+    id: 'analytics_hr_score_period',
+    note: 'Analytics: série mensal de HR Score por empresa',
+    sql: `
+EXPLAIN (FORMAT TEXT)
+SELECT candidate_id, score, calculated_at
+FROM hr_scores
+WHERE company_id = $1
+ORDER BY calculated_at DESC
+LIMIT 100`,
+  },
 ];
 
 async function main() {

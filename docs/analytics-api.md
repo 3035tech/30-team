@@ -2,6 +2,8 @@
 
 API REST para expor métricas de analytics do 30Team para integrações externas.
 
+As respostas JSON de métricas e tendências incluem `meta.generatedAt`, o período efetivo e, em métricas, `meta.sampleSize`. O header `x-request-id` permite correlacionar a chamada com os logs estruturados sem registrar filtros, tokens ou dados pessoais.
+
 ## Autenticação
 
 Todas as rotas requerem **JWT de gestor** via cookie `team30_session`.

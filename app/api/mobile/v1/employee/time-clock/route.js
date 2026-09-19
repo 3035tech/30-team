@@ -3,6 +3,7 @@ import { apiError, apiErrorFromResult, ERR, HTTP_STATUS } from '../../../../../.
 import { query } from '../../../../../../lib/db.js';
 import { TIME_PUNCH_KINDS } from '../../../../../../lib/domain-status.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
+import { mobileIdempotencyKey } from '../../../../../../lib/mobile-idempotency.js';
 import { createTimePunch, getEmployeeTimeClockToday } from '../../../../../../lib/people/time-clock.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
 
@@ -33,10 +34,11 @@ export async function POST(request) {
     const limit = await checkRateLimit(`mobile-employee-punch:${session.candidateId}:${clientIpFromRequest(request)}`, PUNCH_RATE_LIMIT, RATE_LIMIT_WINDOW_MS);
     if (!limit.ok) return apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS);
     const body = await request.json().catch(() => ({}));
+    const idempotencyKey = mobileIdempotencyKey(request);
     const latitude = Number(body.latitude);
     const longitude = Number(body.longitude);
-    if (!TIME_PUNCH_KINDS.includes(body.punchKind) || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
-    const result = await createTimePunch({ query }, { companyId: session.companyId, candidateId: session.candidateId, punchKind: body.punchKind, latitude, longitude });
+    if (!idempotencyKey || !TIME_PUNCH_KINDS.includes(body.punchKind) || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
+    const result = await createTimePunch({ query }, { companyId: session.companyId, candidateId: session.candidateId, punchKind: body.punchKind, latitude, longitude, idempotencyKey });
     if (!result.ok) return apiErrorFromResult(request, result);
     const today = await load(session);
     if (!today.ok) return apiErrorFromResult(request, today);

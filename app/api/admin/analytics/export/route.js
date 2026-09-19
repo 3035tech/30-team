@@ -20,9 +20,13 @@ import {
   exportTrendsToJSON,
 } from '../../../../../lib/analytics-export.js';
 import { checkAnalyticsRateLimit, addRateLimitHeaders } from '../../../../../lib/analytics-rate-limit.js';
+import { withApiLogging } from '../../../../../lib/monitoring.js';
+import { isValidAnalyticsDateRange, isValidAnalyticsMonths } from '../../../../../lib/analytics-query.js';
 
 export async function GET(request) {
-  try {
+  const logContext = { operation: 'analytics.export' };
+  return withApiLogging(request, async () => {
+   try {
     const payload = await getSessionPayload();
     if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
@@ -31,6 +35,7 @@ export async function GET(request) {
       ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
       : Number(scope.companyId);
     if (!Number.isFinite(companyId) || companyId <= 0) return apiError(request, ERR.COMPANY_REQUIRED, 400);
+    logContext.companyId = companyId;
 
     const rateLimitScope = { ...scope, companyId, userId: payload.userId };
     const rateLimitResponse = await checkAnalyticsRateLimit(request, rateLimitScope);
@@ -44,6 +49,9 @@ export async function GET(request) {
       const startDate = searchParams.get('startDate') || null;
       const endDate = searchParams.get('endDate') || null;
       const vacancyId = searchParams.get('vacancyId') || null;
+      if (!isValidAnalyticsDateRange(startDate, endDate)) {
+        return apiError(request, ERR.INVALID_PARAMS, 400);
+      }
 
       const metrics = await getHiringEffectivenessMetrics(companyId, {
         startDate,
@@ -76,6 +84,9 @@ export async function GET(request) {
 
     if (type === 'trends') {
       const months = parseInt(searchParams.get('months') || '12', 10);
+      if (!isValidAnalyticsMonths(months)) {
+        return apiError(request, ERR.INVALID_PARAMS, 400);
+      }
       const trends = await getAllTrends(companyId, { months });
 
       if (format === 'json') {
@@ -95,5 +106,6 @@ export async function GET(request) {
   } catch (err) {
     console.error('[analytics/export GET]', err);
     return apiError(request, ERR.SERVER_ERROR, 500);
-  }
+   }
+  }, logContext);
 }

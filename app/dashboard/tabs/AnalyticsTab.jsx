@@ -59,6 +59,11 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
     endDate: '',
     vacancyId: '',
   });
+  const [draftFilters, setDraftFilters] = useState({
+    startDate: '',
+    endDate: '',
+    vacancyId: '',
+  });
   const [trendMonths, setTrendMonths] = useState(12);
   const [compareType, setCompareType] = useState('areas'); // 'areas' | 'periods' | 'rubrics'
   const [compareParams, setCompareParams] = useState({
@@ -70,8 +75,39 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
     attachPdf: false,
   });
   const [prefsBusy, setPrefsBusy] = useState(false);
+  const [meta, setMeta] = useState(null);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextView = params.get('analyticsView');
+    if (['metrics', 'trends', 'compare'].includes(nextView)) setActiveView(nextView);
+    const hydratedFilters = {
+      startDate: params.get('analyticsStart') || '',
+      endDate: params.get('analyticsEnd') || '',
+      vacancyId: '',
+    };
+    setFilters(hydratedFilters);
+    setDraftFilters(hydratedFilters);
+    const months = Number(params.get('analyticsMonths'));
+    if ([6, 12, 24].includes(months)) setTrendMonths(months);
+    setFiltersHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('analyticsView', activeView);
+    if (filters.startDate) url.searchParams.set('analyticsStart', filters.startDate);
+    else url.searchParams.delete('analyticsStart');
+    if (filters.endDate) url.searchParams.set('analyticsEnd', filters.endDate);
+    else url.searchParams.delete('analyticsEnd');
+    if (activeView === 'trends') url.searchParams.set('analyticsMonths', String(trendMonths));
+    window.history.replaceState(window.history.state, '', url);
+  }, [activeView, filters.endDate, filters.startDate, filtersHydrated, trendMonths]);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
     if (activeView === 'metrics') {
       loadMetrics();
     } else if (activeView === 'trends') {
@@ -79,7 +115,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
     }
     // Compare loads on-demand via button
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: reload when filters change
-  }, [activeView, filters.startDate, filters.endDate, trendMonths, companyId]);
+  }, [activeView, filters.startDate, filters.endDate, trendMonths, companyId, filtersHydrated]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +178,25 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
     }
   }
 
+  function applyMetricFilters(event) {
+    event?.preventDefault();
+    if (
+      draftFilters.startDate &&
+      draftFilters.endDate &&
+      draftFilters.startDate > draftFilters.endDate
+    ) {
+      toast(t(locale, 'panel.analytics.invalidPeriod'), 'warning');
+      return;
+    }
+    setFilters(draftFilters);
+  }
+
+  function clearMetricFilters() {
+    const cleared = { startDate: '', endDate: '', vacancyId: '' };
+    setDraftFilters(cleared);
+    setFilters(cleared);
+  }
+
   async function loadMetrics() {
     if (!companyId) {
       setLoading(false);
@@ -164,6 +219,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
       }
 
       setMetrics(data.metrics);
+      setMeta(data.meta || null);
     } catch (err) {
       console.error('Error loading metrics:', err);
       setError(t(locale, 'panel.analytics.loadErrorBody'));
@@ -192,6 +248,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
       }
 
       setTrends(data.trends);
+      setMeta(data.meta || null);
     } catch (err) {
       console.error('Error loading trends:', err);
       setError(t(locale, 'panel.analytics.loadErrorBody'));
@@ -271,6 +328,9 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
   const metricsEmpty = activeView === 'metrics' && isMetricsEmpty(metrics);
   const trendsEmpty = activeView === 'trends' && isTrendsEmpty(trends);
   const canNav = typeof navigateDashboard === 'function';
+  const filtersDirty =
+    draftFilters.startDate !== filters.startDate ||
+    draftFilters.endDate !== filters.endDate;
   const exportParams = new URLSearchParams({
     companyId: String(companyId),
     format: activeView === 'metrics' ? 'csv' : 'json',
@@ -317,15 +377,18 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
 
         {/* Filtros */}
         {activeView === 'metrics' && (
-        <div className={cn(formFieldRowClass, 'mb-6 gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
+        <form
+          className="mb-6 grid items-end gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+          onSubmit={applyMetricFilters}
+        >
           <FormField
             as="div"
             label={t(locale, 'panel.analytics.startDate')}
           >
             <DateField
               className={S.input}
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+              value={draftFilters.startDate}
+              onChange={(e) => setDraftFilters((current) => ({ ...current, startDate: e.target.value }))}
               aria-label={t(locale, 'panel.analytics.startDate')}
             />
           </FormField>
@@ -335,13 +398,54 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
           >
             <DateField
               className={S.input}
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+              value={draftFilters.endDate}
+              onChange={(e) => setDraftFilters((current) => ({ ...current, endDate: e.target.value }))}
               aria-label={t(locale, 'panel.analytics.endDate')}
             />
           </FormField>
-        </div>
+          <div className="flex min-h-touch items-center justify-end gap-2 sm:col-span-2 lg:col-span-1">
+            {(filters.startDate || filters.endDate || draftFilters.startDate || draftFilters.endDate) ? (
+              <button type="button" className={S.btnGhost} onClick={clearMetricFilters}>
+                {t(locale, 'panel.common.clear')}
+              </button>
+            ) : null}
+            <button type="submit" className={S.btnPrimary} disabled={!filtersDirty}>
+              {t(locale, 'panel.analytics.apply')}
+            </button>
+          </div>
+        </form>
         )}
+
+        {activeView !== 'compare' && meta ? (
+          <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-ink/10 pb-4 font-ui text-xs text-ink-muted">
+            <span>{t(locale, 'panel.analytics.periodSummary', {
+              period: activeView === 'trends'
+                ? t(locale, 'panel.analytics.monthsValue', { n: meta.months || trendMonths })
+                : (meta.period?.startDate || meta.period?.endDate
+                  ? `${meta.period?.startDate || '…'}–${meta.period?.endDate || '…'}`
+                  : t(locale, 'panel.analytics.allHistory')),
+            })}</span>
+            <span>{t(locale, 'panel.analytics.updatedAt', { value: new Date(meta.generatedAt).toLocaleString(locale) })}</span>
+          </div>
+        ) : null}
+
+        {activeView === 'metrics' && metrics && !metricsEmpty ? (
+          <CollapsibleBlock
+            locale={locale}
+            title={t(locale, 'panel.analytics.methodTitle')}
+            collapsedHint={t(locale, 'panel.analytics.sampleSummary', {
+              hires: metrics.sampleSize?.hires || 0,
+              fit: metrics.sampleSize?.poolFit || 0,
+            })}
+            titleClassName="font-ui text-sm normal-case tracking-normal text-ink"
+            className="mb-5 rounded-control border border-ink/10 bg-info/5 px-4 py-3"
+            bordered={false}
+          >
+            <p className="m-0 max-w-4xl font-ui text-xs leading-5 text-ink-muted">
+              {t(locale, 'panel.analytics.methodBody')}
+            </p>
+          </CollapsibleBlock>
+        ) : null}
 
         {activeView === 'trends' && (
         <div className={cn(formFieldRowClass, 'mb-6 gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
@@ -399,18 +503,9 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
               message={t(locale, 'panel.analytics.emptyBody')}
               actionLabel={canNav ? t(locale, 'panel.analytics.emptyCtaVacancies') : undefined}
               onAction={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
+              secondaryActionLabel={canNav ? t(locale, 'panel.analytics.emptyCtaTeam') : undefined}
+              onSecondaryAction={canNav ? () => navigateDashboard({ tab: 'team' }) : undefined}
             />
-            {canNav ? (
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  className={S.btnGhost}
-                  onClick={() => navigateDashboard({ tab: 'team' })}
-                >
-                  {t(locale, 'panel.analytics.emptyCtaTeam')}
-                </button>
-              </div>
-            ) : null}
           </div>
         ) : null}
 
@@ -418,48 +513,54 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
         <div className="grid gap-px overflow-hidden rounded-card border border-ink/12 bg-ink/10 sm:grid-cols-2 xl:grid-cols-3">
           <MetricCard
             title={t(locale, 'panel.analytics.timeToHire')}
-            value={t(locale, 'panel.analytics.daysValue', { n: metrics.timeToHire.avgDays })}
+            value={metrics.timeToHire.count ? t(locale, 'panel.analytics.daysValue', { n: metrics.timeToHire.avgDays }) : t(locale, 'panel.analytics.unavailable')}
             subtitle={t(locale, 'panel.analytics.hiresCount', { n: metrics.timeToHire.count })}
             trend={metrics.timeToHire.trend}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
           />
 
           <MetricCard
             title={t(locale, 'panel.analytics.timeToProductivity')}
-            value={t(locale, 'panel.analytics.daysValue', { n: metrics.timeToProductivity.avgDays })}
+            value={metrics.timeToProductivity.count ? t(locale, 'panel.analytics.daysValue', { n: metrics.timeToProductivity.avgDays }) : t(locale, 'panel.analytics.unavailable')}
             subtitle={t(locale, 'panel.analytics.recordsCount', { n: metrics.timeToProductivity.count })}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'team' }) : undefined}
           />
 
           <MetricCard
             title={t(locale, 'panel.analytics.retention6m')}
-            value={`${metrics.retention.sixMonths.rate}%`}
+            value={metrics.retention.sixMonths.hiredCount ? `${metrics.retention.sixMonths.rate}%` : t(locale, 'panel.analytics.unavailable')}
             subtitle={`${metrics.retention.sixMonths.retainedCount}/${metrics.retention.sixMonths.hiredCount}`}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'team' }) : undefined}
           />
 
           <MetricCard
             title={t(locale, 'panel.analytics.retention12m')}
-            value={`${metrics.retention.twelveMonths.rate}%`}
+            value={metrics.retention.twelveMonths.hiredCount ? `${metrics.retention.twelveMonths.rate}%` : t(locale, 'panel.analytics.unavailable')}
             subtitle={`${metrics.retention.twelveMonths.retainedCount}/${metrics.retention.twelveMonths.hiredCount}`}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'team' }) : undefined}
           />
 
           <MetricCard
             title={t(locale, 'panel.analytics.avgHiredFit')}
-            value={`${metrics.fitComparison.hiredAvgFit.toFixed(1)}/10`}
+            value={metrics.fitComparison.hiredCount ? `${metrics.fitComparison.hiredAvgFit.toFixed(1)}/10` : t(locale, 'panel.analytics.unavailable')}
             subtitle={t(locale, 'panel.analytics.fitPoolDelta', {
               pool: metrics.fitComparison.poolAvgFit.toFixed(1),
               delta: `${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`,
             })}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
           />
 
           <MetricCard
             title={t(locale, 'panel.analytics.rubricAdherence')}
-            value={`${metrics.rubricAdherence.avgAdherence.toFixed(1)}/10`}
+            value={metrics.rubricAdherence.count ? `${metrics.rubricAdherence.avgAdherence.toFixed(1)}/10` : t(locale, 'panel.analytics.unavailable')}
             subtitle={t(locale, 'panel.analytics.hiresCount', { n: metrics.rubricAdherence.count })}
             locale={locale}
+            onClick={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
           />
         </div>
         ) : null}
@@ -602,7 +703,7 @@ function TrendChart({ title, data, dataKey, tone = 'brand' }) {
   );
 }
 
-function MetricCard({ title, value, subtitle, trend, locale }) {
+function MetricCard({ title, value, subtitle, trend, locale, onClick }) {
   const trendClass =
     trend > 0 ? 'text-danger' : trend < 0 ? 'text-success' : 'text-ink';
   const trendText = trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : '';
@@ -613,6 +714,7 @@ function MetricCard({ title, value, subtitle, trend, locale }) {
         value={value}
         label={title}
         hint={subtitle || null}
+        onClick={onClick}
         className="border-0 bg-transparent p-0"
       />
       {trend !== undefined && trendText ? (

@@ -39,6 +39,8 @@ describe('analytics uses the canonical people schema (DTOV)', { skip: !dtov }, (
     assert.ok(metrics.timeToHire);
     assert.ok(metrics.retention.sixMonths);
     assert.equal(metrics.fitComparison.poolCount >= 0, true);
+    assert.equal(metrics.sampleSize.hires, metrics.timeToHire.count);
+    assert.equal(metrics.sampleSize.poolFit, metrics.fitComparison.poolCount);
     assert.deepEqual(Object.keys(trends), ['hrScore', 'turnoverRisk', 'climate', 'pdiCompletion', 'hiresVsExits']);
     assert.ok(Array.isArray(alerts));
     assert.ok(areas.length >= 2);
@@ -48,6 +50,30 @@ describe('analytics uses the canonical people schema (DTOV)', { skip: !dtov }, (
     const areaComparison = await compareAreas(companyId, areas[0], areas[1]);
     assert.equal(areaComparison.areaA.name, areas[0]);
     assert.equal(areaComparison.areaB.name, areas[1]);
+  });
+
+  it('keeps canonical indexes available for analytics hot paths', async () => {
+    const indexes = await query(
+      `SELECT indexname
+       FROM pg_indexes
+       WHERE schemaname = 'public'
+         AND indexname = ANY($1::text[])`,
+      [[
+        'idx_candidates_company_hired_at',
+        'idx_candidates_company_hired_vacancy',
+        'idx_hr_scores_company_calculated',
+        'idx_assessments_company_created_vacancy',
+      ]]
+    );
+    assert.deepEqual(
+      indexes.rows.map((row) => row.indexname).sort(),
+      [
+        'idx_assessments_company_created_vacancy',
+        'idx_candidates_company_hired_at',
+        'idx_candidates_company_hired_vacancy',
+        'idx_hr_scores_company_calculated',
+      ]
+    );
   });
 
   it('does not leak analytics across tenants', async () => {

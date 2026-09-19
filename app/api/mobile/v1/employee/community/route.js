@@ -4,6 +4,7 @@ import { listCompanyPosts } from '../../../../../../lib/company-posts.js';
 import { createCompanyKudo, listCompanyKudos, searchEmployeeColleagues } from '../../../../../../lib/company-kudos.js';
 import { EMPLOYEE_NOTIF, notifyCandidate } from '../../../../../../lib/employee-notifications.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
+import { mobileIdempotencyKey } from '../../../../../../lib/mobile-idempotency.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,9 @@ export async function POST(request) {
     const limit = await checkRateLimit(`mobile-employee-kudos:${session.candidateId}:${clientIpFromRequest(request)}`, KUDOS_RATE_LIMIT, RATE_LIMIT_WINDOW_MS);
     if (!limit.ok) return apiError(request, ERR.RATE_LIMIT, HTTP_STATUS.TOO_MANY_REQUESTS, {}, { headers: { 'Retry-After': String(limit.retryAfterSec) } });
     const body = await request.json().catch(() => ({}));
-    const result = await createCompanyKudo(null, { companyId: session.companyId, fromCandidateId: session.candidateId, toCandidateId: body.toCandidateId, message: body.message });
+    const idempotencyKey = mobileIdempotencyKey(request);
+    if (!idempotencyKey) return apiError(request, ERR.INVALID_DATA, HTTP_STATUS.BAD_REQUEST);
+    const result = await createCompanyKudo(null, { companyId: session.companyId, fromCandidateId: session.candidateId, toCandidateId: body.toCandidateId, message: body.message, idempotencyKey });
     if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.CREATE_FAILED });
     await notifyCandidate(null, { companyId: session.companyId, candidateId: result.kudo.toCandidateId, type: EMPLOYEE_NOTIF.KUDOS_RECEIVED, entityType: 'company_kudo', entityId: result.kudo.id, dedupeKey: `mobile:kudos:${result.kudo.id}`, payload: { fromName: result.kudo.fromName || '—', message: result.kudo.message } });
     const community = await load(session);

@@ -3260,3 +3260,54 @@ CREATE INDEX IF NOT EXISTS idx_mobile_employee_refresh_expiry
   ON mobile_employee_refresh_sessions (expires_at)
   WHERE revoked_at IS NULL;
 INSERT INTO schema_migrations (name) VALUES ('117_mobile_employee_refresh_sessions.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 118: Expo push tokens scoped to an active employee/company context.
+CREATE TABLE IF NOT EXISTS mobile_employee_push_tokens (
+  id BIGSERIAL PRIMARY KEY,
+  candidate_id BIGINT NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  expo_push_token TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('android', 'ios')),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_error TEXT,
+  CONSTRAINT mobile_employee_push_tokens_token_unique UNIQUE (expo_push_token)
+);
+CREATE INDEX IF NOT EXISTS idx_mobile_employee_push_tokens_recipient
+  ON mobile_employee_push_tokens (company_id, candidate_id)
+  WHERE active = TRUE;
+INSERT INTO schema_migrations (name) VALUES ('118_mobile_employee_push_tokens.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 119: índices canônicos dos hot paths de Analytics.
+CREATE INDEX IF NOT EXISTS idx_candidates_company_hired_at
+  ON candidates (company_id, hired_at DESC)
+  WHERE hired_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_candidates_company_hired_vacancy
+  ON candidates (company_id, hired_vacancy_id, hired_at DESC)
+  WHERE hired_vacancy_id IS NOT NULL AND hired_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_hr_scores_company_calculated
+  ON hr_scores (company_id, calculated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_assessments_company_created_vacancy
+  ON assessments (company_id, created_at DESC, vacancy_id)
+  WHERE vacancy_id IS NOT NULL;
+INSERT INTO schema_migrations (name) VALUES ('119_analytics_canonical_indexes.sql')
+ON CONFLICT (name) DO NOTHING;
+
+-- 120: replay protection for critical employee mobile mutations.
+ALTER TABLE employee_time_punches ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE company_kudos ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_time_punches_mobile_idempotency
+  ON employee_time_punches (company_id, candidate_id, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_company_kudos_mobile_idempotency
+  ON company_kudos (company_id, from_candidate_id, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
+COMMENT ON COLUMN employee_time_punches.idempotency_key IS
+  'Opaque client mutation key; prevents duplicate mobile punches after ambiguous network failures.';
+COMMENT ON COLUMN company_kudos.idempotency_key IS
+  'Opaque client mutation key; prevents duplicate mobile kudos after ambiguous network failures.';
+INSERT INTO schema_migrations (name) VALUES ('120_mobile_employee_mutation_idempotency.sql')
+ON CONFLICT (name) DO NOTHING;
