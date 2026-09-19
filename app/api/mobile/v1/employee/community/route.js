@@ -15,14 +15,14 @@ const KUDOS_PAGE_SIZE = 15;
 const COLLEAGUE_LIMIT = 40;
 const MAX_PAGE = 10000;
 const pageSchema = z.string().regex(/^[1-9]\d*$/).transform(Number).pipe(z.number().int().max(MAX_PAGE));
-const pagesSchema = z.object({ postsPage: pageSchema.default(1), kudosPage: pageSchema.default(1) }).strict();
+const pagesSchema = z.object({ postsPage: pageSchema.default(1), kudosPage: pageSchema.default(1), kudoId: z.string().regex(/^[1-9]\d*$/).transform(Number).pipe(z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).optional() }).strict();
 const KUDOS_RATE_LIMIT = 20;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 async function auth(request) { return authenticateMobileEmployee(mobileEmployeeBearerToken(request)); }
-async function load(session, { postsPage = 1, kudosPage = 1 } = {}) {
+async function load(session, { postsPage = 1, kudosPage = 1, kudoId } = {}) {
   const [feed, kudos, colleagues] = await Promise.all([
     listCompanyPosts(null, { companyId: session.companyId, page: postsPage, pageSize: FEED_PAGE_SIZE }),
-    listCompanyKudos(null, { companyId: session.companyId, page: kudosPage, pageSize: KUDOS_PAGE_SIZE }),
+    listCompanyKudos(null, { companyId: session.companyId, page: kudoId ? 1 : kudosPage, pageSize: KUDOS_PAGE_SIZE, ...(kudoId ? { kudoId } : {}) }),
     searchEmployeeColleagues(null, { companyId: session.companyId, excludeCandidateId: session.candidateId, limit: COLLEAGUE_LIMIT }),
   ]);
   if (!feed.ok) return feed;
