@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { getTypeData } from '../../../lib/i18n-data';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
@@ -61,10 +61,20 @@ function TopicButton({ locale, section, onClick }) {
   return <button type="button" onClick={onClick} className="min-h-touch w-full cursor-pointer rounded-control border border-ink/10 bg-transparent px-3 py-2.5 text-left font-ui text-sm text-ink-muted hover:border-brand-500/25 hover:bg-brand-50 hover:text-ink">{t(locale, `panel.help.${section}Title`)}</button>;
 }
 
-export function HelpTab({ locale = 'pt-BR', navigateDashboard }) {
-  const [activeSection, setActiveSection] = useState('welcome');
-  const [activeGroup, setActiveGroup] = useState('start');
+function validInitialSection(section) {
+  return HELP_GUIDE_SECTIONS.includes(section) ? section : 'welcome';
+}
+
+export function HelpTab({ locale = 'pt-BR', navigateDashboard, initialSection = 'welcome' }) {
+  const normalizedInitialSection = validInitialSection(initialSection);
+  const [activeSection, setActiveSection] = useState(normalizedInitialSection);
+  const [activeGroup, setActiveGroup] = useState(() => groupForSection(normalizedInitialSection).id);
   const [query, setQuery] = useState('');
+  useEffect(() => {
+    const section = validInitialSection(initialSection);
+    setActiveSection(section);
+    setActiveGroup(groupForSection(section).id);
+  }, [initialSection]);
   const go = (tab) => { if (typeof navigateDashboard === 'function') navigateDashboard({ tab }); };
   const searchResults = useMemo(() => {
     const needle = fold(query).trim();

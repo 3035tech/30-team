@@ -127,6 +127,15 @@ export function useDashboardNavigation({
       if (curSection) p.set('section', curSection);
     }
 
+    // Contextual help deep-link: keeps the selected Guide article shareable
+    // without carrying it into unrelated dashboard tabs.
+    if (opts.helpSection !== undefined) {
+      if (opts.helpSection) p.set('helpSection', String(opts.helpSection));
+    } else if (nextTab === 'help') {
+      const curHelpSection = urlParams.get('helpSection');
+      if (curHelpSection) p.set('helpSection', curHelpSection);
+    }
+
     const merged = { ...snapshot(), ...opts };
     const teamFrom = parseTeamPagination(merged);
     const teamSortSt = parseTeamSort(merged);

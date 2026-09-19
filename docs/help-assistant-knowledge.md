@@ -7,6 +7,7 @@ O botão flutuante **“Pergunte à IA”** / **“Ask AI”** (canto inferior d
 | Camada | O quê |
 |--------|--------|
 | **Guia** | `HelpTab` apresenta busca, atalhos, categorias (`HELP_GUIDE_GROUPS`) e um artigo por vez; conteúdo em `panel.help.{section}Title/Body/StepN` (pt-BR **e** en) |
+| **Ajuda contextual** | O cabeçalho do dashboard usa `HELP_BY_DASHBOARD_TAB` para abrir `?tab=help&helpSection=<section>` no artigo ligado à tela atual |
 | **Seções canônicas** | `lib/help-sections.js` → `HELP_GUIDE_SECTIONS` (ordem do índice) |
 | **Retrieval** | `buildHelpChunks()` lê todas as seções canônicas no locale |
 | **FAQ** | `FAQ` em `lib/help-assistant.js` + `panel.helpAssist.faq*` (resposta instantânea, sem LLM) |
@@ -24,6 +25,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
    - Ajustar `HELP_SECTION_STEP_COUNTS` se houver passos novos
 2. **Assistente de Ajuda**
    - Garantir que a seção está em `HELP_GUIDE_SECTIONS` (indexação automática via `buildHelpChunks`)
+   - Mapear a tela em `HELP_BY_DASHBOARD_TAB`; `test/unit/help-context-coverage.unit.test.js` protege cobertura e destinos inválidos
    - Se a pergunta for muito comum (“como…”, “onde…”), adicionar entrada em `FAQ` + `panel.helpAssist.faq*` (pt-BR+en)
    - Ampliar vocabulário em `PRODUCT_HINT` (`lib/help-assistant.js`) se surgirem termos novos do domínio
 3. **Docs técnicas** (quando aplicável) — `README` / `docs/` para setup, URLs, migrations

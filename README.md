@@ -403,7 +403,7 @@ Se o nome do bucket ou `S3_KEY_PREFIX` forem diferentes, ajuste os ARNs. Leitura
 
 Migration: `migrations/030_company_profile_public_vacancy_page.sql` (+ `031` default indexável; `032` atribuição/funil; `033` referral; `035` job alerts; `036` `companies.public_profile_enabled`; `037` workplace; `039` logo).
 
-Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**, com busca, atalhos por tarefa, categorias e um artigo por vez. Assistente flutuante de Ajuda (IA): indexa a mesma base do Guia; ver [`docs/help-assistant-knowledge.md`](./docs/help-assistant-knowledge.md).
+Doc técnica (arquitetura, envs, Indexing, funil, IA, checklist LGPD): [`docs/job-seo-and-distribution.md`](./docs/job-seo-and-distribution.md). Guia do painel: aba **Ajuda**, com busca, atalhos por tarefa, categorias e um artigo por vez. O botão **Como funciona?** no cabeçalho das telas abre diretamente o artigo contextual correspondente. Assistente flutuante de Ajuda (IA): indexa a mesma base do Guia; ver [`docs/help-assistant-knowledge.md`](./docs/help-assistant-knowledge.md).
 
 ---
 

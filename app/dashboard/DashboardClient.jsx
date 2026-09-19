@@ -49,6 +49,7 @@ import {
   getDashboardSection,
   getDefaultDashboardSections,
 } from '../../lib/dashboard-navigation.js';
+import { helpMetaForTab } from '../../lib/help-screen-context.js';
 
 function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
@@ -329,6 +330,7 @@ export default function DashboardClient({
   const showProductFeedback = isSuperAdminPayload(sessionAuth);
   const showAudit = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
+  const contextualHelpSection = helpMetaForTab(tab)?.guideSections?.[0] || null;
   const showsCohortChrome = COHORT_TABS.has(tab);
   /** Super admin: company picker on cohort chrome or company-scoped People/catalog tabs. */
   const showsCompanyPicker =
@@ -1214,6 +1216,19 @@ export default function DashboardClient({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2 self-end">
+              {tab !== 'help' && contextualHelpSection && can(sessionAuth, CAP.HELP_VIEW) ? (
+                <button
+                  type="button"
+                  onClick={() => navigateWithOpts({ tab: 'help', helpSection: contextualHelpSection })}
+                  className={cn(S.btnGhost, 'min-h-touch gap-2 px-3.5')}
+                  aria-label={t(locale, 'dashboard.contextHelpAria', {
+                    tab: t(locale, getDashboardTabNav(tab).labelKey),
+                  })}
+                >
+                  <Icon name="help" className="h-4 w-4" />
+                  {t(locale, 'dashboard.contextHelp')}
+                </button>
+              ) : null}
               {showsCohortChrome && !panelLoading ? (
                 <button
                   type="button"
@@ -1638,7 +1653,7 @@ export default function DashboardClient({
                   panelCompanyId={scopedCompanyId}
                 />
               )}
-              {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} />}
+              {tab === 'help' && can(sessionAuth, CAP.HELP_VIEW) && <HelpTab locale={locale} navigateDashboard={navigateWithOpts} initialSection={urlParams.get('helpSection') || 'welcome'} />}
               {tab === 'profile' && can(sessionAuth, CAP.PROFILE_SELF) && (
                 <ProfileTab
                   locale={locale}
