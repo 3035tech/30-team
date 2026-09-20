@@ -51,6 +51,29 @@ describe('module hardening', () => {
     assert.match(source('lib/api-error-codes.js'), /FORBIDDEN: 'FORBIDDEN'/);
   });
 
+  it('keeps DP document upload routes tenant-scoped and private', () => {
+    const employeeFile = source('app/api/employee/dp/documents/[docKey]/file/route.js');
+    const adminFile = source('app/api/admin/candidates/[id]/dp/documents/[docKey]/file/route.js');
+    for (const route of [employeeFile, adminFile]) {
+      assert.match(route, /DP_DOCUMENT_KEYS/);
+      assert.match(route, /uploadDpDocumentFile/);
+      assert.match(route, /downloadDpDocumentFile/);
+      assert.match(route, /Cache-Control.*no-store/);
+      assert.doesNotMatch(route, /S3_ACCESS|S3_SECRET|publicBaseUrl/);
+    }
+    assert.match(employeeFile, /getEmployeeSessionPayload/);
+    assert.match(adminFile, /getManagerScope/);
+    assert.match(adminFile, /dp\.document\.file_uploaded/);
+  });
+
+  it('includes schema, Redis and object storage in authenticated health checks', () => {
+    const health = source('lib/health-status.js');
+    assert.match(health, /checkSchema/);
+    assert.match(health, /getSharedRedisClient/);
+    assert.match(health, /checkObjectStorage/);
+    assert.match(health, /requiredDown = \[postgres, schema\]/);
+  });
+
   it('passes tenant module entitlements to the dashboard client auth snapshot', () => {
     const auth = source('app/dashboard/resolve-dashboard-auth.js');
     assert.match(auth, /companyModules: Array\.isArray\(payload\?\.companyModules\)/);
