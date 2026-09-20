@@ -10,6 +10,7 @@ import { CompanyModulesField } from './CompanyModulesField';
 import { InlineCallout } from './InlineCallout';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { TotpQrCode } from './TotpQrCode';
+import { CompanyLicenseSummary } from './CompanyLicenseSummary';
 import { useAppFeedbackOptional } from './AppFeedback';
 import {
   modulesSelectionEqual,
@@ -34,6 +35,8 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [license, setLicense] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPassword2, setNewPassword2] = useState('');
@@ -66,6 +69,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
 
   const load = async () => {
     setLoading(true);
+    setProfileLoaded(false);
     setError('');
     try {
       const [res, modRes] = await Promise.all([
@@ -79,6 +83,8 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       setDisplayName(u.displayName || '');
       setRole(u.role || '');
       setCompanyName(u.companyName || '');
+      setLicense(data.license || null);
+      setProfileLoaded(true);
       await load2fa();
 
       if (modRes.ok) {
@@ -279,9 +285,17 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
 
         {loading ? (
           <div className="mt-5"><AppLoading variant="panel" /></div>
+        ) : !profileLoaded ? (
+          <InlineCallout tone="danger" role="alert" className="mt-5">
+            <p className="m-0">{error}</p>
+            <button type="button" onClick={load} className={cn(dashS.btnGhost, 'mt-3')}>
+              {t(locale, 'common.retry')}
+            </button>
+          </InlineCallout>
         ) : (
           <ContentEnter animKey="profile-ready">
             <div className="mt-5">
+              {companyName ? <CompanyLicenseSummary license={license} locale={locale} /> : null}
               <PanelSubNav
                 ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
                 active={profileSection}

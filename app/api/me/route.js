@@ -6,6 +6,7 @@ import { LOCALE_COOKIE, normalizeLocale } from '../../../lib/i18n';
 import { apiError, ERR } from '../../../lib/api-error';
 import { bumpSessionVersion, verifySessionWithCapabilities } from '../../../lib/session';
 import { checkRateLimit, clientIpFromRequest } from '../../../lib/rate-limit';
+import { companyLicenseSummary } from '../../../lib/company-license';
 
 async function requireSession(request) {
   const cookieStore = await cookies();
@@ -44,16 +45,22 @@ export async function GET(request) {
   const res = await query(
     `SELECT u.id, u.email, u.role, u.locale, u.display_name AS "displayName",
             u.company_id AS "companyId", u.last_login_at AS "lastLoginAt",
-            c.name AS "companyName"
+            c.name AS "companyName",
+            l.license_number AS "licenseNumber", l.starts_at AS "licenseStartsAt",
+            l.expires_at AS "licenseExpiresAt", l.expires_at <= now() AS "licenseExpired"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id AND c.deleted = FALSE
+     LEFT JOIN company_licenses l ON l.company_id = c.id
      WHERE u.id = $1 AND u.deleted = FALSE AND u.active = TRUE
      LIMIT 1`,
     [payload.userId]
   );
   if (res.rowCount === 0) return apiError(request, ERR.USER_NOT_FOUND, 404);
 
-  return NextResponse.json({ user: res.rows[0] });
+  const { licenseNumber, licenseStartsAt, licenseExpiresAt, licenseExpired, ...user } = res.rows[0];
+  return NextResponse.json({ user, license: companyLicenseSummary(res.rows[0]) }, {
+    headers: { 'Cache-Control': 'private, no-store' },
+  });
 }
 
 /**

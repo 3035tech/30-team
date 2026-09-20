@@ -7,6 +7,7 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 import { BrandMark } from './BrandMark';
 import { Icon } from './Icon';
+import { EmployeeLogoutButton } from './EmployeeLogoutButton';
 import { useEmployeeNav } from './EmployeeNavContext';
 import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
 
@@ -289,6 +290,9 @@ export function EmployeeSidebar({
           );
         })}
       </nav>
+      <div className="shrink-0 border-t border-ink/10 p-2">
+        <EmployeeLogoutButton locale={locale} compact={navCollapsed} onLoggedOut={onClose} />
+      </div>
     </aside>
   );
 }

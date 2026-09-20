@@ -15,7 +15,8 @@ import { Icon } from './Icon';
 import { AppLoading } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { useEmployeeNav } from './EmployeeNavContext';
-import { employeeLoginUrl, redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
+import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
+import { EmployeeLogoutButton } from './EmployeeLogoutButton';
 
 /**
  * Collaborator chrome — theme, locale, notifications, profile menu.
@@ -168,17 +169,6 @@ export function EmployeeTopBar({
       body: JSON.stringify({ markAll: true }),
     });
     void loadNotifs();
-  };
-
-  const logout = async () => {
-    setProfileOpen(false);
-    try {
-      await fetch('/api/auth/employee/session', { method: 'DELETE' });
-    } catch {
-      /* still leave */
-    }
-    // Banner on login (`?reason=logout`) — toast would unmount with this shell
-    router.replace(employeeLoginUrl({ reason: 'logout' }));
   };
 
   const postCompanySwitch = async (payload) => {
@@ -453,18 +443,7 @@ export function EmployeeTopBar({
                   <Icon name="user" className="h-4 w-4 shrink-0 opacity-80" />
                   <span>{t(locale, 'employeeHome.profile')}</span>
                 </Link>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={cn(
-                    S.btnGhost,
-                    'flex min-h-touch w-full items-center justify-start gap-2.5 text-danger'
-                  )}
-                  onClick={logout}
-                >
-                  <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />
-                  <span>{t(locale, 'employeeHome.logout')}</span>
-                </button>
+                <EmployeeLogoutButton locale={locale} role="menuitem" onLoggedOut={() => setProfileOpen(false)} />
               </div>
             ) : null}
           </div>

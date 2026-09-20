@@ -104,7 +104,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
             aria-hidden={!sidebarOpen}
           />
 
-          <div className="relative z-[1] flex min-h-screen">
+          <div className="relative flex min-h-screen">
             <EmployeeSidebar
               locale={locale}
               companyName={company}
