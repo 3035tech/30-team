@@ -118,6 +118,8 @@ export function PromptFormDialog({
   const [cropTarget, setCropTarget] = useState(null); // { field, file }
   const [cepBusyKey, setCepBusyKey] = useState('');
   const [cepHint, setCepHint] = useState('');
+  const dialogRef = useRef(null);
+  const submitLockRef = useRef(false);
   const blobUrlsRef = useRef([]);
   const cepLookupRef = useRef(0);
 
@@ -159,6 +161,7 @@ export function PromptFormDialog({
         init[fieldKey] = initial != null ? String(initial) : '';
       }
     }
+    submitLockRef.current = false;
     setValues(init);
     setUploadBusyKey('');
     setUploadError('');
@@ -187,6 +190,15 @@ export function PromptFormDialog({
       blobUrlsRef.current = [];
     };
   }, [open, onCancel]);
+
+  useEffect(() => {
+    if (!open || !mounted) return undefined;
+    const previous = document.activeElement;
+    const frame = requestAnimationFrame(() => {
+      dialogRef.current?.querySelector('input:not([hidden]):not(:disabled), textarea:not(:disabled), button:not(:disabled)')?.focus();
+    });
+    return () => { cancelAnimationFrame(frame); if (previous?.isConnected) previous.focus(); };
+  }, [open, mounted]);
 
   if (!mounted || !open) return null;
 
@@ -683,6 +695,7 @@ export function PromptFormDialog({
     if (f.type === 'date' || f.type === 'datetime-local') {
       return (
         <DateField
+          locale={locale}
           mode={f.type === 'datetime-local' ? 'datetime-local' : 'date'}
           value={values[fk] ?? ''}
           onChange={(e) => setField(fk, e.target.value)}
@@ -722,7 +735,22 @@ export function PromptFormDialog({
           if (e.target === e.currentTarget) onCancel?.();
         }}
       >
-        <div
+        <form
+          ref={dialogRef}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (submitLockRef.current || uploadBusyKey || missingRequired) return;
+            submitLockRef.current = true;
+            onSubmit?.(values);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Tab' || !event.currentTarget.contains(event.target)) return;
+            const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled), input:not([hidden]):not(:disabled), textarea:not(:disabled), [tabindex="0"]')]
+              .filter(el => el.tabIndex >= 0 && el.getClientRects().length);
+            const first = controls[0], last = controls.at(-1);
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="prompt-form-title"
@@ -760,13 +788,12 @@ export function PromptFormDialog({
               )
             )}
           </div>
-          <div className="mt-[22px] flex justify-end gap-2.5">
+          <div className="mt-[22px] flex flex-wrap justify-end gap-2.5">
             <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>
               {cancelLabel || t(locale, 'panel.common.cancel')}
             </button>
             <button
-              type="button"
-              onClick={() => onSubmit?.(values)}
+              type="submit"
               disabled={Boolean(uploadBusyKey) || missingRequired}
               className={cn(
                 dialogBtnPrimaryClass,
@@ -776,7 +803,7 @@ export function PromptFormDialog({
               {confirmLabel || t(locale, 'panel.common.save')}
             </button>
           </div>
-        </div>
+        </form>
       </div>
       <CompanyLogoCropDialog
         open={Boolean(cropTarget?.file)}

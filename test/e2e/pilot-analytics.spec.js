@@ -19,13 +19,24 @@ test('pilot reports: filters, trace metadata and tenant isolation', async ({ pag
   expect(endBox).not.toBeNull();
   expect(Math.abs(startBox.y - endBox.y)).toBeLessThan(8);
 
-  await start.fill('2025-01-01');
-  await end.fill('2026-12-31');
+  const chooseDate = async (control, iso) => {
+    await control.click();
+    const calendar = page.getByRole('dialog', { name: /selecionar data|select date/i });
+    const current = await calendar.locator('[data-day][tabindex="0"]').getAttribute('data-day');
+    const [year, month] = iso.split('-').map(Number);
+    const [currentYear, currentMonth] = current.split('-').map(Number);
+    const distance = (year - currentYear) * 12 + month - currentMonth;
+    const navigation = calendar.getByRole('button', { name: distance < 0 ? /mês anterior|previous month/i : /próximo mês|next month/i });
+    for (let n = 0; n < Math.abs(distance); n++) await navigation.click();
+    await calendar.locator('[data-day="' + iso + '"]').click();
+  };
+  await chooseDate(start, '2025-01-01');
+  await chooseDate(end, '2026-12-31');
   await page.getByRole('button', { name: /^aplicar$|^apply$/i }).click();
   await expect(page).toHaveURL(/analyticsStart=2025-01-01/);
   await page.reload();
-  await expect(start).toHaveValue('2025-01-01');
-  await expect(end).toHaveValue('2026-12-31');
+  await expect(start).toHaveText('01/01/2025');
+  await expect(end).toHaveText('31/12/2026');
 
   const baseline = await page.request.get('/api/admin/analytics/metrics');
   const forged = await page.request.get('/api/admin/analytics/metrics?companyId=99999999');

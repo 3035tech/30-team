@@ -25,8 +25,8 @@ function ToolbarButton({ label, title, onClick, className }) {
       title={title || label}
       onMouseDown={(e) => {
         e.preventDefault();
-        onClick();
       }}
+      onClick={onClick}
       className={cn(toolbarBtnClass, className)}
     >
       {label}

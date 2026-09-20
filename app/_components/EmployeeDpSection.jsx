@@ -107,6 +107,7 @@ function leaveStatusTone(status) {
 export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [profile, setProfile] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -143,6 +144,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const res = await fetch('/api/employee/dp');
       const data = await res.json().catch(() => ({}));
@@ -155,16 +157,15 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       setPendingDocs(Number(data.pendingDocs) || 0);
       onBadgeRef.current?.(badge);
     } catch (e) {
-      toast(e?.message || t(locale, 'panel.dp.loadError'), 'error');
+      setLoadError(true);
       setProfile(null);
       setDocuments([]);
       setLeaves([]);
       setBalance(null);
-      onBadgeRef.current?.(0);
     } finally {
       setLoading(false);
     }
-  }, [locale, toast]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -499,6 +500,17 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
 
   if (loading) {
     return <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />;
+  }
+
+  if (loadError) {
+    return <ContentEnter animKey="emp-dp-error">
+      <InlineCallout tone="danger" role="alert" emphasis>
+        <p className="m-0">{t(locale, 'panel.dp.loadError')}</p>
+        <button type="button" className={cn(S.btnGhost, 'mt-3')} onClick={() => void load()}>
+          {t(locale, 'common.retry')}
+        </button>
+      </InlineCallout>
+    </ContentEnter>;
   }
 
   const openLeaveCount = leaves.filter(

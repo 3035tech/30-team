@@ -1,0 +1,72 @@
+const { test, expect } = require('@playwright/test');
+
+test('custom calendar: bounds, keyboard, datetime and responsive overlay', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/');
+  const date = page.getByRole('button', { name: 'Data de teste', exact: true });
+  await date.click();
+  const calendar = page.getByRole('dialog', { name: 'Selecionar data' });
+  await expect(calendar).toBeVisible();
+  await expect(calendar.locator('[data-day="2026-09-09"]')).toHaveAttribute('aria-disabled', 'true');
+  await calendar.locator('[data-day="2026-09-19"]').press('ArrowRight');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('date')).toHaveText('2026-09-20');
+  await expect(date).toBeFocused();
+  await date.click();
+  await page.keyboard.press('PageDown');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('date')).toHaveText('2026-09-20');
+  await expect(date).toBeFocused();
+  await page.getByRole('button', { name: 'Horário de teste' }).click();
+  await page.getByRole('combobox', { name: 'Hora', exact: true }).click();
+  await page.getByRole('option', { name: '09', exact: true }).click();
+  await expect(calendar).toBeVisible();
+  await calendar.getByRole('button', { name: 'Aplicar' }).click();
+  await expect(calendar.getByRole('alert')).toBeVisible();
+  await expect(page.getByTestId('time')).toHaveText('2026-09-19T10:30');
+  await page.getByRole('combobox', { name: 'Hora', exact: true }).click();
+  await page.getByRole('option', { name: '11', exact: true }).click();
+  await calendar.getByRole('button', { name: 'Aplicar' }).click();
+  await expect(page.getByTestId('time')).toHaveText('2026-09-19T11:30');
+  for (const width of [375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await date.click();
+    const box = await calendar.boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    await page.screenshot({ path: test.info().outputPath('calendar-' + width + '.png') });
+    await page.keyboard.press('Escape');
+  }
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  await date.click();
+  await page.screenshot({ path: test.info().outputPath('calendar-dark.png') });
+  expect(errors).toEqual([]);
+});
+
+test('real prompt: focus, select above modal, calendar, cancel and one submission', async ({ page }) => {
+  await page.goto('/');
+  const open = page.getByRole('button', { name: 'Abrir formulário' });
+  await open.click();
+  const dialog = page.getByRole('dialog', { name: 'Formulário de teste' });
+  const input = dialog.getByRole('textbox', { name: 'Nome', exact: true });
+  await expect(input).toBeFocused();
+  await input.fill('Teste local');
+  await dialog.getByRole('combobox', { name: 'Área do formulário' }).click();
+  await page.getByRole('option', { name: 'Área B', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Data do formulário' }).click();
+  await page.getByRole('dialog', { name: 'Selecionar data' }).locator('[data-day="2026-09-21"]').click();
+  await expect(dialog).toBeVisible();
+  const save = dialog.getByRole('button', { name: 'Salvar', exact: true });
+  await save.focus();
+  await page.keyboard.press('Tab');
+  await expect(input).toBeFocused();
+  await save.dblclick();
+  await expect(page.getByTestId('submits')).toHaveText('1');
+  await dialog.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(open).toBeFocused();
+  await open.click();
+  await dialog.getByRole('textbox', { name: 'Nome', exact: true }).fill('Outra ação');
+  await save.click();
+  await expect(page.getByTestId('submits')).toHaveText('2');
+});

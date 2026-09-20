@@ -1,6 +1,6 @@
 const path = require('node:path');
 module.exports = {
-  testDir: __dirname, testMatch: 'select.spec.js', workers: 1, timeout: 60000,
+  testDir: __dirname, testMatch: '*.spec.js', workers: 1, timeout: 60000,
   use: { baseURL: 'http://127.0.0.1:3098' },
   outputDir: path.join(__dirname, 'results'),
   webServer: {

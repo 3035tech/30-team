@@ -17,19 +17,19 @@ export const dialogCardClass =
   'w-full max-w-[420px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog';
 
 export const dialogBtnPrimaryClass =
-  'cursor-pointer rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-prose text-white';
+  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-5 py-2.5 font-mono text-prose text-white';
 
 /** Primary button without brand fill — pair with `bg-brand-500` | `bg-danger` | `bg-success`. */
 export const dialogBtnSolidClass =
-  'cursor-pointer rounded-control border-none px-5 py-2.5 font-mono text-prose text-white';
+  'min-h-touch cursor-pointer rounded-control border-none px-5 py-2.5 font-mono text-prose text-white';
 
 export const dialogBtnGhostClass =
-  'cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-prose text-ink-muted';
+  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-5 py-2.5 font-mono text-prose text-ink-muted';
 
 /** Text / password / number in dialogs. */
 export const dialogFieldClass = `mt-1.5 w-full ${fieldInputClass}`;
 
-/** Native select in dialogs (custom chevron). */
+/** Custom select trigger in dialogs. */
 export const dialogSelectClass = `mt-1.5 ${fieldSelectBlockClass}`;
 
 /** Textarea in dialogs. */
