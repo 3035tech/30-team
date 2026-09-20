@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
@@ -824,7 +826,7 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
       {isAdmin && companies.length > 0 ? (
         <label className={cn(S.label, 'mb-0 flex max-w-xs flex-col gap-1')}>
           {t(locale, 'panel.climate.companyLabel')}
-          <select
+          <SelectField
             className={S.select}
             value={String(companyId || '')}
             onChange={(e) => {
@@ -840,7 +842,7 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
                 {c.name || c.id}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
       ) : null}
 

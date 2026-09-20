@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
@@ -154,7 +156,7 @@ export function TeamBehavioralIntelBlock({
         <span className="font-mono text-2xs uppercase tracking-wide text-ink-faint">
           {t(locale, 'panel.overview.bci.groupFilterLabel')}
         </span>
-        <select
+        <SelectField
           className={cn(S.select, 'min-h-touch')}
           value={selectedTeamGroupId != null ? String(selectedTeamGroupId) : ''}
           onChange={(ev) => void onGroupChange(ev)}
@@ -168,7 +170,7 @@ export function TeamBehavioralIntelBlock({
               {g.name}
             </option>
           ))}
-        </select>
+        </SelectField>
       </label>
     ) : null;
 

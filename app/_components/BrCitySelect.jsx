@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { BR_UF_SET } from '../../lib/candidate-profile';
@@ -181,7 +183,7 @@ export function BrCitySelect({
   }
 
   return (
-    <select
+    <SelectField
       id={id}
       className={cn(
         fieldSelectClass,
@@ -202,6 +204,6 @@ export function BrCitySelect({
           {name}
         </option>
       ))}
-    </select>
+    </SelectField>
   );
 }

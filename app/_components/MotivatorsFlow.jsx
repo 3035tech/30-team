@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MOTIVATORS_DEFINITION } from '../../lib/ae/motivators-dimensions.js';
@@ -165,11 +167,11 @@ function HomeScreen({ inviteInfo, onStart, notice, startDisabled, locale, setLoc
         </FormField>
 
         <FormField label={t(locale, 'motivators.areaLabel')} labelClassName={formFieldCandLabelClass} className="w-full">
-          <select className={cn(SC.select, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
+          <SelectField className={cn(SC.select, 'cursor-pointer')} value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
             {areaOptions.map((a) => (
               <option key={a.key} value={a.key}>{localizeAreaLabel(a, locale)}</option>
             ))}
-          </select>
+          </SelectField>
         </FormField>
 
         <label className="mb-4 flex gap-2.5 text-xs text-ink-muted">

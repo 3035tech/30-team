@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
@@ -88,7 +90,7 @@ export default function WhistleblowingPublicClient({ token, locale = 'pt-BR' }) 
     <PublicNarrowShell locale={locale} title={title || t(locale, 'panel.whistleblowing.publicTitle')}>
       <p className={cn(S.muted, 'mb-4 text-prose')}>{t(locale, 'panel.whistleblowing.publicHint')}</p>
       <FormField label={t(locale, 'panel.whistleblowing.categoryLabel')}>
-        <select
+        <SelectField
           className={cn(S.select)}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
@@ -99,7 +101,7 @@ export default function WhistleblowingPublicClient({ token, locale = 'pt-BR' }) 
               {t(locale, `panel.whistleblowing.category.${c}`)}
             </option>
           ))}
-        </select>
+        </SelectField>
       </FormField>
       <FormField
         label={t(locale, 'panel.whistleblowing.bodyLabel')}

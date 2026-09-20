@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -185,11 +187,7 @@ export function CompensationBlock({
     const select = jobRoleSelectRef.current;
     if (!select) return;
     select.focus();
-    try {
-      select.showPicker?.();
-    } catch {
-      // Focus is the accessible fallback when the browser blocks showPicker.
-    }
+    select.click();
   };
 
   const marketChip = (() => {
@@ -521,7 +519,7 @@ export function CompensationBlock({
       <div className="mb-4 rounded-control border border-ink/10 bg-surface px-3 py-2.5">
         <FormField label={t(locale, 'panel.compensation.jobRoleLabel')}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <select
+            <SelectField
               ref={jobRoleSelectRef}
               className={cn(fieldSelectClass, 'min-w-0 flex-1')}
               value={market?.jobRoleId != null ? String(market.jobRoleId) : ''}
@@ -541,7 +539,7 @@ export function CompensationBlock({
                   </option>
                 );
               })}
-            </select>
+            </SelectField>
             {!readOnly && !market?.jobRoleId && !rolesLoading ? (
               roles.length > 0 ? (
                 <button

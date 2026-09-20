@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
@@ -290,7 +292,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
               aria-label={t(locale, 'recruiting.pipelineSearch')}
               className="min-h-touch rounded-control border border-ink/12 bg-surface px-3 font-ui text-sm text-ink outline-none focus:border-brand-500"
             />
-            <select
+            <SelectField
               value={filters.owner}
               onChange={(event) => setFilters((current) => ({ ...current, owner: event.target.value }))}
               className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
@@ -300,8 +302,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
               <option value="mine">{t(locale, 'recruiting.filterMine')}</option>
               <option value="unassigned">{t(locale, 'recruiting.filterUnassigned')}</option>
               {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={`user:${recruiter.id}`}>{recruiter.name}</option>)}
-            </select>
-            <select
+            </SelectField>
+            <SelectField
               value={filters.aging}
               onChange={(event) => setFilters((current) => ({ ...current, aging: event.target.value }))}
               className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
@@ -309,8 +311,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
             >
               <option value="all">{t(locale, 'recruiting.filterAnyTime')}</option>
               <option value="stalled">{t(locale, 'recruiting.filterStalled')}</option>
-            </select>
-            <select
+            </SelectField>
+            <SelectField
               value={filters.fit}
               onChange={(event) => setFilters((current) => ({ ...current, fit: event.target.value }))}
               className="ui-select min-h-touch rounded-control border border-ink/12 bg-surface px-2 font-ui text-xs text-ink"
@@ -318,7 +320,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
             >
               <option value="all">{t(locale, 'recruiting.filterAnyFit')}</option>
               <option value="high">{t(locale, 'recruiting.filterHighFit')}</option>
-            </select>
+            </SelectField>
             <label className="flex min-h-touch items-center gap-2 rounded-control border border-ink/12 bg-surface px-2.5 font-ui text-xs text-ink-muted">
               <input type="checkbox" checked={filters.notes} onChange={(event) => setFilters((current) => ({ ...current, notes: event.target.checked }))} className="accent-brand-500" />
               {t(locale, 'recruiting.filterWithNotes')}
@@ -327,7 +329,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-2">
             <label className="flex items-center gap-2 font-ui text-xs text-ink-muted">
               {t(locale, 'recruiting.vacancyOwner')}
-              <select
+              <SelectField
                 value={workspace.vacancyOwnerUserId || ''}
                 onChange={(event) => void updateVacancyOwner(event.target.value)}
                 disabled={workspaceLoading}
@@ -335,7 +337,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
               >
                 <option value="">{t(locale, 'recruiting.filterUnassigned')}</option>
                 {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
-              </select>
+              </SelectField>
             </label>
             {!workspace.vacancyOwnerUserId ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-xs text-warning">{t(locale, 'recruiting.ownerMissing')}</span> : null}
             <button type="button" className="ml-auto min-h-touch rounded-control border border-brand-500/30 bg-brand-500/[0.07] px-3 font-ui text-xs font-semibold text-brand-600" onClick={saveView}>
@@ -596,7 +598,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                           ) : null}
                           <label className="mt-2 block">
                             <span className="sr-only">{t(locale, 'recruiting.candidateOwner')}</span>
-                            <select
+                            <SelectField
                               value={r.ownerUserId || ''}
                               onChange={(event) => void assignCandidate(r, event.target.value)}
                               onClick={(event) => event.stopPropagation()}
@@ -605,11 +607,11 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                             >
                               <option value="">{t(locale, 'recruiting.filterUnassigned')}</option>
                               {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
-                            </select>
+                            </SelectField>
                           </label>
                           <label className="mt-2 block md:hidden">
                             <span className="sr-only">{t(locale, 'recruiting.moveToStage')}</span>
-                            <select
+                            <SelectField
                               className="ui-select w-full min-h-touch rounded-control border border-ink/12 bg-canvas px-2 py-1.5 font-mono text-2xs text-ink"
                               value={r.pipelineStage || 'new'}
                               disabled={isBusy}
@@ -627,7 +629,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                                   {s.label}
                                 </option>
                               ))}
-                            </select>
+                            </SelectField>
                           </label>
                         </div>
                       );

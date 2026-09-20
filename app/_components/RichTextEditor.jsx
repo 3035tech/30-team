@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useEffect, useRef } from 'react';
 import { t } from '../../lib/i18n';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
@@ -34,7 +36,7 @@ function ToolbarButton({ label, title, onClick, className }) {
 
 function ToolbarSelect({ value, onChange, title, children }) {
   return (
-    <select
+    <SelectField
       title={title}
       value={value}
       onMouseDown={(e) => e.stopPropagation()}
@@ -42,7 +44,7 @@ function ToolbarSelect({ value, onChange, title, children }) {
       className="ui-select max-w-[110px] cursor-pointer rounded-md border border-ink/12 bg-ink/[0.04] !px-1.5 !py-1 !pr-6 font-mono text-2xs text-ink"
     >
       {children}
-    </select>
+    </SelectField>
   );
 }
 

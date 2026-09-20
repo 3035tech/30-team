@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { REJECTION_REASONS, normalizeStartDate } from '../../lib/pipeline';
 import { t } from '../../lib/i18n';
@@ -85,7 +87,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
               htmlFor="pipeline-reject-reason"
               label={t(locale, 'recruiting.rejectionReasonLabel')}
             >
-              <select
+              <SelectField
                 id="pipeline-reject-reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -96,7 +98,7 @@ function PipelineExtrasDialog({ locale, mode, onConfirm, onCancel }) {
                     {rejectionReasonLabel(locale, code)}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </FormField>
           ) : (
             <FormField

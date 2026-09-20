@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { BR_STATES, BR_UF_SET } from '../../lib/candidate-profile';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -19,7 +21,7 @@ export function BrStateSelect({
   const selectValue = BR_UF_SET.has(uf) ? uf : '';
 
   return (
-    <select
+    <SelectField
       id={id}
       className={cn(fieldSelectClass, className)}
       value={selectValue}
@@ -33,6 +35,6 @@ export function BrStateSelect({
           {s.uf}: {s.name}
         </option>
       ))}
-    </select>
+    </SelectField>
   );
 }

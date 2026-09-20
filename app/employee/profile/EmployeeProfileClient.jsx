@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -287,7 +289,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   />
                 </FormField>
                 <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0 flex-1">
-                  <select
+                  <SelectField
                     className={cn(S.select, 'w-full')}
                     value={form.state}
                     onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
@@ -299,7 +301,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                         {s.uf}
                       </option>
                     ))}
-                  </select>
+                  </SelectField>
                 </FormField>
               </div>
               <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')}>

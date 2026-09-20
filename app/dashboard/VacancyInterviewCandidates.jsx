@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
@@ -534,7 +536,7 @@ function CandidateCard({
               />
             </FormField>
             <FormField label={t(locale, 'recruiting.availabilityLabel')} className={formFieldGrowClass}>
-              <select
+              <SelectField
                 value={availability}
                 onChange={(e) => setAvailability(e.target.value)}
                 className={FIELD_SELECT}
@@ -546,10 +548,10 @@ function CandidateCard({
                 <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
                 <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
                 <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-              </select>
+              </SelectField>
             </FormField>
             <FormField label={t(locale, 'recruiting.sourceLabel')} className={formFieldGrowClass}>
-              <select
+              <SelectField
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
                 className={FIELD_SELECT}
@@ -561,7 +563,7 @@ function CandidateCard({
                 <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
                 <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
                 <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-              </select>
+              </SelectField>
             </FormField>
           </div>
           <button
@@ -898,7 +900,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
             />
           </FormField>
           <FormField label={t(locale, 'recruiting.availabilityLabel')} className={formFieldGrowClass}>
-            <select
+            <SelectField
               value={availability}
               onChange={(e) => setAvailability(e.target.value)}
               className={FIELD_SELECT}
@@ -910,10 +912,10 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
               <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
               <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-            </select>
+            </SelectField>
           </FormField>
           <FormField label={t(locale, 'recruiting.sourceLabel')} className={formFieldGrowClass}>
-            <select
+            <SelectField
               value={source}
               onChange={(e) => setSource(e.target.value)}
               className={FIELD_SELECT}
@@ -925,7 +927,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
               <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
               <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-            </select>
+            </SelectField>
           </FormField>
         </div>
         <RichTextEditor

@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { fieldSelectCompactClass } from './form-control-styles';
@@ -61,7 +63,7 @@ export function AdminListFilterSelect({
 }) {
   return (
     <FormField label={label} className={cn('min-w-[9.5rem] max-w-[14rem] shrink-0', className)}>
-      <select
+      <SelectField
         value={value}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}
@@ -69,7 +71,7 @@ export function AdminListFilterSelect({
         className={cn(fieldSelectCompactClass, 'w-full min-w-[9.5rem]', selectClassName)}
       >
         {children}
-      </select>
+      </SelectField>
     </FormField>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
@@ -764,7 +766,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
             {isAdmin ? (
               <FormField label={t(locale, 'panel.admin.companyLabel')} className="max-w-[420px]">
-                <select
+                <SelectField
                   value={companyId}
                   onChange={(e) => setCompanyId(e.target.value)}
                   aria-label={t(locale, 'panel.admin.companyLabel')}
@@ -775,7 +777,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   ) : companies.map((c) => (
                     <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
                   ))}
-                </select>
+                </SelectField>
               </FormField>
             ) : null}
 
@@ -785,7 +787,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
                   className="max-w-[420px]"
                 >
-                  <select
+                  <SelectField
                     value={jobRoleId}
                     onChange={(e) => setJobRoleId(e.target.value)}
                     className={FIELD_SELECT}
@@ -794,7 +796,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {jobRoles.map((jr) => (
                       <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
                     ))}
-                  </select>
+                  </SelectField>
                 </FormField>
                 {(() => {
                   const selected = jobRoles.find((jr) => String(jr.id) === String(jobRoleId));
@@ -818,7 +820,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               hint={pipelineTemplatesError || t(locale, 'panel.pipelineTemplates.fieldHint')}
               className="max-w-[420px]"
             >
-              <select
+              <SelectField
                 value={pipelineTemplateId}
                 onChange={(e) => {
                   setPipelineTemplateId(e.target.value);
@@ -844,7 +846,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     })}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </FormField>
             {(() => {
               const selectedTemplate = pipelineTemplates.find((template) => String(template.id) === String(pipelineTemplateId));
@@ -884,14 +886,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
             <div className={cn(GRID_AUTO, 'items-start')}>
               <FormField label={t(locale, 'recruiting.sortStatus')}>
-                <select
+                <SelectField
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className={FIELD_SELECT}
                 >
                   <option value="open">{t(locale, 'recruiting.openStatus')}</option>
                   <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-                </select>
+                </SelectField>
               </FormField>
               <FormField label={t(locale, 'recruiting.positionsLabel')}>
                 <input
@@ -917,7 +919,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
             <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
               <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
-                <select
+                <SelectField
                   value={employmentType}
                   onChange={(e) => setEmploymentType(e.target.value)}
                   className={FIELD_SELECT}
@@ -926,7 +928,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   {VACANCY_EMPLOYMENT_TYPES.map((type) => (
                     <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
                   ))}
-                </select>
+                </SelectField>
               </FormField>
               <FormField label={t(locale, 'recruiting.salaryMinPh')}>
                 <input
@@ -1052,7 +1054,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
                     className="max-w-[420px]"
                   >
-                    <select
+                    <SelectField
                       value={editingVacancy.jobRoleId || ''}
                       onChange={(e) =>
                         setEditingVacancy((cur) => ({ ...cur, jobRoleId: e.target.value }))
@@ -1063,7 +1065,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       {jobRoles.map((jr) => (
                         <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
                       ))}
-                    </select>
+                    </SelectField>
                   </FormField>
                   {(() => {
                     const selected = jobRoles.find(
@@ -1103,7 +1105,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   />
                 </FormField>
                 <FormField label={t(locale, 'recruiting.sortStatus')} className="flex-[0_0_140px]">
-                  <select
+                  <SelectField
                     value={editingVacancy.status}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
                     aria-label={t(locale, 'recruiting.sortStatus')}
@@ -1111,7 +1113,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   >
                     <option value="open">{t(locale, 'recruiting.openStatus')}</option>
                     <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-                  </select>
+                  </SelectField>
                 </FormField>
               </div>
               <div className={formFieldRowClass}>
@@ -1139,7 +1141,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
               <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
                 <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
-                  <select
+                  <SelectField
                     value={editingVacancy.employmentType}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
                     aria-label={t(locale, 'recruiting.employmentTypeLabel')}
@@ -1149,7 +1151,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {VACANCY_EMPLOYMENT_TYPES.map((type) => (
                       <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
                     ))}
-                  </select>
+                  </SelectField>
                 </FormField>
                 <FormField label={t(locale, 'recruiting.salaryMinPh')}>
                   <input
@@ -1992,7 +1994,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 {t(locale, 'recruiting.vacanciesPage', { total: vacTotal, page: vacPage, pages: vacTotalPages })}
               </span>
               <div className="flex flex-wrap items-center gap-2">
-                <select
+                <SelectField
                   value={String(vacPageSize)}
                   onChange={(e) => {
                     const ps = parseInt(e.target.value, 10);
@@ -2004,7 +2006,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   {PAGE_SIZE_OPTIONS.map((n) => (
                     <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
                   ))}
-                </select>
+                </SelectField>
                 <button
                   type="button"
                   disabled={loading || vacPage <= 1}

@@ -1,0 +1,36 @@
+'use client';
+import { useRef, useState } from 'react';
+import { SelectField } from '../../../app/_components/SelectField.jsx';
+export default function Preview() {
+ const [area, setArea] = useState('product');
+ const [result, setResult] = useState('');
+ const [calls, setCalls] = useState(0);
+ const [rowCalls, setRowCalls] = useState(0);
+ const selectRef = useRef(null);
+ return <main className="mx-auto max-w-3xl space-y-6 p-6">
+ <h1 className="font-display text-3xl">Controles do 30 Team</h1>
+ <p>Revisão isolada, sem dados ou conexão com produção.</p>
+ <label className="flex flex-col gap-2">Área
+ <SelectField aria-label="Área" value={area} onChange={e=>{setArea(e.target.value);setCalls(n=>n+1);}} className="w-full">
+ <option value="product">Produto</option><option disabled value="closed">Indisponível</option>
+ <optgroup label="Operação"><option value="people">Pessoas</option><option value="support">Atendimento</option></optgroup>
+ </SelectField></label>
+ <output data-testid="selected">{area}</output>
+ <output data-testid="calls">{calls}</output>
+ <div onClick={()=>setRowCalls(n=>n+1)} className="rounded-control border border-ink/12 p-4">
+ <SelectField ref={selectRef} aria-label="Dentro do card" onClick={e=>e.stopPropagation()}><option>Primeira</option><option>Segunda</option></SelectField>
+ </div>
+ <output data-testid="row-calls">{rowCalls}</output>
+ <button type="button" onClick={()=>{selectRef.current.focus();selectRef.current.click();}}>Abrir por referência</button>
+ <form onSubmit={e=>{e.preventDefault();setResult(new FormData(e.currentTarget).get('company'));}} className="space-y-4 rounded-card border border-ink/12 bg-surface p-5">
+ <label className="flex flex-col gap-2">Empresa
+ <SelectField aria-label="Empresa" name="company" required defaultValue="" className="w-full">
+ <option value="">Selecione a empresa</option><option value="demo">Empresa demonstração</option></SelectField></label>
+ <button className="rounded-control bg-brand-500 px-4 py-3 text-white" type="submit">Salvar</button>
+ <button className="rounded-control border px-4 py-3" type="reset">Limpar</button>
+ <output data-testid="result">{result}</output>
+ </form>
+ <SelectField aria-label="Bloqueado" disabled><option>Não disponível</option></SelectField>
+ <div className="overflow-hidden rounded-card border border-ink/12 p-4"><SelectField aria-label="Dentro do painel"><option>Primeira</option><option>Segunda</option></SelectField></div>
+ </main>;
+}

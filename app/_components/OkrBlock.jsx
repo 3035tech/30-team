@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -602,7 +604,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     label={t(locale, 'panel.okr.cycleSelectLabel')}
                     className="min-w-[12rem] max-w-sm flex-1"
                   >
-                    <select
+                    <SelectField
                       className={cn(S.select, 'min-h-touch w-full')}
                       value={activeCycleId || ''}
                       onChange={(e) => setActiveCycleId(Number(e.target.value) || null)}
@@ -614,7 +616,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                           {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
                         </option>
                       ))}
-                    </select>
+                    </SelectField>
                   </FormField>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <StatusToneChip

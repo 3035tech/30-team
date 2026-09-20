@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
@@ -105,7 +107,7 @@ export function CompareTabLoader({
             {t(locale, 'panel.compare.listMeta', { n: meta.total })}
           </span>
           <div className="flex flex-wrap items-center gap-2.5">
-            <select
+            <SelectField
               value={String(comparePageSize)}
               onChange={(e) => {
                 const ps = parseInt(e.target.value, 10);
@@ -116,7 +118,7 @@ export function CompareTabLoader({
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
               ))}
-            </select>
+            </SelectField>
             <button
               type="button"
               disabled={effPage <= 1}

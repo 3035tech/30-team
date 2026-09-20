@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -197,7 +199,7 @@ export default function SignupPage() {
           </FormField>
 
           <FormField htmlFor="signup-jobtitle" label={t(locale, 'signup.jobTitle')}>
-            <select
+            <SelectField
               id="signup-jobtitle"
               value={formData.jobTitle}
               onChange={(event) => {
@@ -217,7 +219,7 @@ export default function SignupPage() {
                   {t(locale, `signup.jobTitleOptions.${jobTitle}`)}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </FormField>
 
           {formData.jobTitle === SIGNUP_JOB_TITLE.OTHER ? (
@@ -241,7 +243,7 @@ export default function SignupPage() {
           ) : null}
 
           <FormField htmlFor="signup-teamsize" label={t(locale, 'signup.teamSize')}>
-            <select
+            <SelectField
               id="signup-teamsize"
               value={formData.teamSize}
               onChange={handleChange('teamSize')}
@@ -252,7 +254,7 @@ export default function SignupPage() {
               <option value="11-50">11-50</option>
               <option value="51-200">51-200</option>
               <option value="201+">201+</option>
-            </select>
+            </SelectField>
           </FormField>
 
           <FormField htmlFor="signup-pain" label={t(locale, 'signup.painPoints')}>

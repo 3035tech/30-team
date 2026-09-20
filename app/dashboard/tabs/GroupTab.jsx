@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCompat } from '../../../lib/data';
 import { t } from '../../../lib/i18n';
@@ -551,7 +553,7 @@ export function GroupTab({
                 placeholder={t(locale, 'panel.group.searchAddPh')}
                 className="min-w-0 flex-[1_1_240px] rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2.5 font-mono text-xs text-ink"
               />
-              <select
+              <SelectField
                 onChange={(e)=>{ const id=e.target.value; if(id) addToGroup(id); e.target.value=''; }}
                 defaultValue=""
                 className={cn(S.select, 'w-full max-w-full flex-[0_0_240px] font-mono text-xs sm:w-auto')}
@@ -570,7 +572,7 @@ export function GroupTab({
                       </option>
                     );
                   })}
-              </select>
+              </SelectField>
             </div>
 
             <div className="mb-3.5 flex flex-wrap gap-2">

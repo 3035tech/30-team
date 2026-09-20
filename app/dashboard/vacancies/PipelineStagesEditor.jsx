@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
@@ -312,7 +314,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templ
                         placeholder={t(locale, 'panel.pipelineEditor.labelEnPlaceholder')}
                       />
                       {!s.required ? (
-                        <select
+                        <SelectField
                           value={canonicalDraft}
                           onChange={(e) => setCanonicalDraft(e.target.value)}
                           className={INPUT}
@@ -321,7 +323,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templ
                           {canonicalOptions.map((c) => (
                             <option key={c.value} value={c.value}>{c.label}</option>
                           ))}
-                        </select>
+                        </SelectField>
                       ) : null}
                       <div className="mt-auto flex gap-2 pt-1">
                         <button type="button" className={cn(BTN_PRIMARY, 'flex-1')} onClick={() => saveEdit(s)} disabled={saving}>
@@ -420,7 +422,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templ
                 className={INPUT}
                 placeholder={t(locale, 'panel.pipelineEditor.labelEnPlaceholder')}
               />
-              <select
+              <SelectField
                 value={addingCanonical}
                 onChange={(e) => setAddingCanonical(e.target.value)}
                 className={INPUT}
@@ -429,7 +431,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templ
                 {canonicalOptions.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
-              </select>
+              </SelectField>
               <div className="mt-auto flex gap-2 pt-1">
                 <button type="button" className={cn(BTN_PRIMARY, 'flex-1')} onClick={addStage} disabled={saving || !addingLabelPt.trim()}>
                   {t(locale, 'panel.pipelineEditor.addSubmit')}

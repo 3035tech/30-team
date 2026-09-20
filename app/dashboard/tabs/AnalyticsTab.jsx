@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 /**
  * B-1101 — Analytics: aba de métricas de efetividade
  */
@@ -450,7 +452,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
         {activeView === 'trends' && (
         <div className={cn(formFieldRowClass, 'mb-6 gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4')}>
           <FormField label={t(locale, 'panel.analytics.periodMonths')}>
-            <select
+            <SelectField
               className={S.select}
               value={trendMonths}
               onChange={(e) => setTrendMonths(parseInt(e.target.value, 10))}
@@ -458,7 +460,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
               <option value="6">{t(locale, 'panel.analytics.months6')}</option>
               <option value="12">{t(locale, 'panel.analytics.months12')}</option>
               <option value="24">{t(locale, 'panel.analytics.months24')}</option>
-            </select>
+            </SelectField>
           </FormField>
         </div>
         )}
@@ -474,16 +476,16 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
               <>
                 <div className="grid grid-cols-1 items-end gap-4 rounded-control border border-ink/10 bg-ink/[0.025] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                   <FormField label={t(locale, 'panel.analytics.compareAreaA')}>
-                    <select className={S.select} value={compareParams.areaA} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaA: event.target.value })); }}>
+                    <SelectField className={cn(S.select, 'w-full')} value={compareParams.areaA} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaA: event.target.value })); }}>
                       <option value="">{t(locale, 'panel.analytics.compareSelectArea')}</option>
                       {areaOptions.map((area) => <option key={area} value={area}>{area}</option>)}
-                    </select>
+                    </SelectField>
                   </FormField>
                   <FormField label={t(locale, 'panel.analytics.compareAreaB')}>
-                    <select className={S.select} value={compareParams.areaB} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaB: event.target.value })); }}>
+                    <SelectField className={cn(S.select, 'w-full')} value={compareParams.areaB} onChange={(event) => { setComparison(null); setCompareParams((current) => ({ ...current, areaB: event.target.value })); }}>
                       <option value="">{t(locale, 'panel.analytics.compareSelectArea')}</option>
                       {areaOptions.map((area) => <option key={area} value={area}>{area}</option>)}
-                    </select>
+                    </SelectField>
                   </FormField>
                   <button type="button" className={cn(S.btnPrimary, 'self-end')} disabled={!compareParams.areaA || !compareParams.areaB || compareParams.areaA === compareParams.areaB} onClick={loadComparison}>
                     {t(locale, 'panel.analytics.compareAction')}
@@ -614,7 +616,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
         </p>
         <div className={cn(formFieldRowClass, 'gap-4')}>
           <FormField label={t(locale, 'panel.motivatorsAdmin.analytics.reportFreq')}>
-            <select
+            <SelectField
               className={S.select}
               value={reportPrefs.frequency}
               onChange={(e) => setReportPrefs((p) => ({ ...p, frequency: e.target.value }))}
@@ -622,7 +624,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
               <option value="weekly">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqWeekly')}</option>
               <option value="monthly">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqMonthly')}</option>
               <option value="off">{t(locale, 'panel.motivatorsAdmin.analytics.reportFreqOff')}</option>
-            </select>
+            </SelectField>
           </FormField>
           <label className="flex min-h-touch cursor-pointer items-center gap-2 self-end font-ui text-sm text-ink">
             <input

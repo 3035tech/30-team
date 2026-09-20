@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { TYPE_DATA } from '../../lib/data';
@@ -245,7 +247,7 @@ function AdminListPager({
     >
       <span className="font-mono text-2xs text-ink-muted">{label}</span>
       <div className="flex flex-wrap items-center gap-1.5">
-        <select
+        <SelectField
           value={String(pageSize)}
           onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
           disabled={loading}
@@ -257,7 +259,7 @@ function AdminListPager({
               {t(locale, 'panel.compat.perPageShort', { n })}
             </option>
           ))}
-        </select>
+        </SelectField>
         <button
           type="button"
           disabled={loading || safePage <= 1}
@@ -524,7 +526,7 @@ function PanelSubNav({
       {more.length > 0 ? (
         <label className="relative mb-1 ml-1 inline-flex min-h-touch shrink-0 items-center gap-2">
           <span className="sr-only">{moreLabel}</span>
-          <select
+          <SelectField
             aria-label={moreLabel}
             value={moreValue}
             onChange={(e) => {
@@ -544,7 +546,7 @@ function PanelSubNav({
                 {tab.label}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
       ) : null}
     </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useState } from 'react';
 import { TYPE_DATA } from '../../../lib/data';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
@@ -356,7 +358,7 @@ export function CompatTab({
                 {t(locale, 'panel.compat.pairsPage', { page: pg, total: totalPg })}
               </span>
               <div className="flex flex-wrap items-center gap-2">
-                <select
+                <SelectField
                   value={String(compatPageSize)}
                   onChange={(e) => {
                     const ps = parseInt(e.target.value, 10);
@@ -369,7 +371,7 @@ export function CompatTab({
                       {t(locale, 'panel.compat.perPageShort', { n })}
                     </option>
                   ))}
-                </select>
+                </SelectField>
                 <button
                   type="button"
                   disabled={pg <= 1}

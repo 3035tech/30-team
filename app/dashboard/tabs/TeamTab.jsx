@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
@@ -950,7 +952,7 @@ export function TeamTab({
           <span className="font-mono text-prose text-brand-500">
             {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
           </span>
-          <select
+          <SelectField
             value={bulkStage}
             onChange={(e) => setBulkStage(e.target.value)}
             disabled={bulkBusy}
@@ -959,7 +961,7 @@ export function TeamTab({
             {PIPELINE_OPTIONS.map((code) => (
               <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
             ))}
-          </select>
+          </SelectField>
           <button
             type="button"
             onClick={applyBulk}
@@ -1476,7 +1478,7 @@ export function TeamTab({
                           </div>
                           <label className="flex items-center gap-1.5 text-xs text-ink-muted">
                             {t(locale, 'recruiting.stageLabel')}
-                            <select
+                            <SelectField
                               value={a.pipelineStage || PIPELINE_STAGE.TEST_COMPLETED}
                               disabled={!!stageBusy}
                               onChange={(e) => patchPipeline(a.id, e.target.value)}
@@ -1487,7 +1489,7 @@ export function TeamTab({
                                   {pipelineLabel(locale, code)}
                                 </option>
                               ))}
-                            </select>
+                            </SelectField>
                           </label>
                           <button
                             type="button"
@@ -1723,7 +1725,7 @@ export function TeamTab({
                           label={t(locale, 'recruiting.availabilityLabel')}
                           className={formFieldGrowClass}
                         >
-                          <select
+                          <SelectField
                             value={profileDraft.availability}
                             onChange={(e) =>
                               setProfileDraft((p) => ({ ...p, availability: e.target.value }))
@@ -1739,13 +1741,13 @@ export function TeamTab({
                             <option value="30_days">{t(locale, 'recruiting.availability30')}</option>
                             <option value="60_days">{t(locale, 'recruiting.availability60')}</option>
                             <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
-                          </select>
+                          </SelectField>
                         </FormField>
                         <FormField
                           label={t(locale, 'recruiting.sourceLabel')}
                           className={formFieldGrowClass}
                         >
-                          <select
+                          <SelectField
                             value={profileDraft.source}
                             onChange={(e) =>
                               setProfileDraft((p) => ({ ...p, source: e.target.value }))
@@ -1759,7 +1761,7 @@ export function TeamTab({
                             <option value="agency">{t(locale, 'recruiting.sourceAgency')}</option>
                             <option value="job_board">{t(locale, 'recruiting.sourceJobBoard')}</option>
                             <option value="other">{t(locale, 'recruiting.sourceOther')}</option>
-                          </select>
+                          </SelectField>
                         </FormField>
                         <FormField
                           label={t(locale, 'panel.team.birthDate')}

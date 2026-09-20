@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import Link from 'next/link';
 import { RichTextView } from './RichTextView';
 import { isRichTextEmpty } from '../../lib/sanitize-html';
@@ -680,19 +682,19 @@ export function PublicVacanciesIndexView({
               label={t(locale, 'publicVacancy.indexEmploymentLabel')}
               className="min-w-0 flex-[1_1_160px] gap-1.5"
             >
-              <select name="employmentType" defaultValue={employmentType} className={SC.select}>
+              <SelectField name="employmentType" defaultValue={employmentType} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexEmploymentAll')}</option>
                 <option value="clt">{t(locale, 'recruiting.employmentType_clt')}</option>
                 <option value="pj">{t(locale, 'recruiting.employmentType_pj')}</option>
                 <option value="internship">{t(locale, 'recruiting.employmentType_internship')}</option>
                 <option value="cooperative">{t(locale, 'recruiting.employmentType_cooperative')}</option>
-              </select>
+              </SelectField>
             </FormField>
             <FormField
               label={t(locale, 'publicVacancy.indexWorkplaceLabel')}
               className="min-w-0 flex-[1_1_160px] gap-1.5"
             >
-              <select name="workplaceModality" defaultValue={workplaceModality} className={SC.select}>
+              <SelectField name="workplaceModality" defaultValue={workplaceModality} className={SC.select}>
                 <option value="">{t(locale, 'publicVacancy.indexWorkplaceAll')}</option>
                 {VACANCY_WORKPLACE_MODALITIES.map((mod) => {
                   const key = workplaceModalityLabelKey(mod);
@@ -702,7 +704,7 @@ export function PublicVacanciesIndexView({
                     </option>
                   );
                 })}
-              </select>
+              </SelectField>
             </FormField>
             <button type="submit" className={cn(SC.btnPrimary, 'shrink-0')}>
               {t(locale, 'publicVacancy.indexSearchSubmit')}

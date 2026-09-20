@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { BrStateSelect } from './BrStateSelect';
@@ -32,7 +34,7 @@ export function VacancyWorkplaceFields({
   return (
     <div className="grid max-w-[640px] grid-cols-[repeat(auto-fit,minmax(140px,1fr))] items-start gap-2.5">
       <FormField label={t(locale, 'recruiting.workplaceModalityLabel')}>
-        <select
+        <SelectField
           value={workplaceModality || ''}
           onChange={(e) => onChange?.({ workplaceModality: e.target.value })}
           aria-label={t(locale, 'recruiting.workplaceModalityLabel')}
@@ -44,7 +46,7 @@ export function VacancyWorkplaceFields({
               {t(locale, workplaceModalityLabelKey(mod))}
             </option>
           ))}
-        </select>
+        </SelectField>
       </FormField>
       <FormField label={t(locale, 'recruiting.workplaceStateLabel')}>
         <BrStateSelect

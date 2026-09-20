@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
@@ -456,7 +458,7 @@ export function PromptFormDialog({
 
     if (f.type === 'select') {
       return (
-        <select
+        <SelectField
           value={values[fk] ?? ''}
           onChange={(e) => setField(fk, e.target.value)}
           disabled={Boolean(f.disabled)}
@@ -469,7 +471,7 @@ export function PromptFormDialog({
               {opt.label}
             </option>
           ))}
-        </select>
+        </SelectField>
       );
     }
 

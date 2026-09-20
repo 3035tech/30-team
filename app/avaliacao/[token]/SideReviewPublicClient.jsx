@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../../_components/SelectField';
+
 import { useEffect, useMemo, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
@@ -148,7 +150,7 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
                   ) : null}
                 </div>
                 <FormField label={t(locale, 'performanceReviews.outcomeLabel')}>
-                  <select
+                  <SelectField
                     className={S.select}
                     value={row.outcome}
                     onChange={(e) =>
@@ -164,7 +166,7 @@ export default function SideReviewPublicClient({ token, locale = 'pt-BR' }) {
                         {t(locale, `performanceReviews.${OUTCOME_I18N[o]}`)}
                       </option>
                     ))}
-                  </select>
+                  </SelectField>
                 </FormField>
                 <FormField label={t(locale, 'performanceReviews.sideReview.goalNotes')}>
                   <textarea

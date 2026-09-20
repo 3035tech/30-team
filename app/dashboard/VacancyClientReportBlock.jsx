@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { errorMessage, t } from '../../lib/i18n';
@@ -839,11 +841,11 @@ export function VacancyClientReportBlock({
           </label>
 
           <div className="flex flex-wrap items-center gap-2 mt-3.5">
-            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={S.select}>
+            <SelectField value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={S.select}>
               <option value="shortlist">{t(locale, 'panel.report.filterShortlist')}</option>
               <option value="interview_plus">{t(locale, 'panel.report.filterInterviewPlus')}</option>
               <option value="all">{t(locale, 'panel.report.filterAllTested')}</option>
-            </select>
+            </SelectField>
             <button type="button" onClick={selectVisible} className={btnGhostClass()} disabled={loading || !visible.length}>
               {t(locale, 'panel.report.selectVisible')}
             </button>
@@ -864,7 +866,7 @@ export function VacancyClientReportBlock({
                 t(locale, 'panel.report.suggestShortlistAi')
               )}
             </button>
-            <select
+            <SelectField
               value={String(expiresInDays)}
               onChange={(e) => setExpiresInDays(Number(e.target.value))}
               className={S.select}
@@ -874,13 +876,13 @@ export function VacancyClientReportBlock({
                   {t(locale, 'panel.report.expiresInDays', { n: d })}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
 
           <div className="mt-3">
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="text-xs text-ink-muted">{t(locale, 'panel.report.noteRequiredLabel')}</span>
-              <select
+              <SelectField
                 value={reportTemplateKind}
                 onChange={(e) => setReportTemplateKind(e.target.value)}
                 className={S.selectCompact}
@@ -892,7 +894,7 @@ export function VacancyClientReportBlock({
                     {t(locale, `panel.report.templateKind.${kind}`)}
                   </option>
                 ))}
-              </select>
+              </SelectField>
               <button
                 type="button"
                 onClick={applyNoteTemplate}
@@ -1070,7 +1072,7 @@ export function VacancyClientReportBlock({
                         </td>
                         <td className="py-2 px-2.5">
                           {isOn ? (
-                            <select
+                            <SelectField
                               value={rec}
                               onChange={(e) => setRec(c.candidateId, e.target.value)}
                               className={cn(S.selectCompact, 'py-1')}
@@ -1080,7 +1082,7 @@ export function VacancyClientReportBlock({
                                   {recommendationLabel(r)}
                                 </option>
                               ))}
-                            </select>
+                            </SelectField>
                           ) : (
                             <span className="font-mono text-ink-muted">{recommendationLabel(rec)}</span>
                           )}

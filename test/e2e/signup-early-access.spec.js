@@ -19,8 +19,10 @@ test.describe('early-access signup', () => {
     await page.locator('#signup-fullname').fill('Thomas E2E');
     await page.locator('#signup-email').fill(email);
     await page.locator('#signup-company').fill(companyName);
-    await page.locator('#signup-jobtitle').selectOption('hr_manager');
-    await page.locator('#signup-teamsize').selectOption('11-50');
+    await page.locator('#signup-jobtitle').click();
+    await page.getByRole('option', { name: /gerência ou coordenação de rh|hr manager or coordinator/i }).click();
+    await page.locator('#signup-teamsize').click();
+    await page.getByRole('option', { name: '11-50', exact: true }).click();
     await page.locator('#signup-pain').fill('Gestao 360');
 
     await page.getByRole('button', { name: /criar conta|create free account/i }).click();

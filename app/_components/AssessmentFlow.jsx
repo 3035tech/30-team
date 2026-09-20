@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
@@ -283,7 +285,7 @@ function HomeScreen({
               {areasError}
             </div>
           ) : (
-            <select
+            <SelectField
               value={areaKey}
               onChange={(e) => setAreaKey(e.target.value)}
               className={SC.select}
@@ -293,7 +295,7 @@ function HomeScreen({
                   {localizeAreaLabel(a, locale)}
                 </option>
               ))}
-            </select>
+            </SelectField>
           )}
         </FormField>
 

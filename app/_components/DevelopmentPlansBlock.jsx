@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from './SelectField';
+
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -849,7 +851,7 @@ export function DevelopmentPlansBlock({
                                   >
                                     {t(locale, 'panel.pdi.linkLmsBtn')}
                                   </button>
-                                  <select
+                                  <SelectField
                                     className={cn(S.select, 'min-h-touch w-auto py-1 text-2xs')}
                                     value={it.status}
                                     disabled={busy}
@@ -859,7 +861,7 @@ export function DevelopmentPlansBlock({
                                     <option value="todo">{t(locale, 'panel.pdi.itemStatus.todo')}</option>
                                     <option value="doing">{t(locale, 'panel.pdi.itemStatus.doing')}</option>
                                     <option value="done">{t(locale, 'panel.pdi.itemStatus.done')}</option>
-                                  </select>
+                                  </SelectField>
                                 </div>
                               </div>
                               {(it.linkedResources || []).length > 0 ? (
@@ -919,7 +921,7 @@ export function DevelopmentPlansBlock({
                               {ooOpts.length > 0 ? (
                                 <label className="flex flex-wrap items-center gap-2 pl-10 text-2xs text-ink-muted">
                                   <span>{t(locale, 'panel.pdi.linkOo')}</span>
-                                  <select
+                                  <SelectField
                                     className={cn(S.select, 'min-h-touch max-w-[220px] py-1 text-2xs')}
                                     value={it.oneOnOneId != null ? String(it.oneOnOneId) : ''}
                                     disabled={busy}
@@ -931,7 +933,7 @@ export function DevelopmentPlansBlock({
                                         {String(oo.meetingDate || '').slice(0, 10)}
                                       </option>
                                     ))}
-                                  </select>
+                                  </SelectField>
                                 </label>
                               ) : null}
                             </li>

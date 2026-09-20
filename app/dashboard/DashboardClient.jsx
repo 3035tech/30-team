@@ -1,5 +1,7 @@
 'use client';
 
+import { SelectField } from '../_components/SelectField';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -618,7 +620,7 @@ export default function DashboardClient({
       label={t(locale, 'dashboard.companyFilterLabel')}
       className="w-auto min-w-[10rem] max-w-[18rem] shrink-0"
     >
-      <select
+      <SelectField
         value={company}
         onChange={(e) => {
           const v = e.target.value;
@@ -634,7 +636,7 @@ export default function DashboardClient({
             {co.name}
           </option>
         ))}
-      </select>
+      </SelectField>
     </FormField>
   );
 
@@ -1277,7 +1279,7 @@ export default function DashboardClient({
             aria-label={t(locale, 'dashboard.filtersEssentialsAria')}
           >
             {showsCompanyPicker ? companyFilterControl({ vacancy: 'all', pipeline: 'all' }) : null}
-            <select
+            <SelectField
               value={roster}
               onChange={(e) => {
                 const v = e.target.value;
@@ -1290,8 +1292,8 @@ export default function DashboardClient({
               <option value="internal">{t(locale, 'dashboard.rosterInternal')}</option>
               <option value="recruiting">{t(locale, 'dashboard.rosterRecruiting')}</option>
               <option value="all">{t(locale, 'dashboard.rosterAll')}</option>
-            </select>
-            <select
+            </SelectField>
+            <SelectField
               value={vacancy}
               onChange={(e) => {
                 const v = e.target.value;
@@ -1315,7 +1317,7 @@ export default function DashboardClient({
                   {v.title} {v.status === VACANCY_STATUS.CLOSED ? t(locale, 'dashboard.closed') : ''}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
 
           {filtersExpanded ? (
@@ -1324,24 +1326,24 @@ export default function DashboardClient({
             role="group"
             aria-label={t(locale, 'dashboard.filtersAdvancedAria')}
           >
-            <select value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} className={S.select}>
+            <SelectField value={area} onChange={(e) => { const v = e.target.value; setArea(v); setPipeline('all'); pushFilters({ area: v, pipeline: 'all' }); }} className={S.select}>
               <option value="all">{t(locale, 'dashboard.allAreas')}</option>
               {areas.map((a) => (
                 <option key={a.key} value={a.key}>
                   {localizeAreaLabel(a, locale)} ({counts.find((c) => c.key === a.key)?.count ?? 0})
                 </option>
               ))}
-            </select>
-            <select value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} className={S.select}>
+            </SelectField>
+            <SelectField value={enneagram} onChange={(e) => { const v = e.target.value; setEnneagram(v); pushFilters({ enneagram: v }); }} className={S.select}>
               <option value="all">{t(locale, 'dashboard.allProfiles')}</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => (
                 <option key={t} value={String(t)} title={typeHintTooltip(t, locale)}>
                   T{t} · {typeData[t].short}
                 </option>
               ))}
-            </select>
+            </SelectField>
             {tab !== 'overview' ? (
-            <select value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} className={S.select} aria-label={t(locale, 'recruiting.pipelineAll')}>
+            <SelectField value={pipeline} onChange={(e) => { const v = e.target.value; setPipeline(v); pushFilters({ pipeline: v }); }} className={S.select} aria-label={t(locale, 'recruiting.pipelineAll')}>
               <option value="all">{t(locale, 'recruiting.pipelineAll')}</option>
               <option value="new">{t(locale, 'recruiting.pipelineNew')}</option>
               <option value="interview">{t(locale, 'recruiting.pipelineInterview')}</option>
@@ -1350,7 +1352,7 @@ export default function DashboardClient({
               <option value="approved">{t(locale, 'recruiting.pipelineApproved')}</option>
               <option value="rejected">{t(locale, 'recruiting.pipelineRejected')}</option>
               <option value="archived">{t(locale, 'recruiting.pipelineArchived')}</option>
-            </select>
+            </SelectField>
             ) : null}
             <div className="inline-flex h-[38px] items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3">
               <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
@@ -1507,7 +1509,7 @@ export default function DashboardClient({
                         {t(locale, 'dashboard.itemsPerPageTeam')}
                       </span>
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <select
+                        <SelectField
                           value={String(pagination.pageSize)}
                           onChange={(e) => {
                             const ps = parseInt(e.target.value, 10);
@@ -1518,7 +1520,7 @@ export default function DashboardClient({
                           {PAGE_SIZE_OPTIONS.map((n) => (
                             <option key={n} value={String(n)}>{t(locale, 'dashboard.perPage', { n })}</option>
                           ))}
-                        </select>
+                        </SelectField>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
