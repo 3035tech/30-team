@@ -10,6 +10,8 @@
     "db:validate-schema": "node scripts/validate-release-schema.js",
     "db:validate-schema:static": "node scripts/validate-release-schema.js --static",
     "ops:pilot-preflight": "node scripts/validate-pilot-integrations.js",
+    "ops:render-s3-policy": "node scripts/render-s3-iam-policy.mjs",
+    "ops:audit-admin-auth": "node scripts/audit-admin-api-auth.mjs",
     "release:pilot-check": "node scripts/validate-pilot-readiness.js",
     "release:post-deploy-smoke": "node scripts/validate-pilot-deployment.js",
     "db:test-motivators": "node test/unit/motivators-invite-flow.js",

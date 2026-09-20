@@ -6,20 +6,22 @@
 
 import { NextResponse } from 'next/server';
 import { apiError, ERR } from '../../../../../lib/api-error.js';
+import { withAdminApi } from '../../../../../lib/admin-api.js';
+import { CAP } from '../../../../../lib/permissions.js';
 import { getHiringEffectivenessMetrics } from '../../../../../lib/analytics-metrics.js';
-import { getSessionPayload, getManagerScope, CAP, requireCapability } from '../../../../../lib/ae/require-admin.js';
 import { checkAnalyticsRateLimit, addRateLimitHeaders } from '../../../../../lib/analytics-rate-limit.js';
 import { withApiLogging } from '../../../../../lib/monitoring.js';
 import { isValidAnalyticsDateRange } from '../../../../../lib/analytics-query.js';
 
-export async function GET(request) {
+export const GET = withAdminApi({
+  cap: CAP.OVERVIEW_VIEW,
+  requireCompany: false,
+  companyFrom: 'none',
+  logLabel: 'analytics.metrics',
+}, async ({ request, payload, scope }) => {
   const logContext = { operation: 'analytics.metrics' };
   return withApiLogging(request, async () => {
    try {
-    const payload = await getSessionPayload();
-    if (!requireCapability(payload, CAP.OVERVIEW_VIEW)) return apiError(request, ERR.UNAUTHORIZED, 401);
-    const scope = getManagerScope(payload);
-    if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
     const companyId = scope.isAdmin
       ? Number(new URL(request.url).searchParams.get('companyId') || scope.companyId)
       : Number(scope.companyId);
@@ -61,4 +63,4 @@ export async function GET(request) {
     return apiError(request, ERR.SERVER_ERROR, 500);
    }
   }, logContext);
-}
+});
