@@ -19,6 +19,11 @@ export const dynamic = 'force-dynamic';
 const UPLOAD_LIMIT = 20;
 const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
+
+function safeFileName(fileName) {
+  return String(fileName || 'attachment.bin').replace(/[^a-zA-Z0-9._-]/g, '_');
+}
 
 async function boundedFormData(request) {
   const reader = request.body?.getReader();
@@ -59,13 +64,14 @@ async function context(request, props) {
   return { session, id: Number(rawId) };
 }
 
+/** Download the authenticated employee's sick-leave attachment. */
 export async function GET(request, props) {
   try {
     const ctx = await context(request, props);
     if (ctx.error) return ctx.error;
     const result = await downloadLeaveAttachment({ query }, { id: ctx.id, ...ctx.session });
     if (!result.ok) return apiErrorFromResult(request, result);
-    const fileName = result.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = safeFileName(result.fileName);
     return new NextResponse(result.body, {
       headers: {
         'Cache-Control': 'private, no-store',
@@ -79,6 +85,7 @@ export async function GET(request, props) {
   }
 }
 
+/** Upload or replace the authenticated employee's sick-leave attachment. */
 export async function POST(request, props) {
   try {
     const ctx = await context(request, props);
@@ -131,7 +138,7 @@ export async function POST(request, props) {
     }
     const home = await getEmployeeDpHome({ query }, ctx.session);
     if (!home.ok) return apiErrorFromResult(request, home);
-    return NextResponse.json(home, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(home, { headers: NO_STORE });
   } catch (error) {
     if (error?.code === ERR.INVALID_CV_FILE_SIZE || error?.code === ERR.INVALID_CV_FILE_TYPE) {
       return apiError(request, error.code, HTTP_STATUS.BAD_REQUEST);
@@ -140,6 +147,7 @@ export async function POST(request, props) {
   }
 }
 
+/** Remove the authenticated employee's sick-leave attachment. */
 export async function DELETE(request, props) {
   try {
     const ctx = await context(request, props);
@@ -152,7 +160,7 @@ export async function DELETE(request, props) {
     if (!result.ok) return apiErrorFromResult(request, result);
     const home = await getEmployeeDpHome({ query }, ctx.session);
     if (!home.ok) return apiErrorFromResult(request, home);
-    return NextResponse.json(home, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(home, { headers: NO_STORE });
   } catch {
     return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
