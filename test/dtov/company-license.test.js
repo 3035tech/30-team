@@ -36,7 +36,7 @@ async function license(companyId) {
   return (await db.query('SELECT * FROM company_licenses WHERE company_id=$1', [companyId])).rows[0];
 }
 async function browserContext(cookie, width = 1365) {
-  const context = await browser.newContext({ viewport: { width, height: 900 } });
+  const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await context.addCookies(cookie.split('; ').map((entry) => { const i = entry.indexOf('='); return { name: entry.slice(0, i), value: entry.slice(i + 1), url: base }; }));
   return context;
 }
@@ -133,10 +133,10 @@ try {
   await expect(summary).toContainText('apenas um aviso'); checks++;
   for (const width of [390, 1365]) {
     await page.setViewportSize({ width, height: 900 });
-    const closeMenu = page.locator('.db-sidebar-close-mobile:visible').last();
-    if (width === 390 && await closeMenu.isVisible()) {
-      await closeMenu.click();
-    }
+    // A translated offscreen drawer still satisfies Playwright isVisible().
+    // Escape closes an open drawer without clicking a hidden duplicate button.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.db-overlay-visible')).toHaveCount(0);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1), false);
     await page.screenshot({ path: `/private/tmp/team30-license-${width}.png`, fullPage: true, animations: 'disabled' }); checks++;
   }
@@ -156,6 +156,11 @@ try {
   await page.goto(base + '/employee/profile');
   const logout = page.locator('#employee-sidebar').getByRole('button', { name: 'Sair', exact: true });
   await expect(logout).toBeVisible();
+  await page.locator('#employee-sidebar .db-sidebar-collapse-toggle').click();
+  await expect(logout).toHaveAttribute('title', 'Sair');
+  const logoutBounds = await logout.boundingBox();
+  assert.ok(logoutBounds.width >= 44 && logoutBounds.height >= 44, 'collapsed logout retains a 44px target'); checks++;
+  await page.locator('#employee-sidebar .db-sidebar-collapse-toggle').click();
   await page.route('**/api/auth/employee/session', (route) => route.request().method() === 'DELETE' ? route.abort() : route.continue());
   await logout.click();
   await expect(page.getByText('Não foi possível sair. Confira sua conexão e tente novamente.')).toBeVisible();

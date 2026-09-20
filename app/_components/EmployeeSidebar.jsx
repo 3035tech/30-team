@@ -290,7 +290,7 @@ export function EmployeeSidebar({
           );
         })}
       </nav>
-      <div className="shrink-0 border-t border-ink/10 p-2">
+      <div className="shrink-0 border-t border-ink/10 py-2">
         <EmployeeLogoutButton locale={locale} compact={navCollapsed} onLoggedOut={onClose} />
       </div>
     </aside>

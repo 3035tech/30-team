@@ -1,5 +1,7 @@
 'use client';
 
+import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -196,6 +198,15 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           label: t(locale, 'panel.dp.addressLine'),
           defaultValue: profile?.addressLine || '',
           maxLength: 240,
+          row: 'streetNumber',
+        },
+        {
+          key: 'addressNumber',
+          row: 'streetNumber',
+          label: t(locale, 'panel.dp.addressNumber'),
+          defaultValue: profile?.addressNumber || '',
+          maxLength: DP_ADDRESS_NUMBER_MAX_LENGTH,
+          help: t(locale, 'panel.dp.addressNumberHelp'),
         },
         {
           key: 'addressCity',
@@ -777,8 +788,11 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                 {profile.cpf ? formatCpfBr(profile.cpf) : '—'}
               </p>
             </FormField>
-            <FormField as="div" label={t(locale, 'panel.dp.addressLine')} className="sm:col-span-2">
+            <FormField as="div" label={t(locale, 'panel.dp.addressLine')}>
               <p className="m-0 text-sm text-ink">{profile.addressLine || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.addressNumber')}>
+              <p className="m-0 text-sm text-ink">{profile.addressNumber || '—'}</p>
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.addressCity')}>
               <p className="m-0 text-sm text-ink">{profile.addressCity || '—'}</p>

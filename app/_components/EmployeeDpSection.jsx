@@ -1,5 +1,7 @@
 'use client';
 
+import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -193,6 +195,15 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           label: t(locale, 'panel.dp.addressLine'),
           defaultValue: profile?.addressLine || '',
           maxLength: 240,
+          row: 'streetNumber',
+        },
+        {
+          key: 'addressNumber',
+          row: 'streetNumber',
+          label: t(locale, 'panel.dp.addressNumber'),
+          defaultValue: profile?.addressNumber || '',
+          maxLength: DP_ADDRESS_NUMBER_MAX_LENGTH,
+          help: t(locale, 'panel.dp.addressNumberHelp'),
         },
         {
           key: 'addressCity',
@@ -572,8 +583,11 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                 {profile?.cpf ? formatCpfBr(profile.cpf) : '—'}
               </p>
             </FormField>
-            <FormField label={t(locale, 'panel.dp.addressLine')} className="sm:col-span-2">
+            <FormField label={t(locale, 'panel.dp.addressLine')}>
               <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressLine || '—'}</p>
+            </FormField>
+            <FormField label={t(locale, 'panel.dp.addressNumber')}>
+              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressNumber || '—'}</p>
             </FormField>
             <FormField label={t(locale, 'panel.dp.addressCity')}>
               <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressCity || '—'}</p>

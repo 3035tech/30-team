@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { TIME_PUNCH_KIND } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
@@ -107,10 +108,15 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
   if (loading && !data) return <AppLoading variant="panel" />;
   if (!data) {
     return (
-      <EmptyState
-        title={t(locale, 'employeeHome.timeClock.emptyTitle')}
-        message={t(locale, 'employeeHome.timeClock.loadError')}
-      />
+      <div>
+        <EmptyState
+          title={t(locale, 'employeeHome.timeClock.emptyTitle')}
+          message={t(locale, 'employeeHome.timeClock.loadError')}
+        />
+        <button type="button" className={S.btnGhost} onClick={() => void load()}>
+          {t(locale, 'common.retry')}
+        </button>
+      </div>
     );
   }
 
@@ -158,19 +164,25 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
       </div>
 
       <p className="mb-2 mt-0 font-mono text-2xs text-ink-faint">
-        {t(locale, 'employeeHome.timeClock.dayLabel', { day: data.day })}
+        {t(locale, 'employeeHome.timeClock.dayLabel', { day: formatDisplayDate(data.day, locale) })}
       </p>
       {(data.punches || []).length === 0 ? (
         <p className={cn(S.muted, 'mb-0 text-prose')}>{t(locale, 'employeeHome.timeClock.noPunches')}</p>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {data.punches.map((p) => (
+        <ol aria-label={t(locale, 'employeeHome.timeClock.timelineLabel')} className="m-0 list-none p-0">
+          {data.punches.map((p, index) => (
             <li
               key={p.id}
-              className="flex flex-wrap items-center gap-2 rounded-control border border-ink/8 bg-ink/[0.02] px-3 py-2"
+              className="grid grid-cols-[4rem_1rem_minmax(0,1fr)] gap-x-3"
             >
-              <span className="font-mono text-prose text-ink">{formatTime(p.punchedAt, locale)}</span>
-              <StatusToneChip tone={p.punchKind === TIME_PUNCH_KIND.IN ? 'success' : 'info'}>
+              <time dateTime={p.punchedAt} className="pt-3 text-right font-mono text-sm tabular-nums text-ink">{formatTime(p.punchedAt, locale)}</time>
+              <div className="relative flex justify-center" aria-hidden="true">
+                {index < data.punches.length - 1 ? <span className="absolute -bottom-5 left-1/2 top-5 w-px -translate-x-1/2 bg-ink/15" /> : null}
+                <span className={cn('relative mt-4 h-2.5 w-2.5 shrink-0 rounded-full ring-4 ring-canvas', p.punchKind === TIME_PUNCH_KIND.IN ? 'bg-success' : 'bg-info')} />
+              </div>
+              <div className={cn('min-w-0 pt-2', index < data.punches.length - 1 ? 'pb-6' : 'pb-2')}>
+                <div className="flex min-h-8 flex-wrap items-center gap-2">
+                  <StatusToneChip tone={p.punchKind === TIME_PUNCH_KIND.IN ? 'success' : 'info'}>
                 {p.punchKind === TIME_PUNCH_KIND.IN
                   ? t(locale, 'employeeHome.timeClock.kindIn')
                   : t(locale, 'employeeHome.timeClock.kindOut')}
@@ -180,9 +192,11 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
                   {t(locale, `employeeHome.timeClock.flag.${p.flag}`)}
                 </StatusToneChip>
               ) : null}
+                </div>
+              </div>
             </li>
           ))}
-        </ul>
+        </ol>
       )}
     </ContentEnter>
   );

@@ -281,7 +281,7 @@ export function EmployeeTopBar({
             : t(locale, 'employeeHome.eyebrow')}
         </p>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
           <LanguageSelect locale={locale} onChange={persistLocale} compact />
           <DarkModeToggle />
 
@@ -382,7 +382,7 @@ export function EmployeeTopBar({
               }}
             >
               <Icon name="user" className="h-4 w-4 shrink-0 opacity-75" />
-              <span className="truncate">{displayName || t(locale, 'employeeHome.profile')}</span>
+              <span className="hidden truncate sm:inline">{displayName || t(locale, 'employeeHome.profile')}</span>
               <Icon
                 name="chevronDown"
                 className={cn(

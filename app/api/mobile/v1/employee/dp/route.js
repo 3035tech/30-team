@@ -41,6 +41,7 @@ export async function PATCH(request) {
       emergencyPhone: body.emergencyPhone ?? previous.emergencyPhone,
       emergencyRelation: body.emergencyRelation ?? previous.emergencyRelation,
       cpf: body.cpf ?? previous.cpf, addressLine: body.addressLine ?? previous.addressLine,
+      addressNumber: body.addressNumber,
       addressCity: body.addressCity ?? previous.addressCity, addressState: body.addressState ?? previous.addressState,
       addressPostal: body.addressPostal ?? previous.addressPostal, internalNotes: previous.internalNotes,
     });

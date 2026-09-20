@@ -24,6 +24,9 @@ Empresas sem esse cadastro não recebem uma licença automaticamente.
 - Não libera criação de novas empresas para gestores early access.
 - Portal do colaborador: Sair no rodapé lateral e no menu de perfil reutiliza o
   mesmo componente. Falha no logout mantém a tela e oferece nova tentativa.
+  Durante a saída, o botão exibe progresso e fica desabilitado. O menu recolhido
+  mantém nome acessível e tooltip. No perfil, datas usam marcação semântica e o
+  vencimento recebe destaque, sem depender apenas da cor do status.
 
 ## Deploy e rollback
 

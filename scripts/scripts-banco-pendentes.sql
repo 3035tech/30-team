@@ -3379,3 +3379,7 @@ ORDER BY min(created_at), company_id
 ON CONFLICT (company_id) DO NOTHING;
 
 INSERT INTO schema_migrations(name) VALUES ('122_company_early_access_license.sql') ON CONFLICT (name) DO NOTHING;
+
+-- Additive: do not parse or overwrite existing free-text addresses.
+ALTER TABLE candidate_dp_profiles ADD COLUMN IF NOT EXISTS address_number VARCHAR(20) NOT NULL DEFAULT '';
+INSERT INTO schema_migrations(name) VALUES ('123_dp_address_number.sql') ON CONFLICT (name) DO NOTHING;

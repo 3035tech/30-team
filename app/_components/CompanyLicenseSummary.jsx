@@ -2,6 +2,7 @@
 
 import { t } from '../../lib/i18n';
 import { COMPANY_LICENSE } from '../../lib/company-license';
+import { cn } from '../../lib/cn';
 import { formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { StatusToneChip } from './StatusToneChip';
@@ -21,17 +22,20 @@ export function CompanyLicenseSummary({ license, locale }) {
       </div>
       {license ? <>
         <p className="mb-3 mt-1 text-sm text-ink-muted">{t(locale, 'dashboard.licensePlan')}</p>
-        <dl className="m-0 grid gap-4 sm:grid-cols-3">
+        <dl className="m-0 grid gap-x-6 gap-y-4 rounded-control bg-canvas/60 p-4 sm:grid-cols-3">
           {[
-            ['dashboard.licenseNumber', license.number],
-            ['dashboard.licenseStartsAt', formatDisplayDateTime(license.startsAt, locale)],
-            ['dashboard.licenseExpiresAt', formatDisplayDateTime(license.expiresAt, locale)],
-          ].map(([label, value]) => <div key={label} className="min-w-0">
+            ['dashboard.licenseNumber', license.number, null],
+            ['dashboard.licenseStartsAt', formatDisplayDateTime(license.startsAt, locale), license.startsAt],
+            ['dashboard.licenseExpiresAt', formatDisplayDateTime(license.expiresAt, locale), license.expiresAt],
+          ].map(([label, value, dateTime]) => <div key={label} className="min-w-0">
             <dt className={S.muted}>{t(locale, label)}</dt>
-            <dd className="m-0 mt-1 break-words text-sm font-medium text-ink">{value}</dd>
+            <dd className={cn('m-0 mt-1.5 break-words text-sm text-ink tabular-nums',
+              label === 'dashboard.licenseExpiresAt' ? 'font-semibold' : 'font-medium')}>
+              {dateTime ? <time dateTime={dateTime}>{value}</time> : value}
+            </dd>
           </div>)}
         </dl>
-        <p className="mb-0 mt-3 text-xs text-ink-muted">{t(locale, 'dashboard.licenseEmployeeFree')}</p>
+        <p className="mb-0 mt-3 max-w-prose text-prose leading-relaxed text-ink-muted">{t(locale, 'dashboard.licenseEmployeeFree')}</p>
         {expired ? <InlineCallout tone="warning" className="mt-3">
           {t(locale, 'dashboard.licenseExpiredNotice')}
         </InlineCallout> : null}

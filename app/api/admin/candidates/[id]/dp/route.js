@@ -110,6 +110,7 @@ export async function PATCH(request, props) {
       emergencyRelation: body.emergencyRelation,
       cpf: body.cpf,
       addressLine: body.addressLine,
+      addressNumber: body.addressNumber,
       addressCity: body.addressCity,
       addressState: body.addressState,
       addressPostal: body.addressPostal,

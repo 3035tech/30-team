@@ -3,6 +3,17 @@
   "description": "Fixture catalog for DTOV ephemeral DB. Add a module when a new feature needs data the baseline does not cover.",
   "fixtures": [
     {
+      "id": "dp-address-number",
+      "module": "dp-address-number.js",
+      "enabled": true,
+      "dependsOn": ["baseline"],
+      "covers": ["dp-address-number", "legacy-profile-compatibility"],
+      "smoke": [{
+        "name": "employee-house-number",
+        "sql": "SELECT 1 FROM candidate_dp_profiles p JOIN candidates c ON c.id=p.candidate_id AND c.company_id=p.company_id WHERE c.email='colaborador@todos-os-dados.demo' AND p.address_number='30A' LIMIT 1"
+      }]
+    },
+    {
       "id": "company-license",
       "module": "company-license.js",
       "enabled": true,

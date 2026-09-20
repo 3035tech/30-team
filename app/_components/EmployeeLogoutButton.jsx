@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { employeeLoginUrl } from '../../lib/employee-client-session';
-import { S } from '../dashboard/dashboard-shared';
 import { Icon } from './Icon';
+import { Spinner } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 
 /** Both employee menus share the same logout and failure behavior. */
@@ -32,9 +32,9 @@ export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOu
     }
   };
   return <button type="button" role={role} onClick={logout} disabled={busy} aria-busy={busy}
-    aria-label={label} title={compact ? label : undefined}
-    className={cn(S.btnGhost, 'flex min-h-touch w-full items-center gap-2.5 text-danger', compact ? 'justify-center' : 'justify-start')}>
-    <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />
-    {!compact ? <span>{busy ? t(locale, 'panel.common.loading') : label}</span> : null}
+    aria-label={busy ? t(locale, 'employeeHome.loggingOut') : label} title={compact ? label : undefined}
+    className={cn('flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent py-3 font-ui text-sm font-medium text-ink-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55', compact ? 'justify-center px-0' : 'justify-start px-2.5')}>
+    {busy ? <Spinner /> : <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />}
+    {!compact ? <span>{busy ? t(locale, 'employeeHome.loggingOut') : label}</span> : null}
   </button>;
 }
