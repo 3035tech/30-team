@@ -16,7 +16,7 @@ import { useAppFeedback } from './AppFeedback';
 import { StatusToneChip } from './StatusToneChip';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
-import { CopyableLink } from './CopyableLink';
+import { PrivateAttachment } from './PrivateAttachment';
 import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import { SignatureStrokePreview } from './SignaturePadField';
@@ -838,19 +838,11 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                         {sigStatusLabel(locale, sig)}
                       </StatusToneChip>
                     ) : null}
-                    <span className="font-mono text-2xs text-ink-muted">
-                      {doc.hasFile
-                        ? doc.fileName || t(locale, 'panel.dp.docHasFile')
-                        : t(locale, 'panel.dp.docNoFile')}
-                    </span>
-                    {doc.hasFile && doc.fileUrl ? (
-                      <CopyableLink
-                        url={doc.fileUrl}
-                        label={t(locale, 'panel.dp.docOpenFile')}
-                        compact
-                        locale={locale}
-                      />
-                    ) : null}
+                      {doc.hasFile ? (
+                        <PrivateAttachment href={`/api/admin/candidates/${encodeURIComponent(candidateId)}/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
+                      ) : (
+                        <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.dp.docNoFile')}</span>
+                      )}
                   </div>
                   {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
                     <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>
@@ -1009,16 +1001,11 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       {t(locale, 'panel.dp.managerNotes')}: {row.managerNotes}
                     </p>
                   ) : null}
-                  {row.hasFile && row.fileUrl ? (
-                    <div className="mt-1">
-                      <CopyableLink
-                        url={row.fileUrl}
-                        label={row.fileName || t(locale, 'panel.dp.docOpenFile')}
-                        compact
-                        locale={locale}
-                      />
-                    </div>
-                  ) : null}
+                    {row.hasFile && scopedCompanyId ? (
+                      <div className="mt-2">
+                        <PrivateAttachment href={`/api/admin/dp/leave/${encodeURIComponent(row.id)}/file?companyId=${encodeURIComponent(scopedCompanyId)}`} fileName={row.fileName} locale={locale} />
+                      </div>
+                    ) : null}
                 </div>
                 {!readOnly && scopedCompanyId ? (
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">

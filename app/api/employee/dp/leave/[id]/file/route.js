@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { dpDownloadResponse } from '../../../../../../../lib/people/dp-download-response.js';
+import { downloadLeaveAttachment } from '../../../../../../../lib/people/employee-dp.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
 import { query } from '../../../../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
@@ -13,6 +15,18 @@ import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import { zPositiveInt } from '../../../../../../../lib/validate.js';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(request, props) {
+  const session = await getEmployeeSessionPayload();
+  if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+  const params = await props.params;
+  const parsed = zPositiveInt.safeParse(params?.id);
+  if (!parsed.success) return apiError(request, ERR.INVALID_ID, 400);
+  return dpDownloadResponse(request, `employee:${session.companyId}:${session.candidateId}`, () =>
+    downloadLeaveAttachment({ query }, { id: parsed.data, companyId: session.companyId, candidateId: session.candidateId })
+  );
+}
+
 
 /** POST multipart atestado on own sick leave */
 export async function POST(request, props) {

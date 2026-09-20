@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { DateField } from '../../../app/_components/DateField.jsx';
 import { PromptFormDialog } from '../../../app/_components/PromptFormDialog.jsx';
 import { SelectField } from '../../../app/_components/SelectField.jsx';
+import { PrivateAttachment } from '../../../app/_components/PrivateAttachment.jsx';
 export default function Preview() {
  const [date, setDate] = useState('2026-09-19');
  const [time, setTime] = useState('2026-09-19T10:30');
@@ -14,6 +15,9 @@ export default function Preview() {
  const [rowCalls, setRowCalls] = useState(0);
  const selectRef = useRef(null);
  return <main className="mx-auto max-w-3xl space-y-6 p-6">
+ <section aria-label="Anexo privado">
+ <PrivateAttachment href="/api/employee/dp/documents/address_proof/file" fileName="Comprovante de endereço.pdf" />
+ </section>
  <button type="button" onClick={()=>setDialog(true)}>Abrir formulário</button>
  <PromptFormDialog open={dialog} title="Formulário de teste" fields={[
   {key:'name',label:'Nome',required:true},

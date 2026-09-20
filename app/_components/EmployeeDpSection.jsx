@@ -10,7 +10,7 @@ import { EmptyState } from './EmptyState';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
-import { CopyableLink } from './CopyableLink';
+import { PrivateAttachment } from './PrivateAttachment';
 import { RichTextView } from './RichTextView';
 import { LeaveBalanceSummary } from './LeaveBalanceSummary';
 import { BR_STATES } from '../../lib/candidate-profile.js';
@@ -652,19 +652,11 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                           {sigStatusLabel(locale, sig)}
                         </StatusToneChip>
                       ) : null}
-                      <span className="font-mono text-2xs text-ink-muted">
-                        {doc.hasFile
-                          ? doc.fileName || t(locale, 'panel.dp.docHasFile')
-                          : t(locale, 'panel.dp.docNoFile')}
-                      </span>
-                      {doc.hasFile && doc.fileUrl ? (
-                        <CopyableLink
-                          url={doc.fileUrl}
-                          label={t(locale, 'panel.dp.docOpenFile')}
-                          compact
-                          locale={locale}
-                        />
-                      ) : null}
+                      {doc.hasFile ? (
+                        <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
+                      ) : (
+                        <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.dp.docNoFile')}</span>
+                      )}
                     </div>
                     {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
                       <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>
@@ -735,13 +727,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         <p className={cn(S.muted, 'mb-3 mt-0 text-prose')}>
                           {t(locale, 'employeeHome.dpSignPadHint')}
                         </p>
-                        {doc.fileUrl ? (
+                        {doc.hasFile ? (
                           <div className="mb-3">
-                            <CopyableLink
-                              url={doc.fileUrl}
-                              label={t(locale, 'panel.dp.docOpenFile')}
-                              locale={locale}
-                            />
+                            <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
                           </div>
                         ) : null}
                         <FormField label={t(locale, 'panel.dp.sigStrokeLabel')}>
@@ -861,14 +849,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         <RichTextView html={row.reason} />
                       </div>
                     ) : null}
-                    {row.hasFile && row.fileUrl ? (
-                      <div className="mt-1">
-                        <CopyableLink
-                          url={row.fileUrl}
-                          label={row.fileName || t(locale, 'panel.dp.docOpenFile')}
-                          compact
-                          locale={locale}
-                        />
+                    {row.hasFile ? (
+                      <div className="mt-2">
+                        <PrivateAttachment href={`/api/employee/dp/leave/${encodeURIComponent(row.id)}/file`} fileName={row.fileName} locale={locale} />
                       </div>
                     ) : null}
                   </div>

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { dpDownloadResponse } from '../../../../../../../lib/people/dp-download-response.js';
+import { downloadLeaveAttachment } from '../../../../../../../lib/people/employee-dp.js';
 import { withAdminApi } from '../../../../../../../lib/admin-api.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
 import { query } from '../../../../../../../lib/db.js';
@@ -9,6 +11,25 @@ import {
 } from '../../../../../../../lib/people/employee-dp.js';
 import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import { zPositiveInt } from '../../../../../../../lib/validate.js';
+
+/** Authenticated private leave attachment download. */
+
+export const GET = withAdminApi(
+  { anyCap: [CAP.DP_VIEW, CAP.TEAM_VIEW], requireCompany: true, companyFrom: 'query', logLabel: 'dp-leave-file-download' },
+  async ({ request, payload, params, companyId }) => {
+    const parsed = zPositiveInt.safeParse(params?.id);
+    if (!parsed.success) return apiError(request, ERR.INVALID_ID, 400);
+    return dpDownloadResponse(request, `manager:${payload.userId}`, async () => {
+      const result = await query(
+        'SELECT candidate_id AS "candidateId" FROM employee_leave_requests WHERE id = $1 AND company_id = $2 LIMIT 1',
+        [parsed.data, companyId]
+      );
+      const leave = result.rows[0];
+      if (!leave) return { ok: false, errorCode: ERR.NOT_FOUND };
+      return downloadLeaveAttachment({ query }, { id: parsed.data, companyId, candidateId: leave.candidateId });
+    });
+  }
+);
 
 /** POST /api/admin/dp/leave/[id]/file — atestado attachment */
 export const POST = withAdminApi(

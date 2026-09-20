@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { dpDownloadResponse } from '../../../../../../../../../lib/people/dp-download-response.js';
+import { downloadDpDocumentFile } from '../../../../../../../../../lib/people/employee-dp.js';
+import { withAdminApi } from '../../../../../../../../../lib/admin-api.js';
+import { zPositiveInt } from '../../../../../../../../../lib/validate.js';
 import { query } from '../../../../../../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../../../../lib/api-error.js';
 import {
@@ -27,6 +31,23 @@ async function loadCandidateScope(candidateId, scope) {
   }
   return { candidate: c.rows[0] };
 }
+
+/** Authenticated private document download. */
+
+export const GET = withAdminApi(
+  { anyCap: DP_OR_TEAM, requireCompany: false, companyFrom: 'none', logLabel: 'dp-document-file-download' },
+  async ({ request, payload, scope, params }) => {
+    const parsed = zPositiveInt.safeParse(params?.id);
+    if (!parsed.success) return apiError(request, ERR.INVALID_ID, 400);
+    return dpDownloadResponse(request, `manager:${payload.userId}`, async () => {
+      const loaded = await loadCandidateScope(parsed.data, scope);
+      if (loaded.error) return { ok: false, errorCode: ERR.NOT_FOUND };
+      return downloadDpDocumentFile({ query }, {
+        companyId: loaded.candidate.companyId, candidateId: parsed.data, docKey: params?.docKey,
+      });
+    });
+  }
+);
 
 /** POST multipart file upload for a DP document. */
 export async function POST(request, props) {

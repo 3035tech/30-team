@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { dpDownloadResponse } from '../../../../../../../lib/people/dp-download-response.js';
+import { downloadDpDocumentFile } from '../../../../../../../lib/people/employee-dp.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../../../lib/api-error.js';
 import { query } from '../../../../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
@@ -12,6 +14,16 @@ import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifica
 import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(request, props) {
+  const session = await getEmployeeSessionPayload();
+  if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+  const params = await props.params;
+  return dpDownloadResponse(request, `employee:${session.companyId}:${session.candidateId}`, () =>
+    downloadDpDocumentFile({ query }, { companyId: session.companyId, candidateId: session.candidateId, docKey: params?.docKey })
+  );
+}
+
 
 /** POST /api/employee/dp/documents/[docKey]/file — collaborator upload. */
 export async function POST(request, props) {
