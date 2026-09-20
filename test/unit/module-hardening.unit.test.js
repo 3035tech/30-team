@@ -44,6 +44,13 @@ describe('module hardening', () => {
     assert.doesNotMatch(source('app/api/admin/compensation/route.js'), /CAP\.TEAM_VIEW/);
   });
 
+  it('keeps authenticated capability denials distinct from expired sessions', () => {
+    const wrapper = source('lib/admin-api.js');
+    assert.match(wrapper, /if \(!payload\)[\s\S]*ERR\.UNAUTHORIZED, 401/);
+    assert.match(wrapper, /ERR\.FORBIDDEN, 403/);
+    assert.match(source('lib/api-error-codes.js'), /FORBIDDEN: 'FORBIDDEN'/);
+  });
+
   it('uses the canonical admin API wrapper on the migrated performance route', () => {
     const route = source('app/api/admin/performance-reviews/route.js');
     assert.match(route, /withAdminApi/);

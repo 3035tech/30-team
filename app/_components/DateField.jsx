@@ -15,6 +15,12 @@ const CALENDAR_CELLS = 42;
 const pad = (n) => String(n).padStart(2, '0');
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const localDay = (s) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+function validDateKey(value) {
+  const raw = String(value || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return '';
+  const date = localDay(raw);
+  return Number.isFinite(date.getTime()) && dayKey(date) === raw ? raw : '';
+}
 
 /** Custom calendar. Hidden input preserves ISO form values and native constraints,
  * without showing a browser picker. Escape cancels; selection returns focus. */
@@ -46,7 +52,7 @@ export function DateField({
   function close() { setOpen(false); buttonRef.current?.focus(); }
   function show() {
     if (disabled) return;
-    let initial = String(value || dayKey(new Date()));
+    let initial = validDateKey(value) || dayKey(new Date());
     if (min && initial.slice(0, 10) < min.slice(0, 10)) initial = min;
     if (max && initial.slice(0, 10) > max.slice(0, 10)) initial = max;
     setDraft(withTime ? (initial.includes('T') ? initial : `${initial}T00:00`) : initial);
@@ -142,8 +148,9 @@ export function DateField({
   }
 
   let display = placeholder || message('choose');
-  if (value) {
-    const parsed = withTime ? new Date(value) : localDay(value);
+  const safeValue = withTime ? String(value || '') : validDateKey(value);
+  if (safeValue) {
+    const parsed = withTime ? new Date(safeValue) : localDay(safeValue);
     if (!Number.isNaN(parsed.getTime())) display = parsed.toLocaleString(locale, {
       day: '2-digit', month: '2-digit', year: 'numeric',
       ...(withTime ? { hour: '2-digit', minute: '2-digit', ...(includeSeconds ? { second: '2-digit' } : {}) } : {}),

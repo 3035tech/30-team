@@ -81,6 +81,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
   const [marketBand, setMarketBand] = useState('all');
   const [historyPerson, setHistoryPerson] = useState(null);
   const [workspaceSection, setWorkspaceSection] = useState('people');
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -90,6 +91,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
       return;
     }
     setLoading(true);
+    setAccessDenied(false);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -104,6 +106,12 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
       if (companyId) params.set('companyId', String(companyId));
       const res = await fetch(`/api/admin/compensation?${params}`);
       const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        setAccessDenied(true);
+        setItems([]);
+        setTotal(0);
+        return;
+      }
       if (!res.ok) throw new Error(data?.error || 'load');
       setItems(Array.isArray(data.items) ? data.items : []);
       setTotal(Number(data.total) || 0);
@@ -141,6 +149,15 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
       <EmptyState
         title={t(locale, 'panel.compensationRoster.needCompanyTitle')}
         message={t(locale, 'panel.compensationRoster.needCompanyHint')}
+      />
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <EmptyState
+        title={t(locale, 'panel.compensationRoster.accessDeniedTitle')}
+        message={t(locale, 'panel.compensationRoster.accessDeniedHint')}
       />
     );
   }

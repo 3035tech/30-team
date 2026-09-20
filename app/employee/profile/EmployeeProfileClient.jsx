@@ -11,7 +11,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
+import { FormField } from '../../_components/FormField';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
@@ -279,8 +279,8 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   disabled={busy}
                 />
               </FormField>
-              <div className={cn(formFieldRowClass, 'gap-3')}>
-                <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0 flex-1">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.45fr)_minmax(7rem,0.65fr)_minmax(0,1fr)]">
+                <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0">
                   <input
                     className={cn(S.input, 'w-full')}
                     value={form.city}
@@ -288,7 +288,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                   />
                 </FormField>
-                <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0 flex-1">
+                <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0">
                   <SelectField
                     className={cn(S.select, 'w-full')}
                     value={form.state}
@@ -303,15 +303,15 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     ))}
                   </SelectField>
                 </FormField>
+                <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')} className="min-w-0">
+                  <DateField
+                    className={cn(S.input, 'w-full')}
+                    value={form.birthDate}
+                    onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value || '' }))}
+                    disabled={busy}
+                  />
+                </FormField>
               </div>
-              <FormField as="div" label={t(locale, 'employeeHome.birthDateLabel')}>
-                <DateField
-                  className={cn(S.input, 'w-full')}
-                  value={form.birthDate}
-                  onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value || '' }))}
-                  disabled={busy}
-                />
-              </FormField>
               <button type="submit" disabled={busy} className={cn(S.btnPrimary, 'min-h-touch justify-center')}>
                 {t(locale, 'employeeHome.saveProfile')}
               </button>
