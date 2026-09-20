@@ -1440,7 +1440,7 @@ export default function DashboardClient({
                 role={sessionAuth?.role || 'hr'}
                 locale={locale}
               />
-              {tab === 'leadership' && (
+              {tab === 'leadership' && can(sessionAuth, CAP.LEADERSHIP_VIEW) && (
                 <LeadershipTab
                   analytics={analytics}
                   locale={locale}
@@ -1448,7 +1448,7 @@ export default function DashboardClient({
                   navigateDashboard={navigateWithOpts}
                 />
               )}
-              {tab === 'overview' && (
+              {tab === 'overview' && can(sessionAuth, CAP.OVERVIEW_VIEW) && (
                 <OverviewTab
                   overview={overviewMetrics}
                   locale={locale}
@@ -1478,7 +1478,7 @@ export default function DashboardClient({
                   }}
                 />
               )}
-              {tab === 'analytics' && (
+              {tab === 'analytics' && can(sessionAuth, CAP.OVERVIEW_VIEW) && (
                 <AnalyticsTab
                   companyId={scopedCompanyId}
                   locale={locale}
@@ -1486,7 +1486,7 @@ export default function DashboardClient({
                 />
               )}
               {tab === 'organization' && can(sessionAuth, CAP.TEAM_VIEW) && <OrganizationTab key={scopedCompanyId} locale={locale} companyId={scopedCompanyId} navigateDashboard={navigateWithOpts} />}
-              {tab === 'team' && (
+              {tab === 'team' && can(sessionAuth, CAP.TEAM_VIEW) && (
                 <>
                   <TeamTab
                     results={results}
@@ -1567,7 +1567,7 @@ export default function DashboardClient({
                   ) : null}
                 </>
               )}
-              {tab === 'compatibility' && (
+              {tab === 'compatibility' && can(sessionAuth, CAP.COMPATIBILITY_VIEW) && (
                 <CompatTab
                   tensions={tensions}
                   synergies={synergies}
@@ -1580,7 +1580,7 @@ export default function DashboardClient({
                   locale={locale}
                 />
               )}
-              {tab === 'compare' && (
+              {tab === 'compare' && can(sessionAuth, CAP.COMPARE_VIEW) && (
                 <CompareTabLoader
                   filterQueryString={compareQueryString}
                   comparePage={comparePagSnap.page}
@@ -1681,7 +1681,7 @@ export default function DashboardClient({
                   }}
                 />
               )}
-              {tab === 'group' && (
+              {tab === 'group' && can(sessionAuth, CAP.GROUP_VIEW) && (
                 <GroupTab
                   results={interactionPeople}
                   groupBase={groupBase}

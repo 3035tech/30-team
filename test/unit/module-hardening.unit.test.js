@@ -51,6 +51,33 @@ describe('module hardening', () => {
     assert.match(source('lib/api-error-codes.js'), /FORBIDDEN: 'FORBIDDEN'/);
   });
 
+  it('passes tenant module entitlements to the dashboard client auth snapshot', () => {
+    const auth = source('app/dashboard/resolve-dashboard-auth.js');
+    assert.match(auth, /companyModules: Array\.isArray\(payload\?\.companyModules\)/);
+  });
+
+  it('scopes global search categories to enabled capabilities', () => {
+    const search = source('app/api/admin/search/route.js');
+    assert.match(search, /requireAnyCapability\(payload/);
+    assert.match(search, /canSearchCandidates/);
+    assert.match(search, /canSearchVacancies/);
+    assert.match(search, /canSearchGroups/);
+  });
+
+  it('guards cohort tab rendering with the same capabilities as navigation', () => {
+    const dashboard = source('app/dashboard/DashboardClient.jsx');
+    for (const cap of [
+      'LEADERSHIP_VIEW',
+      'OVERVIEW_VIEW',
+      'TEAM_VIEW',
+      'COMPATIBILITY_VIEW',
+      'COMPARE_VIEW',
+      'GROUP_VIEW',
+    ]) {
+      assert.match(dashboard, new RegExp(`can\\(sessionAuth, CAP\\.${cap}\\)`));
+    }
+  });
+
   it('uses the canonical admin API wrapper on the migrated performance route', () => {
     const route = source('app/api/admin/performance-reviews/route.js');
     assert.match(route, /withAdminApi/);

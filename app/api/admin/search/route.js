@@ -6,7 +6,13 @@
 import { NextResponse } from 'next/server';
 import { queryRead } from '../../../../lib/db.js';
 import { apiError, ERR } from '../../../../lib/api-error.js';
-import { getSessionPayload, getManagerScope } from '../../../../lib/ae/require-admin.js';
+import {
+  CAP,
+  getSessionPayload,
+  getManagerScope,
+  requireAnyCapability,
+} from '../../../../lib/ae/require-admin.js';
+import { can } from '../../../../lib/permissions.js';
 import { resolveCohortCompanyId } from '../../../../lib/assessment-filters.js';
 
 export const dynamic = 'force-dynamic';
@@ -21,9 +27,13 @@ const MAX_RESULTS_PER_CATEGORY = 5;
 export async function GET(request) {
   try {
     const payload = await getSessionPayload();
+    if (!payload) return apiError(request, ERR.UNAUTHORIZED, 401);
     const scope = getManagerScope(payload);
     if (!scope.authorized) {
-      return apiError(request, ERR.UNAUTHORIZED, 401);
+      return apiError(request, ERR.FORBIDDEN, 403);
+    }
+    if (!requireAnyCapability(payload, [CAP.TEAM_VIEW, CAP.VACANCIES_VIEW, CAP.GROUP_VIEW])) {
+      return apiError(request, ERR.FORBIDDEN, 403);
     }
 
     const { searchParams } = new URL(request.url);
@@ -46,8 +56,12 @@ export async function GET(request) {
     const scoped = tenantId != null;
     const limIx = scoped ? '3' : '2';
 
-    // Search candidates
-    const candidatesPromise = queryRead(
+    // Search only categories whose module is enabled for this tenant/user.
+    const canSearchCandidates = can(payload, CAP.TEAM_VIEW);
+    const canSearchVacancies = can(payload, CAP.VACANCIES_VIEW);
+    const canSearchGroups = can(payload, CAP.GROUP_VIEW);
+
+    const candidatesPromise = canSearchCandidates ? queryRead(
       `SELECT
          c.id,
          c.full_name AS name,
@@ -66,10 +80,10 @@ export async function GET(request) {
       scoped
         ? [searchPattern, tenantId, MAX_RESULTS_PER_CATEGORY]
         : [searchPattern, MAX_RESULTS_PER_CATEGORY]
-    );
+    ) : Promise.resolve({ rows: [] });
 
     // Search vacancies
-    const vacanciesPromise = queryRead(
+    const vacanciesPromise = canSearchVacancies ? queryRead(
       `SELECT
          v.id,
          v.title AS name,
@@ -83,10 +97,10 @@ export async function GET(request) {
       scoped
         ? [searchPattern, tenantId, MAX_RESULTS_PER_CATEGORY]
         : [searchPattern, MAX_RESULTS_PER_CATEGORY]
-    );
+    ) : Promise.resolve({ rows: [] });
 
     // Search groups (member_assessment_ids is BIGINT[])
-    const groupsPromise = queryRead(
+    const groupsPromise = canSearchGroups ? queryRead(
       `SELECT
          tg.id,
          tg.name,
@@ -100,7 +114,7 @@ export async function GET(request) {
       scoped
         ? [searchPattern, tenantId, MAX_RESULTS_PER_CATEGORY]
         : [searchPattern, MAX_RESULTS_PER_CATEGORY]
-    );
+    ) : Promise.resolve({ rows: [] });
 
     const [candidatesRes, vacanciesRes, groupsRes] = await Promise.all([
       candidatesPromise,

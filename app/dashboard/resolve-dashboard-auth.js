@@ -25,6 +25,10 @@ export async function resolveDashboardAuth() {
     userId: payload?.userId ?? null,
     role: payload?.role || null,
     companyId: payload?.companyId ?? null,
+    // Keep tenant module entitlements in the client auth snapshot as well as
+    // the server payload. Navigation and deep-link parsing must use the same
+    // source of truth as admin API authorization.
+    companyModules: Array.isArray(payload?.companyModules) ? payload.companyModules : null,
     locale,
     email: null,
     displayName: null,
