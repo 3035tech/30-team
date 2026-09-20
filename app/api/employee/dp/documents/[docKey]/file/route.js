@@ -4,7 +4,9 @@ import { query } from '../../../../../../../lib/db.js';
 import { DP_DOCUMENT_KEYS } from '../../../../../../../lib/domain-status.js';
 import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../../lib/rate-limit.js';
-import { DP_DOC_MAX_BYTES, clearDpDocumentFile, downloadDpDocumentFile, getEmployeeDpHome, uploadDpDocumentFile } from '../../../../../../../lib/people/employee-dp.js';
+import { DP_DOC_MAX_BYTES, clearDpDocumentFile, downloadDpDocumentFile, getEmployeeDisplayName, getEmployeeDpHome, uploadDpDocumentFile } from '../../../../../../../lib/people/employee-dp.js';
+import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifications.js';
+import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 
 export const dynamic = 'force-dynamic';
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
@@ -43,6 +45,19 @@ export async function POST(request, props) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const result = await uploadDpDocumentFile({ query }, { companyId: ctx.session.companyId, candidateId: ctx.session.candidateId, docKey: ctx.docKey, userId: ctx.session.userId, file: { buffer, size: buffer.length, mimeType: file.type, originalName: file.name } });
     if (!result.ok) return apiErrorFromResult(request, result);
+    try {
+      const candidateName = await getEmployeeDisplayName({ query }, ctx.session);
+      await notifyCompanyManagers(query, {
+        companyId: ctx.session.companyId,
+        type: NOTIF.DP_DOC_UPLOADED,
+        entityType: 'candidate',
+        entityId: ctx.session.candidateId,
+        dedupeKey: `employee:dp_doc_up:${ctx.session.candidateId}:${ctx.docKey}:${new Date().toISOString().slice(0, 10)}`,
+        payload: { candidateId: ctx.session.candidateId, candidateName, docKey: ctx.docKey },
+      });
+    } catch (error) {
+      console.error('employee DP document notification', error?.message || error);
+    }
     const home = await getEmployeeDpHome({ query }, ctx.session);
     if (!home.ok) return apiErrorFromResult(request, home);
     return NextResponse.json(home, { headers: NO_STORE });
