@@ -3,6 +3,17 @@
   "description": "Fixture catalog for DTOV ephemeral DB. Add a module when a new feature needs data the baseline does not cover.",
   "fixtures": [
     {
+      "id": "organization",
+      "module": "organization.js",
+      "enabled": true,
+      "dependsOn": ["baseline"],
+      "covers": ["organization-units", "organization-hierarchy", "employee-unit-assignment"],
+      "smoke": [{
+        "name": "employee-unit-tenant",
+        "sql": "SELECT 1 FROM candidates c JOIN org_units u ON u.id=c.org_unit_id AND u.company_id=c.company_id JOIN org_units child ON child.parent_id=u.id AND child.company_id=u.company_id WHERE c.email='colaborador@todos-os-dados.demo' AND u.active LIMIT 1"
+      }]
+    },
+    {
       "id": "baseline",
       "module": "baseline.js",
       "enabled": true,

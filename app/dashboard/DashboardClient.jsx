@@ -57,6 +57,11 @@ function TabLoadingFallback() {
   return <AppLoading variant="panel" />;
 }
 
+const OrganizationTab = dynamic(
+  () => import('./tabs/OrganizationTab').then((m) => ({ default: m.OrganizationTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
+
 const TeamTab = dynamic(
   () => import('./tabs/TeamTab').then((m) => ({ default: m.TeamTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -731,7 +736,7 @@ export default function DashboardClient({
     }
     pushFilters({
       area: 'all', vacancy: 'all', pipeline: 'all', roster: 'internal', enneagram: 'all',
-      dateFrom: null, dateTo: null, search: null, filter: null,
+      dateFrom: null, dateTo: null, search: null, filter: null, orgUnit: null,
       ...(isAdmin ? { company: 'all' } : {}),
     });
   };
@@ -979,7 +984,10 @@ export default function DashboardClient({
                 {sectionBody(DASHBOARD_NAV_SECTION.PEOPLE, (
                   <>
                     {can(sessionAuth, CAP.TEAM_VIEW) ? (
-                      <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+                      <>
+                        <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
+                        <NavLink id="organization" icon="building" label={t(locale, 'panel.orgUnits.title')} />
+                      </>
                     ) : null}
                     {showCompensation ? (
                       <NavLink id="compensation" icon="salary" label={t(locale, 'dashboard.compensation')} />
@@ -1477,6 +1485,7 @@ export default function DashboardClient({
                   navigateDashboard={navigateWithOpts}
                 />
               )}
+              {tab === 'organization' && can(sessionAuth, CAP.TEAM_VIEW) && <OrganizationTab key={scopedCompanyId} locale={locale} companyId={scopedCompanyId} navigateDashboard={navigateWithOpts} />}
               {tab === 'team' && (
                 <>
                   <TeamTab
@@ -1488,6 +1497,7 @@ export default function DashboardClient({
                     isAdmin={isAdmin}
                     companyId={scopedCompanyId}
                     search={selectedSearch}
+                    orgUnitFilter={urlParams.get('orgUnit') || ''}
                     listTotal={listTotal}
                     focusCandidateId={urlParams.get('candidate')}
                     focusSection={urlParams.get('section')}

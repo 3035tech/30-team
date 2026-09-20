@@ -1,4 +1,5 @@
 import { query, queryRead } from '../../lib/db';
+import { ORG_UNIT, parseOrgUnitFilter } from '../../lib/org-unit-constants.js';
 import {
   parseDashboardPagination,
   parseDashboardTab,
@@ -365,6 +366,14 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
         listFilter: selectedListFilter,
       });
       const assessmentWhere = sqlWhere(whereParts);
+
+      // Apply before count and pagination; never filter only the visible page.
+      const orgUnitFilter = needTeam ? parseOrgUnitFilter(searchParams.orgUnit) : null;
+      if (orgUnitFilter === ORG_UNIT.FILTER_NONE) whereParts.push('c.org_unit_id IS NULL');
+      else if (orgUnitFilter) {
+        params.push(orgUnitFilter);
+        whereParts.push(`c.org_unit_id = $${params.length}`);
+      }
 
       const extWhereParts = nameSearch
         ? [

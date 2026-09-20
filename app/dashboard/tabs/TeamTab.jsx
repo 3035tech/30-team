@@ -1,4 +1,5 @@
 'use client';
+import { CandidateOrgUnit, OrgUnitFilter } from '../../_components/OrgUnitField';
 
 import { SelectField } from '../../_components/SelectField';
 
@@ -239,6 +240,7 @@ export function TeamTab({
   isAdmin = false,
   companyId = null,
   search = '',
+  orgUnitFilter = '',
   onSearch,
   listTotal = 0,
   focusCandidateId = null,
@@ -874,9 +876,9 @@ export function TeamTab({
         aria-label={t(locale, 'panel.team.searchAriaLabel')}
         onClear={() => {
           setSearchDraft('');
-          commitSearch('');
+          navigateDashboard?.({ search: '', orgUnit: null, teamPage: 1 });
         }}
-        clearEnabled={Boolean(activeSearch || String(searchDraft || '').trim())}
+        clearEnabled={Boolean(orgUnitFilter || activeSearch || String(searchDraft || '').trim())}
       >
         <AdminListSearch
           locale={locale}
@@ -887,6 +889,8 @@ export function TeamTab({
           label={t(locale, 'panel.team.searchAriaLabel')}
           className="min-w-[12rem] max-w-none grow"
         />
+        <OrgUnitFilter key={companyId} companyId={companyId} locale={locale} value={orgUnitFilter}
+          onChange={(orgUnit) => navigateDashboard?.({ orgUnit: orgUnit || null, teamPage: 1 })} />
         {activeSearch ? (
           <span className="mb-2.5 self-end font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
@@ -1302,6 +1306,9 @@ export function TeamTab({
                           }}
                           embedded
                         />
+                        {isInternalPerson ? (
+                          <CandidateOrgUnit key={`${detail.candidate.companyId}-${detail.candidate.id}`} locale={locale} companyId={detail.candidate.companyId} candidateId={detail.candidate.id} onSaved={() => router.refresh()} />
+                        ) : null}
                         {isInternalPerson ? (
                           <OrgManagerBlock
                             locale={locale}

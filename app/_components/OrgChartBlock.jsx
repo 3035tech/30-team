@@ -21,12 +21,13 @@ function OrgNode({ node, depth, locale, onOpen }) {
           'flex min-h-touch w-full items-start gap-2 rounded-control border border-ink/10 bg-canvas px-2.5 py-2 text-left transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.04]',
           depth > 0 && 'mt-1.5'
         )}
-        style={depth > 0 ? { marginLeft: Math.min(depth, maxDepth) * 12 } : undefined}
+        style={depth > 0 ? { marginLeft: Math.min(depth, maxDepth) * 12, width: `calc(100% - ${Math.min(depth, maxDepth) * 12}px)` } : undefined}
         onClick={() => onOpen?.(node.id)}
         aria-label={t(locale, 'panel.orgChart.openPerson', { name: node.name })}
       >
         <span className="min-w-0 flex-1">
           <span className={cn(S.cardTitle, 'block truncate')}>{node.name}</span>
+          <span className={cn(S.faint, 'block truncate')}>{node.orgUnitName || t(locale, 'panel.orgUnits.none')}</span>
           {node.jobRoleName ? (
             <span className={cn(S.faint, 'block truncate')}>{node.jobRoleName}</span>
           ) : null}
@@ -66,6 +67,7 @@ export function OrgChartBlock({
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     if (!companyId) {
@@ -74,6 +76,7 @@ export function OrgChartBlock({
       return;
     }
     setLoading(true);
+    setError('');
     try {
       const res = await fetch(
         `/api/admin/org-chart?companyId=${encodeURIComponent(companyId)}`
@@ -82,6 +85,7 @@ export function OrgChartBlock({
       if (!res.ok) throw new Error(json?.error || 'load');
       setData(json);
     } catch (e) {
+      setError(e?.message || t(locale, 'panel.orgChart.loadError'));
       toast(e?.message || t(locale, 'panel.orgChart.loadError'), 'error');
       setData(null);
     } finally {
@@ -128,6 +132,11 @@ export function OrgChartBlock({
     >
       {loading ? (
         <AppLoading variant="panel" />
+      ) : error ? (
+        <InlineCallout tone="danger" role="alert">
+          {error}
+          <button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.orgUnits.retry')}</button>
+        </InlineCallout>
       ) : !hasPeople ? (
         <EmptyState
           title={t(locale, 'panel.orgChart.empty')}

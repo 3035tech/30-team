@@ -89,6 +89,9 @@ export function useDashboardNavigation({
 
     // Deep-link Equipe → pessoa: /dashboard?tab=team&candidate=<id>
     const nextTab = opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
+    const nextOrgUnit = opts.orgUnit !== undefined ? opts.orgUnit
+      : opts.company !== undefined && String(opts.company) !== String(company) ? null : urlParams.get('orgUnit');
+    if (nextTab === 'team' && nextOrgUnit) p.set('orgUnit', String(nextOrgUnit));
     const nextCreate = opts.create !== undefined ? opts.create : urlParams.get('create');
     if (nextTab === 'vacancies' && nextCreate === '1') p.set('create', '1');
     if (opts.candidate !== undefined) {
@@ -285,6 +288,7 @@ export function useDashboardNavigation({
       ...(nextFilter?.dateTo !== undefined ? { dateTo: nextFilter.dateTo } : {}),
       ...(nextFilter?.search !== undefined ? { search: nextFilter.search } : {}),
       ...(nextFilter?.teamGroup !== undefined ? { teamGroup: nextFilter.teamGroup } : {}),
+      ...(nextFilter?.orgUnit !== undefined ? { orgUnit: nextFilter.orgUnit } : {}),
       teamPage: 1,
       comparePage: 1,
       vacanciesPage: 1,
