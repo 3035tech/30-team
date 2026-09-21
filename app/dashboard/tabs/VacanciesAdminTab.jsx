@@ -17,9 +17,7 @@ import {
   S,
   AdminCreateButton,
   AdminEditButton,
-  AdminDeleteButton,
   AdminActionsCell,
-  AdminIconButton,
   AdminPageHeader,
   AdminViewButton,
 } from '../dashboard-shared';
@@ -85,6 +83,15 @@ const VACANCY_DETAIL_SECTIONS = Object.freeze([
   'distribution',
   'settings',
 ]);
+
+function VacancyMetaItem({ label, value, warning = false }) {
+  return (
+    <div className="min-w-0 rounded-control border border-ink/8 bg-surface/55 px-3 py-2">
+      <span className="block font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">{label}</span>
+      <span className={cn('mt-1 block truncate text-xs text-ink', warning && 'text-warning')}>{value}</span>
+    </div>
+  );
+}
 
 function normalizeVacancyDetailSection(value) {
   const legacy = {
@@ -1316,33 +1323,37 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       <span className="font-mono text-xs text-ink-faint">· {v.companyName}</span>
                     ) : null}
                   </div>
-                  <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                  <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
                     {v.positionsCount != null && v.positionsCount > 0 && (
-                      <span className={META}>
-                        {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
-                      </span>
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Openings' : 'Vagas'}
+                        value={t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
+                      />
                     )}
                     {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
-                      <span className={META}>
-                        {t(locale, 'recruiting.targetDate', {
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Deadline' : 'Prazo'}
+                        value={t(locale, 'recruiting.targetDate', {
                           date: formatPublicVacancyDate(v.targetDate, locale),
                         })}
-                      </span>
+                      />
                     ) : null}
                     {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
-                      <span className={META}>
-                        {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
-                      </span>
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Salary range' : 'Faixa salarial'}
+                        value={formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                      />
                     ) : null}
-                    <span className={cn(META, !v.ownerName && 'text-warning')}>
-                      {v.ownerName
-                        ? t(locale, 'recruiting.ownerNamed', { name: v.ownerName })
-                        : t(locale, 'recruiting.ownerMissing')}
-                    </span>
+                    <VacancyMetaItem
+                      label={locale === 'en' ? 'Owner' : 'Responsável'}
+                      value={v.ownerName || (locale === 'en' ? 'Not assigned' : 'Não definido')}
+                      warning={!v.ownerName}
+                    />
                     {employmentTypeLabelKey(v.employmentType) ? (
-                      <span className={META}>
-                        {t(locale, employmentTypeLabelKey(v.employmentType))}
-                      </span>
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Employment' : 'Contratação'}
+                        value={t(locale, employmentTypeLabelKey(v.employmentType))}
+                      />
                     ) : null}
                     {formatWorkplaceLabel(
                       {
@@ -1353,8 +1364,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       locale,
                       t
                     ) ? (
-                      <span className={META}>
-                        {formatWorkplaceLabel(
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Workplace' : 'Local de trabalho'}
+                        value={formatWorkplaceLabel(
                           {
                             workplaceModality: v.workplaceModality,
                             workplaceCity: v.workplaceCity,
@@ -1363,7 +1375,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           locale,
                           t
                         )}
-                      </span>
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -1885,33 +1897,39 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       ) : null}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                    <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
                       {v.positionsCount != null && v.positionsCount > 0 ? (
-                        <span className={META}>
-                          {t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
-                        </span>
+                        <VacancyMetaItem
+                          label={locale === 'en' ? 'Openings' : 'Vagas'}
+                          value={t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
+                        />
                       ) : null}
                       {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
-                        <span className={META}>
-                          {t(locale, 'recruiting.targetDate', {
+                        <VacancyMetaItem
+                          label={locale === 'en' ? 'Deadline' : 'Prazo'}
+                          value={t(locale, 'recruiting.targetDate', {
                             date: formatPublicVacancyDate(v.targetDate, locale),
                           })}
-                        </span>
+                        />
                       ) : null}
                       {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
-                        <span className={META}>
-                          {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
-                        </span>
+                        <VacancyMetaItem
+                          label={locale === 'en' ? 'Salary range' : 'Faixa salarial'}
+                          value={formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
+                        />
                       ) : null}
-                      <span className={cn(META, !v.ownerName && 'text-warning')}>
-                        {v.ownerName
-                          ? t(locale, 'recruiting.ownerNamed', { name: v.ownerName })
-                          : t(locale, 'recruiting.ownerMissing')}
-                      </span>
+                      <VacancyMetaItem
+                        label={locale === 'en' ? 'Owner' : 'Responsável'}
+                        value={v.ownerName || (locale === 'en' ? 'Not assigned' : 'Não definido')}
+                        warning={!v.ownerName}
+                      />
                     </div>
 
                     {token ? (
-                      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
+                        <span className="font-ui text-xs text-ink-muted">
+                          {locale === 'en' ? 'Candidate link' : 'Link para candidatos'}
+                        </span>
                         <CopyableLink
                           url={link}
                           locale={locale}
@@ -1929,7 +1947,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         ) : null}
                       </div>
                     ) : (
-                      <div className="mt-2 font-mono text-xs text-ink-faint">
+                      <div className="mt-3 border-t border-ink/8 pt-3 font-mono text-2xs text-ink-faint">
                         {t(locale, 'recruiting.noActiveLink')}
                       </div>
                     )}
@@ -1938,51 +1956,65 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   <div className="flex items-center border-t border-ink/8 pt-3 md:border-t-0 md:pt-0">
                     <AdminActionsCell className="justify-start md:justify-end">
                       <AdminViewButton
+                        asText
                         label={t(locale, 'recruiting.viewCandidates')}
                         onClick={() => openVacancyDetail(v.id)}
+                        className={BTN_BRAND_SOFT}
                       />
                       <AdminEditButton
                         label={t(locale, 'recruiting.editVacancy')}
                         onClick={() => editVacancy(v)}
                         disabled={loading}
                       />
-                      <AdminDeleteButton
-                        label={t(locale, 'recruiting.archiveVacancy')}
-                        onClick={() => archiveVacancy(v.id, v.title)}
-                        disabled={loading}
-                      />
-                      <AdminIconButton
-                        label={t(locale, 'recruiting.cloneVacancy')}
-                        icon="copy"
-                        tint="muted"
-                        onClick={() => cloneVacancyAction(v)}
-                        disabled={loading}
-                      />
-                      <AdminIconButton
-                        label={
-                          v.status === VACANCY_STATUS.OPEN
-                            ? t(locale, 'recruiting.closeVacancy')
-                            : t(locale, 'recruiting.reopenVacancy')
-                        }
-                        icon="door"
-                        tint={v.status === VACANCY_STATUS.OPEN ? 'warning' : 'brand'}
-                        onClick={() =>
-                          setVacancyStatus(
-                            v.id,
-                            v.status === VACANCY_STATUS.OPEN
-                              ? VACANCY_STATUS.CLOSED
-                              : VACANCY_STATUS.OPEN
-                          )
-                        }
-                        disabled={loading}
-                      />
-                      <AdminIconButton
-                        label={t(locale, 'recruiting.rotateLink')}
-                        icon="refresh"
-                        tint="muted"
-                        onClick={() => rotateLink(v.id)}
-                        disabled={loading}
-                      />
+                      <details className="group relative">
+                        <summary className={cn(BTN_GHOST, 'min-h-10 list-none px-2.5 [&::-webkit-details-marker]:hidden')}>
+                          <Icon name="moreHorizontal" className="h-4 w-4" />
+                          <span className="sr-only">{t(locale, 'recruiting.moreActions')}</span>
+                        </summary>
+                        <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                          <button
+                            type="button"
+                            onClick={() => cloneVacancyAction(v)}
+                            disabled={loading}
+                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
+                          >
+                            {t(locale, 'recruiting.cloneVacancy')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => rotateLink(v.id)}
+                            disabled={loading}
+                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
+                          >
+                            {t(locale, 'recruiting.rotateLink')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVacancyStatus(
+                                v.id,
+                                v.status === VACANCY_STATUS.OPEN
+                                  ? VACANCY_STATUS.CLOSED
+                                  : VACANCY_STATUS.OPEN
+                              )
+                            }
+                            disabled={loading}
+                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
+                          >
+                            {v.status === VACANCY_STATUS.OPEN
+                              ? t(locale, 'recruiting.closeVacancy')
+                              : t(locale, 'recruiting.reopenVacancy')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => archiveVacancy(v.id, v.title)}
+                            disabled={loading}
+                            className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
+                          >
+                            {t(locale, 'recruiting.archiveVacancy')}
+                          </button>
+                        </div>
+                      </details>
                     </AdminActionsCell>
                   </div>
                 </div>

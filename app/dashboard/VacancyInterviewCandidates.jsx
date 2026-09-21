@@ -68,6 +68,27 @@ function sourceLabel(locale, code) {
   return code ? t(locale, map[code] || 'recruiting.sourceOther') : null;
 }
 
+function CandidateMetaItem({ label, value, tone = 'neutral' }) {
+  if (!value) return null;
+  return (
+    <div
+      className={cn(
+        'min-w-0 rounded-control border px-2.5 py-2',
+        tone === 'brand'
+          ? 'border-brand-500/20 bg-brand-500/[0.05]'
+          : 'border-ink/8 bg-surface/55'
+      )}
+    >
+      <span className="block truncate font-mono text-2xs uppercase tracking-[0.06em] text-ink-faint">
+        {label}
+      </span>
+      <span className={cn('mt-1 block truncate font-mono text-2xs', tone === 'brand' ? 'text-brand-600' : 'text-ink-muted')}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function CandidateCard({
   row,
   vacancyId,
@@ -315,46 +336,49 @@ function CandidateCard({
                 ) : null}
               </div>
             ) : null}
-            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
               <span
-                className="rounded-lg border border-ink/12 px-2 py-0.5 font-mono text-2xs text-ink-muted"
+                className="rounded-full border border-ink/12 bg-surface/60 px-2.5 py-1 font-mono text-2xs text-ink-muted"
                 title={t(locale, 'recruiting.enneagramBadgeTitle')}
               >
                 {t(locale, 'recruiting.enneagramBadgeShort')}: {inviteStatusLabel(locale, row.inviteStatus)}
               </span>
               <span
                 className={cn(
-                  'rounded-lg border px-2 py-0.5 font-mono text-2xs',
-                  motivatorsDone ? 'border-success/35 text-success' : 'border-ink/12 text-ink-muted'
+                  'rounded-full border px-2.5 py-1 font-mono text-2xs',
+                  motivatorsDone
+                    ? 'border-success/35 bg-success/[0.07] text-success'
+                    : 'border-ink/12 bg-surface/60 text-ink-muted'
                 )}
                 title={t(locale, 'recruiting.motivatorsBadgeTitle')}
               >
                 {t(locale, 'recruiting.motivatorsBadgeShort')}: {motivatorsStatusLabel(locale, motivatorsStatus)}
               </span>
-              {row.topType != null && (
-                <span className="text-2xs font-mono text-brand-500">
-                  {t(locale, 'recruiting.typeShort', { type: row.topType })}
-                </span>
-              )}
-              {availabilityLabel(locale, row.availability) ? (
-                <span className="text-2xs font-mono text-ink-faint">
-                  {availabilityLabel(locale, row.availability)}
-                </span>
-              ) : null}
-              {sourceLabel(locale, row.source) ? (
-                <span className="text-2xs font-mono text-ink-faint">
-                  {sourceLabel(locale, row.source)}
-                </span>
-              ) : null}
-              {row.salaryExpectation ? (
-                <span className="text-2xs font-mono text-ink-faint">
-                  {formatSalaryBr(row.salaryExpectation)}
-                </span>
-              ) : null}
             </div>
+            {(row.topType != null || row.availability || row.source || row.salaryExpectation) ? (
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                <CandidateMetaItem
+                  label={locale === 'en' ? 'Type' : 'Tipo'}
+                  value={row.topType != null ? t(locale, 'recruiting.typeShort', { type: row.topType }) : null}
+                  tone="brand"
+                />
+                <CandidateMetaItem
+                  label={t(locale, 'recruiting.availabilityLabel')}
+                  value={availabilityLabel(locale, row.availability)}
+                />
+                <CandidateMetaItem
+                  label={t(locale, 'recruiting.sourceLabel')}
+                  value={sourceLabel(locale, row.source)}
+                />
+                <CandidateMetaItem
+                  label={t(locale, 'recruiting.salaryExpectationLabel')}
+                  value={row.salaryExpectation ? formatSalaryBr(row.salaryExpectation) : null}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2 border-t border-ink/8 pt-3 lg:w-auto lg:justify-end lg:border-t-0 lg:pt-0">
           <button
             type="button"
             onClick={() => setExpanded((x) => !x)}

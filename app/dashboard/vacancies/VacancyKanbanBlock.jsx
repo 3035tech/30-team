@@ -530,13 +530,21 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                               {r.email}
                             </div>
                           ) : null}
-                          <div className="flex flex-wrap items-center gap-1.5">
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                             {r.pendingTest || r.topType == null ? null : (
-                              <span className="font-mono text-2xs text-ink-muted">T{r.topType}</span>
+                              <span className="rounded-full border border-brand-500/20 bg-brand-500/[0.06] px-1.5 py-0.5 font-mono text-2xs text-brand-600">
+                                T{r.topType}
+                              </span>
                             )}
                             {r.vacancyFitScore010 != null && (
-                              <span className={cn('font-mono text-2xs', fitTone(r.vacancyFitScore010))}>
-                                {r.vacancyFitScore010}/10
+                              <span
+                                className={cn(
+                                  'rounded-full border px-1.5 py-0.5 font-mono text-2xs',
+                                  fitTone(r.vacancyFitScore010)
+                                )}
+                                title={t(locale, 'recruiting.fitScoreLabel')}
+                              >
+                                {t(locale, 'recruiting.fitLabel', { score: r.vacancyFitScore010 })}
                               </span>
                             )}
                           </div>
