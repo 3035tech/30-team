@@ -18,7 +18,7 @@ const COPY = {
     title: 'PDI da equipe',
     subtitle: 'Veja onde o desenvolvimento precisa de uma próxima ação.',
     activePlans: 'PDIs ativos',
-    attention: 'Precisam de atenção',
+    attention: 'Pontos de atenção',
     noPlan: 'Sem PDI ativo',
     completion: 'Conclusão dos itens',
     search: 'Buscar colaborador',
@@ -38,6 +38,12 @@ const COPY = {
     noPlanStatus: 'Sem PDI ativo',
     overduePlan: 'Plano atrasado',
     overdueItems: 'itens atrasados',
+    nextActions: 'Próximas ações',
+    nextActionsBody: 'Comece por estes casos para manter o desenvolvimento em movimento.',
+    overdueItem: 'Item atrasado',
+    withoutOneOnOne: 'Sem 1:1 vinculado',
+    dueOn: 'vence em',
+    seePerson: 'Ver pessoa',
     noItems: 'Sem itens ainda',
     done: 'concluídos',
     error: 'Não foi possível carregar o acompanhamento de PDI.',
@@ -66,6 +72,12 @@ const COPY = {
     noPlanStatus: 'No active plan',
     overduePlan: 'Plan overdue',
     overdueItems: 'overdue items',
+    nextActions: 'Next actions',
+    nextActionsBody: 'Start with these cases to keep development moving.',
+    overdueItem: 'Overdue item',
+    withoutOneOnOne: 'No 1:1 linked',
+    dueOn: 'due',
+    seePerson: 'View person',
     noItems: 'No items yet',
     done: 'complete',
     error: 'Could not load development-plan tracking.',
@@ -124,8 +136,18 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
   }, [load]);
 
   const summary = data?.summary || {};
-  const attentionCount = (Number(summary.overdueItemCount) || 0) + (Number(summary.overduePlanCount) || 0);
+  const attentionCount =
+    (Number(summary.overdueItemCount) || 0) +
+    (Number(summary.overduePlanCount) || 0) +
+    (Number(summary.itemsWithoutOneOnOne) || 0);
   const rows = data?.rows || [];
+  const priorityItems = [
+    ...(summary.queue?.overdue || []).map((item) => ({ ...item, priorityKind: 'overdue' })),
+    ...(summary.queue?.unlinked || []).map((item) => ({ ...item, priorityKind: 'unlinked' })),
+    ...(summary.queue?.noPlan || []).map((item) => ({ ...item, priorityKind: 'no-plan' })),
+  ].filter((item, index, list) => (
+    list.findIndex((candidate) => `${candidate.priorityKind}:${candidate.candidateId}` === `${item.priorityKind}:${item.candidateId}`) === index
+  )).slice(0, 4);
   const openPerson = (row) => {
     if (typeof navigateDashboard !== 'function') return;
     navigateDashboard({
@@ -162,6 +184,50 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                 </div>
               ))}
             </div>
+
+            {priorityItems.length > 0 ? (
+              <div className="mt-4 overflow-hidden rounded-xl border border-warning/20 bg-warning/[0.045]">
+                <div className="flex flex-col gap-1 border-b border-warning/15 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                  <div>
+                    <h2 className="m-0 text-sm font-semibold text-ink">{copy.nextActions}</h2>
+                    <p className="m-0 mt-0.5 text-xs text-ink-muted">{copy.nextActionsBody}</p>
+                  </div>
+                  <span className="font-mono text-2xs text-warning">
+                    {attentionCount} {copy.attention.toLowerCase()}
+                  </span>
+                </div>
+                <div className="divide-y divide-warning/15">
+                  {priorityItems.map((item) => {
+                    const isNoPlan = item.priorityKind === 'no-plan';
+                    const isUnlinked = item.priorityKind === 'unlinked';
+                    const title = isNoPlan ? copy.noPlanStatus : item.itemTitle || item.planTitle || copy.overdueItem;
+                    const detail = isNoPlan
+                      ? copy.noPlanBody
+                      : isUnlinked
+                        ? copy.withoutOneOnOne
+                        : item.dueDate
+                          ? `${copy.dueOn} ${dateLabel(item.dueDate, locale)}`
+                          : copy.overdueItem;
+                    return (
+                      <div key={`${item.priorityKind}-${item.candidateId}`} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="m-0 truncate text-sm font-medium text-ink">{item.candidateName}</p>
+                          <p className="m-0 mt-0.5 truncate text-xs text-ink-muted">{title} · {detail}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openPerson(item)}
+                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 whitespace-nowrap text-xs')}
+                        >
+                          {copy.seePerson}
+                          <Icon name="chevronRight" className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-4 flex flex-col gap-3 border-t border-ink/10 pt-4 sm:flex-row sm:items-end">
               <AdminListSearch
