@@ -60,6 +60,7 @@ describe('company modules entitlements', () => {
   it('tab and employee section gates', () => {
     assert.equal(tabAllowedByCompanyModules(null, 'climate'), true);
     assert.equal(tabAllowedByCompanyModules(['core'], 'climate'), false);
+    assert.equal(tabAllowedByCompanyModules(['core'], 'analytics'), true);
     assert.equal(tabAllowedByCompanyModules(['core', 'climate'], 'climate'), true);
     assert.equal(tabAllowedByCompanyModules(['core'], 'users'), true);
     assert.equal(employeeSectionAllowedByCompanyModules(['core'], 'okr'), false);
