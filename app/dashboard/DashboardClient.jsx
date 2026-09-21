@@ -1133,6 +1133,8 @@ export default function DashboardClient({
           <div className="relative min-w-0 flex-[1_1_280px]">
             <input
               type="search"
+              id="dashboard-global-search"
+              name="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
