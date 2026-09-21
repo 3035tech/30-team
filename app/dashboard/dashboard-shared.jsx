@@ -436,6 +436,7 @@ function PanelSubNav({
   moreTabs = null,
   moreLabel = 'More',
   variant = 'line',
+  scrollable = true,
 }) {
   const tabRefs = useRef(new Map());
   const more = Array.isArray(moreTabs) ? moreTabs : [];
@@ -471,7 +472,7 @@ function PanelSubNav({
       aria-orientation="horizontal"
       aria-label={ariaLabel || undefined}
       className={cn(
-        'mb-4 flex max-w-full overflow-x-auto [scrollbar-width:thin]',
+        cn('mb-4 flex max-w-full', scrollable && 'overflow-x-auto [scrollbar-width:thin]'),
         pill
           ? 'items-stretch gap-2 rounded-control border border-ink/12 bg-ink/[0.025] p-1.5'
           : 'items-end gap-1 border-b border-ink/12'

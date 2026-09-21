@@ -92,6 +92,7 @@ export function LeadershipTab({
           ariaLabel={t(locale, 'panel.leadership.viewModeAria')}
           active={viewMode}
           onChange={setViewMode}
+          scrollable={false}
           tabs={[
             { id: 'summary', label: t(locale, 'panel.leadership.viewSummary') },
             { id: 'detail', label: t(locale, 'panel.leadership.viewDetail') },
