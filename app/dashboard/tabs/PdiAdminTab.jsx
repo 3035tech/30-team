@@ -31,6 +31,9 @@ const COPY = {
     people: 'pessoas',
     noPlanTitle: 'Comece pelo próximo plano',
     noPlanBody: 'Não há pessoas nesta visão. Quando alguém não tiver PDI ativo, aparecerá aqui.',
+    selectCompanyTitle: 'Selecione uma empresa',
+    selectCompanyBody: 'Escolha uma empresa para acompanhar os PDIs da equipe.',
+    unavailableTitle: 'PDI indisponível',
     noDataTitle: 'Nenhum PDI encontrado',
     noDataBody: 'Crie o primeiro plano na ficha da pessoa para começar o acompanhamento.',
     open: 'Abrir PDI',
@@ -65,6 +68,9 @@ const COPY = {
     people: 'people',
     noPlanTitle: 'Start with the next plan',
     noPlanBody: 'No people match this view. Employees without an active plan will appear here.',
+    selectCompanyTitle: 'Select a company',
+    selectCompanyBody: 'Choose a company to track team development plans.',
+    unavailableTitle: 'Development plans unavailable',
     noDataTitle: 'No development plans found',
     noDataBody: 'Create the first plan from a person’s profile to start tracking it.',
     open: 'Open plan',
@@ -163,11 +169,11 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
       <AdminPageHeader title={copy.title} subtitle={copy.subtitle} />
 
       {!companyId ? (
-        <EmptyState title="Selecione uma empresa" message="Escolha uma empresa para acompanhar os PDIs da equipe." />
+        <EmptyState title={copy.selectCompanyTitle} message={copy.selectCompanyBody} />
       ) : loading && !data ? (
         <AppLoading variant="panel" />
       ) : error ? (
-        <EmptyState title="PDI indisponível" message={error} />
+        <EmptyState title={copy.unavailableTitle} message={error} />
       ) : (
         <ContentEnter animKey={`pdi-${companyId}-${view}-${q}-${page}`}>
           <section className={S.cardTight} aria-label={copy.title}>
