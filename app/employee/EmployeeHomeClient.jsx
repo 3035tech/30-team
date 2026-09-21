@@ -70,6 +70,12 @@ function okrMeterTone(act) {
   return 'bg-warning';
 }
 
+function taskTone(task) {
+  if (task.kind === 'lms_overdue') return 'danger';
+  if (task.dueDate && new Date(`${String(task.dueDate).slice(0, 10)}T23:59:59`) < new Date()) return 'warning';
+  return 'info';
+}
+
 /** Group assigned activities by cycle for scanability. */
 function groupOkrByCycle(items) {
   const order = [];
@@ -524,6 +530,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const okrUrgentCount = okrActivities.filter(
     (a) => a.urgency === 'overdue' || a.urgency === 'critical'
   ).length;
+  const attentionCount = okrUrgentCount + lmsOverdueCount + dpBadge + timeClockBadge;
   const startHere =
     sectionOk('tasks') && tasks.length > 0
       ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
@@ -533,7 +540,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           ? { href: '#okr', labelKey: 'employeeHome.startHereOkr', count: okrUrgentCount }
           : sectionOk('dp') && dpBadge > 0
             ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
-            : sectionOk('dp') && timeClockBadge > 0
+            : sectionOk('timeClock') && timeClockBadge > 0
               ? {
                   href: '/employee/time-clock',
                   labelKey: 'employeeHome.startHereTimeClock',
@@ -551,7 +558,36 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     <ContentEnter animKey="ready">
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
         <div className="mb-6">
-          <p className={cn(S.muted, 'm-0')}>{t(locale, 'employeeHome.hint')}</p>
+          <p className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'employeeHome.eyebrow')}</p>
+          <h1 className={cn(S.pageTitle, 'm-0')}>
+            {t(locale, 'employeeHome.hello', { name: data.person?.fullName || '' })}
+          </h1>
+          <p className={cn(S.muted, 'm-0 mt-2 max-w-[58ch]')}>{t(locale, 'employeeHome.hint')}</p>
+          <section className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3" aria-label={t(locale, 'employeeHome.todaySummary')}>
+            <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
+              <div className="font-display text-2xl text-ink">{tasks.length}</div>
+              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummaryTasks')}</div>
+            </div>
+            <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
+              <div className="font-display text-2xl text-ink">{surveyMeta.openCount || 0}</div>
+              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummarySurveys')}</div>
+            </div>
+            <div className={cn('rounded-control border px-3 py-3', attentionCount > 0 ? 'border-warning/25 bg-warning/[0.045]' : 'border-success/20 bg-success/[0.04]')}>
+              <div className="font-display text-2xl text-ink">{attentionCount}</div>
+              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummaryAttention')}</div>
+            </div>
+          </section>
+          <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
+            {sectionOk('pdi') ? (
+              <a href="/employee/pdi" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'panel.employeePortal.pdiTitle')}</a>
+            ) : null}
+            {sectionOk('lms') ? (
+              <a href="/employee/lms" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.lmsTitle')}</a>
+            ) : null}
+            {sectionOk('timeClock') ? (
+              <a href="/employee/time-clock" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.timeClockTitle')}</a>
+            ) : null}
+          </nav>
           {startHere ? (
             <InlineCallout tone="info" className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <span>
@@ -584,14 +620,19 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       ? t(locale, 'employeeHome.emptyGoPdi')
                       : undefined
                 }
-                actionHref={courses.length ? '/employee/lms' : plans.length ? '#pdi' : undefined}
+                actionHref={courses.length ? '/employee/lms' : plans.length ? '/employee/pdi' : undefined}
               />
             </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {tasks.map((task) => (
                 <li key={task.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
-                  <div className={S.cardBody}>{taskLabel(locale, task)}</div>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className={S.cardBody}>{taskLabel(locale, task)}</div>
+                    <StatusToneChip tone={taskTone(task)}>
+                      {task.kind === 'lms_overdue' ? t(locale, 'employeeHome.taskOverdue') : t(locale, 'employeeHome.taskOpen')}
+                    </StatusToneChip>
+                  </div>
                   {task.dueDate ? (
                     <div
                       className={cn(
@@ -689,7 +730,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </EmpEmpty>
           ) : (
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {plans.map((plan) => {
+              {plans.slice(0, 1).map((plan) => {
                 const items = plan.items || [];
                 const doneN = items.filter((it) => it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
                 const pct = items.length ? Math.round((doneN / items.length) * 100) : 0;
@@ -709,7 +750,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     />
                   ) : null}
                   <ul className="mt-2 m-0 list-none space-y-2 p-0">
-                    {items.map((it) => (
+                    {items.slice(0, 3).map((it) => (
                       <li
                         key={it.id}
                         className="flex flex-col gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between"
@@ -756,10 +797,20 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       </li>
                     ))}
                   </ul>
+                  {items.length > 3 ? (
+                    <a href="/employee/pdi" className={cn(S.cardLink, 'mt-3 inline-flex')}>
+                      {t(locale, 'employeeHome.pdiSeeAllItems', { n: items.length - 3 })}
+                    </a>
+                  ) : null}
                 </li>
                 );
               })}
             </ul>
+            {plans.length > 0 ? (
+              <a href="/employee/pdi" className={cn(S.btnBrandSoft, 'mt-3 inline-flex min-h-touch no-underline')}>
+                {t(locale, 'employeeHome.pdiOpenPage')}
+              </a>
+            ) : null}
           )}
         </CollapsibleSection>
         ) : null}
