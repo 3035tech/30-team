@@ -1304,7 +1304,7 @@ export function TeamTab({
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
               onChange={navigatePersonSection}
-              className={focusCandidateId ? 'sticky top-0 z-20 -mx-4 bg-canvas/95 px-4 py-1 backdrop-blur-sm sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10' : undefined}
+              className={focusCandidateId ? 'sticky top-0 z-20 bg-canvas/95 py-1 backdrop-blur-sm' : undefined}
               tabs={[
                 { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },

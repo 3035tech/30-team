@@ -76,7 +76,10 @@ export function AdminRichFormDrawer({
         className={cn(
           'admin-rich-drawer-panel flex flex-col overflow-hidden border border-ink/12 bg-white',
           fullPage
-            ? cn('w-full border-0 bg-canvas shadow-none', withinShell ? 'min-h-screen' : 'h-screen')
+            ? cn(
+                'w-full border-0 bg-canvas shadow-none',
+                withinShell ? 'min-h-screen overflow-visible' : 'h-screen'
+              )
             : 'mx-6 my-6 max-h-[92vh] rounded-[18px] shadow-dialog'
         )}
         style={fullPage ? undefined : { width: `min(100%, ${maxWidth})` }}
@@ -84,8 +87,8 @@ export function AdminRichFormDrawer({
       >
         <div className={cn(
           'flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]',
-          fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10',
-          withinShell && 'sticky top-0 z-20 bg-canvas/95 backdrop-blur-sm'
+          fullPage && !withinShell && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10',
+          withinShell && 'sticky top-0 z-20 border-b-ink/10 bg-canvas/95 px-0 py-3.5 backdrop-blur-sm'
         )}>
           <div className="min-w-0">
             {fullPage ? (
@@ -106,8 +109,11 @@ export function AdminRichFormDrawer({
             <h2
               id="rich-form-drawer-title"
               className={cn(
-                'mb-0 mt-1.5 font-display font-normal leading-tight text-ink',
-                fullPage ? 'text-3xl sm:text-4xl' : 'text-2xl'
+                'mb-0 mt-1.5 leading-tight text-ink',
+                fullPage && withinShell
+                  ? 'font-ui text-3xl font-semibold tracking-tight sm:text-4xl'
+                  : 'font-display font-normal',
+                fullPage && !withinShell ? 'text-3xl sm:text-4xl' : !fullPage ? 'text-2xl' : null
               )}
             >
               {title}
@@ -134,12 +140,13 @@ export function AdminRichFormDrawer({
         <div ref={contentRef} className={cn(
           'flex-1 px-[22px] py-[18px]',
           !withinShell && 'overflow-y-auto',
-          fullPage && 'mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10'
+          fullPage && !withinShell && 'mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10',
+          fullPage && withinShell && 'px-0 py-5 sm:py-6'
         )}>{children}</div>
         {footer ? (
           <div className={cn(
             'flex flex-shrink-0 flex-wrap justify-end gap-2.5 border-t border-ink/12 px-[22px] pb-[18px] pt-3.5',
-            fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10'
+            fullPage && !withinShell && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10'
           )}>
             {footer}
           </div>
