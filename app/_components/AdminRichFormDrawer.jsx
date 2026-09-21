@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -22,8 +22,11 @@ export function AdminRichFormDrawer({
   footer,
   maxWidth = '820px',
   fullPage = false,
+  headerMeta = null,
+  headerActions = null,
 }) {
   const [mounted, setMounted] = useState(false);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
@@ -43,9 +46,15 @@ export function AdminRichFormDrawer({
     };
   }, [fullPage, open, onClose]);
 
+  useEffect(() => {
+    if (!open || !fullPage) return;
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [fullPage, open, title]);
+
   if (!mounted || !open) return null;
 
   const backLabel = locale === 'en' ? 'Back to team' : 'Voltar para equipe';
+  const closeLabel = locale === 'en' ? 'Close profile' : 'Fechar perfil';
 
   return createPortal(
     <div
@@ -78,6 +87,7 @@ export function AdminRichFormDrawer({
               <button
                 type="button"
                 onClick={onClose}
+                aria-label={backLabel}
                 className="mb-3 inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-xs text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
               >
                 ← {backLabel}
@@ -95,17 +105,26 @@ export function AdminRichFormDrawer({
             >
               {title}
             </h2>
+            {headerMeta ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+                {headerMeta}
+              </div>
+            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t(locale, 'panel.common.cancel')}
-            className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2', fullPage && 'mt-8')}
-          >
-            ×
-          </button>
+          <div className={cn('flex shrink-0 items-start gap-2', fullPage && 'mt-8')}>
+            {headerActions}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={fullPage ? closeLabel : t(locale, 'panel.common.cancel')}
+              title={fullPage ? closeLabel : undefined}
+              className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2')}
+            >
+              ×
+            </button>
+          </div>
         </div>
-        <div className={cn(
+        <div ref={contentRef} className={cn(
           'flex-1 overflow-y-auto px-[22px] py-[18px]',
           fullPage && 'mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10'
         )}>{children}</div>

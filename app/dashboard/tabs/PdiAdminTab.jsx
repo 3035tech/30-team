@@ -154,7 +154,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
       tab: 'team',
       candidate: String(row.candidateId),
       search: row.candidateName || null,
-      section: 'journey',
+      section: 'dp',
     });
   };
 

@@ -437,6 +437,7 @@ function PanelSubNav({
   moreLabel = 'More',
   variant = 'line',
   scrollable = true,
+  className,
 }) {
   const tabRefs = useRef(new Map());
   const more = Array.isArray(moreTabs) ? moreTabs : [];
@@ -475,7 +476,8 @@ function PanelSubNav({
         cn('mb-4 flex max-w-full', scrollable && 'overflow-x-auto [scrollbar-width:thin]'),
         pill
           ? 'items-stretch gap-2 rounded-control border border-ink/12 bg-ink/[0.025] p-1.5'
-          : 'items-end gap-1 border-b border-ink/12'
+          : 'items-end gap-1 border-b border-ink/12',
+        className
       )}
     >
       {tabs.map((tab) => {

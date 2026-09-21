@@ -176,6 +176,18 @@ function formatFillDuration(ms) {
   return `${s}s`;
 }
 
+function formatPersonDate(value, locale) {
+  if (!value) return '—';
+  const raw = String(value).slice(0, 10);
+  const [year, month, day] = raw.split('-').map(Number);
+  if (!year || !month || !day) return raw;
+  return new Date(year, month - 1, day).toLocaleDateString(localeHtmlLang(locale), {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 /** 54 perguntas: < ~3 min é bem rápido (sinal soft). */
 function isSuspiciouslyFast(ms) {
   return ms != null && Number.isFinite(Number(ms)) && Number(ms) < 3 * 60 * 1000;
@@ -529,6 +541,7 @@ export function TeamTab({
   const loadDetail = useCallback(async (candidateId) => {
     setDetailLoading(true);
     setDetailErr('');
+    setDetail(null);
     setNotesEditing(false);
     setNotesMsg('');
     setProfileEditing(false);
@@ -836,7 +849,16 @@ export function TeamTab({
     }
   };
 
-  const closePersonDetail = () => {
+  const closePersonDetail = async () => {
+    if (profileEditing || notesEditing) {
+      const ok = await confirm({
+        message: locale === 'en'
+          ? 'You have unsaved changes. Leave this profile?'
+          : 'Existem alterações não salvas. Deseja sair deste perfil?',
+        confirmLabel: locale === 'en' ? 'Leave profile' : 'Sair do perfil',
+      });
+      if (!ok) return;
+    }
     setOpen(null);
     setDetail(null);
     setDetailErr('');
@@ -860,6 +882,54 @@ export function TeamTab({
       });
     }
   };
+
+  const personRows = (results || []).filter((row) => row.candidateId);
+  const currentPersonIndex = openRow?.candidateId
+    ? personRows.findIndex((row) => String(row.candidateId) === String(openRow.candidateId))
+    : -1;
+  const navigateAdjacentPerson = (direction) => {
+    const nextRow = personRows[currentPersonIndex + direction];
+    if (!nextRow) return;
+    openPersonDetail(nextRow, focusSection || peopleSubTab || 'oneOnOne');
+  };
+  const personHeaderMeta = detailMatchesOpen && detail?.candidate ? (
+    <>
+      <StatusToneChip tone={detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? 'success' : 'neutral'}>
+        {t(locale, `panel.team.employment.${detail.candidate.employmentStatus}`)}
+      </StatusToneChip>
+      {openRow?.areaLabel ? <StatusToneChip tone="neutral">{openRow.areaLabel}</StatusToneChip> : null}
+      {detail.candidate.email ? <span className="truncate">{detail.candidate.email}</span> : null}
+    </>
+  ) : null;
+  const personHeaderActions = focusCandidateId ? (
+    <div className="flex items-center gap-1">
+      {currentPersonIndex >= 0 ? (
+        <span className="mr-1 hidden whitespace-nowrap font-mono text-2xs text-ink-faint sm:inline">
+          {currentPersonIndex + 1} / {personRows.length}
+        </span>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => navigateAdjacentPerson(-1)}
+        disabled={currentPersonIndex <= 0}
+        aria-label={locale === 'en' ? 'Previous person' : 'Pessoa anterior'}
+        title={locale === 'en' ? 'Previous person' : 'Pessoa anterior'}
+        className="min-h-touch min-w-touch rounded-control border border-ink/12 bg-transparent px-2 text-lg text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink disabled:cursor-default disabled:opacity-35"
+      >
+        ←
+      </button>
+      <button
+        type="button"
+        onClick={() => navigateAdjacentPerson(1)}
+        disabled={currentPersonIndex < 0 || currentPersonIndex >= personRows.length - 1}
+        aria-label={locale === 'en' ? 'Next person' : 'Próxima pessoa'}
+        title={locale === 'en' ? 'Next person' : 'Próxima pessoa'}
+        className="min-h-touch min-w-touch rounded-control border border-ink/12 bg-transparent px-2 text-lg text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink disabled:cursor-default disabled:opacity-35"
+      >
+        →
+      </button>
+    </div>
+  ) : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -1195,13 +1265,40 @@ export function TeamTab({
         onClose={closePersonDetail}
         maxWidth="920px"
         fullPage={Boolean(focusCandidateId)}
+        headerMeta={personHeaderMeta}
+        headerActions={personHeaderActions}
       >
         {openRow ? (
           <div>
+            {focusCandidateId ? (
+              <section className="mb-5 grid gap-3 sm:grid-cols-3" aria-label={locale === 'en' ? 'Profile summary' : 'Resumo do perfil'}>
+                <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
+                  <span className={S.label}>{locale === 'en' ? 'Current focus' : 'Foco atual'}</span>
+                  <p className="m-0 mt-1 text-sm font-medium text-ink">
+                    {focusSection === 'dp' ? (locale === 'en' ? 'Development plan' : 'Plano de desenvolvimento') : (locale === 'en' ? 'People context' : 'Contexto da pessoa')}
+                  </p>
+                </div>
+        <div className="rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
+                  <span className={S.label}>{locale === 'en' ? 'Started' : 'Início'}</span>
+                  <p className={cn('m-0 mt-1 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
+                    {detailLoading ? '•••' : formatPersonDate(detail?.candidate?.startDate, locale)}
+                  </p>
+                </div>
+                <div className="rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
+                  <span className={S.label}>{locale === 'en' ? 'Current status' : 'Status atual'}</span>
+                  <p className={cn('m-0 mt-1 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
+                    {detail?.candidate?.employmentStatus
+                      ? t(locale, `panel.team.employment.${detail.candidate.employmentStatus}`)
+                      : (detailLoading ? '…' : '—')}
+                  </p>
+                </div>
+              </section>
+            ) : null}
             <PanelSubNav
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
               onChange={navigatePersonSection}
+              className={focusCandidateId ? 'sticky top-0 z-20 -mx-4 bg-canvas/95 px-4 py-1 backdrop-blur-sm sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10' : undefined}
               tabs={[
                 { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
