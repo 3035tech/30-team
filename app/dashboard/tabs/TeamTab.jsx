@@ -1270,6 +1270,7 @@ export function TeamTab({
         onClose={closePersonDetail}
         maxWidth="920px"
         fullPage={isPersonPage}
+        withinShell={isPersonPage}
         headerMeta={personHeaderMeta}
         headerActions={personHeaderActions}
       >

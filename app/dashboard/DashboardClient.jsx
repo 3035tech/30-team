@@ -1201,7 +1201,7 @@ export default function DashboardClient({
           </div>
 
           {/* Title row */}
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          {!isPersonFocus ? <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="mb-1.5">
                 <DashboardBreadcrumb
@@ -1276,7 +1276,7 @@ export default function DashboardClient({
               <ExportCsvButton href={exportUrl} locale={locale} />
               ) : null}
             </div>
-          </div>
+          </div> : null}
 
           {panelLoading ? (
             <AppLoading
@@ -1526,7 +1526,7 @@ export default function DashboardClient({
                       pushFilters({ search: value });
                     }}
                   />
-                  {listTotal > 0 ? (
+                  {!isPersonFocus && listTotal > 0 ? (
                     <div className={cn(S.card, 'mt-[18px] flex flex-wrap items-center justify-between gap-3 px-[22px] py-4')}>
                       <span className="font-mono text-prose text-ink-muted">
                         {t(locale, 'dashboard.itemsPerPageTeam')}

@@ -22,6 +22,7 @@ export function AdminRichFormDrawer({
   footer,
   maxWidth = '820px',
   fullPage = false,
+  withinShell = false,
   headerMeta = null,
   headerActions = null,
 }) {
@@ -38,13 +39,13 @@ export function AdminRichFormDrawer({
       if (e.key === 'Escape') onClose?.();
     };
     const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (!withinShell) document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      if (!withinShell) document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [fullPage, open, onClose]);
+  }, [fullPage, open, onClose, withinShell]);
 
   useEffect(() => {
     if (!open || !fullPage) return;
@@ -56,23 +57,26 @@ export function AdminRichFormDrawer({
   const backLabel = locale === 'en' ? 'Back to team' : 'Voltar para equipe';
   const closeLabel = locale === 'en' ? 'Close profile' : 'Fechar perfil';
 
-  return createPortal(
+  const content = (
     <div
-      className={cn('app-dialog-overlay', fullPage ? 'bg-canvas' : dialogOverlayClass)}
+      className={cn(
+        withinShell ? 'w-full bg-canvas' : 'app-dialog-overlay',
+        !withinShell && (fullPage ? 'bg-canvas' : dialogOverlayClass)
+      )}
       role="presentation"
       onClick={(e) => {
-        if (fullPage) return;
+        if (fullPage || withinShell) return;
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
       <div
-        role={fullPage ? 'main' : 'dialog'}
-        {...(!fullPage ? { 'aria-modal': 'true' } : {})}
+        role={withinShell ? 'region' : fullPage ? 'main' : 'dialog'}
+        {...(!fullPage && !withinShell ? { 'aria-modal': 'true' } : {})}
         aria-labelledby="rich-form-drawer-title"
         className={cn(
           'admin-rich-drawer-panel flex flex-col overflow-hidden border border-ink/12 bg-white',
           fullPage
-            ? 'h-screen w-full border-0 bg-canvas shadow-none'
+            ? cn('w-full border-0 bg-canvas shadow-none', withinShell ? 'min-h-screen' : 'h-screen')
             : 'mx-6 my-6 max-h-[92vh] rounded-[18px] shadow-dialog'
         )}
         style={fullPage ? undefined : { width: `min(100%, ${maxWidth})` }}
@@ -80,7 +84,8 @@ export function AdminRichFormDrawer({
       >
         <div className={cn(
           'flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]',
-          fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10'
+          fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10',
+          withinShell && 'sticky top-0 z-20 bg-canvas/95 backdrop-blur-sm'
         )}>
           <div className="min-w-0">
             {fullPage ? (
@@ -94,7 +99,9 @@ export function AdminRichFormDrawer({
               </button>
             ) : null}
             <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
-              {fullPage ? (locale === 'en' ? 'PERSON PROFILE' : 'PERFIL DA PESSOA') : '30Team'}
+              {fullPage
+                ? (locale === 'en' ? 'PEOPLE / TEAM' : 'PESSOAS / EQUIPE')
+                : '30Team'}
             </span>
             <h2
               id="rich-form-drawer-title"
@@ -125,7 +132,8 @@ export function AdminRichFormDrawer({
           </div>
         </div>
         <div ref={contentRef} className={cn(
-          'flex-1 overflow-y-auto px-[22px] py-[18px]',
+          'flex-1 px-[22px] py-[18px]',
+          !withinShell && 'overflow-y-auto',
           fullPage && 'mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10'
         )}>{children}</div>
         {footer ? (
@@ -137,9 +145,10 @@ export function AdminRichFormDrawer({
           </div>
         ) : null}
       </div>
-    </div>,
-    document.body
+    </div>
   );
+
+  return withinShell ? content : createPortal(content, document.body);
 }
 
 export { dialogBtnGhostClass, dialogBtnPrimaryClass } from './app-dialog-styles';
