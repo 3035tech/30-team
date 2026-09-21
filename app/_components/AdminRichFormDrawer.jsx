@@ -21,6 +21,7 @@ export function AdminRichFormDrawer({
   children,
   footer,
   maxWidth = '820px',
+  fullPage = false,
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -34,40 +35,63 @@ export function AdminRichFormDrawer({
       if (e.key === 'Escape') onClose?.();
     };
     const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = fullPage ? 'auto' : 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose]);
+  }, [fullPage, open, onClose]);
 
   if (!mounted || !open) return null;
 
+  const backLabel = locale === 'en' ? 'Back to team' : 'Voltar para equipe';
+
   return createPortal(
     <div
-      className={cn('app-dialog-overlay', dialogOverlayClass)}
+      className={cn('app-dialog-overlay', fullPage ? 'bg-canvas' : dialogOverlayClass)}
       role="presentation"
       onClick={(e) => {
+        if (fullPage) return;
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
       <div
-        role="dialog"
-        aria-modal="true"
+        role={fullPage ? 'main' : 'dialog'}
+        {...(!fullPage ? { 'aria-modal': 'true' } : {})}
         aria-labelledby="rich-form-drawer-title"
-        className="admin-rich-drawer-panel mx-6 my-6 flex max-h-[92vh] flex-col overflow-hidden rounded-[18px] border border-ink/12 bg-white shadow-dialog"
-        style={{ width: `min(100%, ${maxWidth})` }}
+        className={cn(
+          'admin-rich-drawer-panel flex flex-col overflow-hidden border border-ink/12 bg-white',
+          fullPage
+            ? 'min-h-screen w-full border-0 bg-canvas shadow-none'
+            : 'mx-6 my-6 max-h-[92vh] rounded-[18px] shadow-dialog'
+        )}
+        style={fullPage ? undefined : { width: `min(100%, ${maxWidth})` }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]">
-          <div>
+        <div className={cn(
+          'flex flex-shrink-0 items-start justify-between gap-3 border-b border-ink/12 px-[22px] pb-3.5 pt-[18px]',
+          fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10'
+        )}>
+          <div className="min-w-0">
+            {fullPage ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="mb-3 inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-xs text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+              >
+                ← {backLabel}
+              </button>
+            ) : null}
             <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
-              30Team
+              {fullPage ? (locale === 'en' ? 'PERSON PROFILE' : 'PERFIL DA PESSOA') : '30Team'}
             </span>
             <h2
               id="rich-form-drawer-title"
-              className="mb-0 mt-1.5 font-display text-2xl font-normal leading-tight text-ink"
+              className={cn(
+                'mb-0 mt-1.5 font-display font-normal leading-tight text-ink',
+                fullPage ? 'text-3xl sm:text-4xl' : 'text-2xl'
+              )}
             >
               {title}
             </h2>
@@ -76,14 +100,20 @@ export function AdminRichFormDrawer({
             type="button"
             onClick={onClose}
             aria-label={t(locale, 'panel.common.cancel')}
-            className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2')}
+            className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2', fullPage && 'mt-8')}
           >
             ×
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-[22px] py-[18px]">{children}</div>
+        <div className={cn(
+          'flex-1 overflow-y-auto px-[22px] py-[18px]',
+          fullPage && 'mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10'
+        )}>{children}</div>
         {footer ? (
-          <div className="flex flex-shrink-0 flex-wrap justify-end gap-2.5 border-t border-ink/12 px-[22px] pb-[18px] pt-3.5">
+          <div className={cn(
+            'flex flex-shrink-0 flex-wrap justify-end gap-2.5 border-t border-ink/12 px-[22px] pb-[18px] pt-3.5',
+            fullPage && 'mx-auto w-full max-w-[1180px] px-4 sm:px-8 lg:px-10'
+          )}>
             {footer}
           </div>
         ) : null}

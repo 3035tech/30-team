@@ -1194,6 +1194,7 @@ export function TeamTab({
         locale={locale}
         onClose={closePersonDetail}
         maxWidth="920px"
+        fullPage={Boolean(focusCandidateId)}
       >
         {openRow ? (
           <div>
