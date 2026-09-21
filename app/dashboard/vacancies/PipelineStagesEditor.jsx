@@ -22,11 +22,11 @@ const CANONICAL_OPTIONS_CUSTOM = [
 ];
 
 const BTN_PRIMARY =
-  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-3.5 py-2 font-mono text-xs uppercase tracking-[1px] text-white disabled:opacity-60';
+  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-3.5 py-2 font-ui text-xs font-medium text-white disabled:opacity-60';
 const BTN_GHOST =
-  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-mono text-xs uppercase tracking-[1px] text-ink-muted disabled:opacity-60';
+  'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-xs text-ink-muted disabled:opacity-60';
 const BTN_DANGER =
-  'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-3 py-1.5 font-mono text-xs uppercase tracking-[1px] text-danger disabled:opacity-60';
+  'min-h-touch cursor-pointer rounded-control border border-danger/35 bg-danger/[0.08] px-3 py-1.5 font-ui text-xs text-danger disabled:opacity-60';
 const INPUT =
   'w-full rounded-control border border-ink/12 bg-surface px-2 py-1.5 font-ui text-xs text-ink outline-none focus:border-brand-500';
 

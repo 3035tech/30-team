@@ -93,6 +93,19 @@ function VacancyMetaItem({ label, value, warning = false }) {
   );
 }
 
+function getVacancyLinkState(expiresAt, locale) {
+  const date = expiresAt ? new Date(expiresAt) : null;
+  const timestamp = date?.getTime();
+  const expired = Number.isFinite(timestamp) && timestamp <= Date.now();
+  return {
+    date: Number.isFinite(timestamp) ? date : null,
+    expired,
+    label: expired
+      ? (locale === 'en' ? 'Expired' : 'Expirado')
+      : (locale === 'en' ? 'Active' : 'Ativo'),
+  };
+}
+
 function normalizeVacancyDetailSection(value) {
   const legacy = {
     fit: 'candidates',
@@ -1030,6 +1043,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         open={!!editingVacancy}
         title={t(locale, 'recruiting.editVacancyDrawerTitle')}
         locale={locale}
+        fullPage={Boolean(editingVacancy)}
         onClose={() => setEditingVacancy(null)}
         footer={(
           <>
@@ -1160,7 +1174,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     ))}
                   </SelectField>
                 </FormField>
-                <FormField label={t(locale, 'recruiting.salaryMinPh')}>
+                <FormField label={locale === 'en' ? 'Minimum salary' : 'Salário mínimo'}>
                   <input
                     value={formatSalaryBr(editingVacancy.salaryMin)}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
@@ -1170,7 +1184,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     className={cn(FIELD, 'px-2.5 py-2 text-prose')}
                   />
                 </FormField>
-                <FormField label={t(locale, 'recruiting.salaryMaxPh')}>
+                <FormField label={locale === 'en' ? 'Maximum salary' : 'Salário máximo'}>
                   <input
                     value={formatSalaryBr(editingVacancy.salaryMax)}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
@@ -1255,7 +1269,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         ? publicVacancyPath({ vacancySlug: v.slug, vacancyId: v.id })
         : '';
     const publicPageLink = publicPagePath ? `${appUrl}${publicPagePath}` : '';
-    const exp = v?.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
+    const linkState = getVacancyLinkState(v?.activeTokenExpiresAt, locale);
+    const exp = linkState.date;
     return (
       <>
         {vacancyFormDrawers}
@@ -1464,10 +1479,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               <div className="grid gap-3 md:grid-cols-2">
                 <section className="rounded-control border border-ink/10 bg-ink/[0.025] p-3.5" aria-label={t(locale, 'recruiting.enneagramLinkLabel')}>
                   <span className={cn(S.label, 'mb-2.5 block')}>{t(locale, 'recruiting.enneagramLinkLabel')}</span>
-                  {token ? (
-                    <>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <CopyableLink
+                      {token ? (
+                        <>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={cn(
+                              'rounded-full border px-2 py-1 font-mono text-2xs',
+                              linkState.expired
+                                ? 'border-warning/35 bg-warning/[0.10] text-warning'
+                                : 'border-success/30 bg-success/[0.08] text-success'
+                            )}>
+                              {linkState.label}
+                            </span>
+                            <CopyableLink
                           url={link}
                           locale={locale}
                           label={t(locale, 'recruiting.enneagramLinkLabel')}
@@ -1475,13 +1498,15 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           compact
                           disabled={loading}
                         />
-                        <button
+                            <button
                           type="button"
                           onClick={() => rotateLink(v.id)}
                           disabled={loading}
                           className={cn(BTN_GHOST, loading && 'opacity-60')}
-                        >
-                          {t(locale, 'recruiting.rotateLink')}
+                            >
+                              {linkState.expired
+                                ? (locale === 'en' ? 'Renew link' : 'Renovar link')
+                                : t(locale, 'recruiting.rotateLink')}
                         </button>
                         <button
                           type="button"
@@ -1504,10 +1529,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         </button>
                       </div>
                       {exp ? (
-                        <span className={cn(META_FAINT, 'mt-2 block')}>
-                          {t(locale, 'recruiting.expiresAt', {
-                            when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
-                          })}
+                        <span className={cn(META_FAINT, 'mt-2 block', linkState.expired && 'text-warning')}>
+                          {linkState.expired
+                            ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
+                            : t(locale, 'recruiting.expiresAt', {
+                                when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                              })}
                         </span>
                       ) : null}
                     </>
@@ -1561,9 +1588,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </div>
                   ) : null}
                   {!v.publicPageEnabled ? (
-                    <span className={cn(META_FAINT, 'mt-2 block')}>
-                      {t(locale, 'recruiting.publicPageLinkDisabledHint')}
-                    </span>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
+                      <span className={cn(META_FAINT, 'block flex-1')}>{t(locale, 'recruiting.publicPageLinkDisabledHint')}</span>
+                      <button type="button" onClick={() => editVacancy(v)} disabled={loading} className={BTN_BRAND_SOFT}>
+                        {locale === 'en' ? 'Activate page' : 'Ativar página'}
+                      </button>
+                    </div>
                   ) : null}
                 </section>
               </div>
@@ -1606,7 +1636,17 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               ) : null}
 
               {detailSection === 'candidates' ? (
-                <div>
+                <div className="space-y-4">
+                  <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-4 py-3">
+                    <h3 className="m-0 font-ui text-sm font-semibold text-ink">
+                      {locale === 'en' ? 'Candidate intake' : 'Entrada de candidatos'}
+                    </h3>
+                    <p className="mb-0 mt-1 text-xs leading-[1.5] text-ink-muted">
+                      {locale === 'en'
+                        ? 'Register interview details first, then send assessments and follow invitations below.'
+                        : 'Cadastre os dados da entrevista primeiro. Depois envie avaliações e acompanhe os convites abaixo.'}
+                    </p>
+                  </div>
                   <VacancyInterviewCandidates
                     vacancyId={v.id}
                     locale={locale}
@@ -1623,7 +1663,19 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       setPipelineRefresh((x) => x + 1);
                     }}
                   />
-                  <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                    <div className="rounded-control border border-ink/10 bg-ink/[0.02] p-4">
+                      <h3 className="m-0 font-ui text-sm font-semibold text-ink">
+                        {locale === 'en' ? 'Next step' : 'Próximo passo'}
+                      </h3>
+                      <p className="mb-0 mt-1.5 text-xs leading-[1.55] text-ink-muted">
+                        {locale === 'en'
+                          ? 'Use the pipeline tab to move candidates through the hiring stages and compare fit when results arrive.'
+                          : 'Use a aba Pipeline para mover candidatos pelas etapas e comparar aderência quando os resultados chegarem.'}
+                      </p>
+                    </div>
+                  </div>
                   <CollapsibleBlock
                     locale={locale}
                     title={t(locale, 'recruiting.detailTabFit')}
@@ -1870,11 +1922,15 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             {vacancies.map((v) => {
               const token = v.activeToken || '';
               const link = token ? `${appUrl}/v/${token}` : '';
-              const exp = v.activeTokenExpiresAt ? new Date(v.activeTokenExpiresAt) : null;
+              const linkState = getVacancyLinkState(v.activeTokenExpiresAt, locale);
+              const exp = linkState.date;
               return (
                 <div
                   key={v.id}
-                  className="grid gap-3 rounded-xl border border-ink/12 bg-ink/[0.03] p-3.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+                  className={cn(
+                    'grid gap-3 rounded-xl border bg-ink/[0.03] p-3.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start',
+                    linkState.expired ? 'border-warning/30' : 'border-ink/12'
+                  )}
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
@@ -1930,6 +1986,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         <span className="font-ui text-xs text-ink-muted">
                           {locale === 'en' ? 'Candidate link' : 'Link para candidatos'}
                         </span>
+                        <span className={cn(
+                          'rounded-full border px-2 py-0.5 font-mono text-2xs',
+                          linkState.expired
+                            ? 'border-warning/35 bg-warning/[0.10] text-warning'
+                            : 'border-success/30 bg-success/[0.08] text-success'
+                        )}>
+                          {linkState.label}
+                        </span>
                         <CopyableLink
                           url={link}
                           locale={locale}
@@ -1939,11 +2003,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           disabled={loading}
                         />
                         {exp ? (
-                          <span className="font-mono text-2xs text-ink-faint">
-                            {t(locale, 'recruiting.expiresAt', {
-                              when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
-                            })}
+                          <span className={cn('font-mono text-2xs text-ink-faint', linkState.expired && 'text-warning')}>
+                            {linkState.expired
+                              ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
+                              : t(locale, 'recruiting.expiresAt', {
+                                  when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                                })}
                           </span>
+                        ) : null}
+                        {linkState.expired ? (
+                          <button
+                            type="button"
+                            onClick={() => rotateLink(v.id)}
+                            disabled={loading}
+                            className={cn(BTN_BRAND_SOFT, 'ml-auto', loading && 'opacity-60')}
+                          >
+                            {locale === 'en' ? 'Renew link' : 'Renovar link'}
+                          </button>
                         ) : null}
                       </div>
                     ) : (
