@@ -172,6 +172,9 @@ describe('module hardening', () => {
     assert.match(team, /personNavigationFromSection/);
     assert.match(team, /candidate: null, section: null/);
     assert.match(team, /section,\s*scroll: false/);
+    assert.match(team, /const isPersonPage = Boolean\(focusCandidateId\)/);
+    assert.match(team, /!isPersonPage \? \(/);
+    assert.match(team, /fullPage=\{isPersonPage\}/);
     assert.match(team, /panel\.team\.moreActions/);
     assert.match(team, /StatusToneChip tone="info"/);
     assert.match(team, /aria-label=\{`\$\{t\(locale, 'panel\.team\.openDetail'\)\}/);

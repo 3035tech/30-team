@@ -38,7 +38,7 @@ export function AdminRichFormDrawer({
       if (e.key === 'Escape') onClose?.();
     };
     const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = fullPage ? 'auto' : 'hidden';
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
@@ -72,7 +72,7 @@ export function AdminRichFormDrawer({
         className={cn(
           'admin-rich-drawer-panel flex flex-col overflow-hidden border border-ink/12 bg-white',
           fullPage
-            ? 'min-h-screen w-full border-0 bg-canvas shadow-none'
+            ? 'h-screen w-full border-0 bg-canvas shadow-none'
             : 'mx-6 my-6 max-h-[92vh] rounded-[18px] shadow-dialog'
         )}
         style={fullPage ? undefined : { width: `min(100%, ${maxWidth})` }}

@@ -92,7 +92,12 @@ const COPY = {
 
 function dateLabel(value, locale) {
   if (!value) return null;
-  return new Date(`${value}T12:00:00`).toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR', {
+  const raw = String(value).trim();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? new Date(`${raw}T12:00:00`)
+    : new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR', {
     day: '2-digit',
     month: 'short',
   });
@@ -207,12 +212,13 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                     const isNoPlan = item.priorityKind === 'no-plan';
                     const isUnlinked = item.priorityKind === 'unlinked';
                     const title = isNoPlan ? copy.noPlanStatus : item.itemTitle || item.planTitle || copy.overdueItem;
+                    const dueLabel = dateLabel(item.dueDate, locale);
                     const detail = isNoPlan
                       ? copy.noPlanBody
                       : isUnlinked
                         ? copy.withoutOneOnOne
-                        : item.dueDate
-                          ? `${copy.dueOn} ${dateLabel(item.dueDate, locale)}`
+                        : dueLabel
+                          ? `${copy.dueOn} ${dueLabel}`
                           : copy.overdueItem;
                     return (
                       <div key={`${item.priorityKind}-${item.candidateId}`} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -272,6 +278,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                 {rows.map((row) => {
                   const hasPlan = Boolean(row.planId);
                   const flagged = !hasPlan || row.periodOverdue || row.overdueItemCount > 0;
+                  const periodEndLabel = dateLabel(row.periodEnd, locale);
                   return (
                     <article key={row.candidateId} className={cn('rounded-control border px-3.5 py-3', flagged ? 'border-warning/25 bg-warning/[0.035]' : 'border-ink/10 bg-ink/[0.015]')}>
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -282,11 +289,11 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                             {row.periodOverdue ? <span className="rounded-full bg-danger/10 px-2 py-1 font-mono text-2xs text-danger">{copy.overduePlan}</span> : null}
                           </div>
                           {hasPlan ? (
-                            <p className="m-0 mt-1 text-xs text-ink-muted">
-                              {row.planTitle}
-                              {row.periodEnd ? ` · ${dateLabel(row.periodEnd, locale)}` : ''}
+                          <p className="m-0 mt-1 text-xs text-ink-muted">
+                            {row.planTitle}
+                              {periodEndLabel ? ` · ${periodEndLabel}` : ''}
                               {row.overdueItemCount > 0 ? ` · ${row.overdueItemCount} ${copy.overdueItems}` : ''}
-                            </p>
+                          </p>
                           ) : (
                             <p className="m-0 mt-1 text-xs text-ink-muted">{copy.noPlanBody}</p>
                           )}

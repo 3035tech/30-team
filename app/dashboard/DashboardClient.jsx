@@ -342,7 +342,8 @@ export default function DashboardClient({
   const showAudit = isSuperAdminPayload(sessionAuth);
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const contextualHelpSection = helpMetaForTab(tab)?.guideSections?.[0] || null;
-  const showsCohortChrome = COHORT_TABS.has(tab);
+  const isPersonFocus = tab === 'team' && Boolean(urlParams.get('candidate'));
+  const showsCohortChrome = COHORT_TABS.has(tab) && !isPersonFocus;
   /** Super admin: company picker on cohort chrome or company-scoped People/catalog tabs. */
   const showsCompanyPicker =
     isAdmin &&

@@ -32,6 +32,8 @@ describe('dashboard navigation information architecture', () => {
   it('uses the same ownership map for tabs and breadcrumbs', () => {
     assert.equal(getDashboardSection('analytics'), DASHBOARD_NAV_SECTION.HOME);
     assert.equal(getDashboardTabNav('analytics').labelKey, 'dashboard.analytics');
+    assert.equal(getDashboardSection('pdi'), DASHBOARD_NAV_SECTION.DEVELOPMENT);
+    assert.equal(getDashboardTabNav('pdi').labelKey, 'dashboard.pdi');
     assert.equal(getDashboardSection('lms'), DASHBOARD_NAV_SECTION.DEVELOPMENT);
     assert.equal(getDashboardTabNav('team').labelKey, 'dashboard.team');
     assert.deepEqual(getDashboardTabNav('unknown'), DASHBOARD_TAB_NAV.overview);

@@ -930,9 +930,12 @@ export function TeamTab({
       </button>
     </div>
   ) : null;
+  const isPersonPage = Boolean(focusCandidateId);
 
   return (
     <div className="flex flex-col gap-3">
+      {!isPersonPage ? (
+      <>
       {companyId ? (
         <div className="flex justify-end">
           <AdminCreateButton
@@ -1257,6 +1260,8 @@ export function TeamTab({
         );
       })}
         </div>
+      </>
+      ) : null}
 
       <AdminRichFormDrawer
         open={Boolean(open && openRow)}
@@ -1264,7 +1269,7 @@ export function TeamTab({
         locale={locale}
         onClose={closePersonDetail}
         maxWidth="920px"
-        fullPage={Boolean(focusCandidateId)}
+        fullPage={isPersonPage}
         headerMeta={personHeaderMeta}
         headerActions={personHeaderActions}
       >
