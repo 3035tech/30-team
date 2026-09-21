@@ -353,6 +353,7 @@ export default function DashboardClient({
   const showCompanies = can(sessionAuth, CAP.COMPANIES_MANAGE);
   const showUsers = can(sessionAuth, CAP.USERS_MANAGE);
   const showJobRoles = can(sessionAuth, CAP.JOB_ROLES_VIEW);
+  const canViewJobRoles = showJobRoles || can(sessionAuth, CAP.VACANCIES_MANAGE);
   const showPerformance = can(sessionAuth, CAP.PERFORMANCE_VIEW);
   const showSuccession = can(sessionAuth, CAP.SUCCESSION_VIEW);
   const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
@@ -1510,6 +1511,7 @@ export default function DashboardClient({
                     pipelineFilter={pipeline && pipeline !== 'all' ? pipeline : null}
                     canViewCompensation={showCompensation}
                     canManageCompensation={manageCompensation}
+                    canViewJobRoles={canViewJobRoles}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });
@@ -1653,6 +1655,7 @@ export default function DashboardClient({
                   companyId={scopedCompanyId}
                   navigateDashboard={navigateWithOpts}
                   canManage={manageCompensation}
+                  canViewJobRoles={canViewJobRoles}
                 />
               )}
               {tab === 'leads' && showLeads && <LeadsAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}

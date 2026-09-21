@@ -57,6 +57,7 @@ export function CompensationBlock({
   employmentStatus,
   companyId,
   canManage = true,
+  canViewJobRoles = false,
   navigateDashboard = null,
 }) {
   const { toast, promptForm, confirm } = useAppFeedback();
@@ -131,7 +132,7 @@ export function CompensationBlock({
   }, [load]);
 
   useEffect(() => {
-    if (!companyId || !visible) {
+    if (!companyId || !visible || !canViewJobRoles) {
       setRoles([]);
       setRolesLoading(false);
       return;
@@ -155,7 +156,7 @@ export function CompensationBlock({
     return () => {
       cancelled = true;
     };
-  }, [companyId, visible]);
+  }, [companyId, visible, canViewJobRoles]);
 
   const setJobRole = async (jobRoleId) => {
     if (readOnly) return;
@@ -517,7 +518,7 @@ export function CompensationBlock({
       </div>
 
       <div className="mb-4 rounded-control border border-ink/10 bg-surface px-3 py-2.5">
-        <FormField label={t(locale, 'panel.compensation.jobRoleLabel')}>
+        {canViewJobRoles ? <FormField label={t(locale, 'panel.compensation.jobRoleLabel')}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <SelectField
               ref={jobRoleSelectRef}
@@ -561,8 +562,8 @@ export function CompensationBlock({
               ) : null
             ) : null}
           </div>
-        </FormField>
-        <p
+        </FormField> : null}
+        {canViewJobRoles ? <p
           className={cn(
             'mb-0 mt-1.5 text-xs',
             !rolesLoading && roles.length === 0 ? 'text-info' : S.muted
@@ -574,7 +575,7 @@ export function CompensationBlock({
               ? 'panel.compensation.jobRoleCatalogEmpty'
               : 'panel.compensation.jobRoleHint'
           )}
-        </p>
+        </p> : null}
         {(market?.marketSalaryMin || market?.marketSalaryMax) ? (
           <div className="mt-2 font-mono text-2xs text-ink-muted">
             {t(locale, 'panel.compensation.marketBandLabel')}:{' '}

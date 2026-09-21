@@ -252,6 +252,7 @@ export function TeamTab({
   pipelineFilter = null,
   canViewCompensation = false,
   canManageCompensation = false,
+  canViewJobRoles = false,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -1384,6 +1385,7 @@ export function TeamTab({
                             employmentStatus={detail.candidate.employmentStatus}
                             companyId={detail.candidate.companyId}
                             canManage={canManageCompensation}
+                            canViewJobRoles={canViewJobRoles}
                             navigateDashboard={navigateDashboard}
                           />
                           <BenefitAssignmentsBlock

@@ -65,7 +65,7 @@ function eventTypeLabel(locale, type) {
 /**
  * Unified internal compensation roster — list salaries + history drawer.
  */
-export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, canManage = false }) {
+export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, canManage = false, canViewJobRoles = false }) {
   const { toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
@@ -397,6 +397,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
             employmentStatus={historyPerson.employmentStatus}
             companyId={companyId}
             canManage={canManage}
+            canViewJobRoles={canViewJobRoles}
             navigateDashboard={navigateDashboard}
           />
         ) : null}
