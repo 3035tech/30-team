@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { withAdminApi } from '../../../../../lib/admin-api.js';
-import { queryRead } from '../../../../../lib/db.js';
-import { CAP } from '../../../../../lib/permissions.js';
-import { getCompanyPdiPulse } from '../../../../../lib/people/development-plans.js';
-import { DEVELOPMENT_PLAN_ITEM_STATUS, DEVELOPMENT_PLAN_STATUS, EMPLOYMENT_STATUS } from '../../../../../lib/domain-status.js';
+import { withAdminApi } from '../../../../lib/admin-api.js';
+import { queryRead } from '../../../../lib/db.js';
+import { CAP } from '../../../../lib/permissions.js';
+import { getCompanyPdiPulse } from '../../../../lib/people/development-plans.js';
+import { DEVELOPMENT_PLAN_ITEM_STATUS, DEVELOPMENT_PLAN_STATUS, EMPLOYMENT_STATUS } from '../../../../lib/domain-status.js';
 
 /** GET /api/admin/pdi — company PDI cockpit with actionable people rows. */
 export const GET = withAdminApi(
