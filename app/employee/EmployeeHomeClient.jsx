@@ -729,6 +729,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <EmptyState message={t(locale, 'employeeHome.pdiEmptyHint')} />
             </EmpEmpty>
           ) : (
+            <>
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {plans.slice(0, 1).map((plan) => {
                 const items = plan.items || [];
@@ -811,6 +812,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 {t(locale, 'employeeHome.pdiOpenPage')}
               </a>
             ) : null}
+            </>
           )}
         </CollapsibleSection>
         ) : null}
