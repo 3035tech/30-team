@@ -847,6 +847,7 @@ function AdminListSearch({
     <FormField label={fieldLabel} className={cn('min-w-[12rem] max-w-md shrink-0 grow', className)}>
       <input
         type="search"
+        name="search"
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={(e) => {

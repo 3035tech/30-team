@@ -158,6 +158,10 @@ const PerformanceReviewsAdminTab = dynamic(
   () => import('./tabs/PerformanceReviewsAdminTab').then((m) => ({ default: m.PerformanceReviewsAdminTab })),
   { loading: () => <TabLoadingFallback /> }
 );
+const PdiAdminTab = dynamic(
+  () => import('./tabs/PdiAdminTab').then((m) => ({ default: m.PdiAdminTab })),
+  { loading: () => <TabLoadingFallback /> }
+);
 const OkrAdminTab = dynamic(
   () => import('./tabs/OkrAdminTab').then((m) => ({ default: m.OkrAdminTab })),
   { loading: () => <TabLoadingFallback /> }
@@ -355,6 +359,7 @@ export default function DashboardClient({
   const showJobRoles = can(sessionAuth, CAP.JOB_ROLES_VIEW);
   const canViewJobRoles = showJobRoles || can(sessionAuth, CAP.VACANCIES_MANAGE);
   const showPerformance = can(sessionAuth, CAP.PERFORMANCE_VIEW);
+  const showPdi = can(sessionAuth, CAP.TEAM_VIEW);
   const showSuccession = can(sessionAuth, CAP.SUCCESSION_VIEW);
   const showExitAnalysis = can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW);
   const showLearning = can(sessionAuth, CAP.LEARNING_VIEW);
@@ -1020,12 +1025,15 @@ export default function DashboardClient({
               </>
             ) : null}
 
-            {showPerformance || showSuccession || showLearning ? (
+            {showPerformance || showSuccession || showLearning || showPdi ? (
               <>
                 <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
                 {sectionLabel(DASHBOARD_NAV_SECTION.DEVELOPMENT, t(locale, 'dashboard.sectionDevelopment'))}
                 {sectionBody(DASHBOARD_NAV_SECTION.DEVELOPMENT, (
                   <>
+                    {showPdi ? (
+                      <NavLink id="pdi" icon="clipboard" label="PDI" />
+                    ) : null}
                     {showPerformance ? (
                       <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
                     ) : null}
@@ -1623,6 +1631,9 @@ export default function DashboardClient({
               {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
               {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
+              {tab === 'pdi' && showPdi && (
+                <PdiAdminTab locale={locale} companyId={scopedCompanyId} navigateDashboard={navigateWithOpts} />
+              )}
               {tab === 'okr' && showPerformance && (
                 <OkrAdminTab locale={locale} companyId={scopedCompanyId} />
               )}
