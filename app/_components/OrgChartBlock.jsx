@@ -121,13 +121,13 @@ export function OrgChartBlock({
       variant="card"
       collapsedHint={
         data?.incomplete
-          ? t(locale, 'panel.orgChart.incompleteHint')
-          : data?.withManager
+          ? `${t(locale, 'panel.orgChart.incompleteHint')} ${t(locale, 'panel.orgChart.hint')}`
+          : `${data?.withManager
             ? t(locale, 'panel.orgChart.meta', {
                 total: data.total,
                 linked: data.withManager,
               })
-            : t(locale, 'panel.orgChart.hint')
+            : ''} ${t(locale, 'panel.orgChart.hint')}`.trim()
       }
     >
       {loading ? (

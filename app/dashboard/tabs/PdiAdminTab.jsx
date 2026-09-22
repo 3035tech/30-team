@@ -19,9 +19,9 @@ const COPY = {
     title: 'PDI da equipe',
     subtitle: 'Veja onde o desenvolvimento precisa de uma próxima ação.',
     activePlans: 'PDIs ativos',
-    attention: 'Pontos de atenção',
-    noPlan: 'Sem PDI ativo',
-    completion: 'Conclusão dos itens',
+    attention: 'Sinais de atenção',
+    noPlan: 'Pessoas sem PDI ativo',
+    completion: 'Itens concluídos',
     search: 'Buscar colaborador',
     searchPh: 'Nome do colaborador…',
     viewLabel: 'Mostrar',
@@ -43,8 +43,8 @@ const COPY = {
     noPlanStatus: 'Sem PDI ativo',
     overduePlan: 'Plano atrasado',
     overdueItems: 'itens atrasados',
-    nextActions: 'Próximas ações',
-    nextActionsBody: 'Comece por estes casos para manter o desenvolvimento em movimento.',
+    nextActions: 'Casos prioritários',
+    nextActionsBody: 'Prévia de até 4 casos. Planos vencidos vêm primeiro; use a lista abaixo para percorrer e filtrar a equipe.',
     overdueItem: 'Item atrasado',
     overdueSince: 'Atrasado desde',
     withoutOneOnOne: 'Sem 1:1 vinculado',
@@ -57,9 +57,9 @@ const COPY = {
     title: 'Team development plans',
     subtitle: 'See where development needs a next action.',
     activePlans: 'Active plans',
-    attention: 'Need attention',
-    noPlan: 'No active plan',
-    completion: 'Item completion',
+    attention: 'Attention signals',
+    noPlan: 'People without an active plan',
+    completion: 'Items completed',
     search: 'Search employee',
     searchPh: 'Employee name…',
     viewLabel: 'Show',
@@ -81,8 +81,8 @@ const COPY = {
     noPlanStatus: 'No active plan',
     overduePlan: 'Plan overdue',
     overdueItems: 'overdue items',
-    nextActions: 'Next actions',
-    nextActionsBody: 'Start with these cases to keep development moving.',
+    nextActions: 'Priority cases',
+    nextActionsBody: 'Preview of up to 4 cases. Overdue plans come first; use the list below to browse and filter the team.',
     overdueItem: 'Overdue item',
     overdueSince: 'Overdue since',
     withoutOneOnOne: 'No 1:1 linked',
@@ -211,7 +211,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                     <p className="m-0 mt-0.5 text-xs text-ink-muted">{copy.nextActionsBody}</p>
                   </div>
                   <span className="font-mono text-2xs text-warning">
-                    {attentionCount} {copy.attention.toLowerCase()}
+                    {locale === 'en' ? `Showing ${priorityItems.length}` : `Exibindo ${priorityItems.length}`}
                   </span>
                 </div>
                 <div className="divide-y divide-warning/15">

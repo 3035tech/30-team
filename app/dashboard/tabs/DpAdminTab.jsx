@@ -453,7 +453,8 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         active={workspaceSection}
         onChange={setWorkspaceSection}
         tabs={[
-          { id: 'pending', label: t(locale, 'panel.dp.workspacePending'), badge: requestedCount + pendingDocsPeople + absenteeismPeople || undefined },
+          // The summary mixes requests and people; omit an aggregate badge with no single unit.
+          { id: 'pending', label: t(locale, 'panel.dp.workspacePending') },
           { id: 'leaves', label: t(locale, 'panel.dp.workspaceLeaves') },
           { id: 'documents', label: t(locale, 'panel.dp.workspaceDocuments'), badge: pendingDocsPeople || undefined },
           { id: 'time', label: t(locale, 'panel.dp.workspaceTime') },

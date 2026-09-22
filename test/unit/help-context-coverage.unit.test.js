@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DASHBOARD_TAB_NAV } from '../../lib/dashboard-navigation.js';
-import { HELP_GUIDE_SECTIONS, TAB_BY_HELP_SECTION } from '../../lib/help-sections.js';
+import { HELP_GUIDE_GROUPS, HELP_GUIDE_SECTIONS, TAB_BY_HELP_SECTION } from '../../lib/help-sections.js';
 import { helpMetaForTab, helpScreenPurpose } from '../../lib/help-screen-context.js';
 
 test('every dashboard screen has a valid contextual Guide destination', () => {
@@ -19,6 +19,8 @@ test('every dashboard screen has a valid contextual Guide destination', () => {
 test('PDI guide and screen context point to the dedicated PDI module', () => {
   const meta = helpMetaForTab('pdi');
   assert.equal(TAB_BY_HELP_SECTION.b600Pdi, 'pdi');
+  assert.ok(HELP_GUIDE_GROUPS.find((group) => group.id === 'development')?.sections.includes('b600Pdi'));
+  assert.ok(!HELP_GUIDE_GROUPS.find((group) => group.id === 'people')?.sections.includes('b600Pdi'));
   assert.ok(meta?.guideSections.includes('b600Pdi'));
   assert.match(helpScreenPurpose('pt-BR', 'pdi'), /Desenvolvimento → PDI/);
 });

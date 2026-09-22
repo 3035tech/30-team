@@ -1322,6 +1322,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2.5">
                     <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
+                    <span className="font-mono text-2xs text-ink-faint">{locale === 'en' ? 'Vacancy' : 'Vaga'}:</span>
                     <span
                       className={cn(
                         'rounded-full border px-2 py-0.5 font-mono text-2xs',
@@ -1943,6 +1944,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
                       <span className="font-mono text-xs text-ink-faint">#{v.id}</span>
                       <strong className="font-medium">{v.title}</strong>
+                      <span className="font-mono text-2xs text-ink-faint">{locale === 'en' ? 'Vacancy:' : 'Vaga:'}</span>
                       <span
                         className={cn(
                           'rounded-lg border px-2 py-0.5 font-mono text-2xs',
@@ -1991,7 +1993,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {token ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
                         <span className="font-ui text-xs text-ink-muted">
-                          {locale === 'en' ? 'Candidate link' : 'Link para candidatos'}
+                          {locale === 'en' ? 'Candidate link · link status:' : 'Link para candidatos · estado do link:'}
                         </span>
                         <span className={cn(
                           'rounded-full border px-2 py-0.5 font-mono text-2xs',
@@ -2028,10 +2030,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             {locale === 'en' ? 'Renew link' : 'Renovar link'}
                           </button>
                         ) : null}
+                        <span className="basis-full font-mono text-2xs text-ink-faint">
+                          {locale === 'en'
+                            ? 'Vacancy status and link availability are shown separately.'
+                            : 'A situação da vaga e a disponibilidade do link são mostradas separadamente.'}
+                        </span>
                       </div>
                     ) : (
                       <div className="mt-3 border-t border-ink/8 pt-3 font-mono text-2xs text-ink-faint">
                         {t(locale, 'recruiting.noActiveLink')}
+                        <span className="ml-1">
+                          {locale === 'en'
+                            ? '(independent from vacancy status)'
+                            : '(independente da situação da vaga)'}
+                        </span>
                       </div>
                     )}
                   </div>

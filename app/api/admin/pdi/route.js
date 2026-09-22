@@ -79,7 +79,11 @@ export const GET = withAdminApi(
        ) p ON TRUE
        WHERE ${where.join(' AND ')}
        ORDER BY
-         (p.plan_id IS NULL) DESC,
+         CASE
+           WHEN p.plan_id IS NOT NULL AND (p.period_overdue OR p.overdue_item_count > 0) THEN 0
+           WHEN p.plan_id IS NOT NULL THEN 1
+           ELSE 2
+         END ASC,
          p.period_overdue DESC,
          p.overdue_item_count DESC,
          CASE WHEN p.item_count > 0 THEN p.done_count::float / p.item_count ELSE 0 END ASC,
