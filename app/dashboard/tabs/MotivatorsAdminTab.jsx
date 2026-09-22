@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
@@ -1063,7 +1063,6 @@ function ConfigPanel({ locale }) {
 
 export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const view =
     searchParams.get('motivatorsView') ||
     (searchParams.get('attempt') ? 'results' : 'dashboard');
@@ -1117,7 +1116,9 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
     const p = new URLSearchParams(searchParams.toString());
     p.set('tab', 'motivators');
     p.set('motivatorsView', id);
-    router.replace(`?${p.toString()}`);
+    const url = new URL(window.location.href);
+    url.search = p.toString();
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
   };
 
   const visibleViews = getViews(locale).filter((v) => !v.adminOnly || isAdmin);

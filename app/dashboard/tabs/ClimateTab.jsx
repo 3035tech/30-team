@@ -1080,7 +1080,7 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
                     onChange={(nextSection) => {
                       const next = normalizeClimateDetailSection(nextSection, detail.status);
                       setDetailSection(next);
-                      navigateDashboard?.({ tab: 'climate', climateSection: next, scroll: false });
+                      navigateDashboard?.({ tab: 'climate', climateSection: next, scroll: false, clientOnly: true });
                     }}
                     tabs={[
                       { id: 'overview', label: t(locale, 'panel.climate.detailTabOverview') },

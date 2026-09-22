@@ -181,6 +181,26 @@ describe('module hardening', () => {
     assert.match(team, /<IconActionTip label=\{t\(locale, 'panel\.team\.moreActions'\)\}>/);
   });
 
+  it('updates route-backed tabs without rerunning the full dashboard navigation', () => {
+    const navigation = source('app/dashboard/hooks/useDashboardNavigation.js');
+    const team = source('app/dashboard/tabs/TeamTab.jsx');
+    assert.match(navigation, /if \(opts\.clientOnly && typeof window !== 'undefined'\)[\s\S]*?window\.history\.pushState/);
+    assert.match(team, /loadDetail\(cid\);\s*\}, \[focusCandidateId\]/);
+    assert.match(team, /section,\s*scroll: false,\s*clientOnly: true/);
+    assert.match(source('app/dashboard/tabs/VacanciesAdminTab.jsx'), /vacancySection: next,[\s\S]*?clientOnly: true/);
+    assert.match(source('app/dashboard/tabs/LmsAdminTab.jsx'), /lmsSection: next, scroll: false, clientOnly: true/);
+    assert.match(source('app/dashboard/tabs/ClimateTab.jsx'), /climateSection: next, scroll: false, clientOnly: true/);
+  });
+
+  it('keeps analytics and motivators tabs in place while their panel changes', () => {
+    const analytics = source('app/dashboard/tabs/AnalyticsTab.jsx');
+    const motivators = source('app/dashboard/tabs/MotivatorsAdminTab.jsx');
+    assert.doesNotMatch(analytics, /if \(loading\)\s*\{\s*return <AppLoading/);
+    assert.ok(analytics.indexOf('<PanelSubNav') < analytics.indexOf('{loading ?'));
+    assert.match(motivators, /window\.history\.replaceState/);
+    assert.doesNotMatch(motivators, /router\.replace\(/);
+  });
+
   it('keeps canonical admin chrome responsive and avoids nested DP tables', () => {
     const shared = source('app/dashboard/dashboard-shared.jsx');
     const filters = source('app/_components/AdminListFilters.jsx');

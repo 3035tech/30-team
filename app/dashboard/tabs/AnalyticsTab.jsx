@@ -13,7 +13,7 @@ import { PanelSubNav, S } from '../dashboard-shared.jsx';
 import { DateField } from '../../_components/DateField.jsx';
 import { FormField, formFieldRowClass } from '../../_components/FormField';
 import { useAppFeedback } from '../../_components/AppFeedback.jsx';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading.jsx';
+import { AppLoading } from '../../_components/AppLoading.jsx';
 import { EmptyState } from '../../_components/EmptyState';
 import { cn } from '../../../lib/cn.js';
 import { StatMetricTile } from '../../_components/StatMetricTile';
@@ -304,21 +304,6 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
     );
   }
 
-  if (loading) {
-    return <AppLoading locale={locale} variant="panel" />;
-  }
-
-  if (error) {
-    return (
-      <EmptyState
-        title={t(locale, 'panel.analytics.loadErrorTitle')}
-        message={error}
-        actionLabel={t(locale, 'panel.common.retry')}
-        onAction={activeView === 'trends' ? loadTrends : activeView === 'compare' ? loadComparison : loadMetrics}
-      />
-    );
-  }
-
   const viewTitle =
     activeView === 'metrics'
       ? t(locale, 'panel.analytics.titleMetrics')
@@ -343,7 +328,6 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
   if (activeView === 'trends') exportParams.set('months', String(trendMonths));
 
   return (
-    <ContentEnter animKey={activeView}>
     <div className="space-y-6">
       <div className={cn(S.card, 'overflow-hidden p-0')}>
         <div className="border-b border-ink/10 px-5 pb-0 pt-6 sm:px-7 sm:pt-7">
@@ -376,6 +360,20 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
             </a>
           ) : null}
         </div>
+
+        {loading ? (
+          <div className="py-4" aria-live="polite" aria-busy="true">
+            <AppLoading locale={locale} variant="panel" />
+          </div>
+        ) : error ? (
+          <EmptyState
+            title={t(locale, 'panel.analytics.loadErrorTitle')}
+            message={error}
+            actionLabel={t(locale, 'panel.common.retry')}
+            onAction={activeView === 'trends' ? loadTrends : activeView === 'compare' ? loadComparison : loadMetrics}
+          />
+        ) : (
+          <>
 
         {/* Filtros */}
         {activeView === 'metrics' && (
@@ -604,6 +602,8 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
           <HiringFlowChart data={trends.hiresVsExits} locale={locale} />
         </div>
         )}
+          </>
+        )}
         </div>
       </div>
 
@@ -650,7 +650,6 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
         </CollapsibleBlock>
       </div>
     </div>
-    </ContentEnter>
   );
 }
 

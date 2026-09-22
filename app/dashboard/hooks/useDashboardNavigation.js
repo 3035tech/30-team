@@ -268,8 +268,14 @@ export function useDashboardNavigation({
 
   const navigateWithOpts = (opts = {}) => {
     const scroll = opts.scroll !== false;
-    const { scroll: _scrollOpt, ...urlOpts } = opts;
-    router.push(`/dashboard?${buildDashboardUrl(urlOpts).toString()}`, { scroll });
+    const { scroll: _scrollOpt, clientOnly: _clientOnlyOpt, ...urlOpts } = opts;
+    const href = `/dashboard?${buildDashboardUrl(urlOpts).toString()}`;
+    if (opts.clientOnly && typeof window !== 'undefined') {
+      // Keep tab state deep-linkable without requesting a new server page payload.
+      window.history.pushState(null, '', href);
+      return;
+    }
+    router.push(href, { scroll });
   };
 
   const navigateToTab = (id) => {

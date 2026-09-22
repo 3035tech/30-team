@@ -382,38 +382,39 @@ export function TeamTab({
   }, [search]);
 
   useEffect(() => {
-    if (!focusCandidateId) return;
+    if (!focusCandidateId) {
+      setOpen(null);
+      setDetail(null);
+      setDetailErr('');
+      return;
+    }
     const cid = String(focusCandidateId);
-    const nextNavigation = personNavigationFromSection(focusSection);
     const match = (results || []).find((r) => String(r.candidateId) === cid);
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab(nextNavigation.personTab);
-      setPeopleSubTab(nextNavigation.peopleSubTab);
-      loadDetail(cid);
-      return;
     }
     loadDetail(cid);
-  }, [focusCandidateId, focusSection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusCandidateId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const nextNavigation = personNavigationFromSection(focusSection);
+    setPersonTab(nextNavigation.personTab);
+    setPeopleSubTab(nextNavigation.peopleSubTab);
+  }, [focusSection]);
 
   useEffect(() => {
     if (!focusCandidateId || !detail?.candidate) return;
     if (String(detail.candidate.id) !== String(focusCandidateId)) return;
-    const nextNavigation = personNavigationFromSection(focusSection);
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
     if (match) {
       setOpen(String(match.assessmentId));
-      setPersonTab(nextNavigation.personTab);
-      setPeopleSubTab(nextNavigation.peopleSubTab);
       return;
     }
     const aid = detail.assessments?.[0]?.id;
     if (aid) {
       setOpen(String(aid));
-      setPersonTab(nextNavigation.personTab);
-      setPeopleSubTab(nextNavigation.peopleSubTab);
     }
-  }, [detail, focusCandidateId, focusSection, results]);
+  }, [detail, focusCandidateId, results]);
 
   const commitSearch = (next) => {
     const trimmed = String(next != null ? next : searchDraft).trim();
@@ -868,7 +869,7 @@ export function TeamTab({
     setPersonTab('people');
     setPeopleSubTab('oneOnOne');
     if (typeof navigateDashboard === 'function') {
-      navigateDashboard({ tab: 'team', candidate: null, section: null, scroll: false });
+      navigateDashboard({ tab: 'team', candidate: null, section: null, scroll: false, clientOnly: true });
     }
   };
 
@@ -882,6 +883,7 @@ export function TeamTab({
         candidate: String(openRow.candidateId),
         section,
         scroll: false,
+        clientOnly: true,
       });
     }
   };

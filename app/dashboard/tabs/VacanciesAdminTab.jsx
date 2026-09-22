@@ -1463,6 +1463,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       vacancyDetail: String(v.id),
                       vacancySection: next,
                       scroll: false,
+                      clientOnly: true,
                     });
                   }}
                   tabs={[

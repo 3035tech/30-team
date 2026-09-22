@@ -971,7 +971,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
               onChange={(section) => {
                 const next = normalizeLmsDetailSection(section);
                 setDetailSection(next);
-                navigateDashboard?.({ tab: 'lms', course: selectedId, lmsSection: next, scroll: false });
+                navigateDashboard?.({ tab: 'lms', course: selectedId, lmsSection: next, scroll: false, clientOnly: true });
               }}
               tabs={[
                 { id: 'content', label: t(locale, 'panel.lms.detailTabContent'), badge: (detail.lessons || []).length },
