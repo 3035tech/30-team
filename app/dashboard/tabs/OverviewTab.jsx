@@ -666,6 +666,11 @@ export function OverviewTab({
               <span className={cn(S.label, 'mb-0')}>{t(locale, 'panel.overview.peopleOpsTitle')}</span>
               <div className="flex flex-wrap items-center justify-end gap-1">
                 <AdminIconButton
+                  label={t(locale, 'panel.overview.openPdiModule')}
+                  icon="clipboard"
+                  onClick={() => go({ tab: 'pdi' })}
+                />
+                <AdminIconButton
                   label={t(locale, 'panel.overview.openTeam')}
                   icon="team"
                   onClick={() => go({ tab: 'team' })}

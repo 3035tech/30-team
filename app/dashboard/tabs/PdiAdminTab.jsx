@@ -106,16 +106,23 @@ function dateLabel(value, locale) {
   });
 }
 
-export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
+export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, initialSearch = '' }) {
   const copy = COPY[locale === 'en' ? 'en' : 'pt-BR'];
   const [view, setView] = useState('attention');
-  const [qDraft, setQDraft] = useState('');
-  const [q, setQ] = useState('');
+  const [qDraft, setQDraft] = useState(initialSearch);
+  const [q, setQ] = useState(initialSearch);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const nextSearch = String(initialSearch || '').trim();
+    setQDraft(nextSearch);
+    setQ(nextSearch);
+    setPage(1);
+  }, [initialSearch]);
 
   const load = useCallback(async () => {
     if (!companyId) {

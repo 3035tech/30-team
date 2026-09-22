@@ -61,7 +61,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
         needCompanyTitle: 'Selecione uma empresa',
         needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar a Academy.',
         ctaHelp: 'Ver Guia (PDI → Academy)',
-        ctaPdi: 'Abrir Equipe (PDI)',
+        ctaPdi: 'Abrir PDI da equipe',
         filterTheme: 'Filtrar por tema',
         allThemes: 'Todos os temas',
         filterType: 'Filtrar por tipo',
@@ -110,7 +110,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
         needCompanyTitle: 'Select a company',
         needCompanyHint: 'Choose a company in the panel filter to manage Academy.',
         ctaHelp: 'Open Help (PDI → Academy)',
-        ctaPdi: 'Open Team (PDI)',
+        ctaPdi: 'Open team IDP',
         filterTheme: 'Filter by theme',
         allThemes: 'All themes',
         filterType: 'Filter by type',
@@ -444,7 +444,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
             onAction={hasActiveFilters ? undefined : handleCreate}
           />
           {!hasActiveFilters ? <div className="flex flex-wrap gap-3 px-1">
-            <Link href="/dashboard?tab=team" className="font-mono text-xs text-brand-600 hover:underline">
+            <Link href={companyId ? `/dashboard?tab=pdi&company=${encodeURIComponent(companyId)}` : '/dashboard?tab=pdi'} className="font-mono text-xs text-brand-600 hover:underline">
               {t('ctaPdi')} →
             </Link>
             <Link href="/dashboard?tab=help" className="font-mono text-xs text-brand-600 hover:underline">

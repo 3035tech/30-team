@@ -105,7 +105,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         pickEmployee: 'Selecione um colaborador',
         alreadyAssigned: 'Este colaborador já está atribuído a este papel',
         openOnTeam: 'Abrir na Equipe',
-        openPdi: 'Abrir PDI na Equipe',
+        openPdi: 'Ver no PDI',
         coverageTitle: 'Cobertura de bench',
         coverageHint: 'Papéis com pelo menos um sucessor pronto vs só em desenvolvimento vs sem sucessor.',
         coverageGapHint: '{n} papel(éis) sem sucessor. Priorize atribuição antes da urgência.',
@@ -173,7 +173,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
         pickEmployee: 'Pick an employee',
         alreadyAssigned: 'This employee is already assigned to this role',
         openOnTeam: 'Open on Team',
-        openPdi: 'Open PDI on Team',
+        openPdi: 'View in IDP',
         coverageTitle: 'Bench coverage',
         coverageHint: 'Roles with at least one ready successor vs developing-only vs no successor.',
         coverageGapHint: '{n} role(s) with no successor. Prioritize assignment before urgency.',
@@ -921,7 +921,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                                           {(successor.readiness === 'developing' ||
                                             successor.readiness === 'not_ready') && (
                                             <AdminIconButton
-                                              href={`/dashboard?tab=team&candidate=${personId}&section=journey`}
+                                              href={`/dashboard?tab=pdi${companyId ? `&company=${encodeURIComponent(companyId)}` : ''}&pdiSearch=${encodeURIComponent(successor.successorName || successor.candidateName || '')}`}
                                               label={t('openPdi')}
                                               icon="clipboard"
                                               tint="info"

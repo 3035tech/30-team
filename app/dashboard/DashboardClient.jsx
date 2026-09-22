@@ -1655,7 +1655,7 @@ function DashboardClientContent({
               {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'pdi' && showPdi && (
-                <PdiAdminTab locale={locale} companyId={scopedCompanyId} navigateDashboard={navigateWithOpts} />
+                <PdiAdminTab locale={locale} companyId={scopedCompanyId} navigateDashboard={navigateWithOpts} initialSearch={urlParams.get('pdiSearch') || ''} />
               )}
               {tab === 'okr' && showPerformance && (
                 <OkrAdminTab locale={locale} companyId={scopedCompanyId} />

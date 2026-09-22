@@ -89,6 +89,8 @@ export function useDashboardNavigation({
 
     // Deep-link Equipe → pessoa: /dashboard?tab=team&candidate=<id>
     const nextTab = opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
+    const pdiSearch = opts.pdiSearch !== undefined ? opts.pdiSearch : urlParams.get('pdiSearch');
+    if (nextTab === 'pdi' && pdiSearch) p.set('pdiSearch', String(pdiSearch));
     const nextOrgUnit = opts.orgUnit !== undefined ? opts.orgUnit
       : opts.company !== undefined && String(opts.company) !== String(company) ? null : urlParams.get('orgUnit');
     if (nextTab === 'team' && nextOrgUnit) p.set('orgUnit', String(nextOrgUnit));
