@@ -139,17 +139,17 @@ export function TeamTensionNarrativeBlock({
 
       <div className="mt-3 flex flex-wrap gap-2">
         {narrative.ctas.includes('compat') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('compatibility')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-sm')} onClick={() => go('compatibility')}>
             {t(locale, 'panel.tension.ctaCompat')}
           </button>
         ) : null}
         {narrative.ctas.includes('group') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('group')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-sm')} onClick={() => go('group')}>
             {t(locale, 'panel.tension.ctaGroup')}
           </button>
         ) : null}
         {narrative.ctas.includes('team') ? (
-          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-2xs')} onClick={() => go('team')}>
+          <button type="button" className={cn(S.btnGhost, 'min-h-touch text-sm')} onClick={() => go('team')}>
             {t(locale, 'panel.tension.ctaTeam')}
           </button>
         ) : null}

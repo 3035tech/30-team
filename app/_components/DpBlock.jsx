@@ -1045,7 +1045,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       <button
                         type="button"
                         disabled={busy || leaveUploadId === row.id}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                        className={cn(S.btnGhost, 'min-h-touch text-sm')}
                         onClick={() => startLeaveUpload(row.id)}
                       >
                         {leaveUploadId === row.id

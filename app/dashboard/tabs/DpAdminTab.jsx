@@ -438,7 +438,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
               <button
                 type="button"
                 disabled={exporting}
-                className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                className={cn(S.btnGhost, 'min-h-touch text-sm')}
                 onClick={() => void exportCsv()}
               >
                 {exporting ? t(locale, 'panel.common.loading') : t(locale, 'panel.dp.exportCsv')}

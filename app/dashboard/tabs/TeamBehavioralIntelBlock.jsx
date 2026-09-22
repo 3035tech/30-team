@@ -177,7 +177,7 @@ export function TeamBehavioralIntelBlock({
   if (!intel || intel.meta?.empty) {
     return (
       <div id="behavioral-intel" className={S.cardTight}>
-        <span className={S.label}>{t(locale, 'panel.overview.bci.title')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.title')}</span>
         <p className="mt-2 mb-0 text-prose text-ink-muted">{t(locale, 'panel.overview.bci.empty')}</p>
         {groupSelect}
         <p className="mt-2 mb-0 text-xs text-ink-muted">
@@ -281,7 +281,7 @@ export function TeamBehavioralIntelBlock({
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-12 xl:items-start">
           {/* 1. Profiles */}
           <div className={cn(S.cardTight, 'xl:col-span-7')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.profilesTitle')}</span>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.profilesBase', { n: profiles.nPeople })}
             </p>
@@ -324,7 +324,7 @@ export function TeamBehavioralIntelBlock({
 
           {/* 2. Motivators */}
           <div className={cn(S.cardTight, 'xl:col-span-5')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.motivatorsTitle')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.motivatorsTitle')}</span>
             <p className="mt-0 mb-3 font-mono text-2xs text-ink-faint">
               {t(locale, 'panel.overview.bci.motivatorsBase', { n: motivators.nPeople })}
             </p>
@@ -379,7 +379,7 @@ export function TeamBehavioralIntelBlock({
 
           {/* 3. Forces */}
           <div className={cn(S.cardTight, 'xl:col-span-6')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.forcesTitle')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.forcesTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.forcesQuestion')}
             </p>
@@ -406,7 +406,7 @@ export function TeamBehavioralIntelBlock({
 
           {/* 4. Attention */}
           <div className={cn(S.cardTight, 'xl:col-span-6')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.attentionTitle')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.attentionTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.attentionQuestion')}
             </p>
@@ -436,7 +436,7 @@ export function TeamBehavioralIntelBlock({
 
           {/* 5. Top 5 movers */}
           <div className={cn(S.cardTight, 'xl:col-span-4')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.top5Title')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.top5Title')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.top5Question')}
             </p>
@@ -466,7 +466,7 @@ export function TeamBehavioralIntelBlock({
 
           {/* 6. Actions */}
           <div className={cn(S.cardTight, 'xl:col-span-8')}>
-            <span className={S.label}>{t(locale, 'panel.overview.bci.actionsTitle')}</span>
+            <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.overview.bci.actionsTitle')}</span>
             <p className="mt-0.5 mb-0 text-xs text-ink-muted">
               {t(locale, 'panel.overview.bci.actionsQuestion')}
             </p>

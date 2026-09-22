@@ -347,7 +347,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                className={cn(S.btnGhost, 'min-h-touch text-sm')}
                 disabled={busy}
                 onClick={() => void saveSettings()}
               >
@@ -360,7 +360,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
               />
               <button
                 type="button"
-                className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                className={cn(S.btnBrandSoft, 'min-h-touch text-sm')}
                 disabled={busy || !enabled}
                 onClick={() => void generate()}
               >
@@ -368,7 +368,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
               </button>
               <button
                 type="button"
-                className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                className={cn(S.btnGhost, 'min-h-touch text-sm')}
                 disabled={exporting}
                 onClick={() => void exportCsv()}
               >

@@ -84,7 +84,7 @@ export function LeadershipTab({
   return (
     <div className="flex flex-col gap-4">
       <div className={cn(S.card, 'px-7 py-[22px]')}>
-        <span className={S.label}>{t(locale, 'panel.leadership.title')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.title')}</span>
         <p className="mb-3.5 mt-2.5 text-prose leading-relaxed text-ink-muted">
           {t(locale, 'panel.leadership.intro')}
         </p>
@@ -141,7 +141,7 @@ export function LeadershipTab({
         <ContentEnter animKey="summary" className="flex flex-col gap-4">
           {topPeople.length > 0 ? (
             <div className={S.card}>
-              <span className={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
               <p className="mb-3.5 mt-2 text-xs leading-relaxed text-ink-faint">
                 {t(locale, 'panel.leadership.potentialsIntro')}
               </p>
@@ -174,7 +174,7 @@ export function LeadershipTab({
           ) : null}
 
           <div className={S.card}>
-            <span className={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
             <p className="mb-4 mt-1.5 text-2xs text-ink-faint">
               {t(locale, 'panel.leadership.monthlyHint')}
             </p>
@@ -199,7 +199,7 @@ export function LeadershipTab({
         <ContentEnter animKey="detail" className="flex flex-col gap-4">
           {leadershipPotentials.length > 0 ? (
             <div className={S.card}>
-              <span className={S.label}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.potentialsTitle')}</span>
               <p className="mb-[18px] mt-2 text-xs leading-relaxed text-ink-faint">
                 {t(locale, 'panel.leadership.potentialsIntro')}
               </p>
@@ -257,7 +257,7 @@ export function LeadershipTab({
           ) : null}
 
           <div className={S.card}>
-            <span className={S.label}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.monthlyTitle')}</span>
             <p className="mb-4 mt-1.5 text-2xs text-ink-faint">
               {t(locale, 'panel.leadership.monthlyHint')}
             </p>
@@ -280,7 +280,7 @@ export function LeadershipTab({
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
             <div className={S.card}>
-              <span className={S.label}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.globalDistTitle')}</span>
               <p className="mb-3.5 mt-1.5 text-2xs text-ink-faint">
                 {t(locale, 'panel.leadership.globalDistHint')}
               </p>
@@ -316,7 +316,7 @@ export function LeadershipTab({
             </div>
 
             <div className={S.card}>
-              <span className={S.label}>{t(locale, 'panel.leadership.diversityTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.diversityTitle')}</span>
               <p className="mb-3.5 mt-1.5 text-2xs leading-snug text-ink-faint">
                 {t(locale, 'panel.leadership.diversityHint')}
               </p>
@@ -339,7 +339,7 @@ export function LeadershipTab({
           </div>
 
           <div className={cn(S.card, 'overflow-hidden')}>
-            <span className={S.label}>{t(locale, 'panel.leadership.execTableTitle')}</span>
+              <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'panel.leadership.execTableTitle')}</span>
             <div className="mt-3.5 overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-xs">
                 <thead>

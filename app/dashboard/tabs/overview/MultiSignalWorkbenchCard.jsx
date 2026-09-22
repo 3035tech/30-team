@@ -135,7 +135,7 @@ export default function MultiSignalWorkbenchCard({ locale = 'pt-BR', companyId, 
             <button
               key={c}
               type="button"
-              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+              className={cn(S.btnGhost, 'min-h-touch text-sm')}
               onClick={() =>
                 go(
                   c === 'compat'

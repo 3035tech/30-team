@@ -671,7 +671,7 @@ export function CompensationBlock({
                       <button
                         type="button"
                         disabled={busy}
-                        className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+                        className={cn(S.btnBrandSoft, 'min-h-touch text-sm')}
                         onClick={() =>
                           void setApproval(row, COMPENSATION_APPROVAL_STATUS.APPROVED)
                         }
@@ -681,7 +681,7 @@ export function CompensationBlock({
                       <button
                         type="button"
                         disabled={busy}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs text-danger')}
+                        className={cn(S.btnGhost, 'min-h-touch text-sm text-danger')}
                         onClick={() =>
                           void setApproval(row, COMPENSATION_APPROVAL_STATUS.REJECTED)
                         }

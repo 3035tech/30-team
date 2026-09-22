@@ -133,7 +133,7 @@ export function PersonDossierBlock({
             type="button"
             disabled={aiLoading}
             onClick={runAi}
-            className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-2xs')}
+            className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-sm')}
           >
             {aiLoading ? t(locale, 'panel.dossier.aiRunning') : t(locale, 'panel.dossier.aiCta')}
           </button>

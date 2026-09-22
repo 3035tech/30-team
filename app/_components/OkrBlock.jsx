@@ -626,7 +626,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     </StatusToneChip>
                     <button
                       type="button"
-                      className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                      className={cn(S.btnGhost, 'min-h-touch text-sm')}
                       disabled={busy}
                       onClick={() => void toggleCycleStatus()}
                     >
@@ -649,7 +649,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                 </p>
                 <div className="mt-3">
                   <div className="mb-1 flex items-baseline justify-between gap-2">
-                    <span className={S.label}>{t(locale, 'panel.okr.totalProgress')}</span>
+                <span className={cn(S.cardSection, 'mb-0')}>{t(locale, 'panel.okr.totalProgress')}</span>
                     <span className="font-mono text-2xs text-ink-muted">
                       {cycle.progressPct != null
                         ? `${cycle.progressPct}%`
@@ -666,10 +666,10 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className={S.label}>{t(locale, 'panel.okr.areasTitle')}</span>
+                <span className={cn(S.cardSection, 'mb-0')}>{t(locale, 'panel.okr.areasTitle')}</span>
                 <button
                   type="button"
-                  className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-2xs')}
+                  className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-sm')}
                   disabled={busy || cycleClosed}
                   onClick={() => void createArea()}
                 >
@@ -708,7 +708,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                         <div className="flex flex-wrap gap-1">
                           <button
                             type="button"
-                            className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-2xs')}
+                            className={cn(S.btnGhost, 'min-h-touch gap-1.5 text-sm')}
                             disabled={busy || cycleClosed}
                             onClick={() => void createActivity(area)}
                           >

@@ -1194,7 +1194,7 @@ export function VacancyClientReportBlock({
               {reports.some((r) => r.isLive) ? (
                 <button
                   type="button"
-                  className={cn(S.btnGhost, 'px-2.5 py-1.5 text-2xs')}
+                  className={cn(S.btnGhost, 'px-2.5 py-1.5 text-sm')}
                   disabled={busy}
                   onClick={async () => {
                     const urls = reports

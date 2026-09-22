@@ -957,7 +957,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           locale={locale}
         >
           <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>
-            {t(locale, 'employeeHome.oneOnOneLastAgreementTitle')}
+            {t(locale, 'panel.employeePortal.oneOnOneLastAgreementTitle')}
           </h3>
           {agreements.length === 0 ? (
             <EmpEmpty>
@@ -972,7 +972,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       {formatDisplayDate(a.meetingDate, locale)}
                     </div>
                   ) : null}
-                  <div className={cn(S.cardMuted, 'break-words whitespace-pre-wrap')}>{a.nextSteps}</div>
+                  <div className={cn(S.cardMuted, 'break-words whitespace-pre-wrap')}>
+                    <RichTextView html={a.nextSteps} />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -985,7 +987,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           {prompts.length > 0 ? (
             <div className="mt-4">
               <h3 className={cn(S.cardSection, 'mb-1 mt-0')}>
-                {t(locale, 'employeeHome.oneOnOneReflectionTitle')}
+                {t(locale, 'panel.employeePortal.oneOnOneReflectionTitle')}
               </h3>
               <p className={cn(S.muted, 'mb-2 mt-0 text-sm')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
               <ul className="m-0 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink-muted">
@@ -996,7 +998,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </div>
           ) : null}
           <div className="mt-5 rounded-control border border-brand-500/20 bg-brand-500/[0.045] p-3.5">
-            <h3 className={cn(S.cardSection, 'mb-1 mt-0')}>{t(locale, 'employeeHome.oneOnOnePrepTitle')}</h3>
+            <h3 className={cn(S.cardSection, 'mb-1 mt-0')}>{t(locale, 'panel.employeePortal.oneOnOnePrepTitle')}</h3>
             <p className={cn(S.muted, 'mb-3 mt-0 text-sm')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
             <FormField label={t(locale, 'panel.employeePortal.noteLabel')}>
               <textarea
