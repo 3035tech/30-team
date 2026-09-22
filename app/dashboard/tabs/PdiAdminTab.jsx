@@ -301,7 +301,9 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                           <p className="m-0 mt-1 text-xs text-ink-muted">
                             {row.planTitle}
                               {periodEndLabel ? ` · ${periodEndLabel}` : ''}
-                              {row.overdueItemCount > 0 ? ` · ${row.overdueItemCount} ${copy.overdueItems}` : ''}
+                            {row.overdueItemCount > 0
+                              ? ` · ${row.overdueItemCount} ${row.overdueItemCount === 1 ? copy.overdueItem : copy.overdueItems}`
+                              : ''}
                           </p>
                           ) : (
                             <p className="m-0 mt-1 text-xs text-ink-muted">{copy.noPlanRowDetail}</p>

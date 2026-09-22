@@ -2046,6 +2046,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             {locale === 'en' ? 'Renew link' : 'Renovar link'}
                           </button>
                         ) : null}
+                        {linkState.expired && v.status === VACANCY_STATUS.OPEN ? (
+                          <p className="basis-full m-0 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2 text-xs text-warning" role="status">
+                            {locale === 'en'
+                              ? 'This vacancy is open, but its candidate link has expired. Renew the link to receive applications through it again.'
+                              : 'Esta vaga está aberta, mas o link para candidatos expirou. Renove-o para voltar a receber candidaturas por este link.'}
+                          </p>
+                        ) : null}
                         <span className="basis-full font-mono text-2xs text-ink-faint">
                           {locale === 'en'
                             ? 'Open/closed describes recruiting; active/expired describes this link’s validity.'
