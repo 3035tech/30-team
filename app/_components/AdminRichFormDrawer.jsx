@@ -25,6 +25,9 @@ export function AdminRichFormDrawer({
   withinShell = false,
   headerMeta = null,
   headerActions = null,
+  backLabel: backLabelOverride = null,
+  closeLabel: closeLabelOverride = null,
+  eyebrow = null,
 }) {
   const [mounted, setMounted] = useState(false);
   const contentRef = useRef(null);
@@ -54,8 +57,8 @@ export function AdminRichFormDrawer({
 
   if (!mounted || !open) return null;
 
-  const backLabel = locale === 'en' ? 'Back to team' : 'Voltar para equipe';
-  const closeLabel = locale === 'en' ? 'Close profile' : 'Fechar perfil';
+  const backLabel = backLabelOverride || (locale === 'en' ? 'Back to team' : 'Voltar para equipe');
+  const closeLabel = closeLabelOverride || (locale === 'en' ? 'Close profile' : 'Fechar perfil');
 
   const content = (
     <div
@@ -102,9 +105,9 @@ export function AdminRichFormDrawer({
               </button>
             ) : null}
             <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
-              {fullPage
+              {eyebrow || (fullPage
                 ? (locale === 'en' ? 'PEOPLE / TEAM' : 'PESSOAS / EQUIPE')
-                : '30Team'}
+                : '30Team')}
             </span>
             <h2
               id="rich-form-drawer-title"

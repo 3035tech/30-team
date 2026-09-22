@@ -2,7 +2,7 @@
 
 import { SelectField } from '../../_components/SelectField';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { getTypeData } from '../../../lib/i18n-data';
 import { typeFullName, typeShortLabel } from '../../../lib/type-en';
@@ -30,19 +30,31 @@ function groupForSection(section) {
 
 function TypeCatalog({ locale }) {
   const [selected, setSelected] = useState(1);
+  const tabRefs = useRef([]);
   const typeData = getTypeData(locale);
   const detail = typeData[selected];
+  const selectByKeyboard = (event, number) => {
+    let next;
+    if (event.key === 'ArrowRight') next = (number % 9) + 1;
+    else if (event.key === 'ArrowLeft') next = ((number + 7) % 9) + 1;
+    else if (event.key === 'Home') next = 1;
+    else if (event.key === 'End') next = 9;
+    else return;
+    event.preventDefault();
+    setSelected(next);
+    tabRefs.current[next - 1]?.focus();
+  };
   return (
     <div className="mt-6">
       <p className="mb-4 mt-0 max-w-3xl text-prose leading-relaxed text-ink-muted">{t(locale, 'panel.help.typesCatalogIntro')}</p>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9" role="tablist" aria-label={t(locale, 'panel.help.enneagramTitle')}>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9" role="tablist" aria-orientation="horizontal" aria-label={t(locale, 'panel.help.enneagramTitle')}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => {
           const item = typeData[number];
           const active = selected === number;
-          return <button key={number} type="button" role="tab" aria-selected={active} onClick={() => setSelected(number)} className={cn('min-h-20 cursor-pointer rounded-control border px-2 py-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35', active ? 'bg-surface shadow-sm' : 'bg-ink/[0.02] hover:bg-ink/[0.04]')} style={{ borderColor: active ? item.color : `${item.color}35` }}><span className="block text-lg" aria-hidden>{item.emoji}</span><span className="mt-1 block font-mono text-xs font-semibold" style={{ color: item.color }}>T{number}</span><span className="mt-0.5 block truncate font-ui text-2xs text-ink-muted">{typeShortLabel(number, locale)}</span></button>;
+          return <button key={number} ref={(element) => { tabRefs.current[number - 1] = element; }} id={`help-enneagram-tab-${number}`} type="button" role="tab" aria-selected={active} aria-controls="help-enneagram-panel" tabIndex={active ? 0 : -1} onKeyDown={(event) => selectByKeyboard(event, number)} onClick={() => setSelected(number)} className={cn('min-h-20 cursor-pointer rounded-control border px-2 py-3 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35', active ? 'bg-surface shadow-sm' : 'bg-ink/[0.02] hover:bg-ink/[0.04]')} style={{ borderColor: active ? item.color : `${item.color}35` }}><span className="block text-lg" aria-hidden>{item.emoji}</span><span className="mt-1 block font-mono text-xs font-semibold" style={{ color: item.color }}>T{number}</span><span className="mt-0.5 block truncate font-ui text-2xs text-ink-muted">{typeShortLabel(number, locale)}</span></button>;
         })}
       </div>
-      {detail ? <ContentEnter animKey={`type-${selected}`}><article className="mt-3 rounded-card border border-ink/12 bg-ink/[0.02] p-5" style={{ borderLeftColor: detail.color, borderLeftWidth: 4 }}><div className="flex flex-wrap items-center gap-2"><h3 className="m-0 font-display text-xl font-normal text-ink">T{selected}: {typeFullName(selected, locale)}</h3><span className="rounded-full border px-2.5 py-1 font-mono text-2xs" style={{ color: detail.color, borderColor: `${detail.color}45`, background: `${detail.color}12` }}>{typeShortLabel(selected, locale)}</span></div><p className="mb-0 mt-3 max-w-3xl text-prose leading-6 text-ink">{detail.desc}</p><div className="mt-5 grid gap-4 md:grid-cols-2"><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesAtWork')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{t(locale, `panel.help.typeAtWork${selected}`)}</p></div><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesWatch')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{t(locale, `panel.help.typeWatch${selected}`)}</p></div></div><div className="mt-5 flex flex-wrap gap-2">{detail.strengths.map((strength) => <span key={strength} className="rounded-full border px-2.5 py-1 font-ui text-xs" style={{ background: `${detail.color}12`, borderColor: `${detail.color}30`, color: detail.color }}>{strength}</span>)}</div><details className="mt-5 border-t border-ink/10 pt-4"><summary className="cursor-pointer font-ui text-sm font-medium text-brand-700">{t(locale, 'panel.help.typeMore', { n: selected })}</summary><div className="mt-4 grid gap-4 md:grid-cols-2"><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesChallenge')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{detail.challenge}</p></div><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesTeam')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{detail.team}</p></div></div></details></article></ContentEnter> : null}
+      {detail ? <ContentEnter animKey={`type-${selected}`}><article id="help-enneagram-panel" role="tabpanel" aria-labelledby={`help-enneagram-tab-${selected}`} tabIndex={0} className="mt-3 rounded-card border border-ink/12 bg-ink/[0.02] p-5" style={{ borderLeftColor: detail.color, borderLeftWidth: 4 }}><div className="flex flex-wrap items-center gap-2"><h3 className="m-0 font-display text-xl font-normal text-ink">T{selected}: {typeFullName(selected, locale)}</h3><span className="rounded-full border px-2.5 py-1 font-mono text-2xs" style={{ color: detail.color, borderColor: `${detail.color}45`, background: `${detail.color}12` }}>{typeShortLabel(selected, locale)}</span></div><p className="mb-0 mt-3 max-w-3xl text-prose leading-6 text-ink">{detail.desc}</p><div className="mt-5 grid gap-4 md:grid-cols-2"><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesAtWork')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{t(locale, `panel.help.typeAtWork${selected}`)}</p></div><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesWatch')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{t(locale, `panel.help.typeWatch${selected}`)}</p></div></div><div className="mt-5 flex flex-wrap gap-2">{detail.strengths.map((strength) => <span key={strength} className="rounded-full border px-2.5 py-1 font-ui text-xs" style={{ background: `${detail.color}12`, borderColor: `${detail.color}30`, color: detail.color }}>{strength}</span>)}</div><details className="mt-5 border-t border-ink/10 pt-4"><summary className="cursor-pointer font-ui text-sm font-medium text-brand-700">{t(locale, 'panel.help.typeMore', { n: selected })}</summary><div className="mt-4 grid gap-4 md:grid-cols-2"><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesChallenge')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{detail.challenge}</p></div><div><h4 className="m-0 font-ui text-sm font-semibold text-ink">{t(locale, 'panel.help.typesTeam')}</h4><p className="mb-0 mt-1 text-sm leading-6 text-ink-muted">{detail.team}</p></div></div></details></article></ContentEnter> : null}
     </div>
   );
 }

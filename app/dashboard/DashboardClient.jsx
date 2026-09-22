@@ -366,6 +366,7 @@ function DashboardClientContent({
   const tab = parseDashboardTab(urlParams, sessionAuth);
   const contextualHelpSection = helpMetaForTab(tab)?.guideSections?.[0] || null;
   const isPersonFocus = tab === 'team' && Boolean(urlParams.get('candidate'));
+  const isVacancyDetail = tab === 'vacancies' && Boolean(urlParams.get('vacancyDetail'));
   const showsCohortChrome = COHORT_TABS.has(tab) && !isPersonFocus;
   /** Super admin: company picker on cohort chrome or company-scoped People/catalog tabs. */
   const showsCompanyPicker =
@@ -1232,10 +1233,10 @@ function DashboardClientContent({
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              <h2 className="db-page-title mb-1 font-ui text-3xl font-semibold tracking-tight text-ink">
+              {!isVacancyDetail ? <h2 className="db-page-title mb-1 font-ui text-3xl font-semibold tracking-tight text-ink">
                 {t(locale, getDashboardTabNav(tab).labelKey)}
-              </h2>
-              <span className="text-prose text-ink-muted">
+              </h2> : null}
+              {!isVacancyDetail ? <span className="text-prose text-ink-muted">
                 {panelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
                 ) : showsCohortChrome && ['overview', 'team', 'compatibility'].includes(tab) ? (
@@ -1257,7 +1258,7 @@ function DashboardClientContent({
                     ) : null}
                   </>
                 ) : null}
-              </span>
+              </span> : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 self-end">
               {tab !== 'help' && contextualHelpSection && can(sessionAuth, CAP.HELP_VIEW) ? (

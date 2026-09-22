@@ -1402,7 +1402,7 @@ export function TeamTab({
                     <CollapsibleBlock
                       locale={locale}
                       title={t(locale, 'panel.team.peopleSubTabSummary')}
-                      defaultOpen
+                      defaultOpen={false}
                       className="mb-4"
                       bordered={false}
                     >
