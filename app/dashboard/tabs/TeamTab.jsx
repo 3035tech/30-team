@@ -830,20 +830,23 @@ export function TeamTab({
   const openPersonDetail = (row, section = 'oneOnOne') => {
     const id = String(row.assessmentId);
     const nextNavigation = personNavigationFromSection(section);
+    if (row.candidateId && typeof navigateDashboard === 'function') {
+      // Let the URL switch the drawer into its full-page presentation before
+      // setting `open`; otherwise the legacy inline drawer flashes first.
+      navigateDashboard({
+        tab: 'team',
+        candidate: String(row.candidateId),
+        section,
+        scroll: false,
+      });
+      return;
+    }
+
     setOpen(id);
     setPersonTab(nextNavigation.personTab);
     setPeopleSubTab(nextNavigation.peopleSubTab);
-    if (row.candidateId) {
-      loadDetail(row.candidateId);
-      if (typeof navigateDashboard === 'function') {
-        navigateDashboard({
-          tab: 'team',
-          candidate: String(row.candidateId),
-          section,
-          scroll: false,
-        });
-      }
-    } else {
+    if (row.candidateId) loadDetail(row.candidateId);
+    else {
       setDetail(null);
       setDetailErr('');
     }

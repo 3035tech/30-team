@@ -247,7 +247,16 @@ const ProfileTab = dynamic(
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
 const NAV_SECTIONS_KEY = '30team_nav_sections_open_v2';
 
-export default function DashboardClient({
+export default function DashboardClient(props) {
+  const [locale, setLocale] = useLocale(props.auth?.locale || props.initialLocale || 'pt-BR');
+  return (
+    <AppFeedbackProvider locale={locale}>
+      <DashboardClientContent {...props} locale={locale} setLocale={setLocale} />
+    </AppFeedbackProvider>
+  );
+}
+
+function DashboardClientContent({
   results,
   areas = [],
   companies = [],
@@ -276,13 +285,14 @@ export default function DashboardClient({
   overviewMetrics = null,
   onboardingProgress = null,
   auth = null,
-  initialLocale = 'pt-BR',
+  locale,
+  setLocale,
   /** Shell-only paint while tab queries stream (B-201). */
   panelLoading = false,
 }) {
   const router = useRouter();
   const urlParams = useSearchParams();
-  const [locale, setLocale] = useLocale(auth?.locale || initialLocale);
+  const feedback = useAppFeedbackOptional();
   const initialTabRef = useRef(parseDashboardTab(urlParams, auth));
 
   // Keyboard shortcuts
@@ -311,6 +321,7 @@ export default function DashboardClient({
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const logoutConfirmPendingRef = useRef(false);
   const [groupBaseId, setGroupBaseId] = useState(null);
   const [groupIds, setGroupIds] = useState([]);
   const [dismissedIds, setDismissedIds] = useState([]);
@@ -322,12 +333,24 @@ export default function DashboardClient({
   }, [auth]);
 
   const logout = async () => {
-    if (loggingOut) return;
-    setLoggingOut(true);
+    if (loggingOut || logoutConfirmPendingRef.current) return;
+    logoutConfirmPendingRef.current = true;
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const confirmed = await feedback?.confirm?.({
+        title: t(locale, 'dashboard.logoutConfirmTitle'),
+        message: t(locale, 'dashboard.logoutConfirmBody'),
+        confirmLabel: t(locale, 'dashboard.logoutConfirmAction'),
+        danger: true,
+      });
+      if (!confirmed) return;
+      setLoggingOut(true);
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } finally {
+        router.push(managerLoginUrl({ reason: 'logout' }));
+      }
     } finally {
-      router.push(managerLoginUrl({ reason: 'logout' }));
+      logoutConfirmPendingRef.current = false;
     }
   };
 
@@ -897,7 +920,6 @@ export default function DashboardClient({
   };
 
   return (
-    <AppFeedbackProvider locale={locale}>
     <PipelineExtrasProvider>
     <div className="relative min-h-screen bg-canvas font-ui text-ink">
       {/* Onboarding Tour */}
@@ -1749,6 +1771,5 @@ export default function DashboardClient({
       />
     ) : null}
     </PipelineExtrasProvider>
-    </AppFeedbackProvider>
   );
 }
