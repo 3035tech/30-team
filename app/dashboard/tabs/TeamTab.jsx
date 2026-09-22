@@ -839,6 +839,7 @@ export function TeamTab({
         candidate: String(row.candidateId),
         section,
         scroll: false,
+        clientOnly: true,
       });
       return;
     }
@@ -1283,21 +1284,21 @@ export function TeamTab({
           <div>
             {focusCandidateId ? (
               <section className="mb-5 grid gap-3 sm:grid-cols-3" aria-label={locale === 'en' ? 'Profile summary' : 'Resumo do perfil'}>
-                <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
-                  <span className={S.label}>{locale === 'en' ? 'Current focus' : 'Foco atual'}</span>
-                  <p className="m-0 mt-1 text-sm font-medium text-ink">
+                <div className="flex flex-col gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
+                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Current focus' : 'Foco atual'}</span>
+                  <p className="m-0 text-sm font-medium text-ink">
                     {focusSection === 'dp' ? (locale === 'en' ? 'Development plan' : 'Plano de desenvolvimento') : (locale === 'en' ? 'People context' : 'Contexto da pessoa')}
                   </p>
                 </div>
-        <div className="rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
-                  <span className={S.label}>{locale === 'en' ? 'Started' : 'Início'}</span>
-                  <p className={cn('m-0 mt-1 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
+                <div className="flex flex-col gap-1 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
+                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Started' : 'Início'}</span>
+                  <p className={cn('m-0 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
                     {detailLoading ? '•••' : formatPersonDate(detail?.candidate?.startDate, locale)}
                   </p>
                 </div>
-                <div className="rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
-                  <span className={S.label}>{locale === 'en' ? 'Current status' : 'Status atual'}</span>
-                  <p className={cn('m-0 mt-1 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
+                <div className="flex flex-col gap-1 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
+                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Current status' : 'Status atual'}</span>
+                  <p className={cn('m-0 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
                     {detail?.candidate?.employmentStatus
                       ? t(locale, `panel.team.employment.${detail.candidate.employmentStatus}`)
                       : (detailLoading ? '…' : '—')}

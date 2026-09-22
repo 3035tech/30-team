@@ -187,6 +187,7 @@ describe('module hardening', () => {
     assert.match(navigation, /if \(opts\.clientOnly && typeof window !== 'undefined'\)[\s\S]*?window\.history\.pushState/);
     assert.match(team, /loadDetail\(cid\);\s*\}, \[focusCandidateId\]/);
     assert.match(team, /section,\s*scroll: false,\s*clientOnly: true/);
+    assert.match(team, /candidate: String\(row\.candidateId\),\s*section,\s*scroll: false,\s*clientOnly: true/);
     assert.match(source('app/dashboard/tabs/VacanciesAdminTab.jsx'), /vacancySection: next,[\s\S]*?clientOnly: true/);
     assert.match(source('app/dashboard/tabs/LmsAdminTab.jsx'), /lmsSection: next, scroll: false, clientOnly: true/);
     assert.match(source('app/dashboard/tabs/ClimateTab.jsx'), /climateSection: next, scroll: false, clientOnly: true/);
