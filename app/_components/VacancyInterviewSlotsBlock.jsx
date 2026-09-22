@@ -198,7 +198,6 @@ export function VacancyInterviewSlotsBlock({
     >
     <div className={cn(S.cardTight, 'p-3.5')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.interviewSlotsTitle')}</span>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => shiftWeek(-1)} className={cn(S.btnGhost, 'min-h-touch px-2')}>
             ←
@@ -207,10 +206,10 @@ export function VacancyInterviewSlotsBlock({
           <button type="button" onClick={() => shiftWeek(1)} className={cn(S.btnGhost, 'min-h-touch px-2')}>
             →
           </button>
-          <button type="button" onClick={createSlot} className={cn(S.btnPrimary, 'min-h-touch')}>
-            {t(locale, 'recruiting.interviewSlotsCreate')}
-          </button>
         </div>
+        <button type="button" onClick={createSlot} className={cn(S.btnPrimary, 'min-h-touch')}>
+          {t(locale, 'recruiting.interviewSlotsCreate')}
+        </button>
       </div>
       <p className="mb-3 mt-0 text-xs leading-snug text-ink-muted">{t(locale, 'recruiting.interviewSlotsIntro')}</p>
 

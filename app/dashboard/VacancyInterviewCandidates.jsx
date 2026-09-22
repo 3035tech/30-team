@@ -963,32 +963,34 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
           minHeight={100}
           locale={locale}
         />
-        <div className="flex flex-wrap gap-[12px 18px] mt-2.5">
-          <label htmlFor="create-send-enneagram" className="flex items-center gap-2 text-xs text-ink-muted cursor-pointer">
-            <input
-              id="create-send-enneagram"
-              name="sendEnneagramInvite"
-              type="checkbox"
-              checked={sendEnneagramInvite}
-              onChange={(e) => setSendEnneagramInvite(e.target.checked)}
-              className="accent-brand-500"
-            />
-            {t(locale, 'recruiting.createSendEnneagram')}
-          </label>
-          <label htmlFor="create-send-motivators" className="flex items-center gap-2 text-xs text-ink-muted cursor-pointer">
-            <input
-              id="create-send-motivators"
-              name="sendMotivatorsInvite"
-              type="checkbox"
-              checked={sendMotivatorsInvite}
-              onChange={(e) => setSendMotivatorsInvite(e.target.checked)}
-              className="accent-brand-500"
-            />
-            {t(locale, 'recruiting.createSendMotivators')}
-          </label>
-          <span className="text-2xs font-mono text-ink-faint">
+        <div className="mt-3 flex flex-col items-start gap-2">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <label htmlFor="create-send-enneagram" className="flex min-h-6 cursor-pointer items-center gap-2 text-xs text-ink-muted">
+              <input
+                id="create-send-enneagram"
+                name="sendEnneagramInvite"
+                type="checkbox"
+                checked={sendEnneagramInvite}
+                onChange={(e) => setSendEnneagramInvite(e.target.checked)}
+                className="accent-brand-500"
+              />
+              {t(locale, 'recruiting.createSendEnneagram')}
+            </label>
+            <label htmlFor="create-send-motivators" className="flex min-h-6 cursor-pointer items-center gap-2 text-xs text-ink-muted">
+              <input
+                id="create-send-motivators"
+                name="sendMotivatorsInvite"
+                type="checkbox"
+                checked={sendMotivatorsInvite}
+                onChange={(e) => setSendMotivatorsInvite(e.target.checked)}
+                className="accent-brand-500"
+              />
+              {t(locale, 'recruiting.createSendMotivators')}
+            </label>
+          </div>
+          <p className="m-0 text-2xs leading-snug text-ink-faint">
             {t(locale, 'recruiting.createInvitesHint')}
-          </span>
+          </p>
         </div>
         <div className="mt-2.5">
           <button

@@ -1664,17 +1664,24 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     }}
                   />
                   <div className="grid gap-4 xl:grid-cols-2">
-                    <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
-                    <div className="rounded-control border border-ink/10 bg-ink/[0.02] p-4">
-                      <h3 className="m-0 font-ui text-sm font-semibold text-ink">
+                    <section className="flex flex-col">
+                      <h3 className="mb-2 font-ui text-sm font-semibold text-ink">
+                        {t(locale, 'recruiting.inviteListTitle')}
+                      </h3>
+                      <VacancyInvitesBlock vacancyId={v.id} locale={locale} refreshKey={invitesRefresh} />
+                    </section>
+                    <section className="flex flex-col">
+                      <h3 className="mb-2 font-ui text-sm font-semibold text-ink">
                         {locale === 'en' ? 'Next step' : 'Próximo passo'}
                       </h3>
-                      <p className="mb-0 mt-1.5 text-xs leading-[1.55] text-ink-muted">
-                        {locale === 'en'
-                          ? 'Use the pipeline tab to move candidates through the hiring stages and compare fit when results arrive.'
-                          : 'Use a aba Pipeline para mover candidatos pelas etapas e comparar aderência quando os resultados chegarem.'}
-                      </p>
-                    </div>
+                      <div className="flex-1 rounded-control border border-ink/10 bg-ink/[0.02] p-4">
+                        <p className="m-0 text-xs leading-[1.55] text-ink-muted">
+                          {locale === 'en'
+                            ? 'Use the pipeline tab to move candidates through the hiring stages and compare fit when results arrive.'
+                            : 'Use a aba Pipeline para mover candidatos pelas etapas e comparar aderência quando os resultados chegarem.'}
+                        </p>
+                      </div>
+                    </section>
                   </div>
                   <CollapsibleBlock
                     locale={locale}

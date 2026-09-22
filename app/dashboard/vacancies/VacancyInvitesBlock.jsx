@@ -77,24 +77,16 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
 
   if (!rows.length && !err) {
     return (
-      <div className="mt-2.5">
-        <span className="mb-1.5 block font-mono text-xs text-ink-muted">
-          {t(locale, 'recruiting.inviteListTitle')}
-        </span>
-        <EmptyState
-          title={t(locale, 'recruiting.inviteEmptyTitle')}
-          message={t(locale, 'recruiting.inviteEmptyBody')}
-          className="py-4"
-        />
-      </div>
+      <EmptyState
+        title={t(locale, 'recruiting.inviteEmptyTitle')}
+        message={t(locale, 'recruiting.inviteEmptyBody')}
+        className="py-4"
+      />
     );
   }
 
   return (
-    <div className="mt-3">
-      <span className="mb-2 block font-mono text-xs text-ink-muted">
-        {t(locale, 'recruiting.inviteListTitle')}
-      </span>
+    <div>
       {err ? (
         <p className="mb-2 mt-0 font-mono text-xs text-danger">{err}</p>
       ) : null}
