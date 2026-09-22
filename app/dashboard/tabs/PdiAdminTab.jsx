@@ -44,7 +44,7 @@ const COPY = {
     overduePlan: 'Plano atrasado',
     overdueItems: 'itens atrasados',
     nextActions: 'Casos prioritários',
-    nextActionsBody: 'Prévia de até 4 casos. Planos vencidos vêm primeiro; use a lista abaixo para percorrer e filtrar a equipe.',
+    nextActionsBody: 'Prévia de até 4 casos. Itens e planos vencidos vêm primeiro; use a lista abaixo para percorrer e filtrar a equipe.',
     overdueItem: 'Item atrasado',
     overdueSince: 'Atrasado desde',
     withoutOneOnOne: 'Sem 1:1 vinculado',
@@ -82,7 +82,7 @@ const COPY = {
     overduePlan: 'Plan overdue',
     overdueItems: 'overdue items',
     nextActions: 'Priority cases',
-    nextActionsBody: 'Preview of up to 4 cases. Overdue plans come first; use the list below to browse and filter the team.',
+    nextActionsBody: 'Preview of up to 4 cases. Overdue items and plans come first; use the list below to browse and filter the team.',
     overdueItem: 'Overdue item',
     overdueSince: 'Overdue since',
     withoutOneOnOne: 'No 1:1 linked',
@@ -211,7 +211,9 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                     <p className="m-0 mt-0.5 text-xs text-ink-muted">{copy.nextActionsBody}</p>
                   </div>
                   <span className="font-mono text-2xs text-warning">
-                    {locale === 'en' ? `Showing ${priorityItems.length}` : `Exibindo ${priorityItems.length}`}
+                    {locale === 'en'
+                      ? `${priorityItems.length} ${priorityItems.length === 1 ? 'case' : 'cases'} shown`
+                      : `${priorityItems.length} ${priorityItems.length === 1 ? 'caso exibido' : 'casos exibidos'}`}
                   </span>
                 </div>
                 <div className="divide-y divide-warning/15">

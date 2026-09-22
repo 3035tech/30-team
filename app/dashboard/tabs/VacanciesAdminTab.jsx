@@ -1538,9 +1538,21 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                               })}
                         </span>
                       ) : null}
+                      <p className="m-0 mt-2 font-mono text-2xs text-ink-faint">
+                        {locale === 'en'
+                          ? 'Vacancy status describes recruiting; this link has its own expiry.'
+                          : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
+                      </p>
                     </>
                   ) : (
-                    <span className={META_FAINT}>{t(locale, 'recruiting.noActiveLink')}</span>
+                    <div>
+                      <span className={META_FAINT}>{t(locale, 'recruiting.noActiveLink')}</span>
+                      <p className="m-0 mt-2 font-mono text-2xs text-ink-faint">
+                        {locale === 'en'
+                          ? 'Vacancy status describes recruiting; this link has its own expiry.'
+                          : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
+                      </p>
+                    </div>
                   )}
 
                   {linkExpiryEdit?.vacancyId === v.id ? (
@@ -1993,7 +2005,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {token ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
                         <span className="font-ui text-xs text-ink-muted">
-                          {locale === 'en' ? 'Candidate link · link status:' : 'Link para candidatos · estado do link:'}
+                          {locale === 'en' ? 'Candidate link · availability:' : 'Link para candidatos · disponibilidade:'}
                         </span>
                         <span className={cn(
                           'rounded-full border px-2 py-0.5 font-mono text-2xs',
@@ -2032,8 +2044,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         ) : null}
                         <span className="basis-full font-mono text-2xs text-ink-faint">
                           {locale === 'en'
-                            ? 'Vacancy status and link availability are shown separately.'
-                            : 'A situação da vaga e a disponibilidade do link são mostradas separadamente.'}
+                            ? 'Open/closed describes recruiting; active/expired describes this link’s validity.'
+                            : 'Aberta/fechada descreve o recrutamento; ativo/expirado indica a validade deste link.'}
                         </span>
                       </div>
                     ) : (
@@ -2041,8 +2053,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         {t(locale, 'recruiting.noActiveLink')}
                         <span className="ml-1">
                           {locale === 'en'
-                            ? '(independent from vacancy status)'
-                            : '(independente da situação da vaga)'}
+                            ? '(separate from recruiting status)'
+                            : '(separado da situação do recrutamento)'}
                         </span>
                       </div>
                     )}
