@@ -853,8 +853,8 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
         >
           {t(locale, 'recruiting.newCandidate')}
         </span>
-        <div className={cn(formFieldRowClass, 'mb-2.5')}>
-          <FormField label={t(locale, 'recruiting.fullNamePh')} className="min-w-0 flex-[1_1_180px]">
+        <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <FormField label={t(locale, 'recruiting.fullNamePh')} className="min-w-0">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -864,7 +864,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.inviteCandidateEmailPh')} className="min-w-0 flex-[1_1_180px]">
+          <FormField label={t(locale, 'recruiting.inviteCandidateEmailPh')} className="min-w-0">
             <input
               type="email"
               value={email}
@@ -874,7 +874,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.phoneLabel')} className={formFieldGrowClass}>
+          <FormField label={t(locale, 'recruiting.phoneLabel')} className="min-w-0">
             <input
               value={formatPhoneBr(phone)}
               onChange={(e) => setPhone(stripPhone(e.target.value) || '')}
@@ -884,7 +884,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.linkedinLabel')} className="min-w-0 flex-[2_1_200px]">
+          <FormField label={t(locale, 'recruiting.linkedinLabel')} className="min-w-0">
             <input
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
@@ -893,7 +893,9 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.stateLabel')} className="min-w-0 flex-[0_1_160px]">
+        </div>
+        <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <FormField label={t(locale, 'recruiting.stateLabel')} className="min-w-0">
             <BrStateSelect
               value={stateUf}
               onChange={(uf) => {
@@ -904,7 +906,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD_SELECT}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.cityLabel')} className="min-w-0 flex-[1_1_180px]">
+          <FormField label={t(locale, 'recruiting.cityLabel')} className="min-w-0">
             <BrCitySelect
               uf={stateUf}
               value={city}
@@ -913,7 +915,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD_SELECT}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.salaryExpectationLabel')} className={formFieldGrowClass}>
+          <FormField label={t(locale, 'recruiting.salaryExpectationLabel')} className="min-w-0">
             <input
               value={formatSalaryBr(salaryExpectation)}
               onChange={(e) => setSalaryExpectation(digitsOnly(e.target.value).slice(0, 15))}
@@ -923,7 +925,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               className={FIELD}
             />
           </FormField>
-          <FormField label={t(locale, 'recruiting.availabilityLabel')} className={formFieldGrowClass}>
+          <FormField label={t(locale, 'recruiting.availabilityLabel')} className="min-w-0">
             <SelectField
               value={availability}
               onChange={(e) => setAvailability(e.target.value)}
@@ -938,7 +940,7 @@ export function VacancyInterviewCandidates({ vacancyId, locale = 'pt-BR', onPipe
               <option value="other">{t(locale, 'recruiting.availabilityOther')}</option>
             </SelectField>
           </FormField>
-          <FormField label={t(locale, 'recruiting.sourceLabel')} className={formFieldGrowClass}>
+          <FormField label={t(locale, 'recruiting.sourceLabel')} className="min-w-0">
             <SelectField
               value={source}
               onChange={(e) => setSource(e.target.value)}
