@@ -415,11 +415,19 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
     statusFilter !== 'all' ||
     leaveTypeFilter !== 'all';
 
+  const workspaceHeading = {
+    pending: ['panel.dp.workspacePending', null],
+    leaves: ['panel.dp.inboxTitle', 'panel.dp.inboxSubtitle'],
+    documents: ['panel.dp.workspaceDocuments', null],
+    time: ['panel.dp.workspaceTime', null],
+    onboarding: ['panel.dp.workspaceOnboarding', null],
+  }[workspaceSection] || ['panel.dp.inboxTitle', 'panel.dp.inboxSubtitle'];
+
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        title={t(locale, 'panel.dp.inboxTitle')}
-        subtitle={t(locale, 'panel.dp.inboxSubtitle')}
+        title={t(locale, workspaceHeading[0])}
+        subtitle={workspaceHeading[1] ? t(locale, workspaceHeading[1]) : undefined}
         actions={
           workspaceSection === 'leaves' ? (
             <div className="flex flex-wrap items-center justify-end gap-2">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { ORG_UNIT, orgUnitOptions } from '../../../lib/org-unit-constants.js';
 import { AdminPageHeader, AdminCreateButton, AdminListPager, S } from '../dashboard-shared';
@@ -23,6 +24,7 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
   const [page, setPage] = useState(1);
   const options = orgUnitOptions(units);
   const safePage = Math.min(page, Math.max(1, Math.ceil(options.length / PAGE_SIZE)));
+  const listTitle = locale === 'en' ? 'Organizational units' : 'Unidades organizacionais';
   function edit(unit = {}) { setForm({ id: unit.id, name: unit.name || '', parentId: unit.parentId || '' }); setSaveError(''); }
   async function save(event) {
     event.preventDefault(); if (busy) return; setBusy(true); setSaveError('');
@@ -43,7 +45,7 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
   }
   if (!companyId) return <EmptyState title={t(locale, 'panel.orgUnits.chooseCompany')} />;
   return <div className="flex flex-col gap-4">
-    <AdminPageHeader title={t(locale, 'panel.orgUnits.title')} description={t(locale, 'panel.orgUnits.hint')}
+    <AdminPageHeader title={listTitle} description={t(locale, 'panel.orgUnits.hint')}
       actions={<AdminCreateButton label={t(locale, units.length ? 'panel.orgUnits.create' : 'panel.orgUnits.firstCreate')} disabled={busy || loading || Boolean(error) || Boolean(form)} onClick={() => edit()} />} />
     {form ? <ContentEnter animKey={`org-form-${form.id || 'new'}`}><form className={S.card} onSubmit={save} aria-label={t(locale, form.id ? 'panel.orgUnits.edit' : 'panel.orgUnits.create')}>
       <h2 className={S.cardTitle}>{t(locale, form.id ? 'panel.orgUnits.edit' : 'panel.orgUnits.create')}</h2>
@@ -60,8 +62,18 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
     {loading ? <AppLoading variant="panel" /> : error ? <InlineCallout tone="danger"><span role="alert">{error}</span><button type="button" className={S.btnGhost} onClick={reload}>{t(locale, 'panel.orgUnits.retry')}</button></InlineCallout> : !units.length ? <EmptyState title={t(locale, 'panel.orgUnits.empty')} description={t(locale, 'panel.orgUnits.emptyHint')} /> : <ContentEnter animKey={`units-${companyId}-${units.length}`}>
       <ul className="m-0 list-none space-y-3 p-0">{options.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE).map((unit) => <li key={unit.id} className={S.cardTight}>
         <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1"><h2 className={`${S.cardTitle} break-words`}>{unit.name}</h2><p className={`${S.faint} break-words`}>{unit.label}</p><p className={S.muted}>{t(locale, 'panel.orgUnits.people', { n: unit.peopleCount })}</p></div>
-          <div className="flex flex-wrap gap-2"><button type="button" className={S.btnGhost} onClick={() => navigateDashboard({ tab: 'team', orgUnit: unit.id, roster: 'internal', teamPage: 1, search: '', area: 'all', vacancy: 'all', pipeline: 'all', filter: null, teamGroup: null, dateFrom: '', dateTo: '', enneagram: 'all' })}>{t(locale, 'panel.orgUnits.viewPeople')}</button><button type="button" className={S.btnGhost} disabled={busy || Boolean(form)} onClick={() => edit(unit)}>{t(locale, 'panel.orgUnits.edit')}</button><button type="button" className={S.btnGhost} disabled={busy || Boolean(form)} onClick={() => archive(unit)}>{t(locale, 'panel.orgUnits.archive')}</button></div>
+          <div className="min-w-0 flex-1">
+            <h2 className={`${S.cardTitle} break-words`}>{unit.name}</h2>
+            {unit.label && unit.label.trim().toLocaleLowerCase(locale) !== String(unit.name || '').trim().toLocaleLowerCase(locale) ? (
+              <p className={`${S.faint} break-words`}>{unit.label}</p>
+            ) : null}
+            <p className={cn(S.muted, 'mb-0 mt-1.5')}>{t(locale, 'panel.orgUnits.people', { n: unit.peopleCount })}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:shrink-0">
+            <button type="button" className={S.btnGhost} onClick={() => navigateDashboard({ tab: 'team', orgUnit: unit.id, roster: 'internal', teamPage: 1, search: '', area: 'all', vacancy: 'all', pipeline: 'all', filter: null, teamGroup: null, dateFrom: '', dateTo: '', enneagram: 'all' })}>{t(locale, 'panel.orgUnits.viewPeople')}</button>
+            <button type="button" className={S.btnGhost} disabled={busy || Boolean(form)} onClick={() => edit(unit)}>{t(locale, 'panel.orgUnits.edit')}</button>
+            <button type="button" className={S.btnGhost} disabled={busy || Boolean(form)} onClick={() => archive(unit)}>{t(locale, 'panel.orgUnits.archive')}</button>
+          </div>
         </div>
       </li>)}</ul>
       <AdminListPager locale={locale} page={safePage} pageSize={PAGE_SIZE} pageSizeOptions={[PAGE_SIZE]} total={units.length} onPageChange={setPage} />

@@ -6,6 +6,7 @@ import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { SelectField } from '../../_components/SelectField';
 import { Icon } from '../../_components/Icon';
+import { StatMetricTile } from '../../_components/StatMetricTile';
 import {
   AdminListPager,
   AdminListSearch,
@@ -44,8 +45,8 @@ const COPY = {
     nextActions: 'Próximas ações',
     nextActionsBody: 'Comece por estes casos para manter o desenvolvimento em movimento.',
     overdueItem: 'Item atrasado',
+    overdueSince: 'Atrasado desde',
     withoutOneOnOne: 'Sem 1:1 vinculado',
-    dueOn: 'vence em',
     seePerson: 'Ver pessoa',
     noItems: 'Sem itens ainda',
     done: 'concluídos',
@@ -81,8 +82,8 @@ const COPY = {
     nextActions: 'Next actions',
     nextActionsBody: 'Start with these cases to keep development moving.',
     overdueItem: 'Overdue item',
+    overdueSince: 'Overdue since',
     withoutOneOnOne: 'No 1:1 linked',
-    dueOn: 'due',
     seePerson: 'View person',
     noItems: 'No items yet',
     done: 'complete',
@@ -182,17 +183,14 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
       ) : (
         <ContentEnter animKey={`pdi-${companyId}-${view}-${q}-${page}`}>
           <section className={S.cardTight} aria-label={copy.title}>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink/10 bg-ink/10 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {[
                 [summary.activePlans || 0, copy.activePlans],
                 [attentionCount, copy.attention],
                 [summary.noPlanEmployeeCount || 0, copy.noPlan],
                 [`${summary.donePct ?? 0}%`, copy.completion],
               ].map(([value, label]) => (
-                <div key={label} className="bg-surface px-3.5 py-3">
-                  <div className="font-display text-2xl text-ink">{value}</div>
-                  <div className="mt-1 font-mono text-2xs uppercase tracking-wide text-ink-faint">{label}</div>
-                </div>
+                <StatMetricTile key={label} value={value} label={label} />
               ))}
             </div>
 
@@ -218,7 +216,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                       : isUnlinked
                         ? copy.withoutOneOnOne
                         : dueLabel
-                          ? `${copy.dueOn} ${dueLabel}`
+                          ? `${copy.overdueSince} ${dueLabel}`
                           : copy.overdueItem;
                     return (
                       <div key={`${item.priorityKind}-${item.candidateId}`} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

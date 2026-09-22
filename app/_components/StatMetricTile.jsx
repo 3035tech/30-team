@@ -22,7 +22,7 @@ export function StatMetricTile({
       onClick={onClick || undefined}
       className={cn(
         'rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3 text-left',
-        onClick && 'min-h-touch cursor-pointer hover:bg-ink/[0.04]',
+        onClick && 'min-h-touch cursor-pointer transition-colors hover:bg-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
         className
       )}
     >
@@ -32,11 +32,11 @@ export function StatMetricTile({
       >
         {value}
       </div>
-      <div className="mt-1 font-mono text-2xs uppercase tracking-wide text-ink-faint">
+      <div className="mt-1 font-mono text-2xs uppercase tracking-wide text-ink-muted">
         {label}
       </div>
       {hint ? (
-        <div className="mt-1.5 font-ui text-2xs leading-snug text-ink-faint">{hint}</div>
+        <div className="mt-1.5 font-ui text-2xs leading-snug text-ink-muted">{hint}</div>
       ) : null}
     </Tag>
   );
