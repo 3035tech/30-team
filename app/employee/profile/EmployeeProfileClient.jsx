@@ -11,7 +11,7 @@ import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
-import { FormField } from '../../_components/FormField';
+import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_components/FormField';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
@@ -251,34 +251,49 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
             defaultOpen
           >
             <form className="flex flex-col gap-3" onSubmit={saveProfile}>
-              <FormField label={t(locale, 'employeeHome.fullNameLabel')}>
-                <input
-                  className={cn(S.input, 'w-full')}
-                  value={form.fullName}
-                  onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-                  required
-                  disabled={busy}
-                />
-              </FormField>
-              <FormField label={t(locale, 'employeeHome.emailLabel')}>
-                <input className={cn(S.input, 'w-full opacity-70')} value={form.email} disabled readOnly />
-              </FormField>
-              <FormField label={t(locale, 'employeeHome.phoneLabel')}>
-                <input
-                  className={cn(S.input, 'w-full')}
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  disabled={busy}
-                />
-              </FormField>
-              <FormField label={t(locale, 'employeeHome.linkedinLabel')}>
-                <input
-                  className={cn(S.input, 'w-full')}
-                  value={form.linkedinUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
-                  disabled={busy}
-                />
-              </FormField>
+              <div className={formFieldRowClass}>
+                <FormField
+                  label={t(locale, 'employeeHome.fullNameLabel')}
+                  className={formFieldGrowClass}
+                >
+                  <input
+                    className={cn(S.input, 'w-full')}
+                    value={form.fullName}
+                    onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                    required
+                    disabled={busy}
+                  />
+                </FormField>
+                <FormField label={t(locale, 'employeeHome.emailLabel')} className={formFieldGrowClass}>
+                  <input
+                    className={cn(S.input, 'w-full font-mono text-xs opacity-70')}
+                    value={form.email}
+                    disabled
+                    readOnly
+                  />
+                </FormField>
+              </div>
+              <div className={formFieldRowClass}>
+                <FormField label={t(locale, 'employeeHome.phoneLabel')} className={formFieldGrowClass}>
+                  <input
+                    className={cn(S.input, 'w-full font-mono text-xs')}
+                    value={form.phone}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    disabled={busy}
+                  />
+                </FormField>
+                <FormField
+                  label={t(locale, 'employeeHome.linkedinLabel')}
+                  className="min-w-0 flex-[2_1_200px]"
+                >
+                  <input
+                    className={cn(S.input, 'w-full font-mono text-xs')}
+                    value={form.linkedinUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
+                    disabled={busy}
+                  />
+                </FormField>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.45fr)_minmax(7rem,0.65fr)_minmax(0,1fr)]">
                 <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0">
                   <input

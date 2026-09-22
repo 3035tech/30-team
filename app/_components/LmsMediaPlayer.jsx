@@ -27,7 +27,19 @@ function loadScript(src, globalKey) {
   });
 }
 
-function PlayerChrome({ title, kindLabel, resumeLabel, loadingLabel, loading, onClose, closeLabel, children }) {
+function PlayerChrome({
+  title,
+  kindLabel,
+  resumeLabel,
+  loadingLabel,
+  loading,
+  loadErrorLabel,
+  fallbackHref,
+  openLabel,
+  onClose,
+  closeLabel,
+  children,
+}) {
   return (
     <div className="overflow-hidden rounded-card border border-brand-500/25 bg-surface shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 bg-brand-500/[0.06] px-3 py-2.5">
@@ -56,6 +68,20 @@ function PlayerChrome({ title, kindLabel, resumeLabel, loadingLabel, loading, on
             {loadingLabel}
           </div>
         ) : null}
+        {!loading && loadErrorLabel ? (
+          <div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-ink/90 px-4 text-center text-canvas"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="m-0 font-ui text-sm">{loadErrorLabel}</p>
+            {fallbackHref ? (
+              <a href={fallbackHref} target="_blank" rel="noreferrer" className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
+                {openLabel || 'Open lesson'}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
         {children}
       </div>
     </div>
@@ -76,6 +102,7 @@ export function LmsMediaPlayer({
   kindLabel,
   resumeLabel,
   loadingLabel = '…',
+  loadErrorLabel = 'The player could not be loaded.',
   openLabel,
   pdfExternalHint,
   className,
@@ -86,6 +113,7 @@ export function LmsMediaPlayer({
   const onProgressRef = useRef(onProgress);
   const seekOnceRef = useRef(Math.max(0, Math.floor(Number(startAtSec) || 0)));
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [showResumeChip, setShowResumeChip] = useState(
     () => Math.max(0, Math.floor(Number(startAtSec) || 0)) >= 15
   );
@@ -133,22 +161,45 @@ export function LmsMediaPlayer({
 
     let cancelled = false;
     let pollId = null;
+    let apiReadyTimeoutId = null;
+    let loadTimeoutId = ['youtube', 'vimeo'].includes(kind) ? window.setTimeout(() => {
+      loadTimeoutId = null;
+      if (!cancelled) {
+        setLoading(false);
+        setLoadFailed(true);
+      }
+    }, 12000) : null;
+    const clearLoadTimeout = () => {
+      if (loadTimeoutId) window.clearTimeout(loadTimeoutId);
+      loadTimeoutId = null;
+    };
+    setLoadFailed(false);
 
     const setupYoutube = async () => {
       if (!videoId || !hostRef.current) return;
       setLoading(true);
       try {
         await loadScript('https://www.youtube.com/iframe_api', null);
-        await new Promise((resolve) => {
-          if (window.YT?.Player) resolve();
-          else {
-            const prev = window.onYouTubeIframeAPIReady;
-            window.onYouTubeIframeAPIReady = () => {
-              if (typeof prev === 'function') prev();
-              resolve();
-            };
-          }
-        });
+        await Promise.race([
+          new Promise((resolve) => {
+            if (window.YT?.Player) resolve();
+            else {
+              const prev = window.onYouTubeIframeAPIReady;
+              window.onYouTubeIframeAPIReady = () => {
+                if (typeof prev === 'function') prev();
+                resolve();
+              };
+            }
+          }),
+          new Promise((_, reject) => {
+            apiReadyTimeoutId = window.setTimeout(() => {
+              apiReadyTimeoutId = null;
+              reject(new Error('YouTube API timeout'));
+            }, 8000);
+          }),
+        ]);
+        if (apiReadyTimeoutId) window.clearTimeout(apiReadyTimeoutId);
+        apiReadyTimeoutId = null;
         if (cancelled || !hostRef.current) return;
         hostRef.current.innerHTML = '';
         const el = document.createElement('div');
@@ -168,7 +219,9 @@ export function LmsMediaPlayer({
           },
           events: {
             onReady: (e) => {
+              clearLoadTimeout();
               setLoading(false);
+              setLoadFailed(false);
               if (startAt > 0) {
                 try {
                   e.target.seekTo(startAt, true);
@@ -189,7 +242,11 @@ export function LmsMediaPlayer({
                 }
               }
             },
-            onError: () => setLoading(false),
+            onError: () => {
+              clearLoadTimeout();
+              setLoading(false);
+              setLoadFailed(true);
+            },
           },
         });
         playerRef.current = player;
@@ -203,7 +260,11 @@ export function LmsMediaPlayer({
           }
         }, 15000);
       } catch {
+        if (apiReadyTimeoutId) window.clearTimeout(apiReadyTimeoutId);
+        apiReadyTimeoutId = null;
+        clearLoadTimeout();
         setLoading(false);
+        if (!cancelled) setLoadFailed(true);
       }
     };
 
@@ -226,6 +287,7 @@ export function LmsMediaPlayer({
         hostRef.current.appendChild(iframe);
         const player = new window.Vimeo.Player(iframe);
         playerRef.current = player;
+        await player.ready();
         if (startAt > 0) {
           try {
             await player.setCurrentTime(startAt);
@@ -233,6 +295,7 @@ export function LmsMediaPlayer({
             /* ignore */
           }
         }
+        clearLoadTimeout();
         setLoading(false);
         const tick = async (force = false) => {
           try {
@@ -246,7 +309,9 @@ export function LmsMediaPlayer({
         player.on('ended', () => void tick(true));
         pollId = window.setInterval(() => void tick(false), 15000);
       } catch {
+        clearLoadTimeout();
         setLoading(false);
+        if (!cancelled) setLoadFailed(true);
       }
     };
 
@@ -268,6 +333,8 @@ export function LmsMediaPlayer({
 
     return () => {
       cancelled = true;
+      clearLoadTimeout();
+      if (apiReadyTimeoutId) window.clearTimeout(apiReadyTimeoutId);
       window.removeEventListener('pagehide', onUnload);
       if (pollId) window.clearInterval(pollId);
       try {
@@ -301,6 +368,7 @@ export function LmsMediaPlayer({
           resumeLabel={null}
           loading={false}
           loadingLabel={loadingLabel}
+          loadErrorLabel={null}
           onClose={onClose}
           closeLabel={closeLabel}
         >
@@ -340,6 +408,11 @@ export function LmsMediaPlayer({
           resumeLabel={showResumeChip ? resumeLabel : null}
           loading={loading}
           loadingLabel={loadingLabel}
+          loadErrorLabel={loadFailed ? loadErrorLabel : null}
+          fallbackHref={embedUrl || (kind === 'youtube'
+            ? `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`
+            : `https://vimeo.com/${encodeURIComponent(videoId)}`)}
+          openLabel={openLabel}
           onClose={onClose}
           closeLabel={closeLabel}
         >

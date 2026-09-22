@@ -508,6 +508,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   kindLabel={kindLabelFor(locale, watching.contentKind)}
                   resumeLabel={formatWatchHint(locale, watching)}
                   loadingLabel={t(locale, 'employeeHome.lmsLoadingPlayer')}
+                  loadErrorLabel={t(locale, 'employeeHome.lmsPlayerError')}
                   openLabel={t(locale, 'panel.employeePortal.openLesson')}
                   pdfExternalHint={t(locale, 'employeeHome.lmsPdfExternalHint')}
                 />

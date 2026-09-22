@@ -83,7 +83,8 @@ function leaveStatusLabel(locale, status) {
   return label === k ? status : label;
 }
 
-function docStatusTone(status) {
+function docStatusTone(status, hasFile) {
+  if (status === DP_DOCUMENT_STATUS.RECEIVED && !hasFile) return 'neutral';
   if (status === DP_DOCUMENT_STATUS.RECEIVED) return 'success';
   if (status === DP_DOCUMENT_STATUS.WAIVED) return 'neutral';
   return 'warning';
@@ -658,8 +659,10 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                   <div className="min-w-0">
                     <div className={S.cardMuted}>{docKeyLabel(locale, doc.docKey)}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <StatusToneChip tone={docStatusTone(doc.status)}>
-                        {docStatusLabel(locale, doc.status)}
+                      <StatusToneChip tone={docStatusTone(doc.status, doc.hasFile)}>
+                        {doc.status === DP_DOCUMENT_STATUS.RECEIVED && !doc.hasFile
+                          ? t(locale, 'panel.dp.docStatus.receivedNoFile')
+                          : docStatusLabel(locale, doc.status)}
                       </StatusToneChip>
                       {sig !== DP_DOCUMENT_SIGNATURE_STATUS.NONE ? (
                         <StatusToneChip tone={sigStatusTone(sig)}>
@@ -668,9 +671,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       ) : null}
                       {doc.hasFile ? (
                         <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
-                      ) : (
+                      ) : doc.status !== DP_DOCUMENT_STATUS.RECEIVED ? (
                         <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.dp.docNoFile')}</span>
-                      )}
+                      ) : null}
                     </div>
                     {sig === DP_DOCUMENT_SIGNATURE_STATUS.SIGNED ? (
                       <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>
