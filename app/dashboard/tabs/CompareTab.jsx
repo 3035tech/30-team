@@ -102,7 +102,7 @@ export function CompareTab({
 }) {
   const { isDark } = useDarkMode();
   const allIds = useMemo(() => results.map((r) => String(r.assessmentId)), [results]);
-  const [selectedIds, setSelectedIds] = useState(() => new Set(allIds));
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [sortBy, setSortBy] = useState(() => ({ key: 'name', dir: 'asc' }));
   const [searchDraft, setSearchDraft] = useState(search || '');
 
@@ -110,7 +110,6 @@ export function CompareTab({
     setSelectedIds((prev) => {
       const idSet = new Set(allIds);
       const next = new Set([...prev].filter((id) => idSet.has(id)));
-      if (next.size === 0 && allIds.length > 0) allIds.forEach((id) => next.add(id));
       return next;
     });
   }, [allIds]);
@@ -134,7 +133,17 @@ export function CompareTab({
     });
   };
 
-  const selectAll = () => setSelectedIds(new Set(allIds));
+  const selectUpToFive = () => {
+    setSelectedIds((prev) => {
+      const validIds = new Set(allIds);
+      const next = new Set([...prev].filter((id) => validIds.has(id)).slice(0, 5));
+      for (const row of resultsByName) {
+        if (next.size >= 5) break;
+        next.add(String(row.assessmentId));
+      }
+      return next;
+    });
+  };
   const clearSelection = () => setSelectedIds(new Set());
 
   const visible = results.filter((r) => selectedIds.has(String(r.assessmentId)));
@@ -181,7 +190,7 @@ export function CompareTab({
   const sortMark = (key) => (sortBy.key === key ? (sortBy.dir === 'asc' ? '▲' : '▼') : '');
   const nSel = selectedIds.size;
   const nTot = results.length;
-  const allSelected = nTot > 0 && nSel === nTot;
+  const allSelected = nTot > 0 && nSel >= Math.min(nTot, 5);
 
   const miniBtnBase =
     'cursor-pointer rounded-lg px-3 py-1.5 font-mono text-2xs uppercase tracking-wide';
@@ -236,8 +245,8 @@ export function CompareTab({
           ) : null}
           <button
             type="button"
-            onClick={selectAll}
-            disabled={nTot === 0 || (nTot > 0 && nSel === nTot)}
+            onClick={selectUpToFive}
+            disabled={nTot === 0 || allSelected}
             className={cn(
               miniBtnBase,
               allSelected
@@ -246,7 +255,7 @@ export function CompareTab({
               nTot === 0 && 'opacity-50'
             )}
           >
-            {t(locale, 'panel.compare.selectAll')}
+            {t(locale, 'panel.compare.selectUpToFive')}
           </button>
           <button
             type="button"
@@ -299,6 +308,7 @@ export function CompareTab({
                     type="checkbox"
                     value={id}
                     checked={on}
+                    disabled={!on && nSel >= 5}
                     onChange={() => toggleId(id)}
                     className="h-[15px] w-[15px] shrink-0 cursor-pointer accent-brand-500"
                   />

@@ -582,6 +582,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
             data={trends.hrScore}
             dataKey="avgScore"
             tone="brand"
+            locale={locale}
           />
 
           <TrendChart
@@ -589,6 +590,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
             data={trends.turnoverRisk}
             dataKey="highRiskPct"
             tone="danger"
+            locale={locale}
           />
 
           <TrendChart
@@ -596,6 +598,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
             data={trends.climate}
             dataKey="avgClimate"
             tone="success"
+            locale={locale}
           />
 
           <HiringFlowChart data={trends.hiresVsExits} locale={locale} />
@@ -674,14 +677,19 @@ function AreaComparison({ comparison, locale }) {
   );
 }
 
-function TrendChart({ title, data, dataKey, tone = 'brand' }) {
+function TrendChart({ title, data, dataKey, tone = 'brand', locale }) {
   const maxValue = Math.max(...data.map(d => d[dataKey] || 0));
+  const hasSeriesData = data.some((item) => Number(item[dataKey]) > 0);
   const tones = TREND_TONE[tone] || TREND_TONE.brand;
 
   return (
     <div className={cn(S.cardTight, 'min-w-0')}>
       <div className="mb-5 font-ui text-sm font-semibold text-ink">{title}</div>
-      <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10">
+      {!hasSeriesData ? (
+        <div className="flex h-36 items-center justify-center rounded-control border border-dashed border-ink/10 text-xs text-ink-faint">
+          {t(locale, 'panel.analytics.seriesEmpty')}
+        </div>
+      ) : <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10">
         {data.map((item, idx) => {
           const value = item[dataKey] || 0;
           const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
@@ -700,7 +708,7 @@ function TrendChart({ title, data, dataKey, tone = 'brand' }) {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -730,6 +738,7 @@ function MetricCard({ title, value, subtitle, trend, locale, onClick }) {
 
 function HiringFlowChart({ data = [], locale }) {
   const maxValue = Math.max(0, ...data.map((item) => Math.max(item.hires || 0, item.exits || 0)));
+  const hasSeriesData = data.some((item) => Number(item.hires) > 0 || Number(item.exits) > 0);
   return (
     <div className={cn(S.cardTight, 'min-w-0')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
@@ -739,7 +748,11 @@ function HiringFlowChart({ data = [], locale }) {
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-danger/70" />{t(locale, 'panel.analytics.exits')}</span>
         </div>
       </div>
-      <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10 pt-5">
+      {!hasSeriesData ? (
+        <div className="flex h-36 items-center justify-center rounded-control border border-dashed border-ink/10 text-xs text-ink-faint">
+          {t(locale, 'panel.analytics.seriesEmpty')}
+        </div>
+      ) : <div className="flex h-36 items-end gap-1 overflow-hidden border-b border-ink/10 pt-5">
         {data.map((item) => {
           const hiresHeight = maxValue > 0 ? ((item.hires || 0) / maxValue) * 100 : 0;
           const exitsHeight = maxValue > 0 ? ((item.exits || 0) / maxValue) * 100 : 0;
@@ -753,7 +766,7 @@ function HiringFlowChart({ data = [], locale }) {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }

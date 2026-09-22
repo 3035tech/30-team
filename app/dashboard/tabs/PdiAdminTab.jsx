@@ -32,6 +32,7 @@ const COPY = {
     people: 'pessoas',
     noPlanTitle: 'Comece pelo próximo plano',
     noPlanBody: 'Não há pessoas nesta visão. Quando alguém não tiver PDI ativo, aparecerá aqui.',
+    noPlanRowDetail: 'Crie um plano de desenvolvimento para esta pessoa.',
     selectCompanyTitle: 'Selecione uma empresa',
     selectCompanyBody: 'Escolha uma empresa para acompanhar os PDIs da equipe.',
     unavailableTitle: 'PDI indisponível',
@@ -69,6 +70,7 @@ const COPY = {
     people: 'people',
     noPlanTitle: 'Start with the next plan',
     noPlanBody: 'No people match this view. Employees without an active plan will appear here.',
+    noPlanRowDetail: 'Create a development plan for this employee.',
     selectCompanyTitle: 'Select a company',
     selectCompanyBody: 'Choose a company to track team development plans.',
     unavailableTitle: 'Development plans unavailable',
@@ -212,7 +214,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                     const title = isNoPlan ? copy.noPlanStatus : item.itemTitle || item.planTitle || copy.overdueItem;
                     const dueLabel = dateLabel(item.dueDate, locale);
                     const detail = isNoPlan
-                      ? copy.noPlanBody
+                      ? copy.noPlanRowDetail
                       : isUnlinked
                         ? copy.withoutOneOnOne
                         : dueLabel
@@ -293,7 +295,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) 
                               {row.overdueItemCount > 0 ? ` · ${row.overdueItemCount} ${copy.overdueItems}` : ''}
                           </p>
                           ) : (
-                            <p className="m-0 mt-1 text-xs text-ink-muted">{copy.noPlanBody}</p>
+                            <p className="m-0 mt-1 text-xs text-ink-muted">{copy.noPlanRowDetail}</p>
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-3">

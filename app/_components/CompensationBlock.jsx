@@ -34,6 +34,16 @@ function formatDate(value, locale) {
   });
 }
 
+function isFutureEffectiveDate(value) {
+  const raw = String(value || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+  const parsed = new Date(`${raw}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return raw > today;
+}
+
 const EVENT_TYPE_OPTIONS = [
   COMPENSATION_EVENT_TYPE.HIRE,
   COMPENSATION_EVENT_TYPE.RAISE,
@@ -72,6 +82,7 @@ export function CompensationBlock({
   const [busy, setBusy] = useState(false);
 
   const readOnly = employmentStatus === EMPLOYMENT_STATUS.ALUMNI || !canManage;
+  const currentIsUpcoming = isFutureEffectiveDate(current?.effectiveDate);
   const visible =
     employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
     employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
@@ -492,7 +503,7 @@ export function CompensationBlock({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <div className={cn(S.faint, 'text-2xs uppercase tracking-wide')}>
-              {t(locale, 'panel.compensation.currentLabel')}
+              {t(locale, currentIsUpcoming ? 'panel.compensation.upcomingLabel' : 'panel.compensation.currentLabel')}
             </div>
             {current?.amount ? (
               <div className="mt-1 font-ui text-base font-medium tabular-nums text-ink">
@@ -505,7 +516,7 @@ export function CompensationBlock({
             )}
             {current?.effectiveDate ? (
               <div className="mt-1 font-mono text-2xs text-ink-muted">
-                {t(locale, 'panel.compensation.since', {
+                {t(locale, currentIsUpcoming ? 'panel.compensation.effectiveOn' : 'panel.compensation.since', {
                   date: formatDate(current.effectiveDate, locale),
                 })}
                 {' · '}
@@ -513,7 +524,7 @@ export function CompensationBlock({
               </div>
             ) : null}
           </div>
-          {marketChip}
+          {currentIsUpcoming ? null : marketChip}
         </div>
       </div>
 

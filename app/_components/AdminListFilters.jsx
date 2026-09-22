@@ -30,7 +30,7 @@ export function AdminListFilters({
       role="search"
       aria-label={ariaLabel}
       className={cn(
-        'mb-3 flex flex-nowrap items-end gap-2.5 overflow-x-auto pb-0.5',
+        'mb-3 flex max-w-full flex-wrap items-end gap-2.5 pb-0.5',
         className
       )}
     >

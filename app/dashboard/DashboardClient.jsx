@@ -1216,7 +1216,7 @@ export default function DashboardClient({
               <span className="text-prose text-ink-muted">
                 {panelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
-                ) : showsCohortChrome ? (
+                ) : showsCohortChrome && ['overview', 'team', 'compatibility'].includes(tab) ? (
                   <>
                     {listTotal}{' '}
                     {listTotal === 1

@@ -636,6 +636,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     </button>
                     <AdminDeleteButton
                       locale={locale}
+                      label={t(locale, 'panel.okr.deleteCycleAction')}
                       onClick={() => void deleteCycle()}
                       disabled={busy}
                     />

@@ -264,7 +264,7 @@ export function OverviewTab({
                     </span>
                     {item.days != null ? (
                       <span className="shrink-0 font-mono text-2xs text-ink-faint">
-                        {t(locale, 'panel.overview.daysAgo', { n: item.days })}
+                        {t(locale, item.daysToday ? 'panel.overview.daysToday' : item.daysUntil ? 'panel.overview.daysUntil' : 'panel.overview.daysAgo', { n: item.days })}
                       </span>
                     ) : null}
                   </button>
