@@ -106,7 +106,7 @@ export function PersonDossierBlock({
         <div className={S.cardTight}>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className={S.label}>{t(locale, 'panel.dossier.title')}</span>
+              <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.title')}</span>
               <p className="mt-1 mb-0 text-prose leading-snug text-ink-muted">
                 {t(locale, 'panel.dossier.intro')}
               </p>
@@ -142,7 +142,7 @@ export function PersonDossierBlock({
 
       {ai?.summary ? (
         <div className={cn(S.cardTight, 'border-brand-500/20 bg-brand-500/[0.04]')}>
-          <span className={S.label}>{t(locale, 'panel.dossier.aiTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.aiTitle')}</span>
           <p className="mt-2 mb-0 text-prose leading-snug text-ink">{ai.summary}</p>
           {Array.isArray(ai.recommendations) && ai.recommendations.length > 0 ? (
             <ul className="mt-2 mb-0 list-disc pl-4 text-prose text-ink">
@@ -170,7 +170,7 @@ export function PersonDossierBlock({
       >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
-          <span className={S.label}>{t(locale, 'panel.dossier.profileTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.profileTitle')}</span>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {d.profile?.topType ? <TypeBadge type={d.profile.topType} locale={locale} compact /> : null}
             <span className="text-xs text-ink-muted">
@@ -187,7 +187,7 @@ export function PersonDossierBlock({
         </section>
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
-          <span className={S.label}>{t(locale, 'panel.dossier.hrTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.hrTitle')}</span>
           <p className="mt-1 mb-0 text-2xs leading-snug text-ink-faint">
             {t(locale, 'panel.dossier.hrPurpose')}
           </p>
@@ -218,7 +218,7 @@ export function PersonDossierBlock({
         </section>
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
-          <span className={S.label}>{t(locale, 'panel.dossier.pdiTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.pdiTitle')}</span>
           {d.pdi ? (
             <p className="mt-2 mb-0 text-prose text-ink">
               {d.pdi.title}
@@ -241,7 +241,7 @@ export function PersonDossierBlock({
         </section>
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
-          <span className={S.label}>{t(locale, 'panel.dossier.performanceTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.performanceTitle')}</span>
           {d.performance ? (
             <>
               <p className="mt-2 mb-0 text-prose text-ink">
@@ -304,7 +304,7 @@ export function PersonDossierBlock({
         </section>
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
-          <span className={S.label}>{t(locale, 'panel.dossier.retentionTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.retentionTitle')}</span>
           <p className="mt-2 mb-0 text-prose text-ink">
             {t(locale, 'panel.dossier.retentionOpen', { n: d.retention?.openFollowUpCount || 0 })}
           </p>
@@ -320,7 +320,7 @@ export function PersonDossierBlock({
         </section>
 
         <section>
-          <span className={S.label}>{t(locale, 'panel.dossier.climateTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.climateTitle')}</span>
           <p className="mt-1 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.dossier.climateHint')}</p>
           {d.climateCompany?.latestMean != null ? (
             <p className="mt-2 mb-0 text-prose text-ink">
@@ -336,7 +336,7 @@ export function PersonDossierBlock({
 
       {Array.isArray(d.briefing?.alerts) && d.briefing.alerts.length > 0 ? (
         <section className="mt-3">
-          <span className={S.label}>{t(locale, 'panel.dossier.alertsTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.alertsTitle')}</span>
           <ul className="mt-2 mb-0 list-disc pl-4 text-prose text-ink">
             {d.briefing.alerts.map((a) => (
               <li key={a.key || a.text}>{a.text || a}</li>

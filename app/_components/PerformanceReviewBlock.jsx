@@ -66,7 +66,7 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
   return (
     <ContentEnter className="flex flex-col gap-3">
       <section className={cn(S.cardTight, 'bg-white/70')}>
-        <h4 className={cn(S.label, 'mb-2')}>{t(locale, 'performanceReviews.sideReview.managerSection')}</h4>
+        <h4 className={cn(S.cardSection, 'mb-2')}>{t(locale, 'performanceReviews.sideReview.managerSection')}</h4>
         {review ? (
           <>
             <p className="m-0 text-xs text-ink-muted">
@@ -102,7 +102,7 @@ export function PerformanceReviewBlock({ locale, cycleId, candidateId, companyId
       </section>
 
       <section className={cn(S.cardTight, 'bg-white/70')}>
-        <h4 className={cn(S.label, 'mb-2')}>{t(locale, 'performanceReviews.sideReview.sectionTitle')}</h4>
+        <h4 className={cn(S.cardSection, 'mb-2')}>{t(locale, 'performanceReviews.sideReview.sectionTitle')}</h4>
         {sideReviews.length === 0 ? (
           <p className="m-0 text-xs text-ink-faint">{t(locale, 'performanceReviews.sideReview.empty')}</p>
         ) : (

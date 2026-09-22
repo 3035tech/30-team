@@ -81,10 +81,7 @@ export function CollapsibleBlock({
     onOpenChange?.(Boolean(v));
   };
   const panelId = useId();
-  const label =
-    count != null && Number.isFinite(Number(count))
-      ? `${title} (${count})`
-      : title;
+  const hasCount = count != null && Number.isFinite(Number(count));
 
   const headerBtn = (
     <button
@@ -102,13 +99,20 @@ export function CollapsibleBlock({
       id={id}
       onClick={() => setOpen((v) => !v)}
     >
-      <span
-        className={cn(
-          'min-w-0 font-mono text-2xs uppercase tracking-wider text-ink-muted',
-          titleClassName
-        )}
-      >
-        {label}
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={cn(
+            'min-w-0 font-mono text-2xs uppercase tracking-wider text-ink-muted',
+            titleClassName
+          )}
+        >
+          {title}
+        </span>
+        {hasCount ? (
+          <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-ink/[0.07] px-1.5 font-ui text-xs font-medium tabular-nums text-ink-muted">
+            {count}
+          </span>
+        ) : null}
       </span>
       <span className="inline-flex shrink-0 items-center gap-2">
         {headerAside}

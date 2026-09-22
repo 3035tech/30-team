@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { cn } from '../../lib/cn';
 
 const actionClass =
-  'inline-flex min-h-touch items-center justify-center rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2 font-mono text-prose text-brand-500 no-underline';
+  'inline-flex min-h-touch items-center justify-center rounded-control border border-brand-500/30 bg-brand-500/10 px-4 py-2 font-ui text-sm font-medium text-brand-600 no-underline';
 
 const secondaryActionClass =
-  'inline-flex min-h-touch items-center justify-center rounded-control border border-ink/15 bg-transparent px-4 py-2 font-mono text-prose text-ink-muted no-underline';
+  'inline-flex min-h-touch items-center justify-center rounded-control border border-ink/15 bg-transparent px-4 py-2 font-ui text-sm text-ink-muted no-underline';
 
 /**
  * Shared empty state for dashboard lists — one message + optional primary/secondary CTAs.
@@ -35,12 +35,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'rounded-[14px] border border-dashed border-ink/12 bg-ink/[0.02] px-5 py-7 text-center',
+        'rounded-control border border-dashed border-ink/12 bg-ink/[0.02] px-4 py-5 text-center',
         className
       )}
     >
       {title ? (
-        <p className="mb-2 mt-0 font-display text-base text-ink">{title}</p>
+        <p className="mb-1.5 mt-0 font-ui text-base font-semibold text-ink">{title}</p>
       ) : null}
       {message ? (
         <p className="mx-auto my-0 max-w-[42ch] text-prose leading-[1.55] text-ink-muted">

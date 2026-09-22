@@ -422,7 +422,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                 ← {t(locale, 'employeeHome.backHome')}
               </Link>
             )}
-            <h1 className={cn(S.pageTitle, 'mt-3 mb-1')}>
+            <h1 className={cn(S.pageTitle, 'mt-3 mb-1 font-ui text-2xl font-semibold tracking-tight')}>
               {inCourseView ? activeCourse.title : t(locale, 'employeeHome.lmsPageTitle')}
             </h1>
             {inCourseView ? (
@@ -445,14 +445,14 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                 {dueLabel(locale, activeCourse) ? (
                   <span
                     className={cn(
-                      'font-mono text-2xs',
+                      'text-xs',
                       activeCourse.overdue ? 'text-danger' : 'text-ink-faint'
                     )}
                   >
                     {dueLabel(locale, activeCourse)}
                   </span>
                 ) : null}
-                <span className="font-mono text-2xs text-ink-muted">
+                <span className="text-xs font-medium text-ink-muted">
                   {activeCourse.progressPct}%
                 </span>
               </div>
@@ -595,7 +595,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   <button
                     type="button"
                     disabled={busy || lessonIndex <= 0}
-                    className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                    className={cn(S.btnGhost, 'min-h-touch text-sm')}
                     onClick={() => {
                       const prev = activeCourse.lessons[lessonIndex - 1];
                       if (prev) openLesson(activeCourse, prev);
@@ -610,7 +610,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       lessonIndex < 0 ||
                       lessonIndex >= (activeCourse.lessons || []).length - 1
                     }
-                    className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                    className={cn(S.btnGhost, 'min-h-touch text-sm')}
                     onClick={() => {
                       const next = activeCourse.lessons[lessonIndex + 1];
                       if (next) openLesson(activeCourse, next);
@@ -623,7 +623,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                     className={cn(
                       watching.completed ? S.btnGhost : S.btnBrandSoft,
-                      'min-h-touch text-2xs'
+                      'min-h-touch text-sm'
                     )}
                     onClick={() => void markLesson(watching)}
                   >
@@ -638,7 +638,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       href={watching.contentUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className={cn(S.btnGhost, 'min-h-touch text-2xs no-underline')}
+                      className={cn(S.btnGhost, 'min-h-touch text-sm no-underline')}
                     >
                       {t(locale, 'panel.employeePortal.openLesson')}
                     </a>
@@ -649,8 +649,8 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
 
             <aside className="rounded-card border border-ink/12 bg-surface p-3 lg:sticky lg:top-14">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <span className={S.label}>{t(locale, 'employeeHome.lmsLessonsNav')}</span>
-                <span className="font-mono text-2xs text-ink-muted">{activeCourse.progressPct}%</span>
+                <span className="text-sm font-semibold text-ink">{t(locale, 'employeeHome.lmsLessonsNav')}</span>
+                <span className="text-xs font-medium text-ink-muted">{activeCourse.progressPct}%</span>
               </div>
               <MeterBar
                 percent={activeCourse.progressPct}
@@ -721,7 +721,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
               {activeCourse.certificateAvailable ? (
                 <Link
                   href={`/employee/lms/certificate?enrollmentId=${activeCourse.enrollmentId}`}
-                  className={cn(S.btnGhost, 'mt-3 flex min-h-touch w-full justify-center text-2xs no-underline')}
+                  className={cn(S.btnGhost, 'mt-3 flex min-h-touch w-full justify-center text-sm no-underline')}
                 >
                   {t(locale, 'employeeHome.lmsCertificate')}
                 </Link>
@@ -768,7 +768,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       {due ? (
                         <p
                           className={cn(
-                            'mb-0 mt-1 font-mono text-2xs',
+                            'mb-0 mt-1 text-xs',
                             course.overdue ? 'text-danger' : 'text-ink-faint'
                           )}
                         >
@@ -776,7 +776,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                         </p>
                       ) : null}
                     </div>
-                    <span className="font-mono text-2xs text-ink-muted">{course.progressPct}%</span>
+                    <span className="text-xs font-medium text-ink-muted">{course.progressPct}%</span>
                   </div>
                   <MeterBar
                     percent={course.progressPct}
@@ -793,7 +793,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className={cn(S.btnPrimary, 'min-h-touch text-2xs')}
+                      className={cn(S.btnPrimary, 'min-h-touch text-sm')}
                       onClick={() => {
                         const next =
                           (course.lessons || []).find((l) => Number(l.id) === course.continueLessonId) ||
@@ -813,7 +813,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                     {course.certificateAvailable ? (
                       <Link
                         href={`/employee/lms/certificate?enrollmentId=${course.enrollmentId}`}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs no-underline')}
+                        className={cn(S.btnGhost, 'min-h-touch text-sm no-underline')}
                       >
                         {t(locale, 'employeeHome.lmsCertificate')}
                       </Link>

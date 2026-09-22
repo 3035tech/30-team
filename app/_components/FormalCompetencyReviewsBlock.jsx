@@ -109,7 +109,7 @@ function ScoresMatrix({ locale, review }) {
 
   return (
     <section className={cn(S.card, S.stack)}>
-      <h3 className={S.label}>{tf(locale, 'resultsTitle')}</h3>
+      <h3 className={S.cardSection}>{tf(locale, 'resultsTitle')}</h3>
       <ul className="m-0 list-none space-y-3 p-0">
         {items.map((item) => (
           <li key={item.id} className="rounded-control border border-ink/10 px-3 py-2">
@@ -508,7 +508,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           />
 
           <section className={cn(S.card, S.stack)}>
-            <h3 className={S.label}>{tf(locale, 'itemsTitle')}</h3>
+            <h3 className={S.cardSection}>{tf(locale, 'itemsTitle')}</h3>
             {(selectedReview.items || []).length === 0 ? (
               <EmptyState message={tf(locale, 'itemsEmpty')} />
             ) : (
@@ -538,7 +538,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
 
           {collecting && !mgrDone ? (
             <section className={cn(S.card, S.stack)}>
-              <h3 className={S.label}>{tf(locale, 'managerScores')}</h3>
+              <h3 className={S.cardSection}>{tf(locale, 'managerScores')}</h3>
               {(selectedReview.items || []).map((item) => (
                 <div key={item.id} className={S.stack}>
                   <div className="text-sm text-ink">{item.label}</div>
@@ -571,7 +571,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
 
           {inviteRaters.length ? (
             <section className={cn(S.card, S.stack)}>
-              <h3 className={S.label}>{tf(locale, 'inviteLinks')}</h3>
+              <h3 className={S.cardSection}>{tf(locale, 'inviteLinks')}</h3>
               {inviteRaters.map((r) => (
                 <div key={r.id} className="flex min-h-touch flex-wrap items-center gap-2">
                   <span className="text-prose text-ink-muted">{raterRoleLabel(locale, r.role)}</span>
@@ -749,7 +749,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           </div>
         </CollapsibleBlock>
 
-        <h3 className={S.label}>{tf(locale, 'cyclesTitle')}</h3>
+        <h3 className={S.cardSection}>{tf(locale, 'cyclesTitle')}</h3>
         {cycles.length === 0 ? (
           <EmptyState message={tf(locale, 'cyclesEmpty')} />
         ) : (

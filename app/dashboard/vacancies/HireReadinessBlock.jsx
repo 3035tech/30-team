@@ -51,7 +51,7 @@ export function HireReadinessBlock({
   return (
     <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.hireReadyTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'recruiting.hireReadyTitle')}</span>
         <span
           className={cn(
             'font-mono text-2xs',

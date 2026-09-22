@@ -73,7 +73,7 @@ const S = {
   cardBody: 'font-ui text-sm text-ink',
   cardMuted: 'font-ui text-xs text-ink-muted',
   cardFaint: 'font-ui text-xs leading-snug text-ink-faint',
-  cardSection: 'mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-ink-label',
+  cardSection: 'mb-2 font-ui text-base font-semibold leading-snug text-ink',
   cardRowTitle: 'truncate font-ui text-sm font-medium text-ink',
   cardLink: 'font-ui text-xs font-medium text-brand-600 hover:text-brand-700',
   cardChip:
@@ -81,7 +81,7 @@ const S = {
   cardMetric: 'font-mono text-sm font-semibold tabular-nums',
   cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
-  pageTitle: 'm-0 break-words font-display text-xl font-normal leading-snug text-ink',
+  pageTitle: 'm-0 break-words font-ui text-2xl font-semibold leading-tight tracking-tight text-ink',
   /** Flex row for FormField — items-start evita altura “esticada” por hint/readonly */
   fieldRow: 'flex flex-wrap items-start gap-2.5',
 };

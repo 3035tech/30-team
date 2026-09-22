@@ -24,7 +24,7 @@ export function EmployeeDedicatedShell({
           <Link href="/employee" className={cn(S.cardLink, 'inline-flex')}>
             ← {t(locale, 'employeeHome.backHome')}
           </Link>
-          <h1 className={cn(S.pageTitle, 'mt-3 mb-1')}>{title}</h1>
+          <h1 className={cn(S.pageTitle, 'mt-3 mb-1 font-ui text-2xl font-semibold tracking-tight')}>{title}</h1>
           {hint ? <p className={cn(S.muted, 'mb-0 text-prose')}>{hint}</p> : null}
         </div>
         {trailing ? <div className="shrink-0 pt-8 sm:pt-10">{trailing}</div> : null}

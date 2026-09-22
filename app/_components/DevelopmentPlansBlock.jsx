@@ -598,13 +598,13 @@ export function DevelopmentPlansBlock({
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.pdi.sectionAria')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.pdi.title')}</h3>
+          <h3 className={cn(S.cardSection, 'mb-0')}>{t(locale, 'panel.pdi.title')}</h3>
           <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'panel.pdi.hint')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+            className={cn(S.btnGhost, 'min-h-touch text-sm')}
             onClick={() => setShowArchived((v) => !v)}
           >
             {showArchived ? t(locale, 'panel.pdi.hideArchived') : t(locale, 'panel.pdi.showArchived')}
@@ -623,7 +623,7 @@ export function DevelopmentPlansBlock({
       {overallPct != null || activePlans.length > 0 ? (
         <div className="mb-3 rounded-control border border-ink/10 bg-canvas/60 px-3 py-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-2xs text-ink-muted">
+            <span className="text-xs text-ink-muted">
               {t(locale, 'panel.pdi.progressSummary', {
                 done: sumDone,
                 total: sumItems,
@@ -631,7 +631,7 @@ export function DevelopmentPlansBlock({
               })}
             </span>
             {overallPct != null ? (
-              <span className="font-mono text-2xs text-ink">{overallPct}%</span>
+              <span className="text-xs font-medium text-ink">{overallPct}%</span>
             ) : null}
           </div>
           {sumItems > 0 ? (
@@ -672,7 +672,7 @@ export function DevelopmentPlansBlock({
                   <span className="min-w-0 flex-1">
                     <span className="block font-ui text-sm text-ink">{p.title}</span>
                     {p.periodEnd ? (
-                      <span className="mt-0.5 block font-mono text-2xs text-ink-faint">
+                      <span className="mt-0.5 block text-xs text-ink-muted">
                         {p.periodStart ? `${String(p.periodStart).slice(0, 10)} → ` : ''}
                         {String(p.periodEnd).slice(0, 10)}
                         {overdue ? ` · ${t(locale, 'panel.pdi.overdue')}` : ''}
@@ -687,7 +687,7 @@ export function DevelopmentPlansBlock({
                       />
                     ) : null}
                   </span>
-                  <span className={cn(S.faint, 'flex shrink-0 items-center gap-2 font-mono text-2xs')}>
+                  <span className={cn(S.cardMuted, 'flex shrink-0 items-center gap-2')}>
                     {overdue ? (
                       <span className="text-warning">{t(locale, 'panel.pdi.overdue')}</span>
                     ) : null}

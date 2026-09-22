@@ -150,7 +150,7 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
           ) : (
             <StatusToneChip tone="neutral">{t(locale, 'employeeHome.timeClock.closedShift')}</StatusToneChip>
           )}
-          <label className="inline-flex min-h-touch cursor-pointer items-center gap-2 font-mono text-2xs text-ink-muted">
+          <label className="inline-flex min-h-touch cursor-pointer items-center gap-2 text-xs text-ink-muted">
             <input
               type="checkbox"
               className={S.checkbox}
@@ -163,7 +163,7 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
         </div>
       </div>
 
-      <p className="mb-2 mt-0 font-mono text-2xs text-ink-faint">
+      <p className="mb-2 mt-0 text-xs text-ink-muted">
         {t(locale, 'employeeHome.timeClock.dayLabel', { day: formatDisplayDate(data.day, locale) })}
       </p>
       {(data.punches || []).length === 0 ? (

@@ -86,7 +86,7 @@ export function InterviewScorecardBlock({ vacancyId, candidateId, locale = 'pt-B
 
   return (
     <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3">
-      <span className={cn(S.label, 'mb-1 block')}>{t(locale, 'recruiting.scorecardTitle')}</span>
+      <span className={cn(S.cardSection, 'mb-1 block')}>{t(locale, 'recruiting.scorecardTitle')}</span>
       <p className="mb-3 mt-0 text-2xs leading-snug text-ink-muted">
         {t(locale, 'recruiting.scorecardHint')}
       </p>

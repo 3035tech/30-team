@@ -152,7 +152,7 @@ export function CandidateCvBlock({
   return (
     <div className={wrapClass}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.cvTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'recruiting.cvTitle')}</span>
         {loading ? <AppLoading locale={locale} variant="inline" /> : null}
       </div>
       <p className="mb-3 mt-0 text-xs leading-snug text-ink-muted">{t(locale, 'recruiting.cvIntro')}</p>

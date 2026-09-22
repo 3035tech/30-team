@@ -173,7 +173,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
 
   return (
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.preOnboarding.sectionAria')}>
-      <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.preOnboarding.title')}</h3>
+      <h3 className={cn(S.cardSection, 'mb-0')}>{t(locale, 'panel.preOnboarding.title')}</h3>
       <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{t(locale, 'panel.preOnboarding.hint')}</p>
       {items.length > 0 ? (
         <div className="mt-2">

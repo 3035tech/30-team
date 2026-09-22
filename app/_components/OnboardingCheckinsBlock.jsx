@@ -234,11 +234,11 @@ export function OnboardingCheckinsBlock({
 
   return (
     <section className={cn(S.cardTight, 'mt-3')} aria-label={t(locale, 'panel.onboarding.sectionAria')}>
-      <h3 className={cn(S.label, 'mb-0')}>{t(locale, 'panel.onboarding.title')}</h3>
+      <h3 className={cn(S.cardSection, 'mb-0')}>{t(locale, 'panel.onboarding.title')}</h3>
       <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{t(locale, 'panel.onboarding.hint')}</p>
       {items.length > 0 ? (
         <div className="mt-2">
-          <p className={cn(S.faint, 'm-0 mb-1.5 font-mono text-2xs')}>
+          <p className={cn(S.cardMuted, 'm-0 mb-1.5')}>
             {t(locale, 'panel.onboarding.progress', { done: doneCount, total: items.length })}
           </p>
           <MeterBar
@@ -304,7 +304,7 @@ export function OnboardingCheckinsBlock({
                         </StatusToneChip>
                       ) : null}
                     </div>
-                    <div className="mt-0.5 font-mono text-2xs text-ink-muted">
+                    <div className="mt-0.5 text-xs text-ink-muted">
                       {t(locale, 'panel.onboarding.due', { date: row.dueDate || '—' })}
                       {done && row.outcome === 'extend' && row.extendDays != null ? (
                         <span>

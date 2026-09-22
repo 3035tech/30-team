@@ -239,7 +239,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
         <Link href="/employee" className={cn(S.cardLink, 'inline-flex')}>
           ← {t(locale, 'employeeHome.backHome')}
         </Link>
-        <h1 className={cn(S.pageTitle, 'mt-3')}>{t(locale, 'employeeHome.profileTitle')}</h1>
+        <h1 className={cn(S.pageTitle, 'mt-3 font-ui text-2xl font-semibold tracking-tight')}>{t(locale, 'employeeHome.profileTitle')}</h1>
         <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.profileHint')}</p>
 
         <div className="mt-6 flex flex-col gap-4">
@@ -249,6 +249,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
             variant="card"
             bordered={false}
             defaultOpen
+            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
           >
             <form className="flex flex-col gap-3" onSubmit={saveProfile}>
               <div className={formFieldRowClass}>
@@ -339,6 +340,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
             variant="card"
             bordered={false}
             defaultOpen={false}
+            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
           >
             <form className="flex flex-col gap-3" onSubmit={changePassword}>
               <FormField label={t(locale, 'employeeHome.currentPasswordLabel')}>
@@ -391,6 +393,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
             variant="card"
             bordered={false}
             defaultOpen={false}
+            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
           >
             <InlineCallout tone="info" className="mb-3">
               {t(locale, 'dashboard.profile2faIntro')}

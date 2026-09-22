@@ -82,7 +82,7 @@ export function InterviewPrepBlock({ vacancyId, candidateId, locale = 'pt-BR' })
   return (
     <div className="mb-3 rounded-control border border-ink/10 bg-ink/[0.02] px-3 py-2.5">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'interviewPrep.adminTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'interviewPrep.adminTitle')}</span>
         {link?.prepared ? (
           <StatusToneChip tone="success" bordered>
             {t(locale, 'interviewPrep.preparedBadge')}

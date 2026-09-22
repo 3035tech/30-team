@@ -151,7 +151,7 @@ export function VacancyOfferBlock({
   return (
     <div className="mb-3 rounded-control border border-ink/12 bg-canvas/40 px-3 py-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.offerTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'recruiting.offerTitle')}</span>
         <StatusToneChip tone={offerStatusTone(status)}>
           {t(locale, `recruiting.offerStatus.${status}`)}
         </StatusToneChip>

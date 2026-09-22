@@ -740,7 +740,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
-            <span id="dp-block-title" className={S.label}>
+            <span id="dp-block-title" className={cn(S.cardSection, 'mb-0 block')}>
               {t(locale, 'panel.dp.title')}
             </span>
             <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{t(locale, 'panel.dp.hint')}</p>
@@ -767,7 +767,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-          <span className={S.label}>{t(locale, 'panel.dp.profileTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dp.profileTitle')}</span>
           {!readOnly ? (
             <AdminEditButton
               label={t(locale, 'panel.dp.editProfile')}
@@ -823,7 +823,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       </div>
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
-        <span className={cn(S.label, 'mb-3 block')}>{t(locale, 'panel.dp.docsTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-3 block')}>{t(locale, 'panel.dp.docsTitle')}</span>
         <InlineCallout tone="info" className="mb-3">
           {t(locale, 'panel.dp.sigHint')}
         </InlineCallout>
@@ -941,7 +941,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
-            <span className={S.label}>{t(locale, 'panel.dp.balanceTitle')}</span>
+            <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dp.balanceTitle')}</span>
             <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{t(locale, 'panel.dp.balanceHint')}</p>
           </div>
           {!readOnly ? (
@@ -964,7 +964,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
       <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-          <span className={S.label}>{t(locale, 'panel.dp.leaveTitle')}</span>
+          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dp.leaveTitle')}</span>
           {!readOnly ? (
             <AdminCreateButton
               label={t(locale, 'panel.dp.leaveAdd')}

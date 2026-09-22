@@ -280,7 +280,7 @@ export function EmployeeFeedbackSection({ locale = 'pt-BR', onBadge }) {
     <ContentEnter animKey={`empfb|${inbox.length}|${aboutMe.length}`}>
       <div className="space-y-4">
         <div>
-          <h3 className={cn(S.label, 'mb-2')}>{t(locale, 'employeeHome.feedbackInbox')}</h3>
+          <h3 className={cn(S.cardSection, 'mb-2')}>{t(locale, 'employeeHome.feedbackInbox')}</h3>
           {inbox.length === 0 ? (
             <p className={cn(S.muted, 'm-0 text-prose')}>{t(locale, 'employeeHome.feedbackInboxEmpty')}</p>
           ) : (

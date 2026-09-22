@@ -558,11 +558,11 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
 
         <div className={cn(S.card, 'p-3')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h3 className={cn(S.label, 'm-0')}>{t(locale, 'panel.dp.profileTitle')}</h3>
+            <h3 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.profileTitle')}</h3>
             <button
               type="button"
               disabled={busy}
-              className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
+              className={cn(S.btnBrandSoft, 'min-h-touch text-sm')}
               onClick={() => void saveProfile()}
             >
               {t(locale, 'panel.dp.editProfile')}
@@ -611,7 +611,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
         </div>
 
         <div className={cn(S.card, 'p-3')}>
-          <h3 className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h3>
+          <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h3>
           <p className={cn(S.muted, 'mb-3 mt-0 text-xs')}>{t(locale, 'employeeHome.dpDocsUploadHint')}</p>
           <InlineCallout tone="info" className="mb-3">
             {t(locale, 'employeeHome.dpSignHint')}
@@ -698,7 +698,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       <button
                         type="button"
                         disabled={busy}
-                        className={cn(S.btnPrimary, 'min-h-touch text-2xs')}
+                        className={cn(S.btnPrimary, 'min-h-touch text-sm')}
                         onClick={() => void signDocument(doc)}
                       >
                         {t(locale, 'employeeHome.dpSignBtn')}
@@ -709,7 +709,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       <button
                         type="button"
                         disabled={busy || uploadKey === doc.docKey}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                        className={cn(S.btnGhost, 'min-h-touch text-sm')}
                         onClick={() => startUpload(doc.docKey)}
                       >
                         {uploadKey === doc.docKey
@@ -721,7 +721,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                       <button
                         type="button"
                         disabled={busy}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs text-danger')}
+                        className={cn(S.btnGhost, 'min-h-touch text-sm text-danger')}
                         onClick={() => void removeFile(doc)}
                       >
                         {t(locale, 'panel.dp.docDeleteFile')}
@@ -823,11 +823,11 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
 
         <div className={cn(S.card, 'p-3')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h3 className={cn(S.label, 'm-0')}>{t(locale, 'panel.dp.leaveTitle')}</h3>
+            <h3 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.leaveTitle')}</h3>
             <button
               type="button"
               disabled={busy}
-              className={cn(S.btnPrimary, 'min-h-touch text-2xs')}
+              className={cn(S.btnPrimary, 'min-h-touch text-sm')}
               onClick={() => void requestLeave()}
             >
               {t(locale, 'employeeHome.dpRequestLeave')}
@@ -855,7 +855,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                 >
                   <div className="min-w-0">
                     <div className={S.cardMuted}>{leaveTypeLabel(locale, row.leaveType)}</div>
-                    <div className="font-mono text-2xs text-ink-faint">
+                    <div className="text-xs text-ink-muted">
                       {formatDate(row.startsOn, locale)}–{formatDate(row.endsOn, locale)}
                       {days != null
                         ? ` · ${t(locale, 'panel.dp.leaveDaysMeta', { n: days })}`
@@ -881,7 +881,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         <button
                           type="button"
                           disabled={busy}
-                          className={cn(S.btnGhost, 'min-h-touch text-2xs text-danger')}
+                          className={cn(S.btnGhost, 'min-h-touch text-sm text-danger')}
                           onClick={() => void cancelLeave(row)}
                         >
                           {t(locale, 'employeeHome.dpCancelLeave')}
@@ -893,7 +893,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         <button
                           type="button"
                           disabled={busy || leaveUploadId === row.id}
-                          className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                          className={cn(S.btnGhost, 'min-h-touch text-sm')}
                           onClick={() => startLeaveUpload(row.id)}
                         >
                           {leaveUploadId === row.id

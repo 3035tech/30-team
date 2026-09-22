@@ -351,7 +351,7 @@ export function PeopleManagementPanel({
   return (
     <div className={cn(section === 'oneOnOne' ? 'mb-2 space-y-4' : 'mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5')}>
       <div>
-        <span className={cn(S.label, 'mb-1.5')}>
+        <span className={cn(S.cardSection, 'mb-1.5 block')}>
           {t(locale, 'panel.team.peopleTitle')}
         </span>
         <p className="mb-0 mt-0 text-xs leading-normal text-ink-faint">
@@ -389,7 +389,7 @@ export function PeopleManagementPanel({
         <button
           type="button"
           disabled={busy}
-          className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-2xs')}
+          className={cn(S.btnGhost, 'inline-flex min-h-touch items-center text-sm')}
           onClick={issueEmployeePortal}
         >
           {t(locale, 'panel.employeePortal.issueBtn')}
@@ -397,7 +397,7 @@ export function PeopleManagementPanel({
         <button
           type="button"
           disabled={busy}
-          className={cn(S.btnBrandSoft, 'inline-flex min-h-touch items-center text-2xs')}
+          className={cn(S.btnBrandSoft, 'inline-flex min-h-touch items-center text-sm')}
           onClick={sendEmployeeAccess}
           title={t(locale, 'panel.employeePortal.accessHint')}
         >
@@ -416,7 +416,7 @@ export function PeopleManagementPanel({
       (sessionPrep?.preparedAt ||
         (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim())) ? (
         <div className="mb-3 rounded-control border border-success/25 bg-success/[0.05] px-3 py-2">
-          <span className={cn(S.label, 'mb-1')}>{t(locale, 'panel.employeePortal.managerFeedbackTitle')}</span>
+          <span className={cn(S.cardSection, 'mb-1 block')}>{t(locale, 'panel.employeePortal.managerFeedbackTitle')}</span>
           {sessionPrep?.preparedAt || (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim()) ? (
             <div className="mt-1 text-xs text-ink-muted">
               <span className="font-mono text-2xs uppercase text-brand-600">

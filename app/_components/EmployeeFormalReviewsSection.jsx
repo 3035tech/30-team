@@ -103,11 +103,11 @@ export function EmployeeFormalReviewsSection({ locale = 'pt-BR' }) {
             {t(locale, 'performanceReviews.formal.employeeBack')}
           </button>
           <div>
-            <h3 className="m-0 font-display text-base text-ink">{detail.cycleTitle}</h3>
+            <h3 className="m-0 font-ui text-base font-semibold text-ink">{detail.cycleTitle}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <StatusToneChip tone="neutral">{modelShort(locale, detail.model)}</StatusToneChip>
               {detail.sentAt ? (
-                <span className="font-mono text-2xs text-ink-faint">
+                <span className="text-xs text-ink-muted">
                   {formatDisplayDate(detail.sentAt, locale)}
                 </span>
               ) : null}
@@ -132,7 +132,7 @@ export function EmployeeFormalReviewsSection({ locale = 'pt-BR' }) {
           </ul>
           {notes.length ? (
             <div className={S.stack}>
-              <h4 className={cn(S.label, 'm-0')}>{t(locale, 'performanceReviews.formal.overallNotes')}</h4>
+              <h4 className={cn(S.cardSection, 'm-0')}>{t(locale, 'performanceReviews.formal.overallNotes')}</h4>
               {notes.map((r) => (
                 <div key={r.id} className="rounded-control border border-ink/8 bg-canvas/40 px-3 py-2">
                   <div className="font-mono text-2xs text-ink-faint">{roleLabel(locale, r.role)}</div>
@@ -159,7 +159,7 @@ export function EmployeeFormalReviewsSection({ locale = 'pt-BR' }) {
         >
           <div className="min-w-0">
             <div className="text-sm text-ink">{r.cycleTitle}</div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-2xs text-ink-faint">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
               <span>{modelShort(locale, r.model)}</span>
               {r.sentAt ? <span>· {formatDisplayDate(r.sentAt, locale)}</span> : null}
             </div>

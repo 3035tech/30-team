@@ -85,7 +85,7 @@ export function VacancyFitDecisionStrip({
   if (!weights || !scores) {
     return (
       <div className="mb-3 rounded-control border border-ink/12 bg-canvas/40 px-3 py-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.fitDecisionTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'recruiting.fitDecisionTitle')}</span>
         <p className={cn(S.faint, 'm-0 mt-1')}>{t(locale, 'recruiting.fitDecisionEmpty')}</p>
       </div>
     );
@@ -106,7 +106,7 @@ export function VacancyFitDecisionStrip({
   return (
     <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-        <span className={cn(S.label, 'mb-0')}>{t(locale, 'recruiting.fitDecisionTitle')}</span>
+        <span className={cn(S.cardSection, 'mb-0 block')}>{t(locale, 'recruiting.fitDecisionTitle')}</span>
         {score010 != null ? (
           <span className={cn('font-mono text-xs font-semibold', scoreTone(score010))}>
             {t(locale, 'recruiting.fitDecisionScore', { score: score010 })}

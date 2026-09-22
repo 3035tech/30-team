@@ -117,6 +117,7 @@ function CollapsibleSection({ id, title, count, open, onToggle, children, locale
         }}
         variant="card"
         bordered={false}
+        titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
       >
         {children}
       </CollapsibleBlock>
@@ -528,22 +529,22 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
         <div className="mb-6">
           <p className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'employeeHome.eyebrow')}</p>
-          <h1 className={cn(S.pageTitle, 'm-0')}>
+          <h1 className={cn(S.pageTitle, 'm-0 font-ui text-2xl font-semibold tracking-tight')}>
             {t(locale, 'employeeHome.hello', { name: data.person?.fullName || '' })}
           </h1>
           <p className={cn(S.muted, 'm-0 mt-2 max-w-[58ch]')}>{t(locale, 'employeeHome.hint')}</p>
           <section className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3" aria-label={t(locale, 'employeeHome.todaySummary')}>
             <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
               <div className="font-display text-2xl text-ink">{tasks.length}</div>
-              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummaryTasks')}</div>
+              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryTasks')}</div>
             </div>
             <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
               <div className="font-display text-2xl text-ink">{surveyMeta.openCount || 0}</div>
-              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummarySurveys')}</div>
+              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummarySurveys')}</div>
             </div>
             <div className={cn('rounded-control border px-3 py-3', attentionCount > 0 ? 'border-warning/25 bg-warning/[0.045]' : 'border-success/20 bg-success/[0.04]')}>
               <div className="font-display text-2xl text-ink">{attentionCount}</div>
-              <div className={cn(S.label, 'mt-1')}>{t(locale, 'employeeHome.todaySummaryAttention')}</div>
+              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryAttention')}</div>
             </div>
           </section>
           <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
@@ -605,7 +606,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   {task.dueDate ? (
                     <div
                       className={cn(
-                        'mt-1 font-mono text-2xs',
+                        'mt-1 text-xs',
                         task.kind === 'lms_overdue' ? 'text-danger' : 'text-ink-faint'
                       )}
                     >
@@ -910,7 +911,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                           <span className={S.cardBody}>{course.title}</span>
-                          <span className="font-mono text-2xs text-ink-muted">
+                          <span className="text-xs font-medium text-ink-muted">
                             {course.progressPct}%
                           </span>
                         </div>
@@ -929,7 +930,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         {due ? (
                           <p
                             className={cn(
-                              'mb-0 mt-1 font-mono text-2xs',
+                              'mb-0 mt-1 text-xs',
                               course.overdue ? 'text-danger' : 'text-ink-faint'
                             )}
                           >
@@ -955,6 +956,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           onToggle={() => toggleSection('oneOnOne')}
           locale={locale}
         >
+          <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>
+            {t(locale, 'employeeHome.oneOnOneLastAgreementTitle')}
+          </h3>
           {agreements.length === 0 ? (
             <EmpEmpty>
               <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
@@ -964,7 +968,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               {agreements.map((a) => (
                 <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                   {a.meetingDate ? (
-                    <div className="mb-1 font-mono text-2xs text-ink-faint">
+                  <div className="mb-1 text-xs text-ink-muted">
                       {formatDisplayDate(a.meetingDate, locale)}
                     </div>
                   ) : null}
@@ -980,20 +984,20 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           ) : null}
           {prompts.length > 0 ? (
             <div className="mt-4">
-              <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>
-                {t(locale, 'panel.employeePortal.prepTitle')}
+              <h3 className={cn(S.cardSection, 'mb-1 mt-0')}>
+                {t(locale, 'employeeHome.oneOnOneReflectionTitle')}
               </h3>
-              <p className={cn(S.muted, 'mb-2 mt-0')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
-              <ul className="m-0 list-disc space-y-1 pl-5 text-prose text-ink">
+              <p className={cn(S.muted, 'mb-2 mt-0 text-sm')}>{t(locale, 'panel.employeePortal.prepHint')}</p>
+              <ul className="m-0 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink-muted">
                 {prompts.map((p, i) => (
                   <li key={i}>{typeof p === 'string' ? p : p.text || p.prompt || String(p)}</li>
                 ))}
               </ul>
             </div>
           ) : null}
-          <div className="mt-4 rounded-control border border-ink/12 bg-canvas/40 p-3">
-            <h3 className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'panel.employeePortal.prepActionTitle')}</h3>
-            <p className={cn(S.muted, 'mb-2 mt-0 text-xs')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
+          <div className="mt-5 rounded-control border border-brand-500/20 bg-brand-500/[0.045] p-3.5">
+            <h3 className={cn(S.cardSection, 'mb-1 mt-0')}>{t(locale, 'employeeHome.oneOnOnePrepTitle')}</h3>
+            <p className={cn(S.muted, 'mb-3 mt-0 text-sm')}>{t(locale, 'panel.employeePortal.prepActionHint')}</p>
             <FormField label={t(locale, 'panel.employeePortal.noteLabel')}>
               <textarea
                 className={cn(S.input, 'min-h-[80px] w-full')}
@@ -1016,14 +1020,14 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   : t(locale, 'panel.employeePortal.prepConfirm')}
               </button>
               {data?.oneOnOnePrep?.preparedAt ? (
-                <span className="font-mono text-2xs text-success">
+                <span className="text-xs text-success">
                   {t(locale, 'panel.employeePortal.prepUpdatedAt', {
                     when: formatDisplayDateTime(data.oneOnOnePrep.preparedAt, locale),
                   })}
                 </span>
               ) : null}
             </div>
-            <p className={cn(S.faint, 'mb-0 mt-2 font-mono text-2xs')}>
+            <p className={cn(S.faint, 'mb-0 mt-2 text-xs')}>
               {t(locale, 'panel.employeePortal.prepManagerSees')}
             </p>
           </div>

@@ -112,14 +112,14 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
             {open.map((item) => (
               <li key={item.key} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                 <div className="text-sm text-ink">{item.title}</div>
-                <div className="mt-1 font-mono text-2xs uppercase text-ink-faint">
+                <div className="mt-1 text-xs text-ink-muted">
                   {item.kind === 'climate'
                     ? t(locale, 'employeeHome.surveyKindClimate')
                     : t(locale, 'employeeHome.surveyKindPulse')}
                 </div>
                 <button
                   type="button"
-                  className={cn(S.btnBrandSoft, 'mt-2 min-h-touch text-2xs')}
+                  className={cn(S.btnBrandSoft, 'mt-2 min-h-touch text-sm')}
                   onClick={() => setActive(item)}
                 >
                   {t(locale, 'employeeHome.surveysAnswer')}
@@ -137,7 +137,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
               <div className="font-ui text-sm text-ink">{active.title}</div>
               <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'employeeHome.surveysAnonymousHint')}</p>
               {activeProgress.total > 0 ? (
-                <p className="m-0 mt-1 font-mono text-2xs text-ink-faint">
+                <p className="m-0 mt-1 text-xs text-ink-muted">
                   {t(locale, 'employeeHome.surveysProgress', {
                     answered: activeProgress.answered,
                     total: activeProgress.total,
@@ -147,7 +147,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
             </div>
             <button
               type="button"
-              className={cn(S.btnGhost, 'min-h-touch shrink-0 text-2xs')}
+              className={cn(S.btnGhost, 'min-h-touch shrink-0 text-sm')}
               onClick={() => setActive(null)}
             >
               {t(locale, 'panel.common.cancel')}
@@ -199,7 +199,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
 
       {history.length > 0 ? (
         <div>
-          <h3 className={cn(S.faint, 'mb-2 mt-0 text-2xs uppercase tracking-wide')}>
+          <h3 className={cn(S.cardSection, 'mb-2 mt-0 text-sm')}>
             {t(locale, 'employeeHome.surveysHistory')}
           </h3>
           <ul className="m-0 list-none space-y-1.5 p-0 text-xs text-ink-muted">

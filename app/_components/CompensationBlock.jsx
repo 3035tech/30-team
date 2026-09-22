@@ -473,7 +473,7 @@ export function CompensationBlock({
     >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <span id="compensation-block-title" className={S.label}>
+          <span id="compensation-block-title" className={cn(S.cardSection, 'mb-0 block')}>
             {t(locale, 'panel.compensation.title')}
           </span>
           <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{t(locale, 'panel.compensation.hint')}</p>
