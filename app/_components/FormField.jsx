@@ -37,7 +37,14 @@ export function FormField({
         className
       )}
     >
-      <span className={cn(S.label, 'mb-0', labelClassName)}>{label}</span>
+      <span
+        className={cn(
+          'mb-0 font-ui text-xs font-medium normal-case tracking-normal text-ink-muted',
+          labelClassName
+        )}
+      >
+        {label}
+      </span>
       <div className="w-full min-w-0">{children}</div>
       {hint ? (
         <p className="m-0 font-mono text-2xs leading-snug text-ink-faint">{hint}</p>
