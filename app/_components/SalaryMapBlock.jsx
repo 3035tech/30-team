@@ -144,8 +144,8 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
     <CollapsibleBlock
       locale={locale}
       title={t(locale, 'panel.salaryMap.title')}
-      count={!loading ? visible.length || null : null}
-      defaultOpen={false}
+      count={!loading ? visible.length : null}
+      defaultOpen
       variant="card"
       collapsedHint={
         !loading && belowTotal > 0

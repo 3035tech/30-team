@@ -109,8 +109,8 @@ export function VariablePayInboxBlock({ locale = 'pt-BR', companyId, onOpenPerso
     <CollapsibleBlock
       locale={locale}
       title={t(locale, 'panel.variablePay.inboxTitle')}
-      count={!loading ? items.length || null : null}
-      defaultOpen={items.length > 0}
+      count={!loading ? items.length : null}
+      defaultOpen
       variant="card"
       className="mt-0"
       collapsedHint={t(locale, 'panel.variablePay.inboxHint')}

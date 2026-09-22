@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import DashboardClient from './DashboardClient';
-import { AppLoading } from '../_components/AppLoading';
+import { DashboardRouteLoading } from './DashboardRouteLoading';
 import { resolveDashboardAuth } from './resolve-dashboard-auth';
 import { loadDashboardTabData } from './load-dashboard-data';
 
@@ -14,13 +14,7 @@ export default async function DashboardPage(props) {
 
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen bg-canvas px-4 py-8 font-ui text-ink sm:px-8">
-          <div className="mx-auto w-full max-w-[1600px]">
-            <AppLoading locale={locale} variant="panel" />
-          </div>
-        </div>
-      }
+      fallback={<DashboardRouteLoading locale={locale} />}
     >
       <DashboardTabPayload
         searchParams={searchParams}

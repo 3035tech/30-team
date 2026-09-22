@@ -1,4 +1,4 @@
-import { AppLoading } from '../_components/AppLoading';
+import { DashboardRouteLoading } from './DashboardRouteLoading';
 
 /**
  * Soft-nav placeholder. It intentionally does not mount a second DashboardClient:
@@ -6,11 +6,5 @@ import { AppLoading } from '../_components/AppLoading';
  * fallback, and duplicating the shell would duplicate landmarks, dialogs and menus.
  */
 export default function DashboardLoading() {
-  return (
-    <div className="min-h-screen bg-canvas px-4 py-8 font-ui text-ink sm:px-8">
-      <div className="mx-auto w-full max-w-[1600px]">
-        <AppLoading variant="panel" />
-      </div>
-    </div>
-  );
+  return <DashboardRouteLoading />;
 }
