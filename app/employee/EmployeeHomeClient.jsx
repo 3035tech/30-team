@@ -702,7 +702,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           ) : (
             <>
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {plans.slice(0, 1).map((plan) => {
+              {plans.map((plan) => {
                 const items = plan.items || [];
                 const doneN = items.filter((it) => it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
                 const pct = items.length ? Math.round((doneN / items.length) * 100) : 0;
@@ -710,7 +710,9 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   <li key={plan.id} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className={S.cardBody}>{plan.title}</div>
-                      <StatusToneChip tone={pct >= 100 ? 'success' : 'brand'}>{pct}%</StatusToneChip>
+                      {items.length > 0 ? (
+                        <StatusToneChip tone={pct >= 100 ? 'success' : 'brand'}>{pct}%</StatusToneChip>
+                      ) : null}
                     </div>
                     {plan.objective ? (
                       <p className={cn(S.muted, 'mt-1 m-0')}>{plan.objective}</p>
@@ -728,7 +730,11 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                           {t(locale, countedMessageKey('pdiProgressCount', items.length), { done: doneN, total: items.length })}
                         </p>
                       </>
-                    ) : null}
+                    ) : (
+                      <p className={cn(S.cardMuted, 'mb-0 mt-2')}>
+                        {t(locale, 'employeeHome.pdiNoItems')}
+                      </p>
+                    )}
                   </li>
                 );
               })}
