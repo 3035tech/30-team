@@ -48,10 +48,8 @@ function taskLabel(locale, task) {
   return t(locale, task.titleKey, task.titleValues || {});
 }
 
-function itemStatusLabel(locale, status) {
-  if (status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE) return t(locale, 'employeeHome.pdiDone');
-  if (status === DEVELOPMENT_PLAN_ITEM_STATUS.DOING) return t(locale, 'employeeHome.pdiDoing');
-  return t(locale, 'employeeHome.pdiTodo');
+function countedMessageKey(baseKey, count) {
+  return `employeeHome.${baseKey}${count === 1 ? 'Singular' : 'Plural'}`;
 }
 
 function okrUrgencyTone(urgency) {
@@ -104,13 +102,6 @@ function loadCollapsed() {
   } catch {
     return {};
   }
-}
-
-function patchPdiItem(plans, itemId, status) {
-  return (plans || []).map((plan) => ({
-    ...plan,
-    items: (plan.items || []).map((it) => (it.id === itemId ? { ...it, status } : it)),
-  }));
 }
 
 function CollapsibleSection({ id, title, count, open, onToggle, children, locale = 'pt-BR' }) {
@@ -267,28 +258,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       }
       return next;
     });
-  };
-
-  const pdiAction = async (itemId, status) => {
-    setData((prev) =>
-      prev ? { ...prev, plans: patchPdiItem(prev.plans, itemId, status) } : prev
-    );
-    setBusy(true);
-    try {
-      const res = await fetch('/api/employee/home', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'updatePdiItem', itemId, status }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || 'pdi');
-      toast(t(locale, 'employeeHome.pdiStatusSaved'), 'ok');
-    } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.pdiStatusError'), 'error');
-      await load({ silent: true });
-    } finally {
-      setBusy(false);
-    }
   };
 
   const prepAction = async () => {
@@ -533,13 +502,13 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const attentionCount = okrUrgentCount + lmsOverdueCount + dpBadge + timeClockBadge;
   const startHere =
     sectionOk('tasks') && tasks.length > 0
-      ? { href: '#tasks', labelKey: 'employeeHome.startHereTasks', count: tasks.length }
+      ? { href: '#tasks', labelKey: countedMessageKey('startHereTasks', tasks.length), count: tasks.length }
       : sectionOk('surveys') && surveyMeta.openCount > 0
-        ? { href: '#surveys', labelKey: 'employeeHome.startHereSurveys', count: surveyMeta.openCount }
+        ? { href: '#surveys', labelKey: countedMessageKey('startHereSurveys', surveyMeta.openCount), count: surveyMeta.openCount }
         : sectionOk('okr') && okrUrgentCount > 0
-          ? { href: '#okr', labelKey: 'employeeHome.startHereOkr', count: okrUrgentCount }
+          ? { href: '#okr', labelKey: countedMessageKey('startHereOkr', okrUrgentCount), count: okrUrgentCount }
           : sectionOk('dp') && dpBadge > 0
-            ? { href: '/employee/dp', labelKey: 'employeeHome.startHereDp', count: dpBadge }
+            ? { href: '/employee/dp', labelKey: countedMessageKey('startHereDp', dpBadge), count: dpBadge }
             : sectionOk('timeClock') && timeClockBadge > 0
               ? {
                   href: '/employee/time-clock',
@@ -549,7 +518,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               : sectionOk('lms') && lmsOverdueCount > 0
                 ? {
                     href: '/employee/lms',
-                    labelKey: 'employeeHome.startHereLms',
+                    labelKey: countedMessageKey('startHereLms', lmsOverdueCount),
                     count: lmsOverdueCount,
                   }
                 : null;
@@ -658,6 +627,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                     <a href={task.href} className={cn(S.cardLink, 'mt-2')}>
                       {task.href.startsWith('/employee/lms')
                         ? t(locale, 'employeeHome.goToLms')
+                        : task.href.startsWith('/employee/pdi')
+                          ? t(locale, 'employeeHome.goToPdi')
                         : task.href.startsWith('/employee/dp')
                           ? t(locale, 'employeeHome.dpOpenPage')
                           : task.href.startsWith('/employee/time-clock')
@@ -736,74 +707,29 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                 const doneN = items.filter((it) => it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
                 const pct = items.length ? Math.round((doneN / items.length) * 100) : 0;
                 return (
-                <li key={plan.id} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
-                  <div className={S.cardBody}>{plan.title}</div>
-                  {plan.objective ? (
-                    <p className={cn(S.muted, 'mt-1 m-0')}>{plan.objective}</p>
-                  ) : null}
-                  {items.length > 0 ? (
-                    <MeterBar
-                      percent={pct}
-                      height={6}
-                      className="mt-2"
-                      toneClass={pct >= 100 ? 'bg-success' : 'bg-brand-500'}
-                      aria-label={`${plan.title}: ${pct}%`}
-                    />
-                  ) : null}
-                  <ul className="mt-2 m-0 list-none space-y-2 p-0">
-                    {items.slice(0, 3).map((it) => (
-                      <li
-                        key={it.id}
-                        className="flex flex-col gap-2 rounded-control border border-ink/8 bg-canvas/40 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className={cn(S.cardMuted, 'min-w-0 break-words')}>
-                          {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? '✓ ' : '○ '}
-                          {it.title}
-                          <div className="mt-0.5 font-mono text-2xs text-ink-faint">
-                            {itemStatusLabel(locale, it.status)}
-                            {it.dueDate ? ` · ${formatDisplayDate(it.dueDate, locale)}` : ''}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1 sm:shrink-0">
-                          {it.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              className={cn(S.btnBrandSoft, 'min-h-touch text-2xs')}
-                              onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DONE)}
-                            >
-                              {t(locale, 'employeeHome.pdiMarkDone')}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
-                              onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.TODO)}
-                            >
-                              {t(locale, 'employeeHome.pdiMarkTodo')}
-                            </button>
-                          )}
-                          {it.status === DEVELOPMENT_PLAN_ITEM_STATUS.TODO ? (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              className={cn(S.btnGhost, 'min-h-touch text-2xs')}
-                              onClick={() => pdiAction(it.id, DEVELOPMENT_PLAN_ITEM_STATUS.DOING)}
-                            >
-                              {t(locale, 'employeeHome.pdiMarkDoing')}
-                            </button>
-                          ) : null}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                  {items.length > 3 ? (
-                    <a href="/employee/pdi" className={cn(S.cardLink, 'mt-3 inline-flex')}>
-                      {t(locale, 'employeeHome.pdiSeeAllItems', { n: items.length - 3 })}
-                    </a>
-                  ) : null}
-                </li>
+                  <li key={plan.id} className="rounded-control border border-ink/12 bg-canvas/50 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className={S.cardBody}>{plan.title}</div>
+                      <StatusToneChip tone={pct >= 100 ? 'success' : 'brand'}>{pct}%</StatusToneChip>
+                    </div>
+                    {plan.objective ? (
+                      <p className={cn(S.muted, 'mt-1 m-0')}>{plan.objective}</p>
+                    ) : null}
+                    {items.length > 0 ? (
+                      <>
+                        <MeterBar
+                          percent={pct}
+                          height={6}
+                          className="mt-3"
+                          toneClass={pct >= 100 ? 'bg-success' : 'bg-brand-500'}
+                          aria-label={`${plan.title}: ${pct}%`}
+                        />
+                        <p className={cn(S.cardMuted, 'mb-0 mt-2')}>
+                          {t(locale, countedMessageKey('pdiProgressCount', items.length), { done: doneN, total: items.length })}
+                        </p>
+                      </>
+                    ) : null}
+                  </li>
                 );
               })}
             </ul>
