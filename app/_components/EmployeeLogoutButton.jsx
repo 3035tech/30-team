@@ -12,23 +12,34 @@ import { useAppFeedback } from './AppFeedback';
 /** Both employee menus share the same logout and failure behavior. */
 export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOut }) {
   const router = useRouter();
-  const { toast } = useAppFeedback();
+  const { toast, confirm } = useAppFeedback();
   const pending = useRef(false);
   const [busy, setBusy] = useState(false);
   const label = t(locale, 'employeeHome.logout');
   const logout = async () => {
     if (pending.current) return;
     pending.current = true;
-    setBusy(true);
     try {
-      const response = await fetch('/api/auth/employee/session', { method: 'DELETE' });
-      if (!response.ok) throw new Error('logout');
-      onLoggedOut?.();
-      router.replace(employeeLoginUrl({ reason: 'logout' }));
-    } catch {
-      toast(t(locale, 'employeeHome.logoutFailed'), 'error');
+      const confirmed = await confirm({
+        title: t(locale, 'employeeHome.logoutConfirmTitle'),
+        message: t(locale, 'employeeHome.logoutConfirmBody'),
+        confirmLabel: t(locale, 'employeeHome.logoutConfirmAction'),
+        danger: true,
+      });
+      if (!confirmed) return;
+
+      setBusy(true);
+      try {
+        const response = await fetch('/api/auth/employee/session', { method: 'DELETE' });
+        if (!response.ok) throw new Error('logout');
+        onLoggedOut?.();
+        router.replace(employeeLoginUrl({ reason: 'logout' }));
+      } catch {
+        toast(t(locale, 'employeeHome.logoutFailed'), 'error');
+        setBusy(false);
+      }
+    } finally {
       pending.current = false;
-      setBusy(false);
     }
   };
   return <button type="button" role={role} onClick={logout} disabled={busy} aria-busy={busy}

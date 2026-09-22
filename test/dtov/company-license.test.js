@@ -161,8 +161,15 @@ try {
   const logoutBounds = await logout.boundingBox();
   assert.ok(logoutBounds.width >= 44 && logoutBounds.height >= 44, 'collapsed logout retains a 44px target'); checks++;
   await page.locator('#employee-sidebar .db-sidebar-collapse-toggle').click();
+  await logout.click();
+  await expect(page.getByRole('dialog')).toContainText('Encerrar sessão?');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  assert.equal((await employeeContext.request.get(base + '/api/employee/me')).status(), 200, 'cancel keeps employee session active');
+  assert.match(page.url(), /employee\/profile/); checks++;
   await page.route('**/api/auth/employee/session', (route) => route.request().method() === 'DELETE' ? route.abort() : route.continue());
   await logout.click();
+  await page.getByRole('button', { name: 'Encerrar sessão', exact: true }).click();
   await expect(page.getByText('Não foi possível sair. Confira sua conexão e tente novamente.')).toBeVisible();
   assert.match(page.url(), /employee\/profile/); checks++;
   await page.unroute('**/api/auth/employee/session');
@@ -172,6 +179,7 @@ try {
   await expect(logout).toBeVisible();
   await page.screenshot({ path: '/private/tmp/team30-license-employee-menu.png', fullPage: true, animations: 'disabled' });
   await logout.click();
+  await page.getByRole('button', { name: 'Encerrar sessão', exact: true }).click();
   await page.waitForURL(/employee\/login\?reason=logout/);
   assert.equal((await employeeContext.request.get(base + '/api/employee/me')).status(), 401); checks++;
 
@@ -180,6 +188,7 @@ try {
   await page.goto(base + '/employee/profile');
   await page.locator('button[aria-controls="employee-profile-menu"]').click();
   await page.getByRole('menuitem', { name: 'Sair', exact: true }).click();
+  await page.getByRole('button', { name: 'Encerrar sessão', exact: true }).click();
   await page.waitForURL(/employee\/login\?reason=logout/);
   assert.equal((await topContext.request.get(base + '/api/employee/me')).status(), 401); checks++;
   console.log(`PASS company license: ${checks} checks (signup, concurrency, SQL, tenant, expiry, browser, logout)`);
