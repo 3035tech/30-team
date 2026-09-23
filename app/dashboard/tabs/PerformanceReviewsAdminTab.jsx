@@ -527,6 +527,14 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           { id: 'formal', label: i18nT(locale, 'performanceReviews.formal.segmentFormal'), icon: 'users' },
         ]}
       />
+      <p className="m-0 max-w-[72ch] text-sm leading-[1.55] text-ink-muted" aria-live="polite">
+        {i18nT(
+          locale,
+          mode === 'formal'
+            ? 'performanceReviews.formal.segmentFormalHint'
+            : 'performanceReviews.formal.segmentGoalsHint'
+        )}
+      </p>
 
       {mode === 'formal' ? (
         <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} />

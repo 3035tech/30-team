@@ -10,6 +10,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { DisclosureToggle } from '../../_components/CollapsibleBlock';
 import { buildRubricContextDraft, isRubricContextFilledEnough } from '../../../lib/rubric-prompt';
+import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 
 const BTN_SM =
   'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
@@ -207,15 +208,23 @@ export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vaca
         {t(locale, 'recruiting.rubricWeightHint')}
       </p>
       {loading ? <AppLoading variant="inline" label={t(locale, 'panel.common.loading')} /> : null}
-      <div className="mb-2.5 flex flex-wrap gap-2">
+      <div className="mb-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((typeNum) => (
-          <label key={typeNum} className="flex items-center gap-1 text-xs text-ink-muted">
-            T{typeNum}
+          <label
+            key={typeNum}
+            title={typeHintTooltip(typeNum, locale)}
+            className="flex min-h-[58px] items-center justify-between gap-2 rounded-control border border-ink/10 bg-ink/[0.02] px-2.5 py-2 text-xs text-ink"
+          >
+            <span className="min-w-0">
+              <span className="block font-semibold text-ink">T{typeNum}</span>
+              <span className="block truncate text-2xs text-ink-muted">{typeShortLabel(typeNum, locale)}</span>
+            </span>
             <input
               value={weights[typeNum] ?? ''}
               onChange={(e) => setWeights((prev) => ({ ...prev, [typeNum]: e.target.value }))}
               placeholder="0"
-              className="w-11 rounded-md border border-ink/12 bg-ink/[0.03] px-1.5 py-1 font-mono text-2xs text-ink"
+              aria-label={`${typeShortLabel(typeNum, locale)} (T${typeNum})`}
+              className="w-12 shrink-0 rounded-md border border-ink/12 bg-surface px-1.5 py-1 text-center font-mono text-2xs text-ink"
             />
           </label>
         ))}

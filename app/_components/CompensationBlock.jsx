@@ -476,7 +476,6 @@ export function CompensationBlock({
           <span id="compensation-block-title" className={cn(S.cardSection, 'mb-0 block')}>
             {t(locale, 'panel.compensation.title')}
           </span>
-          <p className={cn(S.muted, 'mb-0 mt-1 text-xs')}>{t(locale, 'panel.compensation.hint')}</p>
         </div>
         {!readOnly ? (
           <div className="flex flex-wrap gap-1.5">
@@ -490,11 +489,6 @@ export function CompensationBlock({
                 {t(locale, 'panel.compensation.importOfferBtn')}
               </button>
             ) : null}
-            <AdminCreateButton
-              label={t(locale, 'panel.compensation.addBtn')}
-              onClick={() => void addEvent()}
-              disabled={busy}
-            />
           </div>
         ) : null}
       </div>
@@ -706,6 +700,16 @@ export function CompensationBlock({
           ))}
         </ul>
       )}
+
+      {!readOnly ? (
+        <div className="mt-4 flex justify-end">
+          <AdminCreateButton
+            label={t(locale, 'panel.compensation.addBtn')}
+            onClick={() => void addEvent()}
+            disabled={busy}
+          />
+        </div>
+      ) : null}
     </section>
     </ContentEnter>
   );

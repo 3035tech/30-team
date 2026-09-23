@@ -32,13 +32,14 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
         {types.map((type) => {
           const weight = value[type] || 0;
           if (weight === 0) return null;
+          const typeData = TYPE_DATA[Number(type.slice(1))];
           return (
             <span
               key={type}
               className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-mono text-xs"
               style={{
-                backgroundColor: `${TYPE_DATA[type]?.color}15`,
-                color: TYPE_DATA[type]?.color,
+                backgroundColor: `${typeData?.color || '#6b7280'}15`,
+                color: typeData?.color || '#6b7280',
               }}
             >
               {type} <span className="font-semibold">{weight}%</span>
@@ -58,16 +59,21 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
       <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
         {types.map((type) => {
           const weight = value[type] || 0;
-          const typeData = TYPE_DATA[type];
+          const typeData = TYPE_DATA[Number(type.slice(1))];
           
           return (
             <div key={type} className="flex items-center gap-3">
-              <div
-                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded font-mono text-xs font-medium text-white"
-                style={{ backgroundColor: typeData?.color }}
-                title={typeData?.name || type}
-              >
-                {type}
+              <div className="flex min-w-[118px] items-center gap-2">
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded font-mono text-xs font-medium text-white"
+                  style={{ backgroundColor: typeData?.color }}
+                  title={typeData?.name || type}
+                >
+                  {type}
+                </div>
+                <span className="truncate text-xs text-ink-muted">
+                  {typeData?.name || type}
+                </span>
               </div>
               
               <input

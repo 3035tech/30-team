@@ -19,6 +19,7 @@ export function PersonDossierBlock({
   companyId = null,
   onGoSubTab,
   embedded = false,
+  summaryOnly = false,
 }) {
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
@@ -162,6 +163,7 @@ export function PersonDossierBlock({
         </div>
       ) : null}
 
+      {!summaryOnly ? (
       <CollapsibleBlock
         locale={locale}
         title={t(locale, 'panel.dossier.title')}
@@ -345,6 +347,7 @@ export function PersonDossierBlock({
         </section>
       ) : null}
       </CollapsibleBlock>
+      ) : null}
     </div>
   );
 }

@@ -152,35 +152,6 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
         </div>
       ) : null}
 
-      {!empty && Array.isArray(data?.sources) && data.sources.length > 0 ? (
-        <div className={cn(S.card, 'px-[18px] py-4')}>
-          <div className="mb-2.5 text-prose font-semibold text-ink">
-            {t(locale, 'recruiting.analyticsSourcesTitle')}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse font-mono text-xs">
-              <thead>
-                <tr className="text-left text-ink-muted">
-                  <th className="px-2 py-1.5 font-medium">{t(locale, 'recruiting.analyticsColSource')}</th>
-                  <th className="px-2 py-1.5 font-medium">{t(locale, 'recruiting.analyticsViews')}</th>
-                  <th className="px-2 py-1.5 font-medium">{t(locale, 'recruiting.analyticsApplications')}</th>
-                  <th className="px-2 py-1.5 font-medium">{t(locale, 'recruiting.analyticsHires')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.sources.slice(0, 8).map((row) => (
-                  <tr key={row.source} className="border-t border-ink/12">
-                    <td className="p-2 text-ink">{row.source}</td>
-                    <td className="p-2 text-ink-muted">{row.views}</td>
-                    <td className="p-2 text-ink-muted">{row.applications}</td>
-                    <td className="p-2 text-ink-muted">{row.hires}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : null}
     </ContentEnter>
   );
 }

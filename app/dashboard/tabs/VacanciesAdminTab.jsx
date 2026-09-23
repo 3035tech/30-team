@@ -118,6 +118,32 @@ function normalizeVacancyDetailSection(value) {
   return VACANCY_DETAIL_SECTIONS.includes(value) ? value : 'pipeline';
 }
 
+function vacancyEditDraft(v = {}) {
+  return {
+    id: v.id,
+    companyId: v.companyId ?? null,
+    title: v.title ?? '',
+    slug: v.slug ?? '',
+    status: v.status ?? VACANCY_STATUS.OPEN,
+    positionsCount: String(v.positionsCount ?? 1),
+    targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
+    description: v.description ?? '',
+    employmentType: v.employmentType ?? '',
+    workplaceModality: v.workplaceModality ?? '',
+    workplaceState: v.workplaceState ?? '',
+    workplaceCity: v.workplaceCity ?? '',
+    salaryMin: salaryToCentsDigits(v.salaryMin),
+    salaryMax: salaryToCentsDigits(v.salaryMax),
+    clientReportShowSalary: Boolean(v.clientReportShowSalary),
+    publicPageEnabled: Boolean(v.publicPageEnabled),
+    publicAllowIndex: Boolean(v.publicAllowIndex),
+    publicShowCompanyInfo: Boolean(v.publicShowCompanyInfo),
+    publicShowSalary: Boolean(v.publicShowSalary),
+    jobRoleId: v.jobRoleId != null ? String(v.jobRoleId) : '',
+    companySlug: v.companySlug || '',
+  };
+}
+
 export { VacancyInviteByEmail };
 
 export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR' }) {
@@ -132,6 +158,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [pipelineRefresh, setPipelineRefresh] = useState(0);
   const [linkExpiryEdit, setLinkExpiryEdit] = useState(null);
   const [editingVacancy, setEditingVacancy] = useState(null);
+  const [editingVacancyBaseline, setEditingVacancyBaseline] = useState('');
   const [detailVacancy, setDetailVacancy] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailSection, setDetailSection] = useState(() =>
@@ -606,31 +633,26 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const editVacancy = (v) => {
+    if (!v?.id) return;
     setShowCreate(false);
     if (v.companyId) loadJobRoles(v.companyId);
-    setEditingVacancy({
-      id: v.id,
-      companyId: v.companyId ?? null,
-      title: v.title ?? '',
-      slug: v.slug ?? '',
-      status: v.status ?? VACANCY_STATUS.OPEN,
-      positionsCount: String(v.positionsCount ?? 1),
-      targetDate: v.targetDate ? String(v.targetDate).slice(0, 10) : '',
-      description: v.description ?? '',
-      employmentType: v.employmentType ?? '',
-      workplaceModality: v.workplaceModality ?? '',
-      workplaceState: v.workplaceState ?? '',
-      workplaceCity: v.workplaceCity ?? '',
-      salaryMin: salaryToCentsDigits(v.salaryMin),
-      salaryMax: salaryToCentsDigits(v.salaryMax),
-      clientReportShowSalary: Boolean(v.clientReportShowSalary),
-      publicPageEnabled: Boolean(v.publicPageEnabled),
-      publicAllowIndex: Boolean(v.publicAllowIndex),
-      publicShowCompanyInfo: Boolean(v.publicShowCompanyInfo),
-      publicShowSalary: Boolean(v.publicShowSalary),
-      jobRoleId: v.jobRoleId != null ? String(v.jobRoleId) : '',
-      companySlug: v.companySlug || '',
-    });
+    const next = vacancyEditDraft(v);
+    setEditingVacancy(next);
+    setEditingVacancyBaseline(JSON.stringify(next));
+  };
+
+  const closeVacancyEditor = async () => {
+    if (!editingVacancy) return;
+    const dirty = editingVacancyBaseline && JSON.stringify(editingVacancy) !== editingVacancyBaseline;
+    if (dirty) {
+      const ok = await confirm({
+        message: t(locale, 'recruiting.closeVacancyEditorConfirm'),
+        confirmLabel: t(locale, 'recruiting.closeVacancyEditorConfirmLabel'),
+      });
+      if (!ok) return;
+    }
+    setEditingVacancy(null);
+    setEditingVacancyBaseline('');
   };
 
   const cloneVacancyAction = async (v) => {
@@ -713,6 +735,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
       setEditingVacancy(null);
+      setEditingVacancyBaseline('');
       if (isDetailView) await loadVacancyDetail(id);
       else await loadVacancies();
       showMsg(t(locale, 'recruiting.vacancyUpdated'));
@@ -1047,12 +1070,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         backLabel={locale === 'en' ? 'Back to vacancies' : 'Voltar para vagas'}
         closeLabel={locale === 'en' ? 'Close vacancy editor' : 'Fechar editor da vaga'}
         eyebrow={locale === 'en' ? 'RECRUITMENT / VACANCIES' : 'RECRUTAMENTO / VAGAS'}
-        onClose={() => setEditingVacancy(null)}
+        onClose={() => void closeVacancyEditor()}
         footer={(
           <>
             <button
               type="button"
-              onClick={() => setEditingVacancy(null)}
+              onClick={() => void closeVacancyEditor()}
               disabled={loading}
               className={dialogBtnGhostClass}
             >

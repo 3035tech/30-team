@@ -58,7 +58,7 @@ export function OrgUnitFilter({ companyId, locale, value, onChange }) {
 
 export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
   const { units, loading, error: listError, reload } = useOrgUnits(companyId);
-  const { toast } = useAppFeedback();
+  const { toast, promptForm } = useAppFeedback();
   const [value, setValue] = useState('');
   const [initial, setInitial] = useState('');
   const [busy, setBusy] = useState(false);
@@ -84,11 +84,52 @@ export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
+  async function createAndAssign() {
+    if (busy || !companyId) return;
+    const values = await promptForm({
+      title: t(locale, 'panel.orgUnits.create'),
+      confirmLabel: t(locale, 'panel.orgUnits.create'),
+      fields: [
+        {
+          key: 'name',
+          label: t(locale, 'panel.orgUnits.name'),
+          required: true,
+          defaultValue: '',
+        },
+      ],
+    });
+    if (!values?.name) return;
+    setBusy(true); setError('');
+    try {
+      const created = await orgUnitRequest(companyId, {
+        method: 'POST',
+        body: { name: String(values.name).trim(), parentId: null },
+      });
+      const next = String(created.id);
+      await orgUnitRequest(companyId, {
+        method: 'PUT',
+        body: { candidateId: Number(candidateId), orgUnitId: Number(created.id) },
+      });
+      setValue(next); setInitial(next);
+      reload(); setVersion((v) => v + 1);
+      toast(t(locale, 'panel.orgUnits.saved'), 'ok');
+      onSaved?.();
+    } catch (e) {
+      setError(e.message);
+    } finally { setBusy(false); }
+  }
   return <CollapsibleBlock locale={locale} title={t(locale, 'panel.orgUnits.unit')} defaultOpen={false} variant="card"
     collapsedHint={units.find((unit) => String(unit.id) === initial)?.name || t(locale, 'panel.orgUnits.none')}>
     {loading || reading ? <AppLoading variant="panel" /> : <div className="flex flex-col gap-3">
       {error || listError ? <InlineCallout tone="danger"><span role="alert">{error || listError}</span><button type="button" className={S.btnGhost} disabled={busy} onClick={() => { reload(); setVersion((v) => v + 1); }}>{t(locale, 'panel.orgUnits.retry')}</button></InlineCallout> : null}
-      <OrgUnitSelect units={units} locale={locale} value={value} onChange={(event) => setValue(event.target.value)} disabled={busy || !loaded || Boolean(listError)} />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1">
+          <OrgUnitSelect units={units} locale={locale} value={value} onChange={(event) => setValue(event.target.value)} disabled={busy || !loaded || Boolean(listError)} />
+        </div>
+        <button type="button" className={S.btnGhost} disabled={busy || !loaded || Boolean(listError)} onClick={() => void createAndAssign()}>
+          {t(locale, 'panel.orgUnits.create')}
+        </button>
+      </div>
       <p className={S.muted}>{t(locale, 'panel.orgUnits.assignmentHint')}</p>
       <button type="button" className={S.btnPrimary} disabled={busy || !loaded || Boolean(listError) || value === initial} onClick={save}>{t(locale, busy ? 'panel.orgUnits.saving' : 'panel.orgUnits.save')}</button>
     </div>}

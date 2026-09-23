@@ -127,7 +127,7 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
 
 const PIPELINE_OPTIONS = PIPELINE_STAGES;
 const PERSON_TOP_SECTIONS = new Set(['people', 'style', 'history', 'profile']);
-const PERSON_MANAGEMENT_SECTIONS = new Set(['oneOnOne', 'journey', 'compensation', 'dp']);
+const PERSON_MANAGEMENT_SECTIONS = new Set(['oneOnOne', 'feedback', 'journey', 'compensation', 'dp']);
 
 function personNavigationFromSection(section) {
   if (PERSON_TOP_SECTIONS.has(section)) {
@@ -174,18 +174,6 @@ function formatFillDuration(ms) {
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}m ${s}s`;
   return `${s}s`;
-}
-
-function formatPersonDate(value, locale) {
-  if (!value) return '—';
-  const raw = String(value).slice(0, 10);
-  const [year, month, day] = raw.split('-').map(Number);
-  if (!year || !month || !day) return raw;
-  return new Date(year, month - 1, day).toLocaleDateString(localeHtmlLang(locale), {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 /** 54 perguntas: < ~3 min é bem rápido (sinal soft). */
@@ -1282,40 +1270,18 @@ export function TeamTab({
       >
         {openRow ? (
           <div>
-            {focusCandidateId ? (
-              <section className="mb-5 grid gap-3 sm:grid-cols-3" aria-label={locale === 'en' ? 'Profile summary' : 'Resumo do perfil'}>
-                <div className="flex flex-col gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
-                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Current focus' : 'Foco atual'}</span>
-                  <p className="m-0 text-sm font-medium text-ink">
-                    {focusSection === 'dp' ? (locale === 'en' ? 'Development plan' : 'Plano de desenvolvimento') : (locale === 'en' ? 'People context' : 'Contexto da pessoa')}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
-                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Started' : 'Início'}</span>
-                  <p className={cn('m-0 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
-                    {detailLoading ? '•••' : formatPersonDate(detail?.candidate?.startDate, locale)}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3">
-                  <span className={cn(S.label, 'mb-0')}>{locale === 'en' ? 'Current status' : 'Status atual'}</span>
-                  <p className={cn('m-0 text-sm font-medium text-ink', detailLoading && 'animate-pulse')}>
-                    {detail?.candidate?.employmentStatus
-                      ? t(locale, `panel.team.employment.${detail.candidate.employmentStatus}`)
-                      : (detailLoading ? '…' : '—')}
-                  </p>
-                </div>
-              </section>
-            ) : null}
             <PanelSubNav
               ariaLabel={t(locale, 'panel.team.personTabsAria')}
               active={personTab}
               onChange={navigatePersonSection}
               className={focusCandidateId ? 'sticky top-0 z-20 bg-canvas/95 py-1 backdrop-blur-sm' : undefined}
               tabs={[
-                { id: 'people', label: t(locale, 'panel.team.personTabPeople') },
+                { id: 'people', label: t(locale, 'panel.team.personTabSummary') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
                 { id: 'history', label: t(locale, 'panel.team.personTabHistory') },
-                { id: 'profile', label: t(locale, 'panel.team.personTabProfile') },
+                ...(detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE
+                  ? [{ id: 'profile', label: t(locale, 'recruiting.candidateProfile') }]
+                  : []),
               ]}
             />
             {personTab === 'style' ? (
@@ -1343,6 +1309,17 @@ export function TeamTab({
                       dimensionScores={detail.people.management.motivators.dimensionScores}
                       compact
                     />
+                    {detail.people.management.motivators.top?.length ? (
+                      <p className="m-0 mt-2 text-xs leading-relaxed text-ink-muted">
+                        {t(locale, 'panel.team.motivatorsRadarSummary', {
+                          names: detail.people.management.motivators.top
+                            .slice(0, 5)
+                            .map((item) => item.label)
+                            .filter(Boolean)
+                            .join(', '),
+                        })}
+                      </p>
+                    ) : null}
                   </div>
                 ) : detailMatchesOpen && detail?.people?.management?.motivators?.top?.length ? (
                   <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
@@ -1380,6 +1357,7 @@ export function TeamTab({
                       detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
                     const allowedSubTabs = new Set([
                       'oneOnOne',
+                      ...(isInternalPerson ? ['feedback'] : []),
                       'journey',
                       ...(isInternalPerson && canViewCompensation ? ['compensation'] : []),
                       ...(isInternalPerson ? ['dp'] : []),
@@ -1403,7 +1381,7 @@ export function TeamTab({
                     <CollapsibleBlock
                       locale={locale}
                       title={t(locale, 'panel.team.peopleSubTabSummary')}
-                      defaultOpen={false}
+                      defaultOpen
                       className="mb-4"
                       bordered={false}
                     >
@@ -1412,10 +1390,8 @@ export function TeamTab({
                           locale={locale}
                           candidateId={detail.candidate.id}
                           companyId={detail.candidate.companyId}
-                          onGoSubTab={(id) => {
-                            if (allowedSubTabs.has(id)) navigatePersonSection(id);
-                          }}
                           embedded
+                          summaryOnly
                         />
                         {isInternalPerson ? (
                           <CandidateOrgUnit key={`${detail.candidate.companyId}-${detail.candidate.id}`} locale={locale} companyId={detail.candidate.companyId} candidateId={detail.candidate.id} onSaved={() => router.refresh()} />
@@ -1442,6 +1418,9 @@ export function TeamTab({
                       onChange={navigatePersonSection}
                       tabs={[
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
+                        ...(isInternalPerson
+                          ? [{ id: 'feedback', label: t(locale, 'panel.team.peopleSubTabFeedback') }]
+                          : []),
                         { id: 'journey', label: t(locale, 'panel.team.peopleSubTabJourney') },
                         ...(isInternalPerson && canViewCompensation
                           ? [
@@ -1458,16 +1437,7 @@ export function TeamTab({
                     />
                     <ContentEnter animKey={activePeopleSubTab}>
                       {activePeopleSubTab === 'oneOnOne' ? (
-                        <div className="space-y-4">
-                          {detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
-                            <ContinuousFeedbackBlock
-                              locale={locale}
-                              companyId={detail.candidate.companyId}
-                              candidateId={detail.candidate.id}
-                              subjectName={openRow.name}
-                            />
-                          ) : null}
-                          <PeopleManagementPanel
+                        <PeopleManagementPanel
                           locale={locale}
                           candidateId={detail.candidate.id}
                           people={detail.people}
@@ -1475,7 +1445,14 @@ export function TeamTab({
                           onRefresh={() => loadDetail(detail.candidate.id)}
                           section="oneOnOne"
                         />
-                        </div>
+                      ) : null}
+                      {activePeopleSubTab === 'feedback' ? (
+                        <ContinuousFeedbackBlock
+                          locale={locale}
+                          companyId={detail.candidate.companyId}
+                          candidateId={detail.candidate.id}
+                          subjectName={openRow.name}
+                        />
                       ) : null}
                       {activePeopleSubTab === 'journey' ? (
                         <PeopleManagementPanel
