@@ -119,7 +119,9 @@ function CollapsibleSection({ id, title, count, open, onToggle, children, locale
         bordered={false}
         titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
       >
-        {children}
+        <div className="px-3 sm:px-4">
+          {children}
+        </div>
       </CollapsibleBlock>
     </section>
   );
@@ -956,9 +958,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           onToggle={() => toggleSection('oneOnOne')}
           locale={locale}
         >
-          <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>
-            {t(locale, 'panel.employeePortal.oneOnOneLastAgreementTitle')}
-          </h3>
           {agreements.length === 0 ? (
             <EmpEmpty>
               <EmptyState message={t(locale, 'panel.employeePortal.agreementsEmpty')} />
@@ -968,7 +967,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               {agreements.map((a) => (
                 <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                   {a.meetingDate ? (
-                  <div className="mb-1 text-xs text-ink-muted">
+                    <div className="mb-1 text-xs text-ink-muted">
                       {formatDisplayDate(a.meetingDate, locale)}
                     </div>
                   ) : null}
