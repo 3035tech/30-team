@@ -11,6 +11,7 @@ import { InlineCallout } from './InlineCallout';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { TotpQrCode } from './TotpQrCode';
 import { CompanyLicenseSummary } from './CompanyLicenseSummary';
+import { BillingTab } from './BillingTab';
 import { useAppFeedbackOptional } from './AppFeedback';
 import {
   modulesSelectionEqual,
@@ -35,6 +36,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [companyId, setCompanyId] = useState(null);
   const [license, setLicense] = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -83,6 +85,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
       setDisplayName(u.displayName || '');
       setRole(u.role || '');
       setCompanyName(u.companyName || '');
+      setCompanyId(u.companyId ?? null);
       setLicense(data.license || null);
       setProfileLoaded(true);
       await load2fa();
@@ -306,6 +309,9 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                     ? [{ id: 'modules', label: t(locale, 'dashboard.profileSectionModules') }]
                     : []),
                   { id: 'security', label: t(locale, 'dashboard.profileSectionSecurity') },
+                  ...(['admin', 'hr'].includes(role)
+                    ? [{ id: 'billing', label: t(locale, 'dashboard.profileSectionBilling') }]
+                    : []),
                 ]}
               />
 
@@ -378,6 +384,16 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                       </button>
                     </div>
                   </section>
+                ) : null}
+
+                {['admin', 'hr'].includes(role) && profileSection === 'billing' ? (
+                  <BillingTab
+                    locale={locale}
+                    role={role}
+                    companyId={companyId}
+                    companyName={companyName}
+                    license={license}
+                  />
                 ) : null}
 
                 {profileSection === 'security' ? (

@@ -8,6 +8,16 @@ import { S } from '../dashboard/dashboard-shared';
 import { StatusToneChip } from './StatusToneChip';
 import { InlineCallout } from './InlineCallout';
 
+function licensePlanLabel(locale, license) {
+  const keys = {
+    [COMPANY_LICENSE.OFFER_TIERS.TRIAL]: 'dashboard.licensePlanTrial',
+    [COMPANY_LICENSE.OFFER_TIERS.EARLY_ADOPTER]: 'dashboard.licensePlanEarlyAdopter',
+    [COMPANY_LICENSE.OFFER_TIERS.DESIGN_PARTNER]: 'dashboard.licensePlanDesignPartner',
+    [COMPANY_LICENSE.OFFER_TIERS.LEGACY]: 'dashboard.licensePlanLegacy',
+  };
+  return t(locale, keys[license?.offerTier] || keys[COMPANY_LICENSE.OFFER_TIERS.LEGACY]);
+}
+
 export function CompanyLicenseSummary({ license, locale }) {
   const expired = license?.status === COMPANY_LICENSE.EXPIRED;
   return (
@@ -21,7 +31,7 @@ export function CompanyLicenseSummary({ license, locale }) {
         </StatusToneChip> : null}
       </div>
       {license ? <>
-        <p className="mb-3 mt-1 text-sm text-ink-muted">{t(locale, 'dashboard.licensePlan')}</p>
+        <p className="mb-3 mt-1 text-sm text-ink-muted">{licensePlanLabel(locale, license)}</p>
         <dl className="m-0 grid gap-x-6 gap-y-4 rounded-control bg-canvas/60 p-4 sm:grid-cols-3">
           {[
             ['dashboard.licenseNumber', license.number, null],

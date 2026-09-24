@@ -47,7 +47,8 @@ export async function GET(request) {
             u.company_id AS "companyId", u.last_login_at AS "lastLoginAt",
             c.name AS "companyName",
             l.license_number AS "licenseNumber", l.starts_at AS "licenseStartsAt",
-            l.expires_at AS "licenseExpiresAt", l.expires_at <= now() AS "licenseExpired"
+            l.expires_at AS "licenseExpiresAt", l.expires_at <= now() AS "licenseExpired",
+            l.offer_tier AS "licenseOfferTier", l.trial_days AS "licenseTrialDays"
      FROM users u
      LEFT JOIN companies c ON c.id = u.company_id AND c.deleted = FALSE
      LEFT JOIN company_licenses l ON l.company_id = c.id

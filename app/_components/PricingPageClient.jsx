@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { BrandMark } from './BrandMark';
 import LanguageSelect from './LanguageSelect';
 import { useLocale } from '../../lib/useLocale';
@@ -9,6 +10,14 @@ import {
   PRODUCT_LANDING_CONTACT_EMAIL,
   getPricingAddons,
   getPricingCoreFeatures,
+  EARLY_ADOPTER_ANNUAL_DISCOUNT,
+  EARLY_ADOPTER_COHORT_LIMIT,
+  EARLY_ADOPTER_FREE_DAYS,
+  EARLY_ADOPTER_MAX_EMPLOYEES,
+  EARLY_ADOPTER_MIN_EMPLOYEES,
+  EARLY_ADOPTER_MONTHLY_RATE,
+  DESIGN_PARTNER_FREE_MONTHS,
+  PUBLIC_TRIAL_DAYS,
 } from '../../lib/pricing-plans';
 
 function SectionLabel({ children }) {
@@ -19,8 +28,26 @@ function SectionLabel({ children }) {
 
 export default function PricingPageClient({ locale: initialLocale }) {
   const [locale, setLocale] = useLocale(initialLocale);
+  const [employeeCount, setEmployeeCount] = useState(20);
+  const [billingCycle, setBillingCycle] = useState('monthly');
   const coreFeatures = getPricingCoreFeatures(locale);
   const addons = getPricingAddons(locale);
+  const pricing = useMemo(() => {
+    const monthlyRate = billingCycle === 'annual'
+      ? EARLY_ADOPTER_MONTHLY_RATE * EARLY_ADOPTER_ANNUAL_DISCOUNT
+      : EARLY_ADOPTER_MONTHLY_RATE;
+    const monthlyTotal = employeeCount * monthlyRate;
+    return {
+      monthlyRate,
+      monthlyTotal,
+      annualTotal: monthlyTotal * 12,
+    };
+  }, [billingCycle, employeeCount]);
+  const money = (value) => new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  }).format(value);
 
   return (
     <div className="min-h-screen bg-canvas font-display text-ink" lang={locale === 'en' ? 'en' : 'pt-BR'}>
@@ -83,11 +110,82 @@ export default function PricingPageClient({ locale: initialLocale }) {
               </div>
 
               <article className="rounded-card border-2 border-brand-200 bg-canvas/90 p-6 shadow-sm">
-                <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
-                  {t(locale, 'pricing.priceLabel')}
+                <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
+                      {t(locale, 'pricing.priceLabel')}
+                    </p>
+                    <p className="mb-1 mt-0 text-3xl font-normal text-ink">
+                      {money(pricing.monthlyRate)}
+                      <span className="ml-1 text-sm text-ink-muted">{t(locale, 'pricing.perEmployeeMonth')}</span>
+                    </p>
+                  </div>
+                  <span className="rounded-control border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+                    {t(locale, 'pricing.earlyAdopterDaysBadge', { n: EARLY_ADOPTER_FREE_DAYS })}
+                  </span>
+                </div>
+                <p className="mb-5 text-sm leading-relaxed text-ink-muted">
+                  {t(locale, 'pricing.priceAfterTrial', {
+                    trialDays: PUBLIC_TRIAL_DAYS,
+                    earlyDays: EARLY_ADOPTER_FREE_DAYS,
+                    cohort: EARLY_ADOPTER_COHORT_LIMIT,
+                    designMonths: DESIGN_PARTNER_FREE_MONTHS,
+                  })}
                 </p>
-                <p className="mb-1 mt-0 text-3xl font-normal text-ink">{t(locale, 'pricing.priceFreeEarlyAccess')}</p>
-                <p className="mb-6 text-sm leading-relaxed text-ink-muted">{t(locale, 'pricing.priceNote')}</p>
+                <div className="mb-5 rounded-control border border-ink/8 bg-white/70 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <label htmlFor="pricing-employees" className="text-sm font-medium text-ink">
+                      {t(locale, 'pricing.employeeCountLabel')}
+                    </label>
+                    <output htmlFor="pricing-employees" className="text-lg font-semibold text-ink">
+                      {employeeCount}
+                    </output>
+                  </div>
+                  <input
+                    id="pricing-employees"
+                    type="range"
+                    min={EARLY_ADOPTER_MIN_EMPLOYEES}
+                    max={EARLY_ADOPTER_MAX_EMPLOYEES}
+                    value={employeeCount}
+                    onChange={(event) => setEmployeeCount(Number(event.target.value))}
+                    className="w-full accent-brand-600"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-ink-faint">
+                    <span>{EARLY_ADOPTER_MIN_EMPLOYEES}</span>
+                    <span>{EARLY_ADOPTER_MAX_EMPLOYEES}+</span>
+                  </div>
+                </div>
+                <div className="mb-5 rounded-control border border-ink/8 bg-ink/[0.035] p-1">
+                  <div className="grid grid-cols-2 gap-1" role="group" aria-label={t(locale, 'pricing.billingCycleLabel')}>
+                    {['monthly', 'annual'].map((cycle) => (
+                      <button
+                        key={cycle}
+                        type="button"
+                        onClick={() => setBillingCycle(cycle)}
+                        aria-pressed={billingCycle === cycle}
+                        className={`min-h-touch rounded-control px-3 py-2 text-sm transition ${billingCycle === cycle ? 'bg-white font-medium text-ink shadow-sm' : 'text-ink-muted'}`}
+                      >
+                        {t(locale, `pricing.billing${cycle === 'monthly' ? 'Monthly' : 'Annual'}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-6 rounded-card border border-brand-100 bg-brand-50/70 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm text-ink-muted">
+                      {billingCycle === 'annual' ? t(locale, 'pricing.annualTotalLabel') : t(locale, 'pricing.monthlyTotalLabel')}
+                    </span>
+                    <strong className="text-2xl font-semibold text-ink">
+                      {billingCycle === 'annual' ? money(pricing.annualTotal) : money(pricing.monthlyTotal)}
+                    </strong>
+                  </div>
+                  <p className="mb-0 mt-1 text-xs text-ink-muted">
+                    {t(locale, 'pricing.totalAfterTrial', { n: EARLY_ADOPTER_FREE_DAYS })}
+                  </p>
+                  <p className="mb-0 mt-2 border-t border-brand-200/60 pt-2 text-xs leading-5 text-ink-muted">
+                    {t(locale, 'pricing.billingDefinition')}
+                  </p>
+                </div>
                 <div className="flex flex-col gap-3">
                   <Link
                     href="/signup"
