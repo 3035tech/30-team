@@ -21,13 +21,21 @@ const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
 async function loadCandidateScope(candidateId, scope) {
   const params = [candidateId];
-  const tenantFilter = scope.isAdmin ? '' : 'AND company_id = $2';
+  const tenantFilter = scope.isAdmin ? '' : 'AND c.company_id = $2';
   if (!scope.isAdmin) params.push(scope.companyId);
   const c = await query(
-    `SELECT id, company_id AS "companyId",
-            employment_status AS "employmentStatus"
-     FROM candidates
-     WHERE id = $1 ${tenantFilter}
+    `SELECT c.id, c.company_id AS "companyId",
+            c.full_name AS "fullName", c.email,
+            c.personal_email AS "personalEmail", c.phone,
+            c.marital_status AS "maritalStatus",
+            c.employee_number AS "employeeNumber", c.work_format AS "workFormat",
+            c.work_history AS "workHistory", c.city, c.state,
+            c.start_date AS "startDate", c.birth_date AS "birthDate",
+            c.job_role_id AS "jobRoleId", jr.name AS "jobRoleName",
+            c.employment_status AS "employmentStatus"
+     FROM candidates c
+     LEFT JOIN job_roles jr ON jr.id = c.job_role_id AND jr.company_id = c.company_id
+     WHERE c.id = $1 ${tenantFilter}
      LIMIT 1`,
     params
   );
@@ -73,6 +81,7 @@ export async function GET(request, props) {
       documents: docs.items,
       leaves: leaves.items,
       balance: balance.ok ? balance.balance : null,
+      candidate: loaded.candidate,
       employmentStatus: loaded.candidate.employmentStatus,
     });
   } catch (err) {
@@ -109,6 +118,8 @@ export async function PATCH(request, props) {
       emergencyPhone: body.emergencyPhone,
       emergencyRelation: body.emergencyRelation,
       cpf: body.cpf,
+      rg: body.rg,
+      dependents: body.dependents,
       addressLine: body.addressLine,
       addressNumber: body.addressNumber,
       addressCity: body.addressCity,

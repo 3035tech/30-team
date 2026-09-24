@@ -25,9 +25,13 @@ export async function GET(request, props) {
 
   const id = params?.id;
   const c = await queryRead(
-    `SELECT c.id, c.company_id AS "companyId", c.full_name AS "fullName", c.email, c.hr_notes AS "hrNotes",
+    `SELECT c.id, c.company_id AS "companyId", c.full_name AS "fullName", c.email,
+            c.personal_email AS "personalEmail", c.marital_status AS "maritalStatus",
+            c.employee_number AS "employeeNumber", c.work_format AS "workFormat",
+            c.work_history AS "workHistory", c.hr_notes AS "hrNotes",
             c.phone, c.linkedin_url AS "linkedinUrl", c.city, c.state,
             c.salary_expectation AS "salaryExpectation", c.availability, c.source,
+            c.job_role_id AS "jobRoleId", jr.name AS "jobRoleName",
             c.employment_status AS "employmentStatus",
             c.hired_at AS "hiredAt", c.start_date AS "startDate",
             c.birth_date AS "birthDate",
@@ -38,6 +42,7 @@ export async function GET(request, props) {
             c.cv_url AS "cvUrl", c.cv_updated_at AS "cvUpdatedAt",
             (c.cv_extracted_text IS NOT NULL AND c.cv_extracted_text <> '') AS "hasCvText"
      FROM candidates c
+     LEFT JOIN job_roles jr ON jr.id = c.job_role_id AND jr.company_id = c.company_id
      LEFT JOIN users u ON u.id = c.created_by_user_id AND u.deleted = FALSE
      WHERE c.id = $1
      LIMIT 1`,
@@ -165,8 +170,13 @@ export async function PATCH(request, props) {
   const hasProfile = Object.values(profile).some((v) => v != null);
   const hasName = body.fullName !== undefined || body.name !== undefined;
   const hasBirthDate = body.birthDate !== undefined || body.birth_date !== undefined;
+  const hasExtendedProfile = [
+    'personalEmail', 'personal_email', 'maritalStatus', 'marital_status',
+    'employeeNumber', 'employee_number', 'workFormat', 'work_format',
+    'workHistory', 'work_history',
+  ].some((key) => body[key] !== undefined);
 
-  if (!hasHrNotes && !hasProfile && !hasName && !hasBirthDate) {
+  if (!hasHrNotes && !hasProfile && !hasName && !hasBirthDate && !hasExtendedProfile) {
     return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
   }
 
@@ -229,13 +239,44 @@ export async function PATCH(request, props) {
     sets.push(`birth_date = $${n++}`);
     sqlParams.push(birthDate);
   }
+  if (body.personalEmail !== undefined || body.personal_email !== undefined) {
+    const value = body.personalEmail !== undefined ? body.personalEmail : body.personal_email;
+    sets.push(`personal_email = $${n++}`);
+    sqlParams.push(value == null ? null : String(value).trim().slice(0, 240) || null);
+  }
+  if (body.maritalStatus !== undefined || body.marital_status !== undefined) {
+    const value = body.maritalStatus !== undefined ? body.maritalStatus : body.marital_status;
+    sets.push(`marital_status = $${n++}`);
+    sqlParams.push(value == null ? null : String(value).trim().slice(0, 40) || null);
+  }
+  if (body.employeeNumber !== undefined || body.employee_number !== undefined) {
+    const value = body.employeeNumber !== undefined ? body.employeeNumber : body.employee_number;
+    sets.push(`employee_number = $${n++}`);
+    sqlParams.push(value == null ? null : String(value).trim().slice(0, 80) || null);
+  }
+  if (body.workFormat !== undefined || body.work_format !== undefined) {
+    const value = body.workFormat !== undefined ? body.workFormat : body.work_format;
+    const allowed = new Set(['clt', 'intern', 'cooperative', 'pj']);
+    const normalized = value == null ? null : String(value).trim().toLowerCase();
+    if (normalized && !allowed.has(normalized)) return apiError(request, ERR.INVALID_DATA, 400);
+    sets.push(`work_format = $${n++}`);
+    sqlParams.push(normalized || null);
+  }
+  if (body.workHistory !== undefined || body.work_history !== undefined) {
+    const value = body.workHistory !== undefined ? body.workHistory : body.work_history;
+    sets.push(`work_history = $${n++}`);
+    sqlParams.push(value == null ? null : String(value).trim().slice(0, 4000) || null);
+  }
 
   if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
   const up = await query(
     `UPDATE candidates SET ${sets.join(', ')}
      WHERE id = $1
-     RETURNING id, full_name AS "fullName", email, hr_notes AS "hrNotes",
+     RETURNING id, full_name AS "fullName", email,
+               personal_email AS "personalEmail", marital_status AS "maritalStatus",
+               employee_number AS "employeeNumber", work_format AS "workFormat",
+               work_history AS "workHistory", hr_notes AS "hrNotes",
                phone, linkedin_url AS "linkedinUrl", city, state,
                salary_expectation AS "salaryExpectation", availability, source,
                birth_date AS "birthDate", start_date AS "startDate"`,

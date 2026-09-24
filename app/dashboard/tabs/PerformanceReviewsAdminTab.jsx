@@ -27,6 +27,7 @@ import {
   AdminTableShell,
   AdminViewButton,
   AdminIconButton,
+  PanelSubNav,
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
@@ -35,7 +36,6 @@ import { InlineCallout } from '../../_components/InlineCallout';
 import { CalibrationBlock } from '../../_components/CalibrationBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
-import { SegmentedControl } from '../../_components/SegmentedControl';
 import { FormalCompetencyReviewsBlock } from '../../_components/FormalCompetencyReviewsBlock';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
@@ -518,13 +518,15 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <SegmentedControl
-        aria-label={t('title')}
-        value={mode}
+      <PanelSubNav
+        ariaLabel={t('title')}
+        active={mode}
         onChange={setMode}
-        options={[
-          { id: 'goals', label: i18nT(locale, 'performanceReviews.formal.segmentGoals'), icon: 'clipboard' },
-          { id: 'formal', label: i18nT(locale, 'performanceReviews.formal.segmentFormal'), icon: 'users' },
+        scrollable={false}
+        variant="pill"
+        tabs={[
+          { id: 'goals', label: i18nT(locale, 'performanceReviews.formal.segmentGoals') },
+          { id: 'formal', label: i18nT(locale, 'performanceReviews.formal.segmentFormal') },
         ]}
       />
       <p className="m-0 max-w-[72ch] text-sm leading-[1.55] text-ink-muted" aria-live="polite">

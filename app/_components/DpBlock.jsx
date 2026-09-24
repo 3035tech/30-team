@@ -61,6 +61,55 @@ function formatDateTime(value, locale) {
   });
 }
 
+function formatDependents(dependents = []) {
+  return (Array.isArray(dependents) ? dependents : [])
+    .map((item) => [item.name, item.cpf, item.relation, item.birthDate].filter(Boolean).join(' | '))
+    .join('\n');
+}
+
+function parseDependents(value) {
+  return String(value || '')
+    .split('\n')
+    .map((line) => line.split('|').map((part) => part.trim()))
+    .filter((parts) => parts.some(Boolean))
+    .slice(0, 20)
+    .map(([name = '', cpf = '', relation = '', birthDate = '']) => ({ name, cpf, relation, birthDate }));
+}
+
+function ageFromBirthDate(value) {
+  if (!value) return null;
+  const birth = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    today.getMonth() < birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 ? age : null;
+}
+
+function maritalStatusLabel(locale, value) {
+  const keys = {
+    single: 'maritalSingle',
+    married: 'maritalMarried',
+    stable_union: 'maritalStableUnion',
+    divorced: 'maritalDivorced',
+    widowed: 'maritalWidowed',
+  };
+  return value ? t(locale, `panel.dp.${keys[value] || 'notInformed'}`) : '—';
+}
+
+function workFormatLabel(locale, value) {
+  const keys = {
+    clt: 'workFormatClt',
+    intern: 'workFormatIntern',
+    cooperative: 'workFormatCooperative',
+    pj: 'workFormatPj',
+  };
+  return value ? t(locale, `panel.dp.${keys[value] || 'notInformed'}`) : '—';
+}
+
 function docKeyLabel(locale, key) {
   const k = `panel.dp.docKey.${key}`;
   const label = t(locale, k);
@@ -117,6 +166,7 @@ function leaveStatusTone(status) {
 export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [profile, setProfile] = useState(null);
+  const [candidate, setCandidate] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [balance, setBalance] = useState(null);
@@ -138,6 +188,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const load = useCallback(async () => {
     if (!candidateId || !visible) {
       setProfile(null);
+      setCandidate(null);
       setDocuments([]);
       setLeaves([]);
       setBalance(null);
@@ -150,6 +201,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'load');
       setProfile(data.profile || null);
+      setCandidate(data.candidate || null);
       setDocuments(Array.isArray(data.documents) ? data.documents : []);
       setLeaves(Array.isArray(data.leaves) ? data.leaves : []);
       setBalance(data.balance || null);
@@ -181,6 +233,77 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       title: t(locale, 'panel.dp.editProfile'),
       confirmLabel: t(locale, 'panel.dp.save'),
       fields: [
+        {
+          key: 'fullName',
+          label: t(locale, 'panel.dp.fullName'),
+          defaultValue: candidate?.fullName || '',
+          required: true,
+        },
+        {
+          key: 'maritalStatus',
+          type: 'select',
+          label: t(locale, 'panel.dp.maritalStatus'),
+          defaultValue: candidate?.maritalStatus || '',
+          options: [
+            { value: '', label: t(locale, 'panel.dp.notInformed') },
+            { value: 'single', label: t(locale, 'panel.dp.maritalSingle') },
+            { value: 'married', label: t(locale, 'panel.dp.maritalMarried') },
+            { value: 'stable_union', label: t(locale, 'panel.dp.maritalStableUnion') },
+            { value: 'divorced', label: t(locale, 'panel.dp.maritalDivorced') },
+            { value: 'widowed', label: t(locale, 'panel.dp.maritalWidowed') },
+          ],
+        },
+        {
+          key: 'personalEmail',
+          type: 'email',
+          label: t(locale, 'panel.dp.personalEmail'),
+          defaultValue: candidate?.personalEmail || '',
+        },
+        {
+          key: 'phone',
+          type: 'phone',
+          label: t(locale, 'panel.dp.mobile'),
+          defaultValue: candidate?.phone || '',
+        },
+        {
+          key: 'employeeNumber',
+          label: t(locale, 'panel.dp.employeeNumber'),
+          defaultValue: candidate?.employeeNumber || '',
+        },
+        {
+          key: 'birthDate',
+          type: 'date',
+          label: t(locale, 'panel.dp.birthDate'),
+          defaultValue: candidate?.birthDate ? String(candidate.birthDate).slice(0, 10) : '',
+        },
+        {
+          key: 'workFormat',
+          type: 'select',
+          label: t(locale, 'panel.dp.workFormat'),
+          defaultValue: candidate?.workFormat || '',
+          options: [
+            { value: '', label: t(locale, 'panel.dp.notInformed') },
+            { value: 'clt', label: t(locale, 'panel.dp.workFormatClt') },
+            { value: 'intern', label: t(locale, 'panel.dp.workFormatIntern') },
+            { value: 'cooperative', label: t(locale, 'panel.dp.workFormatCooperative') },
+            { value: 'pj', label: t(locale, 'panel.dp.workFormatPj') },
+          ],
+        },
+        {
+          key: 'workHistory',
+          type: 'textarea',
+          label: t(locale, 'panel.dp.workHistory'),
+          defaultValue: candidate?.workHistory || '',
+          rows: 3,
+        },
+        {
+          key: 'dependentsText',
+          type: 'textarea',
+          label: t(locale, 'panel.dp.dependents'),
+          defaultValue: formatDependents(profile?.dependents),
+          rows: 4,
+          help: t(locale, 'panel.dp.dependentsHelp'),
+        },
         {
           key: 'addressPostal',
           type: 'cep',
@@ -234,6 +357,11 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           help: t(locale, 'panel.dp.cpfHelp'),
         },
         {
+          key: 'rg',
+          label: t(locale, 'panel.dp.rg'),
+          defaultValue: profile?.rg || '',
+        },
+        {
           key: 'emergencyName',
           label: t(locale, 'panel.dp.emergencyName'),
           defaultValue: profile?.emergencyName || '',
@@ -264,14 +392,31 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
     if (!values) return;
     setBusy(true);
     try {
+      const candidateRes = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: values.fullName,
+          personalEmail: values.personalEmail,
+          phone: values.phone,
+          maritalStatus: values.maritalStatus,
+          employeeNumber: values.employeeNumber,
+          workFormat: values.workFormat,
+          workHistory: values.workHistory,
+          birthDate: values.birthDate,
+        }),
+      });
+      const candidateData = await candidateRes.json().catch(() => ({}));
+      if (!candidateRes.ok) throw new Error(candidateData?.error || 'save');
       const res = await fetch(baseUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, dependents: parseDependents(values.dependentsText) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'save');
       setProfile(data.profile || values);
+      setCandidate((prev) => ({ ...prev, ...candidateData }));
       toast(t(locale, 'panel.dp.saved'), 'ok');
     } catch (e) {
       toast(e?.message || t(locale, 'panel.dp.saveError'), 'error');
@@ -778,6 +923,39 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         </div>
         {profile ? (
           <dl className="m-0 grid gap-2 sm:grid-cols-2">
+            <FormField as="div" label={t(locale, 'panel.dp.fullName')}>
+              <p className="m-0 text-sm text-ink">{candidate?.fullName || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.corporateEmail')}>
+              <p className="m-0 break-all text-sm text-ink">{candidate?.email || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.personalEmail')}>
+              <p className="m-0 break-all text-sm text-ink">{candidate?.personalEmail || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.mobile')}>
+              <p className="m-0 text-sm text-ink">{candidate?.phone ? formatPhoneBr(candidate.phone) : '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.maritalStatus')}>
+              <p className="m-0 text-sm text-ink">{maritalStatusLabel(locale, candidate?.maritalStatus)}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.employeeNumber')}>
+              <p className="m-0 text-sm text-ink">{candidate?.employeeNumber || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.workFormat')}>
+              <p className="m-0 text-sm text-ink">{workFormatLabel(locale, candidate?.workFormat)}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.jobRole')}>
+              <p className="m-0 text-sm text-ink">{candidate?.jobRoleName || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.startDate')}>
+              <p className="m-0 text-sm text-ink">{candidate?.startDate ? formatDate(candidate.startDate, locale) : '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.birthDate')}>
+              <p className="m-0 text-sm text-ink">{candidate?.birthDate ? formatDate(candidate.birthDate, locale) : '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.age')}>
+              <p className="m-0 text-sm text-ink">{ageFromBirthDate(candidate?.birthDate) ?? '—'}</p>
+            </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.addressPostal')}>
               <p className="m-0 text-sm text-ink">
                 {profile.addressPostal ? formatCepBr(profile.addressPostal) : '—'}
@@ -787,6 +965,9 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
               <p className="m-0 text-sm text-ink">
                 {profile.cpf ? formatCpfBr(profile.cpf) : '—'}
               </p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.rg')}>
+              <p className="m-0 text-sm text-ink">{profile.rg || '—'}</p>
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.addressLine')}>
               <p className="m-0 text-sm text-ink">{profile.addressLine || '—'}</p>
@@ -810,6 +991,20 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.emergencyRelation')}>
               <p className="m-0 text-sm text-ink">{profile.emergencyRelation || '—'}</p>
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.dependents')} className="sm:col-span-2">
+              {profile.dependents?.length ? (
+                <ul className="m-0 list-disc pl-4 text-sm text-ink">
+                  {profile.dependents.map((dependent, index) => (
+                    <li key={`${dependent.name}-${index}`}>
+                      {[dependent.name, dependent.cpf, dependent.relation, dependent.birthDate].filter(Boolean).join(' · ')}
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="m-0 text-sm text-ink">—</p>}
+            </FormField>
+            <FormField as="div" label={t(locale, 'panel.dp.workHistory')} className="sm:col-span-2">
+              <p className="m-0 whitespace-pre-wrap text-sm text-ink">{candidate?.workHistory || '—'}</p>
             </FormField>
             <FormField as="div" label={t(locale, 'panel.dp.internalNotes')} className="sm:col-span-2">
               <p className="m-0 whitespace-pre-wrap text-sm text-ink">
