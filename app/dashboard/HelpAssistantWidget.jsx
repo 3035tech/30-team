@@ -163,7 +163,7 @@ export function HelpAssistantWidget({
   };
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[90] flex flex-col items-end gap-2">
+    <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[100] flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
       {open ? (
         <div
           className="pointer-events-auto flex w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-card border border-ink/12 bg-surface shadow-dialog"
