@@ -8,6 +8,7 @@ import {
   isEmployeeSessionPayload,
   verifyEmployeeToken,
 } from '../../lib/employee-auth.js';
+import { normalizeLocale } from '../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,7 @@ export default async function EmployeeHomePage(props) {
   if (!isEmployeeSessionPayload(payload)) {
     redirect('/employee/login?reason=expired');
   }
-  const locale =
-    searchParams?.locale === 'en' || payload.locale === 'en' ? 'en' : 'pt-BR';
+  const locale = normalizeLocale(searchParams?.locale || payload.locale);
 
   return <EmployeeHomeClient locale={locale} />;
 }

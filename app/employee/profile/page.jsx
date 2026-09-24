@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { EmployeeProfileClient } from './EmployeeProfileClient';
 import { EMPLOYEE_COOKIE_NAME } from '../../../lib/employee-auth-constants.js';
 import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/employee-auth.js';
+import { normalizeLocale } from '../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,6 @@ export default async function EmployeeProfilePage(props) {
   if (!isEmployeeSessionPayload(payload)) {
     redirect('/employee/login?reason=expired');
   }
-  const locale =
-    searchParams?.locale === 'en' || payload.locale === 'en' ? 'en' : 'pt-BR';
+  const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return <EmployeeProfileClient locale={locale} />;
 }

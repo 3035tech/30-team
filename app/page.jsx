@@ -18,7 +18,9 @@ export default async function HomePage() {
   const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const copyByLocale = {
     'pt-BR': getProductLandingCopy('pt-BR'),
+    'pt-PT': getProductLandingCopy('pt-BR'),
     en: getProductLandingCopy('en'),
+    'es-419': getProductLandingCopy('en'),
   };
   const jsonLd = buildProductLandingJsonLd(locale);
 

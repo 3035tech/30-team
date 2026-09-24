@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { BrandMark } from './BrandMark';
 import LanguageSelect from './LanguageSelect';
 import { useLocale } from '../../lib/useLocale';
-import { t } from '../../lib/i18n';
+import { localeHtmlLang, localeNumberLocale, t } from '../../lib/i18n';
 import {
   PRODUCT_LANDING_CONTACT_EMAIL,
   getPricingAddons,
@@ -43,14 +43,14 @@ export default function PricingPageClient({ locale: initialLocale }) {
       annualTotal: monthlyTotal * 12,
     };
   }, [billingCycle, employeeCount]);
-  const money = (value) => new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pt-BR', {
+  const money = (value) => new Intl.NumberFormat(localeNumberLocale(locale), {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2,
   }).format(value);
 
   return (
-    <div className="min-h-screen bg-canvas font-display text-ink" lang={locale === 'en' ? 'en' : 'pt-BR'}>
+    <div className="min-h-screen bg-canvas font-display text-ink" lang={localeHtmlLang(locale)}>
       <div className="pointer-events-none fixed inset-0 bg-radial-glow opacity-80" aria-hidden />
 
       <header className="sticky top-0 z-20 border-b border-ink/8 bg-canvas/90 backdrop-blur-md">
@@ -91,7 +91,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
         <section className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="plan-title">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <SectionLabel>{t(locale, 'pricing.planLabel')}</SectionLabel>
-            <div className="grid gap-6 lg:grid-cols-[1fr,minmax(280px,360px)] lg:items-start">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(320px,390px)] lg:items-start">
               <div>
                 <h2 id="plan-title" className="mb-2 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
                   {t(locale, 'pricing.planName')}
@@ -109,8 +109,8 @@ export default function PricingPageClient({ locale: initialLocale }) {
                 </ul>
               </div>
 
-              <article className="rounded-card border-2 border-brand-200 bg-canvas/90 p-6 shadow-sm">
-                <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <article className="rounded-card border-2 border-brand-200 bg-canvas/90 p-5 shadow-sm sm:p-6">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
                       {t(locale, 'pricing.priceLabel')}
@@ -124,7 +124,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
                     {t(locale, 'pricing.earlyAdopterDaysBadge', { n: EARLY_ADOPTER_FREE_DAYS })}
                   </span>
                 </div>
-                <p className="mb-5 text-sm leading-relaxed text-ink-muted">
+                <p className="mb-4 text-xs leading-relaxed text-ink-muted">
                   {t(locale, 'pricing.priceAfterTrial', {
                     trialDays: PUBLIC_TRIAL_DAYS,
                     earlyDays: EARLY_ADOPTER_FREE_DAYS,
@@ -132,13 +132,13 @@ export default function PricingPageClient({ locale: initialLocale }) {
                     designMonths: DESIGN_PARTNER_FREE_MONTHS,
                   })}
                 </p>
-                <div className="mb-5 rounded-control border border-ink/8 bg-white/70 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="mb-4 rounded-control border border-ink/8 bg-white/70 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
                     <label htmlFor="pricing-employees" className="text-sm font-medium text-ink">
                       {t(locale, 'pricing.employeeCountLabel')}
                     </label>
-                    <output htmlFor="pricing-employees" className="text-lg font-semibold text-ink">
-                      {employeeCount}
+                    <output htmlFor="pricing-employees" className="text-sm font-semibold tabular-nums text-ink">
+                      {employeeCount} {t(locale, 'pricing.employeeUnit')}
                     </output>
                   </div>
                   <input
@@ -155,7 +155,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
                     <span>{EARLY_ADOPTER_MAX_EMPLOYEES}+</span>
                   </div>
                 </div>
-                <div className="mb-5 rounded-control border border-ink/8 bg-ink/[0.035] p-1">
+                <div className="mb-4 rounded-control border border-ink/8 bg-ink/[0.035] p-1">
                   <div className="grid grid-cols-2 gap-1" role="group" aria-label={t(locale, 'pricing.billingCycleLabel')}>
                     {['monthly', 'annual'].map((cycle) => (
                       <button
@@ -170,7 +170,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
                     ))}
                   </div>
                 </div>
-                <div className="mb-6 rounded-card border border-brand-100 bg-brand-50/70 p-4">
+                <div className="mb-4 rounded-card border border-brand-100 bg-brand-50/70 p-3.5">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-sm text-ink-muted">
                       {billingCycle === 'annual' ? t(locale, 'pricing.annualTotalLabel') : t(locale, 'pricing.monthlyTotalLabel')}
@@ -182,25 +182,25 @@ export default function PricingPageClient({ locale: initialLocale }) {
                   <p className="mb-0 mt-1 text-xs text-ink-muted">
                     {t(locale, 'pricing.totalAfterTrial', { n: EARLY_ADOPTER_FREE_DAYS })}
                   </p>
-                  <p className="mb-0 mt-2 border-t border-brand-200/60 pt-2 text-xs leading-5 text-ink-muted">
+                  <p className="mb-0 mt-2 border-t border-brand-200/60 pt-2 text-[11px] leading-5 text-ink-muted">
                     {t(locale, 'pricing.billingDefinition')}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <Link
                     href="/signup"
-                    className="inline-flex min-h-touch items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
+                    className="inline-flex min-h-touch items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-4 py-3 text-sm text-white no-underline"
                   >
                     {t(locale, 'pricing.ctaSignup')}
                   </Link>
                   <Link
                     href="/login"
-                    className="inline-flex min-h-touch items-center justify-center rounded-control border border-ink/12 bg-white/70 px-5 py-3.5 text-sm text-ink no-underline"
+                    className="inline-flex min-h-touch items-center justify-center rounded-control border border-ink/12 bg-white/70 px-4 py-3 text-sm text-ink no-underline"
                   >
                     {t(locale, 'pricing.ctaLogin')}
                   </Link>
                 </div>
-                <p className="mb-0 mt-4 text-xs leading-relaxed text-ink-faint">
+                <p className="mb-0 mt-3 text-xs leading-relaxed text-ink-faint">
                   {t(locale, 'pricing.contactLead')}{' '}
                   <a
                     href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}?subject=${encodeURIComponent(t(locale, 'pricing.contactSubject'))}`}
@@ -211,6 +211,43 @@ export default function PricingPageClient({ locale: initialLocale }) {
                 </p>
               </article>
             </div>
+
+            <article className="mt-6 grid gap-6 rounded-card border border-ink/10 bg-white/75 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr),260px] lg:items-center">
+              <div>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <p className="mb-0 font-mono text-2xs uppercase tracking-[0.14em] text-brand-500/70">
+                    {t(locale, 'pricing.completePlanLabel')}
+                  </p>
+                  <span className="rounded-control border border-ink/12 bg-ink/[0.04] px-2 py-1 font-mono text-2xs text-ink-muted">
+                    {t(locale, 'pricing.completePlanBadge')}
+                  </span>
+                </div>
+                <h3 className="mb-2 mt-0 text-xl font-normal text-ink">{t(locale, 'pricing.completePlanName')}</h3>
+                <p className="mb-4 max-w-2xl text-sm leading-relaxed text-ink-muted">
+                  {t(locale, 'pricing.completePlanDescription')}
+                </p>
+                <ul className="m-0 grid list-none gap-x-5 gap-y-2 p-0 text-sm text-ink-muted sm:grid-cols-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <li key={n} className="relative pl-5 leading-relaxed before:absolute before:left-0 before:text-success before:content-['✓']">
+                      {t(locale, `pricing.completeFeature${n}`)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-control border border-brand-100 bg-brand-50/60 p-4 lg:text-center">
+                <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
+                  {t(locale, 'pricing.completePriceLabel')}
+                </p>
+                <p className="mb-1 mt-0 text-2xl font-normal text-ink">{t(locale, 'pricing.completePriceValue')}</p>
+                <p className="mb-4 text-xs leading-relaxed text-ink-muted">{t(locale, 'pricing.completePriceNote')}</p>
+                <a
+                  href={`mailto:${PRODUCT_LANDING_CONTACT_EMAIL}?subject=${encodeURIComponent(t(locale, 'pricing.completeContactSubject'))}`}
+                  className="inline-flex min-h-touch w-full items-center justify-center rounded-control border border-brand-300 bg-white/80 px-4 py-3 text-sm text-brand-700 no-underline hover:border-brand-400"
+                >
+                  {t(locale, 'pricing.completeCta')}
+                </a>
+              </div>
+            </article>
           </div>
         </section>
 

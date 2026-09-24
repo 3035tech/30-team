@@ -6,6 +6,7 @@ import {
   verifyEmployee2faLogin,
 } from '../../../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../../../lib/employee-login-session.js';
+import { normalizeLocale } from '../../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function POST(request) {
       return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
     }
 
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(body.locale);
     const challenge = verifyEmployee2faChallenge(body.challengeToken);
     if (!challenge) {
       return apiError(request, ERR.TWO_FA_CHALLENGE_INVALID, httpStatusForError(ERR.TWO_FA_CHALLENGE_INVALID));

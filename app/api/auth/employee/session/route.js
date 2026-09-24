@@ -15,6 +15,7 @@ import {
   signEmployee2faChallenge,
 } from '../../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
+import { normalizeLocale } from '../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export async function POST(request) {
     }
 
     const token = String(body.token || '').trim();
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(body.locale);
     const consumed = await consumeEmployeeMagicToken(query, { token });
     if (!consumed.ok) {
       return apiError(

@@ -9,6 +9,7 @@ import {
 import { query } from '../../../../../lib/db.js';
 import { signEmployee2faChallenge } from '../../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
+import { normalizeLocale } from '../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function POST(request) {
       return apiError(request, ERR.TURNSTILE_FAILED, httpStatusForError(ERR.TURNSTILE_FAILED));
     }
 
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(body.locale);
     const pickToken = String(body.pickToken || '').trim();
     const pickCandidateId = body.candidateId != null ? Number(body.candidateId) : null;
 

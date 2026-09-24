@@ -4,6 +4,7 @@ import { apiError, ERR, httpStatusForError } from '../../../../../lib/api-error.
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
 import { verifyTurnstileToken } from '../../../../../lib/turnstile.js';
 import { requestEmployeeMagicLink } from '../../../../../lib/employee-auth.js';
+import { normalizeLocale } from '../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function POST(request) {
 
     const email = String(body.email || '').trim().toLowerCase();
     const companySlug = String(body.companySlug || '').trim() || null;
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(body.locale);
 
     if (email) {
       const rlEmail = await checkRateLimit(`employee-magic-email:${email}`, 6, 15 * 60 * 1000);
