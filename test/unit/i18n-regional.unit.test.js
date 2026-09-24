@@ -10,6 +10,7 @@ import {
   normalizeLocale,
   t,
 } from '../../lib/i18n.js';
+import { buildProductLandingMetadata, getProductLandingCopy } from '../../lib/product-landing-seo.js';
 
 test('regional locales normalize with stable aliases and region metadata', () => {
   assert.deepEqual(LOCALES, ['pt-BR', 'pt-PT', 'en', 'es-419']);
@@ -34,6 +35,17 @@ test('regional catalogs override high-traffic copy and fall back safely', () => 
   assert.equal(t('en', 'pricing.completePlanName'), '30Grow Complete');
   assert.equal(t('es-419', 'pricing.navEarly'), 'Probar 30 días gratis');
   assert.equal(t('es-419', 'pricing.completePlanName'), '30Grow Completo');
-  assert.equal(t('es-419', 'common.closeMenu'), 'Close menu');
+  assert.equal(t('es-419', 'common.closeMenu'), 'Cerrar menú');
+  assert.equal(t('es-419', 'login.enter'), 'Iniciar sesión →');
+  assert.equal(t('es-419', 'signup.title'), 'Crea tu cuenta gratis');
   assert.notEqual(t('es-419', 'pricing.planName'), 'pricing.planName');
+});
+
+test('Spanish landing copy is selected consistently', () => {
+  const copy = getProductLandingCopy('es-419');
+  assert.match(copy.metaTitle, /reclutamiento/i);
+  assert.match(copy.heroTitle, /visión continua/i);
+  assert.equal(copy.navPricing, 'Precios');
+  assert.equal(copy.ui.navJourney, 'Cómo funciona');
+  assert.equal(buildProductLandingMetadata('es-419').openGraph.locale, 'es_419');
 });

@@ -24,10 +24,7 @@ function PrimaryCta({ copy, compact = false }) {
 function landingCopyKey(locale) {
   if (locale === 'en') return 'en';
   if (locale === 'pt-PT') return 'pt-PT';
-  // Spanish regional copy is currently complete on pricing; keep the main
-  // landing page in its reviewed English catalog until the full sales copy is
-  // translated, instead of mixing Spanish and Portuguese sections.
-  if (locale === 'es-419') return 'en';
+  if (locale === 'es-419') return 'es-419';
   return 'pt-BR';
 }
 
