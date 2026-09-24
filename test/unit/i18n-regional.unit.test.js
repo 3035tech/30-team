@@ -38,6 +38,8 @@ test('regional catalogs override high-traffic copy and fall back safely', () => 
   assert.equal(t('es-419', 'common.closeMenu'), 'Cerrar menú');
   assert.equal(t('es-419', 'login.enter'), 'Iniciar sesión →');
   assert.equal(t('es-419', 'signup.title'), 'Crea tu cuenta gratis');
+  assert.equal(t('es-419', 'panel.dp.editProfile'), 'Editar ficha');
+  assert.equal(t('es-419', 'panel.dp.profileTitle'), 'Información personal');
   assert.notEqual(t('es-419', 'pricing.planName'), 'pricing.planName');
 });
 
