@@ -1,5 +1,5 @@
 /**
- * k6 Smoke Test — 30Team
+ * k6 Smoke Test — 30Grow
  * 
  * Teste básico de sanidade: 1 VU por 30s.
  * Valida que endpoints críticos respondem sem erro.
@@ -28,7 +28,7 @@ export default function () {
   let res = http.get(`${BASE_URL}/`);
   check(res, {
     'landing page status 200': (r) => r.status === 200,
-    'landing page has title': (r) => r.body.includes('30Team'),
+    'landing page has title': (r) => r.body.includes('30Grow'),
   });
 
   sleep(1);

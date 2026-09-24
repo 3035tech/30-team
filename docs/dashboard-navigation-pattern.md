@@ -1,6 +1,6 @@
 # Padrão de navegação do dashboard
 
-Este documento define a fundação de navegação do painel 30Team. O objetivo é reduzir procura, preservar contexto e impedir que telas grandes sejam resolvidas apenas com mais cards ou mais rolagem.
+Este documento define a fundação de navegação do painel 30Grow. O objetivo é reduzir procura, preservar contexto e impedir que telas grandes sejam resolvidas apenas com mais cards ou mais rolagem.
 
 ## Menu lateral
 

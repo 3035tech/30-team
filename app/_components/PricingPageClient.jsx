@@ -55,7 +55,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
 
       <header className="sticky top-0 z-20 border-b border-ink/8 bg-canvas/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3 sm:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 no-underline" aria-label="30Team">
+          <Link href="/" className="inline-flex items-center gap-2 no-underline" aria-label="30Grow">
             <BrandMark size={28} withWordmark />
           </Link>
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">

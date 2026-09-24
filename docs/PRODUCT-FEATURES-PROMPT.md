@@ -1,11 +1,11 @@
-# Prompt — funcionalidades atuais do 30Team
+# Prompt — funcionalidades atuais do 30Grow
 
 Copie o bloco abaixo para um chat / agente quando precisar de contexto de **produto já entregue** (não de backlog). Data de referência: **set/2026**. Fonte: `AGENTS.md`, Guia (`HelpTab` / `panel.help.*`), `docs/BACKLOG.md` (epics fechados), código em `app/` + `lib/`.
 
 ---
 
 ```
-Você está trabalhando no 30Team (30team) — produto de RH da 3035Tech para perfil de trabalho e recrutamento.
+Você está trabalhando no 30Grow (30team) — produto de RH da 3035Tech para perfil de trabalho e recrutamento.
 
 ## O que é (e o que NÃO é)
 - Instrumento principal: avaliação inspirada no Eneagrama, tipos T1–T9 (estilo de trabalho).
@@ -195,7 +195,7 @@ Gap vs roteiro de demo concorrentes (cliente oculto): `docs/GAP-cliente-oculto-r
 
 | Contexto | Como usar |
 |----------|-----------|
-| Ideação / roadmap | “Com base neste mapa do 30Team, proponha a próxima feature de maior valor sem duplicar o que já existe.” |
+| Ideação / roadmap | “Com base neste mapa do 30Grow, proponha a próxima feature de maior valor sem duplicar o que já existe.” |
 | Implementação | Colar o prompt + pedido específico; reforçar “reusar antes de criar”. |
 | Onboarding de agente | Colar no início da sessão junto com `AGENTS.md`. |
 | Pitch / vendas | Usar as seções “O que é”, superfícies públicas e pilares (recrutar / perfil / time / pós-hire). |

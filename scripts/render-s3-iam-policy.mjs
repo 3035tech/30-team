@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Prints the least-privilege policy required by 30Team object storage.
+ * Prints the least-privilege policy required by 30Grow object storage.
  * Usage:
  *   S3_BUCKET=30team node scripts/render-s3-iam-policy.mjs > /tmp/30team-s3-policy.json
  *   aws iam put-user-policy --user-name 30team-s3 \
@@ -22,7 +22,7 @@ const policy = {
   Version: '2012-10-17',
   Statement: [
     {
-      Sid: 'List30TeamTenantPrefixes',
+      Sid: 'List30GrowTenantPrefixes',
       Effect: 'Allow',
       Action: ['s3:ListBucket'],
       Resource: bucketArn,
@@ -38,7 +38,7 @@ const policy = {
       },
     },
     {
-      Sid: 'Manage30TeamTenantObjects',
+      Sid: 'Manage30GrowTenantObjects',
       Effect: 'Allow',
       Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
       Resource: [

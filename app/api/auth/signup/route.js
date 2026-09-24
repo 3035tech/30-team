@@ -107,8 +107,8 @@ export async function POST(request) {
           const loginUrl = `${appUrl}/login`;
           const subject =
             loc === 'en'
-              ? 'You already have a 30Team account'
-              : 'Você já tem uma conta no 30Team';
+              ? 'You already have a 30Grow account'
+              : 'Você já tem uma conta no 30Grow';
           const text =
             loc === 'en'
               ? `Someone tried to sign up with this email. You already have an account. Sign in: ${loginUrl}\n`

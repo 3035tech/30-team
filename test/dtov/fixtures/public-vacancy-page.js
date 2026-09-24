@@ -24,7 +24,7 @@ export async function seed(client) {
     [
       companyId,
       'https://todos-os-dados.demo',
-      '<p>Empresa demo do 30Team — dados completos para validação de fluxos de RH.</p>',
+      '<p>Empresa demo do 30Grow — dados completos para validação de fluxos de RH.</p>',
     ]
   );
 

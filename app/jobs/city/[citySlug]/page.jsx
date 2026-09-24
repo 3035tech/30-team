@@ -43,9 +43,9 @@ export async function generateMetadata({ params, searchParams } = {}) {
       url: canonical,
       title,
       description,
-      siteName: '30Team',
+      siteName: '30Grow',
       locale: locale === 'en' ? 'en_US' : 'pt_BR',
-      images: ogImage ? [{ url: ogImage, width: 512, height: 512, alt: '30Team' }] : undefined,
+      images: ogImage ? [{ url: ogImage, width: 512, height: 512, alt: '30Grow' }] : undefined,
     },
     twitter: {
       card: 'summary_large_image',

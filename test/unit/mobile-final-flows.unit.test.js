@@ -109,7 +109,7 @@ test('native push keeps legacy destination but sends only generic copy and an op
   const db = { query: async (sql, values) => { assert.match(sql, /candidate_id = \$1 AND company_id = \$2/); assert.deepEqual([...values], [10, 1]); return { rows: [{ token: 'ExpoPushToken[test]' }] }; } };
   await domain.sendMobileEmployeePush(db, { candidateId: 10, companyId: 1, destination: 'dp', notificationId: 99, title: 'Sensitive', body: 'Health details' });
   assert.equal(sent[0].data.notificationId, '99'); assert.equal(sent[0].data.url, 'team30://workspace?destination=dp');
-  assert.equal(sent[0].title, '30 Team'); assert.equal(JSON.stringify(sent).includes('Health details'), false); assert.equal(JSON.stringify(sent).includes('Sensitive'), false);
+  assert.equal(sent[0].title, '30 Grow'); assert.equal(JSON.stringify(sent).includes('Health details'), false); assert.equal(JSON.stringify(sent).includes('Sensitive'), false);
 });
 test('notification reference lookup binds both tenant and recipient; fanout emits only inserted recipient/ID pairs', async () => {
   const sends = [], calls = [];

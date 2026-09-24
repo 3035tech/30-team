@@ -781,7 +781,7 @@ export async function seedTodosOsDadosModules(client, ctx) {
         ytLesson.id,
         'Qual é o objetivo deste curso de onboarding?',
         JSON.stringify([
-          { id: 'a', text: 'Alinhar cultura e uso do 30Team no dia a dia.' },
+          { id: 'a', text: 'Alinhar cultura e uso do 30Grow no dia a dia.' },
           { id: 'b', text: 'Substituir a entrevista técnica.' },
           { id: 'c', text: 'Fechar folha de pagamento.' },
         ]),

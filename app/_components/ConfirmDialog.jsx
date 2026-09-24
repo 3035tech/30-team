@@ -71,7 +71,7 @@ export function ConfirmDialog({
             danger ? 'text-danger' : 'text-brand-500'
           )}
         >
-          30Team
+          30Grow
         </span>
         <h2
           id="confirm-dialog-title"

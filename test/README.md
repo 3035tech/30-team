@@ -1,6 +1,6 @@
 # `test/` — pacote de provas (não é produto)
 
-Separado de `scripts/` (migrate/seed/ops) e de `app/` / `lib/` (código do 30Team).
+Separado de `scripts/` (migrate/seed/ops) e de `app/` / `lib/` (código do 30Grow).
 
 ```
 test/

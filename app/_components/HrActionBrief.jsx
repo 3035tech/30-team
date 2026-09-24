@@ -94,7 +94,7 @@ export function HrActionBrief({
       personName,
       brief,
       labels: {
-        product: '30Team',
+        product: '30Grow',
         title: t(locale, 'panel.team.briefTitle'),
         hint: t(locale, 'panel.team.briefHint'),
         alerts: t(locale, 'panel.team.briefAlerts'),

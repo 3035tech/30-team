@@ -68,7 +68,7 @@ Não foram adicionados campos de domínio nem alteradas APIs, autorização ou S
 Não afirmar que todas as telas/botões/links foram exercitados.
 
 ## Direção visual
-Preservar tokens de marca, tipografia e componentes canônicos do 30 Team.
+Preservar tokens de marca, tipografia e componentes canônicos do 30 Grow.
 Padronizar primeiro controles e acessibilidade, depois composição por tela.
 Sem segundo kit visual, sem remover HTML semântico, sem copiar layout mobile.
 Referência externa solicitada ao responsável; ainda não fornecida.

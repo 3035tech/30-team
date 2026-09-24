@@ -741,7 +741,7 @@ export default function AssessmentFlow({
         <div className={SC.app}>
           <div className={SC.glow} />
           <div className={SC.card}>
-            <span className={SC.label}>◈ 30Team</span>
+            <span className={SC.label}>◈ 30Grow</span>
             <p className={cn(SC.p, 'mb-0')}>{saveError || t(locale, 'candidate.finishErrorFallback')}</p>
             <button
               type="button"

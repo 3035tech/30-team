@@ -1,4 +1,4 @@
-# 30Team
+# 30Grow
 
 > Perfis e dinâmica de equipe (time interno e contratações) — Next.js + Postgres + Docker/K8s
 
@@ -27,7 +27,7 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 ## Estrutura do projeto
 
 ```
-30Team/
+30Grow/
 ├── app/
 │   ├── page.jsx                 ← Landpage SEO / early access
 │   ├── signup/                  ← Self-service signup (early access)

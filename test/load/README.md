@@ -1,4 +1,4 @@
-# Load Testing — 30Team
+# Load Testing — 30Grow
 
 Testes de carga com **k6** para validar performance em cenários realistas.
 

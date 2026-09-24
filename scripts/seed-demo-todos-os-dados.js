@@ -712,7 +712,7 @@ async function main() {
         SLUG,
         calendarYmd(5, 12),
         'https://www.todososdados.demo',
-        '<p><strong>Todos os Dados</strong> é a empresa demo do 30Team para apresentações.</p><p>Recrutamento T1–T9, Motivadores, People e LMS.</p>',
+        '<p><strong>Todos os Dados</strong> é a empresa demo do 30Grow para apresentações.</p><p>Recrutamento T1–T9, Motivadores, People e LMS.</p>',
       ]
     );
     const companyId = co.rows[0].id;
@@ -799,7 +799,7 @@ async function main() {
         companyId,
         'Engenheiro(a) Fullstack: Plataforma',
         'engenheiro-fullstack-plataforma',
-        '<p><strong>Missão:</strong> evoluir o produto 30Team (Next.js + Postgres).</p><ul><li>React / Node</li><li>SQL e performance</li><li>Cultura de entrega com qualidade</li></ul>',
+        '<p><strong>Missão:</strong> evoluir o produto 30Grow (Next.js + Postgres).</p><ul><li>React / Node</li><li>SQL e performance</li><li>Cultura de entrega com qualidade</li></ul>',
         '14000.00',
         '22000.00',
         jobRoleId,
@@ -1084,7 +1084,7 @@ async function main() {
 <p><strong>Alertas / pontos a explorar na entrevista:</strong> Pedro — profundidade sem travar o sprint. Lara — colaboração com times mais “atalho”. Marina — decisão sob pressão e documentação.</p>
 <p><strong>Próximo passo sugerido:</strong> Agendar entrevistas técnicas com o time do cliente para Pedro e Lara; segunda passagem com Marina se houver capacidade. Gustavo fora (gap técnico); Otávio em banco interno.</p>`;
     const vacancyDesc =
-      '<p><strong>Missão:</strong> evoluir o produto 30Team (Next.js + Postgres) com qualidade e previsibilidade.</p><ul><li>React / Node em produto multi-tenant</li><li>SQL, índices e performance em listagens</li><li>Cultura de entrega com revisão e documentação</li></ul>';
+      '<p><strong>Missão:</strong> evoluir o produto 30Grow (Next.js + Postgres) com qualidade e previsibilidade.</p><ul><li>React / Node em produto multi-tenant</li><li>SQL, índices e performance em listagens</li><li>Cultura de entrega com revisão e documentação</li></ul>';
     const note = sanitizeRichTextHtml(executiveNoteRaw, 8000);
     const description = sanitizeRichTextHtml(vacancyDesc, 12000);
     const weightedTypes = rubricWeightedTypes(RUBRIC_WEIGHTS);
@@ -1693,7 +1693,7 @@ async function main() {
         `INSERT INTO lms_lessons (company_id, course_id, title, content_url, content_kind, sort_order)
          VALUES
            ($1, $2, 'Bem-vindo à empresa', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'youtube', 0),
-           ($1, $2, 'Como usamos o 30Team', '/demo/lms-guide.pdf', 'pdf', 1)
+           ($1, $2, 'Como usamos o 30Grow', '/demo/lms-guide.pdf', 'pdf', 1)
          RETURNING id`,
         [companyId, courseId]
       );

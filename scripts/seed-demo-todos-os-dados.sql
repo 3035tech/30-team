@@ -388,7 +388,7 @@ BEGIN
     (CURRENT_DATE + 5) - INTERVAL '12 years',
     'https://www.todososdados.demo',
     $html$
-<p><strong>Todos os Dados</strong> é a empresa demo do 30Team para apresentações.</p>
+<p><strong>Todos os Dados</strong> é a empresa demo do 30Grow para apresentações.</p>
 <p>Recrutamento com perfil de trabalho T1–T9, Motivadores, People (1:1, PDI, clima, pulso) e LMS.</p>
 $html$,
     TRUE,
@@ -449,7 +449,7 @@ $html$,
     'engenheiro-fullstack-plataforma',
     'open', 2, CURRENT_DATE + 21, FALSE,
     $html$
-<p><strong>Missão:</strong> evoluir o produto 30Team (Next.js + Postgres) com qualidade e previsibilidade.</p>
+<p><strong>Missão:</strong> evoluir o produto 30Grow (Next.js + Postgres) com qualidade e previsibilidade.</p>
 <ul>
 <li>React / Node em produto multi-tenant</li>
 <li>SQL, índices e performance em listagens</li>
@@ -773,7 +773,7 @@ $html$,
         'positionsCount', 2,
         'status', 'open',
         'description',
-          '<p><strong>Missão:</strong> evoluir o produto 30Team (Next.js + Postgres).</p>'
+          '<p><strong>Missão:</strong> evoluir o produto 30Grow (Next.js + Postgres).</p>'
       ),
       'privacy', jsonb_build_object('showSalaryExpectation', TRUE),
       'rubricSummary', jsonb_build_object(
@@ -1276,7 +1276,7 @@ $html$,
 
     INSERT INTO lms_lessons (company_id, course_id, title, content_url, content_kind, sort_order)
     VALUES
-      (v_company_id, v_course_id, 'Como usamos o 30Team',
+      (v_company_id, v_course_id, 'Como usamos o 30Grow',
        '/demo/lms-guide.pdf', 'pdf', 1)
     RETURNING id INTO v_lesson2_id;
 

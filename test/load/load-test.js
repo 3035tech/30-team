@@ -1,5 +1,5 @@
 /**
- * k6 Load Test — 30Team
+ * k6 Load Test — 30Grow
  * 
  * Carga média: 10 VUs por 5 minutos.
  * Simula uso diário com múltiplos gestores navegando simultaneamente.

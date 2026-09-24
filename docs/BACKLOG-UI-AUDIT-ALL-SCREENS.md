@@ -1,4 +1,4 @@
-# Backlog UI/UX: auditoria de todas as telas do 30Team
+# Backlog UI/UX: auditoria de todas as telas do 30Grow
 
 Auditoria transversal de disposição de componentes, hierarquia visual, uso de espaço, densidade, ações, navegação, responsividade, acessibilidade e estados de interface.
 
@@ -30,7 +30,7 @@ O navegador local não estava disponível nesta sessão. Portanto, o documento n
 
 ## 2. Diagnóstico executivo
 
-O 30Team possui bons componentes canônicos para listagens, formulários, loading, empty state e progressive disclosure. O principal problema atual não é falta de design system. É a quantidade de responsabilidades acumuladas em algumas telas.
+O 30Grow possui bons componentes canônicos para listagens, formulários, loading, empty state e progressive disclosure. O principal problema atual não é falta de design system. É a quantidade de responsabilidades acumuladas em algumas telas.
 
 Os arquivos mais densos são sinais objetivos de risco de UX e manutenção:
 

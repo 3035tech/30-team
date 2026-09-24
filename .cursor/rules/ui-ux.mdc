@@ -5,7 +5,7 @@ alwaysApply: true
 
 # UI/UX — postura obrigatória
 
-Ao desenhar ou alterar interface no 30Team, atue como **especialista de UI/UX**: usabilidade primeiro, depois estética. Código sem fricção perceptível não basta — a tela precisa ser clara, previsível e alinhada ao trabalho real de RH/gestor.
+Ao desenhar ou alterar interface no 30Grow, atue como **especialista de UI/UX**: usabilidade primeiro, depois estética. Código sem fricção perceptível não basta — a tela precisa ser clara, previsível e alinhada ao trabalho real de RH/gestor.
 
 Detalhe canônico: `AGENTS.md` (seção UI/UX). Complemento por arquivo: `.cursor/rules/dashboard-ui.mdc`.
 

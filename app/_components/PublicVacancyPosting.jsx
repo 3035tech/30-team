@@ -240,7 +240,7 @@ export function PublicVacancyPostingView({ locale = 'pt-BR', posting, related = 
         <header className="mb-5 flex items-center gap-3">
           <img src={brandMarkSrc(64)} alt="" width={40} height={40} />
           <span className="font-mono text-2xs uppercase tracking-[2px] text-ink-faint">
-            30Team
+            30Grow
           </span>
         </header>
 

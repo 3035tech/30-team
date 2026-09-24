@@ -1,5 +1,5 @@
 -- =============================================================================
--- EVAL 20 — massa SQL para avaliar funcionalidades do 30Team
+-- EVAL 20 — massa SQL para avaliar funcionalidades do 30Grow
 -- =============================================================================
 -- Tenant isolado (slug = eval-20-demo). Não toca outras empresas.
 --
@@ -264,7 +264,7 @@ BEGIN
     'Pessoa Engenheira de Software — Eval',
     'pessoa-engenheira-software-eval',
     'open', 3, CURRENT_DATE + 30, FALSE,
-    '<p><strong>Missão:</strong> massa de avaliação do funil 30Team.</p><ul><li>Next.js</li><li>Postgres</li><li>Multi-tenant</li></ul>',
+    '<p><strong>Missão:</strong> massa de avaliação do funil 30Grow.</p><ul><li>Next.js</li><li>Postgres</li><li>Multi-tenant</li></ul>',
     '12000.00', '20000.00', TRUE, v_role_id
   )
   RETURNING id INTO v_vac_id;

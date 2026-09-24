@@ -90,7 +90,7 @@ export function SystemNoticeModal({
           </span>
           <div className="min-w-0 flex-1">
             <span className={cn('font-mono text-2xs uppercase tracking-[2px]', accentClass)}>
-              30Team
+              30Grow
             </span>
             <h2
               id="system-notice-title"

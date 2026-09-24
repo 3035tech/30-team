@@ -34,7 +34,7 @@ export async function generateMetadata(props) {
       url,
       title,
       description,
-      siteName: '30Team',
+      siteName: '30Grow',
       images: ogImage
         ? [{ url: ogImage, width: 512, height: 512, alt: name }]
         : undefined,

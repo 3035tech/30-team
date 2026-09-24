@@ -1,4 +1,4 @@
-# 30Team — gates for dev-test-validate
+# 30Grow — gates for dev-test-validate
 
 Use the **smallest** set that covers the change. Skip gates that cannot apply.
 

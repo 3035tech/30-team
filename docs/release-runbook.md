@@ -26,7 +26,7 @@ O validador é somente leitura. Ele falha se alguma migration canônica não est
 ## Rollback
 
 1. Reimplantar a tag anterior da aplicação.
-2. Não remover colunas/tabelas automaticamente: migrations do 30Team são expansivas e a versão anterior deve tolerar campos adicionais.
+2. Não remover colunas/tabelas automaticamente: migrations do 30Grow são expansivas e a versão anterior deve tolerar campos adicionais.
 3. Restaurar backup apenas diante de corrupção/perda confirmada e com janela de manutenção aprovada.
 4. Registrar causa, intervalo afetado e migrations aplicadas.
 

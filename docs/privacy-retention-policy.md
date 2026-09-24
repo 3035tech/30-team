@@ -1,6 +1,6 @@
 # Política operacional de retenção e exclusão
 
-Documento interno do 30Team para o piloto. A versão pública está em `/privacy`. Este documento orienta engenharia e operação, mas os prazos legais e contratuais precisam de aprovação do controlador e da assessoria jurídica antes do go-live.
+Documento interno do 30Grow para o piloto. A versão pública está em `/privacy`. Este documento orienta engenharia e operação, mas os prazos legais e contratuais precisam de aprovação do controlador e da assessoria jurídica antes do go-live.
 
 ## Princípios
 

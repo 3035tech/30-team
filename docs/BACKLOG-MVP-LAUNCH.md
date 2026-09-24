@@ -1,6 +1,6 @@
 # Backlog de lançamento do MVP
 
-Plano curto para levar o 30Team do estado de demonstração ao primeiro cliente pagante. Este documento prioriza confiança, fluxo completo e capacidade de suporte. Não é um plano de escala para milhões de usuários nem uma lista de paridade com concorrentes.
+Plano curto para levar o 30Grow do estado de demonstração ao primeiro cliente pagante. Este documento prioriza confiança, fluxo completo e capacidade de suporte. Não é um plano de escala para milhões de usuários nem uma lista de paridade com concorrentes.
 
 ## Regra de prioridade
 

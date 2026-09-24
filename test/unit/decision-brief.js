@@ -46,7 +46,7 @@ const html = (await import('../../lib/people/brief-print.js')).buildBriefPrintHt
     hypotheses: [{ id: 'h1', title: 'H', body: 'Body' }],
   },
   labels: {
-    product: '30Team',
+    product: '30Grow',
     title: 'Briefing',
     hint: 'hint',
     alerts: 'Alertas',

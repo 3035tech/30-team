@@ -1,4 +1,4 @@
-# Privacidade e LGPD — notas internas (30Team)
+# Privacidade e LGPD — notas internas (30Grow)
 
 Documento operacional para equipe de produto e engenharia. **Não substitui parecer jurídico** nem política de privacidade voltada ao público.
 

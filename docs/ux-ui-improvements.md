@@ -1,6 +1,6 @@
 # UX/UI — Melhorias Completas (Categoria Inteira)
 
-Implementação sistemática de todas as melhorias críticas e de alto impacto identificadas na análise de usabilidade do 30Team.
+Implementação sistemática de todas as melhorias críticas e de alto impacto identificadas na análise de usabilidade do 30Grow.
 
 ---
 

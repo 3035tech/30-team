@@ -194,7 +194,7 @@ export function EmptyAnalytics({ onViewTutorial }) {
         </svg>
       }
       title="Aguardando dados para analytics"
-      message="As métricas serão geradas automaticamente conforme você usar o 30Team. Contrate, acompanhe PDI e lance pesquisas de clima."
+      message="As métricas serão geradas automaticamente conforme você usar o 30Grow. Contrate, acompanhe PDI e lance pesquisas de clima."
       primaryAction={
         onViewTutorial
           ? {

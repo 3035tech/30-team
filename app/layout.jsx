@@ -9,7 +9,7 @@ export async function generateMetadata() {
   const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   return {
-    title: '30Team',
+    title: '30Grow',
     description: t(locale, 'home.metaDescription'),
     icons: {
       icon: [

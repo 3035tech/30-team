@@ -26,7 +26,7 @@ function ProductPreview({ copy }) {
     <figure className="relative m-0 lg:translate-x-8" aria-label={u.previewAria}>
       <div className="absolute -left-5 top-14 hidden h-24 w-24 rounded-full border border-brand-300/50 lg:block" aria-hidden />
       <div className="relative overflow-hidden rounded-[22px] border border-ink/10 bg-surface shadow-dialog">
-        <div className="flex items-center justify-between border-b border-ink/8 px-4 py-3"><div className="flex gap-2"><span className="h-2.5 w-2.5 rounded-full bg-danger/50" /><span className="h-2.5 w-2.5 rounded-full bg-warning/50" /><span className="h-2.5 w-2.5 rounded-full bg-success/50" /></div><span className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-faint">30Team · {u.liveWorkspace}</span></div>
+        <div className="flex items-center justify-between border-b border-ink/8 px-4 py-3"><div className="flex gap-2"><span className="h-2.5 w-2.5 rounded-full bg-danger/50" /><span className="h-2.5 w-2.5 rounded-full bg-warning/50" /><span className="h-2.5 w-2.5 rounded-full bg-success/50" /></div><span className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-faint">30Grow · {u.liveWorkspace}</span></div>
         <div className="grid min-h-[420px] grid-cols-[64px_1fr] sm:grid-cols-[92px_1fr]">
           <div className="border-r border-ink/8 bg-canvas-alt/55 px-2 py-5">
             <div className="mx-auto mb-6 flex h-8 w-8 items-center justify-center rounded-control bg-brand-100"><BrandMark size={20} /></div>

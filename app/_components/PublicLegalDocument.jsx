@@ -22,7 +22,7 @@ export function PublicLegalDocument({ copy }) {
         <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
           <article className="overflow-hidden rounded-card border border-ink/10 bg-surface shadow-card">
             <header className="border-b border-ink/8 px-6 py-8 sm:px-10 sm:py-10">
-              <p className="m-0 font-mono text-2xs uppercase tracking-[0.2em] text-brand-600">30Team · 3035Tech</p>
+              <p className="m-0 font-mono text-2xs uppercase tracking-[0.2em] text-brand-600">30Grow · 3035Tech</p>
               <h1 className="mb-0 mt-4 font-display text-4xl font-normal leading-tight tracking-[-0.025em] text-ink sm:text-5xl">{copy.document.title}</h1>
               <p className="mb-0 mt-4 max-w-3xl text-base leading-7 text-ink-muted">{copy.document.intro}</p>
               <p className="mb-0 mt-5 font-mono text-xs text-ink-faint">{copy.common.version}</p>

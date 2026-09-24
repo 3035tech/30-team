@@ -1,6 +1,6 @@
 # Backlog de evolução: benchmark Sólides/RHGestor
 
-Análise crítica do Sólides/RHGestor em comparação com o 30Team, preparada a partir dos prints disponíveis em `/Users/thomasmetz/Documents/Solides` em setembro de 2026.
+Análise crítica do Sólides/RHGestor em comparação com o 30Grow, preparada a partir dos prints disponíveis em `/Users/thomasmetz/Documents/Solides` em setembro de 2026.
 
 Foram encontrados 62 arquivos PNG, com aproximadamente 45 telas únicas após desconsiderar duplicações. Os prints cobrem principalmente dashboard do colaborador, People Analytics, cargos e carreira, cadastro de colaboradores, SESMT, férias, LMS, perfis e provas, documentos, recrutamento, admissão, desligamento, aprovações, avaliação, PDI, metas, relatórios e configurações.
 
@@ -8,9 +8,9 @@ Este documento é backlog de produto e referência para desenho futuro. Não é 
 
 ## 1. Decisão de produto
 
-O 30Team não deve buscar paridade ampla com a Sólides. A Sólides é mais completa como sistema administrativo de RH, mas apresenta navegação profunda, muitas telas operacionais, relatórios fragmentados e sobreposição entre cargo, pessoa e lotação.
+O 30Grow não deve buscar paridade ampla com a Sólides. A Sólides é mais completa como sistema administrativo de RH, mas apresenta navegação profunda, muitas telas operacionais, relatórios fragmentados e sobreposição entre cargo, pessoa e lotação.
 
-O posicionamento recomendado para o 30Team é:
+O posicionamento recomendado para o 30Grow é:
 
 > Plataforma de inteligência e operação de pessoas que acompanha a jornada da vaga ao desenvolvimento, sustentada por uma estrutura organizacional confiável.
 
@@ -23,7 +23,7 @@ Prioridade estratégica:
 
 ## 2. Resumo comparativo
 
-| Dimensão | Sólides/RHGestor | 30Team | Decisão |
+| Dimensão | Sólides/RHGestor | 30Grow | Decisão |
 |---|---|---|---|
 | Estrutura organizacional | Grupo, empresa, filial, área, departamento, setor, cargo e superior | Área simples, cargo leve e gestor direto na pessoa | Investir como fundação |
 | Engenharia de cargos | Cadastro extenso, requisitos e carreira | Nome, descrição, rubrica T1–T9, faixa e trilha LMS | Evoluir sem copiar excesso de abas |
@@ -40,7 +40,7 @@ Prioridade estratégica:
 
 ## 3. Lacuna estrutural prioritária
 
-O 30Team ainda não separa adequadamente:
+O 30Grow ainda não separa adequadamente:
 
 - empresa e estabelecimento;
 - unidade organizacional;
@@ -139,7 +139,7 @@ Regras:
 
 ### 4.4 Empresa jurídica e filial
 
-Não sobrecarregar `companies` para representar todos os níveis. A empresa do 30Team continua sendo o tenant. Dentro dela podem existir:
+Não sobrecarregar `companies` para representar todos os níveis. A empresa do 30Grow continua sendo o tenant. Dentro dela podem existir:
 
 #### Pessoa jurídica
 
@@ -665,7 +665,7 @@ Evitar uma página com dezenas ou centenas de links para relatórios quase iguai
 
 ### Pulso emocional diário identificável
 
-O 30Team já possui clima, eNPS, pulso e ouvidoria. Qualquer pulso frequente precisa de anonimato, coorte mínima, frequência controlada e propósito explícito.
+O 30Grow já possui clima, eNPS, pulso e ouvidoria. Qualquer pulso frequente precisa de anonimato, coorte mínima, frequência controlada e propósito explícito.
 
 ### Formulários e BPM genéricos
 
@@ -790,4 +790,4 @@ O benchmark estará convertido em capacidade de produto quando:
 - permissões e queries permanecerem tenant-safe;
 - navegação continuar mais simples que a referência analisada.
 
-O objetivo não é declarar paridade com a Sólides. É incorporar as capacidades que fortalecem a proposta do 30Team sem herdar a complexidade do concorrente.
+O objetivo não é declarar paridade com a Sólides. É incorporar as capacidades que fortalecem a proposta do 30Grow sem herdar a complexidade do concorrente.

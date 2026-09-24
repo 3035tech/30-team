@@ -1860,7 +1860,7 @@ async function main() {
   const offline = argv.includes('--offline');
   const forceDtov = argv.includes('--dtov') || process.env.DTOV === '1';
 
-  process.stdout.write('30Team full regression\n');
+  process.stdout.write('30Grow full regression\n');
 
   // DTOV env must be set BEFORE any import of lib/db.js (pool is created at load).
   if (forceDtov) {

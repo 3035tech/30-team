@@ -2,7 +2,7 @@
 name: dev-test-validate
 description: >-
   REQUIRED after every product implementation (feature, bugfix, migration,
-  API, behavioral UI) in 30Team — bounded Dev → Test → (fix) → Final validation
+  API, behavioral UI) in 30Grow — bounded Dev → Test → (fix) → Final validation
   with ephemeral Postgres (DTOV). Also use when the user asks for
   "dev-test-validate", "pipeline de testes", "roda o pipeline",
   "validate after changes", "teste geral", "regressão", or a develop/test/fix
@@ -170,7 +170,7 @@ This is **not** the default focused Test gate. It runs SQL integrity across the 
 - Seeding or migrating the **developer** Postgres from this pipeline  
 - Skipping `dtov:down` and leaving an orphaned container without telling the user  
 
-## 30Team
+## 30Grow
 
 Default gates and invariants: [gates.md](gates.md).  
 Harness detail: [harness.md](harness.md).

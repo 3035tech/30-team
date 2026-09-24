@@ -1,4 +1,4 @@
-# Backlog — 30Team
+# Backlog — 30Grow
 
 Ideias de funcionalidades **ainda não implementadas**.
 
@@ -25,11 +25,11 @@ Não usar para bugs pontuais. Aqui só **produto / capacidade nova**.
 
 ---
 
-## Diferenças (30Team vs produtos típicos) — base do epic B-400
+## Diferenças (30Grow vs produtos típicos) — base do epic B-400
 
 Gerado a partir do mapa de features atuais (ago/2026). **Não** copiar feature de concorrente se já cobrimos o job-to-be-done com T1–T9 + Motivadores + compat.
 
-| Família de produto | O que costumam ter | 30Team hoje | Gap / oportunidade |
+| Família de produto | O que costumam ter | 30Grow hoje | Gap / oportunidade |
 |--------------------|--------------------|-------------|--------------------|
 | **ATS** (Gupy, Greenhouse, Lever) | Pipeline custom, CV/LinkedIn, scorecards, calendário, oferta | Pipeline + kanban + notes + scorecard leve + pool + /j SEO + /r | Fechado no escopo B-400 (sem virar ATS genérico) |
 | **Assessment puro** | Bateria própria + PDF + benchmarks | T1–T9 + Motivadores + rubrica + PDF briefing + print /r | Aprofundar Eneagrama e Motivadores sem adicionar outro instrumento |
@@ -131,7 +131,7 @@ Pedido (ago/2026): completar o ciclo **módulos geram → núcleo transforma →
 
 **Já coberto (não reimplementar):**
 
-| Bloco da arquitetura | 30Team hoje |
+| Bloco da arquitetura | 30Grow hoje |
 |----------------------|-------------|
 | M1 Portal / funil / perfil | `/j` `/c` `/v` `/t`, pipeline, rubrica, T1–T9, Motivadores, Fit, `/r` |
 | M3 PDI + jornada leve | PDI, 1:1, check-ins D30/D60/D90, `/e`, seed concern→PDI |
@@ -414,7 +414,7 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 
 ---
 
-## Aberto — Epic B-1900 (gaps do roteiro cliente oculto × 30Team)
+## Aberto — Epic B-1900 (gaps do roteiro cliente oculto × 30Grow)
 
 _(entregue — B-1901 dossier Equipe; B-1902 complementaridade/tensão Overview+Grupos; B-1903 workbench multi-sinal Overview; B-1904 IA interpretativa hedged em dossier/tensão/workbench. Ver Guia `b1900Packaging`.)_
 
@@ -476,7 +476,7 @@ Fonte: varredura pública [solides.com.br](https://solides.com.br) (home, soluç
 
 ### Já cobrimos (job-to-be-done — **não** reabrir como cópia Sólides)
 
-| Família Sólides | 30Team hoje |
+| Família Sólides | 30Grow hoje |
 |-----------------|-------------|
 | ATS leve (portal, funil Kanban, banco, carreiras `/jobs` `/companies`, indicação, share UTM) | Vagas + pipeline + Talent Bank + SEO + referral |
 | Match vaga × pessoa | Rubrica T1–T9 + Fit + ranking (sem “triagem de CV por IA”) |
@@ -632,11 +632,11 @@ Fonte: varredura pública Sólides, InCicle, TagguiRH, TeamCulture, Qulture.rock
 - **RH+DP:** Sólides, InCicle, TagguiRH — ponto/folha/admissão **e** desempenho. Disputam “sistema único”.
 - **Performance/engajamento puro:** TeamCulture, Qulture, Alina, ImpulseUp — **não** fazem DP; integram folha. Disputam “camada estratégica”.
 
-**Onde o 30Team joga:** profundo no segundo bloco (1:1, 360, 9Box, PDI, clima, eNPS, pulso, LMS, sucessão, exit, HR Score, radar de turnover, analytics) **e** unificando DP leve no mesmo `candidates` / um login (tese B-2700). Cunha = união + T1–T9/Motivadores, **não** amplitude InCicle.
+**Onde o 30Grow joga:** profundo no segundo bloco (1:1, 360, 9Box, PDI, clima, eNPS, pulso, LMS, sucessão, exit, HR Score, radar de turnover, analytics) **e** unificando DP leve no mesmo `candidates` / um login (tese B-2700). Cunha = união + T1–T9/Motivadores, **não** amplitude InCicle.
 
 ### Já cobrimos (não reabrir como cópia)
 
-| Job | 30Team hoje | Quem também tem | Quem **não** tem (vantagem nossa) |
+| Job | 30Grow hoje | Quem também tem | Quem **não** tem (vantagem nossa) |
 |-----|-------------|-----------------|-------------------------------------|
 | 1:1s + hipóteses + prep | Equipe + `/e` + `/employee` | TeamCulture, Qulture, Alina, ImpulseUp | **Sólides e Taggui** (gap de mercado do estudo) |
 | Avaliação 90/180/360 + 9Box | B-1004 + B-2703 + B-2704 | todos os 7 em algum grau | — |

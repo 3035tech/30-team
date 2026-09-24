@@ -1,4 +1,4 @@
-# Self-Service Signup — 30Team
+# Self-Service Signup — 30Grow
 
 Implementado nas migrations `051_self_service_signup.sql` e `052_analytics_tracking.sql`.
 
@@ -190,7 +190,7 @@ Wizard guiado que aparece automaticamente no primeiro acesso ao dashboard de qua
 
 5. **Done** (🎉)
    - Links para Overview e Guia (Help)
-   - CTA: "Começar a usar o 30Team"
+   - CTA: "Começar a usar o 30Grow"
    - Marca `onboarding_completed = TRUE`
 
 ### API

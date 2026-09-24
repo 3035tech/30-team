@@ -1,4 +1,4 @@
-# Gap — roteiro cliente oculto × 30Team
+# Gap — roteiro cliente oculto × 30Grow
 
 Fonte: planilha *Comparação - Plataformas RH - Cliente Oculto* (perguntas de demo, ago/2026).  
 Mapa do **já entregue:** [`PRODUCT-FEATURES-PROMPT.md`](./PRODUCT-FEATURES-PROMPT.md).  
@@ -6,7 +6,7 @@ Backlog de gaps abertos: epic **B-1900 entregue** (ver [`BACKLOG.md`](./BACKLOG.
 
 Legenda: **tem** = demoável hoje · **parcial** = existe mas raso / siloed · **não** = fora ou não construído (respeitar fora de escopo em `AGENTS.md`).
 
-| # | Capacidade (da pergunta) | 30Team | Onde / nota |
+| # | Capacidade (da pergunta) | 30Grow | Onde / nota |
 |---|--------------------------|--------|-------------|
 | 1 | Proposta de valor GP / problemas que resolve | **tem** | Landpage, Guia, Overview |
 | 2 | Diferenciais vs outras GPs | **tem** | T1–T9 + Motivadores + compat + funil (não ATS genérico) |

@@ -1,5 +1,5 @@
 -- =============================================================================
--- 30Team — bootstrap base no PostgreSQL (RDS ou outro)
+-- 30Grow — bootstrap base no PostgreSQL (RDS ou outro)
 -- =============================================================================
 -- Execute conectado ao DATABASE que você criou (não na instância “postgres”
 -- template, a menos que esse seja o alvo).

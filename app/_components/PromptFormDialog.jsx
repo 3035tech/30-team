@@ -763,7 +763,7 @@ export function PromptFormDialog({
           onClick={(e) => e.stopPropagation()}
         >
           <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
-            30Team
+            30Grow
           </span>
           <h2
             id="prompt-form-title"

@@ -1,5 +1,5 @@
 /**
- * k6 Stress Test — 30Team
+ * k6 Stress Test — 30Grow
  * 
  * Ramp-up até 50 VUs para identificar breaking point.
  * 

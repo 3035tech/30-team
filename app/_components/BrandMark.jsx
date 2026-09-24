@@ -4,7 +4,7 @@ import { brandMarkSrc } from '../../lib/brand';
 import { cn } from '../../lib/cn';
 
 /**
- * Official 30Team mark (person + petals).
+ * Official 30Grow mark (person + petals).
  * Pass `href` or `onClick` to make the mark a home / nav control.
  * @param {{
  *   size?: number,
@@ -21,7 +21,7 @@ import { cn } from '../../lib/cn';
 export function BrandMark({
   size = 32,
   withWordmark = false,
-  wordmark = '30Team',
+  wordmark = '30Grow',
   style,
   className,
   href,

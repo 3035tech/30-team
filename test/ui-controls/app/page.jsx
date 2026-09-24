@@ -29,7 +29,7 @@ export default function Preview() {
  <output data-testid="date">{date}</output>
  <DateField aria-label="Horário de teste" mode="datetime-local" value={time} min="2026-09-19T10:00" max="2026-09-19T12:00" onChange={e=>setTime(e.target.value)}/>
  <output data-testid="time">{time}</output>
- <h1 className="font-display text-3xl">Controles do 30 Team</h1>
+ <h1 className="font-display text-3xl">Controles do 30 Grow</h1>
  <p>Revisão isolada, sem dados ou conexão com produção.</p>
  <label className="flex flex-col gap-2">Área
  <SelectField aria-label="Área" value={area} onChange={e=>{setArea(e.target.value);setCalls(n=>n+1);}} className="w-full">

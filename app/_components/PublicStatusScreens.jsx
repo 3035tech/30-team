@@ -58,7 +58,7 @@ export function PublicFunnyError({ locale = 'pt-BR', title, message, onRetry }) 
         className="block h-auto w-[min(220px,70vw)] rounded-card"
       />
       <p className="m-0 font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-brand-500">
-        30Team
+        30Grow
       </p>
       <h1 className="m-0 font-display text-[clamp(22px,5vw,28px)] font-semibold leading-[1.25] text-ink">
         {title || t(locale, 'panel.report.funnyErrorTitle')}

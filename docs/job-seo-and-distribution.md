@@ -27,7 +27,7 @@ Candidatura na página pública = CTA → `/v/{token}` (mesmo fluxo de assessmen
 
 ## Flags e ciclo de vida
 
-Status de vaga no 30Team: `open` \| `closed` (+ soft `deleted`). Sem enum DRAFT/PAUSED paralelo.
+Status de vaga no 30Grow: `open` \| `closed` (+ soft `deleted`). Sem enum DRAFT/PAUSED paralelo.
 
 | Conceito | Mapeamento |
 |----------|------------|

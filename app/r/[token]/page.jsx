@@ -423,7 +423,7 @@ function ReportInner() {
           </p>
         ) : (
           <p className="mb-2 mt-0 font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-brand-500">
-            30Team
+            30Grow
           </p>
         )}
         <h1 className="mb-1.5 mt-0 font-display text-3xl font-semibold text-ink">
@@ -464,7 +464,7 @@ function ReportInner() {
                 })),
               },
               labels: {
-                product: '30Team',
+                product: '30Grow',
                 publicTitle: t(locale, 'panel.report.publicTitle'),
                 executiveNote: t(locale, 'panel.report.executiveNote'),
                 shortlistTitle: t(locale, 'panel.report.shortlistTitle', { n: cands.length }),

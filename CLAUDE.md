@@ -1,4 +1,4 @@
-# CLAUDE.md — 30Team
+# CLAUDE.md — 30Grow
 
 Instruções para Claude Code (e qualquer agente Anthropic) neste repositório.
 

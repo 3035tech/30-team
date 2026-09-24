@@ -1,6 +1,6 @@
 # Rubrica por vaga (pesos T1–T9)
 
-Este documento explica como funciona a **rubrica de aderência por vaga** no 30Team.
+Este documento explica como funciona a **rubrica de aderência por vaga** no 30Grow.
 
 ---
 
@@ -10,7 +10,7 @@ A rubrica por vaga é um conjunto de **pesos para os tipos T1–T9** que represe
 
 ### Contexto do instrumento
 
-O 30Team usa uma **avaliação inspirada no modelo do Eneagrama** aplicada ao **contexto de trabalho**. O resultado inclui **pontuações T1 a T9**. **Não são diagnósticos clínicos**; são **heurísticas** para triagem e conversa.
+O 30Grow usa uma **avaliação inspirada no modelo do Eneagrama** aplicada ao **contexto de trabalho**. O resultado inclui **pontuações T1 a T9**. **Não são diagnósticos clínicos**; são **heurísticas** para triagem e conversa.
 
 - O **candidato responde o mesmo teste** para qualquer vaga.
 - A rubrica **não muda o teste**; muda **como interpretamos o resultado** *para aquela vaga*.

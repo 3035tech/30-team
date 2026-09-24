@@ -4,7 +4,7 @@ globs: app/**/*.{js,jsx},tailwind.config.js,app/globals.css
 alwaysApply: true
 ---
 
-# Tailwind UI (30Team)
+# Tailwind UI (30Grow)
 
 **Fonte de verdade:** `AGENTS.md` § Stack / UI. Config: `tailwind.config.js` (cores alinhadas a `lib/theme.js` / `lib/brand.js`).
 

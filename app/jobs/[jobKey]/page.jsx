@@ -73,10 +73,10 @@ export async function generateMetadata(props) {
       url: url || undefined,
       title,
       description,
-      siteName: '30Team',
+      siteName: '30Grow',
       locale: locale === 'en' ? 'en_US' : 'pt_BR',
       images: ogImage
-        ? [{ url: ogImage, width: 512, height: 512, alt: '30Team' }]
+        ? [{ url: ogImage, width: 512, height: 512, alt: '30Grow' }]
         : undefined,
     },
     twitter: {

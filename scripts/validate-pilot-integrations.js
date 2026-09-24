@@ -50,7 +50,7 @@ async function validateStorage() {
     for (const probe of probes) {
       await putObject({
         key: probe.key,
-        body: Buffer.from('30Team pilot storage probe\n'),
+        body: Buffer.from('30Grow pilot storage probe\n'),
         contentType: 'application/octet-stream',
       });
       created.push(probe);
@@ -78,7 +78,7 @@ async function validateMail() {
   if (!recipient) throw new Error('PILOT_SMOKE_EMAIL_REQUIRED');
   const sent = await sendTransactionalMail({
     to: recipient,
-    subject: '30Team: teste de homologação',
+    subject: '30Grow: teste de homologação',
     text: `Preflight de e-mail concluído em ${new Date().toISOString()}.`,
   });
   line('OK', 'SMTP delivery', sent.mocked ? 'mock' : recipient);

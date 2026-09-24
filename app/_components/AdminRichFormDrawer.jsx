@@ -107,7 +107,7 @@ export function AdminRichFormDrawer({
             <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
               {eyebrow || (fullPage
                 ? (locale === 'en' ? 'PEOPLE / TEAM' : 'PESSOAS / EQUIPE')
-                : '30Team')}
+                : '30Grow')}
             </span>
             <h2
               id="rich-form-drawer-title"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OWASP ZAP baseline scan against a running 30Team instance (staging recommended).
+# OWASP ZAP baseline scan against a running 30Grow instance (staging recommended).
 # Requires Docker. Does NOT mutate data — read-only spider + passive rules.
 #
 # Usage:
