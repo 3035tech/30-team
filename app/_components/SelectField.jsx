@@ -156,7 +156,7 @@ export function SelectField({
           aria-label={option.accessibleLabel || option.label}
           className={cn('flex min-h-touch cursor-pointer items-center justify-between gap-3 rounded-control px-3 py-2 font-ui text-prose',
             option.disabled ? 'cursor-default text-ink-faint' : active === index ? 'bg-brand-500/10 text-brand-700' : 'text-ink hover:bg-ink/[0.04]')}>
-          <span>{option.group ? <span className="mr-2 text-xs text-ink-muted">{option.group}:</span> : null}{option.label}</span>
+          <span className="whitespace-nowrap">{option.group ? <span className="mr-2 text-xs text-ink-muted">{option.group}:</span> : null}{option.label}</span>
           {selected?.value === option.value ? <span aria-hidden="true">✓</span> : null}
         </li>
       ))}
