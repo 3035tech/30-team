@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
   LOCALES,
   localeHtmlLang,
+  localeAccessibleLabel,
+  localeFlag,
   localeRegionConfig,
   localeLabel,
   normalizeLocale,
@@ -18,7 +20,10 @@ test('regional locales normalize with stable aliases and region metadata', () =>
   assert.equal(localeHtmlLang('es-419'), 'es-419');
   assert.equal(localeRegionConfig('pt-PT').currency, 'EUR');
   assert.equal(localeRegionConfig('es-419').region, '419');
-  assert.equal(localeLabel('pt-PT'), 'Português (Portugal)');
+  assert.equal(localeLabel('pt-PT'), 'Português');
+  assert.equal(localeAccessibleLabel('pt-PT'), 'Português, Portugal');
+  assert.equal(localeFlag('pt-BR'), '🇧🇷');
+  assert.equal(localeFlag('es-419'), '🌎');
 });
 
 test('regional catalogs override high-traffic copy and fall back safely', () => {

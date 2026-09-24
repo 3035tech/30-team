@@ -17,7 +17,7 @@ function optionList(children, group = '', groupDisabled = false) {
     if (child.type === 'optgroup') return optionList(child.props.children, child.props.label, child.props.disabled);
     if (child.type !== 'option') return [];
     const label = Children.toArray(child.props.children).join('');
-    return [{ value: String(child.props.value ?? label), label, group, disabled: Boolean(groupDisabled || child.props.disabled), hidden: Boolean(child.props.hidden) }];
+    return [{ value: String(child.props.value ?? label), label, accessibleLabel: child.props['aria-label'], group, disabled: Boolean(groupDisabled || child.props.disabled), hidden: Boolean(child.props.hidden) }];
   });
 }
 
@@ -153,6 +153,7 @@ export function SelectField({
           aria-selected={selected?.value === option.value} aria-disabled={option.disabled}
           onPointerMove={() => { if (!option.disabled) setActive(index); }}
           onClick={() => choose(index)}
+          aria-label={option.accessibleLabel || option.label}
           className={cn('flex min-h-touch cursor-pointer items-center justify-between gap-3 rounded-control px-3 py-2 font-ui text-prose',
             option.disabled ? 'cursor-default text-ink-faint' : active === index ? 'bg-brand-500/10 text-brand-700' : 'text-ink hover:bg-ink/[0.04]')}>
           <span>{option.group ? <span className="mr-2 text-xs text-ink-muted">{option.group}:</span> : null}{option.label}</span>

@@ -2,7 +2,7 @@
 
 import { SelectField } from './SelectField';
 
-import { LOCALES, LOCALE_COOKIE, localeLabel, normalizeLocale, t } from '../../lib/i18n';
+import { LOCALES, LOCALE_COOKIE, localeAccessibleLabel, localeFlag, localeLabel, normalizeLocale, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { fieldSelectClass } from './form-control-styles';
 
@@ -45,8 +45,8 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
         )}
       >
         {LOCALES.map((loc) => (
-          <option key={loc} value={loc}>
-            {localeLabel(loc)}
+          <option key={loc} value={loc} aria-label={localeAccessibleLabel(loc)}>
+            {localeFlag(loc)} {localeLabel(loc)}
           </option>
         ))}
       </SelectField>
