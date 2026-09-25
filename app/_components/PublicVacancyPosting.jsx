@@ -836,7 +836,12 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
               {t(locale, 'publicVacancy.alertSuccess')}
             </p>
           ) : (
-            <form onSubmit={submitJobAlert} className="flex flex-col gap-4">
+            <form
+              method="post"
+              action="/api/public/job-alerts"
+              onSubmit={submitJobAlert}
+              className="flex flex-col gap-4"
+            >
               <div className="grid items-start gap-4 sm:grid-cols-2">
                 <FormField label={t(locale, 'publicVacancy.alertNameLabel')} className="gap-1.5">
                   <input

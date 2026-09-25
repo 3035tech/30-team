@@ -14,7 +14,8 @@ function authorizedDetailed(request) {
 
 /**
  * GET /api/health — liveness + ping ao Postgres.
- * Detalhes (filas do pool): Authorization: Bearer HEALTH_METRICS_SECRET
+ * O endpoint público retorna somente o status; detalhes (filas do pool,
+ * latência e uptime) exigem Authorization: Bearer HEALTH_METRICS_SECRET.
  * ou header X-Health-Metrics-Token (não usar ?token= — vaza em logs/Referer).
  */
 export async function GET(request) {
@@ -35,7 +36,7 @@ export async function GET(request) {
   };
 
   if (!authorizedDetailed(request)) {
-    return NextResponse.json(base, {
+    return NextResponse.json({ status: base.status }, {
       headers: { 'Cache-Control': 'public, max-age=5' },
     });
   }

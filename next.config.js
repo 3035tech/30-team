@@ -4,6 +4,7 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   output: 'standalone',
   outputFileTracingRoot: __dirname,
+  poweredByHeader: false,
   // Lets CI and migration checks use an isolated cache without touching a running app.
   distDir: process.env.NEXT_DIST_DIR || '.next',
   async headers() {

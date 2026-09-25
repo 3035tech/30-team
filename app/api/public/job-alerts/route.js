@@ -10,7 +10,10 @@ export async function POST(request) {
     return apiError(request, ERR.RATE_LIMIT, 429, {}, { headers: { 'Retry-After': String(rl.retryAfterSec) } });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const contentType = request.headers.get('content-type') || '';
+  const body = contentType.includes('application/json')
+    ? await request.json().catch(() => ({}))
+    : Object.fromEntries(await request.formData().catch(() => new FormData()));
   const result = await upsertJobAlert({
     email: body.email,
     name: body.name,
