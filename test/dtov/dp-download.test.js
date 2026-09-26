@@ -106,6 +106,31 @@ try {
   assert.equal(failure.status,500);
   assert.equal((await failure.json()).errorCode,'INTERNAL');
   checks++;
+  unavailable = false;
+  await client.query("UPDATE employee_dp_documents SET signature_status='none' WHERE candidate_id=$1 AND doc_key='address_proof'", [candidateId]);
+  const auditStart = new Date();
+  for (const [path, cookie] of [[hrDoc, hrCookie], [empDoc, empCookie]]) {
+    const form = new FormData();
+    form.set('file', new Blob([bytes], { type: 'application/pdf' }), 'Synthetic.pdf');
+    const uploaded = await fetch(base + path, { method: 'POST', headers: { cookie }, body: form, signal: AbortSignal.timeout(15000) });
+    assert.equal(uploaded.status, 200, `upload ${path}: ${await uploaded.clone().text()}`);
+    checks++;
+    const removed = await request(path, cookie, { method: 'DELETE' });
+    assert.equal(removed.status, 200, `delete ${path}: ${await removed.clone().text()}`);
+    checks++;
+  }
+  const { rows: audits } = await client.query(`SELECT action, actor_kind, actor_user_id, actor_candidate_id, metadata
+    FROM audit_log WHERE company_id=$1 AND target_id=$2 AND created_at >= $3
+    AND action IN ('dp.document.file_uploaded','dp.document.file_removed')`, [cid,String(candidateId),auditStart]);
+  assert.equal(audits.length,4, 'all successful document mutations must be audited');
+  assert.equal(audits.filter(row => row.actor_kind === 'employee' && Number(row.actor_candidate_id) === Number(candidateId)).length,2);
+  assert.equal(audits.filter(row => row.actor_kind === 'manager' && row.actor_user_id).length,2);
+  for (const row of audits) assert.deepEqual(row.metadata, { docKey: 'address_proof' });
+  checks++;
+  await client.query('UPDATE candidates SET session_version=session_version+1 WHERE id=$1 AND company_id=$2', [candidateId,cid]);
+  await denied(empDoc,empCookie,401);
+  await client.query("UPDATE users SET session_version=session_version+1 WHERE email='hr@todos-os-dados.demo' AND company_id=$1", [cid]);
+  await denied(hrDoc,hrCookie,401);
   console.log(`DP download integration: ${checks} checks passed (real SQL/handlers; local fake S3).`);
 } finally {
   if (server) { server.kill('SIGTERM'); await once(server,'exit'); }

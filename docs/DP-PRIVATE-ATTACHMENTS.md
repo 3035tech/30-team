@@ -43,3 +43,30 @@ node test/dtov/dp-download.test.js
 ```
 
 O último teste altera apenas fixtures locais e encerra o DTOV no finally. Não executar em paralelo com outra sessão DTOV. Rollback de produto: reverter este patch; sem alteração de schema. Validação real do S3 e deploy permanecem operacionais, não executados nesta entrega.
+
+## Revalidação e correções — 25/09/2026
+
+Restaurados os GETs de documentos de RH/colaborador e de atestados do colaborador,
+que divergiam deste contrato. POST/DELETE dessas rotas agora aguardam `params`
+do Next 16. Documentos do RH são filtrados por empresa já na consulta, inclusive
+para admin vinculado a empresa; somente admin sem empresa mantém escopo global.
+Uploads e remoções de documentos registram ator, empresa e docKey no audit log,
+sem nome do arquivo, URL ou conteúdo.
+
+Novos documentos/atestados são gravados no storage com `Cache-Control: private,
+no-store`; ativos públicos mantêm a política anterior. Isso não altera metadados
+de objetos antigos nem políticas de bucket. A sessão do colaborador é revalidada
+contra a versão/vínculo atual no servidor, além da proteção do Proxy.
+
+Prova: build de produção passou em cópia isolada sem `.env`, 50 testes no gate
+de segurança, 40 na regressão offline, 4 do agregador DP e 3 de assinatura.
+Integração de downloads ampliada: **22 verificações aprovadas**, incluindo quatro
+downloads, isolamento, chave adulterada, documento assinado, falha S3, uploads e
+remoções com auditoria real e rejeição de sessões revogadas. Somente SQL local e
+S3 simulado; os containers e o volume DTOV foram removidos ao finalizar.
+
+Leitura da configuração real em AWS: bucket `30grow` com BlockPublicAcls,
+IgnorePublicAcls, BlockPublicPolicy e RestrictPublicBuckets ativos; API de política
+retornou NoSuchBucketPolicy. Nenhum objeto foi listado/baixado e nenhuma política
+foi alterada. A consulta verifica bloqueio público direto do bucket, não todas
+as possíveis formas de exposição por aplicações/CDNs.

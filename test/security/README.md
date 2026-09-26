@@ -2,6 +2,20 @@
 
 Complemento ao DTOV (`test/dtov/http-smoke.js`) para varredura externa.
 
+## Gate obrigatório
+
+`npm run test:security` executa os contratos de hardening, os handlers reais de
+arquivos de DP com SQL/storage simulados, o domínio de downloads, revogação da
+sessão do colaborador, cabeçalhos privados e cache de uploads. Não precisa de
+credenciais nem banco. O GitHub Actions e o build Docker executam esse gate
+antes de publicar a imagem; o GitHub Actions também bloqueia vulnerabilidades
+de runtime high/critical com `npm audit --omit=dev --audit-level=high`.
+
+Para a prova com SQL real, usar `test/dtov/dp-download.test.js` após o build
+isolado e o seed DTOV, seguindo `docs/DP-PRIVATE-ATTACHMENTS.md`. São 22
+verificações, incluindo auditoria e revogação de gestor/colaborador. A suíte
+remove o banco efêmero no final e não pode compartilhar o DTOV com outra tarefa.
+
 ## OWASP ZAP baseline
 
 Requer Docker e app no ar (staging recomendado — **não** aponte para produção sem aviso).

@@ -5,17 +5,16 @@ import { useMemo, useState } from 'react';
 import { BrandMark } from './BrandMark';
 import LanguageSelect from './LanguageSelect';
 import { useLocale } from '../../lib/useLocale';
-import { localeHtmlLang, localeNumberLocale, t } from '../../lib/i18n';
+import { localeHtmlLang, t } from '../../lib/i18n';
+import { formatPublicPrice, getPublicPricing, publicPricingTextValues } from '../../lib/pricing-currency';
 import {
   PRODUCT_LANDING_CONTACT_EMAIL,
   getPricingAddons,
   getPricingCoreFeatures,
-  EARLY_ADOPTER_ANNUAL_DISCOUNT,
   EARLY_ADOPTER_COHORT_LIMIT,
   EARLY_ADOPTER_FREE_DAYS,
   EARLY_ADOPTER_MAX_EMPLOYEES,
   EARLY_ADOPTER_MIN_EMPLOYEES,
-  EARLY_ADOPTER_MONTHLY_RATE,
   DESIGN_PARTNER_FREE_MONTHS,
   PUBLIC_TRIAL_DAYS,
 } from '../../lib/pricing-plans';
@@ -32,22 +31,9 @@ export default function PricingPageClient({ locale: initialLocale }) {
   const [billingCycle, setBillingCycle] = useState('monthly');
   const coreFeatures = getPricingCoreFeatures(locale);
   const addons = getPricingAddons(locale);
-  const pricing = useMemo(() => {
-    const monthlyRate = billingCycle === 'annual'
-      ? EARLY_ADOPTER_MONTHLY_RATE * EARLY_ADOPTER_ANNUAL_DISCOUNT
-      : EARLY_ADOPTER_MONTHLY_RATE;
-    const monthlyTotal = employeeCount * monthlyRate;
-    return {
-      monthlyRate,
-      monthlyTotal,
-      annualTotal: monthlyTotal * 12,
-    };
-  }, [billingCycle, employeeCount]);
-  const money = (value) => new Intl.NumberFormat(localeNumberLocale(locale), {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-  }).format(value);
+  const pricing = useMemo(() => getPublicPricing(locale, { employeeCount, billingCycle }), [locale, billingCycle, employeeCount]);
+  const money = (value) => formatPublicPrice(locale, value);
+  const pricingTextValues = publicPricingTextValues(locale);
 
   return (
     <div className="min-h-screen bg-canvas font-display text-ink" lang={localeHtmlLang(locale)}>
@@ -306,7 +292,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
                 <summary className="cursor-pointer list-none text-base text-ink marker:content-none [&::-webkit-details-marker]:hidden">
                   {t(locale, `pricing.faq${n}Q`)}
                 </summary>
-                <p className="mb-1 mt-3 text-sm leading-relaxed text-ink-muted">{t(locale, `pricing.faq${n}A`)}</p>
+                <p className="mb-1 mt-3 text-sm leading-relaxed text-ink-muted">{t(locale, `pricing.faq${n}A`, pricingTextValues)}</p>
               </details>
             ))}
           </div>

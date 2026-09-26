@@ -116,3 +116,33 @@ empresas. Não executar os testes de fixtures contra bancos de produção.
 
 Nenhum código de produto, configuração de produção ou deploy foi alterado nesta
 verificação. Este relatório preserva o contexto para a continuação.
+
+## Continuação autorizada: correções locais
+
+Após a avaliação acima, o usuário autorizou a implementação, começando por DP.
+Corrigidos os handlers de downloads de documentos e atestados, parâmetros
+assíncronos, filtro de tenant para documentos do RH e auditoria de upload/remoção.
+Sessões de colaboradores agora passam por consulta de versão/vínculo atual no
+servidor, fechando a dependência exclusiva da revalidação no Proxy. Uploads novos
+de DP usam cache privado também nos metadados do storage.
+
+Atualizados os testes desatualizados de tradução e o mock do agregador DP. Criado
+`npm run test:security`, executado pelo GitHub Actions e Docker antes da imagem;
+o Actions também executa auditoria de dependências de produção high/critical.
+
+Resultados finais desta etapa:
+
+- Gate de segurança: 50/50.
+- Regressão offline: 40/40, em instalação limpa.
+- Agregador DP: 4/4; assinatura DP: 3/3.
+- Integração com handlers compilados, PostgreSQL/Redis DTOV e S3 fake: 22/22.
+- Build de produção: aprovado em `/private/tmp/30grow-security-build.vbEpXn`,
+  sem `.env` de produção. A primeira tentativa no workspace foi encerrada após
+  parar durante a carga de dependências; a cópia com `npm ci` concluiu.
+- Bucket de produção `30grow`: quatro opções de bloqueio de acesso público
+  ativas, sem bucket policy. Leitura apenas da configuração, sem acesso a objetos.
+
+Não houve deploy, alteração da AWS nem regravação dos objetos existentes. A CSP
+de produção permanece Report-Only. Coleta centralizada de CSP, validação antes de
+enforcement e avaliação completa de CSRF/2FA nos fluxos autenticados permanecem
+para a etapa seguinte; esta entrega não as declara concluídas.

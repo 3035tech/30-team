@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from '../../lib/useLocale';
 import { t, errorMessage } from '../../lib/i18n';
+import { publicPricingTextValues } from '../../lib/pricing-currency';
 import { BrandMark } from '../_components/BrandMark';
 import LanguageSelect from '../_components/LanguageSelect';
 import { FormField } from '../_components/FormField';
@@ -131,7 +132,7 @@ export default function SignupPage() {
         <h1 className="mb-2 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-3xl font-normal leading-tight text-transparent">
           {t(locale, 'signup.title')}
         </h1>
-        <p className="mb-4 text-base leading-relaxed text-ink-muted">{t(locale, 'signup.intro')}</p>
+        <p className="mb-4 text-base leading-relaxed text-ink-muted">{t(locale, 'signup.intro', publicPricingTextValues(locale))}</p>
         <p className="mb-2 text-sm leading-relaxed text-ink-muted">{t(locale, 'signup.includedBlurb')}</p>
         <p className="mb-6">
           <Link href="/pricing" className="text-sm text-brand-600 underline-offset-2 hover:underline">
